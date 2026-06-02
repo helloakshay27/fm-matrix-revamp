@@ -378,7 +378,7 @@ const WeeklyReports = () => {
     );
 
     const [dayPlans, setDayPlans] = React.useState<
-        Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string }[]>
+        Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]>
     >({});
 
     const [remarksText, setRemarksText] = React.useState("");
@@ -402,6 +402,8 @@ const WeeklyReports = () => {
     const [selectedTodo, setSelectedTodo] = useState<any>(null);
     const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
         useState<null | HTMLElement>(null);
+    const [dayPlanMenuAnchor, setDayPlanMenuAnchor] = useState<{ el: HTMLElement; dayKey: string; date: string } | null>(null);
+    const [planPreFillDate, setPlanPreFillDate] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
@@ -734,6 +736,7 @@ const WeeklyReports = () => {
                             title: t.title || t.name || "Untitled Task",
                             type: "task",
                             date: t.target_date || t.due_date || t.end_date || null,
+                            priority: t.priority || null,
                             originalData: t,
                         })),
                     ...issues
@@ -743,6 +746,7 @@ const WeeklyReports = () => {
                             title: i.title || i.name || "Untitled Issue",
                             type: "issue",
                             date: i.target_date || i.due_date || i.end_date || null,
+                            priority: i.priority || null,
                             originalData: i,
                         })),
                     ...todos
@@ -752,6 +756,7 @@ const WeeklyReports = () => {
                             title: td.title || td.name || td.description || "Untitled Todo",
                             type: "todo",
                             date: td.target_date || td.due_date || td.end_date || null,
+                            priority: td.priority || null,
                             originalData: td,
                         })),
                 ];
@@ -2249,6 +2254,7 @@ const WeeklyReports = () => {
                         starred: false,
                         source_id: item.originalData?.id ?? item.id,
                         source_type: item.type,
+                        originalData: item.originalData ?? null,
                     },
                 ],
             }));
@@ -3008,15 +3014,68 @@ const WeeklyReports = () => {
                                                     )}
                                                 />
                                             </button>
-                                            <p className="flex-1 text-sm text-neutral-700 pt-0.5">
-                                                {item.title}
-                                            </p>
+                                            <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
+                                                    {item.title}
+                                                </p>
+                                                {(() => {
+                                                    const d = item.originalData;
+                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                    let issueEffort: string | null = null;
+                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                        const totalMin = d.issue_allocation_times.reduce(
+                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                        );
+                                                        if (totalMin > 0) {
+                                                            const h = Math.floor(totalMin / 60);
+                                                            const m = totalMin % 60;
+                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                        }
+                                                    }
+                                                    const hasInfo = endDate || effortEst || issueEffort;
+                                                    if (!hasInfo) return null;
+                                                    return (
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            {endDate && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                    <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                    {endDate}
+                                                                </span>
+                                                            )}
+                                                            {effortEst && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                    <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                    Est: {effortEst}
+                                                                </span>
+                                                            )}
+                                                            {issueEffort && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                                                    <Zap className="h-2.5 w-2.5 shrink-0" />
+                                                                    Effort: {issueEffort}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
                                             <span className={cn(
                                                 "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 mt-1",
                                                 item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
                                             )}>
                                                 {item.type}
                                             </span>
+                                            {item.priority && (
+                                                <span
+                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
+                                                    style={{
+                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                    }}
+                                                >
+                                                    {item.priority}
+                                                </span>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -3204,12 +3263,12 @@ const WeeklyReports = () => {
                                             </h3>
                                         </div>
                                         <div className="flex flex-wrap gap-2 pt-1">
-                                            <Badge
+                                            {/* <Badge
                                                 variant="outline"
                                                 className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                                             >
                                                 Completed: {taskIssueCounts.completed}
-                                            </Badge>
+                                            </Badge> */}
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
@@ -3227,6 +3286,12 @@ const WeeklyReports = () => {
                                                 className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                                             >
                                                 In Progress: {taskIssueCounts.inProgress}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800"
+                                            >
+                                                On Hold: {taskIssueCounts.onHold}
                                             </Badge>
                                         </div>
                                     </div>
@@ -3856,7 +3921,7 @@ const WeeklyReports = () => {
                                             {day.canAdd ? (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleAddPlan(day.key)}
+                                                    onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
                                                     className="inline-flex items-center gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2.5 py-1.5 text-xs font-bold text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45"
                                                 >
                                                     <Plus className="h-3 w-3" /> Add
@@ -3879,15 +3944,79 @@ const WeeklyReports = () => {
                                                         className="relative ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm transition-all duration-200 hover:border-[#DA7756]/30 hover:shadow-md"
                                                     >
                                                         <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                            <span className={cn(
-                                                                "self-start text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                            )}>
-                                                                {item.type}
-                                                            </span>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={cn(
+                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                )}>
+                                                                    {item.type}
+                                                                </span>
+                                                                {item.priority && (
+                                                                    <span
+                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                        style={{
+                                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                        }}
+                                                                    >
+                                                                        {item.priority}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
                                                                 {item.title}
                                                             </p>
+                                                            {(() => {
+                                                                const d = item.originalData;
+                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                                let timeLeftLabel: string | null = null;
+                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                                                    const now = new Date();
+                                                                    const end = new Date(d.end_date);
+                                                                    end.setHours(23, 59, 59, 999);
+                                                                    const diff = end.getTime() - now.getTime();
+                                                                    if (diff > 0) {
+                                                                        const days = Math.floor(diff / 86400000);
+                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                        else timeLeftLabel = `${mins}m left`;
+                                                                    }
+                                                                }
+                                                                const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                                                if (!hasInfo) return null;
+                                                                return (
+                                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                                        {endDate && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                                {endDate}
+                                                                            </span>
+                                                                        )}
+                                                                        {overdueLabel && (
+                                                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                                <AlertCircle className="h-2.5 w-2.5 shrink-0" />
+                                                                                {overdueLabel}
+                                                                            </span>
+                                                                        )}
+                                                                        {timeLeftLabel && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                                {timeLeftLabel}
+                                                                            </span>
+                                                                        )}
+                                                                        {effortEst && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                                Est: {effortEst}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div className="flex flex-col gap-1 relative z-20">
                                                             <button
@@ -3932,12 +4061,25 @@ const WeeklyReports = () => {
                                                     </button>
                                                     <div className="flex flex-1 flex-col gap-1.5 min-w-0">
                                                         {planObj.source_type && (
-                                                            <span className={cn(
-                                                                "self-start text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                            )}>
-                                                                {planObj.source_type}
-                                                            </span>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={cn(
+                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                )}>
+                                                                    {planObj.source_type}
+                                                                </span>
+                                                                {planObj.originalData?.priority && (
+                                                                    <span
+                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                        style={{
+                                                                            backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                            color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                                                        }}
+                                                                    >
+                                                                        {planObj.originalData.priority}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         )}
                                                         {planObj.source_type ? (
                                                             <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
@@ -3953,6 +4095,57 @@ const WeeklyReports = () => {
                                                                 className="rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
                                                             />
                                                         )}
+                                                        {planObj.originalData && (() => {
+                                                            const d = planObj.originalData;
+                                                            const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                            const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                            const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                            let timeLeftLabel: string | null = null;
+                                                            if (planObj.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                                                const now = new Date();
+                                                                const end = new Date(d.end_date);
+                                                                end.setHours(23, 59, 59, 999);
+                                                                const diff = end.getTime() - now.getTime();
+                                                                if (diff > 0) {
+                                                                    const days = Math.floor(diff / 86400000);
+                                                                    const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                    const mins = Math.floor((diff % 3600000) / 60000);
+                                                                    if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                    else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                    else timeLeftLabel = `${mins}m left`;
+                                                                }
+                                                            }
+                                                            const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                                            if (!hasInfo) return null;
+                                                            return (
+                                                                <div className="flex items-center gap-3 flex-wrap">
+                                                                    {endDate && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                            {endDate}
+                                                                        </span>
+                                                                    )}
+                                                                    {overdueLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                            <AlertCircle className="h-2.5 w-2.5 shrink-0" />
+                                                                            {overdueLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {timeLeftLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                            {timeLeftLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {effortEst && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                            Est: {effortEst}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
                                                     </div>
                                                     <div className="flex flex-col gap-1 relative z-20">
                                                         <button
@@ -5039,8 +5232,7 @@ const WeeklyReports = () => {
                             isEdit={false}
                             onCloseModal={() => setOpenTaskModal(false)}
                             prefillData={{
-                                start_date: currentDateValue,
-                                target_date: weekEndDateValue,
+                                start_date: planPreFillDate ?? currentDateValue,
                             }}
                         />
                     </div>
@@ -5051,8 +5243,7 @@ const WeeklyReports = () => {
                 openDialog={openIssueModal}
                 handleCloseDialog={() => setOpenIssueModal(false)}
                 prefillData={{
-                    start_date: currentDateValue,
-                    target_date: currentDateValue,
+                    start_date: planPreFillDate ?? currentDateValue,
                 }}
             />
 
@@ -5064,8 +5255,8 @@ const WeeklyReports = () => {
                 }}
                 getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
                 prefillData={{
-                    start_date: currentDateValue,
-                    target_date: weekEndDateValue,
+                    start_date: planPreFillDate ?? currentDateValue,
+                    // target_date: weekEndDateValue,
                 }}
             />
 
@@ -5396,6 +5587,7 @@ const WeeklyReports = () => {
             >
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenTaskModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -5424,6 +5616,7 @@ const WeeklyReports = () => {
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenIssueModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -5452,6 +5645,7 @@ const WeeklyReports = () => {
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenTodoModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -5474,6 +5668,152 @@ const WeeklyReports = () => {
                             <span className="font-bold text-gray-900 text-sm">Add Todo</span>
                             <span className="text-xs text-gray-500 font-medium">
                                 Add a quick follow-up
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+            </Menu>
+
+            {/* Day plan dropdown menu */}
+            <Menu
+                anchorEl={dayPlanMenuAnchor?.el}
+                open={Boolean(dayPlanMenuAnchor)}
+                onClose={() => setDayPlanMenuAnchor(null)}
+                sx={{
+                    "& .MuiPaper-root": {
+                        borderRadius: "12px",
+                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                        minWidth: "220px",
+                        overflow: "visible",
+                        "&::before": {
+                            content: '""',
+                            display: "block",
+                            position: "absolute",
+                            top: -8,
+                            right: 20,
+                            width: 12,
+                            height: 12,
+                            backgroundColor: "#ffffff",
+                            transform: "translateY(-50%) rotate(45deg)",
+                            zIndex: 0,
+                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                        },
+                    },
+                }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "8px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#f0f4ff",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <Plus size={18} className="text-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Item</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenTaskModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#f0f4ff",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <CheckSquare size={18} className="text-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenIssueModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fef2f2",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-red-50 rounded-lg">
+                            <AlertCircle size={18} className="text-red-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenTodoModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 8px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fef9f0",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <ListTodo size={18} className="text-amber-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
                             </span>
                         </div>
                     </div>

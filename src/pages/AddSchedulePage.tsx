@@ -56,7 +56,8 @@ import { validateActivityName, validateActivityNameDebounced } from '@/utils/sch
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User, Supplier } from '../services/assetService';
+import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User } from '../services/assetService';
+import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { MuiSearchableDropdown } from '@/components/MuiSearchableDropdown';
 import { log } from 'console';
@@ -339,7 +340,6 @@ export const AddSchedulePage = () => {
   const [selectedAssetGroup, setSelectedAssetGroup] = useState<number | undefined>();
   const [emailRules, setEmailRules] = useState<EmailRule[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [helpdeskCategories, setHelpdeskCategories] = useState<any[]>([]);
@@ -354,7 +354,6 @@ export const AddSchedulePage = () => {
     subGroups: false,
     emailRules: false,
     users: false,
-    suppliers: false,
     templates: false,
     helpdeskCategories: false,
     services: false,
@@ -727,7 +726,6 @@ export const AddSchedulePage = () => {
     loadAssetGroups();
     loadEmailRules();
     loadUsers();
-    loadSuppliers();
     loadGroups();
     loadTemplates();
     loadHelpdeskCategories();
@@ -876,29 +874,6 @@ export const AddSchedulePage = () => {
       setUsers(mockUsers);
     } finally {
       setLoading(prev => ({ ...prev, users: false }));
-    }
-  };
-
-  const loadSuppliers = async () => {
-    // console.log('Starting to load suppliers...');
-    setLoading(prev => ({ ...prev, suppliers: true }));
-    try {
-      const data = await assetService.getSuppliers();
-      // console.log('Suppliers loaded successfully:', data);
-      setSuppliers(data);
-    } catch (error) {
-      console.error('Failed to load suppliers:', error);
-      toast.error("Failed to load suppliers. Using fallback data.", {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#fff',
-          color: 'black',
-          border: 'none',
-        },
-      });
-    } finally {
-      setLoading(prev => ({ ...prev, suppliers: false }));
     }
   };
 
@@ -4520,30 +4495,6 @@ export const AddSchedulePage = () => {
                 )}
 
                 <Box>
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Supplier </InputLabel>
-                    <Select
-                      label="Supplier"
-                      notched
-                      displayEmpty
-                      value={formData.supplier}
-                      onChange={e => setFormData({ ...formData, supplier: e.target.value })}
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.suppliers}
-                    >
-                      <MenuItem value="">Select Supplier</MenuItem>
-                      {suppliers && suppliers.map(supplier => (
-                        <MenuItem key={supplier.id} value={supplier.id.toString()}>{supplier.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  {loading.suppliers && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading suppliers...
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box>
                   <TextField
                     label={
                       <span>
@@ -4599,7 +4550,22 @@ export const AddSchedulePage = () => {
                     }
                   />
                 </Box>
+
+                <Box>
+                  <SupplierSearchSelect
+                    value={formData.supplier}
+                    onChange={(supplierId) =>
+                      setFormData((prev) => ({ ...prev, supplier: supplierId }))
+                    }
+                    disabled={
+                      stepIndex < activeStep && editingStep !== stepIndex
+                    }
+                    label="Supplier"
+                    size="schedule"
+                  />
+                </Box>
               </Box>
+              
             </Box>
           </SectionCard>
         );

@@ -1090,7 +1090,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                             onDrop={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if (selectedSprint?.status === 'stopped' || !selectedSprint?.status) {
+                                if (selectedSprint?.status === 'stopped' || selectedSprint?.status === 'open' || !selectedSprint?.status) {
                                     try {
                                         const raw = e.dataTransfer.getData('application/reactflow');
                                         if (raw) {

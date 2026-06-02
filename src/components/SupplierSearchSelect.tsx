@@ -13,7 +13,12 @@ import Select, {
   type StylesConfig,
 } from 'react-select';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { FormControl, FormHelperText, Typography } from '@mui/material';
+import {
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  Typography,
+} from '@mui/material';
 
 const PAGE_SIZE = 100;
 const ROW_HEIGHT = 38;
@@ -140,17 +145,50 @@ const fetchSupplierById = async (
 };
 
 const buildSelectStyles = (
-  hasError: boolean
-): StylesConfig<ReactSelectOption, false> => ({
+  hasError: boolean,
+  size: 'default' | 'compact' | 'schedule' = 'default'
+): StylesConfig<ReactSelectOption, false> => {
+  const isSchedule = size === 'schedule';
+  const isCompact = size === 'compact';
+  const controlHeight = isCompact || isSchedule ? 40 : 56;
+  const focusColor = isSchedule || isCompact ? '#da7756' : '#C72030';
+  const borderDefault = isSchedule || isCompact ? '#ddd' : '#c4c4c4';
+
+  return {
   control: (base, state) => ({
     ...base,
-    minHeight: 56,
+    minHeight: controlHeight,
+    height: controlHeight,
+    fontSize: isCompact ? 14 : base.fontSize,
     borderRadius: 4,
-    borderColor: hasError ? '#d32f2f' : state.isFocused ? '#C72030' : '#c4c4c4',
+    borderColor: hasError ? '#d32f2f' : state.isFocused ? focusColor : borderDefault,
     boxShadow: 'none',
+    backgroundColor: '#fff',
     '&:hover': {
-      borderColor: '#C72030',
+      borderColor: focusColor,
     },
+  }),
+  valueContainer: (base) => ({
+    ...base,
+    height: controlHeight - 2,
+    padding: isCompact || isSchedule ? '0 14px' : base.padding,
+  }),
+  indicatorsContainer: (base) => ({
+    ...base,
+    height: controlHeight - 2,
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    padding: isSchedule ? '8px' : base.padding,
+  }),
+  clearIndicator: (base) => ({
+    ...base,
+    padding: isSchedule ? '8px' : base.padding,
+  }),
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
   }),
   menu: (base) => ({
     ...base,
@@ -171,12 +209,15 @@ const buildSelectStyles = (
   placeholder: (base) => ({
     ...base,
     color: '#999',
+    fontSize: isCompact ? 14 : base.fontSize,
   }),
   singleValue: (base) => ({
     ...base,
     color: '#000',
+    fontSize: isCompact ? 14 : base.fontSize,
   }),
-});
+};
+};
 
 export interface SupplierSearchSelectProps {
   value: string;
@@ -187,6 +228,8 @@ export interface SupplierSearchSelectProps {
   helperText?: string;
   label?: React.ReactNode;
   required?: boolean;
+  /** `schedule` = matches Add Schedule TextField/Select (outlined, 56px) */
+  size?: 'default' | 'compact' | 'schedule';
 }
 
 export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
@@ -197,7 +240,11 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
   error = false,
   helperText,
   label = 'Supplier',
+  size = 'default',
 }) => {
+  const isCompact = size === 'compact';
+  const isSchedule = size === 'schedule';
+  const inputId = 'supplier-search-select-input';
   const [options, setOptions] = useState<ReactSelectOption[]>([]);
   const [selected, setSelected] = useState<ReactSelectOption | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -567,9 +614,89 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
 
   const isLoading = initialLoading || menuLoading;
 
+  const selectControl = (
+    <Select
+      inputId={isSchedule ? inputId : undefined}
+      options={options}
+      value={selected}
+      onChange={handleSelectChange}
+      onInputChange={handleInputChange}
+      components={selectComponents}
+      isDisabled={disabled || initialLoading}
+      isLoading={isLoading}
+      isClearable
+      placeholder={
+        initialLoading ? 'Loading suppliers...' : 'Select Supplier'
+      }
+      isSearchable
+      filterOption={() => true}
+      menuPortalTarget={
+        typeof document !== 'undefined' ? document.body : null
+      }
+      menuPosition="fixed"
+      styles={buildSelectStyles(error, size)}
+      noOptionsMessage={() =>
+        isLoading ? 'Loading suppliers...' : 'No suppliers found'
+      }
+      loadingMessage={() => 'Loading suppliers...'}
+    />
+  );
+
+  if (isSchedule) {
+    return (
+      <FormControl
+        fullWidth
+        error={error}
+        sx={{ mt: 1, position: 'relative' }}
+      >
+        {label ? (
+          <InputLabel
+            shrink
+            htmlFor={inputId}
+            sx={{
+              fontSize: 14,
+              color: error ? '#d32f2f' : 'rgba(0, 0, 0, 0.6)',
+              position: 'absolute',
+              top: -8,
+              left: 10,
+              zIndex: 1,
+              backgroundColor: '#fff',
+              px: 0.5,
+              pointerEvents: 'none',
+            }}
+          >
+            {label}
+          </InputLabel>
+        ) : null}
+        {selectControl}
+        {helperText ? (
+          <FormHelperText sx={{ mx: 0 }}>{helperText}</FormHelperText>
+        ) : null}
+      </FormControl>
+    );
+  }
+
   return (
-    <FormControl fullWidth error={error}>
-      {label ? (
+    <FormControl
+      fullWidth
+      error={error}
+      sx={isCompact ? { mt: 1 } : undefined}
+    >
+      {label && isCompact ? (
+        <InputLabel
+          shrink
+          sx={{
+            fontSize: 14,
+            color: 'rgba(0, 0, 0, 0.6)',
+            position: 'relative',
+            transform: 'none',
+            mb: 0.25,
+            ml: 0.5,
+          }}
+        >
+          {label}
+        </InputLabel>
+      ) : label ? (
         <Typography
           sx={{
             fontSize: '14px',
@@ -582,30 +709,7 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
         </Typography>
       ) : null}
 
-      <Select
-        options={options}
-        value={selected}
-        onChange={handleSelectChange}
-        onInputChange={handleInputChange}
-        components={selectComponents}
-        isDisabled={disabled || initialLoading}
-        isLoading={isLoading}
-        isClearable
-        placeholder={
-          initialLoading ? 'Loading suppliers...' : 'Select Supplier'
-        }
-        isSearchable
-        filterOption={() => true}
-        menuPortalTarget={
-          typeof document !== 'undefined' ? document.body : null
-        }
-        menuPosition="fixed"
-        styles={buildSelectStyles(error)}
-        noOptionsMessage={() =>
-          isLoading ? 'Loading suppliers...' : 'No suppliers found'
-        }
-        loadingMessage={() => 'Loading suppliers...'}
-      />
+      {selectControl}
 
       {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
     </FormControl>

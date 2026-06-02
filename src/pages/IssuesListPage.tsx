@@ -15,7 +15,10 @@ import {
   List,
   ChevronDown,
   X,
+  Play,
+  Pause,
 } from "lucide-react";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import IssueManagementKanban from "@/components/IssueManagementKanban";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -78,6 +81,8 @@ interface Issue {
   milestone_id?: string;
   task_id?: string;
   comment?: string;
+  is_started?: boolean;
+  active_time_till_now?: { hours: number; minutes: number; seconds: number };
 }
 
 const columns: ColumnConfig[] = [
@@ -180,6 +185,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "started_time",
+    label: "Actual Efforts Taken",
+    sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "comment",
     label: "Comment",
     sortable: true,
@@ -233,6 +245,55 @@ const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelec
           >
             {isLoading ? "Adding..." : "Add to Sprint"}
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const IssuePauseModal = ({ isOpen, onClose, onSubmit, onEndIssue, isLoading, issueId }: any) => {
+  const [reason, setReason] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) setReason('');
+  }, [isOpen]);
+
+  const handlePause = () => {
+    if (!reason.trim()) { toast.error('Please enter a reason for pausing'); return; }
+    onSubmit(reason, issueId);
+  };
+
+  const handleEnd = () => {
+    if (!reason.trim()) { toast.error('Please enter a reason for ending'); return; }
+    onEndIssue(reason, issueId);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause/End</h2>
+        <div className="mb-6">
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter reason..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+            rows={4}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="flex gap-3 justify-between">
+          <Button onClick={handleEnd} disabled={isLoading} className="px-4 py-2 !bg-red-600 !text-white rounded-md disabled:opacity-50">
+            {isLoading ? 'Submitting...' : 'End Issue'}
+          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+            <Button onClick={handlePause} disabled={isLoading} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
+              {isLoading ? 'Submitting...' : 'Pause Issue'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -312,6 +373,11 @@ const IssuesListPage = ({
     Array<{ row: number; errors: string[] }>
   >([]);
   const [importResults, setImportResults] = useState({ created: 0, failed: 0 });
+
+  // Pause / Play modal state
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [pauseIssueId, setPauseIssueId] = useState<number | null>(null);
+  const [isPauseLoading, setIsPauseLoading] = useState(false);
 
   // Responsible Person Change Modal State
   const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
@@ -414,6 +480,7 @@ const IssuesListPage = ({
     data: issuesData,
     isLoading,
     isFetching,
+    refetch: refetchIssues,
   } = useIssues({
     baseUrl,
     token,
@@ -466,6 +533,8 @@ const IssuesListPage = ({
       milestone_id: issue.milestone_id || "",
       task_id: issue.task_management_id || issue.task_id || "",
       comment: issue.comments[issue.comments.length - 1]?.body || "",
+      is_started: issue.is_started || false,
+      active_time_till_now: issue.active_time_till_now || null,
     };
   };
 
@@ -757,13 +826,13 @@ const IssuesListPage = ({
     newStatus: string
   ) => {
     try {
-      await updateMutation.mutateAsync({
-        id: issueId,
-        data: { status: newStatus },
-        baseUrl,
-        token,
-      });
+      await axios.put(
+        `https://${baseUrl}/issues/${issueId}/update_status.json`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success("Issue status updated successfully");
+      refetchIssues();
     } catch (error) {
       console.log(error);
       toast.error("Failed to update issue status");
@@ -834,6 +903,60 @@ const IssuesListPage = ({
     }
   };
 
+  const handlePlayIssue = async (id: number) => {
+    try {
+      await axios.put(
+        `https://${baseUrl}/issues/${id}/update_status.json`,
+        { status: "started" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Issue started successfully");
+      refetchIssues();
+    } catch (error) {
+      toast.error("Failed to start issue");
+    }
+  };
+
+  const handlePauseIssueSubmit = async (reason: string, iid: number) => {
+    if (!iid) return;
+    setIsPauseLoading(true);
+    try {
+      await axios.put(
+        `https://${baseUrl}/issues/${iid}/update_status.json`,
+        { status: "stopped" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Issue paused successfully");
+      setIsPauseModalOpen(false);
+      setPauseIssueId(null);
+      refetchIssues();
+    } catch (error) {
+      toast.error("Failed to pause issue");
+    } finally {
+      setIsPauseLoading(false);
+    }
+  };
+
+  const handleEndIssueSubmit = async (reason: string, iid: number) => {
+    if (!iid) return;
+    setIsPauseLoading(true);
+    try {
+      await axios.put(
+        `https://${baseUrl}/issues/${iid}/update_status.json`,
+        { status: "completed" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Issue ended successfully");
+      setIsPauseModalOpen(false);
+      setPauseIssueId(null);
+      refetchIssues();
+    } catch (error) {
+      toast.error("Failed to end issue");
+    } finally {
+      setIsPauseLoading(false);
+    }
+  };
+
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "actions") {
       return <div className="flex items-center justify-center gap-2">
@@ -857,13 +980,40 @@ const IssuesListPage = ({
       </div>
     }
     if (columnKey === "title") {
+      const isCompleted = item.status === "completed" || item.status === "closed";
+      const isStarted = item.is_started;
       return (
         <div className="flex flex-col gap-2">
-          <div
-            className="max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap font-medium"
-            title={item.title}
-          >
-            {item.title}
+          <div className="flex items-center gap-2 w-[20rem]">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="w-full truncate">{item.title}</span>
+                </TooltipTrigger>
+                <TooltipContent className="rounded-[5px]">
+                  <p>{item.title}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {!isCompleted && (
+              isStarted ? (
+                <button
+                  onClick={() => { setPauseIssueId(Number(item.id)); setIsPauseModalOpen(true); }}
+                  className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                  title="Pause issue"
+                >
+                  <Pause size={13} className="text-orange-500" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => handlePlayIssue(Number(item.id))}
+                  className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                  title="Start issue"
+                >
+                  <Play size={13} className="text-green-500" />
+                </button>
+              )
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             {item.milestone_name && (
@@ -884,6 +1034,9 @@ const IssuesListPage = ({
           </div>
         </div>
       );
+    }
+    if (columnKey === "started_time") {
+      return <ActiveTimer activeTimeTillNow={item?.active_time_till_now} isStarted={item?.is_started} />;
     }
     if (columnKey === "priority") {
       return item[columnKey];
@@ -1582,6 +1735,18 @@ const IssuesListPage = ({
           </PaginationContent>
         </Pagination>
       </div>
+
+      {/* Pause / End Issue Modal */}
+      {isPauseModalOpen && (
+        <IssuePauseModal
+          isOpen={isPauseModalOpen}
+          onClose={() => { setIsPauseModalOpen(false); setPauseIssueId(null); }}
+          onSubmit={handlePauseIssueSubmit}
+          onEndIssue={handleEndIssueSubmit}
+          isLoading={isPauseLoading}
+          issueId={pauseIssueId}
+        />
+      )}
 
       {/* Responsible Person Change Modal */}
       <ResponsiblePersonReasonModal

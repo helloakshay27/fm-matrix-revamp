@@ -1162,13 +1162,9 @@ const IssueDetailsPage = () => {
         try {
             const apiStatus = mapDisplayToApiStatus(newStatus);
             await axios.put(
-                `https://${baseUrl}/issues/${issueId}.json`,
-                { issue: { status: apiStatus } },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                `https://${baseUrl}/issues/${issueId}/update_status.json`,
+                { status: apiStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
             toast.success("Status updated successfully");
             getIssue();

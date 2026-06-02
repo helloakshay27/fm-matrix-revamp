@@ -313,7 +313,6 @@ export const EditVendorPage = () => {
                         customDateValue = new Date(data.re_kyc_date);
                     }
                 }
-
                 setFormData({
                     companyName: data.company_name || '',
                     primaryPhone: data.mobile1 || '',
