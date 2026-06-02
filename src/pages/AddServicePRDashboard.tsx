@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Settings, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -937,6 +938,7 @@ export const AddServicePRDashboard = () => {
     try {
       await dispatch(createServicePR({ data: payload, baseUrl, token })).unwrap();
       toast.success("Service PR created successfully");
+      cache.invalidatePattern("service_pr*");
       navigate("/finance/service-pr");
     } catch (error) {
       console.log(error);

@@ -362,7 +362,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
     actions: (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => navigate(`/accounting/dashboard/invoices/${order.id}`)}
+          onClick={() => navigate(`/accounting/recurring-invoices/details/${order.id}`)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="View"
         >

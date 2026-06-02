@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { API_CONFIG } from "@/config/apiConfig";
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 import {
   getEmbeddedOrgId,
   getEmbeddedToken,
@@ -315,6 +315,43 @@ function toApiRecord(value: unknown): ApiRecord {
 function getString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
+
+function getCleanAiSummaryErrorMessage(message: string): string {
+  const cleanMessage = (value: string) =>
+    value
+      .trim()
+      .replace(/\s+See\s+https?:\/\/\S+\.?$/i, "")
+      .replace(/\.$/, "");
+  const trimmedMessage = cleanMessage(message);
+  const jsonStartIndex = trimmedMessage.indexOf("{");
+
+  if (jsonStartIndex === -1) {
+    return trimmedMessage;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmedMessage.slice(jsonStartIndex)) as {
+      error?: { message?: unknown };
+    };
+    const apiMessage = parsed.error?.message;
+
+    if (typeof apiMessage === "string" && apiMessage.trim()) {
+      return cleanMessage(apiMessage);
+    }
+  } catch {
+    return trimmedMessage;
+  }
+
+  return trimmedMessage;
+}
+
+const toast = sonnerToast;
+const showToastError = sonnerToast.error.bind(sonnerToast) as typeof sonnerToast.error;
+toast.error = ((message: Parameters<typeof sonnerToast.error>[0], options?: Parameters<typeof sonnerToast.error>[1]) =>
+  showToastError(
+    typeof message === "string" ? getCleanAiSummaryErrorMessage(message) : message,
+    options
+  )) as typeof toast.error;
 
 function pickFirstString(record: ApiRecord, keys: string[]): string {
   for (const key of keys) {
@@ -1730,7 +1767,7 @@ const FeedbackDashboard = () => {
           )}
         </div>
 
-        {isAiSummaryModalOpen &&
+        {isAiSummaryModalOpen && !aiSummaryError &&
           createPortal(
             <div className="fixed inset-0 z-[2147483647] flex items-center justify-center overflow-y-auto bg-black/45 px-4 py-10">
               <div
@@ -1799,13 +1836,7 @@ const FeedbackDashboard = () => {
                   />
                 </label>
 
-                {aiSummaryError && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-                    {aiSummaryError}
-                  </div>
-                )}
-
-                {aiLoading && !aiSummaryError && (
+                {aiLoading && (
                   <div className="flex items-center gap-2 rounded-xl border border-[#DA7756]/25 bg-[#DA7756]/10 px-3 py-2 text-sm font-semibold text-[#9e4f36]">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Processing AI summary...

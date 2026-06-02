@@ -467,7 +467,7 @@ export const SurveyMappingDetailsPage = () => {
     //   defaultVisible: true,
     // },
     {
-      key: "options",
+      key: "qtype",
       label: "Input Type",
       sortable: false,
       draggable: false,
@@ -504,7 +504,7 @@ export const SurveyMappingDetailsPage = () => {
       qnumber: `Q${index + 1}`,
       id: question.id,
       descr: question.descr,
-      qtype: question.qtype.replace(/_/g, " "),
+      qtype: question.qtype.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
       options: question,
       active: question.active,
       created_by: question.created_by || "—",
@@ -518,9 +518,13 @@ export const SurveyMappingDetailsPage = () => {
     columnKey: string
   ): React.ReactNode => {
     switch (columnKey) {
-      case "options": {
+      case "qtype": {
         const question = item.options as SurveyQuestion;
-        return renderQuestionOptions(question);
+        const qtype = question?.qtype?.toLowerCase() || '';
+        if (qtype === 'rating' || qtype === 'emoji' || qtype === 'multiple' || qtype === 'input_box') {
+          return renderQuestionOptions(question);
+        }
+        return <span className="text-sm text-gray-700">{item.qtype}</span>;
       }
       case "status": {
         return (

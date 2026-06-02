@@ -437,10 +437,10 @@ export const RecurringBillsDashboard: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold"
             onClick={() => navigate("/accounting/recurring-bills/create")}
           >
-            <Plus className="w-4 h-4 mr-2" /> New
+            <Plus className="w-4 h-4" /> New
           </Button>
         }
       />

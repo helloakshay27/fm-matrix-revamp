@@ -657,7 +657,7 @@ export const RoleDashboard = () => {
                   <Button
                     onClick={() => setIsEditMode(true)}
                     variant="outline"
-                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                    className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
                     disabled={!currentRole}
                   >
                     <Edit2 className="w-4 h-4 mr-2" />

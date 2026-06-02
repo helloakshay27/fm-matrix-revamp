@@ -2316,13 +2316,13 @@ const NewRecurringExpensePage: React.FC = () => {
             disabled={isSubmitting}
             sx={{
               textTransform: "none",
-              backgroundColor: "#f8e9e9",
-              color: "#c62828",
+              backgroundColor: "#DA7756",
+              color: "#ffffff",
               borderRadius: "6px",
               boxShadow: "none",
               padding: "8px 24px",
               fontWeight: 600,
-              "&:hover": { backgroundColor: "#f4dede", boxShadow: "none" },
+              "&:hover": { backgroundColor: "#C45F40", boxShadow: "none" },
             }}
           >
             {isSubmitting ? "Saving…" : "Save"}
@@ -2333,12 +2333,12 @@ const NewRecurringExpensePage: React.FC = () => {
             disabled={isSubmitting}
             sx={{
               textTransform: "none",
-              color: "#c62828",
-              borderColor: "#c62828",
+              color: "#DA7756",
+              borderColor: "#DA7756",
               borderRadius: "6px",
               padding: "8px 24px",
               fontWeight: 600,
-              "&:hover": { borderColor: "#b71c1c", backgroundColor: "transparent" },
+              "&:hover": { borderColor: "#C45F40", backgroundColor: "transparent" },
             }}
           >
             Cancel

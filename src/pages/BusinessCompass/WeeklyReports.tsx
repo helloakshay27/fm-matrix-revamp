@@ -21,6 +21,7 @@ import {
     User,
     ChevronUp,
     ChevronDown,
+    ChevronRight,
     BarChart3,
     Edit,
     AlertCircle,
@@ -93,6 +94,7 @@ import TodoDetailsModal from "@/components/TodoDetailsModal";
 import AddToDoModal from "@/components/AddToDoModal";
 import { TransitionProps } from "@mui/material/transitions";
 import { useNavigate } from "react-router-dom";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -164,7 +166,7 @@ interface WeeklyReportDraft {
     wins?: string[];
     checkedWins?: Record<number, boolean>;
     starredWins?: Record<number, boolean>;
-    dayPlans?: Record<string, { id: string; text: string; starred?: boolean }[]>;
+    dayPlans?: Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string }[]>;
     remarksText?: string;
     remarksList?: { type: RemarkChipId | null; text: string }[];
     activeRemarkChip?: RemarkChipId | null;
@@ -286,6 +288,29 @@ const formatSopDate = (value: any) => {
 
 const roundScore = (score: number) => Number(score.toFixed(2));
 
+const fmtDate = (d?: string) => {
+    if (!d) return null;
+    const dt = new Date(d);
+    return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
+};
+const fmtHours = (h?: number) => {
+    if (!h) return null;
+    if (h < 1) return `${Math.round(h * 60)}m`;
+    const wh = Math.floor(h); const m = Math.round((h - wh) * 60);
+    return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
+};
+const getOverdueLabel = (targetDate?: string) => {
+    if (!targetDate) return null;
+    const now = new Date(); const end = new Date(targetDate); end.setHours(23, 59, 59, 999);
+    const diff = end.getTime() - now.getTime();
+    if (diff > 0) return null;
+    const abs = Math.abs(diff);
+    const d = Math.floor(abs / 86400000); const h = Math.floor((abs % 86400000) / 3600000); const m = Math.floor((abs % 3600000) / 60000);
+    if (d > 0) return `${d}d ${h}h overdue`;
+    if (h > 0) return `${h}h ${m}m overdue`;
+    return `${m}m overdue`;
+};
+
 const WeeklyReports = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -303,6 +328,11 @@ const WeeklyReports = () => {
     }>({});
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+    const [planWeekOpenItemId, setPlanWeekOpenItemId] = useState<string | null>(null);
+    const [nextWeekScheduledItems, setNextWeekScheduledItems] = useState<any[]>([]);
+    const [nextWeekScheduledLoading, setNextWeekScheduledLoading] = useState(false);
+    const [starredCompletedItems, setStarredCompletedItems] = useState<Record<string, boolean>>({});
     const [showClosureModal, setShowClosureModal] = useState(false);
     const [closureItem, setClosureItem] = useState<any>(null);
     const [closureRemarks, setClosureRemarks] = useState("");
@@ -321,6 +351,7 @@ const WeeklyReports = () => {
     const [overdueItem, setOverdueItem] = useState<any>(null);
     const [overdueReason, setOverdueReason] = useState("");
     const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+    const [pendingConfirmAction, setPendingConfirmAction] = useState<{ fn: () => void; label: string } | null>(null);
     const [currentTasksPage, setCurrentTasksPage] = useState(1);
     const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
     const [hasMoreTasks, setHasMoreTasks] = useState(true);
@@ -347,7 +378,7 @@ const WeeklyReports = () => {
     );
 
     const [dayPlans, setDayPlans] = React.useState<
-        Record<string, { id: string; text: string; starred?: boolean }[]>
+        Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]>
     >({});
 
     const [remarksText, setRemarksText] = React.useState("");
@@ -371,6 +402,8 @@ const WeeklyReports = () => {
     const [selectedTodo, setSelectedTodo] = useState<any>(null);
     const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
         useState<null | HTMLElement>(null);
+    const [dayPlanMenuAnchor, setDayPlanMenuAnchor] = useState<{ el: HTMLElement; dayKey: string; date: string } | null>(null);
+    const [planPreFillDate, setPlanPreFillDate] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
@@ -662,6 +695,83 @@ const WeeklyReports = () => {
 
         fetchTodos();
     }, [normalizedBaseUrl, token, userId, weekEnd, tasksIssuesRefreshKey]);
+
+    useEffect(() => {
+        const fetchNextWeekItems = async () => {
+            if (!normalizedBaseUrl || !userId) return;
+            setNextWeekScheduledLoading(true);
+            try {
+                const nextWeekStart = addDays(weekEnd, 1);
+                const nextWeekYear = nextWeekStart.getFullYear();
+                const nextWeekNum = String(getISOWeek(nextWeekStart)).padStart(2, "0");
+                const forWeek = `${nextWeekYear}-W${nextWeekNum}`;
+                const headers: Record<string, string> = {
+                    Accept: "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                };
+
+                const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
+                    fetch(`${normalizedBaseUrl}/task_managements/my_tasks.json?for_week=${forWeek}`, { headers }),
+                    fetch(`${normalizedBaseUrl}/issues.json?for_week=${forWeek}&q[responsible_person_id_eq]=${userId}`, { headers }),
+                    fetch(`${normalizedBaseUrl}/todos.json?for_week=${forWeek}&q[user_id_eq]=${userId}`, { headers }),
+                ]);
+
+                const rawTasks = tasksRes.status === "fulfilled" && tasksRes.value.ok
+                    ? await tasksRes.value.json() : null;
+                const rawIssues = issuesRes.status === "fulfilled" && issuesRes.value.ok
+                    ? await issuesRes.value.json() : null;
+                const rawTodos = todosRes.status === "fulfilled" && todosRes.value.ok
+                    ? await todosRes.value.json() : null;
+
+                const tasks: any[] = rawTasks?.data?.task_managements || rawTasks?.task_managements || (Array.isArray(rawTasks) ? rawTasks : []);
+                const issues: any[] = rawIssues?.issues || rawIssues?.data?.issues || (Array.isArray(rawIssues) ? rawIssues : []);
+                const todos: any[] = rawTodos?.todos || rawTodos?.data?.todos || rawTodos?.data || (Array.isArray(rawTodos) ? rawTodos : []);
+
+                const completedStatuses = ["completed", "closed", "done"];
+                const combined = [
+                    ...tasks
+                        .filter((t: any) => !completedStatuses.includes(String(t.status || "").toLowerCase()))
+                        .map((t: any) => ({
+                            id: `nw-task-${t.id}`,
+                            title: t.title || t.name || "Untitled Task",
+                            type: "task",
+                            date: t.target_date || t.due_date || t.end_date || null,
+                            priority: t.priority || null,
+                            originalData: t,
+                        })),
+                    ...issues
+                        .filter((i: any) => !completedStatuses.includes(String(i.status || "").toLowerCase()))
+                        .map((i: any) => ({
+                            id: `nw-issue-${i.id}`,
+                            title: i.title || i.name || "Untitled Issue",
+                            type: "issue",
+                            date: i.target_date || i.due_date || i.end_date || null,
+                            priority: i.priority || null,
+                            originalData: i,
+                        })),
+                    ...todos
+                        .filter((td: any) => !completedStatuses.includes(String(td.status || "").toLowerCase()))
+                        .map((td: any) => ({
+                            id: `nw-todo-${td.id}`,
+                            title: td.title || td.name || td.description || "Untitled Todo",
+                            type: "todo",
+                            date: td.target_date || td.due_date || td.end_date || null,
+                            priority: td.priority || null,
+                            originalData: td,
+                        })),
+                ];
+
+                setNextWeekScheduledItems(combined);
+            } catch (err) {
+                console.error("Failed to fetch next week items:", err);
+                setNextWeekScheduledItems([]);
+            } finally {
+                setNextWeekScheduledLoading(false);
+            }
+        };
+
+        fetchNextWeekItems();
+    }, [normalizedBaseUrl, token, userId, weekEnd]);
 
     useEffect(() => {
         const tasks =
@@ -1226,6 +1336,62 @@ const WeeklyReports = () => {
         return false;
     };
 
+    const reopenTaskIssueTodo = async (item: any) => {
+        if (!item || !normalizedBaseUrl) return;
+
+        const realId = String(item.id || "")
+            .replace("task-", "")
+            .replace("issue-", "")
+            .replace("todo-", "");
+
+        setMergedTasksIssues((prev) =>
+            prev.map((existing) =>
+                existing.id === item.id ? { ...existing, status: "open" } : existing
+            )
+        );
+        setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: false }));
+
+        try {
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            };
+
+            if (item.type === "task") {
+                await axios.put(
+                    `${normalizedBaseUrl}/task_managements/${realId}.json`,
+                    { task_management: { status: "open" } },
+                    { headers }
+                );
+            } else if (item.type === "issue") {
+                await axios.put(
+                    `${normalizedBaseUrl}/issues/${realId}.json`,
+                    { issue: { status: "open" } },
+                    { headers }
+                );
+            } else {
+                await axios.put(
+                    `${normalizedBaseUrl}/todos/${realId}.json`,
+                    { todo: { status: "open" } },
+                    { headers }
+                );
+            }
+
+            toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} reopened successfully`);
+        } catch (error) {
+            console.error("Error reopening item:", error);
+            toast.error(`Failed to reopen ${item.type}`);
+            // Revert UI on failure
+            setMergedTasksIssues((prev) =>
+                prev.map((existing) =>
+                    existing.id === item.id ? { ...existing, status: item.status } : existing
+                )
+            );
+            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+        }
+    };
+
     const handleCompleteTaskIssueTodo = async (item: any) => {
         const targetDate =
             item?.originalData?.target_date ||
@@ -1457,6 +1623,7 @@ const WeeklyReports = () => {
         const labels: {
             key: string;
             short: string;
+            date: string;
             color: string;
             canAdd: boolean;
         }[] = [];
@@ -1477,12 +1644,36 @@ const WeeklyReports = () => {
             labels.push({
                 key,
                 short: format(d, "EEE d MMM"),
+                date: format(d, "yyyy-MM-dd"),
                 color: colors[i] ?? "bg-slate-50",
                 canAdd,
             });
         }
         return labels;
     }, [weekEnd]);
+
+    const nextWeekDateToKey = useMemo(() => {
+        const map: Record<string, string> = {};
+        const start = addDays(weekEnd, 1);
+        upcomingDays.forEach((day, i) => {
+            const d = addDays(start, i);
+            map[format(d, "yyyy-MM-dd")] = day.key;
+        });
+        return map;
+    }, [upcomingDays, weekEnd]);
+
+    const nextWeekScheduledByDay = useMemo(() => {
+        const grouped: Record<string, any[]> = {};
+        nextWeekScheduledItems.forEach((item) => {
+            const dateStr = item.date ? item.date.slice(0, 10) : null;
+            const dayKey = dateStr ? nextWeekDateToKey[dateStr] : null;
+            const key = dayKey ?? upcomingDays[0]?.key;
+            if (!key) return;
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(item);
+        });
+        return grouped;
+    }, [nextWeekScheduledItems, nextWeekDateToKey, upcomingDays]);
 
     useEffect(() => {
         const fetchSystemSops = async () => {
@@ -2007,6 +2198,92 @@ const WeeklyReports = () => {
         }));
     };
 
+    const handleAddItemToWeekPlan = (item: any, dayKey: string) => {
+        setDayPlans((prev) => ({
+            ...prev,
+            [dayKey]: [
+                ...(prev[dayKey] || []),
+                {
+                    id: crypto.randomUUID(),
+                    text: item.title,
+                    starred: false,
+                    source_id: item.originalData?.id ?? item.id,
+                    source_type: item.type,
+                },
+            ],
+        }));
+        toast.success(`Added to ${dayKey}`);
+    };
+
+    const addedToNextWeekIds = useMemo(() => {
+        const ids = new Set<string>();
+        mergedTasksIssues.forEach((item) => {
+            const titleLower = (item.title || "").toLowerCase().trim();
+            const alreadyAdded = Object.values(dayPlans).some((tasks) =>
+                tasks.some(
+                    (t) =>
+                        (t.source_id != null && t.source_id === (item.originalData?.id ?? item.id)) ||
+                        t.text.toLowerCase().trim() === titleLower
+                )
+            );
+            if (alreadyAdded) ids.add(item.id);
+        });
+        return ids;
+    }, [mergedTasksIssues, dayPlans]);
+
+    const addItemToNextWeek = (item: any, dayKey?: string) => {
+        const text = (item.title || "").trim();
+        if (!text) return;
+        const targetDay = dayKey ?? upcomingDays[0]?.key;
+        if (!targetDay) return;
+        const alreadyAdded = Object.values(dayPlans).some((tasks) =>
+            tasks.some(
+                (t) =>
+                    (t.source_id != null && t.source_id === (item.originalData?.id ?? item.id)) ||
+                    t.text.toLowerCase().trim() === text.toLowerCase()
+            )
+        );
+        if (!alreadyAdded) {
+            setDayPlans((prev) => ({
+                ...prev,
+                [targetDay]: [
+                    ...(prev[targetDay] || []),
+                    {
+                        id: crypto.randomUUID(),
+                        text,
+                        starred: false,
+                        source_id: item.originalData?.id ?? item.id,
+                        source_type: item.type,
+                        originalData: item.originalData ?? null,
+                    },
+                ],
+            }));
+        }
+        setPlanWeekOpenItemId(null);
+    };
+
+    const removeItemFromNextWeek = (item: any) => {
+        const titleLower = (item.title || "").toLowerCase().trim();
+        const sourceId = item.originalData?.id ?? item.id;
+        setDayPlans((prev) => {
+            const updated: typeof prev = {};
+            for (const [dayKey, tasks] of Object.entries(prev)) {
+                updated[dayKey] = tasks.filter(
+                    (t) =>
+                        !(t.source_id != null && t.source_id === sourceId) &&
+                        t.text.toLowerCase().trim() !== titleLower
+                );
+            }
+            return updated;
+        });
+    };
+
+    const addAllOverdueToNextWeek = () => {
+        mergedTasksIssues
+            .filter((item) => item.status === "overdue" || item.status === "overdued")
+            .forEach((item) => addItemToNextWeek(item));
+    };
+
     const handleRemovePlan = (day: string, index: number) => {
         setDayPlans((prev) => ({
             ...prev,
@@ -2176,20 +2453,40 @@ const WeeklyReports = () => {
                     is_absent: false,
                     report_data: {
                         kpi: "weekly value",
-                        achievements: wins
-                            .map((w, index) => ({
-                                title: w,
-                                is_starred: starredWins[index] ?? false
-                            }))
-                            .filter((item) => item.title.trim() !== ""),
+                        achievements: [
+                            ...wins
+                                .map((w, index) => ({
+                                    title: w,
+                                    is_starred: starredWins[index] ?? false,
+                                }))
+                                .filter((item) => item.title.trim() !== ""),
+                            ...mergedTasksIssues
+                                .filter((item) =>
+                                    ["completed", "closed", "done"].includes(item.status)
+                                )
+                                .map((item) => ({
+                                    title: item.title,
+                                    is_starred: starredCompletedItems[item.id] ?? false,
+                                    source_type: item.type,
+                                    source_id: item.originalData?.id ?? item.id,
+                                })),
+                        ],
                         upcoming_week_plan: [{
                             ...Object.fromEntries(
                                 Object.entries(dayPlans).map(([dayKey, tasks]) => {
-                                    // Extract day abbreviation (Mon, Tue, etc.) and convert to lowercase
                                     const dayMatch = dayKey.match(/^(\w{3})/);
                                     const dayAbbr = dayMatch ? dayMatch[1].toLowerCase() : dayKey.slice(0, 3).toLowerCase();
-                                    // Filter out empty tasks
-                                    const filteredTasks = tasks.filter(t => t.text.trim() !== '');
+                                    const planForDate = upcomingDays.find(d => d.key === dayKey)?.date ?? null;
+                                    const filteredTasks = tasks
+                                        .filter(t => t.text.trim() !== '')
+                                        .map(t => ({
+                                            id: t.id,
+                                            text: t.text,
+                                            starred: t.starred ?? false,
+                                            source_id: t.source_id ?? null,
+                                            source_type: t.source_type ?? null,
+                                            plan_for_date: planForDate,
+                                        }));
                                     return [dayAbbr, filteredTasks];
                                 })
                             )
@@ -2679,6 +2976,143 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
                             <div className="space-y-4 p-6">
+                                {mergedTasksIssues
+                                    .filter((item: any) =>
+                                        ["completed", "closed", "done"].includes(item.status)
+                                    )
+                                    .map((item: any) => (
+                                        <div
+                                            key={`completed-${item.id}`}
+                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                        >
+                                            <Checkbox
+                                                checked
+                                                onCheckedChange={() => {
+                                                    setPendingConfirmAction({
+                                                        fn: () => reopenTaskIssueTodo(item),
+                                                        label: `reopen this ${item.type} (status will change to open)`,
+                                                    });
+                                                }}
+                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setStarredCompletedItems((prev) => ({
+                                                        ...prev,
+                                                        [item.id]: !prev[item.id],
+                                                    }))
+                                                }
+                                                className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                            >
+                                                <Star
+                                                    className={cn(
+                                                        "h-4 w-4 transition-colors duration-200",
+                                                        starredCompletedItems[item.id]
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-neutral-300 hover:text-yellow-300"
+                                                    )}
+                                                />
+                                            </button>
+                                            <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
+                                                    {item.title}
+                                                </p>
+                                                {(() => {
+                                                    const d = item.originalData;
+                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                    let issueEffort: string | null = null;
+                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                        const totalMin = d.issue_allocation_times.reduce(
+                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                        );
+                                                        if (totalMin > 0) {
+                                                            const h = Math.floor(totalMin / 60);
+                                                            const m = totalMin % 60;
+                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                        }
+                                                    }
+                                                    const hasInfo = endDate || effortEst || issueEffort;
+                                                    if (!hasInfo) return null;
+                                                    return (
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            {endDate && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                    <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                    {endDate}
+                                                                </span>
+                                                            )}
+                                                            {effortEst && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                    <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                    Est: {effortEst}
+                                                                </span>
+                                                            )}
+                                                            {issueEffort && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                                                    <Zap className="h-2.5 w-2.5 shrink-0" />
+                                                                    Effort: {issueEffort}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                            <span className={cn(
+                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 mt-1",
+                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                            )}>
+                                                {item.type}
+                                            </span>
+                                            {item.priority && (
+                                                <span
+                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
+                                                    style={{
+                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                    }}
+                                                >
+                                                    {item.priority}
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (item.type === "todo") {
+                                                        setSelectedTodo(item.originalData);
+                                                        setIsTodoDetailsModalOpen(true);
+                                                    } else {
+                                                        navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                    }
+                                                }}
+                                                className="mt-1 p-1 hover:bg-gray-100 rounded-[6px] transition-colors shrink-0"
+                                                title={`View ${item.type} details`}
+                                            >
+                                                <Eye className="h-4 w-4 text-[#DA7756]" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (item.type === "task") {
+                                                        setEditTaskData(item.originalData);
+                                                        setIsEditTaskModalOpen(true);
+                                                    } else if (item.type === "issue") {
+                                                        setEditIssueData(item.originalData);
+                                                        setIsEditIssueModalOpen(true);
+                                                    } else if (item.type === "todo") {
+                                                        setEditTodoData(item.originalData);
+                                                        setIsEditTodoModalOpen(true);
+                                                    }
+                                                }}
+                                                className="mt-1 p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                                title={`Edit ${item.type}`}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ))}
                                 {wins.map((win, index) => (
                                     <div
                                         key={index}
@@ -2829,30 +3263,12 @@ const WeeklyReports = () => {
                                             </h3>
                                         </div>
                                         <div className="flex flex-wrap gap-2 pt-1">
-                                            <Badge
-                                                variant="outline"
-                                                className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
-                                            >
-                                                Tasks: {taskIssueCounts.tasks}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800"
-                                            >
-                                                Issues: {taskIssueCounts.issues}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
-                                            >
-                                                Todos: {taskIssueCounts.todos}
-                                            </Badge>
-                                            <Badge
+                                            {/* <Badge
                                                 variant="outline"
                                                 className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                                             >
-                                                Closed: {taskIssueCounts.completed}
-                                            </Badge>
+                                                Completed: {taskIssueCounts.completed}
+                                            </Badge> */}
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
@@ -2870,6 +3286,12 @@ const WeeklyReports = () => {
                                                 className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                                             >
                                                 In Progress: {taskIssueCounts.inProgress}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800"
+                                            >
+                                                On Hold: {taskIssueCounts.onHold}
                                             </Badge>
                                         </div>
                                     </div>
@@ -2917,193 +3339,369 @@ const WeeklyReports = () => {
                                     </div>
                                 ) : (
                                     <div
-                                        className="space-y-2 max-h-[400px] overflow-y-auto"
+                                        className="space-y-3 max-h-[400px] overflow-y-auto pr-1"
                                         ref={scrollContainerRef}
                                     >
-                                        {mergedTasksIssues.map((item: any) => (
-                                            <div
-                                                key={item.id}
-                                                className={cn(
-                                                    "flex items-center gap-3 p-3 rounded-[10px] border transition-all",
-                                                    item.status === "completed" ||
-                                                        item.status === "closed"
-                                                        ? "bg-[#DA7756]/10 border-[#DA7756]/20"
-                                                        : item.status === "overdue" ||
-                                                            item.status === "overdued" ||
-                                                            item.status === "on_hold"
-                                                            ? "bg-[#DA7756]/10 border-[#DA7756]/20"
-                                                            : item.status === "in_progress"
-                                                                ? "bg-[#DA7756]/10 border-[#DA7756]/20"
-                                                                : "bg-blue-50/50 border-blue-200/50"
-                                                )}
-                                            >
-                                                <Checkbox
-                                                    checked={
-                                                        selectedTasksIssues[item.id] ||
-                                                        item.status === "completed" ||
-                                                        item.status === "closed"
-                                                    }
-                                                    disabled={!!completingTaskIssueIds[item.id]}
-                                                    onCheckedChange={(checked) => {
-                                                        if (
-                                                            checked &&
-                                                            item.status !== "completed" &&
-                                                            item.status !== "closed"
-                                                        ) {
-                                                            handleCompleteTaskIssueTodo(item);
-                                                        } else {
-                                                            setSelectedTasksIssues((prev) => ({
-                                                                ...prev,
-                                                                [item.id]: checked as boolean,
-                                                            }));
-                                                        }
-                                                    }}
-                                                    className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
-                                                />
-                                                <button
-                                                    onClick={() => {
-                                                        if (item.type === "todo") {
-                                                            setSelectedTodo(item.originalData);
-                                                            setIsTodoDetailsModalOpen(true);
-                                                            return;
-                                                        }
+                                        {(
+                                            [
+                                                {
+                                                    key: "overdue",
+                                                    label: "Overdue",
+                                                    statuses: ["overdue", "overdued"],
+                                                    colorClass: "text-red-700",
+                                                    bgItem: "bg-red-50/60 border-red-200",
+                                                    headerBg: "bg-red-50 hover:bg-red-100",
+                                                    pillBg: "bg-red-100 text-red-700",
+                                                    showAddToNextWeek: true,
+                                                    showBulkAdd: true,
+                                                },
+                                                {
+                                                    key: "in_progress",
+                                                    label: "In Progress",
+                                                    statuses: ["in_progress", "started"],
+                                                    colorClass: "text-sky-700",
+                                                    bgItem: "bg-sky-50/60 border-sky-200",
+                                                    headerBg: "bg-sky-50 hover:bg-sky-100",
+                                                    pillBg: "bg-sky-100 text-sky-700",
+                                                    showAddToNextWeek: true,
+                                                    showBulkAdd: false,
+                                                },
+                                                {
+                                                    key: "pending",
+                                                    label: "Open",
+                                                    statuses: ["open", "pending"],
+                                                    colorClass: "text-slate-600",
+                                                    bgItem: "bg-slate-50/60 border-slate-200",
+                                                    headerBg: "bg-slate-50 hover:bg-slate-100",
+                                                    pillBg: "bg-slate-100 text-slate-600",
+                                                    showAddToNextWeek: true,
+                                                    showBulkAdd: false,
+                                                },
+                                                {
+                                                    key: "on_hold",
+                                                    label: "On Hold",
+                                                    statuses: ["on_hold"],
+                                                    colorClass: "text-orange-700",
+                                                    bgItem: "bg-orange-50/60 border-orange-200",
+                                                    headerBg: "bg-orange-50 hover:bg-orange-100",
+                                                    pillBg: "bg-orange-100 text-orange-700",
+                                                    showAddToNextWeek: true,
+                                                    showBulkAdd: false,
+                                                },
+                                                {
+                                                    key: "reopened",
+                                                    label: "Reopened",
+                                                    statuses: ["reopen", "reopened"],
+                                                    colorClass: "text-purple-700",
+                                                    bgItem: "bg-purple-50/60 border-purple-200",
+                                                    headerBg: "bg-purple-50 hover:bg-purple-100",
+                                                    pillBg: "bg-purple-100 text-purple-700",
+                                                    showAddToNextWeek: true,
+                                                    showBulkAdd: false,
+                                                },
+                                            ] as const
+                                        ).map((group) => {
+                                            const items = mergedTasksIssues.filter((item: any) =>
+                                                (group.statuses as readonly string[]).includes(item.status)
+                                            );
+                                            if (items.length === 0) return null;
+                                            const isCollapsed = collapsedGroups.has(group.key);
 
-                                                        const detailsUrl =
-                                                            item.type === "task"
-                                                                ? `/vas/tasks/${item.originalData?.id}`
-                                                                : `/vas/issues/${item.originalData?.id}`;
-                                                        navigate(detailsUrl);
-                                                    }}
-                                                    className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
-                                                    title={`View ${item.type} details`}
-                                                >
-                                                    <Eye
-                                                        size={16}
-                                                        className="text-[#DA7756] hover:text-[#DA7756]"
-                                                    />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (item.type === "task") {
-                                                            setEditTaskData(item.originalData);
-                                                            setIsEditTaskModalOpen(true);
-                                                        } else if (item.type === "issue") {
-                                                            setEditIssueData(item.originalData);
-                                                            setIsEditIssueModalOpen(true);
-                                                        } else if (item.type === "todo") {
-                                                            setEditTodoData(item.originalData);
-                                                            setIsEditTodoModalOpen(true);
-                                                        }
-                                                    }}
-                                                    className="flex-shrink-0 p-1 text-gray-600 hover:text-[#DA7756] transition-colors"
-                                                    title={`Edit ${item.type}`}
-                                                >
-                                                    <Pencil size={14} />
-                                                </button>
-                                                {item.type === "task" &&
-                                                    item.status !== "completed" &&
-                                                    item.status !== "closed" && (
-                                                        item.originalData?.is_started ? (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setPauseTaskId(item.originalData.id);
-                                                                    setIsPauseModalOpen(true);
-                                                                }}
-                                                                disabled={!!updatingPlayPauseIds[item.id]}
-                                                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                                                title={`Pause ${item.type}`}
-                                                            >
-                                                                {updatingPlayPauseIds[item.id] ? (
-                                                                    <Loader2
-                                                                        size={16}
-                                                                        className="text-orange-500 animate-spin"
-                                                                    />
-                                                                ) : (
-                                                                    <Pause size={16} className="text-orange-500" />
-                                                                )}
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handlePlayTask(item);
-                                                                }}
-                                                                disabled={!!updatingPlayPauseIds[item.id]}
-                                                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                                                title={`Play ${item.type}`}
-                                                            >
-                                                                {updatingPlayPauseIds[item.id] ? (
-                                                                    <Loader2
-                                                                        size={16}
-                                                                        className="text-green-500 animate-spin"
-                                                                    />
-                                                                ) : (
-                                                                    <Play size={16} className="text-green-500" />
-                                                                )}
-                                                            </button>
-                                                        )
-                                                    )}
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-[#fff] uppercase">
-                                                        {item.type}
-                                                    </span>
-                                                    {item.status === "completed" ||
-                                                        item.status === "closed" ? (
-                                                        <CheckCircle2
-                                                            size={16}
-                                                            className="text-green-600"
-                                                        />
-                                                    ) : item.status === "overdue" ||
-                                                        item.status === "overdued" ||
-                                                        item.status === "on_hold" ? (
-                                                        <AlertCircle
-                                                            size={16}
-                                                            className="text-red-600"
-                                                        />
-                                                    ) : item.status === "in_progress" ? (
-                                                        <Clock size={16} className="text-amber-600" />
-                                                    ) : (
-                                                        <Info size={16} className="text-blue-600" />
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p
+                                            return (
+                                                <div key={group.key}>
+                                                    <button
                                                         className={cn(
-                                                            "text-sm font-medium truncate",
-                                                            (item.status === "completed" ||
-                                                                item.status === "closed") &&
-                                                            "line-through text-[#DA7756]"
+                                                            "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
+                                                            group.headerBg
                                                         )}
+                                                        onClick={() =>
+                                                            setCollapsedGroups((prev) => {
+                                                                const next = new Set(prev);
+                                                                if (next.has(group.key)) next.delete(group.key);
+                                                                else next.add(group.key);
+                                                                return next;
+                                                            })
+                                                        }
                                                     >
-                                                        {item.title}
-                                                    </p>
-                                                    <p className="text-xs text-[#DA7756] capitalize">
-                                                        {item.status.replace(/_/g, " ")}
-                                                    </p>
+                                                        <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
+                                                            {group.label}
+                                                        </span>
+                                                        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
+                                                            {items.length}
+                                                        </span>
+                                                        <ChevronRight
+                                                            size={14}
+                                                            className={cn(
+                                                                "transition-transform duration-200 ml-1",
+                                                                group.colorClass,
+                                                                !isCollapsed && "rotate-90"
+                                                            )}
+                                                        />
+                                                    </button>
+
+                                                    {!isCollapsed && (
+                                                        <div className="space-y-1.5 pl-1">
+                                                            {items.map((item: any) => {
+                                                                const d = item.originalData;
+                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+
+                                                                let issueEffort: string | null = null;
+                                                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                                    const totalMin = d.issue_allocation_times.reduce(
+                                                                        (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                                    );
+                                                                    if (totalMin > 0) {
+                                                                        const h = Math.floor(totalMin / 60);
+                                                                        const m = totalMin % 60;
+                                                                        issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                                    }
+                                                                }
+
+                                                                let timeLeftLabel: string | null = null;
+                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                                                    const now = new Date();
+                                                                    const end = new Date(d.end_date);
+                                                                    end.setHours(23, 59, 59, 999);
+                                                                    const diff = end.getTime() - now.getTime();
+                                                                    if (diff > 0) {
+                                                                        const days = Math.floor(diff / 86400000);
+                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                        else timeLeftLabel = `${mins}m left`;
+                                                                    }
+                                                                }
+
+                                                                const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+
+                                                                return (
+                                                                    <div
+                                                                        key={item.id}
+                                                                        className={cn(
+                                                                            "flex flex-col rounded-[10px] border transition-all group",
+                                                                            group.bgItem
+                                                                        )}
+                                                                    >
+                                                                        {/* Controls row */}
+                                                                        <div className="flex items-center gap-2 p-2.5">
+                                                                            <Checkbox
+                                                                                checked={
+                                                                                    selectedTasksIssues[item.id] ||
+                                                                                    item.status === "completed" ||
+                                                                                    item.status === "closed"
+                                                                                }
+                                                                                disabled={!!completingTaskIssueIds[item.id]}
+                                                                                onCheckedChange={(checked) => {
+                                                                                    if (
+                                                                                        checked &&
+                                                                                        item.status !== "completed" &&
+                                                                                        item.status !== "closed"
+                                                                                    ) {
+                                                                                        setPendingConfirmAction({
+                                                                                            fn: () => handleCompleteTaskIssueTodo(item),
+                                                                                            label: `complete this ${item.type}`,
+                                                                                        });
+                                                                                    } else {
+                                                                                        setSelectedTasksIssues((prev) => ({
+                                                                                            ...prev,
+                                                                                            [item.id]: checked as boolean,
+                                                                                        }));
+                                                                                    }
+                                                                                }}
+                                                                                className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                                                            />
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    if (item.type === "todo") {
+                                                                                        setSelectedTodo(item.originalData);
+                                                                                        setIsTodoDetailsModalOpen(true);
+                                                                                        return;
+                                                                                    }
+                                                                                    const detailsUrl =
+                                                                                        item.type === "task"
+                                                                                            ? `/vas/tasks/${item.originalData?.id}`
+                                                                                            : `/vas/issues/${item.originalData?.id}`;
+                                                                                    navigate(detailsUrl);
+                                                                                }}
+                                                                                className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                                                                title={`View ${item.type} details`}
+                                                                            >
+                                                                                <Eye size={14} className="text-[#DA7756]" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (item.type === "task") {
+                                                                                        setEditTaskData(item.originalData);
+                                                                                        setIsEditTaskModalOpen(true);
+                                                                                    } else if (item.type === "issue") {
+                                                                                        setEditIssueData(item.originalData);
+                                                                                        setIsEditIssueModalOpen(true);
+                                                                                    } else if (item.type === "todo") {
+                                                                                        setEditTodoData(item.originalData);
+                                                                                        setIsEditTodoModalOpen(true);
+                                                                                    }
+                                                                                }}
+                                                                                className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                                                                title={`Edit ${item.type}`}
+                                                                            >
+                                                                                <Pencil size={13} />
+                                                                            </button>
+                                                                            {item.type === "task" &&
+                                                                                item.status !== "completed" &&
+                                                                                item.status !== "closed" && (
+                                                                                    item.originalData?.is_started ? (
+                                                                                        <button
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                setPauseTaskId(item.originalData.id);
+                                                                                                setIsPauseModalOpen(true);
+                                                                                            }}
+                                                                                            disabled={!!updatingPlayPauseIds[item.id]}
+                                                                                            className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
+                                                                                            title="Pause task"
+                                                                                        >
+                                                                                            {updatingPlayPauseIds[item.id] ? (
+                                                                                                <Loader2 size={14} className="text-orange-500 animate-spin" />
+                                                                                            ) : (
+                                                                                                <Pause size={14} className="text-orange-500" />
+                                                                                            )}
+                                                                                        </button>
+                                                                                    ) : (
+                                                                                        <button
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                handlePlayTask(item);
+                                                                                            }}
+                                                                                            disabled={!!updatingPlayPauseIds[item.id]}
+                                                                                            className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
+                                                                                            title="Start task"
+                                                                                        >
+                                                                                            {updatingPlayPauseIds[item.id] ? (
+                                                                                                <Loader2 size={14} className="text-green-500 animate-spin" />
+                                                                                            ) : (
+                                                                                                <Play size={14} className="text-green-500" />
+                                                                                            )}
+                                                                                        </button>
+                                                                                    )
+                                                                                )}
+                                                                            <span className={cn(
+                                                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                            )}>
+                                                                                {item.type}
+                                                                            </span>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <p className={cn(
+                                                                                    "text-sm font-medium truncate",
+                                                                                    (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
+                                                                                )}>
+                                                                                    {item.title}
+                                                                                </p>
+                                                                            </div>
+                                                                            <span
+                                                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                                                style={{
+                                                                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                                }}
+                                                                            >
+                                                                                {item.priority}
+                                                                            </span>
+                                                                            {group.showAddToNextWeek && (
+                                                                                addedToNextWeekIds.has(item.id) ? (
+                                                                                    <button
+                                                                                        onClick={(e) => { e.stopPropagation(); removeItemFromNextWeek(item); }}
+                                                                                        className="shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                                                                        title="Remove from next week plan"
+                                                                                    >
+                                                                                        Added ✓
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <button
+                                                                                        onClick={(e) => { e.stopPropagation(); setPlanWeekOpenItemId(planWeekOpenItemId === item.id ? null : item.id); }}
+                                                                                        className={cn(
+                                                                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                                                                            planWeekOpenItemId === item.id
+                                                                                                ? "bg-[#DA7756] border-[#DA7756] text-white"
+                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                                                                        )}
+                                                                                        title="Add to next week plan"
+                                                                                    >
+                                                                                        + Next Week
+                                                                                    </button>
+                                                                                )
+                                                                            )}
+                                                                        </div>
+                                                                        {/* Info row */}
+                                                                        {hasInfo && (
+                                                                            <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                                                                {endDate && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                        <Calendar size={9} className="shrink-0" />
+                                                                                        {endDate}
+                                                                                    </span>
+                                                                                )}
+                                                                                {overdueLabel && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                                        <AlertCircle size={9} className="shrink-0" />
+                                                                                        {overdueLabel}
+                                                                                    </span>
+                                                                                )}
+                                                                                {timeLeftLabel && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                                        <Clock size={9} className="shrink-0" />
+                                                                                        {timeLeftLabel}
+                                                                                    </span>
+                                                                                )}
+                                                                                {effortEst && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                        <Clock size={9} className="shrink-0" />
+                                                                                        Est: {effortEst}
+                                                                                    </span>
+                                                                                )}
+                                                                                {issueEffort && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                                                        <Zap size={9} className="shrink-0" />
+                                                                                        Effort: {issueEffort}
+                                                                                    </span>
+                                                                                )}
+                                                                                {item.type === "task" && d?.active_time_till_now && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                                                        <Zap size={9} className="shrink-0" />
+                                                                                        <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                        {/* Inline day picker */}
+                                                                        {planWeekOpenItemId === item.id && (
+                                                                            <div className="px-3 pb-3 pt-2 flex items-center gap-1.5 flex-wrap border-t border-dashed border-gray-200">
+                                                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">
+                                                                                    Pick day:
+                                                                                </span>
+                                                                                {upcomingDays.map((day) => (
+                                                                                    <button
+                                                                                        key={day.key}
+                                                                                        onClick={(e) => { e.stopPropagation(); addItemToNextWeek(item, day.key); }}
+                                                                                        className="text-[10px] font-semibold px-2 py-1 rounded-[6px] border border-[#DA7756]/30 bg-white text-[#DA7756] hover:bg-[#DA7756] hover:text-white hover:border-[#DA7756] transition-all whitespace-nowrap"
+                                                                                    >
+                                                                                        {day.short}
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <span
-                                                    className="text-[10px] px-2 py-1 rounded-full font-bold shrink-0"
-                                                    style={{
-                                                        backgroundColor:
-                                                            item.priority === "High"
-                                                                ? "#fee2e2"
-                                                                : item.priority === "Medium"
-                                                                    ? "#fef3c7"
-                                                                    : "#dcfce7",
-                                                        color:
-                                                            item.priority === "High"
-                                                                ? "#991b1b"
-                                                                : item.priority === "Medium"
-                                                                    ? "#92400e"
-                                                                    : "#166534",
-                                                    }}
-                                                >
-                                                    {item.priority}
-                                                </span>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         {isLoadingMore && (
                                             <div className="flex items-center justify-center py-4">
                                                 <Loader2
@@ -3323,7 +3921,7 @@ const WeeklyReports = () => {
                                             {day.canAdd ? (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleAddPlan(day.key)}
+                                                    onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
                                                     className="inline-flex items-center gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2.5 py-1.5 text-xs font-bold text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45"
                                                 >
                                                     <Plus className="h-3 w-3" /> Add
@@ -3333,6 +3931,113 @@ const WeeklyReports = () => {
                                             )}
                                         </div>
                                         <div className="flex flex-col gap-2">
+                                            {/* Next week scheduled items — read-only, not in payload */}
+                                            {nextWeekScheduledLoading && !nextWeekScheduledItems.length ? (
+                                                <div className="flex items-center gap-2 ml-2 py-2">
+                                                    <Loader2 size={12} className="animate-spin text-gray-400" />
+                                                    <span className="text-[11px] text-gray-400">Loading scheduled...</span>
+                                                </div>
+                                            ) : (
+                                                nextWeekScheduledByDay[day.key]?.map((item: any) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className="relative ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm transition-all duration-200 hover:border-[#DA7756]/30 hover:shadow-md"
+                                                    >
+                                                        <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={cn(
+                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                )}>
+                                                                    {item.type}
+                                                                </span>
+                                                                {item.priority && (
+                                                                    <span
+                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                        style={{
+                                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                        }}
+                                                                    >
+                                                                        {item.priority}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
+                                                                {item.title}
+                                                            </p>
+                                                            {(() => {
+                                                                const d = item.originalData;
+                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                                let timeLeftLabel: string | null = null;
+                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                                                    const now = new Date();
+                                                                    const end = new Date(d.end_date);
+                                                                    end.setHours(23, 59, 59, 999);
+                                                                    const diff = end.getTime() - now.getTime();
+                                                                    if (diff > 0) {
+                                                                        const days = Math.floor(diff / 86400000);
+                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                        else timeLeftLabel = `${mins}m left`;
+                                                                    }
+                                                                }
+                                                                const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                                                if (!hasInfo) return null;
+                                                                return (
+                                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                                        {endDate && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                                {endDate}
+                                                                            </span>
+                                                                        )}
+                                                                        {overdueLabel && (
+                                                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                                <AlertCircle className="h-2.5 w-2.5 shrink-0" />
+                                                                                {overdueLabel}
+                                                                            </span>
+                                                                        )}
+                                                                        {timeLeftLabel && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                                {timeLeftLabel}
+                                                                            </span>
+                                                                        )}
+                                                                        {effortEst && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                                Est: {effortEst}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                        <div className="flex flex-col gap-1 relative z-20">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (item.type === "todo") {
+                                                                        setSelectedTodo(item.originalData);
+                                                                        setIsTodoDetailsModalOpen(true);
+                                                                    } else {
+                                                                        navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                                    }
+                                                                }}
+                                                                className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                title={`View ${item.type}`}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
                                             {dayPlans[day.key]?.map((planObj, index) => (
                                                 <div
                                                     key={planObj.id}
@@ -3343,9 +4048,7 @@ const WeeklyReports = () => {
                                                         type="button"
                                                         onClick={() => handleTogglePlanStar(day.key, index)}
                                                         className="mt-1 shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                                        title={
-                                                            planObj.starred ? "Unstar" : "Star this priority"
-                                                        }
+                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
                                                     >
                                                         <Star
                                                             className={cn(
@@ -3356,14 +4059,94 @@ const WeeklyReports = () => {
                                                             )}
                                                         />
                                                     </button>
-                                                    <AutoSizingTextarea
-                                                        value={planObj.text}
-                                                        onChange={(val: string) =>
-                                                            handlePlanChange(day.key, index, val)
-                                                        }
-                                                        placeholder="What's your strategic priority?"
-                                                        className="flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
-                                                    />
+                                                    <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+                                                        {planObj.source_type && (
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={cn(
+                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                )}>
+                                                                    {planObj.source_type}
+                                                                </span>
+                                                                {planObj.originalData?.priority && (
+                                                                    <span
+                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                        style={{
+                                                                            backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                            color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                                                        }}
+                                                                    >
+                                                                        {planObj.originalData.priority}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {planObj.source_type ? (
+                                                            <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
+                                                                {planObj.text}
+                                                            </p>
+                                                        ) : (
+                                                            <AutoSizingTextarea
+                                                                value={planObj.text}
+                                                                onChange={(val: string) =>
+                                                                    handlePlanChange(day.key, index, val)
+                                                                }
+                                                                placeholder="What's your strategic priority?"
+                                                                className="rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
+                                                            />
+                                                        )}
+                                                        {planObj.originalData && (() => {
+                                                            const d = planObj.originalData;
+                                                            const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                            const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                            const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                            let timeLeftLabel: string | null = null;
+                                                            if (planObj.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                                                const now = new Date();
+                                                                const end = new Date(d.end_date);
+                                                                end.setHours(23, 59, 59, 999);
+                                                                const diff = end.getTime() - now.getTime();
+                                                                if (diff > 0) {
+                                                                    const days = Math.floor(diff / 86400000);
+                                                                    const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                    const mins = Math.floor((diff % 3600000) / 60000);
+                                                                    if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                    else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                    else timeLeftLabel = `${mins}m left`;
+                                                                }
+                                                            }
+                                                            const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                                            if (!hasInfo) return null;
+                                                            return (
+                                                                <div className="flex items-center gap-3 flex-wrap">
+                                                                    {endDate && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                            {endDate}
+                                                                        </span>
+                                                                    )}
+                                                                    {overdueLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                            <AlertCircle className="h-2.5 w-2.5 shrink-0" />
+                                                                            {overdueLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {timeLeftLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                            {timeLeftLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {effortEst && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                            Est: {effortEst}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
                                                     <div className="flex flex-col gap-1 relative z-20">
                                                         <button
                                                             type="button"
@@ -3374,22 +4157,16 @@ const WeeklyReports = () => {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                handleMovePlan(day.key, index, "up")
-                                                            }
-                                                            disabled={index === 0}
+                                                            onClick={() => handleMovePlan(day.key, index, "up")}
+                                                            disabled={index === 0 || !!planObj.source_type}
                                                             className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                                                         >
                                                             <ChevronUp className="h-4 w-4" />
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                handleMovePlan(day.key, index, "down")
-                                                            }
-                                                            disabled={
-                                                                index === (dayPlans[day.key]?.length ?? 0) - 1
-                                                            }
+                                                            onClick={() => handleMovePlan(day.key, index, "down")}
+                                                            disabled={index === (dayPlans[day.key]?.length ?? 0) - 1 || !!planObj.source_type}
                                                             className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                                                         >
                                                             <ChevronDown className="h-4 w-4" />
@@ -4455,8 +5232,7 @@ const WeeklyReports = () => {
                             isEdit={false}
                             onCloseModal={() => setOpenTaskModal(false)}
                             prefillData={{
-                                start_date: currentDateValue,
-                                target_date: weekEndDateValue,
+                                start_date: planPreFillDate ?? currentDateValue,
                             }}
                         />
                     </div>
@@ -4467,8 +5243,7 @@ const WeeklyReports = () => {
                 openDialog={openIssueModal}
                 handleCloseDialog={() => setOpenIssueModal(false)}
                 prefillData={{
-                    start_date: currentDateValue,
-                    target_date: currentDateValue,
+                    start_date: planPreFillDate ?? currentDateValue,
                 }}
             />
 
@@ -4480,8 +5255,8 @@ const WeeklyReports = () => {
                 }}
                 getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
                 prefillData={{
-                    start_date: currentDateValue,
-                    target_date: weekEndDateValue,
+                    start_date: planPreFillDate ?? currentDateValue,
+                    // target_date: weekEndDateValue,
                 }}
             />
 
@@ -4812,6 +5587,7 @@ const WeeklyReports = () => {
             >
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenTaskModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -4840,6 +5616,7 @@ const WeeklyReports = () => {
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenIssueModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -4868,6 +5645,7 @@ const WeeklyReports = () => {
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenTodoModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -4890,6 +5668,152 @@ const WeeklyReports = () => {
                             <span className="font-bold text-gray-900 text-sm">Add Todo</span>
                             <span className="text-xs text-gray-500 font-medium">
                                 Add a quick follow-up
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+            </Menu>
+
+            {/* Day plan dropdown menu */}
+            <Menu
+                anchorEl={dayPlanMenuAnchor?.el}
+                open={Boolean(dayPlanMenuAnchor)}
+                onClose={() => setDayPlanMenuAnchor(null)}
+                sx={{
+                    "& .MuiPaper-root": {
+                        borderRadius: "12px",
+                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                        minWidth: "220px",
+                        overflow: "visible",
+                        "&::before": {
+                            content: '""',
+                            display: "block",
+                            position: "absolute",
+                            top: -8,
+                            right: 20,
+                            width: 12,
+                            height: 12,
+                            backgroundColor: "#ffffff",
+                            transform: "translateY(-50%) rotate(45deg)",
+                            zIndex: 0,
+                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                        },
+                    },
+                }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "8px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#f0f4ff",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <Plus size={18} className="text-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Item</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenTaskModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#f0f4ff",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <CheckSquare size={18} className="text-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenIssueModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fef2f2",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-red-50 rounded-lg">
+                            <AlertCircle size={18} className="text-red-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenTodoModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 8px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fef9f0",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <ListTodo size={18} className="text-amber-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
                             </span>
                         </div>
                     </div>
@@ -5048,6 +5972,42 @@ const WeeklyReports = () => {
                     </div>
                 </div>
             </MuiDialog>
+
+            {/* Task completion confirmation modal */}
+            {pendingConfirmAction && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                <AlertCircle size={20} className="text-amber-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                                <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                                    This will {pendingConfirmAction.label}.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                onClick={() => setPendingConfirmAction(null)}
+                                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    pendingConfirmAction.fn();
+                                    setPendingConfirmAction(null);
+                                }}
+                                className="px-4 py-1.5 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#333] rounded-lg transition-colors"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

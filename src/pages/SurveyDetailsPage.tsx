@@ -407,7 +407,11 @@ export const SurveyDetailsPage = () => {
                                             ? "Emojis"
                                             : question.qtype === "description"
                                               ? "Description Box"
-                                              : "Unknown Type"
+                                              : question.qtype === "checkbox"
+                                                ? "Checkbox"
+                                                : question.qtype === "date"
+                                                  ? "Date"
+                                                  : "Unknown Type"
                                   }
                                   disabled
                                 >
@@ -429,6 +433,12 @@ export const SurveyDetailsPage = () => {
                                     </SelectItem>
                                     <SelectItem value="Emojis">
                                       Emojis
+                                    </SelectItem>
+                                    <SelectItem value="Checkbox">
+                                      Checkbox
+                                    </SelectItem>
+                                    <SelectItem value="Date">
+                                      Date
                                     </SelectItem>
                                   </SelectContent>
                                 </Select>

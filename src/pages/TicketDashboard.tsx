@@ -20,7 +20,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters, EscalationInfo } from '@/services/ticketManagementAPI';
-import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse } from '@/services/ticketAnalyticsAPI';
+import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse, IssueBreakdownCategoryWise, SiteWiseIssueSummary } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
 import { ResponseTATCard } from '@/components/ResponseTATCard';
@@ -30,7 +30,9 @@ import {
   ProactiveReactiveCard,
   CategoryWiseProactiveReactiveCard,
   UnitCategoryWiseCard,
-  TicketAgingMatrixCard
+  TicketAgingMatrixCard,
+  IssueBreakdownCategoryWiseCard,
+  SiteWiseIssueSummaryCard
 } from '@/components/ticket-analytics';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
@@ -121,7 +123,7 @@ export const TicketDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
+  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat', 'issueBreakdown', 'siteWiseSummary']);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -159,6 +161,8 @@ export const TicketDashboard = () => {
   const [unitCategorywiseData, setUnitCategorywiseData] = useState<UnitCategorywiseData | null>(null);
   const [responseTATData, setResponseTATData] = useState<ResponseTATData | null>(null);
   const [resolutionTATReportData, setResolutionTATReportData] = useState<ResolutionTATReportData | null>(null);
+  const [issueBreakdownData, setIssueBreakdownData] = useState<IssueBreakdownCategoryWise | null>(null);
+  const [siteWiseIssueSummaryData, setSiteWiseIssueSummaryData] = useState<SiteWiseIssueSummary | null>(null);
   const [recentTicketsData, setRecentTicketsData] = useState<RecentTicketsResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsLoaded, setAnalyticsLoaded] = useState(false); // Track if analytics data has been loaded
@@ -171,7 +175,9 @@ export const TicketDashboard = () => {
     categoryWiseProactiveReactive: false,
     categoryChart: false,
     agingMatrix: false,
-    resolutionTat: false
+    resolutionTat: false,
+    issueBreakdown: false,
+    siteWiseSummary: false
   });
 
   // Utility function to convert DD/MM/YYYY to Date object
@@ -251,7 +257,9 @@ export const TicketDashboard = () => {
       categoryWiseProactiveReactive: true,
       categoryChart: true,
       agingMatrix: true,
-      resolutionTat: true
+      resolutionTat: true,
+      issueBreakdown: true,
+      siteWiseSummary: true
     });
 
     try {
@@ -287,6 +295,16 @@ export const TicketDashboard = () => {
           setLoadingStates(prev => ({ ...prev, resolutionTat: false }));
           return data;
         }),
+        ticketAnalyticsAPI.getIssueBreakdownCategoryWise(startDate, endDate).then(data => {
+          setIssueBreakdownData(data);
+          setLoadingStates(prev => ({ ...prev, issueBreakdown: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getSiteWiseIssueSummary(startDate, endDate).then(data => {
+          setSiteWiseIssueSummaryData(data);
+          setLoadingStates(prev => ({ ...prev, siteWiseSummary: false }));
+          return data;
+        }),
         ticketAnalyticsAPI.getRecentTickets().then(data => {
           setRecentTicketsData(data);
           return data;
@@ -311,7 +329,9 @@ export const TicketDashboard = () => {
         categoryWiseProactiveReactive: false,
         categoryChart: false,
         agingMatrix: false,
-        resolutionTat: false
+        resolutionTat: false,
+        issueBreakdown: false,
+        siteWiseSummary: false
       });
 
       sonnerToast.error("Failed to fetch analytics data. Please try again.");
@@ -1506,6 +1526,7 @@ export const TicketDashboard = () => {
                                   <TicketStatusOverviewCard
                                     openTickets={openticketanalyticsData}
                                     closedTickets={closedticketanalyticsData}
+                                    detailedSummary={statusAnalyticsData?.detailed_summary ?? null}
                                   />
                                 </SectionLoader>
                               </SortableChartItem>
@@ -1612,6 +1633,30 @@ export const TicketDashboard = () => {
                               />
                             </SectionLoader>
                           </SortableChartItem>
+                        )}
+                      </div>
+
+                      {/* Seventh Row - Issue Breakdown Category Wise */}
+                      <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                        {visibleSections.includes('issueBreakdown') && (
+                          <SectionLoader loading={loadingStates.issueBreakdown}>
+                            <IssueBreakdownCategoryWiseCard
+                              data={issueBreakdownData}
+                              className="bg-white border border-gray-200 rounded-lg"
+                            />
+                          </SectionLoader>
+                        )}
+                      </div>
+
+                      {/* Eighth Row - Site / Project-wise Issue Summary */}
+                      <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                        {visibleSections.includes('siteWiseSummary') && (
+                          <SectionLoader loading={loadingStates.siteWiseSummary}>
+                            <SiteWiseIssueSummaryCard
+                              data={siteWiseIssueSummaryData}
+                              className="bg-white border border-gray-200 rounded-lg"
+                            />
+                          </SectionLoader>
                         )}
                       </div>
                     </div>

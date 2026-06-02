@@ -75,6 +75,32 @@ export function useProductSecurity(): SecurityState {
     "pending" | "granted" | "denied"
   >("pending");
   const [isBlurred, setIsBlurred] = useState(false);
+  const isBlurredRef = useRef(false);
+  const blurTimeoutRef = useRef<number | undefined>(undefined);
+
+  // Determine blur state based on faceAuthStatus - this is the single source of truth
+  useEffect(() => {
+    const shouldBlur = !["verified", "api_unavailable"].includes(faceAuthStatus);
+    
+    if (isBlurredRef.current === shouldBlur) return; // Skip if no change
+
+    if (blurTimeoutRef.current) {
+      window.clearTimeout(blurTimeoutRef.current);
+    }
+
+    if (shouldBlur) {
+      // Blur immediately on security issues
+      isBlurredRef.current = true;
+      setIsBlurred(true);
+    } else {
+      // Delay unblurring slightly to prevent flickering during transitions
+      blurTimeoutRef.current = window.setTimeout(() => {
+        isBlurredRef.current = false;
+        setIsBlurred(false);
+        blurTimeoutRef.current = undefined;
+      }, 100);
+    }
+  }, [faceAuthStatus]);
   const [showBlackout, setShowBlackout] = useState(false);
   const [blackoutReason, setBlackoutReason] = useState("Security Violation");
   const [blackoutSubtitle, setBlackoutSubtitle] = useState(
@@ -101,13 +127,13 @@ export function useProductSecurity(): SecurityState {
     setBlackoutSubtitle(subtitle);
     setIncidentTime(new Date().toLocaleString());
     setCountdown(5);
-    setIsBlurred(true);
+    setFaceAuthStatus("error");
     setShowBlackout(true);
   }, []);
 
   const dismissBlackout = useCallback(() => {
     setShowBlackout(false);
-    setIsBlurred(false);
+    setFaceAuthStatus("ready");
   }, []);
 
   const flashScreenshotBlank = useCallback((duration = 1800) => {
@@ -136,6 +162,9 @@ export function useProductSecurity(): SecurityState {
       if (screenshotBlankTimeoutRef.current) {
         window.clearTimeout(screenshotBlankTimeoutRef.current);
       }
+      if (blurTimeoutRef.current) {
+        window.clearTimeout(blurTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -143,7 +172,6 @@ export function useProductSecurity(): SecurityState {
     const hasStoredProfile = hasLocalFaceProfile(currentFaceAuthUser.id);
 
     setFaceDetected(false);
-    setIsBlurred(true);
     setFaceAuthStatus(currentFaceAuthUser.id ? "ready" : "unconfigured");
     setFaceAuthLabel(currentFaceAuthUser.label);
     setFaceAuthMessage(
@@ -204,7 +232,6 @@ export function useProductSecurity(): SecurityState {
 
       markFaceProfileEnrolled(currentFaceAuthUser.id);
       setFaceDetected(true);
-      setIsBlurred(false);
       setFaceAuthStatus("verified");
       setFaceAuthMessage(result.message || "Face profile saved and verified.");
       toast.success(result.message || "Face profile saved and verified.");
@@ -212,7 +239,6 @@ export function useProductSecurity(): SecurityState {
       console.warn("Face registration failed:", err);
       setFaceAuthStatus("error");
       setFaceDetected(false);
-      setIsBlurred(true);
       const message =
         err instanceof Error ? err.message : "Face registration failed.";
       setFaceAuthMessage(message);
@@ -240,7 +266,6 @@ export function useProductSecurity(): SecurityState {
         console.warn("face-api.js model loading timed out");
         setModelLoading(false);
         setFaceDetected(false);
-        setIsBlurred(true);
         setFaceAuthStatus("error");
         setFaceAuthMessage("Face model loading timed out. Refresh the page.");
       }, 15000);
@@ -265,7 +290,6 @@ export function useProductSecurity(): SecurityState {
       console.error("face-api.js model failed to load from all sources");
       setModelLoading(false);
       setFaceDetected(false);
-      setIsBlurred(true);
       setFaceAuthStatus("error");
       setFaceAuthMessage("Face-api.js models failed to load.");
       window.clearTimeout(timeoutId);
@@ -363,7 +387,6 @@ export function useProductSecurity(): SecurityState {
             noFaceCount++;
             if (noFaceCount >= 2) {
               setFaceDetected(false);
-              setIsBlurred(true);
               setFaceAuthStatus((status) =>
                 status === "unconfigured" ? status : "ready"
               );
@@ -376,7 +399,6 @@ export function useProductSecurity(): SecurityState {
 
           if (detections.length > 1) {
             setFaceDetected(false);
-            setIsBlurred(true);
             setFaceAuthStatus("multiple_faces");
             setFaceAuthMessage("Keep only one face in the frame.");
             showFaceAuthToast("Multiple faces detected. Access blocked.");
@@ -385,7 +407,6 @@ export function useProductSecurity(): SecurityState {
 
           if (!currentFaceAuthUser.id) {
             setFaceDetected(false);
-            setIsBlurred(true);
             setFaceAuthStatus("unconfigured");
             setFaceAuthMessage("Logged-in user id was not found.");
             return;
@@ -418,12 +439,10 @@ export function useProductSecurity(): SecurityState {
 
             if (matchedCurrentUser) {
               setFaceDetected(true);
-              setIsBlurred(false);
               setFaceAuthStatus("verified");
               setFaceAuthMessage(result.message || "Face verified.");
             } else if (isFaceRecognitionUnconfiguredResponse(result)) {
               setFaceDetected(false);
-              setIsBlurred(true);
               setFaceAuthStatus("unconfigured");
               setFaceAuthMessage(
                 result.message ||
@@ -431,7 +450,6 @@ export function useProductSecurity(): SecurityState {
               );
             } else {
               setFaceDetected(false);
-              setIsBlurred(true);
               setFaceAuthStatus("rejected");
               setFaceAuthMessage("Face does not match the logged-in user.");
               showFaceAuthToast("Face does not match the logged-in user.");
@@ -440,21 +458,18 @@ export function useProductSecurity(): SecurityState {
             console.error("Face recognition API error:", err);
             if (isFaceProfileMissingError(err)) {
               setFaceDetected(false);
-              setIsBlurred(true);
               setFaceAuthStatus("unconfigured");
               setFaceAuthMessage(
                 "No enrolled face profile found. Add your face profile first."
               );
             } else if (isFaceAuthServiceUnavailableError(err)) {
               setFaceDetected(true);
-              setIsBlurred(false);
               setFaceAuthStatus("api_unavailable");
               setFaceAuthMessage(
                 "Face verification service is unavailable. Camera presence check is active."
               );
             } else {
               setFaceDetected(false);
-              setIsBlurred(true);
               setFaceAuthStatus("error");
               setFaceAuthMessage("Face verification failed. Try again.");
               showFaceAuthToast("Face verification failed. Try again.");
@@ -465,7 +480,6 @@ export function useProductSecurity(): SecurityState {
         } catch (err) {
           console.error("Face detection error:", err);
           setFaceDetected(false);
-          setIsBlurred(true);
           setFaceAuthStatus("error");
           setFaceAuthMessage("Face detection failed. Try again.");
         }

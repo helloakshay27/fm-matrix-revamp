@@ -71,6 +71,7 @@ const mapStatusToDisplay = (rawStatus: string | undefined) => {
         completed: "Completed",
         reopen: "Reopen",
         closed: "Closed",
+        overdue: "Overdued",
     };
     return statusMap[rawStatus?.toLowerCase() || ""] || "Open";
 };
@@ -83,6 +84,7 @@ const mapDisplayToApiStatus = (displayStatus: string) => {
         Completed: "completed",
         Reopen: "reopen",
         Closed: "closed",
+        Overdued: "overdue",
     };
     return reverseStatusMap[displayStatus] || "open";
 };
@@ -1160,13 +1162,9 @@ const IssueDetailsPage = () => {
         try {
             const apiStatus = mapDisplayToApiStatus(newStatus);
             await axios.put(
-                `https://${baseUrl}/issues/${issueId}.json`,
-                { issue: { status: apiStatus } },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                `https://${baseUrl}/issues/${issueId}/update_status.json`,
+                { status: apiStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
             toast.success("Status updated successfully");
             getIssue();
@@ -1378,7 +1376,7 @@ const IssueDetailsPage = () => {
                                         zIndex: 1000,
                                     }}
                                 >
-                                    {["Open", "In Progress", "On Hold", "Completed", "Reopen", "Closed"].map(
+                                    {["Open", "In Progress", "On Hold", "Completed", "Reopen", "Closed", "Overdued"].map(
                                         (option, idx) => (
                                             <li key={idx} role="menuitem">
                                                 <button

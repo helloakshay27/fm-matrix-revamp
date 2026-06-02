@@ -120,12 +120,12 @@ export const fetchWings = createAsyncThunk<Wing[], number>(
   }
 );
 
-export const fetchAreas = createAsyncThunk<Area[], number>(
+export const fetchAreas = createAsyncThunk<Area[], { buildingId: number; wingId?: number }>(
   'serviceLocation/fetchAreas',
-  async (buildingId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/buildings/${buildingId}/areas.json`, {
-      params: { access_token: TOKEN }
-    });
+  async ({ buildingId, wingId }) => {
+    const params: Record<string, any> = { access_token: TOKEN };
+    if (wingId) params.wing_id = wingId;
+    const response = await axios.get(`${BASE_URL}/pms/buildings/${buildingId}/areas.json`, { params });
     return response.data.areas || [];
   }
 );

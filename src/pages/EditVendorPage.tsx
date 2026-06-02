@@ -202,6 +202,7 @@ const initialFormData = {
 };
 
 const initialContactPerson = {
+    id: null as number | null,
     firstName: '',
     lastName: '',
     primaryEmail: '',
@@ -244,7 +245,7 @@ export const EditVendorPage = () => {
     const [complianceAttachments, setComplianceAttachments] = useState<File[]>([]);
     const [otherAttachments, setOtherAttachments] = useState<File[]>([]);
     const [openingBalances, setOpeningBalances] = useState([
-        { billNo: '', date: '', dueDate: '', amount: '' }
+        { id: null as number | null, billNo: '', date: '', dueDate: '', amount: '' }
     ]);
     const [loadingVendor, setLoadingVendor] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
@@ -279,37 +280,39 @@ export const EditVendorPage = () => {
                     if (!Array.isArray(data.contacts) || data.contacts.length === 0) {
                         return [initialContactPerson];
                     }
-                    return data.contacts.map((contact: any) => {
-                        const name = contact.name || '';
-                        const [firstName, ...rest] = name.trim().split(' ');
-                        return {
-                            firstName: firstName || '',
-                            lastName: rest.join(' ') || '',
-                            primaryEmail: contact.email || '',
-                            secondaryEmail: '',
-                            primaryMobile: contact.phone || '',
-                            secondaryMobile: '',
-                        };
-                    });
+                    return data.contacts.map((contact: any) => ({
+                        id: contact.id ?? null,
+                        firstName: contact.first_name || '',
+                        lastName: contact.last_name || '',
+                        primaryEmail: contact.email1 || '',
+                        secondaryEmail: contact.email2 || '',
+                        primaryMobile: contact.mobile1 || '',
+                        secondaryMobile: contact.mobile2 || '',
+                    }));
                 };
 
-                const billing = data.default_billing_address || (Array.isArray(data.addresses) ? data.addresses.find((addr: any) => addr.address_type === 'billing') : null) || {};
-                const shipping = data.default_shipping_address || (Array.isArray(data.addresses) ? data.addresses.find((addr: any) => addr.address_type === 'shipping') : null) || {};
+                const billing: any = data.default_billing_address ||
+                    (Array.isArray(data.billing_addresses) ? data.billing_addresses[0] : null) || {};
+                const shipping: any = data.default_shipping_address ||
+                    (Array.isArray(data.shipping_addresses) ? data.shipping_addresses[0] : null) || {};
 
                 let reKycValue = '';
                 let customDateValue: Date | null = null;
                 if (data.re_kyc_in) {
-                    if (data.re_kyc_in === 'custom' && data.re_kyc_date) {
+                    const raw = String(data.re_kyc_in);
+                    const monthsMatch = raw.match(/^(\d+)_months?$/);
+                    if (monthsMatch) {
+                        reKycValue = `${monthsMatch[1]}m`;
+                    } else if (['3m', '6m', '9m', '12m'].includes(raw)) {
+                        reKycValue = raw;
+                    } else if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                        reKycValue = 'custom';
+                        customDateValue = new Date(raw);
+                    } else if (raw === 'custom' && data.re_kyc_date) {
                         reKycValue = 'custom';
                         customDateValue = new Date(data.re_kyc_date);
-                    } else if (['3m', '6m', '9m', '12m'].includes(data.re_kyc_in)) {
-                        reKycValue = data.re_kyc_in;
-                    } else if (/^\d{4}-\d{2}-\d{2}$/.test(data.re_kyc_in)) {
-                        reKycValue = 'custom';
-                        customDateValue = new Date(data.re_kyc_in);
                     }
                 }
-
                 setFormData({
                     companyName: data.company_name || '',
                     primaryPhone: data.mobile1 || '',
@@ -322,7 +325,7 @@ export const EditVendorPage = () => {
                     serviceDescription: data.service_description || '',
                     date: data.signed_on_contract ? String(data.signed_on_contract) : '',
                     services: normalizeService(),
-                    gstTreatment: data.primary_gst_detail?.gst_preference || data.gst_preference || '',
+                    gstTreatment: data.gst_preference || data.primary_gst_detail?.gst_preference || '',
                     gstin: data.primary_gst_detail?.gstin || data.gstin_number || '',
                     businessLegalName: data.primary_gst_detail?.business_legal_name || '',
                     businessTradeName: data.primary_gst_detail?.business_trade_name || '',
@@ -358,10 +361,11 @@ export const EditVendorPage = () => {
                 if (Array.isArray(data.opening_balances) && data.opening_balances.length > 0) {
                     setOpeningBalances(
                         data.opening_balances.map((row: any) => ({
+                            id: row.id ?? null,
                             billNo: row.bill_no || '',
                             date: row.date || '',
                             dueDate: row.due_date || '',
-                            amount: row.amount ? String(row.amount) : '',
+                            amount: row.amount != null ? String(row.amount) : '',
                         }))
                     );
                 }
@@ -633,22 +637,31 @@ export const EditVendorPage = () => {
         apiFormData.append('pms_supplier[ifsc_code]', formData.ifscCode || '');
 
         contactPersons.forEach((contact, index) => {
-            if (contact.firstName || contact.lastName) {
-                apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][first_name]`, contact.firstName || '');
-                apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][last_name]`, contact.lastName || '');
-                apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email1]`, contact.primaryEmail || '');
-                apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email2]`, contact.secondaryEmail || '');
-                apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile1]`, contact.primaryMobile || '');
-                apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile2]`, contact.secondaryMobile || '');
+            if (contact.firstName || contact.lastName || contact.primaryEmail) {
+                const prefix = `pms_supplier[pms_supplier_contacts_attributes][${index}]`;
+                if (contact.id) {
+                    apiFormData.append(`${prefix}[id]`, String(contact.id));
+                }
+                apiFormData.append(`${prefix}[first_name]`, contact.firstName || '');
+                apiFormData.append(`${prefix}[last_name]`, contact.lastName || '');
+                apiFormData.append(`${prefix}[email1]`, contact.primaryEmail || '');
+                apiFormData.append(`${prefix}[email2]`, contact.secondaryEmail || '');
+                apiFormData.append(`${prefix}[mobile1]`, contact.primaryMobile || '');
+                apiFormData.append(`${prefix}[mobile2]`, contact.secondaryMobile || '');
             }
         });
 
         if (formData.reKyc) {
             let reKycValue = formData.reKyc;
-            if (reKycValue !== 'custom') {
-                reKycValue = `${formData.reKyc.replace('m', '')}_months`;
-            } else if (formData.customDate) {
-                reKycValue = formData.customDate.toISOString().split('T')[0];
+            if (reKycValue === 'custom') {
+                if (formData.customDate) {
+                    reKycValue = formData.customDate instanceof Date
+                        ? formData.customDate.toISOString().split('T')[0]
+                        : String(formData.customDate);
+                }
+            } else {
+                // "12m" → "12_months", "3m" → "3_months", etc.
+                reKycValue = reKycValue.replace(/^(\d+)m$/, '$1_months');
             }
             apiFormData.append('pms_supplier[re_kyc_in]', reKycValue);
         }
@@ -662,10 +675,14 @@ export const EditVendorPage = () => {
 
         openingBalances.forEach((row, index) => {
             if (row.billNo || row.date || row.dueDate || row.amount) {
-                apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][bill_no]`, row.billNo || '');
-                apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][date]`, row.date || '');
-                apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][due_date]`, row.dueDate || '');
-                apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][amount]`, row.amount || '');
+                const prefix = `pms_supplier[opening_balance_details_attributes][${index}]`;
+                if (row.id) {
+                    apiFormData.append(`${prefix}[id]`, String(row.id));
+                }
+                apiFormData.append(`${prefix}[bill_no]`, row.billNo || '');
+                apiFormData.append(`${prefix}[date]`, row.date || '');
+                apiFormData.append(`${prefix}[due_date]`, row.dueDate || '');
+                apiFormData.append(`${prefix}[amount]`, row.amount || '');
             }
         });
 
@@ -701,7 +718,10 @@ export const EditVendorPage = () => {
                         'account_number': 'accountNumber',
                         'bank_branch_name': 'bankBranchName',
                         'ifsc_code': 'ifscCode',
-                        'account_name': 'accountName'
+                        'account_name': 'accountName',
+                        'pms_supplier_contacts.email1': 'contact_0_primaryEmail',
+                        'pms_supplier_contacts.email2': 'contact_0_secondaryEmail',
+                        'pms_supplier_contacts.mobile1': 'contact_0_primaryMobile',
                     };
 
                     const formFieldName = fieldMapping[field] || field;
@@ -713,6 +733,8 @@ export const EditVendorPage = () => {
                         targetStep = 1;
                     } else if (bankFields.includes(field)) {
                         targetStep = 2;
+                    } else if (field.startsWith('pms_supplier_contacts')) {
+                        targetStep = 3;
                     }
                 });
 
@@ -1467,7 +1489,11 @@ export const EditVendorPage = () => {
                                     type="date"
                                     fullWidth
                                     variant="outlined"
-                                    value={formData.customDate}
+                                    value={
+                                        formData.customDate instanceof Date
+                                            ? formData.customDate.toISOString().split('T')[0]
+                                            : formData.customDate || ''
+                                    }
                                     onChange={(e) => setFormData({ ...formData, customDate: e.target.value ? new Date(e.target.value) : null })}
                                     InputLabelProps={{ shrink: true }}
                                     InputProps={{ sx: fieldStyles }}

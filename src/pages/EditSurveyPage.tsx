@@ -444,19 +444,23 @@ export const EditSurveyPage = () => {
             answerType:
               q.qtype === "multiple"
                 ? "multiple-choice"
-                : q.qtype === "input"
-                  ? "input-box"
-                  : q.qtype === "input_box"
-                    ? "input-box"
-                    : q.qtype === "rating"
-                      ? "rating"
-                      : q.qtype === "emoji"
-                        ? "emojis"
-                        : q.qtype === "text"
-                          ? "input-box"
-                          : q.qtype === "description"
-                            ? "description"
-                            : "description",
+                : q.qtype === "checkbox"
+                  ? "checkbox"
+                  : q.qtype === "date"
+                    ? "date"
+                    : q.qtype === "input"
+                      ? "input-box"
+                      : q.qtype === "input_box"
+                        ? "input-box"
+                        : q.qtype === "rating"
+                          ? "rating"
+                          : q.qtype === "emoji"
+                            ? "emojis"
+                            : q.qtype === "text"
+                              ? "input-box"
+                              : q.qtype === "description"
+                                ? "description"
+                                : "description",
             mandatory: q.quest_mandatory,
             answerOptions:
               q.snag_quest_options?.map((option: any) => ({
@@ -629,7 +633,7 @@ export const EditSurveyPage = () => {
           const updatedQuestion = { ...q, [field]: value };
           if (
             field === "answerType" &&
-            ["multiple-choice", "rating", "emojis"].includes(value as string) &&
+            ["multiple-choice", "rating", "emojis", "checkbox"].includes(value as string) &&
             !updatedQuestion.answerOptions
           ) {
             updatedQuestion.answerOptions = [
@@ -638,7 +642,7 @@ export const EditSurveyPage = () => {
             ];
           } else if (
             field === "answerType" &&
-            !["multiple-choice", "rating", "emojis"].includes(value as string)
+            !["multiple-choice", "rating", "emojis", "checkbox"].includes(value as string)
           ) {
             updatedQuestion.answerOptions = undefined;
           }
@@ -980,7 +984,7 @@ export const EditSurveyPage = () => {
 
       // Check if multiple choice, rating, or emojis have at least one option with text
       if (
-        ["multiple-choice", "rating", "emojis"].includes(question.answerType)
+        ["multiple-choice", "rating", "emojis", "checkbox"].includes(question.answerType)
       ) {
         if (!question.answerOptions || question.answerOptions.length === 0) {
           toast.error("Validation Error", {
@@ -1109,13 +1113,17 @@ export const EditSurveyPage = () => {
         const qtype =
           question.answerType === "multiple-choice"
             ? "multiple"
-            : question.answerType === "input-box"
-              ? "input_box"
-              : question.answerType === "rating"
-                ? "rating"
-                : question.answerType === "emojis"
-                  ? "emoji"
-                  : "description";
+            : question.answerType === "checkbox"
+              ? "checkbox"
+              : question.answerType === "date"
+                ? "date"
+                : question.answerType === "input-box"
+                  ? "input_box"
+                  : question.answerType === "rating"
+                    ? "rating"
+                    : question.answerType === "emojis"
+                      ? "emoji"
+                      : "description";
 
         formData.append(`question[][qtype]`, qtype);
         formData.append(
@@ -1171,7 +1179,7 @@ export const EditSurveyPage = () => {
 
         // Add multiple choice, rating, and emoji options with proper structure
         if (
-          ["multiple-choice", "rating", "emojis"].includes(
+          ["multiple-choice", "rating", "emojis", "checkbox"].includes(
             question.answerType
           ) &&
           question.answerOptions
@@ -1726,14 +1734,16 @@ export const EditSurveyPage = () => {
                             <SelectItem value="rating">Rating</SelectItem>
                             <SelectItem value="emojis">Emojis</SelectItem>
                             <SelectItem value="input-box">Input Box</SelectItem>
+                             <SelectItem value="checkbox">Checkbox</SelectItem>
+                             <SelectItem value="date">Date</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       {/* Multiple Choice, Rating, and Emoji Options */}
-                      {["multiple-choice", "rating", "emojis"].includes(
-                        question.answerType
-                      ) && (
+      {["multiple-choice", "rating", "emojis", "checkbox"].includes(
+        question.answerType
+      ) && (
                         <div className="space-y-3 pt-2">
                           <Label className="text-sm font-medium text-gray-700">
                             {question.answerType === "rating"

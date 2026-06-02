@@ -16,6 +16,16 @@ const ExploreDialog: React.FC<ExploreDialogProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  const handleExploreItemClick = (item: QuickLink) => {
+    // Store that we're navigating from Explore
+    sessionStorage.setItem("exploredFromHub", "true");
+    setIsExploreOpen(false);
+    navigate(
+      item.link ||
+        `/${item.name.toLowerCase().replace(/\s+/g, "-")}`
+    );
+  };
+
   return (
     <Dialog open={isExploreOpen} onOpenChange={setIsExploreOpen}>
       <DialogContent className="max-w-[1200px] p-0 h-auto rounded-[12px] bg-white border-none shadow-xl">
@@ -37,13 +47,7 @@ const ExploreDialog: React.FC<ExploreDialogProps> = ({
             {quickLinks.map((item, index) => (
               <div
                 key={index}
-                onClick={() => {
-                  setIsExploreOpen(false);
-                  navigate(
-                    item.link ||
-                      `/${item.name.toLowerCase().replace(/\s+/g, "-")}`
-                  );
-                }}
+                onClick={() => handleExploreItemClick(item)}
                 className="flex flex-col items-center justify-center w-[140px] h-[120px] bg-[#FCFBF8] rounded-xl cursor-pointer hover:bg-[#F4F2EC] transition-all group shrink-0"
               >
                 <div className="w-[52px] h-[52px] bg-white rounded-xl flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-[#F0ECE1] group-hover:scale-105 transition-transform duration-300 mb-4">

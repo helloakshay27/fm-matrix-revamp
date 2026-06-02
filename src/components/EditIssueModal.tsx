@@ -232,6 +232,7 @@ const EditIssueModal = ({
     const [issueDuration, setIssueDuration] = useState();
     const [totalWorkingHours, setTotalWorkingHours] = useState(0);
     const [dateWiseHours, setDateWiseHours] = useState([]);
+    const [originalDateWiseHrs, setOriginalDateWiseHrs] = useState([]);
 
     const isSubmittingRef = useRef(false);
     const startDateRef = useRef(null);
@@ -337,7 +338,33 @@ const EditIssueModal = ({
             if (issueData.project_management_id) setNewIssuesProjectId(issueData.project_management_id);
             if (issueData.milestone_id) setNewIssuesMilestoneId(issueData.milestone_id);
             if (issueData.task_management_id) setNewIssuesTaskId(issueData.task_management_id);
-            // subtask?
+
+            if (issueData.estimated_hour) {
+                setTotalWorkingHours(issueData.estimated_hour);
+            }
+
+            if (Array.isArray(issueData.issue_allocation_times) && issueData.issue_allocation_times.length > 0) {
+                // Merge multiple records for the same date so DurationPicker shows correct totals
+                const mergedByDate = Object.values(
+                    issueData.issue_allocation_times.reduce((acc: any, entry: any) => {
+                        if (acc[entry.date]) {
+                            const totalMins =
+                                (acc[entry.date].hours * 60 + acc[entry.date].minutes) +
+                                (entry.hours * 60 + entry.minutes);
+                            acc[entry.date] = {
+                                ...acc[entry.date],
+                                hours: Math.floor(totalMins / 60),
+                                minutes: totalMins % 60,
+                            };
+                        } else {
+                            acc[entry.date] = { ...entry };
+                        }
+                        return acc;
+                    }, {})
+                );
+                setDateWiseHours(mergedByDate);
+                setOriginalDateWiseHrs(issueData.issue_allocation_times);
+            }
 
             // Tags will be set in fetchMentionTags after fetching all available tags
         }
@@ -777,19 +804,37 @@ const EditIssueModal = ({
 
             formData.append("issue[estimated_hour]", String(totalWorkingHours || 0));
 
-            dateWiseHours.map((date: any) => {
-                formData.append(
-                    "issue[issue_allocation_times_attributes][][hours]",
-                    String(date.hours)
-                );
-                formData.append(
-                    "issue[issue_allocation_times_attributes][][minutes]",
-                    String(date.minutes)
-                );
-                formData.append(
-                    "issue[issue_allocation_times_attributes][][date]",
-                    date.date
-                );
+            const originalAllocations: any[] = issueData?.issue_allocation_times || [];
+            const currentUIMap = new Map(dateWiseHours.map((d: any) => [d.date, d]));
+
+            // Update or destroy existing records (keep their IDs)
+            const originalPayload = originalAllocations.map((allocation: any) => {
+                const uiEntry = currentUIMap.get(allocation.date);
+                return {
+                    ...(uiEntry || allocation),
+                    id: allocation.id,
+                    _destroy: !uiEntry,
+                };
+            });
+
+            // New records that have no matching original
+            const newPayload = dateWiseHours
+                .filter((d: any) => !originalAllocations.some((o: any) => o.date === d.date))
+                .map((d: any) => ({ ...d, id: null, _destroy: false }));
+
+            const allocationTimesAttributes = [...originalPayload, ...newPayload];
+
+            allocationTimesAttributes.forEach((entry: any, index: number) => {
+                const prefix = `issue[issue_allocation_times_attributes][${index}]`;
+                if (entry.id) {
+                    formData.append(`${prefix}[id]`, String(entry.id));
+                }
+                formData.append(`${prefix}[hours]`, String(entry.hours));
+                formData.append(`${prefix}[minutes]`, String(entry.minutes));
+                formData.append(`${prefix}[date]`, entry.date);
+                if (entry._destroy) {
+                    formData.append(`${prefix}[_destroy]`, "1");
+                }
             });
 
             attachments.forEach((file: any) => {
@@ -842,6 +887,7 @@ const EditIssueModal = ({
             handleCloseDialog,
             totalWorkingHours,
             dateWiseHours,
+            originalDateWiseHrs,
             baseUrl,
             token,
             issueData,
@@ -1134,7 +1180,7 @@ const EditIssueModal = ({
                         <Box sx={{ mb: 2 }}>
                             <Box sx={{ fontSize: "12px", mb: 1 }}>Efforts Duration</Box>
                             <DurationPicker
-                                dateWiseHours={[]}
+                                dateWiseHours={dateWiseHours}
                                 onChange={setIssueDuration}
                                 onDateWiseHoursChange={setDateWiseHours}
                                 startDate={startDate}
@@ -1147,6 +1193,7 @@ const EditIssueModal = ({
                                 totalWorkingHours={totalWorkingHours}
                                 setTotalWorkingHours={setTotalWorkingHours}
                                 shift={shift}
+                                isEdit={true}
                             />
                         </Box>
 
