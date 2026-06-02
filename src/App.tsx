@@ -1197,6 +1197,7 @@ import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrappe
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
+import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -3532,7 +3533,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/purchase-order/edit/:id"
-                              element={<PurchaseOrderCreatePage />}
+                              element={<PurchaseOrderEditPage />}
                             />
                             {/* Bills Routes */}
                             <Route
@@ -6291,6 +6292,11 @@ function App() {
                             <Route
                               path="/pulse/curated-services/service-category/edit/:id"
                               element={<EditCuratedServiceCategoryPage />}
+                            />
+
+                            <Route
+                              path="/pulse/ride_settings"
+                              element={<RideSettingsPage />}
                             />
 
                             {/* Carpool Routes */}

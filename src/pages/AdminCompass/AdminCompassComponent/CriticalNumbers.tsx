@@ -49,6 +49,7 @@ interface Kpi {
   current_value?: number | null;
   department_id?: number | null;
   assignee_id?: number | null;
+  department_name?: string | null;
   selected: boolean;
   owner?: string | null;
 }
@@ -57,6 +58,7 @@ interface KpiFormState {
   name: string;
   unit: string;
   frequency: string;
+  current_value: string;
   target_value: string;
   department_id: string; // id as string
   assign_to_id: string; // id as string
@@ -76,12 +78,63 @@ const EMPTY_FORM: KpiFormState = {
   name: "",
   unit: "Select unit",
   frequency: "Monthly",
+  current_value: "",
   target_value: "",
   department_id: "",
   assign_to_id: "",
 };
 
+const formatKpiNumber = (value: unknown) => {
+  if (value === null || value === undefined || value === "") return "";
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return String(value);
+  return Number.isInteger(numericValue)
+    ? String(numericValue)
+    : String(numericValue);
+};
+
 // ── API helpers ──
+const getKpiDepartmentId = (k: any) =>
+  k.department_id ??
+  k.department?.id ??
+  k.department?.department_id ??
+  k.department_detail?.id ??
+  null;
+
+const getKpiDepartmentName = (k: any) =>
+  k.department_name ??
+  k.department?.name ??
+  k.department?.title ??
+  (typeof k.department === "string" ? k.department : null) ??
+  null;
+
+const getKpiAssignee = (k: any) => {
+  const assignee =
+    k.assignee ??
+    (Array.isArray(k.assignees) ? k.assignees[0] : null) ??
+    (Array.isArray(k.users) ? k.users[0] : null) ??
+    (Array.isArray(k.assigned_users) ? k.assigned_users[0] : null);
+  const assigneeId =
+    k.assignee_id ??
+    (Array.isArray(k.assignee_ids) ? k.assignee_ids[0] : null) ??
+    assignee?.id ??
+    assignee?.user_id ??
+    null;
+  const assigneeName =
+    assignee?.full_name ||
+    assignee?.name ||
+    `${assignee?.first_name || assignee?.firstname || ""} ${
+      assignee?.last_name || assignee?.lastname || ""
+    }`.trim() ||
+    k.owner ||
+    null;
+
+  return {
+    id: assigneeId,
+    name: assigneeName || null,
+  };
+};
+
 const fetchKpisFromApi = async (): Promise<Kpi[]> => {
   const res = await fetch(`${BASE_URL}/kpis`, {
     method: "GET",
@@ -102,20 +155,24 @@ const fetchKpisFromApi = async (): Promise<Kpi[]> => {
       : Array.isArray(json.data?.kpis)
         ? json.data.kpis
         : (json.kpis ?? []);
-  return list.map((k: any) => ({
-    id: k.id,
-    name: k.name ?? "",
-    description: k.description ?? "",
-    category: k.category ?? "",
-    unit: k.unit ?? "",
-    frequency: k.frequency ?? "monthly",
-    target_value: k.target_value ?? null,
-    current_value: k.current_value ?? null,
-    department_id: k.department_id ?? null,
-    assignee_id: k.assignee_id ?? null,
-    owner: k.assignee?.name ?? k.owner ?? null,
-    selected: true,
-  }));
+  return list.map((k: any) => {
+    const assignee = getKpiAssignee(k);
+    return {
+      id: k.id,
+      name: k.name ?? "",
+      description: k.description ?? "",
+      category: k.category ?? "",
+      unit: k.unit ?? "",
+      frequency: k.frequency ?? "monthly",
+      target_value: k.target_value ?? null,
+      current_value: k.current_value ?? null,
+      department_id: getKpiDepartmentId(k),
+      department_name: getKpiDepartmentName(k),
+      assignee_id: assignee.id,
+      owner: assignee.name ?? k.owner ?? null,
+      selected: true,
+    };
+  });
 };
 
 // ── Users API ──
@@ -140,9 +197,11 @@ const fetchUsersFromApi = async (): Promise<UserOption[]> => {
     ? json
     : Array.isArray(json.users)
       ? json.users
-      : Array.isArray(json.data)
-        ? json.data
-        : [];
+      : Array.isArray(json.data?.users)
+        ? json.data.users
+        : Array.isArray(json.data)
+          ? json.data
+          : [];
 
   return list
     .filter((u: any) => u?.id)
@@ -151,7 +210,9 @@ const fetchUsersFromApi = async (): Promise<UserOption[]> => {
       const fName =
         u.full_name ||
         u.name ||
-        `${u.first_name || ""} ${u.last_name || ""}`.trim();
+        `${u.first_name || u.firstname || ""} ${
+          u.last_name || u.lastname || ""
+        }`.trim();
       const displayName = fName || `User ${u.id}`;
       return {
         id: u.id,
@@ -177,9 +238,11 @@ const fetchDepartmentsFromApi = async (): Promise<DeptOption[]> => {
     ? json
     : Array.isArray(json.departments)
       ? json.departments
-      : Array.isArray(json.data)
-        ? json.data
-        : [];
+      : Array.isArray(json.data?.departments)
+        ? json.data.departments
+        : Array.isArray(json.data)
+          ? json.data
+          : [];
 
   return list
     .filter((d: any) => d?.id)
@@ -202,7 +265,10 @@ const createKpiInApi = async (
       name: form.name.trim(),
       unit: form.unit !== "Select unit" ? form.unit : undefined,
       frequency: form.frequency.toLowerCase(),
-      target_value: form.target_value
+      current_value: form.current_value.trim() !== ""
+        ? parseFloat(form.current_value)
+        : undefined,
+      target_value: form.target_value.trim() !== ""
         ? parseFloat(form.target_value)
         : undefined,
       department: deptName || undefined,
@@ -226,6 +292,7 @@ const createKpiInApi = async (
     json = {};
   }
   const k = json.data?.kpi ?? json.data ?? json.kpi ?? json;
+  const assignee = getKpiAssignee(k);
   return {
     id: k.id,
     name: k.name ?? form.name,
@@ -235,9 +302,10 @@ const createKpiInApi = async (
     frequency: k.frequency ?? form.frequency.toLowerCase(),
     target_value: k.target_value ?? null,
     current_value: k.current_value ?? null,
-    department_id: k.department_id ?? null,
-    assignee_id: k.assignee_id ?? null,
-    owner: k.assignee?.name ?? null,
+    department_id: getKpiDepartmentId(k),
+    department_name: getKpiDepartmentName(k),
+    assignee_id: assignee.id,
+    owner: assignee.name,
     selected: true,
   };
 };
@@ -801,15 +869,62 @@ export const CriticalNumbers = () => {
   };
 
   const openEdit = (kpi: Kpi) => {
+    const departmentId =
+      kpi.department_id != null
+        ? String(kpi.department_id)
+        : departments.find(
+            (dept) =>
+              dept.name.trim().toLowerCase() ===
+              String(kpi.department_name || "").trim().toLowerCase()
+          )?.id?.toString() || "";
+    const assigneeId =
+      kpi.assignee_id != null
+        ? String(kpi.assignee_id)
+        : users.find(
+            (user) =>
+              user.name.trim().toLowerCase() ===
+              String(kpi.owner || "").trim().toLowerCase()
+          )?.id?.toString() || "";
+
+    if (departmentId && kpi.department_name) {
+      setDepartments((prev) =>
+        prev.some((dept) => String(dept.id) === departmentId)
+          ? prev
+          : [
+              ...prev,
+              {
+                id: Number(departmentId),
+                name: kpi.department_name || `Dept ${departmentId}`,
+              },
+            ]
+      );
+    }
+    if (assigneeId && kpi.owner) {
+      setUsers((prev) =>
+        prev.some((user) => String(user.id) === assigneeId)
+          ? prev
+          : [
+              ...prev,
+              {
+                id: Number(assigneeId),
+                name: kpi.owner || `User ${assigneeId}`,
+              },
+            ]
+      );
+    }
+
     setForm({
       name: kpi.name,
       unit: kpi.unit ?? "Select unit",
       frequency: kpi.frequency
         ? kpi.frequency.charAt(0).toUpperCase() + kpi.frequency.slice(1)
         : "Monthly",
-      target_value: kpi.target_value != null ? String(kpi.target_value) : "",
-      department_id: kpi.department_id != null ? String(kpi.department_id) : "",
-      assign_to_id: kpi.assignee_id != null ? String(kpi.assignee_id) : "",
+      current_value:
+        kpi.current_value != null ? formatKpiNumber(kpi.current_value) : "",
+      target_value:
+        kpi.target_value != null ? formatKpiNumber(kpi.target_value) : "",
+      department_id: departmentId,
+      assign_to_id: assigneeId,
     });
     setEditingKpi(kpi);
     setSaveError(null);
@@ -860,9 +975,20 @@ export const CriticalNumbers = () => {
       const created = await createKpiInApi(form, departments);
       // Attach resolved names optimistically
       const ownerName = findName(users, form.assign_to_id);
+      const departmentName = findName(departments, form.department_id);
       setKpis((prev) => [
         ...prev,
-        { ...created, owner: ownerName ?? created.owner },
+        {
+          ...created,
+          department_id: form.department_id
+            ? parseInt(form.department_id, 10)
+            : created.department_id,
+          department_name: departmentName ?? created.department_name,
+          assignee_id: form.assign_to_id
+            ? parseInt(form.assign_to_id, 10)
+            : created.assignee_id,
+          owner: ownerName ?? created.owner,
+        },
       ]);
       closeModal();
       fetchKpisFromApi()
@@ -888,7 +1014,10 @@ export const CriticalNumbers = () => {
       // Naya payload structure
       const patch: any = {
         name: form.name.trim(),
-        target_value: form.target_value
+        current_value: form.current_value.trim() !== ""
+          ? parseFloat(form.current_value)
+          : undefined,
+        target_value: form.target_value.trim() !== ""
           ? parseFloat(form.target_value)
           : undefined,
         frequency: form.frequency.toLowerCase(),
@@ -909,6 +1038,7 @@ export const CriticalNumbers = () => {
       await updateKpiInApi(editingKpi.id, patch);
 
       const ownerName = findName(users, form.assign_to_id);
+      const departmentName = findName(departments, form.department_id);
       setKpis((prev) =>
         prev.map((k) =>
           k.id === editingKpi.id
@@ -917,12 +1047,16 @@ export const CriticalNumbers = () => {
                 name: form.name,
                 unit: form.unit !== "Select unit" ? form.unit : k.unit,
                 frequency: form.frequency.toLowerCase(),
-                target_value: form.target_value
+                current_value: form.current_value.trim() !== ""
+                  ? parseFloat(form.current_value)
+                  : k.current_value,
+                target_value: form.target_value.trim() !== ""
                   ? parseFloat(form.target_value)
                   : k.target_value,
                 department_id: form.department_id
                   ? parseInt(form.department_id, 10)
                   : k.department_id,
+                department_name: departmentName ?? k.department_name,
                 assignee_id: form.assign_to_id
                   ? parseInt(form.assign_to_id, 10)
                   : k.assignee_id,
@@ -1542,7 +1676,9 @@ export const CriticalNumbers = () => {
                           lineHeight: 1,
                         }}
                       >
-                        {kpi.current_value ?? "—"}
+                        {kpi.current_value != null
+                          ? formatKpiNumber(kpi.current_value)
+                          : "—"}
                         {kpi.unit && kpi.unit !== "Select unit"
                           ? ` ${kpi.unit}`
                           : ""}
@@ -1557,7 +1693,7 @@ export const CriticalNumbers = () => {
                             fontFamily: C.font,
                           }}
                         >
-                          Target: {kpi.target_value}
+                          Target: {formatKpiNumber(kpi.target_value)}
                           {kpi.unit && kpi.unit !== "Select unit"
                             ? ` ${kpi.unit}`
                             : ""}
@@ -1734,11 +1870,11 @@ export const CriticalNumbers = () => {
                 )}
               </div>
 
-              {/* Unit + Target */}
+              {/* Unit + Values */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "1fr 1fr 1fr",
                   gap: 14,
                 }}
               >
@@ -1764,6 +1900,29 @@ export const CriticalNumbers = () => {
                       <option key={u}>{u}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      color: C.textMain,
+                      marginBottom: 6,
+                      fontFamily: C.font,
+                    }}
+                  >
+                    Current Value
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 250"
+                    value={form.current_value}
+                    onChange={(e) =>
+                      setForm({ ...form, current_value: e.target.value })
+                    }
+                    className="kpi-input"
+                  />
                 </div>
                 <div>
                   <label

@@ -30,6 +30,10 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);
     const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+    const prefilledResponsiblePerson = prefillData?.responsible_person;
+    const prefilledResponsiblePersonId = prefilledResponsiblePerson?.id;
+    const prefilledResponsiblePersonName = prefilledResponsiblePerson?.name;
+    const defaultResponsiblePerson = prefilledResponsiblePersonId ?? userId ?? '';
     const [selectedResponsiblePerson, setSelectedResponsiblePerson] = useState(userId || '');
     const [priority, setPriority] = useState('');
     const [isEditorReady, setIsEditorReady] = useState(false);
@@ -76,13 +80,13 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                 setTitle('');
                 setDescription('');
                 setDate(null);
-                setSelectedResponsiblePerson(userId || '');
+                setSelectedResponsiblePerson(defaultResponsiblePerson);
                 setPriority('');
             }
 
             setIsEditorReady(true);
         }
-    }, [isModalOpen, isEditMode, editingTodo, userId]);
+    }, [isModalOpen, isEditMode, editingTodo, defaultResponsiblePerson]);
 
     useEffect(() => {
         if (!isModalOpen || !isEditorReady || !quillRef.current) return;
@@ -142,7 +146,21 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                         name: user.name || user.full_name || "Unknown",
                         department_name: user.department_name,
                     }));
-                setUsers(validUsers);
+                const shouldAddPrefilledUser =
+                    prefilledResponsiblePersonId &&
+                    !validUsers.some((user: any) => user.id === prefilledResponsiblePersonId);
+                setUsers(
+                    shouldAddPrefilledUser
+                        ? [
+                            ...validUsers,
+                            {
+                                id: prefilledResponsiblePersonId,
+                                name: prefilledResponsiblePersonName,
+                                department_name: "",
+                            },
+                        ]
+                        : validUsers
+                );
             } catch (error) {
                 console.log("Error fetching users:", error);
             }
@@ -151,7 +169,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
         if (isModalOpen) {
             fetchUsers();
         }
-    }, [isModalOpen, baseURL, token]);
+    }, [isModalOpen, baseURL, token, prefilledResponsiblePersonId, prefilledResponsiblePersonName]);
 
     const closeModal = () => {
         setIsModalOpen();

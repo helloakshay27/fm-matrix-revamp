@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText } from 'lucide-react';
+import { Eye, Plus, Download, Upload, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -32,7 +32,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ItemData {
   id: number;
@@ -42,7 +51,8 @@ interface ItemData {
   description: string;
   rate: number;
   usage_unit: string;
-   current_stock?: number | null;
+  current_stock?: number | null;
+  active?: boolean;
   icon?: {
     document_file_name: string | null;
     attachment_url: string;
@@ -53,9 +63,9 @@ interface ItemData {
 export const ItemsDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
-const baseUrl = localStorage.getItem("baseUrl");
-const token = localStorage.getItem("token");
-const lock_account_id = localStorage.getItem("lock_account_id");
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem("lock_account_id");
   // State management
   // const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
   // const [journals, setJournals] = useState([]);
@@ -82,31 +92,35 @@ const lock_account_id = localStorage.getItem("lock_account_id");
   const [items, setItems] = useState<ItemData[]>([]);
   const perPage = 20;
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDeleteItem, setSelectedDeleteItem] = useState<ItemData | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   // Fetch items from API
+  const fetchItems = async () => {
+    setLoading(true);
+    try {
+      // const baseUrl = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
+      // const token = API_CONFIG.TOKEN;
+      const url = `https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`;
+      const response = await axios.get(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      // The API is expected to return an array of items
+      setItems(response.data || []);
+      console.log('Fetched items:', response.data);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      toast.error('Failed to fetch items');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchItems = async () => {
-      setLoading(true);
-      try {
-        // const baseUrl = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
-        // const token = API_CONFIG.TOKEN;
-        const url = `https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`;
-        const response = await axios.get(url, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        // The API is expected to return an array of items
-        setItems(response.data|| []);
-        console.log('Fetched items:', response.data);
-      } catch (error) {
-        console.error('Error fetching items:', error);
-        toast.error('Failed to fetch items');
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+
     fetchItems();
   }, []);
 
@@ -475,72 +489,173 @@ const lock_account_id = localStorage.getItem("lock_account_id");
     );
   };
 
+
+  const handleDeleteItem = async () => {
+    if (!selectedDeleteItem) return;
+
+    setDeleteLoading(true);
+
+    try {
+      const url = `https://${baseUrl}/lock_account_items/${selectedDeleteItem.id}.json`;
+
+      await axios.delete(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      // Remove deleted item from table instantly
+      setItems((prev) =>
+        prev.filter((item) => item.id !== selectedDeleteItem.id)
+      );
+
+      toast.success("Item deleted successfully");
+
+      setDeleteDialogOpen(false);
+      setSelectedDeleteItem(null);
+      // Reload latest items list
+      await fetchItems();
+
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete item");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+  const handleToggleStatus = async (item: ItemData) => {
+    try {
+      const url = `https://${baseUrl}/lock_account_items/${item.id}/toggle_active.json`;
+
+      const response = await axios.patch(
+        url,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      toast.success(
+        response?.data?.message || "Status updated successfully"
+      );
+
+      // Reload latest items
+      await fetchItems();
+
+    } catch (error) {
+      console.error("Toggle status error:", error);
+      toast.error("Failed to update status");
+    }
+  };
+
   // Define columns for EnhancedTable
-const columns = [
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'name', label: 'Name', sortable: true },
-  { key: 'sku', label: 'SKU', sortable: true },
-  { key: 'purchase_description', label: 'Purchase Description', sortable: true },
-  { key: 'purchase_rate', label: 'Purchase Rate', sortable: true },
-  { key: 'sale_description', label: 'Description', sortable: false },
-  { key: 'sale_rate', label: 'Rate', sortable: true },
-  { key: 'current_stock', label: 'Current Stock', sortable: true },
-  { key: 'unit', label: 'Usage Unit', sortable: true },
-];
+  const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'sku', label: 'SKU', sortable: true },
+    { key: 'purchase_description', label: 'Purchase Description', sortable: true },
+    { key: 'purchase_rate', label: 'Purchase Rate', sortable: true },
+    { key: 'sale_description', label: 'Description', sortable: false },
+    { key: 'sale_rate', label: 'Rate', sortable: true },
+    { key: 'current_stock', label: 'Current Stock', sortable: true },
+    { key: 'active', label: 'Status', sortable: false },
+    { key: 'unit', label: 'Usage Unit', sortable: true },
+  ];
 
 
   // Render cell content
 
   const renderCell = (item: ItemData, columnKey: string) => {
-  if (columnKey === "actions") {
-    return (
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/accounting/items/details/${item.id}`)}
-          title="View"
-          className="p-0"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+    if (columnKey === "actions") {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/accounting/items/details/${item.id}`)}
+            title="View"
+            className="p-0"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
 
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/accounting/items/edit/${item.id}`)}
-          title="Edit"
-          className="p-0"
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-      </div>
-    );
-  }
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/accounting/items/edit/${item.id}`)}
+            title="Edit"
+            className="p-0"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            title="Delete"
+            className="p-0 text-red-600 hover:text-red-700"
+            onClick={() => {
+              setSelectedDeleteItem(item);
+              setDeleteDialogOpen(true);
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    }
 
-  if (columnKey === "name") {
-    const hasIcon = item.icon?.document_file_name;
-    return (
-      <div className="flex items-center gap-2">
-        {hasIcon ? (
-          <img
-            src={item.icon!.attachment_url}
-            alt={item.name}
-            className="w-7 h-7 rounded object-cover border border-gray-200 flex-shrink-0"
-          />
-        ) : (
-          <div className="w-7 h-7 rounded border border-gray-200 bg-gray-100 flex-shrink-0" />
-        )}
-        <span>{item.name}</span>
-      </div>
-    );
-  }
-  if (columnKey === "current_stock") {
-    return item.current_stock ?? "--";
-  }
+    if (columnKey === "name") {
+      const hasIcon = item.icon?.document_file_name;
+      return (
+        <div className="flex items-center gap-2">
+          {hasIcon ? (
+            <img
+              src={item.icon!.attachment_url}
+              alt={item.name}
+              className="w-7 h-7 rounded object-cover border border-gray-200 flex-shrink-0"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded border border-gray-200 bg-gray-100 flex-shrink-0" />
+          )}
+          <span>{item.name}</span>
+        </div>
+      );
+    }
+    if (columnKey === "current_stock") {
+      return item.current_stock ?? "--";
+    }
 
-  return item[columnKey as keyof ItemData] ?? "--";
-};
+    if (columnKey === "active") {
+      return (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleToggleStatus(item)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-red-500" : "bg-gray-300"
+              }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+                }`}
+            />
+          </button>
 
-  
+          <span
+            className={`text-sm font-medium ${item.active ? "text-red-600" : "text-red-600"
+              }`}
+          >
+            {/* {item.active ? "Active" : "Inactive"} */}
+          </span>
+        </div>
+      );
+    }
+
+    return item[columnKey as keyof ItemData] ?? "--";
+  };
+
+
   // Custom left actions
   const renderCustomActions = () => (
     <div className="flex gap-3">
@@ -569,7 +684,7 @@ const columns = [
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-         <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Items</h1>
       </div>
       {/* Memberships Table */}
@@ -591,20 +706,93 @@ const columns = [
           exportFileName="club-group-memberships"
           handleExport={handleExport}
           storageKey="club-group-memberships-table"
+          // leftActions={
+          //   <div className="flex gap-3">
+          //     {renderCustomActions()}
+          //   </div>
+          // }
           leftActions={
-            <div className="flex gap-3">
-              {renderCustomActions()}
+            <div className="flex flex-wrap items-center gap-3">
+
+              {/* ADD BUTTON */}
+              <Button
+                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                onClick={handleAddMembership}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add
+              </Button>
+              {/* DOWNLOAD SAMPLE BUTTON */}
+              {/* <Button
+                variant="outline"
+                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = "/sample-item-upload.xlsx";
+                  link.download = "sample-item-upload.xlsx";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Sample
+              </Button> */}
+
+              {/* BULK UPLOAD BUTTON */}
+              {/* <Button
+                variant="outline"
+                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
+                onClick={() => navigate("/accounting/items/bulk-upload")}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Bulk Upload
+              </Button> */}
+
+
             </div>
           }
           // onFilterClick={() => setIsFilterOpen(true)}
-          rightActions={renderRightActions()}
+          rightActions={
+            <div>
+            {/* renderRightActions() */}
+
+             {/* DOWNLOAD SAMPLE BUTTON */}
+              {/* <Button
+                variant="outline"
+                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = "/sample-item-upload.xlsx";
+                  link.download = "sample-item-upload.xlsx";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Sample
+              </Button> */}
+
+              {/* BULK UPLOAD BUTTON */}
+              {/* <Button
+                variant="outline"
+                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white ms-2"
+                onClick={() => navigate("/accounting/items/bulk-upload")}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Bulk Upload
+              </Button> */}
+              </div>
+          }
           searchPlaceholder="Search "
           onSearchChange={handleSearch}
           hideTableExport={true}
           hideColumnsButton={false}
           className="transition-all duration-500 ease-in-out"
           loading={loading}
-          loadingMessage="Loading group memberships..."
+          loadingMessage="Loading ..."
         />
 
         {/* Pagination Section */}
@@ -666,6 +854,61 @@ const columns = [
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Item
+            </AlertDialogTitle>
+
+            <AlertDialogDescription>
+              Once you delete these items, you won't be able to retrieve them later.
+              Are you sure you want to delete them?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>
+              Cancel
+            </AlertDialogCancel>
+
+            {/* <AlertDialogAction
+        onClick={(e) => {
+          e.preventDefault();
+          handleDeleteItem();
+        }}
+        disabled={deleteLoading}
+        className="bg-red-600 hover:bg-red-700 text-white"
+      >
+        {deleteLoading ? "Deleting..." : "OK"}
+      </AlertDialogAction> */}
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteItem();
+              }}
+              disabled={deleteLoading}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                border: "none",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#b91c1c";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc2626";
+              }}
+            >
+              {deleteLoading ? "Deleting..." : "OK"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -245,21 +245,6 @@ const normalizeToString = (w: any): string => {
     return String(w ?? "");
 };
 
-const normalizeWinKey = (win: unknown): string =>
-    normalizeToString(win).trim().replace(/\s+/g, " ").toLowerCase();
-
-const getTitleOrValue = (item: unknown) => {
-    if (
-        item &&
-        typeof item === "object" &&
-        "title" in item &&
-        typeof item.title === "string"
-    ) {
-        return item.title;
-    }
-    return item;
-};
-
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
 
 const normalizeSopStatus = (status: any) =>
@@ -378,7 +363,7 @@ const WeeklyReports = () => {
     );
 
     const [dayPlans, setDayPlans] = React.useState<
-        Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string }[]>
+        Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]>
     >({});
 
     const [remarksText, setRemarksText] = React.useState("");
@@ -402,17 +387,12 @@ const WeeklyReports = () => {
     const [selectedTodo, setSelectedTodo] = useState<any>(null);
     const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
         useState<null | HTMLElement>(null);
+    const [dayPlanMenuAnchor, setDayPlanMenuAnchor] = useState<{ el: HTMLElement; dayKey: string; date: string } | null>(null);
+    const [planPreFillDate, setPlanPreFillDate] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
     const [editingId, setEditingId] = React.useState<number | null>(null);
-    const [showDailyWinsDialog, setShowDailyWinsDialog] = React.useState(false);
-    const [dailyReports, setDailyReports] = React.useState<any[]>([]);
-    const [isLoadingDailyReports, setIsLoadingDailyReports] =
-        React.useState(false);
-    const [selectedDailyWins, setSelectedDailyWins] = React.useState<string[]>(
-        []
-    );
     const [uploadedFilesCount, setUploadedFilesCount] = React.useState(0);
     const [selectedFileNames, setSelectedFileNames] = React.useState<string[]>(
         []
@@ -734,6 +714,7 @@ const WeeklyReports = () => {
                             title: t.title || t.name || "Untitled Task",
                             type: "task",
                             date: t.target_date || t.due_date || t.end_date || null,
+                            priority: t.priority || null,
                             originalData: t,
                         })),
                     ...issues
@@ -743,6 +724,7 @@ const WeeklyReports = () => {
                             title: i.title || i.name || "Untitled Issue",
                             type: "issue",
                             date: i.target_date || i.due_date || i.end_date || null,
+                            priority: i.priority || null,
                             originalData: i,
                         })),
                     ...todos
@@ -752,6 +734,7 @@ const WeeklyReports = () => {
                             title: td.title || td.name || td.description || "Untitled Todo",
                             type: "todo",
                             date: td.target_date || td.due_date || td.end_date || null,
+                            priority: td.priority || null,
                             originalData: td,
                         })),
                 ];
@@ -1563,55 +1546,6 @@ const WeeklyReports = () => {
     const lastWeekNum = String(getISOWeek(prevWeekStart));
     const lastWeekLabel = `${format(prevWeekStart, "MMM d")} - ${format(prevWeekEnd, "MMM d")}`;
 
-    const importPrevWeekStart = React.useMemo(
-        () => subDays(weekStart, 7),
-        [weekStart]
-    );
-    const importPrevWeekEnd = React.useMemo(() => subDays(weekEnd, 7), [weekEnd]);
-    const existingWinKeys = React.useMemo(
-        () =>
-            new Set(
-                wins
-                    .map(normalizeWinKey)
-                    .filter(Boolean)
-            ),
-        [wins]
-    );
-    const availableDailyReports = React.useMemo(
-        () =>
-            dailyReports
-                .map((report) => {
-                    const rawDate = report.start_date || report.created_at;
-                    const reportDate = rawDate ? new Date(rawDate) : null;
-                    if (!reportDate || isNaN(reportDate.getTime())) return null;
-
-                    const rawWins =
-                        report.report_data?.achievements ||
-                        report.report_data?.accomplishments?.items?.map(
-                            getTitleOrValue
-                        ) ||
-                        (Array.isArray(report.report_data?.accomplishments)
-                            ? report.report_data.accomplishments.map(
-                                getTitleOrValue
-                            )
-                            : []) ||
-                        [];
-                    const reportWins = rawWins
-                        .map(normalizeToString)
-                        .map((win: string) => win.trim())
-                        .filter(
-                            (win: string) =>
-                                win && !existingWinKeys.has(normalizeWinKey(win))
-                        );
-
-                    return reportWins.length > 0
-                        ? { id: report.id, reportDate, wins: reportWins }
-                        : null;
-                })
-                .filter(Boolean),
-        [dailyReports, existingWinKeys]
-    );
-
     const upcomingDays = React.useMemo(() => {
         const start = new Date(weekEnd);
         start.setDate(start.getDate() + 1);
@@ -2082,110 +2016,6 @@ const WeeklyReports = () => {
         }
     };
 
-    // --- MODIFIED: Remove carried forward achievements from the current list ---
-    const handleCarryForward = () => {
-        const indicesToCarry: number[] = [];
-        const uncheckedWins = wins.filter((win, i) => {
-            if (!checkedWins[i] && win.trim() !== "") {
-                indicesToCarry.push(i);
-                return true;
-            }
-            return false;
-        });
-
-        if (uncheckedWins.length === 0) {
-            toast.info("No uncompleted achievements to carry forward");
-            return;
-        }
-        if (history.length === 0) {
-            toast.error("No previous reports found to carry forward");
-            return;
-        }
-
-        const latest = history.find((item) => item.id !== editingId);
-        if (latest) {
-            const firstDay = upcomingDays.find((d) => d.canAdd)?.key;
-            if (firstDay) {
-                setDayPlans((prev) => ({
-                    ...prev,
-                    [firstDay]: [
-                        ...(prev[firstDay] || []),
-                        ...uncheckedWins.map((win) => ({
-                            id: crypto.randomUUID(),
-                            text: win,
-                        })),
-                    ],
-                }));
-
-                // Remove the carried forward items from 'wins'
-                const remainingWins: string[] = [];
-                const newCheckedWins: Record<number, boolean> = {};
-                const newStarredWins: Record<number, boolean> = {};
-
-                let newIdx = 0;
-                wins.forEach((win, i) => {
-                    if (!indicesToCarry.includes(i)) {
-                        remainingWins.push(win);
-                        newCheckedWins[newIdx] = checkedWins[i] ?? false;
-                        newStarredWins[newIdx] = starredWins[i] ?? false;
-                        newIdx++;
-                    }
-                });
-
-                setWins(remainingWins);
-                setCheckedWins(newCheckedWins);
-                setStarredWins(newStarredWins);
-
-                toast.success(
-                    `Carried forward ${uncheckedWins.length} uncompleted achievement(s) and removed from list`
-                );
-            }
-        }
-    };
-
-    const handleImportDailyWins = async () => {
-        setIsLoadingDailyReports(true);
-        setSelectedDailyWins([]);
-        setShowDailyWinsDialog(true);
-        try {
-            const response = await apiClient.get(
-                `${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=daily`
-            );
-            const allDaily = response.data || [];
-
-            const prevStartStr = format(importPrevWeekStart, "yyyy-MM-dd");
-            const prevEndStr = format(importPrevWeekEnd, "yyyy-MM-dd");
-
-            const filtered = allDaily.filter((report: any) => {
-                const raw = report.start_date || report.created_at;
-                if (!raw) return false;
-                const reportDateStr =
-                    typeof raw === "string"
-                        ? raw.split("T")[0]
-                        : format(new Date(raw), "yyyy-MM-dd");
-                return reportDateStr >= prevStartStr && reportDateStr <= prevEndStr;
-            });
-
-            setDailyReports(filtered);
-        } catch (error) {
-            console.error("Failed to fetch daily reports:", error);
-            toast.error("Failed to load daily reports");
-        } finally {
-            setIsLoadingDailyReports(false);
-        }
-    };
-
-    const confirmImportDailyWins = () => {
-        if (selectedDailyWins.length === 0) {
-            toast.info("No wins selected");
-            return;
-        }
-        setWins((prev) => [...prev, ...selectedDailyWins]);
-        toast.success(`Imported ${selectedDailyWins.length} daily wins`);
-        setShowDailyWinsDialog(false);
-        setSelectedDailyWins([]);
-    };
-
     const handleAddPlan = (day: string) => {
         setDayPlans((prev) => ({
             ...prev,
@@ -2249,6 +2079,7 @@ const WeeklyReports = () => {
                         starred: false,
                         source_id: item.originalData?.id ?? item.id,
                         source_type: item.type,
+                        originalData: item.originalData ?? null,
                     },
                 ],
             }));
@@ -2433,6 +2264,32 @@ const WeeklyReports = () => {
                 }
             });
 
+            const mondayPlanKey = upcomingDays[0]?.key;
+            const uncompletedWins = wins
+                .map((win, index) => ({ text: win.trim(), index }))
+                .filter(({ text, index }) => text !== "" && checkedWins[index] === false);
+            const effectiveDayPlans = { ...dayPlans };
+
+            if (mondayPlanKey && uncompletedWins.length > 0) {
+                const existingMondayPlans = effectiveDayPlans[mondayPlanKey] || [];
+                const existingPlanText = new Set(
+                    existingMondayPlans
+                        .map((plan) => plan.text.trim().toLowerCase())
+                        .filter(Boolean)
+                );
+                const carriedMondayPlans = uncompletedWins
+                    .filter(({ text }) => !existingPlanText.has(text.toLowerCase()))
+                    .map(({ text }) => ({
+                        id: crypto.randomUUID(),
+                        text,
+                    }));
+
+                effectiveDayPlans[mondayPlanKey] = [
+                    ...existingMondayPlans,
+                    ...carriedMondayPlans,
+                ];
+            }
+
             const payload = {
                 user_journal: {
                     user_id: currentUser.id,
@@ -2453,7 +2310,10 @@ const WeeklyReports = () => {
                                     title: w,
                                     is_starred: starredWins[index] ?? false,
                                 }))
-                                .filter((item) => item.title.trim() !== ""),
+                                .filter(
+                                    (item, index) =>
+                                        item.title.trim() !== "" && checkedWins[index] !== false
+                                ),
                             ...mergedTasksIssues
                                 .filter((item) =>
                                     ["completed", "closed", "done"].includes(item.status)
@@ -2467,7 +2327,7 @@ const WeeklyReports = () => {
                         ],
                         upcoming_week_plan: [{
                             ...Object.fromEntries(
-                                Object.entries(dayPlans).map(([dayKey, tasks]) => {
+                                Object.entries(effectiveDayPlans).map(([dayKey, tasks]) => {
                                     const dayMatch = dayKey.match(/^(\w{3})/);
                                     const dayAbbr = dayMatch ? dayMatch[1].toLowerCase() : dayKey.slice(0, 3).toLowerCase();
                                     const planForDate = upcomingDays.find(d => d.key === dayKey)?.date ?? null;
@@ -2965,9 +2825,19 @@ const WeeklyReports = () => {
                                         Your Achievements
                                     </h3>
                                 </div>
-                                <Badge className={badgePoints}>
-                                    {weeklyScore.breakdown.achievements}/6 pts
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                    <Badge className={badgePoints}>
+                                        {weeklyScore.breakdown.achievements}/6 pts
+                                    </Badge>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddWin}
+                                        className="h-9 rounded-[10px] bg-[#f5ebe8] px-3 text-[12px] font-bold text-[#881337] transition-colors hover:bg-[#eaddd7] flex items-center justify-center gap-1.5 shadow-none border-none"
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Add Win
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-4 p-6">
                                 {mergedTasksIssues
@@ -3008,15 +2878,68 @@ const WeeklyReports = () => {
                                                     )}
                                                 />
                                             </button>
-                                            <p className="flex-1 text-sm text-neutral-700 pt-0.5">
-                                                {item.title}
-                                            </p>
+                                            <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
+                                                    {item.title}
+                                                </p>
+                                                {(() => {
+                                                    const d = item.originalData;
+                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                    let issueEffort: string | null = null;
+                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                        const totalMin = d.issue_allocation_times.reduce(
+                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                        );
+                                                        if (totalMin > 0) {
+                                                            const h = Math.floor(totalMin / 60);
+                                                            const m = totalMin % 60;
+                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                        }
+                                                    }
+                                                    const hasInfo = endDate || effortEst || issueEffort;
+                                                    if (!hasInfo) return null;
+                                                    return (
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            {endDate && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                    <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                    {endDate}
+                                                                </span>
+                                                            )}
+                                                            {effortEst && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                    <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                    Est: {effortEst}
+                                                                </span>
+                                                            )}
+                                                            {issueEffort && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                                                    <Zap className="h-2.5 w-2.5 shrink-0" />
+                                                                    Effort: {issueEffort}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
                                             <span className={cn(
                                                 "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 mt-1",
                                                 item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
                                             )}>
                                                 {item.type}
                                             </span>
+                                            {item.priority && (
+                                                <span
+                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
+                                                    style={{
+                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                    }}
+                                                >
+                                                    {item.priority}
+                                                </span>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -3104,37 +3027,6 @@ const WeeklyReports = () => {
                                     </div>
                                 ))}
 
-                                <div className="flex flex-col gap-3 sm:flex-row w-full">
-                                    <button
-                                        type="button"
-                                        onClick={handleImportDailyWins}
-                                        className="h-[46px] flex-1 rounded-[10px] border border-dashed border-[#93c5fd] bg-transparent text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
-                                    >
-                                        <Plus className="h-4 w-4 text-slate-400" />
-                                        Import Daily Wins (last week&apos;s)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleAddWin}
-                                        className="h-[46px] flex-1 rounded-[10px] bg-[#f5ebe8] text-[13px] font-bold text-[#881337] transition-colors hover:bg-[#eaddd7] flex items-center justify-center gap-2 shadow-none border-none"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                        Add Win
-                                    </button>
-                                </div>
-
-                                {wins.length > 0 &&
-                                    wins.some((w, i) => !checkedWins[i] && w.trim() !== "") && (
-                                        <Button
-                                            type="button"
-                                            onClick={handleCarryForward}
-                                            className={cn(
-                                                "h-12 w-full rounded-xl bg-[#e65100] hover:bg-[#d84315] text-white font-bold tracking-wide"
-                                            )}
-                                        >
-                                            Carry Forward Uncompleted
-                                        </Button>
-                                    )}
                                 <div className="space-y-4 pt-4 border-t border-neutral-100">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
@@ -3204,12 +3096,12 @@ const WeeklyReports = () => {
                                             </h3>
                                         </div>
                                         <div className="flex flex-wrap gap-2 pt-1">
-                                            <Badge
+                                            {/* <Badge
                                                 variant="outline"
                                                 className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                                             >
                                                 Completed: {taskIssueCounts.completed}
-                                            </Badge>
+                                            </Badge> */}
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
@@ -3227,6 +3119,12 @@ const WeeklyReports = () => {
                                                 className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                                             >
                                                 In Progress: {taskIssueCounts.inProgress}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800"
+                                            >
+                                                On Hold: {taskIssueCounts.onHold}
                                             </Badge>
                                         </div>
                                     </div>
@@ -3856,7 +3754,7 @@ const WeeklyReports = () => {
                                             {day.canAdd ? (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleAddPlan(day.key)}
+                                                    onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
                                                     className="inline-flex items-center gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2.5 py-1.5 text-xs font-bold text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45"
                                                 >
                                                     <Plus className="h-3 w-3" /> Add
@@ -3879,15 +3777,79 @@ const WeeklyReports = () => {
                                                         className="relative ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm transition-all duration-200 hover:border-[#DA7756]/30 hover:shadow-md"
                                                     >
                                                         <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                            <span className={cn(
-                                                                "self-start text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                            )}>
-                                                                {item.type}
-                                                            </span>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={cn(
+                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                )}>
+                                                                    {item.type}
+                                                                </span>
+                                                                {item.priority && (
+                                                                    <span
+                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                        style={{
+                                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                        }}
+                                                                    >
+                                                                        {item.priority}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
                                                                 {item.title}
                                                             </p>
+                                                            {(() => {
+                                                                const d = item.originalData;
+                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                                let timeLeftLabel: string | null = null;
+                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                                                    const now = new Date();
+                                                                    const end = new Date(d.end_date);
+                                                                    end.setHours(23, 59, 59, 999);
+                                                                    const diff = end.getTime() - now.getTime();
+                                                                    if (diff > 0) {
+                                                                        const days = Math.floor(diff / 86400000);
+                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                        else timeLeftLabel = `${mins}m left`;
+                                                                    }
+                                                                }
+                                                                const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                                                if (!hasInfo) return null;
+                                                                return (
+                                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                                        {endDate && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                                {endDate}
+                                                                            </span>
+                                                                        )}
+                                                                        {overdueLabel && (
+                                                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                                <AlertCircle className="h-2.5 w-2.5 shrink-0" />
+                                                                                {overdueLabel}
+                                                                            </span>
+                                                                        )}
+                                                                        {timeLeftLabel && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                                {timeLeftLabel}
+                                                                            </span>
+                                                                        )}
+                                                                        {effortEst && (
+                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                                Est: {effortEst}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div className="flex flex-col gap-1 relative z-20">
                                                             <button
@@ -3932,12 +3894,25 @@ const WeeklyReports = () => {
                                                     </button>
                                                     <div className="flex flex-1 flex-col gap-1.5 min-w-0">
                                                         {planObj.source_type && (
-                                                            <span className={cn(
-                                                                "self-start text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                            )}>
-                                                                {planObj.source_type}
-                                                            </span>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={cn(
+                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                )}>
+                                                                    {planObj.source_type}
+                                                                </span>
+                                                                {planObj.originalData?.priority && (
+                                                                    <span
+                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                        style={{
+                                                                            backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                            color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                                                        }}
+                                                                    >
+                                                                        {planObj.originalData.priority}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         )}
                                                         {planObj.source_type ? (
                                                             <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
@@ -3953,6 +3928,57 @@ const WeeklyReports = () => {
                                                                 className="rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
                                                             />
                                                         )}
+                                                        {planObj.originalData && (() => {
+                                                            const d = planObj.originalData;
+                                                            const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                            const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                            const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                            let timeLeftLabel: string | null = null;
+                                                            if (planObj.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                                                const now = new Date();
+                                                                const end = new Date(d.end_date);
+                                                                end.setHours(23, 59, 59, 999);
+                                                                const diff = end.getTime() - now.getTime();
+                                                                if (diff > 0) {
+                                                                    const days = Math.floor(diff / 86400000);
+                                                                    const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                    const mins = Math.floor((diff % 3600000) / 60000);
+                                                                    if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                    else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                    else timeLeftLabel = `${mins}m left`;
+                                                                }
+                                                            }
+                                                            const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                                            if (!hasInfo) return null;
+                                                            return (
+                                                                <div className="flex items-center gap-3 flex-wrap">
+                                                                    {endDate && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                            {endDate}
+                                                                        </span>
+                                                                    )}
+                                                                    {overdueLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                            <AlertCircle className="h-2.5 w-2.5 shrink-0" />
+                                                                            {overdueLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {timeLeftLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                            {timeLeftLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {effortEst && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                            Est: {effortEst}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
                                                     </div>
                                                     <div className="flex flex-col gap-1 relative z-20">
                                                         <button
@@ -4944,89 +4970,6 @@ const WeeklyReports = () => {
                 </Tabs>
             </div>
 
-            {/* Import Daily Wins Dialog */}
-            <Dialog open={showDailyWinsDialog} onOpenChange={setShowDailyWinsDialog}>
-                <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden font-poppins">
-                    <DialogHeader className="p-6 pb-2">
-                        <DialogTitle className="text-xl font-bold text-neutral-900">
-                            Select Daily Wins from Past Week
-                        </DialogTitle>
-                        <p className="text-sm text-neutral-500 mt-1">
-                            Choose accomplishments from your daily reports (
-                            {format(importPrevWeekStart, "MMM d")} to{" "}
-                            {format(importPrevWeekEnd, "MMM d")}) to add to this week&apos;s
-                            achievements.
-                        </p>
-                    </DialogHeader>
-
-                    <div className="max-h-[400px] overflow-y-auto p-6 pt-2 space-y-6">
-                        {isLoadingDailyReports ? (
-                            <div className="space-y-4 py-4">
-                                <Skeleton className="h-6 w-1/3" />
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                        ) : availableDailyReports.length > 0 ? (
-                            availableDailyReports.map((entry) => (
-                                <div key={entry.id} className="space-y-3">
-                                    <h4 className="text-sm font-bold text-neutral-700">
-                                        {format(entry.reportDate, "EEE, MMM d")}
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {entry.wins.map((win: string, i: number) => (
-                                            <div key={i} className="flex items-center gap-3 p-1">
-                                                <Checkbox
-                                                    id={`win-${entry.id}-${i}`}
-                                                    checked={selectedDailyWins.includes(win)}
-                                                    onCheckedChange={(checked) => {
-                                                        if (checked) {
-                                                            setSelectedDailyWins((prev) => [...prev, win]);
-                                                        } else {
-                                                            setSelectedDailyWins((prev) =>
-                                                                prev.filter((w) => w !== win)
-                                                            );
-                                                        }
-                                                    }}
-                                                    className="rounded border-neutral-300"
-                                                />
-                                                <label
-                                                    htmlFor={`win-${entry.id}-${i}`}
-                                                    className="text-sm text-neutral-700 cursor-pointer"
-                                                >
-                                                    {win}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="h-px bg-neutral-100 mt-4 mx-[-24px]" />
-                                </div>
-                            ))
-                        ) : (
-                            <div className="py-8 text-center text-neutral-500 text-sm italic">
-                                No daily wins available to import for the past week.
-                            </div>
-                        )}
-                    </div>
-
-                    <DialogFooter className="p-6 pt-2 gap-3 sm:justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowDailyWinsDialog(false)}
-                            className="rounded-xl border-neutral-200 text-neutral-700 font-bold px-6"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={confirmImportDailyWins}
-                            disabled={selectedDailyWins.length === 0}
-                            className="rounded-xl bg-neutral-400 hover:bg-neutral-500 text-white font-bold px-6"
-                        >
-                            Add Selected
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
             <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
                 <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
                     <div className="sticky top-0 bg-white z-10">
@@ -5039,8 +4982,7 @@ const WeeklyReports = () => {
                             isEdit={false}
                             onCloseModal={() => setOpenTaskModal(false)}
                             prefillData={{
-                                start_date: currentDateValue,
-                                target_date: weekEndDateValue,
+                                start_date: planPreFillDate ?? currentDateValue,
                             }}
                         />
                     </div>
@@ -5051,8 +4993,7 @@ const WeeklyReports = () => {
                 openDialog={openIssueModal}
                 handleCloseDialog={() => setOpenIssueModal(false)}
                 prefillData={{
-                    start_date: currentDateValue,
-                    target_date: currentDateValue,
+                    start_date: planPreFillDate ?? currentDateValue,
                 }}
             />
 
@@ -5064,8 +5005,8 @@ const WeeklyReports = () => {
                 }}
                 getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
                 prefillData={{
-                    start_date: currentDateValue,
-                    target_date: weekEndDateValue,
+                    start_date: planPreFillDate ?? currentDateValue,
+                    // target_date: weekEndDateValue,
                 }}
             />
 
@@ -5396,6 +5337,7 @@ const WeeklyReports = () => {
             >
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenTaskModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -5424,6 +5366,7 @@ const WeeklyReports = () => {
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenIssueModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -5452,6 +5395,7 @@ const WeeklyReports = () => {
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
+                        setPlanPreFillDate(null);
                         setOpenTodoModal(true);
                         setTaskIssueMenuAnchor(null);
                     }}
@@ -5474,6 +5418,152 @@ const WeeklyReports = () => {
                             <span className="font-bold text-gray-900 text-sm">Add Todo</span>
                             <span className="text-xs text-gray-500 font-medium">
                                 Add a quick follow-up
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+            </Menu>
+
+            {/* Day plan dropdown menu */}
+            <Menu
+                anchorEl={dayPlanMenuAnchor?.el}
+                open={Boolean(dayPlanMenuAnchor)}
+                onClose={() => setDayPlanMenuAnchor(null)}
+                sx={{
+                    "& .MuiPaper-root": {
+                        borderRadius: "12px",
+                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                        minWidth: "220px",
+                        overflow: "visible",
+                        "&::before": {
+                            content: '""',
+                            display: "block",
+                            position: "absolute",
+                            top: -8,
+                            right: 20,
+                            width: 12,
+                            height: 12,
+                            backgroundColor: "#ffffff",
+                            transform: "translateY(-50%) rotate(45deg)",
+                            zIndex: 0,
+                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                        },
+                    },
+                }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "8px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#f0f4ff",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <Plus size={18} className="text-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Item</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenTaskModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#f0f4ff",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <CheckSquare size={18} className="text-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenIssueModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fef2f2",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-red-50 rounded-lg">
+                            <AlertCircle size={18} className="text-red-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                        setOpenTodoModal(true);
+                        setDayPlanMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px 8px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fef9f0",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <ListTodo size={18} className="text-amber-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
                             </span>
                         </div>
                     </div>
