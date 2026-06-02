@@ -126,7 +126,7 @@ const RideSettingsPage = () => {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 mx-auto">
       <div className="flex items-center gap-3 mb-8">
         <div className="p-2.5 rounded-xl bg-[#C72030]/10">
           <Settings2 className="w-6 h-6 text-[#C72030]" />
