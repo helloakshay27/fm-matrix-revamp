@@ -1441,13 +1441,13 @@ export const AMCDashboard = () => {
               </svg>
               AMC List
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="analytics"
               className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <BarChart3 className="w-4 h-4" />
               Analytics
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
@@ -1948,11 +1948,11 @@ export const AMCDashboard = () => {
           </MUIDialogContent>
         </MUIDialog>
 
-        <AMCAnalyticsFilterDialog
+        {/* <AMCAnalyticsFilterDialog
           isOpen={isAnalyticsFilterOpen}
           onClose={() => setIsAnalyticsFilterOpen(false)}
           onApplyFilters={handleAnalyticsFilterApply}
-        />
+        /> */}
       </>
     </div>
   );
