@@ -442,7 +442,7 @@ const mapApiTasks = (api: ApiSprint): Task[] => {
   });
 };
 
-const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
+const SprintTaskList = ({ sprintId, initialMemberId }: { sprintId: string; initialMemberId?: number }) => {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
   const navigate = useNavigate();
@@ -469,6 +469,7 @@ const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [tempSearchQuery, setTempSearchQuery] = useState("");
   const debounceTimerTask = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRenderTask = useRef(true);
   const [dropdowns, setDropdowns] = useState({
     status: false, workflowStatus: false, responsiblePerson: false,
     createdBy: false, project: false, tags: false,
@@ -498,8 +499,25 @@ const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
   }, [sprintId, baseUrl, token]);
 
   useEffect(() => {
-    if (sprintId) fetchTasks(activeFilters, 1, searchQuery);
+    if (!sprintId) return;
+    if (initialMemberId != null) {
+      const params = { "q[responsible_person_id_in][]": [initialMemberId] };
+      setSelectedResponsible([initialMemberId]);
+      setActiveFilters(params);
+      fetchTasks(params, 1, "");
+    } else {
+      fetchTasks({}, 1, "");
+    }
   }, [fetchTasks]);
+
+  useEffect(() => {
+    if (isFirstRenderTask.current) { isFirstRenderTask.current = false; return; }
+    if (initialMemberId == null) return;
+    const params = { "q[responsible_person_id_in][]": [initialMemberId] };
+    setSelectedResponsible([initialMemberId]);
+    setActiveFilters(params);
+    fetchTasks(params, 1, "");
+  }, [initialMemberId]);
 
   useEffect(() => {
     if (debounceTimerTask.current) clearTimeout(debounceTimerTask.current);
@@ -1148,6 +1166,12 @@ const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
         searchValue={tempSearchQuery}
         onSearchChange={(val: string) => setTempSearchQuery(val)}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        leftActions={
+          <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
+            <span className="text-gray-700 font-medium text-sm">Total Tasks:</span>
+            <span className="text-lg font-bold text-[#C72030]">{paginationData?.total_count || 0}</span>
+          </div>
+        }
       />
 
       {/* Pagination */}
@@ -1533,7 +1557,7 @@ const mapSprintIssueData = (issue: any) => ({
   active_time_till_now: issue.active_time_till_now || null,
 });
 
-const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
+const SprintIssueList = ({ sprintId, initialMemberId }: { sprintId: string; initialMemberId?: number }) => {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
   const navigate = useNavigate();
@@ -1552,6 +1576,7 @@ const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
   const [issueSearchQuery, setIssueSearchQuery] = useState("");
   const [issueTempSearch, setIssueTempSearch] = useState("");
   const debounceTimerIssue = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRenderIssue = useRef(true);
 
   const fetchIssues = useCallback(async (filters = "", page = 1, search = "") => {
     setLoadingIssues(true);
@@ -1573,8 +1598,23 @@ const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
   }, [sprintId, baseUrl, token]);
 
   useEffect(() => {
-    if (sprintId) fetchIssues("", 1, issueSearchQuery);
+    if (!sprintId) return;
+    if (initialMemberId != null) {
+      const filterString = `q[responsible_person_id_in][]=${initialMemberId}`;
+      setAppliedFilters(filterString);
+      fetchIssues(filterString, 1, "");
+    } else {
+      fetchIssues("", 1, "");
+    }
   }, [fetchIssues]);
+
+  useEffect(() => {
+    if (isFirstRenderIssue.current) { isFirstRenderIssue.current = false; return; }
+    if (initialMemberId == null) return;
+    const filterString = `q[responsible_person_id_in][]=${initialMemberId}`;
+    setAppliedFilters(filterString);
+    fetchIssues(filterString, 1, "");
+  }, [initialMemberId]);
 
   useEffect(() => {
     if (debounceTimerIssue.current) clearTimeout(debounceTimerIssue.current);
@@ -1774,6 +1814,12 @@ const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
         searchValue={issueTempSearch}
         onSearchChange={(val: string) => setIssueTempSearch(val)}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        leftActions={
+          <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
+            <span className="text-gray-700 font-medium text-sm">Total Issues:</span>
+            <span className="text-lg font-bold text-[#C72030]">{paginationData?.total_count || 0}</span>
+          </div>
+        }
       />
 
       {/* Pagination */}
@@ -2149,6 +2195,8 @@ export const SprintDetailsPage = () => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Open");
+  const [memberTaskFilter, setMemberTaskFilter] = useState<number | undefined>(undefined);
+  const [memberIssueFilter, setMemberIssueFilter] = useState<number | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<
     "tasks" | "issues" | "activity_log"
   >("tasks");
@@ -2440,7 +2488,7 @@ export const SprintDetailsPage = () => {
                       Priority :
                     </div>
                     <div className="text-left text-[14px]">
-                      {sprintDetails.priority || "-"}
+                      {sprintDetails.priority?.charAt(0)?.toUpperCase() + sprintDetails.priority?.slice(1) || "-"}
                     </div>
                   </div>
                 </div>
@@ -2537,10 +2585,10 @@ export const SprintDetailsPage = () => {
               {/* Tab content */}
               <div className="mt-4 overflow-x-auto">
                 {activeTab === "tasks" && (
-                  <SprintTaskList sprintId={String(id)} />
+                  <SprintTaskList sprintId={String(id)} initialMemberId={memberTaskFilter} />
                 )}
                 {activeTab === "issues" && (
-                  <SprintIssueList sprintId={String(id)} />
+                  <SprintIssueList sprintId={String(id)} initialMemberId={memberIssueFilter} />
                 )}
                 {activeTab === "activity_log" && (
                   <SprintActivityLog sprintId={String(id)} />
@@ -2753,13 +2801,29 @@ export const SprintDetailsPage = () => {
                               : "#ef4444";
                         return (
                           <>
-                            <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberIssueFilter(undefined);
+                                setMemberTaskFilter(m.member_id);
+                                setActiveTab("tasks");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.total_tasks}
                               </span>
                             </td>
-                            <td className="px-3 py-3 text-center border-r border-slate-100">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberIssueFilter(undefined);
+                                setMemberTaskFilter(m.member_id);
+                                setActiveTab("tasks");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.completed_tasks}
                               </span>
                             </td>
@@ -2795,13 +2859,29 @@ export const SprintDetailsPage = () => {
                               : "#ef4444";
                         return (
                           <>
-                            <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberTaskFilter(undefined);
+                                setMemberIssueFilter(m.member_id);
+                                setActiveTab("issues");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.total_issues}
                               </span>
                             </td>
-                            <td className="px-3 py-3 text-center border-r border-slate-100">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberTaskFilter(undefined);
+                                setMemberIssueFilter(m.member_id);
+                                setActiveTab("issues");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.completed_issues}
                               </span>
                             </td>
