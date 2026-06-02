@@ -2583,9 +2583,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                         Today's Accomplishments
                       </h3>
                     </div>
-                    <Badge className={badgePoints}>
-                      {dailyScore.accomplishmentsScore}/20 PTS
-                    </Badge>
+                    <div className="flex items-center gap-4">
+                      <Badge className={badgePoints}>
+                        {dailyScore.accomplishmentsScore}/20 PTS
+                      </Badge>
+                      <Button
+                        className="rounded-[8px] shadow-lg font-semibold text-sm"
+                        onClick={addAccomplishment}
+                      >
+                        <Plus size={14} />
+                        Add Item
+                      </Button>
+                    </div>
                   </div>
 
                   <CardContent className="p-6 space-y-6">
@@ -2822,32 +2831,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 h-11 border-[#10b981]/30 text-[#10b981] font-bold text-sm bg-white hover:bg-[#ecfdf5] rounded-[8px] flex items-center justify-center gap-2"
-                          onClick={addAccomplishment}
-                        >
-                          <Plus size={18} />
-                          Add Item
-                        </Button>
-                        {/* {visibleAccomplishments.some((a) => !a.completed) && (
-                          <button
-                            type="button"
-                            style={{
-                              backgroundColor: "#DA7756",
-                              color: "#ffffff",
-                              cursor: "pointer",
-                              opacity: 1,
-                            }}
-                            className="flex h-10 items-center gap-2 rounded-[8px] border-none px-6 text-xs font-black shadow-md transition-all"
-                            onClick={transferUncheckedToTomorrow}
-                          >
-                            <CalendarCheck size={16} />
-                            Transfer unchecked to tomorrow
-                          </button>
-                        )} */}
-                      </div>
                     </div>
 
                     <div className="pt-6 border-t border-gray-50 flex items-center justify-between">

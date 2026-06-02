@@ -245,21 +245,6 @@ const normalizeToString = (w: any): string => {
     return String(w ?? "");
 };
 
-const normalizeWinKey = (win: unknown): string =>
-    normalizeToString(win).trim().replace(/\s+/g, " ").toLowerCase();
-
-const getTitleOrValue = (item: unknown) => {
-    if (
-        item &&
-        typeof item === "object" &&
-        "title" in item &&
-        typeof item.title === "string"
-    ) {
-        return item.title;
-    }
-    return item;
-};
-
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
 
 const normalizeSopStatus = (status: any) =>
@@ -408,13 +393,6 @@ const WeeklyReports = () => {
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
     const [editingId, setEditingId] = React.useState<number | null>(null);
-    const [showDailyWinsDialog, setShowDailyWinsDialog] = React.useState(false);
-    const [dailyReports, setDailyReports] = React.useState<any[]>([]);
-    const [isLoadingDailyReports, setIsLoadingDailyReports] =
-        React.useState(false);
-    const [selectedDailyWins, setSelectedDailyWins] = React.useState<string[]>(
-        []
-    );
     const [uploadedFilesCount, setUploadedFilesCount] = React.useState(0);
     const [selectedFileNames, setSelectedFileNames] = React.useState<string[]>(
         []
@@ -1568,55 +1546,6 @@ const WeeklyReports = () => {
     const lastWeekNum = String(getISOWeek(prevWeekStart));
     const lastWeekLabel = `${format(prevWeekStart, "MMM d")} - ${format(prevWeekEnd, "MMM d")}`;
 
-    const importPrevWeekStart = React.useMemo(
-        () => subDays(weekStart, 7),
-        [weekStart]
-    );
-    const importPrevWeekEnd = React.useMemo(() => subDays(weekEnd, 7), [weekEnd]);
-    const existingWinKeys = React.useMemo(
-        () =>
-            new Set(
-                wins
-                    .map(normalizeWinKey)
-                    .filter(Boolean)
-            ),
-        [wins]
-    );
-    const availableDailyReports = React.useMemo(
-        () =>
-            dailyReports
-                .map((report) => {
-                    const rawDate = report.start_date || report.created_at;
-                    const reportDate = rawDate ? new Date(rawDate) : null;
-                    if (!reportDate || isNaN(reportDate.getTime())) return null;
-
-                    const rawWins =
-                        report.report_data?.achievements ||
-                        report.report_data?.accomplishments?.items?.map(
-                            getTitleOrValue
-                        ) ||
-                        (Array.isArray(report.report_data?.accomplishments)
-                            ? report.report_data.accomplishments.map(
-                                getTitleOrValue
-                            )
-                            : []) ||
-                        [];
-                    const reportWins = rawWins
-                        .map(normalizeToString)
-                        .map((win: string) => win.trim())
-                        .filter(
-                            (win: string) =>
-                                win && !existingWinKeys.has(normalizeWinKey(win))
-                        );
-
-                    return reportWins.length > 0
-                        ? { id: report.id, reportDate, wins: reportWins }
-                        : null;
-                })
-                .filter(Boolean),
-        [dailyReports, existingWinKeys]
-    );
-
     const upcomingDays = React.useMemo(() => {
         const start = new Date(weekEnd);
         start.setDate(start.getDate() + 1);
@@ -2087,110 +2016,6 @@ const WeeklyReports = () => {
         }
     };
 
-    // --- MODIFIED: Remove carried forward achievements from the current list ---
-    const handleCarryForward = () => {
-        const indicesToCarry: number[] = [];
-        const uncheckedWins = wins.filter((win, i) => {
-            if (!checkedWins[i] && win.trim() !== "") {
-                indicesToCarry.push(i);
-                return true;
-            }
-            return false;
-        });
-
-        if (uncheckedWins.length === 0) {
-            toast.info("No uncompleted achievements to carry forward");
-            return;
-        }
-        if (history.length === 0) {
-            toast.error("No previous reports found to carry forward");
-            return;
-        }
-
-        const latest = history.find((item) => item.id !== editingId);
-        if (latest) {
-            const firstDay = upcomingDays.find((d) => d.canAdd)?.key;
-            if (firstDay) {
-                setDayPlans((prev) => ({
-                    ...prev,
-                    [firstDay]: [
-                        ...(prev[firstDay] || []),
-                        ...uncheckedWins.map((win) => ({
-                            id: crypto.randomUUID(),
-                            text: win,
-                        })),
-                    ],
-                }));
-
-                // Remove the carried forward items from 'wins'
-                const remainingWins: string[] = [];
-                const newCheckedWins: Record<number, boolean> = {};
-                const newStarredWins: Record<number, boolean> = {};
-
-                let newIdx = 0;
-                wins.forEach((win, i) => {
-                    if (!indicesToCarry.includes(i)) {
-                        remainingWins.push(win);
-                        newCheckedWins[newIdx] = checkedWins[i] ?? false;
-                        newStarredWins[newIdx] = starredWins[i] ?? false;
-                        newIdx++;
-                    }
-                });
-
-                setWins(remainingWins);
-                setCheckedWins(newCheckedWins);
-                setStarredWins(newStarredWins);
-
-                toast.success(
-                    `Carried forward ${uncheckedWins.length} uncompleted achievement(s) and removed from list`
-                );
-            }
-        }
-    };
-
-    const handleImportDailyWins = async () => {
-        setIsLoadingDailyReports(true);
-        setSelectedDailyWins([]);
-        setShowDailyWinsDialog(true);
-        try {
-            const response = await apiClient.get(
-                `${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=daily`
-            );
-            const allDaily = response.data || [];
-
-            const prevStartStr = format(importPrevWeekStart, "yyyy-MM-dd");
-            const prevEndStr = format(importPrevWeekEnd, "yyyy-MM-dd");
-
-            const filtered = allDaily.filter((report: any) => {
-                const raw = report.start_date || report.created_at;
-                if (!raw) return false;
-                const reportDateStr =
-                    typeof raw === "string"
-                        ? raw.split("T")[0]
-                        : format(new Date(raw), "yyyy-MM-dd");
-                return reportDateStr >= prevStartStr && reportDateStr <= prevEndStr;
-            });
-
-            setDailyReports(filtered);
-        } catch (error) {
-            console.error("Failed to fetch daily reports:", error);
-            toast.error("Failed to load daily reports");
-        } finally {
-            setIsLoadingDailyReports(false);
-        }
-    };
-
-    const confirmImportDailyWins = () => {
-        if (selectedDailyWins.length === 0) {
-            toast.info("No wins selected");
-            return;
-        }
-        setWins((prev) => [...prev, ...selectedDailyWins]);
-        toast.success(`Imported ${selectedDailyWins.length} daily wins`);
-        setShowDailyWinsDialog(false);
-        setSelectedDailyWins([]);
-    };
-
     const handleAddPlan = (day: string) => {
         setDayPlans((prev) => ({
             ...prev,
@@ -2439,6 +2264,32 @@ const WeeklyReports = () => {
                 }
             });
 
+            const mondayPlanKey = upcomingDays[0]?.key;
+            const uncompletedWins = wins
+                .map((win, index) => ({ text: win.trim(), index }))
+                .filter(({ text, index }) => text !== "" && checkedWins[index] === false);
+            const effectiveDayPlans = { ...dayPlans };
+
+            if (mondayPlanKey && uncompletedWins.length > 0) {
+                const existingMondayPlans = effectiveDayPlans[mondayPlanKey] || [];
+                const existingPlanText = new Set(
+                    existingMondayPlans
+                        .map((plan) => plan.text.trim().toLowerCase())
+                        .filter(Boolean)
+                );
+                const carriedMondayPlans = uncompletedWins
+                    .filter(({ text }) => !existingPlanText.has(text.toLowerCase()))
+                    .map(({ text }) => ({
+                        id: crypto.randomUUID(),
+                        text,
+                    }));
+
+                effectiveDayPlans[mondayPlanKey] = [
+                    ...existingMondayPlans,
+                    ...carriedMondayPlans,
+                ];
+            }
+
             const payload = {
                 user_journal: {
                     user_id: currentUser.id,
@@ -2459,7 +2310,10 @@ const WeeklyReports = () => {
                                     title: w,
                                     is_starred: starredWins[index] ?? false,
                                 }))
-                                .filter((item) => item.title.trim() !== ""),
+                                .filter(
+                                    (item, index) =>
+                                        item.title.trim() !== "" && checkedWins[index] !== false
+                                ),
                             ...mergedTasksIssues
                                 .filter((item) =>
                                     ["completed", "closed", "done"].includes(item.status)
@@ -2473,7 +2327,7 @@ const WeeklyReports = () => {
                         ],
                         upcoming_week_plan: [{
                             ...Object.fromEntries(
-                                Object.entries(dayPlans).map(([dayKey, tasks]) => {
+                                Object.entries(effectiveDayPlans).map(([dayKey, tasks]) => {
                                     const dayMatch = dayKey.match(/^(\w{3})/);
                                     const dayAbbr = dayMatch ? dayMatch[1].toLowerCase() : dayKey.slice(0, 3).toLowerCase();
                                     const planForDate = upcomingDays.find(d => d.key === dayKey)?.date ?? null;
@@ -2971,9 +2825,19 @@ const WeeklyReports = () => {
                                         Your Achievements
                                     </h3>
                                 </div>
-                                <Badge className={badgePoints}>
-                                    {weeklyScore.breakdown.achievements}/6 pts
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                    <Badge className={badgePoints}>
+                                        {weeklyScore.breakdown.achievements}/6 pts
+                                    </Badge>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddWin}
+                                        className="h-9 rounded-[10px] bg-[#f5ebe8] px-3 text-[12px] font-bold text-[#881337] transition-colors hover:bg-[#eaddd7] flex items-center justify-center gap-1.5 shadow-none border-none"
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Add Win
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-4 p-6">
                                 {mergedTasksIssues
@@ -3163,37 +3027,6 @@ const WeeklyReports = () => {
                                     </div>
                                 ))}
 
-                                <div className="flex flex-col gap-3 sm:flex-row w-full">
-                                    <button
-                                        type="button"
-                                        onClick={handleImportDailyWins}
-                                        className="h-[46px] flex-1 rounded-[10px] border border-dashed border-[#93c5fd] bg-transparent text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
-                                    >
-                                        <Plus className="h-4 w-4 text-slate-400" />
-                                        Import Daily Wins (last week&apos;s)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleAddWin}
-                                        className="h-[46px] flex-1 rounded-[10px] bg-[#f5ebe8] text-[13px] font-bold text-[#881337] transition-colors hover:bg-[#eaddd7] flex items-center justify-center gap-2 shadow-none border-none"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                        Add Win
-                                    </button>
-                                </div>
-
-                                {wins.length > 0 &&
-                                    wins.some((w, i) => !checkedWins[i] && w.trim() !== "") && (
-                                        <Button
-                                            type="button"
-                                            onClick={handleCarryForward}
-                                            className={cn(
-                                                "h-12 w-full rounded-xl bg-[#e65100] hover:bg-[#d84315] text-white font-bold tracking-wide"
-                                            )}
-                                        >
-                                            Carry Forward Uncompleted
-                                        </Button>
-                                    )}
                                 <div className="space-y-4 pt-4 border-t border-neutral-100">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
@@ -5136,89 +4969,6 @@ const WeeklyReports = () => {
                     </TabsContent>
                 </Tabs>
             </div>
-
-            {/* Import Daily Wins Dialog */}
-            <Dialog open={showDailyWinsDialog} onOpenChange={setShowDailyWinsDialog}>
-                <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden font-poppins">
-                    <DialogHeader className="p-6 pb-2">
-                        <DialogTitle className="text-xl font-bold text-neutral-900">
-                            Select Daily Wins from Past Week
-                        </DialogTitle>
-                        <p className="text-sm text-neutral-500 mt-1">
-                            Choose accomplishments from your daily reports (
-                            {format(importPrevWeekStart, "MMM d")} to{" "}
-                            {format(importPrevWeekEnd, "MMM d")}) to add to this week&apos;s
-                            achievements.
-                        </p>
-                    </DialogHeader>
-
-                    <div className="max-h-[400px] overflow-y-auto p-6 pt-2 space-y-6">
-                        {isLoadingDailyReports ? (
-                            <div className="space-y-4 py-4">
-                                <Skeleton className="h-6 w-1/3" />
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                        ) : availableDailyReports.length > 0 ? (
-                            availableDailyReports.map((entry) => (
-                                <div key={entry.id} className="space-y-3">
-                                    <h4 className="text-sm font-bold text-neutral-700">
-                                        {format(entry.reportDate, "EEE, MMM d")}
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {entry.wins.map((win: string, i: number) => (
-                                            <div key={i} className="flex items-center gap-3 p-1">
-                                                <Checkbox
-                                                    id={`win-${entry.id}-${i}`}
-                                                    checked={selectedDailyWins.includes(win)}
-                                                    onCheckedChange={(checked) => {
-                                                        if (checked) {
-                                                            setSelectedDailyWins((prev) => [...prev, win]);
-                                                        } else {
-                                                            setSelectedDailyWins((prev) =>
-                                                                prev.filter((w) => w !== win)
-                                                            );
-                                                        }
-                                                    }}
-                                                    className="rounded border-neutral-300"
-                                                />
-                                                <label
-                                                    htmlFor={`win-${entry.id}-${i}`}
-                                                    className="text-sm text-neutral-700 cursor-pointer"
-                                                >
-                                                    {win}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="h-px bg-neutral-100 mt-4 mx-[-24px]" />
-                                </div>
-                            ))
-                        ) : (
-                            <div className="py-8 text-center text-neutral-500 text-sm italic">
-                                No daily wins available to import for the past week.
-                            </div>
-                        )}
-                    </div>
-
-                    <DialogFooter className="p-6 pt-2 gap-3 sm:justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowDailyWinsDialog(false)}
-                            className="rounded-xl border-neutral-200 text-neutral-700 font-bold px-6"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={confirmImportDailyWins}
-                            disabled={selectedDailyWins.length === 0}
-                            className="rounded-xl bg-neutral-400 hover:bg-neutral-500 text-white font-bold px-6"
-                        >
-                            Add Selected
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
                 <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
