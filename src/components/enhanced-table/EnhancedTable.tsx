@@ -122,6 +122,7 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
+  filterAdjacentActions?: React.ReactNode;
   canAddRow?: boolean;
   onAddRow?: (newRowData: Partial<T>) => void;
   renderEditableCell?: (columnKey: string, value: any, onChange: (value: any) => void) => React.ReactNode;
@@ -183,6 +184,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
+  filterAdjacentActions,
   canAddRow = false,
   onAddRow,
   renderEditableCell,
@@ -775,6 +777,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Filter className="w-4 h-4" />
             </Button>
           )}
+
+          {filterAdjacentActions}
 
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
