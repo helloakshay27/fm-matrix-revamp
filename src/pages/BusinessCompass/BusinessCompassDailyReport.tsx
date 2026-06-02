@@ -3830,7 +3830,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="mt-4">
+                    {/* <div className="mt-4">
                       <Button
                         variant="outline"
                         className="w-full h-11 border-[#DA7756]/30 text-[#DA7756] font-bold text-sm bg-white hover:bg-[#DA7756]/5 rounded-[8px] flex items-center justify-center gap-2"
@@ -3839,7 +3839,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <Plus size={18} />
                         Add Item
                       </Button>
-                    </div>
+                    </div> */}
                   </CardContent>
                 </Card>
               </div>
@@ -5597,6 +5597,34 @@ const BusinessCompassDailyReport: React.FC = () => {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
+        <MenuItem
+          onClick={() => {
+            addPlanningItem()
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "8px 8px 4px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#f0f4ff",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Plus size={18} className="text-blue-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Item</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
         <MenuItem
           onClick={() => {
             setPreFillDate(getNextDayDate());
