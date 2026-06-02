@@ -875,12 +875,18 @@ const BusinessCompassDailyReport: React.FC = () => {
     }));
     const nonEmptyAccomplishments = [
       ...visibleAccomplishments.filter((a) => cleanReportText(a.text) !== ""),
-      ...autoAddedAccomplishments.map((item) => ({
-        id: `auto-${item.id}`,
-        text: item.title || "",
-        completed: true,
-        starred: false,
-      })),
+      ...autoAddedAccomplishments.map((item) => {
+        const autoStarKey = String(item.id);
+        const isStarred = autoStarredIds.has(autoStarKey);
+        return {
+          id: `auto-${autoStarKey}`,
+          text: item.title || "",
+          completed: true,
+          starred: isStarred,
+          star: isStarred,
+          is_starred: isStarred,
+        };
+      }),
     ];
     const nonEmptyPlanningItems = planningItems.filter(
       (p) => cleanReportText(p.text) !== ""
@@ -891,7 +897,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       nonEmptyPlanningItems
     );
-  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, mergedTasksIssues, planningItems]);
+  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, autoStarredIds, mergedTasksIssues, planningItems]);
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -2055,7 +2061,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         })),
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
-        star: autoStarredIds.has(item.id),
+        star: autoStarredIds.has(String(item.id)),
       })),
     ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
@@ -2681,7 +2687,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                       ))}
 
                       {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
-                      {autoAddedAccomplishments.map((item) => (
+                      {autoAddedAccomplishments.map((item) => {
+                        const autoStarKey = String(item.id);
+                        const isAutoStarred = autoStarredIds.has(autoStarKey);
+
+                        return (
                         <div key={item.id} className="relative animate-in fade-in duration-300">
                           <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
                             <div className="flex items-center gap-4">
@@ -2696,15 +2706,16 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 size={18}
                                 className={cn(
                                   "cursor-pointer transition-all shrink-0",
-                                  autoStarredIds.has(item.id)
+                                  isAutoStarred
                                     ? "text-[#eab308] fill-[#eab308]"
                                     : "text-[#DA7756]/70 hover:text-[#DA7756]"
                                 )}
                                 onClick={() => {
+                                  markDraftDirty();
                                   setAutoStarredIds((prev) => {
                                     const next = new Set(prev);
-                                    if (next.has(item.id)) next.delete(item.id);
-                                    else next.add(item.id);
+                                    if (next.has(autoStarKey)) next.delete(autoStarKey);
+                                    else next.add(autoStarKey);
                                     return next;
                                   });
                                 }}
@@ -2813,7 +2824,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                             })()}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
 
                       {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">

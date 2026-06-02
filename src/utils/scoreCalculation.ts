@@ -188,7 +188,9 @@ function calculateAccomplishmentsScore(
             itemPoints += pointsPerCompletedItem;
         }
 
-        if (item.starred) {
+        const isStarred = Boolean(item.starred ?? item.star ?? item.is_starred);
+
+        if (isStarred) {
             itemPoints += bonusPointsPerStar;
         }
 
@@ -199,7 +201,7 @@ function calculateAccomplishmentsScore(
             id: item.id,
             text: item.text || "",
             completed: item.completed || false,
-            starred: item.starred || false,
+            starred: isStarred,
             points: itemPoints,
             cumulativePoints: cumulativePoints,
         });
