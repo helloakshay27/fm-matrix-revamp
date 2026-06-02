@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
+import AddToDoModal from "../../../components/AddToDoModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -196,6 +197,25 @@ const fetchDynamicMembers = async () => {
       [u.firstname, u.lastname].filter(Boolean).join(" ") ||
       `User ${u.id}`,
   }));
+};
+
+const getMemberResponsiblePrefill = (member: any) => {
+  const id =
+    member?.user_id ||
+    member?.id ||
+    member?.user?.id ||
+    member?.daily_report?.user_id ||
+    member?.daily_report?.user?.id ||
+    "";
+  const name =
+    member?.name ||
+    member?.full_name ||
+    member?.user?.full_name ||
+    member?.user?.name ||
+    [member?.firstname, member?.lastname].filter(Boolean).join(" ") ||
+    `User ${id}`;
+
+  return id ? { id: String(id), name } : null;
 };
 
 const fetchDailyMeetingData = async ({
@@ -481,6 +501,8 @@ const DailyTab = ({
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [isTodoModalOpen, setIsTodoModalOpen] = useState(false);
+  const [actionMemberPrefill, setActionMemberPrefill] = useState<any>(null);
   const [quickActionOpenId, setQuickActionOpenId] = useState<any>(null);
   const [quickActionText, setQuickActionText] = useState("");
 
@@ -515,6 +537,51 @@ const DailyTab = ({
   };
 
   const navigate = useNavigate();
+
+  const openTaskModalForMember = (member: any) => {
+    const responsiblePerson = getMemberResponsiblePrefill(member);
+    if (!responsiblePerson) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTaskModalOpen(true);
+  };
+
+  const openIssueModalForMember = (member: any) => {
+    const responsiblePerson = getMemberResponsiblePrefill(member);
+    if (!responsiblePerson) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsIssueModalOpen(true);
+  };
+
+  const openTodoModalForMember = (member: any) => {
+    const responsiblePerson = getMemberResponsiblePrefill(member);
+    if (!responsiblePerson) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTodoModalOpen(true);
+  };
+
+  const closeTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setActionMemberPrefill(null);
+  };
+
+  const closeIssueModal = () => {
+    setIsIssueModalOpen(false);
+    setActionMemberPrefill(null);
+  };
+
+  const closeTodoModal = () => {
+    setIsTodoModalOpen(false);
+    setActionMemberPrefill(null);
+  };
 
   // ── Auto-populate checked in reports into selectedReports ──
   useEffect(() => {
@@ -2304,16 +2371,22 @@ const DailyTab = ({
 
                                 <div className="flex flex-wrap gap-2 pt-1">
                                   <button
-                                    onClick={() => setIsTaskModalOpen(true)}
+                                    onClick={() => openTaskModalForMember(report)}
                                     className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
                                   >
                                     <Plus className="w-3.5 h-3.5" /> Add Task
                                   </button>
                                   <button
-                                    onClick={() => setIsIssueModalOpen(true)}
+                                    onClick={() => openIssueModalForMember(report)}
                                     className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
                                   >
                                     <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                                  </button>
+                                  <button
+                                    onClick={() => openTodoModalForMember(report)}
+                                    className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" /> Add Todo
                                   </button>
                                   <button
                                     onClick={() => {
@@ -2655,23 +2728,443 @@ const DailyTab = ({
           </div>
 
           {failedMembers.length > 0 && (
-            <div className="bg-[#fff1f2] border border-red-200 rounded-2xl p-5 shadow-sm">
+            <div className="bg-[#FFFDFB] border border-red-100 rounded-2xl p-4 shadow-sm">
               <div className="flex items-center gap-2 text-red-600 font-bold text-sm mb-4">
-                <AlertTriangle className="w-4 h-4" /> Team Members Who Failed to
-                Submit ({failedMembers.length}):
+                <AlertTriangle className="w-4 h-4" />
+                Team Members Who Failed to Submit ({failedMembers.length})
               </div>
-              <div className="flex flex-wrap gap-2.5">
-                {failedMembers.map((member: any, i: number) => (
+              <div className="space-y-4">
+                {failedMembers.map((member: any, i: number) => {
+                  const missedId = `missed-${member.id || member.user_id || member.name || i}`;
+                  const isMissedExpanded = expandedReports.includes(missedId);
+
+                  return (
                   <div
-                    key={i}
-                    className="flex items-center gap-2 bg-white border border-red-100 px-3 py-1.5 rounded-full shadow-sm"
+                    key={missedId}
+                    className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all"
                   >
-                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                    <span className="text-[12px] font-bold text-gray-700">
-                      {member.name || member}
-                    </span>
+                    <div className="p-4 flex items-start gap-4">
+                      <div className="flex items-start gap-3 pt-1">
+                        <input
+                          type="checkbox"
+                          checked
+                          readOnly
+                          disabled
+                          className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
+                        />
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
+                            0
+                          </div>
+                          <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                            Missed
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                                {member.name || member}
+                              </h3>
+                              {member.department && (
+                                <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                  {member.department}
+                                </span>
+                              )}
+                              <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
+                                NOT SUBMITTED
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-gray-400 mb-2 truncate">
+                              {member.email || "Report not submitted for this date"}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(missedId)}
+                            className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "w-4 h-4 transition-transform",
+                                isMissedExpanded && "rotate-180"
+                              )}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                            KPI: 0/20
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                            Tasks, Issues & Todos: 0/20
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                            Planning: 0/20
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                            Timing: 0/20
+                          </span>
+                        </div>
+
+                        <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
+                          Click to view missed submission details
+                        </p>
+
+                        {dateRow.length > 0 && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                              {configName}
+                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {dateRow.map((d: any, dateIndex: number) => {
+                                const s =
+                                  d.full_date === activeDate
+                                    ? "missed"
+                                    : d.status === "non_meeting"
+                                      ? "holiday"
+                                      : d.status;
+
+                                return (
+                                  <div
+                                    key={dateIndex}
+                                    className={cn(
+                                      "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                      s === "done" || s === "submitted"
+                                        ? "bg-[#10B981] text-white border-[#10B981]"
+                                        : s === "missed"
+                                          ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                          : s === "holiday"
+                                            ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                            : "bg-gray-100 text-gray-400 border-gray-200"
+                                    )}
+                                  >
+                                    <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                      {d.day ? d.day.charAt(0) : ""}
+                                    </span>
+                                    <span className="leading-none">
+                                      {d.date ?? ""}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {isMissedExpanded && (
+                      <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                        <div className="p-5 space-y-5">
+                          <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
+                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                              <span className="text-sm font-bold text-yellow-800">
+                                Self Rating: 0/10
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
+                              <span className="text-sm font-bold text-purple-800">
+                                Total Score: 0
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
+                              <span className="text-sm font-bold text-red-700">
+                                Missed
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                </div>
+                                <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                  Accomplishments
+                                </h4>
+                              </div>
+                              <p className="text-xs text-neutral-300 italic">
+                                None recorded.
+                              </p>
+                            </div>
+
+                            <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                                </div>
+                                <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                  Tasks, Issues & Todos
+                                </h4>
+                              </div>
+                              <p className="text-xs text-neutral-300 italic">
+                                None recorded.
+                              </p>
+                            </div>
+
+                            <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                                </div>
+                                <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                  Tomorrow's Plan
+                                </h4>
+                              </div>
+                              <p className="text-xs text-neutral-300 italic">
+                                None recorded.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            <button
+                              onClick={() => openTaskModalForMember(member)}
+                              className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add Task
+                            </button>
+                            <button
+                              onClick={() => openIssueModalForMember(member)}
+                              className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                            </button>
+                            <button
+                              onClick={() => openTodoModalForMember(member)}
+                              className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add Todo
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (feedbackOpenId === missedId) {
+                                  setFeedbackOpenId(null);
+                                } else {
+                                  setFeedbackOpenId(missedId);
+                                  setFeedbackRating(0);
+                                  setFeedbackMessage("");
+                                  if (member.id || member.user_id) {
+                                    loadPastFeedbacks(member.id || member.user_id);
+                                  }
+                                }
+                              }}
+                              className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                            </button>
+                          </div>
+
+                          {feedbackOpenId === missedId && (
+                            <div className="border-t border-[#EAE3DF] pt-5 mt-2">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
+                                    Provide Feedback
+                                  </p>
+                                  <p className="text-sm font-bold text-neutral-800 mb-2">
+                                    Rating (1-5 stars)
+                                  </p>
+                                  <div className="flex items-center gap-1 mb-4">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setFeedbackRating(star)}
+                                        className="transition-transform hover:scale-110"
+                                      >
+                                        <Star
+                                          className={cn(
+                                            "w-8 h-8",
+                                            star <= feedbackRating
+                                              ? "text-yellow-400 fill-yellow-400"
+                                              : "text-gray-300"
+                                          )}
+                                        />
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <p className="text-sm font-bold text-neutral-800 mb-2">
+                                    Feedback Message
+                                  </p>
+                                  <textarea
+                                    autoFocus
+                                    value={feedbackMessage}
+                                    onChange={(e) =>
+                                      setFeedbackMessage(e.target.value)
+                                    }
+                                    placeholder="Enter constructive feedback..."
+                                    rows={3}
+                                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                                  />
+                                  <div className="flex items-center gap-3 mt-4">
+                                    <button
+                                      onClick={async () => {
+                                        if (feedbackRating === 0) {
+                                          toast.error(
+                                            "Please select a star rating!"
+                                          );
+                                          return;
+                                        }
+
+                                        const targetUserId =
+                                          member.id || member.user_id;
+                                        if (!targetUserId) {
+                                          toast.error(
+                                            "User ID not found for this member."
+                                          );
+                                          return;
+                                        }
+
+                                        try {
+                                          const loggedInUserId =
+                                            localStorage.getItem("userId") || "";
+                                          const payload = {
+                                            resource_type: "User",
+                                            resource_id: targetUserId,
+                                            rating_from_id: loggedInUserId,
+                                            score: feedbackRating,
+                                            reviews: feedbackMessage,
+                                            positive_opening: "",
+                                            constructive_feedback: "",
+                                            positive_closing: "",
+                                          };
+                                          const res = await fetch(
+                                            `${getBaseUrl()}/ratings`,
+                                            {
+                                              method: "POST",
+                                              headers: {
+                                                ...getAuthHeaders(),
+                                                "Content-Type":
+                                                  "application/json",
+                                              },
+                                              body: JSON.stringify(payload),
+                                            }
+                                          );
+                                          if (!res.ok)
+                                            throw new Error(
+                                              `HTTP ${res.status}`
+                                            );
+                                          toast.success("Feedback added!");
+                                          setFeedbackOpenId(null);
+                                          setFeedbackRating(0);
+                                          setFeedbackMessage("");
+                                          await loadDailyData(false);
+                                        } catch (err: any) {
+                                          toast.error(
+                                            "Error adding feedback: " +
+                                              err.message
+                                          );
+                                        }
+                                      }}
+                                      className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                    >
+                                      Submit Feedback
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setFeedbackOpenId(null);
+                                        setFeedbackRating(0);
+                                        setFeedbackMessage("");
+                                      }}
+                                      className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
+                                      Recent Feedbacks
+                                    </p>
+                                    <button
+                                      onClick={handleFeedback}
+                                      className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                    >
+                                      View All <ChevronRight className="w-3 h-3" />
+                                    </button>
+                                  </div>
+
+                                  {isFetchingFeedbacks ? (
+                                    <div className="flex justify-center items-center h-full py-6">
+                                      <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                    </div>
+                                  ) : fetchedFeedbacks.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                      <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                      <span className="text-xs font-medium italic">
+                                        No past feedback found.
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                      {fetchedFeedbacks
+                                        .slice(0, 3)
+                                        .map((fb: any, idx: number) => (
+                                          <div
+                                            key={fb.id ?? idx}
+                                            className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                                          >
+                                            <div className="flex items-center gap-1 mb-1.5">
+                                              {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                  key={star}
+                                                  className={cn(
+                                                    "w-3 h-3",
+                                                    star <= fb.score
+                                                      ? "text-yellow-400 fill-yellow-400"
+                                                      : "text-gray-200"
+                                                  )}
+                                                />
+                                              ))}
+                                              {fb.created_at && (
+                                                <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
+                                                  {new Date(
+                                                    fb.created_at
+                                                  ).toLocaleDateString("en-IN", {
+                                                    day: "numeric",
+                                                    month: "short",
+                                                    year: "2-digit",
+                                                  })}
+                                                </span>
+                                              )}
+                                            </div>
+                                            {fb.reviews ? (
+                                              <p className="text-xs text-neutral-700 leading-relaxed">
+                                                {fb.reviews}
+                                              </p>
+                                            ) : (
+                                              <p className="text-xs text-neutral-400 italic">
+                                                No review provided.
+                                              </p>
+                                            )}
+                                            {fb.reviewer && (
+                                              <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                                - {fb.reviewer.trim()}
+                                              </p>
+                                            )}
+                                          </div>
+                                        ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2683,7 +3176,7 @@ const DailyTab = ({
           <div className="fixed inset-0 z-[9999] flex">
             <div
               className="flex-1 bg-black/40 backdrop-blur-sm"
-              onClick={() => setIsTaskModalOpen(false)}
+              onClick={closeTaskModal}
             />
             <div
               className="relative flex flex-col bg-white shadow-2xl"
@@ -2694,7 +3187,7 @@ const DailyTab = ({
                   Add Tasks
                 </h2>
                 <button
-                  onClick={() => setIsTaskModalOpen(false)}
+                  onClick={closeTaskModal}
                   className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500"
                 >
                   <X className="w-5 h-5" />
@@ -2704,12 +3197,12 @@ const DailyTab = ({
               <div className="flex-1 overflow-y-auto">
                 <ProjectTaskCreateModal
                   isEdit={false}
-                  onCloseModal={() => setIsTaskModalOpen(false)}
+                  onCloseModal={closeTaskModal}
                   className="max-w-full mx-0"
-                  prefillData={null}
+                  prefillData={actionMemberPrefill}
                   opportunityId={null}
                   onSuccess={async () => {
-                    setIsTaskModalOpen(false);
+                    closeTaskModal();
                     await loadDailyData(false);
                   }}
                   isConversion={false}
@@ -2722,8 +3215,18 @@ const DailyTab = ({
 
       <AddIssueModal
         openDialog={isIssueModalOpen}
-        handleCloseDialog={() => setIsIssueModalOpen(false)}
+        handleCloseDialog={closeIssueModal}
         preSelectedProjectId={undefined}
+        prefillData={actionMemberPrefill}
+      />
+      <AddToDoModal
+        isModalOpen={isTodoModalOpen}
+        setIsModalOpen={closeTodoModal}
+        getTodos={async () => {
+          closeTodoModal();
+          await loadDailyData(false);
+        }}
+        prefillData={actionMemberPrefill}
       />
     </div>
   );

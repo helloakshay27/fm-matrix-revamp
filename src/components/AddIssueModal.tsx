@@ -455,6 +455,26 @@ const AddIssueModal = ({
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    const responsiblePersonId = prefillData?.responsible_person?.id;
+    if (!responsiblePersonId) return;
+
+    setResponsiblePerson(String(responsiblePersonId));
+    if (prefillData?.responsible_person?.name) {
+      setUsers((prev) =>
+        prev.some((user) => user.id === responsiblePersonId)
+          ? prev
+          : [
+              ...prev,
+              {
+                id: String(responsiblePersonId),
+                full_name: prefillData.responsible_person.name,
+              },
+            ]
+      );
+    }
+  }, [prefillData]);
+
+  useEffect(() => {
     const getUsers = async () => {
       try {
         const response = await axios.get(
@@ -465,13 +485,30 @@ const AddIssueModal = ({
             },
           }
         );
-        setUsers(response.data.users || []);
+        const apiUsers = response.data.users || [];
+        const responsiblePersonId = prefillData?.responsible_person?.id;
+        const responsiblePersonName = prefillData?.responsible_person?.name;
+        const shouldAddPrefilledUser =
+          responsiblePersonId &&
+          !apiUsers.some((user: any) => user.id === responsiblePersonId);
+
+        setUsers(
+          shouldAddPrefilledUser
+            ? [
+                ...apiUsers,
+                {
+                  id: String(responsiblePersonId),
+                  full_name: responsiblePersonName || `User ${responsiblePersonId}`,
+                },
+              ]
+            : apiUsers
+        );
       } catch (error) {
         console.log(error);
       }
     };
     getUsers();
-  }, []);
+  }, [prefillData]);
 
   const fetchShifts = useCallback(
     async (userId: string) => {

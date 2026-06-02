@@ -41,6 +41,28 @@ const getBaseUrl = () => {
 const BASE_URL = getBaseUrl();
 const AI_CRITICAL_NUMBERS_STORAGE_KEY = "business_plan_ai_critical_numbers";
 
+const getSelectedOrgName = () => {
+  const fallbackName = "HAVEN INFOLINE PRIVATE LIMITED";
+  const selectedOrg = localStorage.getItem("selectedOrg");
+
+  if (!selectedOrg) return fallbackName;
+
+  try {
+    const parsedOrg = JSON.parse(selectedOrg);
+    const parsedName =
+      parsedOrg?.name ||
+      parsedOrg?.company_name ||
+      parsedOrg?.organization_name ||
+      parsedOrg?.title;
+
+    return typeof parsedName === "string" && parsedName.trim()
+      ? parsedName.trim()
+      : fallbackName;
+  } catch {
+    return selectedOrg.trim() || fallbackName;
+  }
+};
+
 function getCleanAiPlanErrorMessage(message: string): string {
   const cleanMessage = (value: string) =>
     value
@@ -1396,16 +1418,43 @@ interface KPI {
 type AiBuilderStage = "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
-  { key: "purpose", label: "Purpose / Why do we exist?" },
-  { key: "core_values", label: "Core Values" },
-  { key: "brand_promises", label: "Brand Promises & Promise KPIs" },
-  { key: "bhag", label: "BHAG / 10-Year Goal" },
-  { key: "three_year_vision", label: "3-Year Goals & Initiatives" },
-  { key: "annual_goals", label: "1-Year Goals & Initiatives" },
-  { key: "target_markets", label: "Target Markets" },
-  { key: "key_initiatives", label: "Key Initiatives" },
-  { key: "key_metrics", label: "Key Metrics" },
-  { key: "people_process", label: "People & Process" },
+  { key: "purpose", label: "Q1: Why does your company exist?" },
+  {
+    key: "core_values",
+    label: "Q2: What 4-5 values or behaviours best represent your team or culture?",
+  },
+  {
+    key: "brand_promises",
+    label: "Q3: What are the USPs that make you stand out?",
+  },
+  {
+    key: "bhag",
+    label: "Q4: What bold outcome do you want to achieve in the next 10-15 years?",
+  },
+  {
+    key: "three_year_vision",
+    label: "Q5: What do you want to achieve in the next 3-5 years?",
+  },
+  {
+    key: "annual_goals",
+    label: "Q6: What are your main business goals for this financial year?",
+  },
+  {
+    key: "target_markets",
+    label: "Q7: Which customer segments or geographies will you focus on this year?",
+  },
+  {
+    key: "key_initiatives",
+    label: "Q8: What 3 key actions or projects will help you achieve this year's goals?",
+  },
+  {
+    key: "key_metrics",
+    label: "Q9: What are the key numbers or metrics you should regularly track to ensure success?",
+  },
+  {
+    key: "people_process",
+    label: "Q10: What improvements do you need in your people or processes to succeed?",
+  },
 ] as const;
 
 const TOOLTIP_CONTENT: Record<
@@ -1832,7 +1881,7 @@ const BusinessPlanAndGoles = () => {
       day: "numeric",
       year: "numeric",
     });
-    let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
+    let text = `BUSINESS PLAN\n${getSelectedOrgName()}\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
 
     text += `PURPOSE\n${"=".repeat(60)}\n`;
     text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
@@ -2972,7 +3021,7 @@ const BusinessPlanAndGoles = () => {
             className="text-sm font-semibold mt-1"
             style={{ color: C.textMuted }}
           >
-            HAVEN INFOLINE PRIVATE LIMITED
+            {getSelectedOrgName()}
           </p>
         </div>
         <div className="flex gap-3 shrink-0">
