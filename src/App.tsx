@@ -1114,11 +1114,13 @@ const NewRecurringExpensePage = lazy(() => import("./pages/New Recurring Expense
 const RecurringExpensesListPage = lazy(() => import("./pages/ClubManagement/RecurringExpensesListPage"));
 const RecurringExpenseDetailPage = lazy(() => import("./pages/ClubManagement/RecurringExpenseDetailPage"));
 const RecurringInvoicesCreatePage = lazy(() => import("./pages/ClubManagement/RecurringInvoicesCreatePage").then(m => ({ default: m.RecurringInvoicesCreatePage })));
+const EditRecurringInvoicePage = lazy(() => import("./pages/EditRecurringInvoicePage").then(m => ({ default: m.EditRecurringInvoicePage })));
 const RecurringInvoicesListPage = lazy(() => import("./pages/ClubManagement/RecurringInvoicesListPage").then(m => ({ default: m.RecurringInvoicesListPage })));
 const RecurringBillDetails = lazy(() => import("./pages/ClubManagement/RecurringBillDetails"));
 const RecurringJournalDashboard = lazy(() => import("./pages/ClubManagement/RecurringJournalDashboard").then(m => ({ default: m.RecurringJournalDashboard })));
 const RecurringJournalDetails = lazy(() => import("./pages/ClubManagement/RecurringJournalDetails").then(m => ({ default: m.RecurringJournalDetails })));
 const SalesOrderCreatePage = lazy(() => import("./pages/SalesOrderCreatePage").then(m => ({ default: m.SalesOrderCreatePage })));
+const EditSalesOrderPage = lazy(() => import("./pages/EditSalesOrderPage").then(m => ({ default: m.EditSalesOrderPage })));
 const SalesOrderDetailPage = lazy(() => import("./pages/SalesOrderDetailPage").then(m => ({ default: m.SalesOrderDetailPage })));
 const SalesOrderListPage = lazy(() => import("./pages/SalesOrderListPage").then(m => ({ default: m.SalesOrderListPage })));
 const TransactionsDetails = lazy(() => import("./pages/ClubManagement/TransationsDetails").then(m => ({ default: m.TransactionsDetails })));
@@ -1158,6 +1160,7 @@ const ClubGroupMembershipDetails = lazy(() => import("./pages/ClubManagement/Clu
 const ClubMembershipDashboard = lazy(() => import("./pages/ClubManagement/ClubMembershipDashboard"));
 const ClubMembershipDetailPage = lazy(() => import("./pages/ClubManagement/ClubMembershipDetailPage"));
 const CustomersAdd = lazy(() => import("./pages/ClubManagement/CustomersAdd"));
+const CustomersEdit = lazy(() => import("./pages/ClubManagement/CustomersEdit"));
 const CustomersDashboard = lazy(() => import("./pages/ClubManagement/CustomersDashboard"));
 const DetailsSaleCustomerReport = lazy(() => import("./pages/ClubManagement/DetailsSaleCustomerReport"));
 const SalesByItemReport = lazy(() => import("./pages/ClubManagement/SalesByItemReport"));
@@ -1192,12 +1195,17 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
+import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
+import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
+import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
+const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
 const InvoiceDashboardAccounting = lazy(() => import("./pages/ClubManagement/InvoiceDashboard").then(m => ({ default: m.InvoiceDashboardAccounting })));
 const InvoiceDashboardDetailsPage = lazy(() => import("./pages/ClubManagement/InvoiceDashboardDetailsPage").then(m => ({ default: m.InvoiceDashboardDetailsPage })));
 const QuotesDashboard = lazy(() => import("./pages/ClubManagement/QuotesDashboard").then(m => ({ default: m.QuotesDashboard })));
 const QuotesAdd = lazy(() => import("./pages/ClubManagement/QuotesAdd").then(m => ({ default: m.QuotesAdd })));
+const QuotesEdit = lazy(() => import("./pages/ClubManagement/QuotesEdit").then(m => ({ default: m.QuotesEdit })).catch(() => import("./pages/ClubManagement/QuotesEdit")));
 const QuotesDetails = lazy(() => import("./pages/ClubManagement/QuotesDetails").then(m => ({ default: m.QuotesDetails })));
 const RideReviews = lazy(() => import("./pages/pulse/RideReviews").then(m => ({ default: m.RideReviews })));
 const UserDetail = lazy(() => import("./pages/pulse/UserDetail").then(m => ({ default: m.UserDetail })));
@@ -1209,6 +1217,7 @@ const DeliveryChallansDashboard = lazy(() => import("./pages/ClubManagement/Deli
 const DeliveryChallansAdd = lazy(() => import("./pages/ClubManagement/DeliveryChallansAdd").then(m => ({ default: m.DeliveryChallansAdd })));
 const PaymentsReceivedListPage = lazy(() => import("./pages/PaymentsReceivedListPage"));
 const RecordPaymentPage = lazy(() => import("./pages/RecordPaymentPage"));
+const EditPaymentReceivedPage = lazy(() => import("./pages/EditPaymentReceivedPage").then(m => ({ default: m.EditPaymentReceivedPage })));
 const PaymentReceivedDetailsPage = lazy(() => import("./pages/PaymentReceivedDetailsPage"));
 const SectionMaster = lazy(() => import("./pages/ClubManagement/SectionMaster"));
 const CreditNoteListPage = lazy(() => import("./pages/ClubManagement/CreditNoteListPage"));
@@ -2464,13 +2473,17 @@ function App() {
                               path="/accounting/payments-made"
                               element={<PaymentsMadePage />}
                             />
+                             {/* <Route
+                              path="/accounting/payments-made/:id"
+                              element={<PaymentDetailPage/>}
+                            /> */}
                             <Route
                               path="/accounting/payments-made/create"
                               element={<CreatePaymentPage />}
                             />
                             <Route
                               path="/accounting/payments-made/:id"
-                              element={<PaymentDetailPage />}
+                              element={<PaymentMadeDetailsPage />}
                             />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
@@ -3381,6 +3394,10 @@ function App() {
                               element={<CustomersAdd />}
                             />
                             <Route
+                              path="/accounting/customers/edit/:id"
+                              element={<CustomersEdit />}
+                            />
+                            <Route
                               path="/accounting/customers/details/:id"
                               element={<CustomersDetails />}
                             />
@@ -3399,7 +3416,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/sales-order/edit/:id"
-                              element={<SalesOrderCreatePage />}
+                              element={<EditSalesOrderPage />}
                             />
                             <Route
                               path="/accounting/invoices/list"
@@ -3408,6 +3425,10 @@ function App() {
                             <Route
                               path="/accounting/invoices/add"
                               element={<InvoiceAdd />}
+                            />
+                            <Route
+                              path="/accounting/invoices/edit/:id"
+                              element={<EditInvoicePage />}
                             />
                             <Route
                               path="/accounting/dashboard/invoices/:id"
@@ -3420,6 +3441,10 @@ function App() {
                             <Route
                               path="/accounting/quotes/add"
                               element={<QuotesAdd />}
+                            />
+                            <Route
+                              path="/accounting/quotes/edit/:id"
+                              element={<QuotesEdit />}
                             />
                             <Route
                               path="/accounting/quotes/details/:id"
@@ -3442,12 +3467,24 @@ function App() {
                               element={<RecurringInvoicesCreatePage />}
                             />
                             <Route
+                              path="/accounting/recurring-invoices/edit/:id"
+                              element={<EditRecurringInvoicePage />}
+                            />
+                            <Route
+                              path="/accounting/recurring-invoices/details/:id"
+                              element={<RecurringInvoiceDetailsPage />}
+                            />
+                            <Route
                               path="/accounting/payments-received"
                               element={<PaymentsReceivedListPage />}
                             />
                             <Route
                               path="/accounting/payments-received/create"
                               element={<RecordPaymentPage />}
+                            />
+                            <Route
+                              path="/accounting/payments-received/edit/:id"
+                              element={<EditPaymentReceivedPage />}
                             />
                             <Route
                               path="/accounting/payments-received/:id"
@@ -3484,7 +3521,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/purchase-order/edit/:id"
-                              element={<PurchaseOrderCreatePage />}
+                              element={<PurchaseOrderEditPage />}
                             />
                             {/* Bills Routes */}
                             <Route
@@ -3579,7 +3616,7 @@ function App() {
                             />
                             <Route
                               path="/settings/sales-order/edit/:id"
-                              element={<SalesOrderCreatePage />}
+                              element={<EditSalesOrderPage />}
                             />
                             <Route
                               path="/accounting/payment-terms"
@@ -4648,17 +4685,22 @@ function App() {
                               element={<ViewPerformancePage />}
                             />
                             <Route
-                              path="/maintenance/vendor"
+                              path="/accounting/vendor"
                               element={<VendorPage />}
                             />
                             <Route
-                              path="/maintenance/vendor/add"
+                              path="/accounting/vendor/add"
                               element={<AddVendorPage />}
                             />
                             <Route
-                              path="/maintenance/vendor/view/:id"
+                              path="/accounting/vendor/view/:id"
                               element={<DetailsVendorPage />}
                             />
+                            <Route
+                              path="/accounting/vendor/edit/:id"
+                              element={<EditVendorPage />}
+                            ></Route>
+
                             <Route
                               path="/vas/projects"
                               element={<ProjectsDashboard />}
@@ -6238,6 +6280,11 @@ function App() {
                             <Route
                               path="/pulse/curated-services/service-category/edit/:id"
                               element={<EditCuratedServiceCategoryPage />}
+                            />
+
+                            <Route
+                              path="/pulse/ride_settings"
+                              element={<RideSettingsPage />}
                             />
 
                             {/* Carpool Routes */}
