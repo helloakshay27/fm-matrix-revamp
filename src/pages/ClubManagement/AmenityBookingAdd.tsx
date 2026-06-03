@@ -473,7 +473,8 @@ export const AddFacilityBookingClubPage = () => {
           // Fetch booking rule for user
           console.log('=== Calling Booking Rule API ===');
           const baseUrl = localStorage.getItem('baseUrl');
-          const bookingRuleResponse = await axios.get(`https://${baseUrl}/pms/admin/facility_setups/${facilityId}/booking_rule_for_user?user_id=${selectedUser}`, {
+          const selectedDateForApi = selectedDate ? selectedDate.replace(/-/g, '/') : '';
+          const bookingRuleResponse = await axios.get(`https://${baseUrl}/pms/admin/facility_setups/${facilityId}/booking_rule_for_user?user_id=${selectedUser}&on_date=${selectedDateForApi}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Accept': 'application/json, text/plain, */*',
@@ -504,7 +505,7 @@ export const AddFacilityBookingClubPage = () => {
     } else {
       console.log('❌ Amenity API not called - condition not met');
     }
-  }, [userType, selectedUser, selectedFacility]);
+  }, [userType, selectedUser, selectedFacility, selectedDate]);
 
   // Auto-select slot from URL parameter when slots are loaded
   useEffect(() => {

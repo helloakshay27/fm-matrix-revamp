@@ -25,6 +25,7 @@ import { RepairReplaceModal } from "@/components/RepairReplaceModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
+import { getReturnToFromState } from "@/utils/listBackNavigation";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -96,7 +97,10 @@ export const AssetDetailsPage = () => {
 
   console.log(showEnable);
 
-  const handleBack = () => navigate("/maintenance/asset");
+  const handleBack = () => {
+    const returnTo = getReturnToFromState(location.state);
+    navigate(returnTo ?? "/maintenance/asset");
+  };
 
   const handleEditDetails = () => {
     // Navigate to the appropriate edit page based on asset type

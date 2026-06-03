@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // MUI components for revamped Filter dialog
@@ -46,6 +46,7 @@ import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUplo
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
 import { AddVisitModal } from '@/components/AddVisitModal';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 
 // Unified analytics color palette
 const analyticsColorPalette = {
@@ -186,6 +187,7 @@ export const AMCDashboard = () => {
   const filterDialogRef = useRef<HTMLDivElement | null>(null);
   const amcTypeControlRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -744,7 +746,9 @@ export const AMCDashboard = () => {
   };
 
   const handleViewDetails = (id: number) => {
-    navigate(`/maintenance/amc/details/${id}`);
+    navigate(`/maintenance/amc/details/${id}`, {
+      state: { returnTo: buildReturnToPath(location.pathname, location.search, location.hash) },
+    });
   };
 
   const handleImportClick = () => {
