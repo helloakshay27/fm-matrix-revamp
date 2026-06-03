@@ -818,8 +818,6 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
-    const today = new Date().toLocaleDateString("en-CA");
-    if (startDate !== today) return [];
     return mergedTasksIssues.filter(
       (item) =>
         (item.status === "completed" || item.status === "closed" || item.status === "done") &&
