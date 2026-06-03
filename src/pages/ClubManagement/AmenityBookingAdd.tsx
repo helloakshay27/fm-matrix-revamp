@@ -185,14 +185,18 @@ export const AddFacilityBookingClubPage = () => {
   const [bookingRuleData, setBookingRuleData] = useState<{
     can_book: boolean;
     rate: number;
+    multiple_bookings?: boolean;
+    multiple_booking_count?: number;
+    concurrent_slots?: number;
+    bookable_slot_count?: number;
   } | null>(null);
 
   // Helper: Check if slot selection is allowed
   const canSelectSlots = bookingRuleData ? bookingRuleData.can_book !== false : true;
-  // Helper: Max slots user can select
-  const maxSelectableSlots = bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1;
+  // Helper: Max slots user can select — use bookable_slot_count when available
+  const maxSelectableSlots = bookingRuleData?.bookable_slot_count ?? (bookingRuleData?.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
   // Helper: Max concurrent slots
-  const maxConcurrentSlots = bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1;
+  const maxConcurrentSlots = bookingRuleData?.concurrent_slots ?? 1;
 
   // Helper: Check if a slot can be selected (enforce concurrent rule and check if booked)
   const isSlotSelectable = (slotId: number) => {
@@ -664,20 +668,21 @@ export const AddFacilityBookingClubPage = () => {
       let totalUserCharge = 0;
       let totalGuestCharge = 0;
       if (hasSlots) {
+        let maxMemberPremium = 0;
+        let maxGuestPremium = 0;
         selectedSlots.forEach((slotId) => {
           const slot = slots.find((s) => s.id === slotId);
-          let memberPremium = 0;
-          let guestPremium = 0;
           if (slot && slot.is_premium && slot.premium_percentage) {
-            memberPremium = userType === 'occupant' ? Math.round((memberRate * slot.premium_percentage) / 100) : 0;
-            guestPremium = (userType === 'guest' || userType === 'fm') ? Math.round((adultGuestCharge * slot.premium_percentage) / 100) : 0;
+            const mp = Math.round((memberRate * slot.premium_percentage) / 100);
+            const gp = Math.round((adultGuestCharge * slot.premium_percentage) / 100);
+            if (mp > maxMemberPremium) maxMemberPremium = mp;
+            if (gp > maxGuestPremium) maxGuestPremium = gp;
           }
-          // Add for each slot
-          totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-          totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
         });
+        // Flat charge: price does not multiply with slot count, only with member/guest count
+        totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
+        totalGuestCharge = numberOfGuests * (adultGuestCharge + maxGuestPremium);
       } else {
-        // No slots selected, use base charge
         totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
         totalGuestCharge = numberOfGuests * adultGuestCharge;
       }
@@ -765,9 +770,12 @@ export const AddFacilityBookingClubPage = () => {
               memberPremium,
               guestPremium
             });
-            totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-            totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
           });
+          // Flat charge: price does not multiply with slot count, only with member/guest count
+          const maxMemberPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.memberPremium), 0);
+          const maxGuestPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.guestPremium), 0);
+          totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
+          totalGuestCharge = numberOfGuests * (adultGuestCharge + maxGuestPremium);
         } else {
           totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
           totalGuestCharge = numberOfGuests * adultGuestCharge;
@@ -1436,9 +1444,7 @@ export const AddFacilityBookingClubPage = () => {
               )}
               {bookingRuleData && canSelectSlots && (
                 <div className="mt-2 text-gray-600 text-xs">
-                  {bookingRuleData.multiple_bookings
-                    ? `You can select up to ${maxSelectableSlots} slots. `
-                    : 'You can select only one slot. '}
+                  {`You can select up to ${maxSelectableSlots} slot${maxSelectableSlots !== 1 ? 's' : ''}. `}
                   {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
                 </div>
               )}
@@ -1753,12 +1759,13 @@ export const AddFacilityBookingClubPage = () => {
                             memberPremium,
                             guestPremium
                           });
-                          // Add for each slot
-                          totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-                          totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
                         });
+                        // Flat charge: price does not multiply with slot count, only with member/guest count
+                        const maxMemberPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.memberPremium), 0);
+                        const maxGuestPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.guestPremium), 0);
+                        totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
+                        totalGuestCharge = numberOfGuests * (adultGuestCharge + maxGuestPremium);
                       } else {
-                        // No slots selected, use base charge
                         totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
                         totalGuestCharge = numberOfGuests * adultGuestCharge;
                       }
@@ -1820,11 +1827,7 @@ export const AddFacilityBookingClubPage = () => {
                                   <div className="flex flex-col gap-1 w-full">
                                     <div className="flex items-center gap-2">
                                       <span className="text-gray-700">Member Charge</span>
-                                      {hasSlots ? (
-                                        <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
-                                      ) : (
-                                        <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
-                                      )}
+                                      <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
                                     </div>
                                     {/* Show member premium calculation per slot as a table */}
                                     {hasSlots && (
@@ -1891,11 +1894,7 @@ export const AddFacilityBookingClubPage = () => {
                                           step: 1
                                         }}
                                       />
-                                      {hasSlots ? (
-                                        <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
-                                      ) : (
-                                        <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
-                                      )}
+                                      <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
                                     </div>
                                   </div>
                                   {/* Show guest premium calculation per slot as a table */}

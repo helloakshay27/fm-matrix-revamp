@@ -1351,7 +1351,22 @@ const ProjectTaskCreateModal = ({
                 ? "Admin"
                 : user.employee_type || "",
         }));
-      setUsers(validUsers);
+      const prefilledResponsiblePerson = prefillData?.responsible_person;
+      const shouldAddPrefilledUser =
+        prefilledResponsiblePerson?.id &&
+        !validUsers.some((user: any) => user.id === prefilledResponsiblePerson.id);
+      setUsers(
+        shouldAddPrefilledUser
+          ? [
+              ...validUsers,
+              {
+                id: prefilledResponsiblePerson.id,
+                name: prefilledResponsiblePerson.name,
+                full_name: prefilledResponsiblePerson.name,
+              },
+            ]
+          : validUsers
+      );
     } catch (error) {
       console.log(error);
       toast.error(error);

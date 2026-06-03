@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -264,6 +265,7 @@ export const GRNDetailsPage = () => {
         approveGRN({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("GRN approved successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
@@ -306,6 +308,7 @@ export const GRNDetailsPage = () => {
         rejectGrn({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("GRN rejected successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
@@ -779,12 +782,7 @@ export const GRNDetailsPage = () => {
                             className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
                             title="View"
                             onClick={() => {
-                              setSelectedAttachment({
-                                id: attachment.id,
-                                url: attachment.document_url,
-                                document_name: attachment.filename,
-                              });
-                              setIsPreviewModalOpen(true);
+                              if (attachment.document_url) window.open(attachment.document_url, '_blank');
                             }}
                             type="button"
                           >
@@ -795,12 +793,7 @@ export const GRNDetailsPage = () => {
                             alt={attachment.filename}
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
-                              setSelectedAttachment({
-                                id: attachment.id,
-                                url: attachment.document_url,
-                                document_name: attachment.filename,
-                              });
-                              setIsPreviewModalOpen(true);
+                              if (attachment.document_url) window.open(attachment.document_url, '_blank');
                             }}
                           />
                         </>
@@ -830,12 +823,7 @@ export const GRNDetailsPage = () => {
                           variant="ghost"
                           className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
                           onClick={() => {
-                            setSelectedAttachment({
-                              id: attachment.id,
-                              url: attachment.document_url,
-                              document_name: attachment.filename,
-                            });
-                            setIsPreviewModalOpen(true);
+                            if (attachment.document_url) window.open(attachment.document_url, '_blank');
                           }}
                         >
                           <Eye className="w-4 h-4" />

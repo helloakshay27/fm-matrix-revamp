@@ -9,7 +9,7 @@ import { KeyProcessesSection } from "./AdminCompassComponent/KeyProcessesSection
 import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 import GoalsPage from "./AdminCompassComponent/goalsPage";
 
 // ── Design Tokens ──
@@ -40,6 +40,71 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 const AI_CRITICAL_NUMBERS_STORAGE_KEY = "business_plan_ai_critical_numbers";
+
+const getSelectedOrgName = () => {
+  const fallbackName = "HAVEN INFOLINE PRIVATE LIMITED";
+  const selectedOrg = localStorage.getItem("selectedOrg");
+
+  if (!selectedOrg) return fallbackName;
+
+  try {
+    const parsedOrg = JSON.parse(selectedOrg);
+    const parsedName =
+      parsedOrg?.name ||
+      parsedOrg?.company_name ||
+      parsedOrg?.organization_name ||
+      parsedOrg?.title;
+
+    return typeof parsedName === "string" && parsedName.trim()
+      ? parsedName.trim()
+      : fallbackName;
+  } catch {
+    return selectedOrg.trim() || fallbackName;
+  }
+};
+
+function getCleanAiPlanErrorMessage(message: string): string {
+  const cleanMessage = (value: string) =>
+    value
+      .trim()
+      .replace(/\s+See\s+https?:\/\/\S+\.?$/i, "")
+      .replace(/\s+You can find your API key at https?:\/\/\S+\.?$/i, "");
+
+  const trimmedMessage = cleanMessage(message);
+  const jsonStartIndex = trimmedMessage.indexOf("{");
+
+  if (jsonStartIndex === -1) {
+    return trimmedMessage;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmedMessage.slice(jsonStartIndex)) as {
+      error?: { message?: unknown };
+    };
+    const apiMessage = parsed.error?.message;
+
+    if (typeof apiMessage === "string" && apiMessage.trim()) {
+      return cleanMessage(apiMessage);
+    }
+  } catch {
+    // Keep the original message if it is not parseable JSON.
+  }
+
+  return trimmedMessage;
+}
+
+const toast = sonnerToast;
+const showToastError = sonnerToast.error.bind(
+  sonnerToast
+) as typeof sonnerToast.error;
+toast.error = ((
+  message: Parameters<typeof sonnerToast.error>[0],
+  options?: Parameters<typeof sonnerToast.error>[1]
+) =>
+  showToastError(
+    typeof message === "string" ? getCleanAiPlanErrorMessage(message) : message,
+    options
+  )) as typeof toast.error;
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("token") || "";
@@ -1353,16 +1418,43 @@ interface KPI {
 type AiBuilderStage = "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
-  { key: "purpose", label: "Purpose / Why do we exist?" },
-  { key: "core_values", label: "Core Values" },
-  { key: "brand_promises", label: "Brand Promises & Promise KPIs" },
-  { key: "bhag", label: "BHAG / 10-Year Goal" },
-  { key: "three_year_vision", label: "3-Year Goals & Initiatives" },
-  { key: "annual_goals", label: "1-Year Goals & Initiatives" },
-  { key: "target_markets", label: "Target Markets" },
-  { key: "key_initiatives", label: "Key Initiatives" },
-  { key: "key_metrics", label: "Key Metrics" },
-  { key: "people_process", label: "People & Process" },
+  { key: "purpose", label: "Q1: Why does your company exist?" },
+  {
+    key: "core_values",
+    label: "Q2: What 4-5 values or behaviours best represent your team or culture?",
+  },
+  {
+    key: "brand_promises",
+    label: "Q3: What are the USPs that make you stand out?",
+  },
+  {
+    key: "bhag",
+    label: "Q4: What bold outcome do you want to achieve in the next 10-15 years?",
+  },
+  {
+    key: "three_year_vision",
+    label: "Q5: What do you want to achieve in the next 3-5 years?",
+  },
+  {
+    key: "annual_goals",
+    label: "Q6: What are your main business goals for this financial year?",
+  },
+  {
+    key: "target_markets",
+    label: "Q7: Which customer segments or geographies will you focus on this year?",
+  },
+  {
+    key: "key_initiatives",
+    label: "Q8: What 3 key actions or projects will help you achieve this year's goals?",
+  },
+  {
+    key: "key_metrics",
+    label: "Q9: What are the key numbers or metrics you should regularly track to ensure success?",
+  },
+  {
+    key: "people_process",
+    label: "Q10: What improvements do you need in your people or processes to succeed?",
+  },
 ] as const;
 
 const TOOLTIP_CONTENT: Record<
@@ -1789,7 +1881,7 @@ const BusinessPlanAndGoles = () => {
       day: "numeric",
       year: "numeric",
     });
-    let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
+    let text = `BUSINESS PLAN\n${getSelectedOrgName()}\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
 
     text += `PURPOSE\n${"=".repeat(60)}\n`;
     text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
@@ -1982,6 +2074,32 @@ const BusinessPlanAndGoles = () => {
     ].join("\n");
   };
 
+  const getAiPlanResponseText = (response: any): string => {
+    const candidates = [
+      response?.response,
+      response?.data?.response,
+      response?.result?.response,
+      response?.output,
+      response?.data?.output,
+      response?.result?.output,
+      response?.content,
+      response?.data?.content,
+      response?.result?.content,
+      response?.text,
+      response?.data?.text,
+      response?.result?.text,
+      response?.generated_text,
+      response?.data?.generated_text,
+      response?.result?.generated_text,
+    ];
+
+    const text = candidates.find(
+      (candidate) => typeof candidate === "string" && candidate.trim()
+    );
+
+    return text ? text.trim() : "";
+  };
+
   const extractAiPlanText = (response: any): string => {
     const planObject =
       response?.plan ||
@@ -2005,6 +2123,7 @@ const BusinessPlanAndGoles = () => {
       response?.result?.ai_plan,
       response?.result?.business_plan,
       response?.result?.summary,
+      getAiPlanResponseText(response),
     ];
     const text = candidates.find(
       (candidate) => typeof candidate === "string" && candidate.trim()
@@ -2019,7 +2138,13 @@ const BusinessPlanAndGoles = () => {
     return (
       status === "completed" ||
       status === "success" ||
-      (response?.success === true && !!(response?.plan || response?.data?.plan))
+      (response?.success === true &&
+        !!(
+          response?.plan ||
+          response?.data?.plan ||
+          response?.result?.plan ||
+          getAiPlanResponseText(response)
+        ))
     );
   };
 
@@ -2249,7 +2374,7 @@ const BusinessPlanAndGoles = () => {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || json?.success === false) {
-        throw new Error(json?.message || json?.error || "Failed to start AI plan generation.");
+        throw new Error(json?.message || json?.error || "No AI Setup Detected");
       }
 
       if (isAiPlanCompleted(json)) {
@@ -2283,6 +2408,7 @@ const BusinessPlanAndGoles = () => {
       }
 
       setAiBuilderError(err.message || "Failed to generate AI plan.");
+      toast.error(err.message || "Failed to generate AI plan.");
       setAiBuilderStage("questions");
     } finally {
       if (aiPlanAbortRef.current === controller) {
@@ -2293,7 +2419,9 @@ const BusinessPlanAndGoles = () => {
 
   const goToNextAiQuestion = () => {
     if (!aiAnswers[aiQuestionIndex]?.trim()) {
-      setAiBuilderError("Please answer this question before continuing.");
+      const message = "Please answer this question before continuing.";
+      setAiBuilderError(message);
+      toast.error(message);
       return;
     }
 
@@ -2893,7 +3021,7 @@ const BusinessPlanAndGoles = () => {
             className="text-sm font-semibold mt-1"
             style={{ color: C.textMuted }}
           >
-            HAVEN INFOLINE PRIVATE LIMITED
+            {getSelectedOrgName()}
           </p>
         </div>
         <div className="flex gap-3 shrink-0">
@@ -3695,10 +3823,6 @@ const BusinessPlanAndGoles = () => {
                       autoFocus
                     />
                   </div>
-
-                  {aiBuilderError && (
-                    <div className="bp-error-banner">{aiBuilderError}</div>
-                  )}
                 </div>
               )}
 
