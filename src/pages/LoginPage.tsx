@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Building2, Check, Eye, EyeOff } from "lucide-react";
+import { Building2, Eye, EyeOff } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import loginBg from "@/assets/banner_logo/login_bg.png";
 import {
@@ -67,7 +67,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     executeRecaptchaRef.current = executeRecaptcha;
   }, [executeRecaptcha]);
 
-  const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedOrganization, setSelectedOrganization] =
@@ -76,8 +75,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaText, setCaptchaText] = useState("");
-  const [captchaInput, setCaptchaInput] = useState("");
+  const [orgsFetched, setOrgsFetched] = useState(false);
+  const [lastFetchedEmail, setLastFetchedEmail] = useState("");
 
   const hostname = window.location.hostname;
 
@@ -133,14 +132,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setOrganizations(orgs);
 
       if (selectedOrg) {
-        // Auto-select the organization and move to password step
         handleOrganizationSelect(selectedOrg);
         toast.success(
           `Organization "${selectedOrg.name}" automatically selected.`
         );
       } else {
-        // If orgId doesn't match, show organization selection step
-        setCurrentStep(2);
+        setOrgsFetched(true);
         toast.info("Please select your organization.");
       }
 
@@ -170,26 +167,24 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         message: "Please enter your email or mobile number.",
       };
 
-    const looksLikeEmail = trimmed.includes("@");
-    if (looksLikeEmail) {
+    if (trimmed.includes("@")) {
       const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
       return valid
         ? { isValid: true, message: "" }
         : {
             isValid: false,
-            message:
-              "Please enter a valid email address (e.g. name@example.com).",
+            message: "Please enter a valid email address (e.g. name@example.com).",
           };
     }
 
-    // Treat as mobile: strip spaces/dashes, allow optional leading +
-    const digits = trimmed.replace(/[\s\-().]/g, "");
-    const valid = /^\+?[0-9]{7,15}$/.test(digits);
+    // Indian mobile: strip optional +91 / 91 prefix, then 10 digits starting 6–9
+    const normalized = trimmed.replace(/^(\+91|91)/, "").replace(/[\s\-().]/g, "");
+    const valid = /^[6-9]\d{9}$/.test(normalized);
     return valid
       ? { isValid: true, message: "" }
       : {
           isValid: false,
-          message: "Please enter a valid mobile number (7–15 digits).",
+          message: "Please enter a valid 10-digit mobile number (e.g. 9876543210).",
         };
   };
 
@@ -238,19 +233,23 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     return { isValid: true, message: "Password is valid." };
   };
 
-  const handleEmailSubmit = async () => {
-    const validation = validateEmailOrMobile(email);
-    if (!validation.isValid) {
-      toast.error(validation.message);
-      return;
-    }
+  const fetchOrganizations = async (emailValue: string) => {
+    const validation = validateEmailOrMobile(emailValue);
+    if (!validation.isValid) return;
+    if (emailValue === lastFetchedEmail) return;
 
     setIsLoading(true);
+    setOrgsFetched(false);
+    setOrganizations([]);
+    setSelectedOrganization(null);
     try {
-      const orgs = await getOrganizationsByEmail(email);
+      const orgs = await getOrganizationsByEmail(emailValue);
       setOrganizations(orgs);
-      setCurrentStep(2);
-      if (orgs.length === 0) {
+      setOrgsFetched(true);
+      setLastFetchedEmail(emailValue);
+      if (orgs.length === 1) {
+        handleOrganizationSelect(orgs[0]);
+      } else if (orgs.length === 0) {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
@@ -260,15 +259,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     }
   };
 
-  const generateCaptcha = () => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-    let result = "";
-    for (let i = 0; i < 6; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setCaptchaText(result);
-    setCaptchaInput("");
-  };
 
   const handleOrganizationSelect = (org: Organization) => {
     const baseUrl = `${org.sub_domain}.${org.domain}`;
@@ -287,21 +277,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     setBaseUrl(baseUrl);
     setSelectedOrganization(org);
-    setCurrentStep(3);
-
-    // Generate CAPTCHA for Vodafone Idea
-    if (org.name === "Vodafone Idea") {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-      let result = "";
-      for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      setCaptchaText(result);
-      setCaptchaInput("");
-    } else {
-      setCaptchaText("");
-      setCaptchaInput("");
-    }
   };
 
   const handleLogin = async () => {
@@ -316,26 +291,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     //   return;
     // }
 
-    if (selectedOrganization?.name === "Vodafone Idea") {
-      if (!captchaInput) {
-        toast.error("Please enter the CAPTCHA.");
-        return;
-      }
-      if (captchaInput !== captchaText) {
-        toast.error("Invalid CAPTCHA. Please try again.");
-        generateCaptcha();
-        setCaptchaInput("");
-        return;
-      }
-    }
-
     setLoginLoading(true);
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const organizationId = selectedOrganization.id;
 
-      // Execute Google reCAPTCHA v3 and obtain token for backend verification.
-      // Poll up to 10s in case the script is still loading.
       let recaptchaToken: string | undefined;
       const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
@@ -361,8 +321,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           setLoginLoading(false);
           return;
         }
-      } else {
-        console.warn("reCAPTCHA site key is missing. Skipping reCAPTCHA verification.");
       }
 
       const response = await loginUser(
@@ -605,86 +563,36 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     }
   };
 
-  const handleBack = () => {
-    if (currentStep === 2) {
-      setCurrentStep(1);
-      setOrganizations([]);
-    } else if (currentStep === 3) {
-      setCurrentStep(2);
-      setSelectedOrganization(null);
-    }
-  };
 
-  const renderStepIndicator = () => (
-    <div className="text-center mb-8">
-      <div className="flex justify-center items-center space-x-4 mb-3">
-        {[1, 2, 3].map((step) => (
-          <div
-            key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
-              step === currentStep
-                ? "bg-[#C72030] text-white shadow-lg scale-110"
-                : step < currentStep
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 text-gray-400"
-            }`}
-          >
-            {step < currentStep ? (
-              <Check className="w-5 h-5 stroke-[2.5]" />
-            ) : (
-              <span className="font-semibold">{step}</span>
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-center items-center gap-2">
-        <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
-        ></div>
-        <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
-        ></div>
-        <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
-        ></div>
-      </div>
-      <p className="text-gray-400 text-sm mt-3 font-medium">
-        Step {currentStep} of 3
-      </p>
-    </div>
-  );
-
-  const renderEmailStep = () => (
+  const renderLoginForm = () => (
     <>
-      {/* Test */}
-      {/* Email Input Label */}
+      {/* Email field */}
       <div className="mb-4">
-        <Label
-          htmlFor="email"
-          className="text-gray-700 font-medium text-base block mb-2"
-        >
+        <Label htmlFor="email" className="text-gray-700 font-medium text-base block mb-2">
           Email Address or Mobile Number
         </Label>
-
-        {/* Input Field */}
         <TextField
           variant="outlined"
           placeholder="Enter email or mobile number"
           type="text"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleEmailSubmit()}
+          onChange={(e) => {
+            const val = e.target.value;
+            setEmail(val);
+            if (orgsFetched && val.trim() !== lastFetchedEmail) {
+              setOrgsFetched(false);
+              setOrganizations([]);
+              setSelectedOrganization(null);
+              setLastFetchedEmail("");
+            }
+          }}
+          onBlur={() => fetchOrganizations(email.trim())}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === "Enter") fetchOrganizations(email.trim());
+          }}
           sx={{
             ...muiFieldStyles,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "0.5rem",
-            },
+            "& .MuiOutlinedInput-root": { borderRadius: "0.5rem" },
             "& .MuiOutlinedInput-input::placeholder": {
               fontSize: "17px",
               color: "#424651ff",
@@ -692,273 +600,144 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               fontWeight: 500,
             },
             ...(isViSite && {
-              "& .MuiOutlinedInput-input": {
-                fontSize: "16px",
-              },
+              "& .MuiOutlinedInput-input": { fontSize: "16px" },
             }),
           }}
           fullWidth
         />
       </div>
 
-      {/* Submit Button */}
-      <Button
-        onClick={handleEmailSubmit}
-        disabled={isLoading || !email}
-        className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-medium rounded-lg text-base mt-4"
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <span className="animate-spin mr-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-            <span>Finding Organizations...</span>
-          </div>
-        ) : (
-          "Continue"
-        )}
-      </Button>
-    </>
-  );
+      {/* Org fetch loading */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-3 text-gray-500 text-sm">
+          <span className="animate-spin mr-2 h-4 w-4 border-2 border-[#C72030] border-t-transparent rounded-full" />
+          Finding organizations...
+        </div>
+      )}
 
-  const renderOrganizationStep = () => (
-    <>
-      <div className="flex items-center mb-4 ">
-        <Button
-          onClick={handleBack}
-          variant="ghost"
-          size="sm"
-          className="text-gray-300 hover:text-white p-1"
-          style={{ marginTop: "10px" }}
-        >
-          <ArrowLeft size={30} />
-        </Button>
+      {/* No orgs message */}
+      {orgsFetched && !isLoading && organizations.length === 0 && (
+        <div className="text-center text-red-500 text-sm py-2 mb-2">
+          No organizations found for this email address.
+        </div>
+      )}
 
-        {isViSite ? (
-          <h2 className="text-sm font-semibold text-black ml-2 tracking-tight">
-            Select Organization
-          </h2>
-        ) : (
-          <h2 className="text-xl font-semibold text-white ml-2">
-            Select Organization
-          </h2>
-        )}
-      </div>
-      <p className="text-grey-300 text-sm mb-6 ">
-        Email / Mobile: <span className="text-grey-500 font-bold">{email}</span>
-      </p>
-
-      <p className="text-gray-500 text-sm">
-        Select your organization to continue :
-      </p>
-
-      <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto scrollbar">
-        {organizations &&
-          organizations.map((org) => (
-            <div
-              key={org.id}
-              onClick={() => handleOrganizationSelect(org)}
-              className="bg-white shadow-md rounded-xl p-4 cursor-pointer hover:bg-gray-50 border border-gray-100 hover:border-[#C72030]"
-            >
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-[#C72030] bg-opacity-10 rounded-lg flex items-center justify-center mr-4">
-                  {/* {org.logo?.url ? (
-                  <img 
-                    src={`https://uat.lockated.com${org.logo.url}`} 
-                    alt={`${org.name} logo`}
-                    className="w-8 h-8 object-contain"
-                  />
-                ) : (
-                  <Building2 className="text-[#C72030]" size={24} />
-                )} */}
-
-                  <Building2 className="text-[#C72030]" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-gray-900 font-medium">{org.name}</h3>
-                  <p className="text-gray-500 text-sm">{org.domain}</p>
+      {/* Org selection list */}
+      {orgsFetched && !isLoading && organizations.length > 1 && !selectedOrganization && (
+        <div className="mb-4">
+          <p className="text-gray-500 text-sm mb-2">Select your organization to continue:</p>
+          <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar">
+            {organizations.map((org) => (
+              <div
+                key={org.id}
+                onClick={() => handleOrganizationSelect(org)}
+                className="bg-white shadow-md rounded-xl p-3 cursor-pointer hover:bg-gray-50 border border-gray-100 hover:border-[#C72030]"
+              >
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-[#C72030] bg-opacity-10 rounded-lg flex items-center justify-center mr-3">
+                    <Building2 className="text-[#C72030]" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-gray-900 font-medium text-sm">{org.name}</h3>
+                    <p className="text-gray-500 text-xs">{org.domain}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-      </div>
-
-      {(!organizations || organizations.length === 0) && (
-        <div className="text-center text-gray-300 py-8">
-          <p>No organizations found for this email address.</p>
+            ))}
+          </div>
         </div>
       )}
-    </>
-  );
 
-  const renderPasswordStep = () => (
-    <>
-      <div className="flex items-center mb-4">
-        <Button
-          onClick={handleBack}
-          variant="ghost"
-          size="sm"
-          className="text-gray-300 hover:text-white p-1"
-        >
-          <ArrowLeft size={20} />
-        </Button>
-        <h2 className="text-xl font-semibold text-white ml-2">
-          Enter Password
-        </h2>
-      </div>
-
+      {/* Selected org badge */}
       {selectedOrganization && (
-        <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 mb-6">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-4 flex items-center justify-between">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
-              {/* {selectedOrganization.logo?.url ? (
-                <img
-                  src={`https://uat.lockated.com${selectedOrganization.logo.url}`}
-                  alt={`${selectedOrganization.name} logo`}
-                  className="w-6 h-6 object-contain"
-                />
-              ) : (
-                <Building2 className="text-black" size={20} />
-              )} */}
-
-              <Building2 className="text-black" size={20} />
+            <div className="w-9 h-9 bg-[#C72030] bg-opacity-10 rounded-lg flex items-center justify-center mr-3">
+              <Building2 className="text-[#C72030]" size={18} />
             </div>
             <div>
-              <h3 className="text-black font-medium">
-                {selectedOrganization.name}
-              </h3>
-              <p className="text-gray-400 text-sm">{email}</p>
+              <p className="text-gray-800 font-medium text-sm">{selectedOrganization.name}</p>
+              <p className="text-gray-400 text-xs">{email}</p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedOrganization(null);
+              if (organizations.length <= 1) {
+                setOrgsFetched(false);
+                setOrganizations([]);
+                setLastFetchedEmail("");
+              }
+            }}
+            className="text-xs text-[#C72030] hover:underline font-medium ml-2"
+          >
+            Change
+          </button>
         </div>
       )}
 
-      <TextField
-        variant="outlined"
-        type={showPassword ? "text" : "password"}
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        sx={muiFieldStyles}
-        onKeyPress={(e) => e.key === "Enter" && handleLogin()}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                onClick={() => setShowPassword(!showPassword)}
-                edge="end"
-                sx={{
-                  color: "#64748b",
-                  "&:hover": {
-                    backgroundColor: "rgba(0,0,0,0.04)",
-                  },
-                }}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-
-
-  {/* CAPTCHA — shown only for Vodafone Idea */}
-      {selectedOrganization?.name === "Vodafone Idea" && (
-        <div className="mb-6">
-          <p className="text-gray-700 font-medium text-sm mb-2">Please enter the CAPTCHA below</p>
-          {/* CAPTCHA display box */}
-          <div
-            style={{
-              background: "linear-gradient(135deg,#f0f0f0 0%,#d8d8d8 100%)",
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              padding: "10px 16px",
-              fontFamily: "'Courier New', monospace",
-              fontSize: "22px",
-              fontWeight: 700,
-              letterSpacing: "8px",
-              color: "#333",
-              userSelect: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "8px",
-            }}
-          >
-            <span style={{ textDecoration: "line-through" }}>{captchaText}</span>
-            <button
-              type="button"
-              onClick={generateCaptcha}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "18px",
-                color: "#C72030",
-                padding: "0 4px",
-              }}
-              title="Refresh CAPTCHA"
-            >
-              &#x21BB;
-            </button>
-          </div>
-          {/* CAPTCHA input */}
-          <input
-            type="text"
-            placeholder="Type the CAPTCHA here"
-            value={captchaInput}
-            onChange={(e) => setCaptchaInput(e.target.value)}
-            style={{
-              width: "100%",
-              height: "44px",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "0 14px",
-              fontSize: "15px",
-              boxSizing: "border-box",
-              outline: "none",
+      {/* Password + Login (revealed after org selected) */}
+      {selectedOrganization && (
+        <>
+          <TextField
+            variant="outlined"
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            sx={muiFieldStyles}
+            onKeyDown={(e: React.KeyboardEvent) => e.key === "Enter" && handleLogin()}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                    sx={{
+                      color: "#64748b",
+                      "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
           />
-        </div>
-      )}
 
-      {/* Terms and Privacy */}
-      <div className="text-center text-sm text-gray-300 mb-4">
-        By clicking Log in you are accepting our{" "}
-        <span className="text-blue-300 hover:underline cursor-pointer">
-          Privacy Policy
-        </span>{" "}
-        & agree to the{" "}
-        <span className="text-blue-300 hover:underline cursor-pointer">
-          Terms & Conditions
-        </span>
-        .
-      </div>
-
-    
-      {/* Login Button */}
-      <Button
-        onClick={handleLogin}
-        disabled={!password || loginLoading}
-        className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loginLoading ? (
-          <div className="flex items-center justify-center">
-            <span className="animate-spin mr-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-            <span>Logging in...</span>
+          <div className="text-center text-sm text-gray-300 mb-4">
+            By clicking Log in you are accepting our{" "}
+            <span className="text-blue-300 hover:underline cursor-pointer">Privacy Policy</span>{" "}
+            & agree to the{" "}
+            <span className="text-blue-300 hover:underline cursor-pointer">Terms & Conditions</span>.
           </div>
-        ) : (
-          "LOG IN"
-        )}
-      </Button>
 
-      {/* Forgot Password */}
-      <div className="text-center mt-6">
-        <button
-          className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors"
-          onClick={() => navigate("/forgot-password", { state: { email } })}
-        >
-          Forgot your password?
-        </button>
-      </div>
+          <Button
+            onClick={handleLogin}
+            disabled={!password || loginLoading}
+            className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loginLoading ? (
+              <div className="flex items-center justify-center">
+                <span className="animate-spin mr-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                <span>Logging in...</span>
+              </div>
+            ) : (
+              "LOG IN"
+            )}
+          </Button>
+
+          <div className="text-center mt-6">
+            <button
+              className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors"
+              onClick={() => navigate("/forgot-password", { state: { email } })}
+            >
+              Forgot your password?
+            </button>
+          </div>
+        </>
+      )}
     </>
   );
 
@@ -1121,11 +900,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               </p>
             </div>
 
-            {/* Step Form */}
+            {/* Login Form */}
             <div className="mt-8 space-y-5">
-              {currentStep === 1 && renderEmailStep()}
-              {currentStep === 2 && renderOrganizationStep()}
-              {currentStep === 3 && renderPasswordStep()}
+              {renderLoginForm()}
             </div>
           </div>
         </div>
