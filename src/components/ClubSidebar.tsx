@@ -93,14 +93,14 @@ const modulesByPackage = {
       href: "/club-management/amenities-booking-club",
     },
     {
-      name: "Broadcast",
+      name: "Notices",
       icon: Bell,
-      href: "/club-management/broadcast",
+      href: "/pulse/notices",
     },
     {
-      name: "Event",
+      name: "Events",
       icon: Calendar,
-      href: "/club-management/events",
+      href: "/pulse/events",
     },
     {
       name: "Payments",
