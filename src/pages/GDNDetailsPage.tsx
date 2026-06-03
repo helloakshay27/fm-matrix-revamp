@@ -1,14 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, Loader2, Send, X } from "lucide-react";
+import { ChevronDown, FileText, Loader2, Search, Send, X } from "lucide-react";
 import { toast } from "sonner";
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select as MuiSelect,
-  SelectChangeEvent,
-} from "@mui/material";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +53,26 @@ interface DispatchUser {
   name: string;
 }
 
+interface DispatchUserApi {
+  id?: number | string;
+  user_id?: number | string;
+  value?: number | string;
+  full_name?: string | null;
+  name?: string | null;
+  firstname?: string | null;
+  first_name?: string | null;
+  lastname?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  mobile?: string | null;
+}
+
+interface DispatchUsersResponse {
+  users?: DispatchUserApi[];
+  data?: DispatchUserApi[];
+  fm_users?: DispatchUserApi[];
+}
+
 const toTitleCase = (value?: string | null) => {
   if (!value) return "-";
 
@@ -70,7 +83,7 @@ const toTitleCase = (value?: string | null) => {
     .join(" ");
 };
 
-const getUserName = (user: any) => {
+const getUserName = (user: DispatchUserApi) => {
   const fullName = String(user?.full_name ?? user?.name ?? "").trim();
   if (fullName) return fullName;
 
@@ -81,79 +94,13 @@ const getUserName = (user: any) => {
   return joinedName || String(user?.email ?? user?.mobile ?? "User").trim();
 };
 
-const normalizeDispatchUsers = (items: any[]): DispatchUser[] =>
+const normalizeDispatchUsers = (items: DispatchUserApi[]): DispatchUser[] =>
   items
     .map((user) => ({
       id: String(user?.id ?? user?.user_id ?? user?.value ?? ""),
       name: getUserName(user),
     }))
     .filter((user) => user.id && user.name);
-
-const dispatchSelectSx = {
-  "& .MuiInputLabel-root": {
-    backgroundColor: "#fff",
-    color: "#111827",
-    fontSize: "14px",
-    lineHeight: 1,
-    px: "4px",
-  },
-  "& .MuiInputLabel-root.Mui-focused": {
-    color: "#111827",
-  },
-  "& .MuiOutlinedInput-root": {
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: "0px",
-    minHeight: "54px",
-    "& fieldset": {
-      borderColor: "#d8d8d8",
-    },
-    "&:hover fieldset": {
-      borderColor: "#c7c7c7",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "#d8d8d8",
-      borderWidth: "1px",
-    },
-  },
-  "& .MuiSelect-select": {
-    alignItems: "center",
-    backgroundColor: "#f7f7f7",
-    color: "#C72030",
-    display: "flex",
-    fontSize: "13px",
-    height: "34px",
-    lineHeight: "34px",
-    margin: "10px 10px 8px",
-    minHeight: "0 !important",
-    padding: "0 32px 0 12px !important",
-  },
-  "& .MuiSelect-icon": {
-    color: "#9ca3af",
-    right: "14px",
-  },
-};
-
-const dispatchMenuProps = {
-  PaperProps: {
-    sx: {
-      mt: 0.5,
-      maxHeight: 180,
-      borderRadius: "0px",
-      boxShadow: "0 8px 18px rgba(15, 23, 42, 0.16)",
-      zIndex: 1600,
-      "& .MuiMenuItem-root": {
-        minHeight: 34,
-        whiteSpace: "normal",
-        wordBreak: "break-word",
-        fontSize: "13px",
-      },
-    },
-  },
-  MenuListProps: {
-    dense: true,
-  },
-};
 
 export const GDNDetailsPage = () => {
   const { id } = useParams();
@@ -164,8 +111,10 @@ export const GDNDetailsPage = () => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [selectedHandOverTo, setSelectedHandOverTo] = useState("");
   const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
+  const [dispatchDropdownOpen, setDispatchDropdownOpen] = useState(false);
+  const [handOverSearch, setHandOverSearch] = useState("");
 
-  const fetchGdnDetails = async () => {
+  const fetchGdnDetails = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -209,13 +158,13 @@ export const GDNDetailsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchGdnDetails();
-  }, [id]);
+  }, [fetchGdnDetails]);
 
-  const fetchHandOverUsers = async () => {
+  const fetchHandOverUsers = useCallback(async () => {
     setUsersLoading(true);
 
     try {
@@ -238,7 +187,7 @@ export const GDNDetailsPage = () => {
         throw new Error(`Failed to fetch users (${response.status})`);
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as DispatchUsersResponse;
       const source = Array.isArray(result.users)
         ? result.users
         : Array.isArray(result.data)
@@ -255,19 +204,21 @@ export const GDNDetailsPage = () => {
     } finally {
       setUsersLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (dispatchDialogOpen && handOverUsers.length === 0) {
       fetchHandOverUsers();
     }
-  }, [dispatchDialogOpen]);
+  }, [dispatchDialogOpen, fetchHandOverUsers, handOverUsers.length]);
 
   const handleDispatchDialogChange = (open: boolean) => {
     setDispatchDialogOpen(open);
 
     if (!open) {
       setSelectedHandOverTo("");
+      setDispatchDropdownOpen(false);
+      setHandOverSearch("");
     }
   };
 
@@ -345,6 +296,9 @@ export const GDNDetailsPage = () => {
 
   const selectedHandOverUserName =
     handOverUsers.find((user) => user.id === selectedHandOverTo)?.name || "";
+  const filteredHandOverUsers = handOverUsers.filter((user) =>
+    user.name.toLowerCase().includes(handOverSearch.trim().toLowerCase())
+  );
 
   if (loading && !gdnDetails) {
     return (
@@ -478,7 +432,7 @@ export const GDNDetailsPage = () => {
         open={dispatchDialogOpen}
         onOpenChange={handleDispatchDialogChange}
       >
-        <DialogContent className="top-1/2 max-w-[300px] gap-0 overflow-visible rounded-[4px] border-0 bg-white p-0 shadow-xl sm:max-w-[300px] sm:rounded-[4px]">
+        <DialogContent className="top-1/2 w-[300px] max-w-[calc(100vw_-_32px)] gap-0 overflow-visible rounded-[4px] border-0 bg-white p-0 shadow-xl sm:w-[300px] sm:max-w-[300px] sm:rounded-[4px]">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 border-b border-gray-200 px-4 py-4 text-left">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Dispatch Now
@@ -495,49 +449,74 @@ export const GDNDetailsPage = () => {
           </DialogHeader>
 
           <div className="px-7 py-8">
-            <FormControl
-              fullWidth
-              size="small"
-              sx={dispatchSelectSx}
-              variant="outlined"
-            >
-              <InputLabel id="dispatch-hand-over-to-label" shrink>
-                Hand Over To <span style={{ color: "#C72030" }}>*</span>
-              </InputLabel>
-              <MuiSelect
-                displayEmpty
+            <div className="relative">
+              <label
+                className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-medium text-[#C72030]"
+                htmlFor="dispatch-hand-over-to"
+              >
+                Hand Over To <span>*</span>
+              </label>
+              <button
+                className="flex h-[54px] w-full items-center border border-[#d8d8d8] bg-white px-[10px] text-left disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={usersLoading || dispatchSubmitting}
                 id="dispatch-hand-over-to"
-                label="Hand Over To *"
-                labelId="dispatch-hand-over-to-label"
-                MenuProps={dispatchMenuProps}
-                onChange={(event: SelectChangeEvent) =>
-                  setSelectedHandOverTo(event.target.value)
-                }
-                renderValue={(selected) => {
-                  if (usersLoading) return "Loading users...";
-                  if (!selected) return "Select hand over to";
-                  return selectedHandOverUserName || "Select hand over to";
-                }}
-                value={selectedHandOverTo}
+                onClick={() => setDispatchDropdownOpen((open) => !open)}
+                type="button"
               >
-                {usersLoading ? (
-                  <MenuItem value="" disabled>
-                    Loading users...
-                  </MenuItem>
-                ) : handOverUsers.length ? (
-                  handOverUsers.map((user) => (
-                    <MenuItem key={user.id} value={user.id}>
-                      {user.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="" disabled>
-                    No users found
-                  </MenuItem>
-                )}
-              </MuiSelect>
-            </FormControl>
+                <span className="flex h-[34px] flex-1 items-center bg-[#f7f7f7] px-3 pr-8 text-[13px] text-[#C72030]">
+                  {usersLoading
+                    ? "Loading users..."
+                    : selectedHandOverUserName || "Select hand over to"}
+                </span>
+                <ChevronDown className="absolute right-4 h-4 w-4 text-gray-400" />
+              </button>
+
+              {dispatchDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full z-[80] mt-1 max-h-[220px] overflow-hidden border border-[#d8d8d8] bg-white shadow-[0_8px_18px_rgba(15,23,42,0.16)]">
+                  <div className="border-b border-gray-100 p-2">
+                    <div className="flex h-9 items-center gap-2 rounded-[4px] border border-[#C72030] px-2">
+                      <Search className="h-4 w-4 text-gray-500" />
+                      <input
+                        autoFocus
+                        className="h-full w-full bg-transparent text-[13px] outline-none placeholder:text-gray-500"
+                        onChange={(event) =>
+                          setHandOverSearch(event.target.value)
+                        }
+                        onKeyDown={(event) => event.stopPropagation()}
+                        placeholder="Type to search..."
+                        value={handOverSearch}
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-[165px] overflow-y-auto py-1">
+                    {usersLoading ? (
+                      <div className="px-3 py-2 text-[13px] text-gray-500">
+                        Loading users...
+                      </div>
+                    ) : filteredHandOverUsers.length ? (
+                      filteredHandOverUsers.map((user) => (
+                        <button
+                          className="block w-full px-3 py-2 text-left text-[13px] text-gray-900 hover:bg-[#f3edf3]"
+                          key={user.id}
+                          onClick={() => {
+                            setSelectedHandOverTo(user.id);
+                            setDispatchDropdownOpen(false);
+                            setHandOverSearch("");
+                          }}
+                          type="button"
+                        >
+                          {user.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-[13px] text-gray-500">
+                        No users found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter className="border-t border-gray-200 px-5 py-4 sm:justify-end sm:space-x-0">
