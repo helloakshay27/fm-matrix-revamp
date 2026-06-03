@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
-import { Eye, Plus, Download, Upload, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText } from 'lucide-react';
+import { Eye, Plus, Download, Upload, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -95,6 +95,113 @@ export const ItemsDashboard = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteItem, setSelectedDeleteItem] = useState<ItemData | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
+  const [bulkUploadDragActive, setBulkUploadDragActive] = useState(false);
+  const [bulkUploadStatus, setBulkUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [bulkUploadMessage, setBulkUploadMessage] = useState('');
+  const bulkUploadInputRef = useRef<HTMLInputElement>(null);
+  const validateBulkFile = (file: File) => {
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!['.xlsx', '.xls'].includes(ext)) {
+      toast.error('Only Excel files (.xlsx, .xls) are allowed.');
+      return false;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size exceeds 10MB limit');
+      return false;
+    }
+    return true;
+  };
+
+  const handleBulkDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBulkUploadDragActive(e.type === 'dragenter' || e.type === 'dragover');
+  };
+
+  const handleBulkDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBulkUploadDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && validateBulkFile(file)) setBulkUploadFile(file);
+  };
+
+  const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && validateBulkFile(file)) setBulkUploadFile(file);
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkUploadFile) return toast.error('Please select a file to upload');
+
+    setBulkUploadStatus('uploading');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', bulkUploadFile);
+
+      const response = await fetch(
+        `https://${baseUrl}/lock_account_items/bulk_upload.json?lock_account_id=${lock_account_id}`,
+        {
+          method: 'POST',
+          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: formData,
+        }
+      );
+
+      const contentType = response.headers.get('content-type') || '';
+
+      if (!response.ok) {
+        const errData = contentType.includes('application/json')
+          ? await response.json().catch(() => ({}))
+          : {};
+        throw new Error(errData.message || `Upload failed with status ${response.status}`);
+      }
+
+      if (
+        contentType.includes('application/vnd.openxmlformats-officedocument') ||
+        contentType.includes('application/vnd.ms-excel') ||
+        contentType.includes('application/octet-stream')
+      ) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const cd = response.headers.get('content-disposition');
+        const match = cd?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        link.download = match?.[1]?.replace(/['"]/g, '') || 'items_upload_result.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        closeBulkUploadDialog();
+        toast.success('File processed. Result file downloaded.');
+        return;
+      }
+
+      const data = await response.json();
+      closeBulkUploadDialog();
+      toast.success(data.message || 'Items uploaded successfully!');
+      await fetchItems();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Upload failed';
+      setBulkUploadStatus('error');
+      setBulkUploadMessage(msg);
+      toast.error(msg);
+    }
+  };
+
+  const closeBulkUploadDialog = () => {
+    setBulkUploadOpen(false);
+    setBulkUploadFile(null);
+    setBulkUploadStatus('idle');
+    setBulkUploadMessage('');
+    if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = '';
+  };
+
   // Fetch items from API
   const fetchItems = async () => {
     setLoading(true);
@@ -276,6 +383,46 @@ export const ItemsDashboard = () => {
     } catch (error) {
       console.error('Error downloading Society QR:', error);
       toast.error('Failed to download Society QR');
+    }
+  };
+
+  const handleDownloadSample = async () => {
+    const loadingToast = toast.loading('Downloading sample format...');
+
+    try {
+      const response = await fetch(
+        `https://${baseUrl}/lock_account_items/bulk_upload_sample.xlsx`,
+        {
+          method: 'GET',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Failed to download sample: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('content-disposition');
+      const fileNameMatch = contentDisposition?.match(/filename="?([^"]+)"?/i);
+      const fileName = fileNameMatch?.[1] || 'sample-item-upload.xlsx';
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success('Sample format downloaded successfully', { id: loadingToast });
+    } catch (error) {
+      console.error('Error downloading sample format:', error);
+      toast.error('Failed to download sample format', { id: loadingToast });
     }
   };
 
@@ -722,68 +869,32 @@ export const ItemsDashboard = () => {
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
-              {/* DOWNLOAD SAMPLE BUTTON */}
-              {/* <Button
-                variant="outline"
-                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = "/sample-item-upload.xlsx";
-                  link.download = "sample-item-upload.xlsx";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Sample
-              </Button> */}
-
-              {/* BULK UPLOAD BUTTON */}
-              {/* <Button
-                variant="outline"
-                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
-                onClick={() => navigate("/accounting/items/bulk-upload")}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Bulk Upload
-              </Button> */}
-
-
+            
             </div>
           }
           // onFilterClick={() => setIsFilterOpen(true)}
           rightActions={
             <div>
             {/* renderRightActions() */}
-
-             {/* DOWNLOAD SAMPLE BUTTON */}
-              {/* <Button
+               <Button
                 variant="outline"
                 className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = "/sample-item-upload.xlsx";
-                  link.download = "sample-item-upload.xlsx";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
+                onClick={handleDownloadSample}
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download Sample
-              </Button> */}
+              </Button>
 
               {/* BULK UPLOAD BUTTON */}
-              {/* <Button
+              <Button
                 variant="outline"
+                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
                 className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white ms-2"
-                onClick={() => navigate("/accounting/items/bulk-upload")}
+                onClick={() => { setBulkUploadOpen(true); setBulkUploadStatus('idle'); setBulkUploadMessage(''); }}
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Bulk Upload
-              </Button> */}
+              </Button>
               </div>
           }
           searchPlaceholder="Search "
@@ -850,6 +961,111 @@ export const ItemsDashboard = () => {
           <DialogFooter>
             <Button onClick={() => setModalData({ isOpen: false, title: '', items: [] })} variant="outline">
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Dialog */}
+      <Dialog open={bulkUploadOpen} onOpenChange={closeBulkUploadDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Items</DialogTitle>
+            <DialogDescription>Upload an Excel file to import items in bulk</DialogDescription>
+          </DialogHeader>
+
+          {/* Drop Zone */}
+          <div
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${
+              bulkUploadDragActive
+                ? 'border-[#C72030] bg-red-50'
+                : 'border-gray-300 hover:border-[#C72030] hover:bg-gray-50'
+            }`}
+            onDragEnter={handleBulkDrag}
+            onDragLeave={handleBulkDrag}
+            onDragOver={handleBulkDrag}
+            onDrop={handleBulkDrop}
+            onClick={() => bulkUploadInputRef.current?.click()}
+          >
+            <input
+              ref={bulkUploadInputRef}
+              type="file"
+              className="hidden"
+              accept=".xlsx,.xls"
+              onChange={handleBulkFileChange}
+            />
+            {!bulkUploadFile ? (
+              <div className="space-y-3">
+                <div className="flex justify-center">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-gray-400" />
+                  </div>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Drag & Drop or <span className="text-[#C72030] font-semibold">browse</span>
+                </p>
+                <p className="text-xs text-gray-400">Excel (.xlsx, .xls) — Max 10MB</p>
+              </div>
+            ) : (
+              <div
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FileText className="w-8 h-8 text-[#C72030] flex-shrink-0" />
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 text-sm truncate">{bulkUploadFile.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {(bulkUploadFile.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="p-1 hover:bg-gray-200 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setBulkUploadFile(null);
+                    setBulkUploadStatus('idle');
+                    if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = '';
+                  }}
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Status */}
+          {bulkUploadStatus !== 'idle' && (
+            <div
+              className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+                bulkUploadStatus === 'uploading'
+                  ? 'bg-blue-50 text-blue-700'
+                  : bulkUploadStatus === 'success'
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {bulkUploadStatus === 'uploading' && <Loader2 className="w-4 h-4 animate-spin" />}
+              {bulkUploadStatus === 'success' && <CheckCircle className="w-4 h-4" />}
+              {bulkUploadStatus === 'error' && <AlertCircle className="w-4 h-4" />}
+              <span>{bulkUploadStatus === 'uploading' ? 'Uploading...' : bulkUploadMessage}</span>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={closeBulkUploadDialog}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkUpload}
+              disabled={!bulkUploadFile || bulkUploadStatus === 'uploading'}
+              className="bg-[#C72030] hover:bg-[#a51b28] text-white disabled:opacity-50"
+            >
+              {bulkUploadStatus === 'uploading' ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</>
+              ) : (
+                <><Upload className="w-4 h-4 mr-2" />Upload</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

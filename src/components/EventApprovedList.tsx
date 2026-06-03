@@ -136,7 +136,7 @@ const EventApprovedList = () => {
 
             return (
                 <span className={`px-2 py-1 rounded text-sm font-medium ${statusStyles[status] || "bg-gray-100 text-gray-700"}`}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : "-"}
                 </span>
             );
         }

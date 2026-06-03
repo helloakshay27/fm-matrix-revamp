@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Scale, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import axios from "axios";
+import { toast } from "sonner";
 
 export type TrialBalanceRowKind =
   | "section"
@@ -21,7 +23,7 @@ export interface TrialBalanceRow {
   netDebit: number;
   netCredit: number;
   indent: number;
-  ledgerId?: number;
+  ledgerId?: number | string;
 }
 
 const formatCurrency = (value: number) =>
@@ -37,349 +39,173 @@ const columns: ColumnConfig[] = [
   { key: "netCredit", label: "Net Credit", sortable: true, defaultVisible: true },
 ];
 
-/** Demo structure aligned with reference UI — replace with API mapping. */
-const buildRows = (): TrialBalanceRow[] => [
-  { id: "s-assets", kind: "section", label: "Assets", netDebit: 0, netCredit: 0, indent: 0 },
-  {
-    id: "a-ar",
-    kind: "account",
-    label: "Accounts Receivable",
-    netDebit: 1561.75,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 1,
-  },
-  {
-    id: "a-at",
-    kind: "account",
-    label: "Advance Tax",
-    netDebit: 0,
-    netCredit: 1003.0,
-    indent: 1,
-    ledgerId: 2,
-  },
-  {
-    id: "a-furn",
-    kind: "account",
-    label: "Furniture and Equipment",
-    netDebit: 29000.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 3,
-  },
-  {
-    id: "sg-itc",
-    kind: "subgroup",
-    label: "Input Tax Credits",
-    netDebit: 0,
-    netCredit: 0,
-    indent: 1,
-  },
-  {
-    id: "a-icgst",
-    kind: "account",
-    label: "Input CGST",
-    netDebit: 1433.5,
-    netCredit: 0,
-    indent: 2,
-    ledgerId: 4,
-  },
-  {
-    id: "a-isgst",
-    kind: "account",
-    label: "Input SGST",
-    netDebit: 1433.5,
-    netCredit: 0,
-    indent: 2,
-    ledgerId: 5,
-  },
-  {
-    id: "t-itc",
-    kind: "subtotal",
-    label: "Total for Input Tax Credits",
-    netDebit: 2867.0,
-    netCredit: 0,
-    indent: 1,
-  },
-  {
-    id: "a-petty",
-    kind: "account",
-    label: "Petty Cash",
-    netDebit: 0,
-    netCredit: 32356.13,
-    indent: 1,
-    ledgerId: 6,
-  },
-  {
-    id: "a-prepaid",
-    kind: "account",
-    label: "Prepaid Expenses",
-    netDebit: 1128.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 7,
-  },
-  {
-    id: "a-tdsr",
-    kind: "account",
-    label: "TDS Receivable",
-    netDebit: 283.13,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 8,
-  },
-  {
-    id: "a-undep",
-    kind: "account",
-    label: "Undeposited Funds",
-    netDebit: 0,
-    netCredit: 922.0,
-    indent: 1,
-    ledgerId: 9,
-  },
 
-  { id: "s-liab", kind: "section", label: "Liabilities", netDebit: 0, netCredit: 0, indent: 0 },
-  {
-    id: "l-ap",
-    kind: "account",
-    label: "Accounts Payable",
-    netDebit: 0,
-    netCredit: 25262.5,
-    indent: 1,
-    ledgerId: 10,
-  },
-  {
-    id: "l-emp",
-    kind: "account",
-    label: "Employee Reimbursements",
-    netDebit: 100.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 11,
-  },
-  {
-    id: "sg-gst",
-    kind: "subgroup",
-    label: "GST Payable",
-    netDebit: 0,
-    netCredit: 0,
-    indent: 1,
-  },
-  {
-    id: "l-ocgst",
-    kind: "account",
-    label: "Output CGST",
-    netDebit: 0,
-    netCredit: 108.88,
-    indent: 2,
-    ledgerId: 12,
-  },
-  {
-    id: "l-osgst",
-    kind: "account",
-    label: "Output SGST",
-    netDebit: 0,
-    netCredit: 104.82,
-    indent: 2,
-    ledgerId: 13,
-  },
-  {
-    id: "t-gst",
-    kind: "subtotal",
-    label: "Total for GST Payable",
-    netDebit: 0,
-    netCredit: 213.7,
-    indent: 1,
-  },
-  {
-    id: "l-sal",
-    kind: "account",
-    label: "Net Salary Payable",
-    accountCode: "Payroll-005",
-    netDebit: 0,
-    netCredit: 99800.0,
-    indent: 1,
-    ledgerId: 14,
-  },
-  {
-    id: "l-ptax",
-    kind: "account",
-    label: "Payroll Tax Payable",
-    accountCode: "Payroll-002",
-    netDebit: 0,
-    netCredit: 200.0,
-    indent: 1,
-    ledgerId: 15,
-  },
-  {
-    id: "l-tcs",
-    kind: "account",
-    label: "TCS Payable",
-    netDebit: 3812.5,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 16,
-  },
-  {
-    id: "l-tds",
-    kind: "account",
-    label: "TDS Payable",
-    netDebit: 0,
-    netCredit: 351.5,
-    indent: 1,
-    ledgerId: 17,
-  },
-  {
-    id: "l-unearned",
-    kind: "account",
-    label: "Unearned Revenue",
-    netDebit: 0,
-    netCredit: 3548.55,
-    indent: 1,
-    ledgerId: 18,
-  },
+interface TrialBalanceLedger {
+  ledger_id?: number;
+  id?: number;
+  lock_account_ledger_id?: number;
+  lock_account_ledger?: {
+    id?: number;
+    ledger_id?: number;
+  };
+  ledger_name?: string;
+  name?: string;
+  account_code?: string;
+  code?: string;
+  total_credits?: number;
+  total_debits?: number;
+  credit?: number;
+  debit?: number;
+}
 
-  { id: "s-eq", kind: "section", label: "Equities", netDebit: 0, netCredit: 0, indent: 0 },
-  {
-    id: "e-cap",
-    kind: "account",
-    label: "Capital Stock",
-    netDebit: 250.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 19,
-  },
-  {
-    id: "e-draw",
-    kind: "account",
-    label: "Drawings",
-    netDebit: 0,
-    netCredit: 1000.0,
-    indent: 1,
-    ledgerId: 20,
-  },
+interface TrialBalanceGroup {
+  group_id?: number;
+  id?: number;
+  group_name?: string;
+  name?: string;
+  total_credits?: number;
+  total_debits?: number;
+  children?: TrialBalanceGroup[];
+  ledgers?: TrialBalanceLedger[];
+}
 
-  { id: "s-inc", kind: "section", label: "Income", netDebit: 0, netCredit: 0, indent: 0 },
-  {
-    id: "i-disc",
-    kind: "account",
-    label: "Discount",
-    netDebit: 0,
-    netCredit: 10.0,
-    indent: 1,
-    ledgerId: 21,
-  },
-  {
-    id: "i-int",
-    kind: "account",
-    label: "Interest Income",
-    netDebit: 90.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 22,
-  },
-  {
-    id: "i-sales",
-    kind: "account",
-    label: "Sales",
-    netDebit: 0,
-    netCredit: 6100.0,
-    indent: 1,
-    ledgerId: 23,
-  },
-  {
-    id: "i-ship",
-    kind: "account",
-    label: "Shipping Charge",
-    netDebit: 0,
-    netCredit: 100.0,
-    indent: 1,
-    ledgerId: 24,
-  },
+interface TrialBalanceResponse {
+  lock_account_name?: string;
+  assets?: TrialBalanceGroup;
+  liabilities?: TrialBalanceGroup;
+  equities?: TrialBalanceGroup;
+  equity?: TrialBalanceGroup;
+  income?: TrialBalanceGroup;
+  expenses?: TrialBalanceGroup;
+  expense?: TrialBalanceGroup;
+  totals?: Record<string, number | undefined>;
+}
 
-  { id: "s-exp", kind: "section", label: "Expense", netDebit: 0, netCredit: 0, indent: 0 },
-  {
-    id: "x-auto",
-    kind: "account",
-    label: "Automobile Expense",
-    netDebit: 1000.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 25,
-  },
-  {
-    id: "x-bank",
-    kind: "account",
-    label: "Bank Fees and Charges",
-    netDebit: 0,
-    netCredit: 6000.0,
-    indent: 1,
-    ledgerId: 26,
-  },
-  {
-    id: "x-cogs",
-    kind: "account",
-    label: "Cost of Goods Sold",
-    netDebit: 31750.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 27,
-  },
-  {
-    id: "x-goods",
-    kind: "account",
-    label: "Goods cost",
-    netDebit: 3803.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 28,
-  },
-  {
-    id: "x-job",
-    kind: "account",
-    label: "Job Costing",
-    netDebit: 100.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 29,
-  },
-  {
-    id: "x-mat",
-    kind: "account",
-    label: "Materials",
-    netDebit: 122.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 30,
-  },
-  {
-    id: "x-sal",
-    kind: "account",
-    label: "Salaries and Employee Wages",
-    netDebit: 100000.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 31,
-  },
-  {
-    id: "x-sub",
-    kind: "account",
-    label: "Subcontractor",
-    netDebit: 1000.0,
-    netCredit: 0,
-    indent: 1,
-    ledgerId: 32,
-  },
+const toNumber = (value: unknown) => Number(value || 0);
 
-  {
-    id: "grand",
-    kind: "grand_total",
-    label: "Total for Trial Balance",
-    netDebit: 176867.38,
-    netCredit: 176867.38,
-    indent: 0,
-  },
-];
+const getLedgerId = (ledger: TrialBalanceLedger) =>
+  ledger.ledger_id ??
+  ledger.lock_account_ledger_id ??
+  ledger.lock_account_ledger?.id ??
+  ledger.lock_account_ledger?.ledger_id ??
+  ledger.id;
+
+const mapGroupRows = (
+  group: TrialBalanceGroup,
+  level: number,
+  path: string
+): TrialBalanceRow[] => {
+  const groupId = group.group_id ?? group.id ?? path;
+  const rows: TrialBalanceRow[] = [
+    {
+      id: `group-${path}-${groupId}`,
+      kind: "subgroup",
+      label: group.group_name || group.name || "Group",
+      netDebit: toNumber(group.total_debits),
+      netCredit: toNumber(group.total_credits),
+      indent: level,
+    },
+  ];
+
+  (group.ledgers || []).forEach((ledger, index) => {
+    const ledgerId = getLedgerId(ledger);
+    rows.push({
+      id: `ledger-${path}-${ledgerId ?? index}`,
+      kind: "account",
+      label: ledger.ledger_name || ledger.name || "Ledger",
+      accountCode: ledger.account_code || ledger.code || "",
+      netDebit: toNumber(ledger.total_debits ?? ledger.debit),
+      netCredit: toNumber(ledger.total_credits ?? ledger.credit),
+      indent: level + 1,
+      ledgerId,
+    });
+  });
+
+  (group.children || []).forEach((child, index) => {
+    rows.push(...mapGroupRows(child, level + 1, `${path}-${index}`));
+  });
+
+  return rows;
+};
+
+const mapTrialBalanceRows = (data: TrialBalanceResponse | null): TrialBalanceRow[] => {
+  if (!data) return [];
+
+  const sections: Array<[string, TrialBalanceGroup | undefined]> = [
+    ["Assets", data.assets],
+    ["Liabilities", data.liabilities],
+    ["Equities", data.equities || data.equity],
+    ["Income", data.income],
+    ["Expense", data.expenses || data.expense],
+  ];
+  const rows: TrialBalanceRow[] = [];
+
+  sections.forEach(([label, group]) => {
+    const hasRows = Boolean(
+      group &&
+        (((group.children || []).length > 0) || ((group.ledgers || []).length > 0))
+    );
+
+    if (!hasRows || !group) return;
+
+    rows.push({
+      id: `section-${label.toLowerCase()}`,
+      kind: "section",
+      label,
+      netDebit: 0,
+      netCredit: 0,
+      indent: 0,
+    });
+
+    (group.ledgers || []).forEach((ledger, index) => {
+      const ledgerId = getLedgerId(ledger);
+      rows.push({
+        id: `ledger-${label}-${ledgerId ?? index}`,
+        kind: "account",
+        label: ledger.ledger_name || ledger.name || "Ledger",
+        accountCode: ledger.account_code || ledger.code || "",
+        netDebit: toNumber(ledger.total_debits ?? ledger.debit),
+        netCredit: toNumber(ledger.total_credits ?? ledger.credit),
+        indent: 1,
+        ledgerId,
+      });
+    });
+
+    (group.children || []).forEach((child, index) => {
+      rows.push(...mapGroupRows(child, 1, `${label.toLowerCase()}-${index}`));
+    });
+  });
+
+  if (rows.length > 0) {
+    const debitFromTotals =
+      toNumber(data.totals?.total_assets_debits) +
+      toNumber(data.totals?.total_liabilities_debits) +
+      toNumber(data.totals?.total_equity_debits) +
+      toNumber(data.totals?.total_income_debits) +
+      toNumber(data.totals?.total_expense_debits);
+    const creditFromTotals =
+      toNumber(data.totals?.total_assets_credits) +
+      toNumber(data.totals?.total_liabilities_credits) +
+      toNumber(data.totals?.total_equity_credits) +
+      toNumber(data.totals?.total_income_credits) +
+      toNumber(data.totals?.total_expense_credits);
+
+    rows.push({
+      id: "grand",
+      kind: "grand_total",
+      label: "Total for Trial Balance",
+      netDebit:
+        debitFromTotals ||
+        rows.reduce((sum, row) => (row.kind === "account" ? sum + row.netDebit : sum), 0),
+      netCredit:
+        creditFromTotals ||
+        rows.reduce((sum, row) => (row.kind === "account" ? sum + row.netCredit : sum), 0),
+      indent: 0,
+    });
+  }
+
+  return rows;
+};
 
 const getDefaultDateRange = () => {
   const today = new Date();
@@ -400,9 +226,14 @@ function formatDisplayDate(value: string) {
 
 const TrialBalance: React.FC = () => {
   const navigate = useNavigate();
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const lockAccountId = localStorage.getItem("lock_account_id");
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
   const [filters, setFilters] = useState(defaultRange);
-  const [rows] = useState<TrialBalanceRow[]>(() => buildRows());
+  const [trialBalanceData, setTrialBalanceData] = useState<TrialBalanceResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const rows = useMemo(() => mapTrialBalanceRows(trialBalanceData), [trialBalanceData]);
 
   const periodLabel = useMemo(
     () =>
@@ -420,13 +251,46 @@ const TrialBalance: React.FC = () => {
     []
   );
 
+  const fetchTrialBalance = useCallback(async () => {
+    if (!baseUrl || !lockAccountId) {
+      setTrialBalanceData(null);
+      toast.error("Missing account configuration for trial balance");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.get<TrialBalanceResponse>(
+        `https://${baseUrl}/lock_accounts/${lockAccountId}/lock_account_transactions/trial_balance_sheet.json`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setTrialBalanceData(response.data);
+    } catch (error) {
+      console.error("Error fetching trial balance:", error);
+      setTrialBalanceData(null);
+      toast.error("Failed to load trial balance data");
+    } finally {
+      setLoading(false);
+    }
+  }, [baseUrl, lockAccountId, token]);
+
+  useEffect(() => {
+    fetchTrialBalance();
+  }, [fetchTrialBalance]);
+
   const handleView = () => {
-    // Wire API: pass asOfDate
+    fetchTrialBalance();
   };
 
-  const openLedger = (id?: number) => {
+  const openLedger = (id?: number | string) => {
     if (id != null) {
-      navigate(`/accounting/reports/trial-balance/details/${id}`);
+      navigate(`/accounting/reports/trial-balance/details/${encodeURIComponent(String(id))}`);
     }
   };
 
@@ -479,7 +343,9 @@ const TrialBalance: React.FC = () => {
 
       <div className="mb-6 overflow-hidden rounded-lg border border-[#D5DbDB] bg-white">
         <div className="border-b border-[#EAECF0] bg-[#F8F9FC] px-6 py-6 text-center">
-          <p className="text-sm text-[#667085]">Lockated</p>
+          <p className="text-sm text-[#667085]">
+            {trialBalanceData?.lock_account_name || "Lockated"}
+          </p>
           <h1 className="mt-1 text-3xl font-semibold text-[#111827]">Trial Balance</h1>
           <p className="mt-2 text-sm text-[#667085]">
             <span className="font-medium text-[#344054]">Basis</span> : Accrual
@@ -498,6 +364,12 @@ const TrialBalance: React.FC = () => {
             exportFileName="trial-balance"
             searchPlaceholder="Search accounts..."
             emptyMessage="No data available for selected date range."
+            loading={loading}
+            onRowClick={(item) => {
+              if (item.kind === "account" && item.ledgerId != null) {
+                openLedger(item.ledgerId);
+              }
+            }}
             renderCell={(item, columnKey) => {
               const pad = 8 + (item.indent || 0) * 16;
               
@@ -519,7 +391,7 @@ const TrialBalance: React.FC = () => {
                         className="text-sm font-semibold text-[#111827]"
                         style={{ paddingLeft: pad }}
                       >
-                        <span className="inline-flex items-center gap-1 text-blue-600">
+                        <span className="inline-flex items-center gap-1 text-[#111827]">
                           <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
                           {item.label}
                         </span>
@@ -532,13 +404,17 @@ const TrialBalance: React.FC = () => {
                       style={{ paddingLeft: pad }}
                     >
                       {item.ledgerId != null ? (
-                        <button
-                          type="button"
-                          onClick={() => openLedger(item.ledgerId)}
+                        <a
+                          href={`/accounting/reports/trial-balance/details/${encodeURIComponent(String(item.ledgerId))}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            openLedger(item.ledgerId);
+                          }}
                           className="text-left text-blue-600 hover:text-blue-800 hover:underline"
                         >
                           {item.label}
-                        </button>
+                        </a>
                       ) : (
                         <span className="text-[#111827]">{item.label}</span>
                       )}
@@ -591,6 +467,9 @@ const TrialBalance: React.FC = () => {
               if (item.kind === "grand_total") {
                 return "bg-[#E5E0D3] font-bold";
               }
+              if (item.kind === "account" && item.ledgerId != null) {
+                return "cursor-pointer hover:bg-blue-50";
+              }
               return "";
             }}
             headerCellClassName="bg-[#E5E0D3] text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]"
@@ -604,3 +483,4 @@ const TrialBalance: React.FC = () => {
 };
 
 export default TrialBalance;
+
