@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -264,6 +265,7 @@ export const GRNDetailsPage = () => {
         approveGRN({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("GRN approved successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
@@ -306,6 +308,7 @@ export const GRNDetailsPage = () => {
         rejectGrn({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("GRN rejected successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);

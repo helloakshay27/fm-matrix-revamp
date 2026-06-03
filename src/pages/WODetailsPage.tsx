@@ -1,4 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -395,6 +396,7 @@ export const WODetailsPage = () => {
         approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("Work Order approved successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
@@ -424,6 +426,7 @@ export const WODetailsPage = () => {
         approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("Work Order rejected successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
