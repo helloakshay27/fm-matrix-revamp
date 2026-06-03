@@ -115,19 +115,21 @@ const columns: ColumnConfig[] = [{
   sortable: true,
   hideable: true,
   draggable: true
-}, {
-  key: 'assignee',
-  label: 'Assignee',
-  sortable: true,
-  hideable: true,
-  draggable: true
-}, {
-  key: 'supervisor',
-  label: 'Supervisor',
-  sortable: true,
-  hideable: true,
-  draggable: true
-}, {
+}, 
+// {
+//   key: 'assignee',
+//   label: 'Assignee',
+//   sortable: true,
+//   hideable: true,
+//   draggable: true
+// }, {
+//   key: 'supervisor',
+//   label: 'Supervisor',
+//   sortable: true,
+//   hideable: true,
+//   draggable: true
+// }, 
+{
   key: 'grace_time',
   label: 'Grace Time',
   sortable: true,
