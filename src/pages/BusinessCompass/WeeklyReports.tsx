@@ -2840,6 +2840,59 @@ const WeeklyReports = () => {
                                 </div>
                             </div>
                             <div className="space-y-4 p-6">
+                                {wins.map((win, index) => (
+                                    <div
+                                        key={index}
+                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                    >
+                                        <Checkbox
+                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                            checked={checkedWins[index] ?? true}
+                                            onCheckedChange={(checked) =>
+                                                setCheckedWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !!checked,
+                                                }))
+                                            }
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setStarredWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !prev[index],
+                                                }))
+                                            }
+                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                        >
+                                            <Star
+                                                className={cn(
+                                                    "h-4 w-4 transition-colors duration-200",
+                                                    starredWins[index]
+                                                        ? "text-yellow-400 fill-yellow-400"
+                                                        : "text-neutral-300 hover:text-yellow-300"
+                                                )}
+                                            />
+                                        </button>
+                                        <Textarea
+                                            value={win}
+                                            onChange={(e) => handleWinChange(index, e.target.value)}
+                                            placeholder="Describe your win…"
+                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
+                                        />
+                                        <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                            Note
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveWin(index)}
+                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+
                                 {mergedTasksIssues
                                     .filter((item: any) =>
                                         ["completed", "closed", "done"].includes(item.status)
@@ -2884,7 +2937,7 @@ const WeeklyReports = () => {
                                                 </p>
                                                 {(() => {
                                                     const d = item.originalData;
-                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                    const completionDate = fmtDate(d?.completed_at || d?.updated_at);
                                                     const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
                                                     let issueEffort: string | null = null;
                                                     if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
@@ -2897,14 +2950,14 @@ const WeeklyReports = () => {
                                                             issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
                                                         }
                                                     }
-                                                    const hasInfo = endDate || effortEst || issueEffort;
+                                                    const hasInfo = completionDate || effortEst || issueEffort;
                                                     if (!hasInfo) return null;
                                                     return (
                                                         <div className="flex items-center gap-3 flex-wrap">
-                                                            {endDate && (
-                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                            {completionDate && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-green-600">
                                                                     <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                    {endDate}
+                                                                    {completionDate}
                                                                 </span>
                                                             )}
                                                             {effortEst && (
@@ -2977,55 +3030,6 @@ const WeeklyReports = () => {
                                             </button>
                                         </div>
                                     ))}
-                                {wins.map((win, index) => (
-                                    <div
-                                        key={index}
-                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
-                                    >
-                                        <Checkbox
-                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                            checked={checkedWins[index] ?? true}
-                                            onCheckedChange={(checked) =>
-                                                setCheckedWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !!checked,
-                                                }))
-                                            }
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setStarredWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !prev[index],
-                                                }))
-                                            }
-                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
-                                        >
-                                            <Star
-                                                className={cn(
-                                                    "h-4 w-4 transition-colors duration-200",
-                                                    starredWins[index]
-                                                        ? "text-yellow-400 fill-yellow-400"
-                                                        : "text-neutral-300 hover:text-yellow-300"
-                                                )}
-                                            />
-                                        </button>
-                                        <Textarea
-                                            value={win}
-                                            onChange={(e) => handleWinChange(index, e.target.value)}
-                                            placeholder="Describe your win…"
-                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveWin(index)}
-                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
 
                                 <div className="space-y-4 pt-4 border-t border-neutral-100">
                                     <div className="flex items-center justify-between">
@@ -3893,27 +3897,25 @@ const WeeklyReports = () => {
                                                         />
                                                     </button>
                                                     <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                        {planObj.source_type && (
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={cn(
-                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                                )}>
-                                                                    {planObj.source_type}
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className={cn(
+                                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-gray-500 text-white"
+                                                            )}>
+                                                                {planObj.source_type || "Note"}
+                                                            </span>
+                                                            {planObj.originalData?.priority && (
+                                                                <span
+                                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                    style={{
+                                                                        backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                        color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                                                    }}
+                                                                >
+                                                                    {planObj.originalData.priority}
                                                                 </span>
-                                                                {planObj.originalData?.priority && (
-                                                                    <span
-                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
-                                                                        style={{
-                                                                            backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                            color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
-                                                                        }}
-                                                                    >
-                                                                        {planObj.originalData.priority}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                                            )}
+                                                        </div>
                                                         {planObj.source_type ? (
                                                             <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
                                                                 {planObj.text}
@@ -5474,7 +5476,7 @@ const WeeklyReports = () => {
                             <Plus size={18} className="text-blue-600" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Item</span>
+                            <span className="font-bold text-gray-900 text-sm">Add Note</span>
                             <span className="text-xs text-gray-500 font-medium">
                                 {dayPlanMenuAnchor?.dayKey ?? "this day"}
                             </span>

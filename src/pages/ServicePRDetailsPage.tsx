@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -668,7 +669,7 @@ export const ServicePRDetailsPage = () => {
         ).unwrap();
 
         toast.success(response?.message || "Service PR approved successfully");
-        
+        refreshPendingApprovalsCount();
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to approve Service PR");
@@ -704,6 +705,7 @@ export const ServicePRDetailsPage = () => {
 ).unwrap();
         // toast.success("Service PR rejected successfully");
         toast.success(response?.message || "Service PR rejected successfully");
+        refreshPendingApprovalsCount();
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to reject Service PR");
