@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getToken, getBaseUrl } from "@/utils/auth";
+import { CalendarProviderSelectModal } from "./CalendarProviderSelectModal";
 
 const selectMenuProps = {
   PaperProps: {
@@ -95,6 +96,7 @@ export const EmployeeUnifiedCalendar: React.FC<
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isNcConnectModalOpen, setIsNcConnectModalOpen] = useState(false);
   const [ncCredentials, setNcCredentials] = useState({ username: '', app_password: '' });
+  const [isProviderSelectOpen, setIsProviderSelectOpen] = useState(false);
   const [isYearLoading, setIsYearLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasAppliedCustomFilters, setHasAppliedCustomFilters] = useState(false);
@@ -1068,11 +1070,9 @@ export const EmployeeUnifiedCalendar: React.FC<
                   } else {
                     toast.error("Failed to sync calendar");
                   }
-                } else if (statusData.action === "redirect") {
-                  toast.info("Opening calendar connection...");
-                  window.open(statusData.connect_url, "_blank");
-                } else if (statusData.action === "show_form") {
-                  setIsNcConnectModalOpen(true);
+                } else {
+                  // No calendar connected — let user pick a provider
+                  setIsProviderSelectOpen(true);
                 }
               } catch (error) {
                 console.error("Calendar sync error:", error);
@@ -2172,6 +2172,18 @@ export const EmployeeUnifiedCalendar: React.FC<
           </div>
         </div>
       )}
+
+      {/* Calendar Provider Selection Modal */}
+      <CalendarProviderSelectModal
+        open={isProviderSelectOpen}
+        onClose={() => setIsProviderSelectOpen(false)}
+        userEmail={(() => {
+          const user = JSON.parse(localStorage.getItem("user") || "{}");
+          return user?.email || localStorage.getItem("userEmail") || localStorage.getItem("email") || "";
+        })()}
+        baseUrl={getBaseUrl() || ""}
+        onConnected={() => { setIsProviderSelectOpen(false); fetchCalendarData(); }}
+      />
 
       {/* Nextcloud Connect Modal */}
       <Dialog open={isNcConnectModalOpen} onOpenChange={setIsNcConnectModalOpen}>

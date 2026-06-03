@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import ReCAPTCHA from "react-google-recaptcha";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building2, Check, Eye, EyeOff } from "lucide-react";
@@ -78,6 +79,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [captchaText, setCaptchaText] = useState("");
   const [captchaInput, setCaptchaInput] = useState("");
+  const [v2CaptchaToken, setV2CaptchaToken] = useState<string | null>(null);
+  const v2CaptchaRef = useRef<ReCAPTCHA>(null);
 
   const hostname = window.location.hostname;
 
@@ -243,37 +246,14 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       return;
     }
 
+    if (!v2CaptchaToken) {
+      toast.error("Please complete the CAPTCHA verification.");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      let captchaToken: string | undefined;
-      const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-      const isLocalDev = hostname === "localhost" || hostname === "127.0.0.1";
-
-      if (siteKey && !isLocalDev) {
-        const maxWaitMs = 10000;
-        const pollMs = 500;
-        let waited = 0;
-        while (!executeRecaptchaRef.current && waited < maxWaitMs) {
-          await new Promise((r) => setTimeout(r, pollMs));
-          waited += pollMs;
-        }
-        const execFn = executeRecaptchaRef.current;
-        if (execFn) {
-          try {
-            captchaToken = await execFn("get_organizations");
-          } catch {
-            toast.error("reCAPTCHA failed. Please refresh and try again.");
-            setIsLoading(false);
-            return;
-          }
-        } else {
-          toast.error("reCAPTCHA not ready. Check your network and try again.");
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      const orgs = await getOrganizationsByEmail(email, captchaToken);
+      const orgs = await getOrganizationsByEmail(email, v2CaptchaToken);
       setOrganizations(orgs);
       setCurrentStep(2);
       if (orgs.length === 0) {
@@ -315,19 +295,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     setSelectedOrganization(org);
     setCurrentStep(3);
 
-    // Generate CAPTCHA for Vodafone Idea
-    if (org.name === "Vodafone Idea") {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-      let result = "";
-      for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      setCaptchaText(result);
-      setCaptchaInput("");
-    } else {
-      setCaptchaText("");
-      setCaptchaInput("");
-    }
+    generateCaptcha();
   };
 
   const handleLogin = async () => {
@@ -342,17 +310,15 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     //   return;
     // }
 
-    if (selectedOrganization?.name === "Vodafone Idea") {
-      if (!captchaInput) {
-        toast.error("Please enter the CAPTCHA.");
-        return;
-      }
-      if (captchaInput !== captchaText) {
-        toast.error("Invalid CAPTCHA. Please try again.");
-        generateCaptcha();
-        setCaptchaInput("");
-        return;
-      }
+    if (!captchaInput) {
+      toast.error("Please enter the CAPTCHA.");
+      return;
+    }
+    if (captchaInput !== captchaText) {
+      toast.error("Invalid CAPTCHA. Please try again.");
+      generateCaptcha();
+      setCaptchaInput("");
+      return;
     }
 
     setLoginLoading(true);
@@ -362,9 +328,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       let recaptchaToken: string | undefined;
       const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-      const isLocalDev = hostname === "localhost" || hostname === "127.0.0.1";
 
-      if (siteKey && !isLocalDev) {
+      if (siteKey) {
         const maxWaitMs = 10000;
         const pollMs = 500;
         let waited = 0;
@@ -724,10 +689,23 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         />
       </div>
 
+      {/* reCAPTCHA v2 checkbox — visible CAPTCHA */}
+      {import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY && (
+        <div className="flex justify-center mt-4">
+          <ReCAPTCHA
+            ref={v2CaptchaRef}
+            sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY}
+            onChange={(token) => setV2CaptchaToken(token)}
+            onExpired={() => setV2CaptchaToken(null)}
+            onErrored={() => setV2CaptchaToken(null)}
+          />
+        </div>
+      )}
+
       {/* Submit Button */}
       <Button
         onClick={handleEmailSubmit}
-        disabled={isLoading || !email}
+        disabled={isLoading || !email || (!!import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY && !v2CaptchaToken)}
         className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-medium rounded-lg text-base mt-4"
       >
         {isLoading ? (
@@ -883,8 +861,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       />
 
 
-  {/* CAPTCHA — shown only for Vodafone Idea */}
-      {selectedOrganization?.name === "Vodafone Idea" && (
+  {/* CAPTCHA — required on all logins */}
+      {captchaText && (
         <div className="mb-6">
           <p className="text-gray-700 font-medium text-sm mb-2">Please enter the CAPTCHA below</p>
           {/* CAPTCHA display box */}
@@ -960,7 +938,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       {/* Login Button */}
       <Button
         onClick={handleLogin}
-        disabled={!password || loginLoading}
+        disabled={!password || loginLoading || !captchaInput}
         className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loginLoading ? (
