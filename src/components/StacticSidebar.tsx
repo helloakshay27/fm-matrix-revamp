@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
 import { getUser, isAssetRestrictedUser } from "@/utils/auth";
@@ -1988,6 +1988,34 @@ export const StacticSidebar = () => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const doFetch = () => {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      if (!baseUrl || !token) return false;
+      fetch(`https://${baseUrl}/pms/purchase_orders/pending_approvals_count.json`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data) => { if (typeof data?.count === "number") setPendingApprovalsCount(data.count); })
+        .catch(() => {});
+      return true;
+    };
+
+    let retryInterval: ReturnType<typeof setInterval> | null = null;
+    if (!doFetch()) {
+      retryInterval = setInterval(() => { if (doFetch()) { clearInterval(retryInterval!); retryInterval = null; } }, 1000);
+    }
+
+    const handler = () => doFetch();
+    window.addEventListener("pending-approvals-updated", handler);
+    return () => {
+      window.removeEventListener("pending-approvals-updated", handler);
+      if (retryInterval) clearInterval(retryInterval);
+    };
+  }, []);
 
   // Check if current organization is PANCHSHIL (via hostname or localStorage)
   const hostname = window.location.hostname;
@@ -2301,7 +2329,16 @@ export const StacticSidebar = () => {
                       {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                       )}
-                      {subItem.name}
+                      <span className="flex items-center justify-between w-full">
+                        <span>{subItem.name}</span>
+                        {subItem.href === "/finance/pending-approvals" &&
+                          pendingApprovalsCount !== null &&
+                          pendingApprovalsCount > 0 && (
+                            <span className="ml-2 min-w-[20px] h-5 px-1 rounded-full bg-[#C72030] text-white text-[10px] font-bold flex items-center justify-center">
+                              {pendingApprovalsCount > 99 ? "99+" : pendingApprovalsCount}
+                            </span>
+                          )}
+                      </span>
                     </button>
                   )}
                 </div>

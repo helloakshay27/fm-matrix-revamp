@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -493,6 +494,7 @@ export const PODetailsPage = () => {
         approvePO({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("PO approved successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error: any) {
       toast.error(error.message || "Failed to approve PO");
@@ -526,6 +528,7 @@ export const PODetailsPage = () => {
         rejectPO({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("PO rejected successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error: any) {
       toast.error(error.message || "Failed to reject PO");

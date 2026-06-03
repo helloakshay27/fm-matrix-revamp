@@ -185,14 +185,18 @@ export const AddFacilityBookingClubPage = () => {
   const [bookingRuleData, setBookingRuleData] = useState<{
     can_book: boolean;
     rate: number;
+    multiple_bookings?: boolean;
+    multiple_booking_count?: number;
+    concurrent_slots?: number;
+    bookable_slot_count?: number;
   } | null>(null);
 
   // Helper: Check if slot selection is allowed
   const canSelectSlots = bookingRuleData ? bookingRuleData.can_book !== false : true;
-  // Helper: Max slots user can select
-  const maxSelectableSlots = bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1;
+  // Helper: Max slots user can select — use bookable_slot_count when available
+  const maxSelectableSlots = bookingRuleData?.bookable_slot_count ?? (bookingRuleData?.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
   // Helper: Max concurrent slots
-  const maxConcurrentSlots = bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1;
+  const maxConcurrentSlots = bookingRuleData?.concurrent_slots ?? 1;
 
   // Helper: Check if a slot can be selected (enforce concurrent rule and check if booked)
   const isSlotSelectable = (slotId: number) => {
@@ -1440,9 +1444,7 @@ export const AddFacilityBookingClubPage = () => {
               )}
               {bookingRuleData && canSelectSlots && (
                 <div className="mt-2 text-gray-600 text-xs">
-                  {bookingRuleData.multiple_bookings
-                    ? `You can select up to ${maxSelectableSlots} slots. `
-                    : 'You can select only one slot. '}
+                  {`You can select up to ${maxSelectableSlots} slot${maxSelectableSlots !== 1 ? 's' : ''}. `}
                   {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
                 </div>
               )}
