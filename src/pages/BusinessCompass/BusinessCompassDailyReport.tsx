@@ -4698,7 +4698,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </h2>
                             <p className="text-sm text-gray-500 mt-2">
-                              By: Common Admin Id
+                              By: {user?.firstname} {user?.lastname}
                             </p>
                           </div>
                           <div className="flex items-start gap-4">
