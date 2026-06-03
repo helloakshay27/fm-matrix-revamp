@@ -2017,8 +2017,13 @@ const BusinessCompassDailyReport: React.FC = () => {
       const startDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-01`;
       const lastDay = new Date(parseInt(selectedYear), monthIndex, 0).getDate();
       const endDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-${lastDay.toString().padStart(2, "0")}`;
+      const today = new Date();
+      const todayDate = `${today.getFullYear()}-${String(
+        today.getMonth() + 1
+      ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
       // queryParams.append("q[start_date_gteq]", startDate);
-      queryParams.append("q[start_date_lteq]", endDate);
+      queryParams.append("q[start_date_lteq]", todayDate);
 
       const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
       const response = await axios.get(url, {
@@ -3088,42 +3093,101 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {!isCollapsed && (
                                 <div className="space-y-1.5 pl-1">
                                   {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      <Checkbox
-                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                        onCheckedChange={(checked) => {
-                                          if (checked && item.status !== "completed" && item.status !== "closed") {
-                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                          } else {
-                                            markDraftDirty();
-                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                    <div key={item.id} className="flex flex-col gap-1 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      <div className="flex items-center gap-2">
+                                        <Checkbox
+                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                          onCheckedChange={(checked) => {
+                                            if (checked && item.status !== "completed" && item.status !== "closed") {
+                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                            } else {
+                                              markDraftDirty();
+                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                            }
+                                          }}
+                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                        />
+                                        <button
+                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                          title={`View ${item.type} details`}
+                                        >
+                                          <Eye size={14} className="text-amber-600" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                          title={`Edit ${item.type}`}
+                                        >
+                                          <Pencil size={13} />
+                                        </button>
+                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                          {item.type}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                        </div>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                          {item.priority}
+                                        </span>
+                                        {/* Add to Tomorrow button */}
+                                        <button
+                                          onClick={() =>
+                                            addedToTomorrowIds.has(item.id)
+                                              ? removeItemFromTomorrow(item)
+                                              : addItemToTomorrow(item)
                                           }
-                                        }}
-                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                      />
-                                      <button
-                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                        title={`View ${item.type} details`}
-                                      >
-                                        <Eye size={14} className="text-amber-600" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                        title={`Edit ${item.type}`}
-                                      >
-                                        <Pencil size={13} />
-                                      </button>
-                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                        {item.type}
-                                      </span>
-                                      <div className="flex-1 min-w-0">
-                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                          className={cn(
+                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                            addedToTomorrowIds.has(item.id)
+                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                              : "bg-white border-gray-200 text-gray-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/50 opacity-0 group-hover:opacity-100"
+                                          )}
+                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                        >
+                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                        </button>
                                       </div>
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                        {item.priority}
-                                      </span>
+                                      {(() => {
+                                        const d = item.originalData;
+                                        const endDate = fmtDate(d?.target_date || d?.end_date);
+                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                        let issueEffort: string | null = null;
+                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                          const totalMin = d.issue_allocation_times.reduce(
+                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                          );
+                                          if (totalMin > 0) {
+                                            const h = Math.floor(totalMin / 60);
+                                            const m = totalMin % 60;
+                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                          }
+                                        }
+                                        const hasInfo = endDate || effortEst || issueEffort;
+                                        if (!hasInfo) return null;
+                                        return (
+                                          <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                            {endDate && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                <CalendarIcon size={9} className="shrink-0" />
+                                                {endDate}
+                                              </span>
+                                            )}
+                                            {effortEst && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                <Clock size={9} className="shrink-0" />
+                                                Est: {effortEst}
+                                              </span>
+                                            )}
+                                            {issueEffort && (
+                                              <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                                <Zap size={9} className="shrink-0" />
+                                                Effort: {issueEffort}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   ))}
                                 </div>

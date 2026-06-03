@@ -530,7 +530,7 @@ export const UnifiedAnalyticsSelector: React.FC<
           </p>
         </div>
 
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-72 overflow-y-auto">
           {Object.entries(analyticsOptions).map(
             ([moduleKey, module], index) => {
               const Icon = module.icon;
@@ -615,7 +615,8 @@ export const UnifiedAnalyticsSelector: React.FC<
               <Button
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="bg-primary hover:bg-primary/90"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
               >
                 Apply
               </Button>

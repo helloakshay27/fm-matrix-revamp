@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Loader2 } from "lucide-react";
+import { ClipboardList, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Pagination,
   PaginationContent,
@@ -13,14 +16,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 interface GDNPendingApproval {
   gdnId: number;
@@ -37,7 +32,74 @@ interface GDNPagination {
   per_page: number;
 }
 
+interface GDNPendingApprovalApiItem {
+  gdn_id?: number | string;
+  id?: number | string;
+  site_name?: string | number | boolean | null;
+  level_name?: string | number | boolean | null;
+  level_id?: number;
+  user_id?: number | string | null;
+}
+
+interface GDNPendingApprovalsResponse {
+  pending_data?: GDNPendingApprovalApiItem[];
+  pending_approvals?: GDNPendingApprovalApiItem[];
+  pagination?: Partial<GDNPagination> & {
+    total_count?: number;
+  };
+  current_page?: number;
+  page?: number;
+  total_pages?: number;
+  total_entries?: number;
+  total_count?: number;
+  per_page?: number;
+}
+
 const GDN_PENDING_APPROVALS_ENDPOINT = "/pms/srns/pending_approvals.json";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "gdnId",
+    label: "GDN ID",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "siteName",
+    label: "Site Name",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "level",
+    label: "Level",
+    sortable: true,
+    defaultVisible: true,
+  },
+];
+
+const displayValue = (value?: string | number | boolean | null) => {
+  if (value === null || value === undefined || value === "") return "-";
+  return String(value);
+};
+
+const getPaginationFromResponse = (
+  result: GDNPendingApprovalsResponse,
+  page: number
+): GDNPagination => ({
+  current_page: Number(
+    result.pagination?.current_page || result.current_page || result.page || page
+  ),
+  total_pages: Number(result.pagination?.total_pages || result.total_pages || 0),
+  total_entries: Number(
+    result.pagination?.total_entries ||
+      result.pagination?.total_count ||
+      result.total_entries ||
+      result.total_count ||
+      0
+  ),
+  per_page: Number(result.pagination?.per_page || result.per_page || 15),
+});
 
 export const GDNPendingApprovalsDashboard = () => {
   const navigate = useNavigate();
@@ -52,35 +114,7 @@ export const GDNPendingApprovalsDashboard = () => {
     per_page: 15,
   });
 
-  const displayValue = (value?: string | number | boolean | null) => {
-    if (value === null || value === undefined || value === "") return "-";
-    return String(value);
-  };
-
-  const getPaginationFromResponse = (
-    result: any,
-    page: number
-  ): GDNPagination => ({
-    current_page: Number(
-      result.pagination?.current_page ||
-        result.current_page ||
-        result.page ||
-        page
-    ),
-    total_pages: Number(
-      result.pagination?.total_pages || result.total_pages || 0
-    ),
-    total_entries: Number(
-      result.pagination?.total_entries ||
-        result.pagination?.total_count ||
-        result.total_entries ||
-        result.total_count ||
-        0
-    ),
-    per_page: Number(result.pagination?.per_page || result.per_page || 15),
-  });
-
-  const fetchPendingApprovals = async (page = 1) => {
+  const fetchPendingApprovals = useCallback(async (page = 1) => {
     setLoading(true);
     try {
       const baseUrl = API_CONFIG.BASE_URL;
@@ -91,8 +125,8 @@ export const GDNPendingApprovalsDashboard = () => {
         headers: { Authorization: getAuthHeader(), "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error(`Failed to fetch pending approvals (${response.status})`);
-      const result = await response.json();
-      const source: any[] = Array.isArray(result.pending_data)
+      const result = (await response.json()) as GDNPendingApprovalsResponse;
+      const source: GDNPendingApprovalApiItem[] = Array.isArray(result.pending_data)
         ? result.pending_data
         : Array.isArray(result.pending_approvals)
           ? result.pending_approvals
@@ -113,11 +147,11 @@ export const GDNPendingApprovalsDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPendingApprovals();
-  }, []);
+  }, [fetchPendingApprovals]);
 
   const handleView = (item: GDNPendingApproval) => {
     const queryParams = new URLSearchParams();
@@ -138,6 +172,22 @@ export const GDNPendingApprovalsDashboard = () => {
       }`
     );
   };
+
+  const renderCell = (item: GDNPendingApproval, columnKey: string) => {
+    const value = item[columnKey as keyof GDNPendingApproval];
+    return displayValue(value);
+  };
+
+  const renderActions = (item: GDNPendingApproval) => (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="p-1"
+      onClick={() => handleView(item)}
+    >
+      <Eye className="h-4 w-4" />
+    </Button>
+  );
 
   const handlePageChange = (page: number) => {
     if (
@@ -238,64 +288,38 @@ export const GDNPendingApprovalsDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 mx-auto">
       <div className="mb-4 text-sm text-gray-600">
         GDN &gt; Pending Approvals
       </div>
 
-      <h1 className="text-2xl font-bold mb-6">Pending Approvals</h1>
+      <h1 className="text-2xl font-semibold mb-6">GDN Pending Approvals</h1>
 
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">View</TableHead>
-              <TableHead className="font-semibold">GDN ID</TableHead>
-              <TableHead className="font-semibold">Site Name</TableHead>
-              <TableHead className="font-semibold">Level</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading GDN pending approvals...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : pendingApprovalsData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                  No pending approvals found
-                </TableCell>
-              </TableRow>
-            ) : (
-              pendingApprovalsData.map((item) => (
-                <TableRow
-                  key={`${item.gdnId}-${item.levelId || item.level}`}
-                  className="hover:bg-gray-50"
-                >
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="p-1"
-                      onClick={() => handleView(item)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.gdnId}</TableCell>
-                  <TableCell>{item.siteName}</TableCell>
-                  <TableCell>{item.level}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <Card className="shadow-sm border border-border">
+        <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ClipboardList className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            Pending Approvals
+          </h3>
+        </div>
+        <CardContent>
+          <EnhancedTable
+            data={pendingApprovalsData}
+            columns={columns}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            storageKey="gdn-pending-approvals"
+            emptyMessage="No pending approvals found"
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            loading={loading}
+            loadingMessage="Loading GDN pending approvals..."
+          />
+        </CardContent>
+      </Card>
 
       {pagination.total_pages > 1 && (
         <div className="flex justify-center mt-6">

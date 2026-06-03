@@ -266,6 +266,13 @@ const emptyInventoryItem = (): GDNInventoryItem => ({
   comment: "",
 });
 
+const getCurrentStockQuantity = (currentStock: string) => {
+  const normalizedStock = currentStock.replace(/,/g, "");
+  const stockMatch = normalizedStock.match(/-?\d+(?:\.\d+)?/);
+
+  return stockMatch ? Number(stockMatch[0]) : NaN;
+};
+
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="flex items-center gap-3 mb-5">
     <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030]">
@@ -409,7 +416,7 @@ export const AddGDNPage = () => {
 
   const handleSubmit = async () => {
     const hasMissingInventory = inventoryItems.some(
-      (item) => !item.inventory || !item.quantity || !item.companyStaffId
+      (item) => !item.inventory || !item.quantity
       // !item.assetId ||
       // !item.consumingIn.trim() ||
       // !item.reason.trim()
@@ -421,12 +428,41 @@ export const AddGDNPage = () => {
     }
 
     const hasInvalidNumbers = inventoryItems.some(
-      (item) => Number(item.quantity) <= 0 || Number(item.companyStaffId) <= 0
+      (item) => {
+        const quantity = Number(item.quantity);
+        return !Number.isFinite(quantity) || quantity <= 0;
+      }
       // Number(item.assetId) <= 0
     );
 
     if (hasInvalidNumbers) {
-      toast.error("Please enter valid quantity and staff ID.");
+      toast.error("Please enter a valid quantity.");
+      return;
+    }
+
+    const hasUnavailableStock = inventoryItems.some(
+      (item) => !Number.isFinite(getCurrentStockQuantity(item.currentStock))
+    );
+
+    if (hasUnavailableStock) {
+      toast.error("Please wait for current stock to load before submitting.");
+      return;
+    }
+
+    const stockExceededIndex = inventoryItems.findIndex(
+      (item) =>
+        Number(item.quantity) > getCurrentStockQuantity(item.currentStock)
+    );
+
+    if (stockExceededIndex !== -1) {
+      const currentStock = getCurrentStockQuantity(
+        inventoryItems[stockExceededIndex].currentStock
+      );
+      toast.error(
+        `Quantity cannot be more than current stock (${currentStock}) for row ${
+          stockExceededIndex + 1
+        }.`
+      );
       return;
     }
 
