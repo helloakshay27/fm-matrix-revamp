@@ -133,6 +133,12 @@ export interface EscalationItem {
   name: string;
   after_days: number | null;
   escalate_to_users: string | number[] | null;
+  escalate_to_users_details?: {
+    id: number | string;
+    name: string;
+    email?: string;
+    mobile?: string;
+  }[];
   created_at: string;
   updated_at: string;
   complaint_status_id: number | null;
