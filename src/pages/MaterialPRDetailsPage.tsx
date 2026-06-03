@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -613,6 +614,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
           approvePO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
         toast.success(response?.message || "PR approved successfully");
+        refreshPendingApprovalsCount();
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to approve PO");
@@ -648,6 +650,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
           rejectPO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
         toast.success(response?.message || "PO rejected successfully");
+        refreshPendingApprovalsCount();
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to reject PO");

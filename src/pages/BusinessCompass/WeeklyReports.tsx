@@ -166,6 +166,7 @@ interface WeeklyReportDraft {
     wins?: string[];
     checkedWins?: Record<number, boolean>;
     starredWins?: Record<number, boolean>;
+    starredCompletedItems?: Record<string, boolean>;
     dayPlans?: Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string }[]>;
     remarksText?: string;
     remarksList?: { type: RemarkChipId | null; text: string }[];
@@ -257,6 +258,28 @@ const getSopStatusValue = (status: any) => {
     if (normalizedStatus === "running") return "Running";
     if (normalizedStatus === "broken") return "Broken";
     return "To Start";
+};
+
+const getValidWeeklyPlanItems = (
+    plans: Record<string, { text?: string; starred?: boolean }[]>
+) =>
+    Object.values(plans).flatMap((tasks) =>
+        (tasks || []).filter((item) => {
+            if (!item || typeof item !== "object") return false;
+            return typeof item.text === "string" && item.text.trim() !== "";
+        })
+    );
+
+const calculateWeeklyPlanningScore = (
+    plans: Record<string, { text?: string; starred?: boolean }[]>
+) => {
+    const validPlanItems = getValidWeeklyPlanItems(plans);
+    const starredPlanItems = Math.min(
+        validPlanItems.filter((item) => item.starred).length,
+        3
+    );
+
+    return Math.min(validPlanItems.length * 1 + starredPlanItems * 1, 20);
 };
 
 const formatSopValue = (value: any) => {
@@ -505,6 +528,8 @@ const WeeklyReports = () => {
             setCheckedWins(draft.checkedWins);
         if (draft.starredWins && typeof draft.starredWins === "object")
             setStarredWins(draft.starredWins);
+        if (draft.starredCompletedItems && typeof draft.starredCompletedItems === "object")
+            setStarredCompletedItems(draft.starredCompletedItems);
         if (draft.dayPlans && typeof draft.dayPlans === "object")
             setDayPlans(draft.dayPlans);
         if (typeof draft.remarksText === "string")
@@ -1021,7 +1046,13 @@ const WeeklyReports = () => {
         else dailyKpiScore = 0;
 
         // 3. Starred Achievements (Max 6 points)
-        const starredCount = Object.values(starredWins).filter(Boolean).length;
+        const starredWinCount = wins.filter((win, index) => {
+            const hasText = typeof win === "string" && win.trim() !== "";
+            return hasText && checkedWins[index] && starredWins[index];
+        }).length;
+        const starredCount =
+            starredWinCount +
+            Object.values(starredCompletedItems).filter(Boolean).length;
         const achievementsScore = Math.min(starredCount * 2, 6);
 
         // 4. Tasks & Issues (Max 10 points)
@@ -1049,17 +1080,7 @@ const WeeklyReports = () => {
         sopScore = roundScore(sopScore);
 
         // 6. Items Planned for Coming Week (Max 20 points)
-        const totalPlanned = Object.values(dayPlans).reduce((acc, tasks) => {
-            return (
-                acc +
-                tasks.filter((t) => {
-                    if (!t || typeof t !== "object") return false;
-                    const text = (t as any)?.text;
-                    return typeof text === "string" && text.trim() !== "";
-                }).length
-            );
-        }, 0);
-        const planningScore = Math.min(totalPlanned, 20);
+        const planningScore = calculateWeeklyPlanningScore(dayPlans);
 
         // 7. Remarks Logged (Max 14 points)
         let remarksScore = 0;
@@ -1102,7 +1123,7 @@ const WeeklyReports = () => {
                 remarks: remarksScore,
             },
         };
-    }, [kpis, kpiEntries, dailyKpiSummary, starredWins, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
+    }, [kpis, kpiEntries, dailyKpiSummary, wins, checkedWins, starredWins, starredCompletedItems, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
 
     const closureFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1865,6 +1886,7 @@ const WeeklyReports = () => {
             wins,
             checkedWins,
             starredWins,
+            starredCompletedItems,
             dayPlans,
             remarksText,
             remarksList,
@@ -1881,6 +1903,7 @@ const WeeklyReports = () => {
         wins,
         checkedWins,
         starredWins,
+        starredCompletedItems,
         dayPlans,
         remarksText,
         remarksList,
@@ -2290,6 +2313,12 @@ const WeeklyReports = () => {
                 ];
             }
 
+            const finalPlanningScore = calculateWeeklyPlanningScore(effectiveDayPlans);
+            const finalTotalScore = Math.min(
+                weeklyScore.total - weeklyScore.breakdown.planning + finalPlanningScore,
+                100
+            );
+
             const payload = {
                 user_journal: {
                     user_id: currentUser.id,
@@ -2320,7 +2349,7 @@ const WeeklyReports = () => {
                                 )
                                 .map((item) => ({
                                     title: item.title,
-                                    is_starred: starredCompletedItems[item.id] ?? false,
+                                    is_starred: starredCompletedItems[String(item.id)] ?? false,
                                     source_type: item.type,
                                     source_id: item.originalData?.id ?? item.id,
                                 })),
@@ -2337,6 +2366,7 @@ const WeeklyReports = () => {
                                             id: t.id,
                                             text: t.text,
                                             starred: t.starred ?? false,
+                                            is_starred: t.starred ?? false,
                                             source_id: t.source_id ?? null,
                                             source_type: t.source_type ?? null,
                                             plan_for_date: planForDate,
@@ -2364,7 +2394,7 @@ const WeeklyReports = () => {
                             planned_value: plannedEntries[kpi.kpi_id] || "",
                             notes: kpi.kpi_name,
                         })),
-                        total_score: Math.round(weeklyScore.total),
+                        total_score: Math.round(finalTotalScore),
                         remarks: formattedRemarks,
                         remark_type: activeRemarkChip,
                         score_override: true,
@@ -2374,7 +2404,7 @@ const WeeklyReports = () => {
                             starred_achievements: weeklyScore.breakdown.achievements,
                             tasks_issues: weeklyScore.breakdown.tasks,
                             sop_health: weeklyScore.breakdown.sop,
-                            planning: weeklyScore.breakdown.planning,
+                            planning: finalPlanningScore,
                             remarks: weeklyScore.breakdown.remarks,
                         },
                     },
@@ -2840,6 +2870,59 @@ const WeeklyReports = () => {
                                 </div>
                             </div>
                             <div className="space-y-4 p-6">
+                                {wins.map((win, index) => (
+                                    <div
+                                        key={index}
+                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                    >
+                                        <Checkbox
+                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                            checked={checkedWins[index] ?? true}
+                                            onCheckedChange={(checked) =>
+                                                setCheckedWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !!checked,
+                                                }))
+                                            }
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setStarredWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !prev[index],
+                                                }))
+                                            }
+                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                        >
+                                            <Star
+                                                className={cn(
+                                                    "h-4 w-4 transition-colors duration-200",
+                                                    starredWins[index]
+                                                        ? "text-yellow-400 fill-yellow-400"
+                                                        : "text-neutral-300 hover:text-yellow-300"
+                                                )}
+                                            />
+                                        </button>
+                                        <Textarea
+                                            value={win}
+                                            onChange={(e) => handleWinChange(index, e.target.value)}
+                                            placeholder="Describe your win…"
+                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
+                                        />
+                                        <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                            Note
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveWin(index)}
+                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+
                                 {mergedTasksIssues
                                     .filter((item: any) =>
                                         ["completed", "closed", "done"].includes(item.status)
@@ -2861,18 +2944,19 @@ const WeeklyReports = () => {
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() =>
+                                                onClick={() => {
+                                                    const itemKey = String(item.id);
                                                     setStarredCompletedItems((prev) => ({
                                                         ...prev,
-                                                        [item.id]: !prev[item.id],
-                                                    }))
-                                                }
+                                                        [itemKey]: !prev[itemKey],
+                                                    }));
+                                                }}
                                                 className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
                                             >
                                                 <Star
                                                     className={cn(
                                                         "h-4 w-4 transition-colors duration-200",
-                                                        starredCompletedItems[item.id]
+                                                        starredCompletedItems[String(item.id)]
                                                             ? "text-yellow-400 fill-yellow-400"
                                                             : "text-neutral-300 hover:text-yellow-300"
                                                     )}
@@ -2884,7 +2968,7 @@ const WeeklyReports = () => {
                                                 </p>
                                                 {(() => {
                                                     const d = item.originalData;
-                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                    const completionDate = fmtDate(d?.completed_at || d?.updated_at);
                                                     const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
                                                     let issueEffort: string | null = null;
                                                     if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
@@ -2897,14 +2981,14 @@ const WeeklyReports = () => {
                                                             issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
                                                         }
                                                     }
-                                                    const hasInfo = endDate || effortEst || issueEffort;
+                                                    const hasInfo = completionDate || effortEst || issueEffort;
                                                     if (!hasInfo) return null;
                                                     return (
                                                         <div className="flex items-center gap-3 flex-wrap">
-                                                            {endDate && (
-                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                            {completionDate && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-green-600">
                                                                     <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                    {endDate}
+                                                                    {completionDate}
                                                                 </span>
                                                             )}
                                                             {effortEst && (
@@ -2977,55 +3061,6 @@ const WeeklyReports = () => {
                                             </button>
                                         </div>
                                     ))}
-                                {wins.map((win, index) => (
-                                    <div
-                                        key={index}
-                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
-                                    >
-                                        <Checkbox
-                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                            checked={checkedWins[index] ?? true}
-                                            onCheckedChange={(checked) =>
-                                                setCheckedWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !!checked,
-                                                }))
-                                            }
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setStarredWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !prev[index],
-                                                }))
-                                            }
-                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
-                                        >
-                                            <Star
-                                                className={cn(
-                                                    "h-4 w-4 transition-colors duration-200",
-                                                    starredWins[index]
-                                                        ? "text-yellow-400 fill-yellow-400"
-                                                        : "text-neutral-300 hover:text-yellow-300"
-                                                )}
-                                            />
-                                        </button>
-                                        <Textarea
-                                            value={win}
-                                            onChange={(e) => handleWinChange(index, e.target.value)}
-                                            placeholder="Describe your win…"
-                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveWin(index)}
-                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
 
                                 <div className="space-y-4 pt-4 border-t border-neutral-100">
                                     <div className="flex items-center justify-between">
@@ -3893,27 +3928,25 @@ const WeeklyReports = () => {
                                                         />
                                                     </button>
                                                     <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                        {planObj.source_type && (
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={cn(
-                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                                )}>
-                                                                    {planObj.source_type}
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className={cn(
+                                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                                                planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-gray-500 text-white"
+                                                            )}>
+                                                                {planObj.source_type || "Note"}
+                                                            </span>
+                                                            {planObj.originalData?.priority && (
+                                                                <span
+                                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                                                    style={{
+                                                                        backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                        color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                                                    }}
+                                                                >
+                                                                    {planObj.originalData.priority}
                                                                 </span>
-                                                                {planObj.originalData?.priority && (
-                                                                    <span
-                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
-                                                                        style={{
-                                                                            backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                            color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
-                                                                        }}
-                                                                    >
-                                                                        {planObj.originalData.priority}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                                            )}
+                                                        </div>
                                                         {planObj.source_type ? (
                                                             <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
                                                                 {planObj.text}
@@ -4343,8 +4376,8 @@ const WeeklyReports = () => {
                                                     </p>
                                                     <div className="bg-white/80 p-2 rounded border border-neutral-100">
                                                         <p>
-                                                            2 points per starred achievement. Star your top 3
-                                                            impactful wins.
+                                                            2 points per completed starred achievement. Star
+                                                            your top 3 impactful wins.
                                                         </p>
                                                     </div>
                                                 </div>
@@ -4420,7 +4453,10 @@ const WeeklyReports = () => {
                                                             6. Planning (20 pts)
                                                         </p>
                                                         <div className="bg-white/80 p-2 rounded border border-neutral-100">
-                                                            <p>1 pt per unique priority item (Max 20).</p>
+                                                            <p>
+                                                                1 pt per valid plan item +1 extra point per
+                                                                starred item (max 3 stars, max 20).
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-1.5">
@@ -5474,7 +5510,7 @@ const WeeklyReports = () => {
                             <Plus size={18} className="text-blue-600" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Item</span>
+                            <span className="font-bold text-gray-900 text-sm">Add Note</span>
                             <span className="text-xs text-gray-500 font-medium">
                                 {dayPlanMenuAnchor?.dayKey ?? "this day"}
                             </span>
