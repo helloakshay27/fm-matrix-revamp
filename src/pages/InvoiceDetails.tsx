@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -327,6 +328,7 @@ export const InvoiceDetails = () => {
         try {
             await dispatch(approveInvoice({ baseUrl, token, id: Number(id), data: payload })).unwrap();
             toast.success("Invoice approved successfully");
+            refreshPendingApprovalsCount();
             navigate(`/finance/pending-approvals`);
         } catch (error) {
             console.error("Error approving PO:", error);
