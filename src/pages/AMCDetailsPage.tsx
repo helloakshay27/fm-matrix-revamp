@@ -27,7 +27,7 @@ import {
   Settings,
   Plus,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AddVisitModal } from "@/components/AddVisitModal";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAMCDetails } from "@/store/slices/amcDetailsSlice";
@@ -41,6 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye } from "lucide-react";
 import { AMCAnalyticsTab } from "@/components/amc-details/AMCAnalyticsTab";
 import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreviewTab";
+import { getReturnToFromState } from "@/utils/listBackNavigation";
 
 interface AMCDetailsData {
   id: number;
@@ -125,6 +126,7 @@ interface TicketRecord {
 
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const {
@@ -434,6 +436,11 @@ export const AMCDetailsPage = () => {
     setShowAddVisitModal(false);
   };
 
+  const handleBackToList = () => {
+    const returnTo = getReturnToFromState(location.state);
+    navigate(returnTo ?? "/maintenance/amc");
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -446,7 +453,7 @@ export const AMCDetailsPage = () => {
           Back to AMC List
         </Button> */}
         <button
-          onClick={() => navigate("/maintenance/amc")}
+          onClick={handleBackToList}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -1510,7 +1517,7 @@ export const AMCDetailsPage = () => {
                         <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Asset/service Covered</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                       </TableRow>
                     </TableHeader>
