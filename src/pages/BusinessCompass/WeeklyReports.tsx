@@ -166,6 +166,7 @@ interface WeeklyReportDraft {
     wins?: string[];
     checkedWins?: Record<number, boolean>;
     starredWins?: Record<number, boolean>;
+    starredCompletedItems?: Record<string, boolean>;
     dayPlans?: Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string }[]>;
     remarksText?: string;
     remarksList?: { type: RemarkChipId | null; text: string }[];
@@ -257,6 +258,28 @@ const getSopStatusValue = (status: any) => {
     if (normalizedStatus === "running") return "Running";
     if (normalizedStatus === "broken") return "Broken";
     return "To Start";
+};
+
+const getValidWeeklyPlanItems = (
+    plans: Record<string, { text?: string; starred?: boolean }[]>
+) =>
+    Object.values(plans).flatMap((tasks) =>
+        (tasks || []).filter((item) => {
+            if (!item || typeof item !== "object") return false;
+            return typeof item.text === "string" && item.text.trim() !== "";
+        })
+    );
+
+const calculateWeeklyPlanningScore = (
+    plans: Record<string, { text?: string; starred?: boolean }[]>
+) => {
+    const validPlanItems = getValidWeeklyPlanItems(plans);
+    const starredPlanItems = Math.min(
+        validPlanItems.filter((item) => item.starred).length,
+        3
+    );
+
+    return Math.min(validPlanItems.length * 1 + starredPlanItems * 1, 20);
 };
 
 const formatSopValue = (value: any) => {
@@ -505,6 +528,8 @@ const WeeklyReports = () => {
             setCheckedWins(draft.checkedWins);
         if (draft.starredWins && typeof draft.starredWins === "object")
             setStarredWins(draft.starredWins);
+        if (draft.starredCompletedItems && typeof draft.starredCompletedItems === "object")
+            setStarredCompletedItems(draft.starredCompletedItems);
         if (draft.dayPlans && typeof draft.dayPlans === "object")
             setDayPlans(draft.dayPlans);
         if (typeof draft.remarksText === "string")
@@ -1021,7 +1046,13 @@ const WeeklyReports = () => {
         else dailyKpiScore = 0;
 
         // 3. Starred Achievements (Max 6 points)
-        const starredCount = Object.values(starredWins).filter(Boolean).length;
+        const starredWinCount = wins.filter((win, index) => {
+            const hasText = typeof win === "string" && win.trim() !== "";
+            return hasText && checkedWins[index] && starredWins[index];
+        }).length;
+        const starredCount =
+            starredWinCount +
+            Object.values(starredCompletedItems).filter(Boolean).length;
         const achievementsScore = Math.min(starredCount * 2, 6);
 
         // 4. Tasks & Issues (Max 10 points)
@@ -1049,17 +1080,7 @@ const WeeklyReports = () => {
         sopScore = roundScore(sopScore);
 
         // 6. Items Planned for Coming Week (Max 20 points)
-        const totalPlanned = Object.values(dayPlans).reduce((acc, tasks) => {
-            return (
-                acc +
-                tasks.filter((t) => {
-                    if (!t || typeof t !== "object") return false;
-                    const text = (t as any)?.text;
-                    return typeof text === "string" && text.trim() !== "";
-                }).length
-            );
-        }, 0);
-        const planningScore = Math.min(totalPlanned, 20);
+        const planningScore = calculateWeeklyPlanningScore(dayPlans);
 
         // 7. Remarks Logged (Max 14 points)
         let remarksScore = 0;
@@ -1102,7 +1123,7 @@ const WeeklyReports = () => {
                 remarks: remarksScore,
             },
         };
-    }, [kpis, kpiEntries, dailyKpiSummary, starredWins, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
+    }, [kpis, kpiEntries, dailyKpiSummary, wins, checkedWins, starredWins, starredCompletedItems, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
 
     const closureFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1865,6 +1886,7 @@ const WeeklyReports = () => {
             wins,
             checkedWins,
             starredWins,
+            starredCompletedItems,
             dayPlans,
             remarksText,
             remarksList,
@@ -1881,6 +1903,7 @@ const WeeklyReports = () => {
         wins,
         checkedWins,
         starredWins,
+        starredCompletedItems,
         dayPlans,
         remarksText,
         remarksList,
@@ -2290,6 +2313,12 @@ const WeeklyReports = () => {
                 ];
             }
 
+            const finalPlanningScore = calculateWeeklyPlanningScore(effectiveDayPlans);
+            const finalTotalScore = Math.min(
+                weeklyScore.total - weeklyScore.breakdown.planning + finalPlanningScore,
+                100
+            );
+
             const payload = {
                 user_journal: {
                     user_id: currentUser.id,
@@ -2320,7 +2349,7 @@ const WeeklyReports = () => {
                                 )
                                 .map((item) => ({
                                     title: item.title,
-                                    is_starred: starredCompletedItems[item.id] ?? false,
+                                    is_starred: starredCompletedItems[String(item.id)] ?? false,
                                     source_type: item.type,
                                     source_id: item.originalData?.id ?? item.id,
                                 })),
@@ -2337,6 +2366,7 @@ const WeeklyReports = () => {
                                             id: t.id,
                                             text: t.text,
                                             starred: t.starred ?? false,
+                                            is_starred: t.starred ?? false,
                                             source_id: t.source_id ?? null,
                                             source_type: t.source_type ?? null,
                                             plan_for_date: planForDate,
@@ -2364,7 +2394,7 @@ const WeeklyReports = () => {
                             planned_value: plannedEntries[kpi.kpi_id] || "",
                             notes: kpi.kpi_name,
                         })),
-                        total_score: Math.round(weeklyScore.total),
+                        total_score: Math.round(finalTotalScore),
                         remarks: formattedRemarks,
                         remark_type: activeRemarkChip,
                         score_override: true,
@@ -2374,7 +2404,7 @@ const WeeklyReports = () => {
                             starred_achievements: weeklyScore.breakdown.achievements,
                             tasks_issues: weeklyScore.breakdown.tasks,
                             sop_health: weeklyScore.breakdown.sop,
-                            planning: weeklyScore.breakdown.planning,
+                            planning: finalPlanningScore,
                             remarks: weeklyScore.breakdown.remarks,
                         },
                     },
@@ -2861,18 +2891,19 @@ const WeeklyReports = () => {
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() =>
+                                                onClick={() => {
+                                                    const itemKey = String(item.id);
                                                     setStarredCompletedItems((prev) => ({
                                                         ...prev,
-                                                        [item.id]: !prev[item.id],
-                                                    }))
-                                                }
+                                                        [itemKey]: !prev[itemKey],
+                                                    }));
+                                                }}
                                                 className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
                                             >
                                                 <Star
                                                     className={cn(
                                                         "h-4 w-4 transition-colors duration-200",
-                                                        starredCompletedItems[item.id]
+                                                        starredCompletedItems[String(item.id)]
                                                             ? "text-yellow-400 fill-yellow-400"
                                                             : "text-neutral-300 hover:text-yellow-300"
                                                     )}
@@ -4343,8 +4374,8 @@ const WeeklyReports = () => {
                                                     </p>
                                                     <div className="bg-white/80 p-2 rounded border border-neutral-100">
                                                         <p>
-                                                            2 points per starred achievement. Star your top 3
-                                                            impactful wins.
+                                                            2 points per completed starred achievement. Star
+                                                            your top 3 impactful wins.
                                                         </p>
                                                     </div>
                                                 </div>
@@ -4420,7 +4451,10 @@ const WeeklyReports = () => {
                                                             6. Planning (20 pts)
                                                         </p>
                                                         <div className="bg-white/80 p-2 rounded border border-neutral-100">
-                                                            <p>1 pt per unique priority item (Max 20).</p>
+                                                            <p>
+                                                                1 pt per valid plan item +1 extra point per
+                                                                starred item (max 3 stars, max 20).
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-1.5">

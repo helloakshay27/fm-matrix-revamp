@@ -4122,27 +4122,43 @@ const BusinessCompassDailyReport: React.FC = () => {
                               0 ? (
                               <div className="space-y-1.5">
                                 {dailyScore.details.accomplishments.itemBreakdown.map(
-                                  (item, idx) => (
-                                    <div
-                                      key={item.id}
-                                      className="text-[10px] font-bold text-gray-600"
-                                    >
-                                      {idx > 0 && (
-                                        <span className="text-gray-400">+</span>
-                                      )}
-                                      <span className="text-gray-700 ml-1">
-                                        {item.text.substring(0, 35)}
-                                        {item.text.length > 35 ? "..." : ""}
-                                      </span>
-                                      <span className="text-purple-600 font-black ml-2">
-                                        {item.points}
-                                      </span>
-                                      <span className="text-gray-400 ml-1">=</span>
-                                      <span className="text-purple-700 font-black ml-1">
-                                        {item.cumulativePoints}
-                                      </span>
-                                    </div>
-                                  )
+                                  (item) => {
+                                    const completedPoints = item.completed ? 3 : 0;
+                                    const starPoints = item.completed && item.starred ? 2 : 0;
+
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className="rounded-[10px] border border-purple-100 bg-white px-3 py-2 text-[10px] font-bold text-gray-600"
+                                      >
+                                        <div className="flex items-center justify-between gap-3">
+                                          <span className="min-w-0 flex-1 truncate text-gray-700">
+                                            {item.text}
+                                          </span>
+                                          <span className="shrink-0 font-black text-purple-700">
+                                            {item.points} pts
+                                          </span>
+                                        </div>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[9px] text-gray-500">
+                                          <span>
+                                            Completed: {completedPoints} pts
+                                          </span>
+                                          {starPoints > 0 && (
+                                            <span className="flex items-center gap-1 text-[#b45309]">
+                                              <Star
+                                                size={10}
+                                                className="fill-[#eab308] text-[#eab308]"
+                                              />
+                                              Star: +{starPoints} pts
+                                            </span>
+                                          )}
+                                          <span className="font-black text-purple-700">
+                                            Running total: {item.cumulativePoints} pts
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
                                 )}
                               </div>
                             ) : (
@@ -4317,7 +4333,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span>• Regular items:</span>
+                              <span>• Plan items:</span>
                               <span className="text-gray-900">
                                 {dailyScore.details.planning.regularItems} × 2
                                 pts ={" "}
@@ -4332,12 +4348,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   size={12}
                                   className="text-[#eab308] fill-[#eab308]"
                                 />{" "}
-                                Starred items:
+                                Star bonus:
                               </span>
                               <span className="text-gray-900">
-                                {dailyScore.details.planning.starredItems} × 4
+                                {dailyScore.details.planning.starredItems} × 1
                                 pts ={" "}
-                                {dailyScore.details.planning.starredItems * 4}{" "}
+                                {dailyScore.details.planning.starredItems * 1}{" "}
                                 pts
                               </span>
                             </div>
@@ -4593,7 +4609,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 Starred items:
                               </span>{" "}
                               <span className="text-slate-900 font-bold">
-                                +4 points each (double points, max 3 stars)
+                                +1 extra point each (max 3 stars)
                               </span>
                             </li>
                           </ul>
