@@ -126,7 +126,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     }
     dispatch(setSelectedBuilding(initialValues.buildingId));
     dispatch(fetchWings(initialValues.buildingId));
-    dispatch(fetchAreas({ buildingId: initialValues.buildingId }));
+    dispatch(fetchAreas({ buildingId: initialValues.buildingId, wingId: initialValues.wingId }));
     dispatch(fetchFloors(initialValues.buildingId));
     dispatch(fetchRooms(initialValues.buildingId));
 
