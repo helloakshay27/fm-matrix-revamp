@@ -20,7 +20,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
-import { Receipt, FileText } from 'lucide-react';
+import { Receipt, FileText, ArrowLeft } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
 
 // ── Section wrapper ──────────────────────────────────────────────────────────
@@ -817,11 +817,20 @@ export const ExpenseEditPage: React.FC = () => {
       )}
 
       <header className="sticky top-0 bg-background z-10 pb-4">
-        <div>
-          <h1 className="text-2xl font-bold">Edit Expense</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Update expense #{id}
-          </p>
+        <div className="flex items-center gap-3 mb-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold">Edit Expense</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Update expense #{id}
+            </p>
+          </div>
         </div>
       </header>
 

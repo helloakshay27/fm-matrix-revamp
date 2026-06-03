@@ -1,593 +1,998 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+{/* =========================================
+   PAYMENT MADE DETAILS PAGE
+   Separate Details View + PDF View
+   Similar to Payment Received Page
+========================================= */}
+
+import React from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import {
-  X,
-  Plus,
-  MoreHorizontal,
-  Paperclip,
-  MessageSquare,
-  Edit,
+  ArrowLeft,
+  Edit2,
+  Download,
   Printer,
   FileText,
-  CheckCircle,
-  Sparkles,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-// Reuse the Payment interface or import it (if exported)
-// ideally it should be imported, but for now I'll redefine or stick to a generic input if not easily shareable without circular deps.
-// Better to export it from PaymentsMadePage or a types file.
-// For this step I will assume it is passed as a prop with the right shape.
+import { Button } from "@/components/ui/button";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
-interface Payment {
-  id: string;
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+
+import PaymentMadePdf from "../ClubManagement/PaymentMadePdfTemplate";
+
+interface PaymentMade {
+  id: number;
   payment_number: string;
-  vendor_name: string;
   date: string;
-  mode: string;
-  status: "DRAFT" | "PAID" | "VOID";
-  amount: number;
-  unused_amount: number;
-  bank_reference_number: string;
+  vendor_name: string;
+  payment_mode: string;
+  reference_number: string;
   paid_through_account: string;
-  currency_symbol: string;
-  tds_percentage?: number;
+  amount: number;
   tds_amount?: number;
+  tds_percentage?: number;
   net_amount?: number;
-  bill_numbers?: string;
-  deposit_to_ledger_name?: string;
+  status: "PAID" | "DRAFT" | "VOID";
+  notes?: string;
 }
 
-const numberToWords = (num: number): string => {
-  const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+interface BillPayment {
+  id: number;
+  formatted_number?: string;
+  payment_date?: string;
+  amount: number;
+  resource_id: number;
+}
 
-  const convert = (n: number): string => {
-    if (n < 20) return a[n];
-    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
-    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convert(n % 100) : '');
-    if (n < 100000) return convert(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + convert(n % 1000) : '');
-    if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 !== 0 ? ' ' + convert(n % 100000) : '');
-    return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + convert(n % 10000000) : '');
-  };
+interface JournalEntry {
+  id: number | string;
+  account: string;
+  debit: number;
+  credit: number;
+}
 
-  const fractional = Math.round((num % 1) * 100);
-  let words = convert(Math.floor(num)) + ' Rupee';
-  if (Math.floor(num) !== 1) words += 's';
-  if (fractional > 0) {
-    words += ' and ' + convert(fractional) + ' Paisa';
-    if (fractional !== 1) words += 's';
-  }
-  return words + ' Only';
+interface PaymentMadeDetailsPageProps {
+  selectedPaymentId?: string | null;
+  onClose?: () => void;
+  onSelectPayment?: (id: string) => void;
+  payments?: unknown[];
+}
+
+const toAmount = (value: any): number => {
+  const amount = Number(value || 0);
+  return Number.isFinite(amount) ? amount : 0;
 };
 
-interface PaymentDetailViewProps {
-  payments: Payment[];
-  selectedPaymentId: string | null;
-  onSelectPayment: (id: string) => void;
-  onClose: () => void;
-}
+const normalizeBillPayments = (data: any): BillPayment[] => {
+  const rows =
+    data?.bill_payments ||
+    data?.lock_bill_payments ||
+    data?.lock_bill_payments_attributes ||
+    data?.payment_bills ||
+    data?.bills ||
+    [];
 
-export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
-  payments,
-  selectedPaymentId,
-  onSelectPayment,
-  onClose,
-}) => {
-  const selectedPayment = payments.find((p) => p.id === selectedPaymentId);
-  const [isPdfMenuOpen, setIsPdfMenuOpen] = useState(false);
-  const pdfMenuRef = useRef<HTMLDivElement>(null);
+  return Array.isArray(rows)
+    ? rows.map((row: any, index: number) => ({
+        id: Number(row.id || row.resource_id || index),
+        formatted_number:
+          row.formatted_number ||
+          row.bill_number ||
+          row.invoice_number ||
+          row.resource_number ||
+          row.number,
+        payment_date:
+          row.payment_date ||
+          row.bill_date ||
+          row.invoice_date ||
+          row.date ||
+          data?.payment_date,
+        amount:
+          Number(
+            row.amount ||
+              row.payment_amount ||
+              row.bill_amount ||
+              row.invoice_amount ||
+              0
+          ) || 0,
+        resource_id: Number(row.resource_id || row.id || 0) || 0,
+      }))
+    : [];
+};
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        pdfMenuRef.current &&
-        !pdfMenuRef.current.contains(e.target as Node)
-      ) {
-        setIsPdfMenuOpen(false);
+const normalizeJournalEntries = (data: any): JournalEntry[] => {
+  const transactionRecords =
+    data?.transaction_records ||
+    data?.lock_account_transaction_records ||
+    [];
+  const nestedTransactionRecords = Array.isArray(
+    data?.lock_account_transactions
+  )
+    ? data.lock_account_transactions.flatMap(
+        (txn: any) => txn?.transaction_records || []
+      )
+    : [];
+  const rows = [
+    ...(Array.isArray(transactionRecords)
+      ? transactionRecords
+      : []),
+    ...nestedTransactionRecords,
+    ...(Array.isArray(data?.journal_entries)
+      ? data.journal_entries
+      : []),
+    ...(Array.isArray(data?.journal_entry_lines)
+      ? data.journal_entry_lines
+      : []),
+    ...(Array.isArray(data?.journal_items)
+      ? data.journal_items
+      : []),
+    ...(Array.isArray(data?.ledger_entries)
+      ? data.ledger_entries
+      : []),
+    ...(Array.isArray(data?.transaction_entries)
+      ? data.transaction_entries
+      : []),
+    ...(Array.isArray(data?.transactions)
+      ? data.transactions
+      : []),
+    ...(Array.isArray(data?.lock_journal_entries)
+      ? data.lock_journal_entries
+      : []),
+    ...(Array.isArray(data?.journal?.journal_entries)
+      ? data.journal.journal_entries
+      : []),
+    ...(Array.isArray(data?.journal?.journal_entry_lines)
+      ? data.journal.journal_entry_lines
+      : []),
+    ...(Array.isArray(
+      data?.accounting_transaction?.journal_entries
+    )
+      ? data.accounting_transaction.journal_entries
+      : []),
+  ];
+
+  if (!Array.isArray(rows)) return [];
+
+  return rows
+    .map((row: any, index: number) => {
+      const account =
+        row.account_name ||
+        row.account ||
+        row.ledger_name ||
+        row.lock_account_ledger_name ||
+        row.account_ledger_name ||
+        row.particular ||
+        row.particulars ||
+        row.name ||
+        "";
+
+      const type = String(
+        row.tr_type ||
+          row.entry_type ||
+          row.transaction_type ||
+          row.type ||
+          row.dr_cr ||
+          row.debit_credit ||
+          ""
+      ).toLowerCase();
+
+      let debit = toAmount(
+        row.debit ||
+          row.dr ||
+          row.debit_amount ||
+          row.dr_amount ||
+          row.debit_value
+      );
+      let credit = toAmount(
+        row.credit ||
+          row.cr ||
+          row.credit_amount ||
+          row.cr_amount ||
+          row.credit_value
+      );
+
+      if (row.tr_type && row.amount) {
+        if (type === "cr") {
+          debit = 0;
+          credit = Math.abs(toAmount(row.amount));
+        } else if (type === "dr") {
+          debit = Math.abs(toAmount(row.amount));
+          credit = 0;
+        }
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
-  if (!selectedPayment) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-20 bg-gray-50 h-screen">
-        <div className="text-center space-y-4">
-          <div className="bg-red-50 p-4 rounded-full w-fit mx-auto">
-            <X className="h-8 w-8 text-red-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Payment Not Found
-          </h3>
-          <p className="text-sm text-gray-500 max-w-xs mx-auto">
-            The payment record you are looking for might have been moved or
-            doesn't exist in the current view.
-          </p>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="border-gray-300 h-9"
-          >
-            Back to List
-          </Button>
-        </div>
-      </div>
+      if (!debit && !credit && row.amount) {
+        if (type.includes("credit") || type === "cr") {
+          credit = toAmount(row.amount);
+        } else {
+          debit = toAmount(row.amount);
+        }
+      }
+
+      return {
+        id: row.id || `${account || "journal"}-${index}`,
+        account,
+        debit,
+        credit,
+      };
+    })
+    .filter(
+      (row) =>
+        row.account || row.debit > 0 || row.credit > 0
     );
-  }
+};
+
+export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
+  selectedPaymentId,
+}) => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const detailsId = id;
+  // selectedPaymentId || 
+
+  const pdfRef = React.useRef<HTMLDivElement>(null);
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
+  const authHeaders = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  const [activeTab, setActiveTab] =
+    React.useState("details");
+
+  const [payment, setPayment] =
+    React.useState<PaymentMade | null>(null);
+
+  const [billPayments, setBillPayments] =
+    React.useState<BillPayment[]>([]);
+
+  const [journalEntries, setJournalEntries] =
+    React.useState<JournalEntry[]>([]);
+
+  React.useEffect(() => {
+    if (!detailsId) return;
+
+    const apiBase = baseUrl
+      ? baseUrl.startsWith("http")
+        ? baseUrl
+        : `https://${baseUrl}`
+      : "https://club-uat-api.lockated.com";
+    const lockAccountId = localStorage.getItem("lock_account_id") || "3";
+
+    axios
+      .get(`${apiBase.replace(/\/+$/, "")}/lock_payments.json`, {
+        headers: token ? authHeaders : undefined,
+        params: {
+          lock_account_id: lockAccountId,
+          "q[payment_made_eq]": 1,
+          "q[id_eq]": detailsId,
+          page: 1,
+          per_page: 10,
+        },
+      })
+      .then((res) => {
+        const list = Array.isArray(res.data?.lock_payments)
+          ? res.data.lock_payments
+          : Array.isArray(res.data)
+          ? res.data
+          : [];
+        const data =
+          list.find((row: any) => String(row?.id) === String(detailsId)) ||
+          res.data?.lock_payment ||
+          list[0] ||
+          res.data ||
+          {};
+
+        setPayment({
+          id: data.id,
+          payment_number:
+            data.payment_number ||
+            data.receipt_number ||
+            data.order_number ||
+            String(data.id),
+
+          date: data.payment_date
+            ? new Date(
+                data.payment_date
+              ).toLocaleDateString("en-GB")
+            : "-",
+
+          vendor_name:
+            data.vendor_name ||
+            data.resident_name ||
+            data.payment_to_name ||
+            data.payment_of ||
+            "Vendor",
+
+          payment_mode:
+            data.payment_mode || "",
+
+          reference_number:
+            data.reference_number ||
+            data.neft_reference ||
+            data.order_number ||
+            data.pg_transaction_id ||
+            "",
+
+          paid_through_account:
+            data.paid_through_account ||
+            data.deposit_to_ledger_name ||
+            data.deposit_to_ledger ||
+            data.payment_gateway ||
+            data.bank_name ||
+            "Petty Cash",
+
+          amount:
+            Number(
+              data.paid_amount ||
+                data.payment_amount ||
+                data.total_amount ||
+                0
+            ) || 0,
+
+          tds_amount:
+            Number(data.tds_amount || 0) || 0,
+
+          tds_percentage:
+            Number(data.tds_percentage || 0) || 0,
+
+          net_amount:
+            Number(data.net_amount || 0) || 0,
+
+          notes: data.notes || "",
+
+          status:
+            data.payment_status === "paid"
+              ? "PAID"
+              : data.payment_status === "void"
+              ? "VOID"
+              : "DRAFT",
+        });
+
+        setBillPayments(normalizeBillPayments(data));
+
+        const journalRows = normalizeJournalEntries(data);
+        setJournalEntries(journalRows);
+
+        if (!journalRows.length) {
+          axios
+            .get(
+              `${apiBase.replace(
+                /\/+$/,
+                ""
+              )}/lock_payments/${detailsId}.json`,
+              {
+                headers: token ? authHeaders : undefined,
+                params: {
+                  lock_account_id: lockAccountId,
+                },
+              }
+            )
+            .then((detailsRes) => {
+              const detailsData =
+                detailsRes.data?.lock_payment ||
+                detailsRes.data ||
+                {};
+              setJournalEntries(
+                normalizeJournalEntries(detailsData)
+              );
+            })
+            .catch((detailsErr) => {
+              console.error(detailsErr);
+            });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, [detailsId, baseUrl, token]);
+
+  const handleDownloadPdf = async () => {
+    try {
+      const input = pdfRef.current;
+
+      if (!input) return;
+
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+      });
+
+      const imgData =
+        canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: "a4",
+      });
+
+      const pdfWidth =
+        pdf.internal.pageSize.getWidth();
+
+      const pdfHeight =
+        (canvas.height * pdfWidth) /
+        canvas.width;
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        pdfWidth,
+        pdfHeight
+      );
+
+      pdf.save(
+        `payment-made-${
+          payment?.payment_number || "payment"
+        }.pdf`
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const amountFormatted = `₹${Number(
+    payment?.amount || 0
+  ).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+  const formatLedgerAmount = (amount: number) =>
+    Number(amount || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const journalDebitTotal = journalEntries.reduce(
+    (total, entry) => total + toAmount(entry.debit),
+    0
+  );
+  const journalCreditTotal = journalEntries.reduce(
+    (total, entry) => total + toAmount(entry.credit),
+    0
+  );
 
   return (
-    <div className="flex h-[calc(100vh-140px)] border-t border-gray-200">
-      {/* Sidebar List */}
-      <div className="w-[350px] border-r border-gray-200 flex flex-col bg-white">
-        {/* Sidebar Header */}
-        <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-          <button className="flex items-center gap-1 font-semibold text-gray-700 hover:text-gray-900">
-            All Payments <span className="text-[10px] ml-1">▼</span>
-          </button>
-          <div className="flex gap-2">
+    <div className="p-6">
+      <main className="flex-1">
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+
             <Button
-              size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white h-8 w-8 p-0 rounded-md"
+              variant="ghost"
+              className="p-2"
+              onClick={() => {
+                // if (typeof onClose === "function") {
+                //   onClose();
+                // } else {
+                  navigate("/accounting/payments-made");
+                // }
+              }}
             >
-              <Plus className="h-4 w-4" />
+              <ArrowLeft className="w-4 h-4" />
             </Button>
+
+            <h2 className="text-2xl font-semibold">
+              Payment Made -{" "}
+              {payment?.payment_number || "-"}
+            </h2>
+
+            {payment && (
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  payment.status === "PAID"
+                    ? "bg-green-100 text-green-700"
+                    : payment.status === "VOID"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
+                {payment.status}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
             <Button
-              size="sm"
               variant="outline"
-              className="h-8 w-8 p-0 border-gray-300 text-gray-600"
+              onClick={() =>
+                setActiveTab("pdf")
+              }
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <FileText className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+
+            <Button
+              onClick={handleDownloadPdf}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate(
+                  `/accounting/payments-made/edit/${payment?.id}`
+                )
+              }
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
             </Button>
           </div>
         </div>
 
-        {/* Payment List */}
-        <div className="flex-1 overflow-y-auto">
-          {payments.map((payment) => (
-            <div
-              key={payment.id}
-              onClick={() => onSelectPayment(payment.id)}
-              className={cn(
-                "p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors group relative",
-                selectedPaymentId === payment.id
-                  ? "bg-[#f3f4f6] border-l-[3px] border-l-red-500"
-                  : "border-l-[3px] border-l-transparent"
-              )}
-            >
-              <div className="flex justify-between items-start mb-1">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                    checked={false} // Placeholder
-                    readOnly
-                  />
-                  <span className="font-medium text-gray-900 text-sm">
-                    {payment.vendor_name}
-                  </span>
-                </div>
-                <span className="font-medium text-gray-900 text-sm">
-                  {payment.currency_symbol}
-                  {payment.amount.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-xs text-gray-500 pl-5">
-                <span>
-                  {payment.date} • {payment.mode}
-                </span>
-              </div>
-              <div className="pl-5 mt-1">
-                <span
-                  className={cn(
-                    "text-[10px] uppercase font-bold tracking-wider",
-                    payment.status === "PAID"
-                      ? "text-green-600"
-                      : "text-gray-500"
-                  )}
-                >
-                  {payment.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+        {/* TABS */}
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <TabsList className="mb-6">
+            <TabsTrigger value="details">
+              Details View
+            </TabsTrigger>
 
-      {/* Detail Content */}
-      <div className="flex-1 flex flex-col bg-gray-50 overflow-y-auto relative">
-        {/* Detail Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center sticky top-0 z-10">
-          <h2 className="text-xl font-bold text-gray-900">
-            {selectedPayment.payment_number}
-          </h2>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="text-gray-500">
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" className="text-gray-500">
-              <MessageSquare className="h-4 w-4" />
-            </Button>
-            <div className="w-px h-6 bg-gray-200 mx-2"></div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-500 hover:text-red-500 hover:bg-red-50"
-              onClick={onClose}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+            <TabsTrigger value="pdf">
+              PDF View
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Action Toolbar */}
-        <div className="bg-white border-b border-gray-200 px-6 py-2 flex items-center gap-2 shadow-sm sticky top-[61px] z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-700 hover:bg-gray-100 gap-2 h-8"
-          >
-            <Edit className="h-4 w-4" /> Edit
-          </Button>
-          <div className="w-px h-4 bg-gray-300"></div>
-          <div className="relative" ref={pdfMenuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-700 hover:bg-gray-100 gap-2 h-8"
-              onClick={() => setIsPdfMenuOpen((prev) => !prev)}
-            >
-              <FileText className="h-4 w-4" /> PDF/Print
-              <span className="text-[10px]">▼</span>
-            </Button>
-            {isPdfMenuOpen && (
-              <div className="absolute top-full left-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
-                <button
-                  onClick={() => {
-                    setIsPdfMenuOpen(false);
-                    window.print();
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                >
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  Save as PDF
-                </button>
-                <button
-                  onClick={() => {
-                    setIsPdfMenuOpen(false);
-                    window.print();
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                >
-                  <Printer className="h-4 w-4 text-gray-500" />
-                  Print
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="w-px h-4 bg-gray-300"></div>
-          {selectedPayment.status === "DRAFT" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-700 hover:bg-gray-100 gap-2 h-8"
-            >
-              <CheckCircle className="h-4 w-4" /> Mark as Paid
-            </Button>
-          )}
-          <div className="w-px h-4 bg-gray-300"></div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-gray-500"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
+          {/* ======================================
+              DETAILS TAB
+          ====================================== */}
 
-        {/* Scrollable Document Area */}
-        <div className="p-8 pb-20 justify-center flex">
-          <div className="w-full max-w-4xl space-y-6">
-            {/* Next Action Banner */}
-            {selectedPayment.status === "DRAFT" && (
-              <div className="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-wrap justify-between items-center gap-4 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="h-5 w-5 text-purple-500 fill-purple-100" />
-                  <div className="text-sm">
-                    <span className="font-semibold text-gray-900 mr-1">
-                      WHAT'S NEXT?
-                    </span>
-                    <span className="text-gray-600">
-                      Mark the payment as Paid to confirm that it has been sent.
-                    </span>
-                  </div>
-                </div>
-                <Button className="bg-red-600 hover:bg-red-700 text-white h-8 text-sm px-4">
-                  Mark as Paid
-                </Button>
-              </div>
-            )}
-            {selectedPayment.status === "PAID" && (
-              <div className="bg-gray-200 text-gray-600 px-4 py-3 rounded-md shadow-sm mb-6 flex items-center animate-in fade-in zoom-in-95 duration-200 w-fit">
-                <span className="text-sm">
-                  The Paid status indicates that your vendor has received this
-                  payment.
-                </span>
-              </div>
-            )}
-
-            {/* Receipt Preview */}
-            <div className="bg-white shadow-xl min-h-[900px] p-16 relative mx-auto text-gray-800">
-              {/* Draft Ribbon */}
-              {selectedPayment.status === "DRAFT" && (
-                <div className="absolute top-0 left-0">
-                  <div className="bg-gray-500 text-white text-xs font-bold px-12 py-1 transform -rotate-45 -translate-x-10 translate-y-8 text-center shadow-md border-b-2 border-gray-600 tracking-wider">
-                    DRAFT
-                  </div>
-                </div>
-              )}
-
-              {/* Paid Ribbon (Optional) */}
-              {selectedPayment.status === "PAID" && (
-                <div className="absolute top-0 left-0">
-                  <div className="bg-green-600 text-white text-xs font-bold px-12 py-1 transform -rotate-45 -translate-x-10 translate-y-8 text-center shadow-md border-b-2 border-green-700 tracking-wider">
-                    PAID
-                  </div>
-                </div>
-              )}
-
-              {/* Header Info */}
-              <div className="mt-8 flex flex-col items-start gap-1">
-                <h1 className="font-bold text-2xl text-gray-900 mb-2">
-                  Lockated
-                </h1>
-                <p className="text-sm text-gray-500">pune Maharashtra 411006</p>
-                <p className="text-sm text-gray-500">India</p>
-                <p className="text-sm text-gray-500">
-                  ajay.phulkar@lockated.com
-                </p>
-              </div>
-
-              {/* Title */}
-              <div className="mt-16 mb-12 text-center">
-                <h2 className="text-xl font-bold text-gray-800 uppercase tracking-widest border-b border-gray-300 inline-block pb-1">
-                  Payments Made
-                </h2>
-              </div>
-
-              {/* Details and Amount */}
-              <div className="flex justify-between items-start">
-                <div className="w-2/3 space-y-5">
-                  {/* Row 1 */}
-                  <div className="grid grid-cols-[160px_1fr] items-center border-b border-gray-100 py-3">
-                    <span className="text-gray-600 font-medium text-sm">
-                      Payment#
-                    </span>
-                    <span className="text-gray-900 font-medium text-sm">
-                      {selectedPayment.payment_number}
-                    </span>
-                  </div>
-                  {/* Row 2 */}
-                  <div className="grid grid-cols-[160px_1fr] items-center border-b border-gray-100 py-3">
-                    <span className="text-gray-600 font-medium text-sm">
-                      Payment Date
-                    </span>
-                    <span className="text-gray-900 font-bold text-sm">
-                      {selectedPayment.date}
-                    </span>
-                  </div>
-                  {/* Row 3 */}
-                  <div className="grid grid-cols-[160px_1fr] items-center border-b border-gray-100 py-3">
-                    <span className="text-gray-600 font-medium text-sm">
-                      Reference Number
-                    </span>
-                    <span className="text-gray-900 font-medium text-sm">
-                      {selectedPayment.bank_reference_number || ""}
-                    </span>
-                  </div>
-                  {/* Row 4 - Paid To */}
-                  <div className="grid grid-cols-[160px_1fr] items-start border-b border-gray-100 py-3">
-                    <span className="text-gray-600 font-medium text-sm mt-1">
-                      Paid To
-                    </span>
-                    <div>
-                      <div className="text-red-600 font-bold text-sm cursor-pointer hover:underline mb-1">
-                        {selectedPayment.vendor_name}
-                      </div>
-                      <div className="text-gray-500 text-sm">India</div>
-                    </div>
-                  </div>
-                  {/* Row 5 */}
-                  <div className="grid grid-cols-[160px_1fr] items-center border-b border-gray-100 py-3">
-                    <span className="text-gray-600 font-medium text-sm">
-                      Payment Mode
-                    </span>
-                    <span className="text-gray-900 font-medium text-sm">
-                      {selectedPayment.mode}
-                    </span>
-                  </div>
-                  {/* Row 6 */}
-                  <div className="grid grid-cols-[160px_1fr] items-center border-b border-gray-100 py-3">
-                    <span className="text-gray-600 font-medium text-sm">
-                      Paid Through
-                    </span>
-                    <span className="text-gray-900 font-medium text-sm">
-                      {selectedPayment.paid_through_account}
-                    </span>
-                  </div>
-                  {/* Row 7 — TDS (only shown if tds_amount > 0) */}
-                  {(selectedPayment.tds_amount ?? 0) > 0 && (
-                    <div className="grid grid-cols-[160px_1fr] items-center border-b border-gray-100 py-3">
-                      <span className="text-gray-600 font-medium text-sm">
-                        TDS Deducted
-                      </span>
-                      <span className="text-red-500 font-semibold text-sm">
-                        &minus; {selectedPayment.currency_symbol}
-                        {(selectedPayment.tds_amount ?? 0).toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                        {(selectedPayment.tds_percentage ?? 0) > 0 && (
-                          <span className="ml-1 text-gray-400 font-normal text-xs">
-                            ({selectedPayment.tds_percentage}%)
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  )}
-                  {/* Row 8 — Net Amount after TDS */}
-                  {(selectedPayment.tds_amount ?? 0) > 0 && (
-                    <div className="grid grid-cols-[160px_1fr] items-center py-3">
-                      <span className="text-gray-600 font-medium text-sm">
-                        Amount After TDS
-                      </span>
-                      <span className="text-gray-900 font-bold text-sm">
-                        {selectedPayment.currency_symbol}
-                        {((selectedPayment.net_amount ?? 0) > 0
-                          ? selectedPayment.net_amount ?? 0
-                          : selectedPayment.amount - (selectedPayment.tds_amount ?? 0)
-                        ).toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Amount Box */}
-                <div className="bg-[#78ae54] text-white p-6 w-[240px] text-center flex flex-col justify-center items-center shadow-sm">
-                  <div className="text-sm font-medium mb-1 invert-0">
-                    Amount Paid
-                  </div>
-                  <div className="text-2xl font-bold tracking-wide">
-                    {selectedPayment.currency_symbol}
-                    {selectedPayment.amount.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-12 pt-8 border-t border-gray-100">
-                <div className="grid grid-cols-[160px_1fr] items-start">
-                  <span className="text-gray-600 font-medium text-sm">
-                    Amount Paid In Words
-                  </span>
-                  <span className="text-gray-900 font-medium text-sm italic">
-                    {numberToWords(selectedPayment.amount)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Over Payment Section */}
-              <div className="mt-8 pt-4 border-t border-gray-100 flex justify-end">
-                <span className="text-gray-600 text-sm mr-2">
-                  Over payment:
-                </span>
-                <span className="text-gray-900 font-medium text-sm">
-                  {selectedPayment.currency_symbol}
-                  {selectedPayment.amount.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-            </div>
-
-            {/* Journal Section */}
-            <div className="mt-8 max-w-4xl mx-auto">
-              <div className="border-b border-gray-200">
-                <button className="px-1 py-2 border-b-2 border-red-600 text-sm font-medium text-gray-900">
-                  Journal
-                </button>
-              </div>
-              <div className="py-4 text-gray-500 text-sm w-full">
-                {selectedPayment.status === "PAID" ? (
-                  <div className="mt-2 w-full">
-                    <div className="flex justify-between items-center mb-6">
-                      <div className="text-xs text-gray-500 flex items-center gap-1">
-                        Amount is displayed in your base currency
-                        <span className="bg-green-600 text-white px-1 text-[10px] font-bold rounded-sm">
-                          INR
-                        </span>
-                      </div>
-                      <div className="flex border border-gray-300 rounded overflow-hidden text-xs">
-                        <button className="px-3 py-1 bg-gray-200 text-gray-700 font-bold border-r border-gray-300 shadow-inner">
-                          Accrual
-                        </button>
-                        <button className="px-3 py-1 bg-white text-gray-500 hover:bg-gray-50">
-                          Cash
-                        </button>
-                      </div>
-                    </div>
-
-                    <h3 className="font-bold text-gray-900 mb-4 text-base">
-                      Vendor Payment - {selectedPayment.payment_number}
+          <TabsContent value="details">
+            <div className="bg-white border rounded shadow-sm">
+              <div className="p-10">
+                {/* COMPANY + AMOUNT */}
+                <div className="grid grid-cols-12 gap-6">
+                  <div className="col-span-8">
+                    <h3 className="text-2xl font-bold">
+                      Lockated
                     </h3>
 
-                    <div className="w-full">
-                      <div className="grid grid-cols-[1fr_150px_150px] border-b border-gray-200 pb-2 mb-0 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                        <div>ACCOUNT</div>
-                        <div className="text-right">DEBIT</div>
-                        <div className="text-right">CREDIT</div>
+                    <div className="mt-3 text-sm text-gray-500">
+                      pune Maharashtra 411006
+                      <br />
+                      India
+                      <br />
+                      ajay.phulkar@lockated.com
+                    </div>
+                  </div>
+
+                  <div className="col-span-4 flex justify-end">
+                    <div className="bg-green-500 text-white p-6 rounded shadow text-center">
+                      <div className="text-sm">
+                        Amount Paid
                       </div>
-                      <div className="grid grid-cols-[1fr_150px_150px] border-b border-gray-100 py-3 text-sm text-gray-700 items-center hover:bg-gray-50">
-                        <div className="text-gray-900 hover:text-blue-600 cursor-pointer">
-                          {selectedPayment.deposit_to_ledger_name || "Prepaid Expenses"}
-                        </div>
-                        <div className="text-right">
-                          {selectedPayment.amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
-                        <div className="text-right">0.00</div>
-                      </div>
-                      <div className="grid grid-cols-[1fr_150px_150px] border-b-2 border-gray-200 py-3 text-sm text-gray-700 items-center hover:bg-gray-50">
-                        <div className="text-gray-900 hover:text-blue-600 cursor-pointer">
-                          {selectedPayment.paid_through_account || "Petty Cash"}
-                        </div>
-                        <div className="text-right">0.00</div>
-                        <div className="text-right">
-                          {selectedPayment.amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-[1fr_150px_150px] pt-3 text-sm font-bold text-gray-900 items-center">
-                        <div></div>
-                        <div className="text-right">
-                          {selectedPayment.amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
-                        <div className="text-right">
-                          {selectedPayment.amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
+
+                      <div className="text-2xl font-bold mt-2">
+                        {amountFormatted}
                       </div>
                     </div>
                   </div>
-                ) : selectedPayment.status === "DRAFT" ? (
-                  "Journal entries will not be available for Payments in the Draft state."
-                ) : (
-                  "No journal entries found."
-                )}
+                </div>
+
+                <hr className="my-8" />
+
+                <h3 className="text-center text-xl font-semibold mb-8 uppercase tracking-wider">
+                  Payments Made
+                </h3>
+
+                {/* DETAILS */}
+                <div className="grid grid-cols-12 gap-6">
+                  <div className="col-span-6 space-y-5">
+                    <div>
+                      <div className="text-sm text-gray-500">
+                        Payment Date
+                      </div>
+
+                      <div className="font-semibold">
+                        {payment?.date || "-"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm text-gray-500">
+                        Reference Number
+                      </div>
+
+                      <div className="font-semibold">
+                        {payment?.reference_number ||
+                          "-"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm text-gray-500">
+                        Payment Mode
+                      </div>
+
+                      <div className="font-semibold">
+                        {payment?.payment_mode ||
+                          "-"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm text-gray-500">
+                        Paid Through
+                      </div>
+
+                      <div className="font-semibold">
+                        {payment?.paid_through_account ||
+                          "-"}
+                      </div>
+                    </div>
+
+                    {(payment?.tds_amount || 0) >
+                      0 && (
+                      <div>
+                        <div className="text-sm text-gray-500">
+                          TDS Deducted
+                        </div>
+
+                        <div className="font-semibold text-red-500">
+                          ₹
+                          {Number(
+                            payment?.tds_amount || 0
+                          ).toLocaleString(
+                            "en-IN",
+                            {
+                              minimumFractionDigits: 2,
+                            }
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* VENDOR */}
+                  <div className="col-span-6">
+                    <div className="text-sm text-gray-500">
+                      Paid To
+                    </div>
+
+                    <div className="mt-2">
+                      <div className="text-blue-600 font-semibold">
+                        {payment?.vendor_name ||
+                          "-"}
+                      </div>
+
+                      <div className="text-sm text-gray-500 mt-1">
+                        India
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TABLE */}
+                <div className="mt-10">
+                  <div className="text-lg font-semibold mb-4">
+                    Payment For
+                  </div>
+
+                  <div className="overflow-x-auto border rounded">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="p-3 text-left">
+                            Bill Number
+                          </th>
+
+                          <th className="p-3 text-left">
+                            Bill Date
+                          </th>
+
+                          <th className="p-3 text-right">
+                            Bill Amount
+                          </th>
+
+                          <th className="p-3 text-right">
+                            Payment Amount
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {billPayments.map((bp) => (
+                          <tr
+                            key={bp.id}
+                            className="border-t"
+                          >
+                            <td className="p-3 text-blue-600">
+                              {bp.formatted_number ||
+                                `BILL-${bp.resource_id}`}
+                            </td>
+
+                            <td className="p-3">
+                              {bp.payment_date
+                                ? new Date(
+                                    bp.payment_date
+                                  ).toLocaleDateString(
+                                    "en-GB"
+                                  )
+                                : "-"}
+                            </td>
+
+                            <td className="p-3 text-right">
+                              ₹
+                              {Number(
+                                bp.amount || 0
+                              ).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                }
+                              )}
+                            </td>
+
+                            <td className="p-3 text-right">
+                              ₹
+                              {Number(
+                                bp.amount || 0
+                              ).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                }
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* MORE INFORMATION */}
+                <div className="mt-10">
+                  <h3 className="text-xl font-semibold mb-8">
+                    More Information
+                  </h3>
+
+                  <div className="grid grid-cols-12 gap-4 text-sm">
+                    <div className="col-span-3 text-gray-500">
+                      Notes
+                    </div>
+
+                    <div className="col-span-9 text-gray-800">
+                      {payment?.notes || "-"}
+                    </div>
+                  </div>
+
+                  <div className="mt-10">
+                    <div className="inline-flex border-b-2 border-blue-500 px-4 pb-3 text-sm font-semibold text-gray-700">
+                      Journal
+                    </div>
+
+                    <div className="border-t">
+                      <div className="flex items-center justify-between py-3 text-xs text-gray-500">
+                        <div>
+                          Amount is displayed in your base currency{" "}
+                          <span className="bg-green-700 text-white px-1.5 py-0.5 rounded-sm font-semibold">
+                            INR
+                          </span>
+                        </div>
+
+                        <div className="inline-flex overflow-hidden rounded border border-gray-300 text-xs">
+                          <span className="bg-gray-200 px-2 py-1">
+                            Accrual
+                          </span>
+                          <span className="bg-white px-2 py-1">
+                            Cash
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-lg font-semibold mb-4">
+                        Vendor Payment -{" "}
+                        {payment?.payment_number || "-"}
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                            <tr>
+                              <th className="py-2 text-left">
+                                Account
+                              </th>
+
+                              <th className="py-2 text-right">
+                                Debit
+                              </th>
+
+                              <th className="py-2 text-right">
+                                Credit
+                              </th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {journalEntries.length > 0 ? (
+                              journalEntries.map((entry) => (
+                                <tr
+                                  key={entry.id}
+                                  className="border-b last:border-b-0"
+                                >
+                                  <td className="py-2 pr-3">
+                                    {entry.account || "-"}
+                                  </td>
+
+                                  <td className="py-2 text-right">
+                                    {formatLedgerAmount(entry.debit)}
+                                  </td>
+
+                                  <td className="py-2 text-right">
+                                    {formatLedgerAmount(entry.credit)}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan={3}
+                                  className="py-4 text-center text-gray-500"
+                                >
+                                  No journal entries found.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+
+                          {journalEntries.length > 0 && (
+                            <tfoot>
+                              <tr className="border-t font-semibold">
+                                <td className="py-2" />
+
+                                <td className="py-2 text-right">
+                                  {formatLedgerAmount(
+                                    journalDebitTotal
+                                  )}
+                                </td>
+
+                                <td className="py-2 text-right">
+                                  {formatLedgerAmount(
+                                    journalCreditTotal
+                                  )}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          )}
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </TabsContent>
+
+          {/* ======================================
+              PDF TAB
+          ====================================== */}
+
+          <TabsContent value="pdf">
+            <div className="bg-white border rounded shadow-sm">
+              {/* PDF HEADER */}
+              <div className="flex items-center justify-between border-b px-6 py-4">
+                <h3 className="text-lg font-semibold">
+                  Payment Made PDF
+                </h3>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      window.print()
+                    }
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Print
+                  </Button>
+
+                  <Button
+                    onClick={
+                      handleDownloadPdf
+                    }
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+
+              {/* PDF PREVIEW */}
+              <div className="bg-gray-100 p-6 overflow-auto">
+                <div
+                  ref={pdfRef}
+                  className="flex justify-center"
+                >
+                  <PaymentMadePdf
+                    data={{
+                      status:
+                        payment?.status,
+                      amount:
+                        payment?.amount,
+                      payment_date:
+                        payment?.date,
+                      payment_mode:
+                        payment?.payment_mode,
+                      reference_number:
+                        payment?.reference_number,
+                      payment_number:
+                        payment?.payment_number,
+                      vendor_name:
+                        payment?.vendor_name,
+                      paid_through:
+                        payment?.paid_through_account,
+                      tds_amount:
+                        payment?.tds_amount,
+                    }}
+                    bills={billPayments.map(
+                      (bp) => ({
+                        id: bp.id,
+                        bill_number:
+                          bp.formatted_number ||
+                          `BILL-${bp.resource_id}`,
+                        bill_date:
+                          bp.payment_date,
+                        bill_amount:
+                          bp.amount,
+                        payment_amount:
+                          bp.amount,
+                      })
+                    )}
+                    formatDate={(date) => {
+                      if (!date) return "-";
+
+                      return new Date(
+                        date
+                      ).toLocaleDateString(
+                        "en-GB"
+                      );
+                    }}
+                    formatCurrency={(
+                      amount
+                    ) =>
+                      `₹${Number(
+                        amount || 0
+                      ).toLocaleString(
+                        "en-IN",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}`
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 };
+
+export default PaymentMadeDetailsPage;

@@ -142,7 +142,7 @@ function calculateKPIScore(kpis: any[]): { score: number; details: KPIDetails } 
  * Calculate Accomplishments Score (Max 20 points)
  * Combines Daily Checklist (max 10) + Accomplishments (max 10)
  * Points awarded proportionally based on completion percentage
- * Scoring: 3 points per completed item + 2 bonus points per starred item
+ * Scoring: 3 points per completed item + 2 bonus points per completed starred item
  */
 function calculateAccomplishmentsScore(
     accomplishments: any[]
@@ -168,6 +168,8 @@ function calculateAccomplishmentsScore(
 
     let totalPoints = 0;
     let cumulativePoints = 0;
+    let baseCompletedPoints = 0;
+    let starBonusPoints = 0;
     const itemBreakdown: Array<{
         id: string;
         text: string;
@@ -183,25 +185,30 @@ function calculateAccomplishmentsScore(
     // Calculate points for each item
     accomplishments.forEach((item: any) => {
         let itemPoints = 0;
+        const isStarred = Boolean(item.starred ?? item.star ?? item.is_starred);
 
         if (item.completed) {
             itemPoints += pointsPerCompletedItem;
+            baseCompletedPoints += pointsPerCompletedItem;
+
+            if (isStarred) {
+                itemPoints += bonusPointsPerStar;
+                starBonusPoints += bonusPointsPerStar;
+            }
         }
 
-        if (item.starred) {
-            itemPoints += bonusPointsPerStar;
-        }
-
+        const pointsBeforeItem = Math.min(cumulativePoints, maxPoints);
         totalPoints += itemPoints;
         cumulativePoints += itemPoints;
+        const cappedCumulativePoints = Math.min(cumulativePoints, maxPoints);
 
         itemBreakdown.push({
             id: item.id,
             text: item.text || "",
             completed: item.completed || false,
-            starred: item.starred || false,
-            points: itemPoints,
-            cumulativePoints: cumulativePoints,
+            starred: isStarred,
+            points: cappedCumulativePoints - pointsBeforeItem,
+            cumulativePoints: cappedCumulativePoints,
         });
     });
 
@@ -217,7 +224,7 @@ function calculateAccomplishmentsScore(
             completionPercentage,
             points: score,
             maxPoints,
-            bonus: score - completedItems * pointsPerCompletedItem,
+            bonus: Math.max(0, Math.min(starBonusPoints, score - Math.min(baseCompletedPoints, maxPoints))),
             itemBreakdown,
         },
     };
@@ -324,8 +331,8 @@ function calculateTasksIssuesScore(
 
 /**
  * Calculate Planning Score (Max 20 points)
- * - Regular items: +2 points each
- * - Starred items: +4 points each (double points, max 3 stars)
+ * - Plan items: +2 points each
+ * - Starred bonus: +1 point each (max 3 stars)
  */
 function calculatePlanningScore(
     planningItems: any[]
@@ -348,20 +355,15 @@ function calculatePlanningScore(
         };
     }
 
-    let regularItems = 0;
-    let starredItems = 0;
-
     // Count starred items, max 3
-    starredItems = Math.min(
+    const starredItems = Math.min(
         validItems.filter((p) => p.starred).length,
         3
     );
 
-    // Regular items = total - starred
-    regularItems = validItems.length - starredItems;
-
+    const regularItems = validItems.length;
     const regularPoints = regularItems * 2;
-    const starredPoints = starredItems * 4;
+    const starredPoints = starredItems * 1;
     const score = Math.min(regularPoints + starredPoints, maxPoints);
 
     return {
@@ -369,7 +371,7 @@ function calculatePlanningScore(
         details: {
             regularItems,
             starredItems,
-            totalItems: planningItems.length,
+            totalItems: validItems.length,
             points: score,
             maxPoints,
         },

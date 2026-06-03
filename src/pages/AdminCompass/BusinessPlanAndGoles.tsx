@@ -9,7 +9,7 @@ import { KeyProcessesSection } from "./AdminCompassComponent/KeyProcessesSection
 import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 import GoalsPage from "./AdminCompassComponent/goalsPage";
 
 // ── Design Tokens ──
@@ -40,6 +40,71 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 const AI_CRITICAL_NUMBERS_STORAGE_KEY = "business_plan_ai_critical_numbers";
+
+const getSelectedOrgName = () => {
+  const fallbackName = "HAVEN INFOLINE PRIVATE LIMITED";
+  const selectedOrg = localStorage.getItem("selectedOrg");
+
+  if (!selectedOrg) return fallbackName;
+
+  try {
+    const parsedOrg = JSON.parse(selectedOrg);
+    const parsedName =
+      parsedOrg?.name ||
+      parsedOrg?.company_name ||
+      parsedOrg?.organization_name ||
+      parsedOrg?.title;
+
+    return typeof parsedName === "string" && parsedName.trim()
+      ? parsedName.trim()
+      : fallbackName;
+  } catch {
+    return selectedOrg.trim() || fallbackName;
+  }
+};
+
+function getCleanAiPlanErrorMessage(message: string): string {
+  const cleanMessage = (value: string) =>
+    value
+      .trim()
+      .replace(/\s+See\s+https?:\/\/\S+\.?$/i, "")
+      .replace(/\s+You can find your API key at https?:\/\/\S+\.?$/i, "");
+
+  const trimmedMessage = cleanMessage(message);
+  const jsonStartIndex = trimmedMessage.indexOf("{");
+
+  if (jsonStartIndex === -1) {
+    return trimmedMessage;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmedMessage.slice(jsonStartIndex)) as {
+      error?: { message?: unknown };
+    };
+    const apiMessage = parsed.error?.message;
+
+    if (typeof apiMessage === "string" && apiMessage.trim()) {
+      return cleanMessage(apiMessage);
+    }
+  } catch {
+    // Keep the original message if it is not parseable JSON.
+  }
+
+  return trimmedMessage;
+}
+
+const toast = sonnerToast;
+const showToastError = sonnerToast.error.bind(
+  sonnerToast
+) as typeof sonnerToast.error;
+toast.error = ((
+  message: Parameters<typeof sonnerToast.error>[0],
+  options?: Parameters<typeof sonnerToast.error>[1]
+) =>
+  showToastError(
+    typeof message === "string" ? getCleanAiPlanErrorMessage(message) : message,
+    options
+  )) as typeof toast.error;
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("token") || "";
@@ -345,6 +410,32 @@ interface OverviewMedia {
   videos: OverviewMediaItem[];
 }
 
+const getGoogleDriveFileId = (url: string): string | null => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "lh3.googleusercontent.com") {
+      return (
+        parsed.pathname.match(/\/d\/([^=/?#]+)/)?.[1] ||
+        parsed.pathname.match(/\/d\/(.+)/)?.[1]?.split("=")[0] ||
+        null
+      );
+    }
+    if (parsed.hostname !== "drive.google.com") return null;
+    return (
+      parsed.pathname.match(/\/file\/d\/([^/]+)/)?.[1] ||
+      parsed.searchParams.get("id")
+    );
+  } catch {
+    return null;
+  }
+};
+
+const getGoogleDriveOpenUrl = (url: string): string | null => {
+  const fileId = getGoogleDriveFileId(url);
+  return fileId ? `https://drive.google.com/file/d/${fileId}/view` : null;
+};
+
 const normalizeImageUrl = (url: string): string => {
   if (!url) return "";
   try {
@@ -352,6 +443,13 @@ const normalizeImageUrl = (url: string): string => {
     const directImageUrl = parsed.searchParams.get("imgurl");
     if (parsed.hostname.includes("google.") && directImageUrl) {
       return directImageUrl;
+    }
+
+    if (parsed.hostname === "drive.google.com") {
+      const fileId = getGoogleDriveFileId(url);
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
+      }
     }
   } catch {
     return url;
@@ -370,18 +468,59 @@ const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   } catch {
     json = {};
   }
-  const parseMediaArray = (arr: any[]): OverviewMediaItem[] =>
+  const parseMediaArray = (
+    arr: any[],
+    normalizeUrl: (url: string) => string = (url) => url
+  ): OverviewMediaItem[] =>
     arr
       .map((item) =>
         typeof item === "string"
           ? { id: null, url: item }
-          : { id: item?.id ?? null, url: item?.url ?? "" }
+          : { id: item?.id ?? null, url: item?.url ?? item?.field_value ?? "" }
       )
-      .map((item) => ({ ...item, url: normalizeImageUrl(item.url) }))
+      .map((item) => ({ ...item, url: normalizeUrl(item.url) }))
       .filter((item) => Boolean(item.url));
+
+  const dataRecords = Array.isArray(json?.data) ? json.data : [];
+  const overviewRecords = dataRecords.filter(
+    (item: any) => item?.group_name === "business_plan_overview"
+  );
+  const imageRecords = overviewRecords.filter((item: any) =>
+    String(item?.field_name || "").toLowerCase().startsWith("image")
+  );
+  const videoRecords = overviewRecords.filter((item: any) =>
+    String(item?.field_name || "").toLowerCase().startsWith("video")
+  );
+  const mergeParsedMedia = (
+    primary: OverviewMediaItem[],
+    secondary: OverviewMediaItem[]
+  ): OverviewMediaItem[] => {
+    const seen = new Set<string>();
+    return [...primary, ...secondary].filter((item) => {
+      if (!item.url || seen.has(item.url)) return false;
+      seen.add(item.url);
+      return true;
+    });
+  };
+
+  const topLevelImages = Array.isArray(json?.images)
+    ? parseMediaArray(json.images, normalizeImageUrl)
+    : [];
+  const recordImages = parseMediaArray(imageRecords, normalizeImageUrl);
+  const topLevelVideos = Array.isArray(json?.videos)
+    ? parseMediaArray(json.videos)
+    : [];
+  const recordVideos = parseMediaArray(videoRecords);
+  const hasTopLevelImages = Array.isArray(json?.images);
+  const hasTopLevelVideos = Array.isArray(json?.videos);
+
   return {
-    images: Array.isArray(json?.images) ? parseMediaArray(json.images) : [],
-    videos: Array.isArray(json?.videos) ? parseMediaArray(json.videos) : [],
+    images: hasTopLevelImages
+      ? topLevelImages
+      : mergeParsedMedia(topLevelImages, recordImages),
+    videos: hasTopLevelVideos
+      ? topLevelVideos
+      : mergeParsedMedia(topLevelVideos, recordVideos),
   };
 };
 
@@ -400,9 +539,23 @@ const saveOverviewImagesApi = async (images: string[]): Promise<void> => {
   }
 };
 
+const getUniqueImageUrls = (urls: string[]): string[] => {
+  const seen = new Set<string>();
+  return urls
+    .map((url) => normalizeImageUrl(String(url || "").trim()))
+    .filter((url) => {
+      if (!url || seen.has(url)) return false;
+      seen.add(url);
+      return true;
+    });
+};
+
 const saveOverviewVideosApi = async (videos: string[]): Promise<void> => {
   const payload = {
-    extra_field: { group_name: "business_plan_overview", videos },
+    extra_field: {
+      group_name: "business_plan_overview",
+      videos: videos.map((url) => getGoogleDriveOpenUrl(url) || url),
+    },
   };
   const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
@@ -418,6 +571,28 @@ const saveOverviewVideosApi = async (videos: string[]): Promise<void> => {
 // ─────────────────────────────────
 //  Icons
 // ─────────────────────────────────
+const mergeOverviewMediaItems = (
+  fetched: OverviewMediaItem[],
+  fallbackUrls: string[]
+): OverviewMediaItem[] => {
+  const merged: OverviewMediaItem[] = [];
+  const seen = new Set<string>();
+
+  fetched.forEach((item) => {
+    if (!item.url || seen.has(item.url)) return;
+    seen.add(item.url);
+    merged.push(item);
+  });
+
+  fallbackUrls.forEach((url) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    merged.push({ id: null, url });
+  });
+
+  return merged;
+};
+
 const InfoIcon = () => (
   <svg
     className="w-4 h-4 text-gray-400"
@@ -595,6 +770,9 @@ const InlineImageSlider = ({
 }) => {
   const [current, setCurrent] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
+    () => new Set()
+  );
 
   useEffect(() => {
     if (current >= images.length && images.length > 0)
@@ -618,6 +796,9 @@ const InlineImageSlider = ({
 
   const prev = () => setCurrent((p) => (p > 0 ? p - 1 : images.length - 1));
   const next = () => setCurrent((p) => (p < images.length - 1 ? p + 1 : 0));
+  const currentImageUrl = images[current] || "";
+  const hasImageFailed = failedImageUrls.has(currentImageUrl);
+  const driveOpenUrl = getGoogleDriveOpenUrl(currentImageUrl);
 
   const sliderBox = (
     <div
@@ -626,28 +807,88 @@ const InlineImageSlider = ({
         width: "100%",
         borderRadius: fullscreen ? 0 : 16,
         overflow: "hidden",
-        background: "#111",
-        paddingTop: fullscreen ? undefined : "56.25%",
+        background: "#f3f4f6",
+        paddingTop: fullscreen ? undefined : "48%",
         height: fullscreen ? "100%" : undefined,
       }}
     >
-      <img
-        key={current}
-        src={images[current]}
-        alt={`slide-${current}`}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain" as const,
-          position: fullscreen ? "static" : "absolute",
-          top: fullscreen ? undefined : 0,
-          left: fullscreen ? undefined : 0,
-          display: "block",
-        }}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.opacity = "0.3";
-        }}
-      />
+      {hasImageFailed ? (
+        <div
+          style={{
+            position: fullscreen ? "static" : "absolute",
+            inset: fullscreen ? undefined : 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            padding: 24,
+            textAlign: "center",
+            background: "#f3f4f6",
+            color: C.textMain,
+            fontFamily: "'Poppins', sans-serif",
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700 }}>
+            Image preview is blocked
+          </div>
+          <div style={{ maxWidth: 360, fontSize: 12, color: "#d1d5db" }}>
+            Google Drive does not allow this file to render directly here.
+          </div>
+          {driveOpenUrl && (
+            <a
+              href={driveOpenUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                marginTop: 4,
+                borderRadius: 999,
+                background: "#fff",
+                color: "#111",
+                padding: "8px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+              }}
+            >
+              Open image
+            </a>
+          )}
+        </div>
+      ) : (
+        <img
+          key={current}
+          src={currentImageUrl}
+          alt={`slide-${current}`}
+          referrerPolicy="no-referrer"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover" as const,
+            position: fullscreen ? "static" : "absolute",
+            top: fullscreen ? undefined : 0,
+            left: fullscreen ? undefined : 0,
+            display: "block",
+          }}
+          onLoad={() => {
+            setFailedImageUrls((prevFailed) => {
+              if (!prevFailed.has(currentImageUrl)) return prevFailed;
+              const nextFailed = new Set(prevFailed);
+              nextFailed.delete(currentImageUrl);
+              return nextFailed;
+            });
+          }}
+          onError={() => {
+            setFailedImageUrls((prevFailed) => {
+              const nextFailed = new Set(prevFailed);
+              nextFailed.add(currentImageUrl);
+              return nextFailed;
+            });
+          }}
+        />
+      )}
       <div
         style={{
           position: "absolute",
@@ -912,7 +1153,7 @@ const InlineImageSlider = ({
   }
 
   return (
-    <div className="mb-5">
+    <div className="mb-5 w-full">
       {sliderBox}
       <style>{`@keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
     </div>
@@ -966,6 +1207,123 @@ const VideoPreview = ({ url }: { url: string }) => {
 // ─────────────────────────────────
 //  Inline Video Player
 // ─────────────────────────────────
+const DirectVideoPlayer: React.FC<{ url: string; safeIdx: number }> = ({
+  url,
+  safeIdx,
+}) => {
+  const driveOpenUrl = getGoogleDriveOpenUrl(url);
+  const isBinaryVideoUrl = (() => {
+    try {
+      return /\.bin$/i.test(new URL(url).pathname);
+    } catch {
+      return false;
+    }
+  })();
+  const videoType = isBinaryVideoUrl ? "video/mp4" : undefined;
+  const [videoError, setVideoError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setVideoError(null);
+  }, [url]);
+
+  if (driveOpenUrl) {
+    return (
+      <a
+        key={`drive-${safeIdx}-${driveOpenUrl}`}
+        href={driveOpenUrl}
+        target="_blank"
+        rel="noreferrer"
+        title="Open Drive video"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#fff",
+          fontSize: 18,
+          fontWeight: 800,
+          textDecoration: "none",
+          background: "#f3f4f6",
+          fontFamily: "'Poppins', sans-serif",
+        }}
+      >
+        Thumbnail
+      </a>
+    );
+  }
+
+  if (videoError) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+          padding: 24,
+          textAlign: "center",
+          background: "#f3f4f6",
+          color: C.textMain,
+          fontFamily: "'Poppins', sans-serif",
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 800 }}>
+          Video preview is unavailable
+        </div>
+        <div style={{ maxWidth: 380, fontSize: 12, color: "#d1d5db" }}>
+          {videoError}
+        </div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            marginTop: 4,
+            borderRadius: 999,
+            background: "#fff",
+            color: "#111",
+            padding: "8px 14px",
+            fontSize: 12,
+            fontWeight: 800,
+            textDecoration: "none",
+          }}
+        >
+          Open video
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <video
+      key={`vid-${safeIdx}-${url}`}
+      controls
+      onError={() =>
+        setVideoError("This video file cannot be played in the browser.")
+      }
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "cover" as const,
+        display: "block",
+      }}
+    >
+      <source src={url} type={videoType} />
+      Your browser does not support the video tag.
+    </video>
+  );
+};
+
 const InlineVideoPlayer: React.FC<{
   videos: string[];
   onDelete: (idx: number) => void;
@@ -996,15 +1354,15 @@ const InlineVideoPlayer: React.FC<{
   const next = () => setCurrent((p) => (p < videos.length - 1 ? p + 1 : 0));
 
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div style={{ marginBottom: 20, width: "100%" }}>
       <div
         style={{
           position: "relative",
           width: "100%",
-          paddingTop: "56.25%",
+          paddingTop: "48%",
           borderRadius: 16,
           overflow: "hidden",
-          background: "#111",
+          background: "#f3f4f6",
         }}
       >
         {videoId ? (
@@ -1025,20 +1383,7 @@ const InlineVideoPlayer: React.FC<{
             }}
           />
         ) : (
-          <video
-            key={`vid-${safeIdx}-${url}`}
-            src={url}
-            controls
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "contain" as const,
-              display: "block",
-            }}
-          />
+          <DirectVideoPlayer url={url} safeIdx={safeIdx} />
         )}
       </div>
       <div
@@ -1144,7 +1489,7 @@ const InlineVideoPlayer: React.FC<{
             fontFamily: "'Poppins', sans-serif",
           }}
         >
-          {safeIdx + 1}/{videos.length} — {url}
+          {safeIdx + 1}/{videos.length}
         </p>
         <button
           onClick={() => onDelete(safeIdx)}
@@ -1353,16 +1698,43 @@ interface KPI {
 type AiBuilderStage = "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
-  { key: "purpose", label: "Purpose / Why do we exist?" },
-  { key: "core_values", label: "Core Values" },
-  { key: "brand_promises", label: "Brand Promises & Promise KPIs" },
-  { key: "bhag", label: "BHAG / 10-Year Goal" },
-  { key: "three_year_vision", label: "3-Year Goals & Initiatives" },
-  { key: "annual_goals", label: "1-Year Goals & Initiatives" },
-  { key: "target_markets", label: "Target Markets" },
-  { key: "key_initiatives", label: "Key Initiatives" },
-  { key: "key_metrics", label: "Key Metrics" },
-  { key: "people_process", label: "People & Process" },
+  { key: "purpose", label: "Q1: Why does your company exist?" },
+  {
+    key: "core_values",
+    label: "Q2: What 4-5 values or behaviours best represent your team or culture?",
+  },
+  {
+    key: "brand_promises",
+    label: "Q3: What are the USPs that make you stand out?",
+  },
+  {
+    key: "bhag",
+    label: "Q4: What bold outcome do you want to achieve in the next 10-15 years?",
+  },
+  {
+    key: "three_year_vision",
+    label: "Q5: What do you want to achieve in the next 3-5 years?",
+  },
+  {
+    key: "annual_goals",
+    label: "Q6: What are your main business goals for this financial year?",
+  },
+  {
+    key: "target_markets",
+    label: "Q7: Which customer segments or geographies will you focus on this year?",
+  },
+  {
+    key: "key_initiatives",
+    label: "Q8: What 3 key actions or projects will help you achieve this year's goals?",
+  },
+  {
+    key: "key_metrics",
+    label: "Q9: What are the key numbers or metrics you should regularly track to ensure success?",
+  },
+  {
+    key: "people_process",
+    label: "Q10: What improvements do you need in your people or processes to succeed?",
+  },
 ] as const;
 
 const TOOLTIP_CONTENT: Record<
@@ -1550,6 +1922,8 @@ const BusinessPlanAndGoles = () => {
   const [isSavingImages, setIsSavingImages] = useState(false);
   const [isSavingVideos, setIsSavingVideos] = useState(false);
   const [mediaSaveError, setMediaSaveError] = useState<string | null>(null);
+  const overviewImageUploadRef = useRef<HTMLInputElement | null>(null);
+  const overviewVideoUploadRef = useRef<HTMLInputElement | null>(null);
 
   // ── Fetches ──
   const loadBrandPromises = useCallback(async () => {
@@ -1789,7 +2163,7 @@ const BusinessPlanAndGoles = () => {
       day: "numeric",
       year: "numeric",
     });
-    let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
+    let text = `BUSINESS PLAN\n${getSelectedOrgName()}\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
 
     text += `PURPOSE\n${"=".repeat(60)}\n`;
     text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
@@ -1982,6 +2356,32 @@ const BusinessPlanAndGoles = () => {
     ].join("\n");
   };
 
+  const getAiPlanResponseText = (response: any): string => {
+    const candidates = [
+      response?.response,
+      response?.data?.response,
+      response?.result?.response,
+      response?.output,
+      response?.data?.output,
+      response?.result?.output,
+      response?.content,
+      response?.data?.content,
+      response?.result?.content,
+      response?.text,
+      response?.data?.text,
+      response?.result?.text,
+      response?.generated_text,
+      response?.data?.generated_text,
+      response?.result?.generated_text,
+    ];
+
+    const text = candidates.find(
+      (candidate) => typeof candidate === "string" && candidate.trim()
+    );
+
+    return text ? text.trim() : "";
+  };
+
   const extractAiPlanText = (response: any): string => {
     const planObject =
       response?.plan ||
@@ -2005,6 +2405,7 @@ const BusinessPlanAndGoles = () => {
       response?.result?.ai_plan,
       response?.result?.business_plan,
       response?.result?.summary,
+      getAiPlanResponseText(response),
     ];
     const text = candidates.find(
       (candidate) => typeof candidate === "string" && candidate.trim()
@@ -2019,7 +2420,13 @@ const BusinessPlanAndGoles = () => {
     return (
       status === "completed" ||
       status === "success" ||
-      (response?.success === true && !!(response?.plan || response?.data?.plan))
+      (response?.success === true &&
+        !!(
+          response?.plan ||
+          response?.data?.plan ||
+          response?.result?.plan ||
+          getAiPlanResponseText(response)
+        ))
     );
   };
 
@@ -2249,7 +2656,7 @@ const BusinessPlanAndGoles = () => {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || json?.success === false) {
-        throw new Error(json?.message || json?.error || "Failed to start AI plan generation.");
+        throw new Error(json?.message || json?.error || "No AI Setup Detected");
       }
 
       if (isAiPlanCompleted(json)) {
@@ -2283,6 +2690,7 @@ const BusinessPlanAndGoles = () => {
       }
 
       setAiBuilderError(err.message || "Failed to generate AI plan.");
+      toast.error(err.message || "Failed to generate AI plan.");
       setAiBuilderStage("questions");
     } finally {
       if (aiPlanAbortRef.current === controller) {
@@ -2293,7 +2701,9 @@ const BusinessPlanAndGoles = () => {
 
   const goToNextAiQuestion = () => {
     if (!aiAnswers[aiQuestionIndex]?.trim()) {
-      setAiBuilderError("Please answer this question before continuing.");
+      const message = "Please answer this question before continuing.";
+      setAiBuilderError(message);
+      toast.error(message);
       return;
     }
 
@@ -2500,21 +2910,134 @@ const BusinessPlanAndGoles = () => {
   };
 
   // ── Overview Media Handlers ──
+  const refreshOverviewMediaWithFallback = async ({
+    fallbackImages,
+    fallbackVideos,
+  }: {
+    fallbackImages?: string[];
+    fallbackVideos?: string[];
+  }) => {
+    try {
+      const fetched = await fetchOverviewMediaFromApi();
+      setOverviewImages(fetched.images);
+      setOverviewVideos(fetched.videos);
+    } catch (err: any) {
+      setMediaFetchError(err.message || "Failed to load media.");
+      if (fallbackImages) {
+        const images = mergeOverviewMediaItems(overviewImages || [], fallbackImages);
+        setOverviewImages(images);
+      }
+      if (fallbackVideos) {
+        const videos = mergeOverviewMediaItems(overviewVideos || [], fallbackVideos);
+        setOverviewVideos(videos);
+      }
+    }
+  };
+
   const handleAddImage = async () => {
     const trimmed = normalizeImageUrl(newImageUrl.trim());
     if (!trimmed) return;
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      const updated = [
-        ...(overviewImages || []).map((item) => item.url),
+      const latestMedia = await fetchOverviewMediaFromApi().catch(() => null);
+      const existingImages =
+        latestMedia?.images ||
+        (overviewImages || []).filter(
+          (item) => !String(item.url || "").startsWith("data:image/")
+        );
+      const updated = getUniqueImageUrls([
+        ...existingImages.map((item) => item.url),
         trimmed,
-      ];
+      ]);
       await saveOverviewImagesApi(updated);
       setNewImageUrl("");
-      await loadOverviewMedia();
+      await refreshOverviewMediaWithFallback({ fallbackImages: updated });
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save image.");
+    } finally {
+      setIsSavingImages(false);
+    }
+  };
+
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+      reader.readAsDataURL(file);
+    });
+
+  const imageFileToJpegDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = image.naturalWidth || image.width;
+          canvas.height = image.naturalHeight || image.height;
+          const context = canvas.getContext("2d");
+          if (!context) {
+            reject(new Error(`Failed to convert ${file.name} to JPEG`));
+            return;
+          }
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0);
+          resolve(canvas.toDataURL("image/jpeg", 0.92));
+        };
+        image.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+        image.src = String(reader.result || "");
+      };
+      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+      reader.readAsDataURL(file);
+    });
+
+  const handleUploadOverviewImages = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files || []).filter((file) =>
+      file.type.startsWith("image/")
+    );
+    event.target.value = "";
+
+    if (files.length === 0) {
+      toast.error("Please select image files.");
+      return;
+    }
+
+    const availableSlots = Math.max(12 - (overviewImages || []).length, 0);
+    if (availableSlots === 0) {
+      toast.error("You can add up to 12 images.");
+      return;
+    }
+
+    const selectedFiles = files.slice(0, availableSlots);
+    setIsSavingImages(true);
+    setMediaSaveError(null);
+    try {
+      const uploadedUrls = await Promise.all(
+        selectedFiles.map(imageFileToJpegDataUrl)
+      );
+      const latestMedia = await fetchOverviewMediaFromApi().catch(() => null);
+      const existingImages =
+        latestMedia?.images ||
+        (overviewImages || []).filter(
+          (item) => !String(item.url || "").startsWith("data:image/")
+        );
+      const updated = getUniqueImageUrls([
+        ...existingImages.map((item) => item.url),
+        ...uploadedUrls,
+      ]);
+      await saveOverviewImagesApi(updated);
+      await refreshOverviewMediaWithFallback({ fallbackImages: updated });
+      toast.success(`${selectedFiles.length} image(s) uploaded`);
+      if (files.length > selectedFiles.length) {
+        toast.error("Some images were skipped because the limit is 12.");
+      }
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to upload images.");
     } finally {
       setIsSavingImages(false);
     }
@@ -2550,12 +3073,53 @@ const BusinessPlanAndGoles = () => {
       const updated = [
         ...(overviewVideos || []).map((item) => item.url),
         trimmed,
-      ];
+      ].filter((url, index, arr) => url && arr.indexOf(url) === index);
       await saveOverviewVideosApi(updated);
       setNewVideoUrl("");
-      await loadOverviewMedia();
+      await refreshOverviewMediaWithFallback({ fallbackVideos: updated });
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save video.");
+    } finally {
+      setIsSavingVideos(false);
+    }
+  };
+
+  const handleUploadOverviewVideos = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files || []).filter((file) =>
+      file.type.startsWith("video/")
+    );
+    event.target.value = "";
+
+    if (files.length === 0) {
+      toast.error("Please select video files.");
+      return;
+    }
+
+    const availableSlots = Math.max(12 - (overviewVideos || []).length, 0);
+    if (availableSlots === 0) {
+      toast.error("You can add up to 12 videos.");
+      return;
+    }
+
+    const selectedFiles = files.slice(0, availableSlots);
+    setIsSavingVideos(true);
+    setMediaSaveError(null);
+    try {
+      const uploadedUrls = await Promise.all(selectedFiles.map(fileToDataUrl));
+      const updated = [
+        ...(overviewVideos || []).map((item) => item.url),
+        ...uploadedUrls,
+      ].filter((url, index, arr) => url && arr.indexOf(url) === index);
+      await saveOverviewVideosApi(updated);
+      await refreshOverviewMediaWithFallback({ fallbackVideos: updated });
+      toast.success(`${selectedFiles.length} video(s) uploaded`);
+      if (files.length > selectedFiles.length) {
+        toast.error("Some videos were skipped because the limit is 12.");
+      }
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to upload videos.");
     } finally {
       setIsSavingVideos(false);
     }
@@ -2893,7 +3457,7 @@ const BusinessPlanAndGoles = () => {
             className="text-sm font-semibold mt-1"
             style={{ color: C.textMuted }}
           >
-            HAVEN INFOLINE PRIVATE LIMITED
+            {getSelectedOrgName()}
           </p>
         </div>
         <div className="flex gap-3 shrink-0">
@@ -3110,6 +3674,14 @@ const BusinessPlanAndGoles = () => {
                   <div>
                     <div className="flex gap-2 mb-3">
                       <input
+                        ref={overviewImageUploadRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleUploadOverviewImages}
+                      />
+                      <input
                         type="text"
                         value={newImageUrl}
                         onChange={(e) => setNewImageUrl(e.target.value)}
@@ -3130,6 +3702,17 @@ const BusinessPlanAndGoles = () => {
                       >
                         {isSavingImages ? <LoaderIcon /> : "+ Add"}
                       </button>
+                      <button
+                        onClick={() => overviewImageUploadRef.current?.click()}
+                        disabled={isSavingImages}
+                        className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5 bg-white"
+                        style={{
+                          color: C.primaryHov,
+                          borderColor: C.primaryBord,
+                        }}
+                      >
+                        {isSavingImages ? <LoaderIcon /> : "Upload"}
+                      </button>
                     </div>
                     <p
                       className="text-[11px] mb-4 font-semibold"
@@ -3140,7 +3723,7 @@ const BusinessPlanAndGoles = () => {
                     {isFetchingMedia ? (
                       <div
                         className="w-full rounded-2xl animate-pulse mb-5"
-                        style={{ height: 340, background: "#e5e1d8" }}
+                        style={{ height: 260, background: "#e5e1d8" }}
                       />
                     ) : (overviewImages || []).length === 0 ? (
                       <div
@@ -3207,6 +3790,14 @@ const BusinessPlanAndGoles = () => {
                   <div>
                     <div className="flex gap-2 mb-1.5">
                       <input
+                        ref={overviewVideoUploadRef}
+                        type="file"
+                        accept="video/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleUploadOverviewVideos}
+                      />
+                      <input
                         type="text"
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
@@ -3227,6 +3818,17 @@ const BusinessPlanAndGoles = () => {
                       >
                         {isSavingVideos ? <LoaderIcon /> : "+ Add"}
                       </button>
+                      <button
+                        onClick={() => overviewVideoUploadRef.current?.click()}
+                        disabled={isSavingVideos}
+                        className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5 bg-white"
+                        style={{
+                          color: C.primaryHov,
+                          borderColor: C.primaryBord,
+                        }}
+                      >
+                        {isSavingVideos ? <LoaderIcon /> : "Upload"}
+                      </button>
                     </div>
 
                     <p
@@ -3238,7 +3840,7 @@ const BusinessPlanAndGoles = () => {
                     {isFetchingMedia ? (
                       <div
                         className="w-full rounded-2xl animate-pulse mb-5"
-                        style={{ height: 340, background: "#e5e1d8" }}
+                        style={{ height: 260, background: "#e5e1d8" }}
                       />
                     ) : (overviewVideos || []).length === 0 ? (
                       <div
@@ -3695,10 +4297,6 @@ const BusinessPlanAndGoles = () => {
                       autoFocus
                     />
                   </div>
-
-                  {aiBuilderError && (
-                    <div className="bp-error-banner">{aiBuilderError}</div>
-                  )}
                 </div>
               )}
 

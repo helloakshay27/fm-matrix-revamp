@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // MUI components for revamped Filter dialog
@@ -46,6 +46,7 @@ import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUplo
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
 import { AddVisitModal } from '@/components/AddVisitModal';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 
 // Unified analytics color palette
 const analyticsColorPalette = {
@@ -186,6 +187,7 @@ export const AMCDashboard = () => {
   const filterDialogRef = useRef<HTMLDivElement | null>(null);
   const amcTypeControlRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -730,19 +732,23 @@ export const AMCDashboard = () => {
     setSelectedSummary(null);
   };
 
+  // Load analytics APIs only when the Analytics tab is selected
   useEffect(() => {
-    const defaultRange = getDefaultDateRange();
-    const startDate = convertDateStringToDate(defaultRange.startDate);
-    const endDate = convertDateStringToDate(defaultRange.endDate);
-    fetchAMCAnalyticsData(startDate, endDate);
-  }, []);
+    if (activeTab === 'analytics') {
+      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+      fetchAMCAnalyticsData(startDate, endDate);
+    }
+  }, [activeTab]);
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
   };
 
   const handleViewDetails = (id: number) => {
-    navigate(`/maintenance/amc/details/${id}`);
+    navigate(`/maintenance/amc/details/${id}`, {
+      state: { returnTo: buildReturnToPath(location.pathname, location.search, location.hash) },
+    });
   };
 
   const handleImportClick = () => {
@@ -1010,10 +1016,12 @@ export const AMCDashboard = () => {
                   );
                   if (response.status === 200) {
                     toast.success(`Status updated to ${value}`);
-                    const { startDate, endDate } = analyticsDateRange;
-                    const startDateObj = convertDateStringToDate(startDate);
-                    const endDateObj = convertDateStringToDate(endDate);
-                    await fetchAMCAnalyticsData(startDateObj, endDateObj);
+                    if (activeTab === 'analytics') {
+                      const { startDate, endDate } = analyticsDateRange;
+                      const startDateObj = convertDateStringToDate(startDate);
+                      const endDateObj = convertDateStringToDate(endDate);
+                      await fetchAMCAnalyticsData(startDateObj, endDateObj);
+                    }
                   } else {
                     dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
                     toast.error('Failed to update AMC status');
@@ -1437,13 +1445,13 @@ export const AMCDashboard = () => {
               </svg>
               AMC List
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="analytics"
               className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <BarChart3 className="w-4 h-4" />
               Analytics
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
@@ -1944,11 +1952,11 @@ export const AMCDashboard = () => {
           </MUIDialogContent>
         </MUIDialog>
 
-        <AMCAnalyticsFilterDialog
+        {/* <AMCAnalyticsFilterDialog
           isOpen={isAnalyticsFilterOpen}
           onClose={() => setIsAnalyticsFilterOpen(false)}
           onApplyFilters={handleAnalyticsFilterApply}
-        />
+        /> */}
       </>
     </div>
   );

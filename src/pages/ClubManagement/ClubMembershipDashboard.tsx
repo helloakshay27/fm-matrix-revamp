@@ -629,7 +629,7 @@ export const ClubMembershipDashboard = () => {
   const renderCardAllocated = (allocated: boolean) => {
     return (
       <div className="flex items-center justify-center">
-        <div className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? 'bg-green-500' : 'bg-gray-300'}`}>
+        <div className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? '!bg-green-500' : 'bg-gray-300'}`}>
           <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${allocated ? 'right-0.5' : 'left-0.5'}`} />
         </div>
       </div>
@@ -758,7 +758,7 @@ export const ClubMembershipDashboard = () => {
         <div className="flex items-center gap-3">
           <div
             onClick={() => handleToggleStatus(item, !active)}
-            className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${active ? 'bg-green-500' : 'bg-gray-300'}`}
+            className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${active ? '!bg-green-500' : 'bg-gray-300'}`}
           >
             <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
           </div>

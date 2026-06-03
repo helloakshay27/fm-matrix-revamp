@@ -403,70 +403,46 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }: any) => {
     );
 };
 
-// Responsible Person Change Modal Component
 const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, pendingResponsiblePersonId = null, users = [] }: any) => {
     const [reason, setReason] = useState('');
-
-    useEffect(() => {
-        if (!isOpen) {
-            setReason('');
-        }
-    }, [isOpen]);
+    useEffect(() => { if (!isOpen) setReason(''); }, [isOpen]);
 
     const handleSubmit = () => {
-        if (!reason.trim()) {
-            toast.error("Please enter a reason");
-            return;
-        }
-        if (taskId && pendingResponsiblePersonId) {
-            onSubmit(reason, taskId, pendingResponsiblePersonId);
-        }
+        if (!reason.trim()) { toast.error('Please enter a reason for changing the responsible person'); return; }
+        if (taskId && pendingResponsiblePersonId) onSubmit(reason, taskId, pendingResponsiblePersonId);
     };
 
     if (!isOpen) return null;
-
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Change Responsible Person</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium">
-                            New Responsible Person
-                        </label>
-                        <p className="text-sm text-gray-600">
-                            {users.find(u => u.id === pendingResponsiblePersonId)?.full_name || 'Unknown'}
-                        </p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <label htmlFor="reason" className="text-sm font-medium">
-                            Reason for change
-                        </label>
-                        <Textarea
-                            id="reason"
-                            placeholder="Enter reason for changing the responsible person..."
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            className="min-h-[100px]"
-                        />
-                    </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+                <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-3">
+                        New person: {(users as any[]).find((u: any) => u.id === pendingResponsiblePersonId)?.full_name || 'Unknown'}
+                    </p>
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for changing responsible person..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>
-                        Cancel
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+                    <Button onClick={handleSubmit} disabled={isLoading} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+                        {isLoading ? 'Submitting...' : 'Change Responsible Person'}
                     </Button>
-                    <Button onClick={handleSubmit} disabled={isLoading}>
-                        {isLoading ? "Updating..." : "Update"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </div>
+            </div>
+        </div>
     );
 };
 
 const SprintTasks = ({ tasks }) => {
+    console.log(tasks)
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -488,10 +464,6 @@ const SprintTasks = ({ tasks }) => {
     const [pendingCompletionPercentage, setPendingCompletionPercentage] = useState<number>(0);
     const [isOverdueLoading, setIsOverdueLoading] = useState(false);
     const [pendingStatusChange, setPendingStatusChange] = useState<{ id: number; status: string } | null>(null);
-    const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
-    const [responsibleTaskId, setResponsibleTaskId] = useState<number | null>(null);
-    const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<number | null>(null);
-    const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
     const [statuses, setStatuses] = useState([])
 
     // Filter state
@@ -509,6 +481,12 @@ const SprintTasks = ({ tasks }) => {
     const [filterSearchTerms, setFilterSearchTerms] = useState({
         status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '',
     });
+
+    // Responsible person state
+    const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+    const [responsibleTaskId, setResponsibleTaskId] = useState<number | null>(null);
+    const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<number | null>(null);
+    const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
 
     // Derive unique project options from tasks
     const projectOptions = useMemo(() => {
@@ -630,133 +608,101 @@ const SprintTasks = ({ tasks }) => {
     }, [getUsers]);
 
     const handlePauseTaskSubmit = async (reason: string, tid: number) => {
+        if (!tid) return;
         setIsPauseLoading(true);
         try {
-            const response = baseUrl
-                ? await axios.post(`https://${baseUrl}/task_managements/${tid}/pause_task.json`, { reason }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                })
-                : await baseClient.post(`/task_managements/${tid}/pause_task.json`, { reason }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-            toast.success("Task paused successfully");
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'stopped' } })).unwrap();
+            await axios.post(`https://${baseUrl}/comments.json`, {
+                comment: {
+                    body: `Paused with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            toast.success('Task paused successfully with reason');
             setIsPauseModalOpen(false);
-        } catch (error) {
-            console.log(error);
-            toast.error("Failed to pause task");
+            setPauseTaskId(null);
+        } catch (error: any) {
+            toast.error(`Failed to pause task: ${error?.response?.data?.error || error?.message || 'Server error'}`);
         } finally {
             setIsPauseLoading(false);
         }
     };
 
     const handleHoldReasonSubmit = async (reason: string, tid: number) => {
+        if (!tid) return;
         setIsHoldLoading(true);
         try {
-            const response = baseUrl
-                ? await axios.post(`https://${baseUrl}/task_managements/${tid}/hold_task.json`, { reason }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                })
-                : await baseClient.post(`/task_managements/${tid}/hold_task.json`, { reason }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-            toast.success("Task put on hold successfully");
+            await statusMutation.mutateAsync({ id: tid, status: 'on_hold' });
+            await axios.post(`https://${baseUrl}/comments.json`, {
+                comment: {
+                    body: `On hold with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            toast.success('Task put on hold with reason');
             setIsHoldModalOpen(false);
-        } catch (error) {
-            console.log(error);
-            toast.error("Failed to put task on hold");
+            setHoldTaskId(null);
+        } catch (error: any) {
+            toast.error(`Failed to put task on hold: ${error?.response?.data?.error || error?.message || 'Server error'}`);
         } finally {
             setIsHoldLoading(false);
         }
     };
 
     const handleEndTaskSubmit = async (reason: string, tid: number) => {
+        if (!tid) return;
         setIsPauseLoading(true);
         try {
-            const response = baseUrl
-                ? await axios.post(`https://${baseUrl}/task_managements/${tid}/end_task.json`, { reason }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                })
-                : await baseClient.post(`/task_managements/${tid}/end_task.json`, { reason }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-            toast.success("Task ended successfully");
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'completed' } })).unwrap();
+            await axios.post(`https://${baseUrl}/comments.json`, {
+                comment: {
+                    body: `Ended with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            toast.success('Task ended successfully');
             setIsPauseModalOpen(false);
-        } catch (error) {
-            console.log(error);
-            toast.error("Failed to end task");
+            setPauseTaskId(null);
+        } catch (error: any) {
+            toast.error(`Failed to end task: ${error?.response?.data?.error || error?.message || 'Server error'}`);
         } finally {
             setIsPauseLoading(false);
         }
     };
 
     const handleOverdueReasonSubmit = async (reason: string) => {
+        if (!pendingStatusChange) return;
         setIsOverdueLoading(true);
         try {
-            if (pendingStatusChange) {
-                const response = baseUrl
-                    ? await axios.post(`https://${baseUrl}/task_managements/${pendingStatusChange.id}/overdue_task_completion.json`, { reason }, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                    : await baseClient.post(`/task_managements/${pendingStatusChange.id}/overdue_task_completion.json`, { reason }, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-
-                await statusMutation.mutateAsync({ id: pendingStatusChange.id, status: pendingStatusChange.status });
-                toast.success("Task marked as completed");
-                setIsOverdueModalOpen(false);
-                setPendingStatusChange(null);
-            }
-        } catch (error) {
-            console.log(error);
-            toast.error("Failed to complete task");
+            await statusMutation.mutateAsync({ id: pendingStatusChange.id, status: pendingStatusChange.status });
+            await axios.post(`https://${baseUrl}/comments.json`, {
+                comment: {
+                    body: `Overdue reason: ${reason}`,
+                    commentable_id: pendingStatusChange.id,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            toast.success("Task marked as completed");
+            setIsOverdueModalOpen(false);
+            setPendingStatusChange(null);
+        } catch (error: any) {
+            toast.error(`Failed to complete task: ${error?.response?.data?.error || error?.message || 'Server error'}`);
         } finally {
             setIsOverdueLoading(false);
         }
     };
 
-    const handleResponsiblePersonReasonSubmit = async (reason: string, tid: number, newResponsiblePersonId: number) => {
-        setIsResponsibleLoading(true);
-        try {
-            const response = baseUrl
-                ? await axios.post(`https://${baseUrl}/task_managements/${tid}/assign_responsible_person.json`,
-                    { responsible_person_id: newResponsiblePersonId, reason },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                : await baseClient.post(`/task_managements/${tid}/assign_responsible_person.json`,
-                    { responsible_person_id: newResponsiblePersonId, reason },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-            toast.success("Responsible person changed successfully");
-            setIsResponsibleModalOpen(false);
-        } catch (error) {
-            console.log(error);
-            toast.error("Failed to change responsible person");
-        } finally {
-            setIsResponsibleLoading(false);
-        }
-    };
 
     const getStatuses = async () => {
         try {
@@ -852,10 +798,40 @@ const SprintTasks = ({ tasks }) => {
     }
 
     const handleUpdateTask = async (id: number, responsible_person_id: number) => {
-        // Show modal to ask for reason
         setResponsibleTaskId(id);
         setPendingResponsiblePersonId(responsible_person_id);
         setIsResponsibleModalOpen(true);
+    }
+
+    const handleResponsiblePersonReasonSubmit = async (reason: string, tid: number, newResponsiblePersonId: number) => {
+        if (!tid || !newResponsiblePersonId) return;
+        setIsResponsibleLoading(true);
+        try {
+            const task = tasks.find((t: any) => t.id === tid);
+            const oldName = (users as any[]).find(u => u.id === task?.responsible_person_id)?.full_name || 'Unknown';
+            const newName = (users as any[]).find(u => u.id === newResponsiblePersonId)?.full_name || `User ${newResponsiblePersonId}`;
+
+            await dispatch(editProjectTask({ token, baseUrl, id: String(tid), data: { responsible_person_id: newResponsiblePersonId } })).unwrap();
+
+            await axios.post(`https://${baseUrl}/comments.json`, {
+                comment: {
+                    body: `Responsible person changed from ${oldName} to ${newName} with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            }, { headers: { Authorization: `Bearer ${token}` } });
+
+            toast.success('Responsible person changed with reason');
+            setIsResponsibleModalOpen(false);
+            setResponsibleTaskId(null);
+            setPendingResponsiblePersonId(null);
+        } catch (error: any) {
+            toast.error(`Failed to update responsible person: ${error?.response?.data?.error || error?.message || 'Server error'}`);
+        } finally {
+            setIsResponsibleLoading(false);
+        }
     }
 
     const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
@@ -910,7 +886,7 @@ const SprintTasks = ({ tasks }) => {
             case "id":
                 return <span className="w-[80px]">{isSubtask ? 'S-' : 'T-'}{item.id}</span>
             case "title":
-                const isCompleted = item.status === 'completed';
+                const isCompleted = item.status === 'Completed';
                 const isTaskStarted = item.is_started;
                 const hasSubtasks = item.total_sub_tasks > 0;
 
@@ -1121,6 +1097,8 @@ const SprintTasks = ({ tasks }) => {
                 renderCell={renderCell}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 leftActions={leftActions}
+                pagination={true}
+                pageSize={10}
             />
 
             {/* Filter Modal */}
@@ -1311,13 +1289,14 @@ const SprintTasks = ({ tasks }) => {
 
             <ResponsiblePersonReasonModal
                 isOpen={isResponsibleModalOpen}
-                onClose={() => setIsResponsibleModalOpen(false)}
+                onClose={() => { setIsResponsibleModalOpen(false); setResponsibleTaskId(null); setPendingResponsiblePersonId(null); }}
                 onSubmit={handleResponsiblePersonReasonSubmit}
                 isLoading={isResponsibleLoading}
                 taskId={responsibleTaskId}
                 pendingResponsiblePersonId={pendingResponsiblePersonId}
                 users={users}
             />
+
         </div>
     )
 }

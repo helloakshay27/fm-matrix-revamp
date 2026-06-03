@@ -272,7 +272,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     []
   );
   const [planningItems, setPlanningItems] = useState<
-    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null; fromWeeklyPlan?: boolean }[]
+    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null; fromWeeklyPlan?: boolean; originalData?: any }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
     {
@@ -473,6 +473,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             id: `task-${t.id}`,
             title: t.title || t.name || "",
             type: "task" as const,
+            priority: t.priority || null,
+            originalData: t,
           })),
         ...issues
           .filter((i: any) => !isCompleted(i.status))
@@ -480,6 +482,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             id: `issue-${i.id}`,
             title: i.title || "",
             type: "issue" as const,
+            priority: i.priority || null,
+            originalData: i,
           })),
         ...todos
           .filter((t: any) => !isCompleted(t.status))
@@ -487,6 +491,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             id: `todo-${t.id}`,
             title: t.title || "",
             type: "todo" as const,
+            priority: t.priority || null,
+            originalData: t,
           })),
       ].filter((item) => item.title.trim() !== "");
 
@@ -812,8 +818,6 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
-    const today = new Date().toLocaleDateString("en-CA");
-    if (startDate !== today) return [];
     return mergedTasksIssues.filter(
       (item) =>
         (item.status === "completed" || item.status === "closed" || item.status === "done") &&
@@ -869,12 +873,18 @@ const BusinessCompassDailyReport: React.FC = () => {
     }));
     const nonEmptyAccomplishments = [
       ...visibleAccomplishments.filter((a) => cleanReportText(a.text) !== ""),
-      ...autoAddedAccomplishments.map((item) => ({
-        id: `auto-${item.id}`,
-        text: item.title || "",
-        completed: true,
-        starred: false,
-      })),
+      ...autoAddedAccomplishments.map((item) => {
+        const autoStarKey = String(item.id);
+        const isStarred = autoStarredIds.has(autoStarKey);
+        return {
+          id: `auto-${autoStarKey}`,
+          text: item.title || "",
+          completed: true,
+          starred: isStarred,
+          star: isStarred,
+          is_starred: isStarred,
+        };
+      }),
     ];
     const nonEmptyPlanningItems = planningItems.filter(
       (p) => cleanReportText(p.text) !== ""
@@ -885,7 +895,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       nonEmptyPlanningItems
     );
-  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, mergedTasksIssues, planningItems]);
+  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, autoStarredIds, mergedTasksIssues, planningItems]);
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -1055,7 +1065,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       const sourceType = item.type ?? null;
       setPlanningItems((prev) => [
         ...prev,
-        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false, source_id: sourceId, source_type: sourceType },
+        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false, source_id: sourceId, source_type: sourceType, originalData: item.originalData ?? null },
       ]);
       markDraftDirty();
     }
@@ -2007,8 +2017,13 @@ const BusinessCompassDailyReport: React.FC = () => {
       const startDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-01`;
       const lastDay = new Date(parseInt(selectedYear), monthIndex, 0).getDate();
       const endDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-${lastDay.toString().padStart(2, "0")}`;
-      queryParams.append("q[start_date_gteq]", startDate);
-      queryParams.append("q[start_date_lteq]", endDate);
+      const today = new Date();
+      const todayDate = `${today.getFullYear()}-${String(
+        today.getMonth() + 1
+      ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+      // queryParams.append("q[start_date_gteq]", startDate);
+      queryParams.append("q[start_date_lteq]", todayDate);
 
       const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
       const response = await axios.get(url, {
@@ -2049,7 +2064,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         })),
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
-        star: autoStarredIds.has(item.id),
+        star: autoStarredIds.has(String(item.id)),
       })),
     ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
@@ -2577,9 +2592,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                         Today's Accomplishments
                       </h3>
                     </div>
-                    <Badge className={badgePoints}>
-                      {dailyScore.accomplishmentsScore}/20 PTS
-                    </Badge>
+                    <div className="flex items-center gap-4">
+                      <Badge className={badgePoints}>
+                        {dailyScore.accomplishmentsScore}/20 PTS
+                      </Badge>
+                      <Button
+                        className="rounded-[8px] shadow-lg font-semibold text-sm"
+                        onClick={addAccomplishment}
+                      >
+                        <Plus size={14} />
+                        Add Item
+                      </Button>
+                    </div>
                   </div>
 
                   <CardContent className="p-6 space-y-6">
@@ -2628,6 +2652,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 onClick={() => toggleStar(item.id)}
                               />
 
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                Note
+                              </span>
+
                               <input
                                 type="text"
                                 value={item.text}
@@ -2666,88 +2694,145 @@ const BusinessCompassDailyReport: React.FC = () => {
                       ))}
 
                       {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
-                      {autoAddedAccomplishments.map((item) => (
-                        <div key={item.id} className="relative animate-in fade-in duration-300">
-                          <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
-                            <div className="flex items-center gap-4">
-                              <div
-                                className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
-                                onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
-                                title="Mark as open"
-                              >
-                                <Check size={14} className="text-white" />
-                              </div>
-                              <Star
-                                size={18}
-                                className={cn(
-                                  "cursor-pointer transition-all shrink-0",
-                                  autoStarredIds.has(item.id)
-                                    ? "text-[#eab308] fill-[#eab308]"
-                                    : "text-[#DA7756]/70 hover:text-[#DA7756]"
+                      {autoAddedAccomplishments.map((item) => {
+                        const autoStarKey = String(item.id);
+                        const isAutoStarred = autoStarredIds.has(autoStarKey);
+
+                        return (
+                          <div key={item.id} className="relative animate-in fade-in duration-300">
+                            <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
+                              <div className="flex items-center gap-4">
+                                <div
+                                  className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
+                                  onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
+                                  title="Mark as open"
+                                >
+                                  <Check size={14} className="text-white" />
+                                </div>
+                                <Star
+                                  size={18}
+                                  className={cn(
+                                    "cursor-pointer transition-all shrink-0",
+                                    isAutoStarred
+                                      ? "text-[#eab308] fill-[#eab308]"
+                                      : "text-[#DA7756]/70 hover:text-[#DA7756]"
+                                  )}
+                                  onClick={() => {
+                                    markDraftDirty();
+                                    setAutoStarredIds((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has(autoStarKey)) next.delete(autoStarKey);
+                                      else next.add(autoStarKey);
+                                      return next;
+                                    });
+                                  }}
+                                />
+                                <span className={cn(
+                                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                  item.type === "task"
+                                    ? "bg-[#DA7756] text-white"
+                                    : item.type === "issue"
+                                      ? "bg-violet-600 text-white"
+                                      : "bg-amber-500 text-white"
+                                )}>
+                                  {item.type}
+                                </span>
+                                <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
+                                  {item.title}
+                                </span>
+                                {item.priority && (
+                                  <span
+                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                    style={{
+                                      backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                      color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                    }}
+                                  >
+                                    {item.priority}
+                                  </span>
                                 )}
-                                onClick={() => {
-                                  setAutoStarredIds((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(item.id)) next.delete(item.id);
-                                    else next.add(item.id);
-                                    return next;
-                                  });
-                                }}
-                              />
-                              <span className={cn(
-                                "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                item.type === "task"
-                                  ? "bg-[#DA7756] text-white"
-                                  : item.type === "issue"
-                                    ? "bg-violet-600 text-white"
-                                    : "bg-amber-500 text-white"
-                              )}>
-                                {item.type}
-                              </span>
-                              <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
-                                {item.title}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  if (item.type === "todo") {
-                                    setSelectedTodo(item.originalData);
-                                    setIsDetailsModalOpen(true);
-                                  } else {
-                                    navigate(
-                                      item.type === "task"
-                                        ? `/vas/tasks/${item.originalData?.id}`
-                                        : `/vas/issues/${item.originalData?.id}`
-                                    );
+                                <button
+                                  onClick={() => {
+                                    if (item.type === "todo") {
+                                      setSelectedTodo(item.originalData);
+                                      setIsDetailsModalOpen(true);
+                                    } else {
+                                      navigate(
+                                        item.type === "task"
+                                          ? `/vas/tasks/${item.originalData?.id}`
+                                          : `/vas/issues/${item.originalData?.id}`
+                                      );
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                  title={`View ${item.type} details`}
+                                >
+                                  <Eye size={14} className="text-[#DA7756]" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (item.type === "task") {
+                                      setEditTaskData(item.originalData);
+                                      setIsEditTaskModalOpen(true);
+                                    } else if (item.type === "issue") {
+                                      setEditIssueData(item.originalData);
+                                      setIsEditIssueModalOpen(true);
+                                    } else if (item.type === "todo") {
+                                      setEditTodoData(item.originalData);
+                                      setIsEditTodoModalOpen(true);
+                                    }
+                                  }}
+                                  className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                  title={`Edit ${item.type}`}
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              </div>
+                              {(() => {
+                                const d = item.originalData;
+                                const endDate = fmtDate(startDate);
+                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                let issueEffort: string | null = null;
+                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                  const totalMin = d.issue_allocation_times.reduce(
+                                    (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                  );
+                                  if (totalMin > 0) {
+                                    const h = Math.floor(totalMin / 60);
+                                    const m = totalMin % 60;
+                                    issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
                                   }
-                                }}
-                                className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                title={`View ${item.type} details`}
-                              >
-                                <Eye size={14} className="text-[#DA7756]" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (item.type === "task") {
-                                    setEditTaskData(item.originalData);
-                                    setIsEditTaskModalOpen(true);
-                                  } else if (item.type === "issue") {
-                                    setEditIssueData(item.originalData);
-                                    setIsEditIssueModalOpen(true);
-                                  } else if (item.type === "todo") {
-                                    setEditTodoData(item.originalData);
-                                    setIsEditTodoModalOpen(true);
-                                  }
-                                }}
-                                className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                title={`Edit ${item.type}`}
-                              >
-                                <Pencil size={13} />
-                              </button>
+                                }
+                                const hasInfo = endDate || effortEst || issueEffort;
+                                if (!hasInfo) return null;
+                                return (
+                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                    {endDate && (
+                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                        <CalendarIcon size={9} className="shrink-0" />
+                                        {endDate}
+                                      </span>
+                                    )}
+                                    {effortEst && (
+                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                        <Clock size={9} className="shrink-0" />
+                                        Est: {effortEst}
+                                      </span>
+                                    )}
+                                    {issueEffort && (
+                                      <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                        <Zap size={9} className="shrink-0" />
+                                        Effort: {issueEffort}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
@@ -2765,32 +2850,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 h-11 border-[#10b981]/30 text-[#10b981] font-bold text-sm bg-white hover:bg-[#ecfdf5] rounded-[8px] flex items-center justify-center gap-2"
-                          onClick={addAccomplishment}
-                        >
-                          <Plus size={18} />
-                          Add Item
-                        </Button>
-                        {/* {visibleAccomplishments.some((a) => !a.completed) && (
-                          <button
-                            type="button"
-                            style={{
-                              backgroundColor: "#DA7756",
-                              color: "#ffffff",
-                              cursor: "pointer",
-                              opacity: 1,
-                            }}
-                            className="flex h-10 items-center gap-2 rounded-[8px] border-none px-6 text-xs font-black shadow-md transition-all"
-                            onClick={transferUncheckedToTomorrow}
-                          >
-                            <CalendarCheck size={16} />
-                            Transfer unchecked to tomorrow
-                          </button>
-                        )} */}
-                      </div>
                     </div>
 
                     <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
@@ -3034,42 +3093,101 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {!isCollapsed && (
                                 <div className="space-y-1.5 pl-1">
                                   {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      <Checkbox
-                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                        onCheckedChange={(checked) => {
-                                          if (checked && item.status !== "completed" && item.status !== "closed") {
-                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                          } else {
-                                            markDraftDirty();
-                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                    <div key={item.id} className="flex flex-col gap-1 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      <div className="flex items-center gap-2">
+                                        <Checkbox
+                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                          onCheckedChange={(checked) => {
+                                            if (checked && item.status !== "completed" && item.status !== "closed") {
+                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                            } else {
+                                              markDraftDirty();
+                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                            }
+                                          }}
+                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                        />
+                                        <button
+                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                          title={`View ${item.type} details`}
+                                        >
+                                          <Eye size={14} className="text-amber-600" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                          title={`Edit ${item.type}`}
+                                        >
+                                          <Pencil size={13} />
+                                        </button>
+                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                          {item.type}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                        </div>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                          {item.priority}
+                                        </span>
+                                        {/* Add to Tomorrow button */}
+                                        <button
+                                          onClick={() =>
+                                            addedToTomorrowIds.has(item.id)
+                                              ? removeItemFromTomorrow(item)
+                                              : addItemToTomorrow(item)
                                           }
-                                        }}
-                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                      />
-                                      <button
-                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                        title={`View ${item.type} details`}
-                                      >
-                                        <Eye size={14} className="text-amber-600" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                        title={`Edit ${item.type}`}
-                                      >
-                                        <Pencil size={13} />
-                                      </button>
-                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                        {item.type}
-                                      </span>
-                                      <div className="flex-1 min-w-0">
-                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                          className={cn(
+                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                            addedToTomorrowIds.has(item.id)
+                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                              : "bg-white border-gray-200 text-gray-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/50 opacity-0 group-hover:opacity-100"
+                                          )}
+                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                        >
+                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                        </button>
                                       </div>
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                        {item.priority}
-                                      </span>
+                                      {(() => {
+                                        const d = item.originalData;
+                                        const endDate = fmtDate(d?.target_date || d?.end_date);
+                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                        let issueEffort: string | null = null;
+                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                          const totalMin = d.issue_allocation_times.reduce(
+                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                          );
+                                          if (totalMin > 0) {
+                                            const h = Math.floor(totalMin / 60);
+                                            const m = totalMin % 60;
+                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                          }
+                                        }
+                                        const hasInfo = endDate || effortEst || issueEffort;
+                                        if (!hasInfo) return null;
+                                        return (
+                                          <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                            {endDate && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                <CalendarIcon size={9} className="shrink-0" />
+                                                {endDate}
+                                              </span>
+                                            )}
+                                            {effortEst && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                <Clock size={9} className="shrink-0" />
+                                                Est: {effortEst}
+                                              </span>
+                                            )}
+                                            {issueEffort && (
+                                              <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                                <Zap size={9} className="shrink-0" />
+                                                Effort: {issueEffort}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   ))}
                                 </div>
@@ -3540,18 +3658,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     )}
                                     onClick={() => togglePlanningStar(item.id)}
                                   />
-                                  {item.source_type && (
-                                    <span className={cn(
-                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.source_type === "task"
-                                        ? "bg-[#DA7756] text-white"
-                                        : item.source_type === "issue"
-                                          ? "bg-violet-600 text-white"
-                                          : "bg-amber-500 text-white"
-                                    )}>
-                                      {item.source_type}
-                                    </span>
-                                  )}
+                                  <span className={cn(
+                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                    item.source_type === "task"
+                                      ? "bg-[#DA7756] text-white"
+                                      : item.source_type === "issue"
+                                        ? "bg-violet-600 text-white"
+                                        : item.source_type === "todo"
+                                          ? "bg-amber-500 text-white"
+                                          : "bg-gray-500 text-white"
+                                  )}>
+                                    {item.source_type || "Note"}
+                                  </span>
                                   <input
                                     type="text"
                                     value={item.text}
@@ -3561,6 +3679,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     placeholder="What's your strategic priority?"
                                     className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
                                   />
+                                  {item.originalData?.priority && (
+                                    <span
+                                      className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                      style={{
+                                        backgroundColor: item.originalData.priority === "High" ? "#fee2e2" : item.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                        color: item.originalData.priority === "High" ? "#991b1b" : item.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                      }}
+                                    >
+                                      {item.originalData.priority}
+                                    </span>
+                                  )}
                                   <div className="flex items-center gap-2">
                                     <X
                                       size={18}
@@ -3569,6 +3698,57 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     />
                                   </div>
                                 </div>
+                                {item.originalData && (() => {
+                                  const d = item.originalData;
+                                  const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                  const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                  const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                  let timeLeftLabel: string | null = null;
+                                  if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                    const now = new Date();
+                                    const end = new Date(d.end_date);
+                                    end.setHours(23, 59, 59, 999);
+                                    const diff = end.getTime() - now.getTime();
+                                    if (diff > 0) {
+                                      const days = Math.floor(diff / 86400000);
+                                      const hrs = Math.floor((diff % 86400000) / 3600000);
+                                      const mins = Math.floor((diff % 3600000) / 60000);
+                                      if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                      else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                      else timeLeftLabel = `${mins}m left`;
+                                    }
+                                  }
+                                  const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                  if (!hasInfo) return null;
+                                  return (
+                                    <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
+                                      {endDate && (
+                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                          <CalendarIcon size={9} className="shrink-0" />
+                                          {endDate}
+                                        </span>
+                                      )}
+                                      {overdueLabel && (
+                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                          <AlertCircle size={9} className="shrink-0" />
+                                          {overdueLabel}
+                                        </span>
+                                      )}
+                                      {timeLeftLabel && (
+                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                          <Clock size={9} className="shrink-0" />
+                                          {timeLeftLabel}
+                                        </span>
+                                      )}
+                                      {effortEst && (
+                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                          <Clock size={9} className="shrink-0" />
+                                          Est: {effortEst}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                                 {item.fromWeeklyPlan && (
                                   <div className="pl-7 pt-1">
                                     <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
@@ -3606,21 +3786,85 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 key={item.id}
                                 className="relative animate-in fade-in slide-in-from-top-1 duration-200"
                               >
-                                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
-                                  <Star size={18} className="text-gray-300 shrink-0" />
-                                  <span className={cn(
-                                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                    item.type === "task"
-                                      ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                      : item.type === "issue"
-                                        ? "bg-violet-100 text-violet-700"
-                                        : "bg-yellow-100 text-yellow-700"
-                                  )}>
-                                    {item.type}
-                                  </span>
-                                  <span className="flex-1 text-sm font-medium text-gray-500 truncate">
-                                    {item.title}
-                                  </span>
+                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
+                                  <div className="flex items-center gap-3">
+                                    <Star size={18} className="text-gray-300 shrink-0" />
+                                    <span className={cn(
+                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.type === "task"
+                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                        : item.type === "issue"
+                                          ? "bg-violet-100 text-violet-700"
+                                          : "bg-yellow-100 text-yellow-700"
+                                    )}>
+                                      {item.type}
+                                    </span>
+                                    <span className="flex-1 text-sm font-medium text-gray-500 truncate">
+                                      {item.title}
+                                    </span>
+                                    {item.priority && (
+                                      <span
+                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                        style={{
+                                          backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                          color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                        }}
+                                      >
+                                        {item.priority}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {(() => {
+                                    const d = item.originalData;
+                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                    let timeLeftLabel: string | null = null;
+                                    if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                      const now = new Date();
+                                      const end = new Date(d.end_date);
+                                      end.setHours(23, 59, 59, 999);
+                                      const diff = end.getTime() - now.getTime();
+                                      if (diff > 0) {
+                                        const days = Math.floor(diff / 86400000);
+                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                        else timeLeftLabel = `${mins}m left`;
+                                      }
+                                    }
+                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                    if (!hasInfo) return null;
+                                    return (
+                                      <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
+                                        {endDate && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <CalendarIcon size={9} className="shrink-0" />
+                                            {endDate}
+                                          </span>
+                                        )}
+                                        {overdueLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                            <AlertCircle size={9} className="shrink-0" />
+                                            {overdueLabel}
+                                          </span>
+                                        )}
+                                        {timeLeftLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                            <Clock size={9} className="shrink-0" />
+                                            {timeLeftLabel}
+                                          </span>
+                                        )}
+                                        {effortEst && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <Clock size={9} className="shrink-0" />
+                                            Est: {effortEst}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             ))}
@@ -3647,7 +3891,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="mt-4">
+                    {/* <div className="mt-4">
                       <Button
                         variant="outline"
                         className="w-full h-11 border-[#DA7756]/30 text-[#DA7756] font-bold text-sm bg-white hover:bg-[#DA7756]/5 rounded-[8px] flex items-center justify-center gap-2"
@@ -3656,7 +3900,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <Plus size={18} />
                         Add Item
                       </Button>
-                    </div>
+                    </div> */}
                   </CardContent>
                 </Card>
               </div>
@@ -3944,27 +4188,43 @@ const BusinessCompassDailyReport: React.FC = () => {
                               0 ? (
                               <div className="space-y-1.5">
                                 {dailyScore.details.accomplishments.itemBreakdown.map(
-                                  (item, idx) => (
-                                    <div
-                                      key={item.id}
-                                      className="text-[10px] font-bold text-gray-600"
-                                    >
-                                      {idx > 0 && (
-                                        <span className="text-gray-400">+</span>
-                                      )}
-                                      <span className="text-gray-700 ml-1">
-                                        {item.text.substring(0, 35)}
-                                        {item.text.length > 35 ? "..." : ""}
-                                      </span>
-                                      <span className="text-purple-600 font-black ml-2">
-                                        {item.points}
-                                      </span>
-                                      <span className="text-gray-400 ml-1">=</span>
-                                      <span className="text-purple-700 font-black ml-1">
-                                        {item.cumulativePoints}
-                                      </span>
-                                    </div>
-                                  )
+                                  (item) => {
+                                    const completedPoints = item.completed ? 3 : 0;
+                                    const starPoints = item.completed && item.starred ? 2 : 0;
+
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className="rounded-[10px] border border-purple-100 bg-white px-3 py-2 text-[10px] font-bold text-gray-600"
+                                      >
+                                        <div className="flex items-center justify-between gap-3">
+                                          <span className="min-w-0 flex-1 truncate text-gray-700">
+                                            {item.text}
+                                          </span>
+                                          <span className="shrink-0 font-black text-purple-700">
+                                            {item.points} pts
+                                          </span>
+                                        </div>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[9px] text-gray-500">
+                                          <span>
+                                            Completed: {completedPoints} pts
+                                          </span>
+                                          {starPoints > 0 && (
+                                            <span className="flex items-center gap-1 text-[#b45309]">
+                                              <Star
+                                                size={10}
+                                                className="fill-[#eab308] text-[#eab308]"
+                                              />
+                                              Star: +{starPoints} pts
+                                            </span>
+                                          )}
+                                          <span className="font-black text-purple-700">
+                                            Running total: {item.cumulativePoints} pts
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
                                 )}
                               </div>
                             ) : (
@@ -4139,7 +4399,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span>• Regular items:</span>
+                              <span>• Plan items:</span>
                               <span className="text-gray-900">
                                 {dailyScore.details.planning.regularItems} × 2
                                 pts ={" "}
@@ -4154,12 +4414,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   size={12}
                                   className="text-[#eab308] fill-[#eab308]"
                                 />{" "}
-                                Starred items:
+                                Star bonus:
                               </span>
                               <span className="text-gray-900">
-                                {dailyScore.details.planning.starredItems} × 4
+                                {dailyScore.details.planning.starredItems} × 1
                                 pts ={" "}
-                                {dailyScore.details.planning.starredItems * 4}{" "}
+                                {dailyScore.details.planning.starredItems * 1}{" "}
                                 pts
                               </span>
                             </div>
@@ -4415,7 +4675,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 Starred items:
                               </span>{" "}
                               <span className="text-slate-900 font-bold">
-                                +4 points each (double points, max 3 stars)
+                                +1 extra point each (max 3 stars)
                               </span>
                             </li>
                           </ul>
@@ -4518,7 +4778,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </h2>
                             <p className="text-sm text-gray-500 mt-2">
-                              By: Common Admin Id
+                              By: {user?.firstname} {user?.lastname}
                             </p>
                           </div>
                           <div className="flex items-start gap-4">
@@ -5414,6 +5674,34 @@ const BusinessCompassDailyReport: React.FC = () => {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
+        <MenuItem
+          onClick={() => {
+            addPlanningItem()
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "8px 8px 4px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#f0f4ff",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Plus size={18} className="text-blue-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Note</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
         <MenuItem
           onClick={() => {
             setPreFillDate(getNextDayDate());

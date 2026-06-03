@@ -231,7 +231,7 @@ export const BookingSetupClubDashboard = () => {
         return (
           <div className="flex items-center justify-center">
             <div
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? 'bg-green-500' : 'bg-gray-300'
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? '!bg-green-500' : 'bg-gray-300'
                 }`}
               onClick={() => handleStatusToggle(item.id)}
             >

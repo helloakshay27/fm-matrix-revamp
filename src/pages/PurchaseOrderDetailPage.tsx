@@ -41,6 +41,12 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import axios from "axios";
+// import html2canvas from "html2canvas";
+// import jsPDF from "jspdf";
+// import PurchaseOrderPdfTemplate from "./ClubManagement/PurchaseOrderPdfTemplate";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import PurchaseOrderPdfTemplate from "./ClubManagement/PurchaseOrderPdfTemplate";
 
 // Types based on actual API response
 interface PoInventory {
@@ -187,6 +193,7 @@ const aggregateTax = (
 export const PurchaseOrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const pdfRef = React.useRef<HTMLDivElement>(null);
 
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
     null
@@ -410,6 +417,34 @@ export const PurchaseOrderDetailPage = () => {
     navigate("/accounting/purchase-order/create");
   };
 
+  const handleDownloadPdf = async () => {
+    try {
+      const input = pdfRef.current;
+      if (!input) return;
+
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`purchase-order-${purchaseOrder?.external_id || "po"}.pdf`);
+    } catch (err) {
+      console.error(err);
+      sonnerToast.error("Failed to download PDF");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -540,6 +575,22 @@ export const PurchaseOrderDetailPage = () => {
             <Badge className={`${getStatusColor(purchaseOrder.status)} border`}>
               {purchaseOrder.status?.toUpperCase()}
             </Badge>
+
+            <Button
+              variant="outline"
+              onClick={() => setActiveTab("pdf-view")}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleDownloadPdf}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
 
             <Button
               size="sm"
@@ -691,6 +742,7 @@ export const PurchaseOrderDetailPage = () => {
               {[
                 { label: "Order Details", value: "order-details" },
                 { label: "Vendor Info", value: "vendor-info" },
+                { label: "PDF View", value: "pdf-view" },
                 { label: "History", value: "history" },
               ].map((tab) => (
                 <TabsTrigger
@@ -1263,6 +1315,82 @@ export const PurchaseOrderDetailPage = () => {
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+
+            {/* PDF View Tab */}
+            <TabsContent
+              value="pdf-view"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Purchase Order PDF
+                    </CardTitle>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => window.print()}
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleDownloadPdf}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download PDF
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-100 p-6 overflow-auto rounded-lg">
+                    <div ref={pdfRef} className="flex justify-center">
+                      <PurchaseOrderPdfTemplate
+                        data={{
+                          po_number: `PO-${String(purchaseOrder?.id).padStart(5, "0")}`,
+                          po_date: purchaseOrder?.po_date,
+                          external_id: purchaseOrder?.external_id,
+                          reference_number: purchaseOrder?.reference_number,
+                          status: purchaseOrder?.status,
+                          amount: purchaseOrder?.total_amount,
+                          total_amount: purchaseOrder?.total_amount,
+                          amount_in_words: purchaseOrder?.amount_in_words,
+                          sub_total_amount: purchaseOrder?.sub_total_amount || purchaseOrder?.sub_total,
+                          discount_amount: purchaseOrder?.tax?.discount || 0,
+                          lock_account_tax_amount: purchaseOrder?.lock_account_tax_amount,
+                          adjustment: purchaseOrder?.tax?.adjustment || 0,
+                          supplier_name: purchaseOrder?.supplier?.company_name,
+                          supplier_email: purchaseOrder?.supplier?.email,
+                          supplier_phone: purchaseOrder?.supplier?.mobile1,
+                          supplier_address: purchaseOrder?.supplier?.formatted_address,
+                          payment_terms: purchaseOrder?.payment_term || purchaseOrder?.payment_tern,
+                          delivery_address: typeof purchaseOrder?.delivery_address === "string"
+                            ? purchaseOrder?.delivery_address
+                            : purchaseOrder?.delivery_address?.formatted_address || purchaseOrder?.delivery_address?.address,
+                          terms_conditions: purchaseOrder?.terms_conditions,
+                        }}
+                        items={resolveItems(purchaseOrder) || []}
+                        formatCurrency={(amount) =>
+                          `₹${Number(amount || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        }
+                        formatDate={(date) => {
+                          if (!date) return "-";
+                          return new Date(date).toLocaleDateString("en-GB");
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* History Tab */}

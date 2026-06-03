@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -49,6 +50,7 @@ import {
 import { approvePO, rejectPO } from "@/store/slices/purchaseOrderSlice";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
+import { getReturnToFromState } from "@/utils/listBackNavigation";
 
 // Interfaces
 interface BillingAddress {
@@ -613,6 +615,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
           approvePO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
         toast.success(response?.message || "PR approved successfully");
+        refreshPendingApprovalsCount();
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to approve PO");
@@ -648,6 +651,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
           rejectPO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
         toast.success(response?.message || "PO rejected successfully");
+        refreshPendingApprovalsCount();
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to reject PO");
@@ -868,9 +872,12 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
 
   return (
     <div className="p-6 mx-auto">
-      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
+      <Button variant="ghost" onClick={() => {
+        const returnTo = getReturnToFromState(location.state);
+        navigate(returnTo ?? "/finance/material-pr");
+      }} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
+        Back to Material PRs
       </Button>
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <h1 className="text-2xl font-semibold">Material PR Details</h1>

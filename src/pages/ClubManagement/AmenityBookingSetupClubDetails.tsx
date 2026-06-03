@@ -831,13 +831,13 @@ export const BookingSetupDetailClubPage = () => {
                         : "-"}
                     </span>
                   </div>
-                  <div className="flex items-start">
+                  {/* <div className="flex items-start">
                     <span className="text-gray-500 min-w-[160px]">Allow Multiple Slots</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
                       {formData.allowMultipleSlots ? "Yes" : "No"}
                     </span>
-                  </div>
+                  </div> */}
                   {formData.allowMultipleSlots && (
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[160px]">Maximum Slots</span>
