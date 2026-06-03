@@ -116,6 +116,11 @@ interface CronSetting {
   cron_expression: string;
 }
 
+interface EligibleGuard {
+  id: number;
+  name: string;
+}
+
 interface ScheduleData {
   id: number;
   assigned_guard_id: number;
@@ -124,6 +129,7 @@ interface ScheduleData {
   supervisor_id: number;
   active: boolean;
   cron_setting?: CronSetting;
+  eligible_guards?: EligibleGuard[];
   created_at: string;
   updated_at: string;
   name?: string; // Optional as it might not be in the actual API response
@@ -1670,15 +1676,33 @@ export const PatrollingDetailPage: React.FC = () => {
                                 <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
                                   <div className="flex items-center gap-2 mb-1">
                                     <Shield className="w-4 h-4 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-900">Guard</span>
+                                    <span className="text-sm font-medium text-gray-900">Guards</span>
                                   </div>
-                                  <p className="text-sm text-gray-800 font-medium">
-                                    {schedule.assigned_guard_name || 
-                                      <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">
-                                        ID: {schedule.assigned_guard_id}
-                                      </span>
-                                    }
-                                  </p>
+                                  {schedule.eligible_guards && schedule.eligible_guards.length > 0 ? (
+                                    <div className="space-y-1.5">
+                                      {schedule.eligible_guards.map((guard) => (
+                                        <div
+                                          key={guard.id}
+                                          className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded border border-gray-200"
+                                        >
+                                          <span className="text-sm font-medium text-gray-900">
+                                            {guard.name}
+                                          </span>
+                                          <Badge variant="outline" className="text-xs text-gray-500 ml-2 shrink-0">
+                                            ID: {guard.id}
+                                          </Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-gray-800 font-medium">
+                                      {schedule.assigned_guard_name || (
+                                        <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">
+                                          ID: {schedule.assigned_guard_id}
+                                        </span>
+                                      )}
+                                    </p>
+                                  )}
                                 </div>
                                 <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
                                   <div className="flex items-center gap-2 mb-1">

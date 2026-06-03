@@ -242,6 +242,13 @@ export const ResponseEscalationTab: React.FC = () => {
     );
   };
 
+  const getUserNamesFromDetails = (
+    userDetails: { id: number | string; name: string }[] | undefined | null
+  ): string => {
+    if (!userDetails || userDetails.length === 0) return "";
+    return userDetails.map((u) => u.name).join(", ");
+  };
+
   const getUserNames = (userIds: string | number[] | null): string => {
     if (!userIds) return "";
 
@@ -1060,7 +1067,7 @@ export const ResponseEscalationTab: React.FC = () => {
                                   key={escalation.name}
                                   className="text-sm text-gray-700"
                                 >
-                                  {getUserNames(escalation.escalate_to_users)}
+                                  {getUserNamesFromDetails(escalation.escalate_to_users_details) || getUserNames(escalation.escalate_to_users)}
                                 </div>
                               ))}
                             </div>
