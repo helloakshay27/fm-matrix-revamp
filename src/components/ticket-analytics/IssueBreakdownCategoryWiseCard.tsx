@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { IssueBreakdownCategoryWise } from '@/services/ticketAnalyticsAPI';
 
 interface IssueBreakdownCategoryWiseCardProps {
@@ -37,13 +37,13 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
   }, [categories, totals]);
 
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4 sm:pb-6">
-        <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           Issue Breakdown Category Wise
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h3>
+      </div>
+      <div className="p-5">
         <div className="overflow-x-auto -mx-3 sm:mx-0">
           <div className="min-w-[600px] px-3 sm:px-0">
             <table className="w-full border-collapse border border-gray-300">
@@ -115,7 +115,7 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
             </table>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

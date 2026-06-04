@@ -1,6 +1,119 @@
 import React, { useMemo } from 'react';
 import { Download } from 'lucide-react';
 
+// ── Closure Progress Card ────────────────────────────────
+export const ClosureProgressCard: React.FC<{ data: any }> = ({ data }) => {
+  const root = data?.data ?? data ?? {};
+  const snapshot = root?.snapshot ?? {};
+  const total = Number(snapshot?.total_tickets?.count ?? snapshot?.total_tickets ?? root?.total_tickets ?? 0) || 1;
+  const closed = Number(snapshot?.closed_tickets?.count ?? snapshot?.closed_tickets ?? root?.closed_tickets ?? 0);
+  const open = Number(snapshot?.open_tickets?.count ?? snapshot?.open_tickets ?? root?.open_tickets ?? 0);
+  const closedPct = Math.round((closed / total) * 100);
+  const openPct = Math.round((open / total) * 100);
+
+  return (
+    <div className="bg-white rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Closure Progress
+        </h3>
+        <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ backgroundColor: '#B7DCD4', color: '#2E7D6B' }}>
+          ↑ +12 pts this week
+        </span>
+      </div>
+      <div className="space-y-4">
+        {/* Closed */}
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-gray-600 font-medium">Closed</span>
+            <span className="font-semibold text-gray-800">{closedPct}%</span>
+          </div>
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full rounded-full" style={{ width: `${closedPct}%`, backgroundColor: '#76CDC1' }} />
+          </div>
+        </div>
+        {/* Open */}
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-gray-600 font-medium">Open</span>
+            <span className="font-semibold text-gray-800">{openPct}%</span>
+          </div>
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full rounded-full" style={{ width: `${openPct}%`, backgroundColor: '#E39090' }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Site-wise Ticket Breakdown Card ─────────────────────
+export const SiteWiseTicketBreakdownCard: React.FC<{ data: any }> = ({ data }) => {
+  const sites = useMemo(() => {
+    const root = data?.data ?? data ?? {};
+    const arr = root?.sites ?? root?.site_wise ?? root?.centers ?? root?.center_wise ?? [];
+    return Array.isArray(arr) ? arr : [];
+  }, [data]);
+
+  return (
+    <div className="bg-white rounded-xl overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Site-wise Ticket Breakdown
+        </h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr style={{ backgroundColor: '#D97655' }}>
+              {['Site Name', 'Filled', 'Missed', 'Total', 'Closed', 'Open', 'Closure Rate'].map((h) => (
+                <th key={h} className={`px-4 py-3 text-white font-semibold whitespace-nowrap ${h === 'Site Name' ? 'text-left' : 'text-center'}`}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sites.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-6 text-center text-gray-400 text-sm">No data available</td>
+              </tr>
+            ) : (
+              sites.map((site: any, i: number) => {
+                const name = site.site_name ?? site.center_name ?? site.name ?? '-';
+                const filled = site.filled ?? site.total_tickets ?? 0;
+                const missed = site.missed ?? 0;
+                const total = site.total ?? (filled + missed);
+                const closedN = site.closed ?? site.closed_tickets ?? 0;
+                const openN = site.open ?? site.open_tickets ?? 0;
+                const closureRate = total > 0 ? Math.round((closedN / total) * 100) : (site.closure_rate ?? 0);
+                return (
+                  <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-800">{name}</td>
+                    <td className="px-4 py-3 text-center font-semibold" style={{ color: '#2E7D6B' }}>{filled}</td>
+                    <td className="px-4 py-3 text-center font-semibold" style={{ color: '#D97655' }}>{missed}</td>
+                    <td className="px-4 py-3 text-center font-bold text-gray-900">{total}</td>
+                    <td className="px-4 py-3 text-center font-semibold" style={{ color: '#2E7D6B' }}>{closedN}</td>
+                    <td className="px-4 py-3 text-center font-semibold" style={{ color: '#D97655' }}>{openN}</td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden min-w-[60px]">
+                          <div className="h-full rounded-full" style={{ width: `${closureRate}%`, backgroundColor: '#76CDC1' }} />
+                        </div>
+                        <span className="text-xs font-medium text-gray-600 whitespace-nowrap">{closureRate}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 interface Props { 
   agingClosureData: any; 
   feedbackData: any;

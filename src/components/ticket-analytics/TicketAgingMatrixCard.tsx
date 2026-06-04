@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Download } from 'lucide-react';
 import { TicketAgingMatrix } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
@@ -48,31 +48,21 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
   };
 
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4 sm:pb-6">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-            Tickets Ageing Matrix
-          </CardTitle>
-          <Download
-            data-no-drag="true"
-            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            style={{ pointerEvents: 'auto' }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Tickets Ageing Matrix
+        </h3>
+        <Download
+          data-no-drag="true"
+          className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          style={{ pointerEvents: 'auto' }}
+        />
+      </div>
+      <div className="p-5">
         <div className="space-y-4 sm:space-y-6">
           {/* Table - Horizontally scrollable on mobile */}
           <div className="overflow-x-auto -mx-3 sm:mx-0">
@@ -146,7 +136,7 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

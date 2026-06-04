@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -208,32 +207,24 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
   }, [type]);
 
   return (
-    <Card className="h-full flex flex-col border-analytics-border bg-white">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-analytics-border">
-        <CardTitle className="text-lg font-semibold text-analytics-text">
+    <div className="h-full flex flex-col bg-white rounded-xl shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           {chartTitle}
-        </CardTitle>
+        </h3>
         {onDownload && (
           <Download
             data-no-drag="true"
-            className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
             style={{ pointerEvents: 'auto' }}
           />
         )}
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 pt-4">
+      <div className="flex-1 p-5 overflow-auto">
         {!data || chartData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-analytics-muted">
             No data available
@@ -325,7 +316,7 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

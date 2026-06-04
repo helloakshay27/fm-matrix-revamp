@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { SiteWiseIssueSummary } from '@/services/ticketAnalyticsAPI';
 
 interface SiteWiseIssueSummaryCardProps {
@@ -54,13 +54,13 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
   });
 
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           Site / Project-wise Issue Summary
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h3>
+      </div>
+      <div className="p-5">
         {buildings.length === 0 ? (
           <div className="text-center text-gray-500 py-8 text-sm">No data available</div>
         ) : (
@@ -127,7 +127,7 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

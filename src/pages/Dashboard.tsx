@@ -478,6 +478,23 @@ export const Dashboard = () => {
     })
   );
 
+  // Sync measured card heights back into layouts so grid cells resize to content
+  React.useEffect(() => {
+    if (Object.keys(cardHeights).length === 0) return;
+    setLayouts(prev => {
+      let changed = false;
+      const next = prev.map(l => {
+        const measured = cardHeights[l.i];
+        if (!measured || measured <= 0) return l;
+        const h = measured + 24; // 24px bottom breathing room
+        if (Math.abs(l.h - h) < 10) return l; // skip tiny differences
+        changed = true;
+        return { ...l, h, minH: 200 };
+      });
+      return changed ? next : prev;
+    });
+  }, [cardHeights]);
+
   // Convert date to DD/MM/YYYY format for date range display
   const convertDateToString = (date: Date): string => {
     const day = date.getDate().toString().padStart(2, "0");
@@ -496,8 +513,13 @@ export const Dashboard = () => {
     if (savedLayout) {
       try {
         const parsedLayout = JSON.parse(savedLayout);
-        console.log("✅ Parsed saved layout:", parsedLayout);
-        setLayouts(parsedLayout);
+        // Enforce minimum heights so old stored layouts with small h don't cut off cards
+        const fixedLayout = parsedLayout.map((l: { h: number; minH?: number; [key: string]: unknown }) => ({
+          ...l,
+          h: Math.max(l.h, 5),
+          minH: Math.max(l.minH ?? 3, 3),
+        }));
+        setLayouts(fixedLayout);
       } catch (e) {
         console.error("❌ Failed to parse saved layout", e);
       }
@@ -559,34 +581,42 @@ export const Dashboard = () => {
 
       console.log("🆕 Generating new layout for:", analytic.id);
 
-      // Cards that should use compact height (simple stat cards only)
-      const compactCards = [
-        'customer_experience_feedback',
-        'customer_rating_overview',
-        'helpdesk_snapshot',
-        'amc_contract_summary',
-        'engagement_metrics',
+      // Card height tiers (rowHeight=48px each unit)
+      // tier 1 (h:5 = 240px): simple flat stat cards
+      // tier 2 (h:7 = 336px): snapshot/summary cards with multiple stat rows
+      // tier 3 (h:9 = 432px): chart cards (pie, bar)
+      // tier 4 (h:11 = 528px): table cards
+      const tier1Cards = ['customer_experience_feedback', 'customer_rating_overview', 'engagement_metrics'];
+      const tier2Cards = ['helpdesk_snapshot', 'amc_contract_summary', 'site_wise_adoption_rate'];
+      const tier4Cards = [
+        'aging_closure_feedback', 'ticket_performance_metrics', 'customer_rating_overview',
+        'company_asset_overview', 'center_assets_downtime', 'highest_maintenance_assets',
+        'amc_contract_expiry_90', 'inv_overview_summary', 'inv_overstock_top10',
+        'inv_top_consumables', 'checklist_progress', 'checklist_overdue',
       ];
 
-      const isCompactCard = compactCards.includes(analytic.endpoint);
+      const cardH = tier1Cards.includes(analytic.endpoint) ? 5
+        : tier2Cards.includes(analytic.endpoint) ? 7
+        : tier4Cards.includes(analytic.endpoint) ? 11
+        : 9; // default: chart cards
+
+      const minH = cardH - 2;
 
       // Find the maximum y position to place new cards below existing ones
       const maxY = layouts.length > 0
         ? Math.max(...layouts.map(l => l.y + l.h))
         : 0;
 
-      // Full width layout for analytics cards: each card takes full width (12 columns)
-      // Recent Updates sidebar is outside the grid system
       const row = index;
 
       return {
         i: analytic.id,
-        x: 0, // Start at column 0 for full width
-        y: maxY + row * (isCompactCard ? 4 : 6),
-        w: 12, // Full width (12 columns)
-        h: isCompactCard ? 4 : 6,
+        x: 0,
+        y: maxY + row * cardH,
+        w: 12,
+        h: cardH,
         minW: 4,
-        minH: isCompactCard ? 3 : 5,
+        minH,
       };
     });
 
@@ -3238,26 +3268,46 @@ export const Dashboard = () => {
             opacity: 0.5;
           }
 
-          /* Card wrapper - allows resize to work properly */
+          /* Card wrapper — fills the react-grid-layout cell */
           .analytics-card-wrapper {
             height: 100%;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: auto;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
             background: white;
             display: flex;
             flex-direction: column;
-          }
-          
-          .analytics-card-wrapper:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            font-family: 'Work Sans', system-ui, sans-serif;
           }
 
-          /* Card content - scales with resize */
+          .analytics-card-wrapper:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+          }
+
+          /* Card content — fills remaining height after header */
           .analytics-card-content {
             flex: 1;
-            overflow: auto;
+            display: flex;
+            flex-direction: column;
             min-height: 0;
+            overflow: auto;
+          }
+
+          /* Children of card content fill height */
+          .analytics-card-content > * {
+            flex: 1;
+            min-height: 0;
+          }
+
+          /* Recharts ResponsiveContainer always fills its slot */
+          .analytics-card-content .recharts-responsive-container {
+            flex: 1 !important;
+            min-height: 260px;
+          }
+
+          /* Tables: no fixed height, scroll only when in constrained grid cell */
+          .analytics-card-content table {
+            width: 100%;
           }
 
           /* Placeholder styling for resize */
@@ -3275,45 +3325,26 @@ export const Dashboard = () => {
           }
 
           /* Card specific styles */
-          [data-lov-name="Card"].bg-card,
-          .bg-card {
-            height: 100% !important;
-            box-shadow: none !important;
+          .analytics-card-wrapper .bg-card {
+            height: 100%;
+            box-shadow: none;
             border-radius: 0;
-          }
-          
-          .bg-card.coverage-card {
-            height: 100% !important;
-            max-height: none !important;
-            box-shadow: none !important;
+            display: flex;
+            flex-direction: column;
           }
 
-          [data-lov-name="CardContent"].p-6.pt-0,
-          .bg-card .p-6.pt-0 {
-            height: auto !important;
-            overflow-y: auto !important;
+          .analytics-card-wrapper .bg-card.coverage-card {
+            max-height: none;
           }
-          
+
+          .analytics-card-wrapper .bg-card .p-6.pt-0 {
+            flex: 1;
+            overflow-y: auto;
+          }
+
           .tracking-tight {
             color: #000000;
             font-weight: 600;
-          }
-          
-          .bg-card svg,
-          .cursor-grab svg {
-            color: #000000 !important;
-          }
-
-          .bg-card button {
-            border: none !important;
-          }
-
-          .bg-card button svg {
-            color: #000000 !important;
-          }
-
-          h1, h2, h3, h4, h5, h6 {
-            color: #000000 !important;
           }
         `}
       </style>
@@ -3451,7 +3482,7 @@ export const Dashboard = () => {
               </div>
 
               {/* Recent Updates Sidebar - Always Visible */}
-              <div className="w-[350px] flex-shrink-0">
+              <div className="flex-shrink-0 self-stretch">
                 <RecentUpdatedSidebar />
               </div>
             </div>

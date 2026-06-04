@@ -1,109 +1,121 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Download, Grid } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Download } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
+// Guideline pie colors
+const PIE_COLORS = ['#CDCAF5', '#76CDC1', '#E39090', '#EDC488', '#9EC8BA', '#DA7756', '#8E7BE0', '#798C5E'];
 
 interface AssetCategoryWiseCardProps {
   data: any;
   onDownload?: () => Promise<void>;
 }
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe', '#00c49f', '#ffbb28', '#ff8042'];
+const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return percent > 0.06 ? (
+    <text x={x} y={y} fill="#333" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  ) : null;
+};
 
 export const AssetCategoryWiseCard: React.FC<AssetCategoryWiseCardProps> = ({ data, onDownload }) => {
-  // Process data for chart
   const processData = () => {
-    if (!data) {
-      return [{ name: 'No Data', value: 1, color: '#e5e7eb' }];
-    }
-
-    // Handle different data structures
-    let categoryData = [];
-    
+    if (!data) return [];
     if (data.assets_statistics?.asset_categorywise) {
-      // New structure
-      categoryData = data.assets_statistics.asset_categorywise.map((item: any, index: number) => ({
-        name: item.category,
-        value: item.count,
-        color: COLORS[index % COLORS.length]
-      }));
-    } else if (data.categories && Array.isArray(data.categories)) {
-      // Legacy structure with categories array
-      categoryData = data.categories.map((item: any, index: number) => ({
-        name: item.category_name || item.name,
-        value: item.asset_count || item.count || item.value,
-        color: COLORS[index % COLORS.length]
-      }));
-    } else if (data.asset_type_category_counts) {
-      // Legacy structure with asset_type_category_counts
-      categoryData = Object.entries(data.asset_type_category_counts).map(([name, value], index) => ({
-        name,
-        value: value as number,
-        color: COLORS[index % COLORS.length]
-      }));
-    } else if (Array.isArray(data)) {
-      // Direct array structure
-      categoryData = data.map((item: any, index: number) => ({
-        name: item.category || item.name,
-        value: item.count || item.value,
-        color: COLORS[index % COLORS.length]
+      return data.assets_statistics.asset_categorywise.map((item: any, i: number) => ({
+        name: item.category, value: item.count, color: PIE_COLORS[i % PIE_COLORS.length],
       }));
     }
-
-    return categoryData.length > 0 ? categoryData : [{ name: 'No Data', value: 1, color: '#e5e7eb' }];
+    if (data.categories && Array.isArray(data.categories)) {
+      return data.categories.map((item: any, i: number) => ({
+        name: item.category_name ?? item.name, value: item.asset_count ?? item.count ?? 0, color: PIE_COLORS[i % PIE_COLORS.length],
+      }));
+    }
+    if (data.asset_type_category_counts) {
+      return Object.entries(data.asset_type_category_counts).map(([name, value], i) => ({
+        name, value: value as number, color: PIE_COLORS[i % PIE_COLORS.length],
+      }));
+    }
+    if (Array.isArray(data)) {
+      return data.map((item: any, i: number) => ({
+        name: item.category ?? item.name, value: item.count ?? item.value, color: PIE_COLORS[i % PIE_COLORS.length],
+      }));
+    }
+    return [];
   };
 
-  const chartData = processData();
-  const hasData = chartData.length > 0 && chartData[0].name !== 'No Data';
+  const chartData = processData().filter((d: any) => d.value > 0);
+  const hasData = chartData.length > 0;
+  const total = chartData.reduce((s: number, d: any) => s + d.value, 0);
 
   return (
-    <Card className="h-96">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-2 text-base font-medium">
-          <Grid className="w-4 h-4" />
+    <div className="bg-white rounded-xl shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           Category Wise Assets
-        </CardTitle>
+        </h3>
         {onDownload && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDownload}
-            className="h-8 w-8 p-0"
-            data-download-button
-          >
-            <Download className="w-4 h-4" />
-          </Button>
+          <Download
+            data-no-drag="true"
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
+            style={{ pointerEvents: 'auto' }}
+          />
         )}
-      </CardHeader>
-      <CardContent>
+      </div>
+
+      <div className="flex-1 p-5 flex flex-col min-h-0">
         {hasData ? (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <>
+            <div className="relative" style={{ height: 260 }}>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%" cy="50%"
+                    innerRadius="35%" outerRadius="58%"
+                    paddingAngle={2}
+                    dataKey="value"
+                    labelLine={false}
+                    label={CustomLabel}
+                  >
+                    {chartData.map((_: any, i: number) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: any, n: any) => [v, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{total.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500">Total</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 justify-center">
+              {chartData.map((d: any, i: number) => (
+                <div key={d.name} className="flex items-center gap-1.5 text-xs text-gray-600">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                  {d.name}
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center py-12 text-gray-400 text-sm">
             No data available
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

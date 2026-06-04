@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ProactiveReactiveCardProps {
   proactiveOpenTickets: number;
@@ -14,84 +13,47 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
   proactiveClosedTickets,
   reactiveOpenTickets,
   reactiveClosedTickets,
-  className = ""
+  className = '',
 }) => {
+  const sections = [
+    {
+      title: 'Proactive',
+      items: [
+        { label: 'Open', value: proactiveOpenTickets, bg: 'rgba(227,144,144,0.15)', num: '#D97655' },
+        { label: 'Closed', value: proactiveClosedTickets, bg: 'rgba(183,220,212,0.30)', num: '#2E7D6B' },
+      ],
+    },
+    {
+      title: 'Reactive',
+      items: [
+        { label: 'Open', value: reactiveOpenTickets, bg: 'rgba(227,144,144,0.15)', num: '#D97655' },
+        { label: 'Closed', value: reactiveClosedTickets, bg: 'rgba(183,220,212,0.30)', num: '#2E7D6B' },
+      ],
+    },
+  ];
+
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-          Proactive/Reactive Tickets
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          {/* Proactive Section */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-700 text-center">Proactive</h4>
-            
-            {/* Proactive Open Card */}
-            <Card className="bg-[#E3909026]">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-center">
-                  <div>
-                    <p className="text-lg font-semibold text-[#D97655] text-center">
-                      {proactiveOpenTickets}
-                    </p>
-                    <p className="text-sm text-gray-600 text-center">Open</p>
+    <div className={`bg-white rounded-xl shadow-sm p-5 ${className}`}>
+      <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+        Proactive / Reactive Tickets
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        {sections.map(section => (
+          <div key={section.title}>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 text-center">{section.title}</p>
+            <div className="space-y-2">
+              {section.items.map(item => (
+                <div key={item.label} className="rounded-2xl px-4 py-5 text-center" style={{ backgroundColor: item.bg }}>
+                  <div className="text-2xl font-bold" style={{ color: item.num, fontFamily: 'Work Sans, sans-serif' }}>
+                    {item.value.toLocaleString()}
                   </div>
+                  <div className="text-xs text-gray-500 mt-0.5">{item.label}</div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Proactive Closed Card */}
-            <Card className="bg-[#EFEFFB]">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-center">
-                  <div>
-                    <p className="text-lg font-semibold text-[#6B5EA8] text-center">
-                      {proactiveClosedTickets}
-                    </p>
-                    <p className="text-sm text-gray-600 text-center">Closed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           </div>
-
-          {/* Reactive Section */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-700 text-center">Reactive</h4>
-            
-            {/* Reactive Open Card */}
-            <Card className="bg-[#E3909026]">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-center">
-                  <div>
-                    <p className="text-lg font-semibold text-[#D97655] text-center">
-                      {reactiveOpenTickets}
-                    </p>
-                    <p className="text-sm text-gray-600 text-center">Open</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Reactive Closed Card */}
-            <Card className="bg-[#EFEFFB]">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-center">
-                  <div>
-                    <p className="text-lg font-semibold text-[#6B5EA8] text-center">
-                      {reactiveClosedTickets}
-                    </p>
-                    <p className="text-sm text-gray-600 text-center">Closed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+    </div>
   );
 };
