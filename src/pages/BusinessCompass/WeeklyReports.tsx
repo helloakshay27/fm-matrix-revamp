@@ -1928,11 +1928,14 @@ const WeeklyReports = () => {
         const newWins = wins.filter((_, i) => i !== index);
         setWins(newWins);
         const newChecked: Record<number, boolean> = {};
+        const newStarred: Record<number, boolean> = {};
         newWins.forEach((_, i) => {
             const oldIndex = i < index ? i : i + 1;
             newChecked[i] = checkedWins[oldIndex] ?? true;
+            newStarred[i] = starredWins[oldIndex] ?? false;
         });
         setCheckedWins(newChecked);
+        setStarredWins(newStarred);
     };
 
     const handleWinChange = (index: number, value: string) => {
@@ -2908,7 +2911,10 @@ const WeeklyReports = () => {
                                             value={win}
                                             onChange={(e) => handleWinChange(index, e.target.value)}
                                             placeholder="Describe your win…"
-                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
+                                            className={cn(
+                                                "min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0",
+                                                (checkedWins[index] ?? true) && "line-through opacity-60"
+                                            )}
                                         />
                                         <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
                                             Note
@@ -4876,44 +4882,6 @@ const WeeklyReports = () => {
                                                             )}
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            {/* Tasks & Issues */}
-                                            <div className="mt-6 space-y-4">
-                                                <div className="flex items-center gap-2 text-orange-600">
-                                                    <AlertTriangle className="h-5 w-5" />
-                                                    <h4 className="font-bold text-sm">Tasks & Issues</h4>
-                                                </div>
-                                                {reportData.tasks_issues?.length > 0 ? (
-                                                    reportData.tasks_issues.map((ti: any, i: number) => (
-                                                        <div
-                                                            key={i}
-                                                            className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 flex items-center justify-between text-xs"
-                                                        >
-                                                            <div className="flex items-center gap-4">
-                                                                <X className="h-4 w-4 text-neutral-400" />
-                                                                <span className="font-bold text-neutral-800">
-                                                                    {ti.title}
-                                                                </span>
-                                                                <div className="flex gap-2">
-                                                                    <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">
-                                                                        Task
-                                                                    </Badge>
-                                                                    <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">
-                                                                        {ti.status || "open"}
-                                                                    </Badge>
-                                                                </div>
-                                                            </div>
-                                                            <Badge className="bg-[#b45309] hover:bg-[#b45309] text-white text-[10px] font-bold uppercase h-6 px-3">
-                                                                {ti.priority || "medium"}
-                                                            </Badge>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 text-sm text-neutral-500 italic">
-                                                        No issues recorded
-                                                    </div>
-                                                )}
                                             </div>
 
                                             {/* Remarks History */}
