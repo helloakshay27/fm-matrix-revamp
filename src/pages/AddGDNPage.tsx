@@ -455,14 +455,7 @@ export const AddGDNPage = () => {
     );
 
     if (stockExceededIndex !== -1) {
-      const currentStock = getCurrentStockQuantity(
-        inventoryItems[stockExceededIndex].currentStock
-      );
-      toast.error(
-        `Quantity cannot be more than current stock (${currentStock}) for row ${
-          stockExceededIndex + 1
-        }.`
-      );
+      toast.error("Quantity cannot be more than current stock");
       return;
     }
 
@@ -539,16 +532,13 @@ export const AddGDNPage = () => {
         GDN Generation &gt; GDN Request Add
       </div>
 
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">ADD GDN</h1>
-        <Button
-          variant="outline"
-          className="gap-2"
+      <div className="flex items-center gap-4 mb-6">
+        <button
           onClick={() => navigate("/finance/gdn/request-list")}
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">ADD GDN</h1>
       </div>
 
       <div className="space-y-4">
@@ -575,8 +565,6 @@ export const AddGDNPage = () => {
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Description"
                 fullWidth
-                multiline
-                minRows={2}
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={compactFieldSx}
