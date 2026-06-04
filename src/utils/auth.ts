@@ -273,15 +273,15 @@ export const getOrganizationsByEmail = async (
     apiBase = localOverride.replace(/\/$/, "");
   } else {
     const baseUrls: Record<string, string> = {
-      fm:            "https://uat.lockated.com",
-      vi:            "https://live-api.gophygital.work",
-      dev:           "https://dev-api.lockated.com",
-      pulse:         "https://pulse-api.lockated.com",
-      club:          "https://club-uat-api.lockated.com",
-      panchshilUat:  "https://pulse-uat-api.panchshil.com",
+      fm: "https://fm-uat-api.lockated.com",
+      vi: "https://live-api.gophygital.work",
+      dev: "https://dev-api.lockated.com",
+      pulse: "https://pulse-api.lockated.com",
+      club: "https://club-uat-api.lockated.com",
+      panchshilUat: "https://pulse-uat-api.panchshil.com",
       panchshilClub: "https://recess-club-api.panchshil.com",
       panchshilProd: "https://pulse-api.panchshil.com",
-      default:       "https://uat.lockated.com",
+      default: "https://fm-uat-api.lockated.com",
     };
 
     const h = window.location.hostname;
@@ -311,13 +311,13 @@ export const getOrganizationsByEmail = async (
   // Key name must match params[:recaptcha_token] on the backend.
   const fetchOptions: RequestInit = captchaToken
     ? {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, recaptcha_token: captchaToken }),
-      }
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, recaptcha_token: captchaToken }),
+    }
     : {
-        method: "GET",
-      };
+      method: "GET",
+    };
 
   const finalUrl = captchaToken
     ? url
