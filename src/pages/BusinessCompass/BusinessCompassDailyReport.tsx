@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, forwardRef, useEffect, useMemo } from "react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
@@ -2023,8 +2024,13 @@ const BusinessCompassDailyReport: React.FC = () => {
       const startDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-01`;
       const lastDay = new Date(parseInt(selectedYear), monthIndex, 0).getDate();
       const endDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-${lastDay.toString().padStart(2, "0")}`;
+      const today = new Date();
+      const todayDate = `${today.getFullYear()}-${String(
+        today.getMonth() + 1
+      ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
       // queryParams.append("q[start_date_gteq]", startDate);
-      queryParams.append("q[start_date_lteq]", endDate);
+      queryParams.append("q[start_date_lteq]", todayDate);
 
       const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
       const response = await axios.get(url, {

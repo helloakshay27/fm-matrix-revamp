@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Eye } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Pagination,
   PaginationContent,
@@ -40,6 +34,58 @@ interface GDNPagination {
 }
 
 const GDN_REQUEST_LIST_ENDPOINT = "/pms/srns/gdn_request_list.json";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "id",
+    label: "ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "gdn_date",
+    label: "GDN Date",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "inventory_count",
+    label: "Inventory Count",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_by",
+    label: "Created By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "handed_over_to",
+    label: "Handed Over To",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
 
 export const GDNDashboard = () => {
   const navigate = useNavigate();
@@ -112,6 +158,44 @@ export const GDNDashboard = () => {
         return "bg-gray-500 text-white";
     }
   };
+
+  const renderCell = (item: GDNRequest, columnKey: string) => {
+    if (columnKey === "status") {
+      return (
+        <span
+          className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+            item.status
+          )}`}
+        >
+          {item.status || "-"}
+        </span>
+      );
+    }
+
+    const value = item[columnKey as keyof GDNRequest];
+    return value ?? "-";
+  };
+
+  const renderActions = (item: GDNRequest) => (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="p-1"
+      onClick={() => navigate(`/finance/gdn/details/${item.id}`)}
+    >
+      <Eye className="h-4 w-4" />
+    </Button>
+  );
+
+  const leftActions = (
+    <Button
+      className="fm-button-fix fm-button-brand px-4 py-2"
+      onClick={() => navigate("/finance/gdn/request-add")}
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add
+    </Button>
+  );
 
   const handlePageChange = (page: number) => {
     if (
@@ -221,84 +305,18 @@ export const GDNDashboard = () => {
       {/* Page Title */}
       <h1 className="text-2xl font-bold mb-6">GDN LIST</h1>
 
-      {/* Add Button */}
-      <div className="mb-6">
-        <Button
-          className="fm-button-fix fm-button-brand px-4 py-2"
-          onClick={() => navigate("/finance/gdn/request-add")}
-        >
-          + Add
-        </Button>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">ID</TableHead>
-              <TableHead className="font-semibold">GDN Date</TableHead>
-              <TableHead className="font-semibold">Inventory Count</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Created On</TableHead>
-              <TableHead className="font-semibold">Created By</TableHead>
-              <TableHead className="font-semibold">Handed Over To</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="text-center py-8 text-gray-500"
-                >
-                  Loading GDN requests...
-                </TableCell>
-              </TableRow>
-            ) : gdnData.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="text-center py-8 text-gray-500"
-                >
-                  No GDN requests found
-                </TableCell>
-              </TableRow>
-            ) : (
-              gdnData.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="p-1"
-                      onClick={() =>
-                        navigate(`/finance/gdn/details/${item.id}`)
-                      }
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.id}</TableCell>
-                  <TableCell>{item.gdn_date || "-"}</TableCell>
-                  <TableCell>{item.inventory_count ?? "-"}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)}`}
-                    >
-                      {item.status || "-"}
-                    </span>
-                  </TableCell>
-                  <TableCell>{item.created_at || "-"}</TableCell>
-                  <TableCell>{item.created_by || "-"}</TableCell>
-                  <TableCell>{item.handed_over_to || "-"}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <EnhancedTable
+        data={gdnData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="gdn-request-list-table"
+        emptyMessage="No GDN requests found"
+        hideTableExport={true}
+        loading={loading}
+        loadingMessage="Loading GDN requests..."
+        leftActions={leftActions}
+      />
 
       {pagination.total_pages > 1 && (
         <div className="flex justify-center mt-6">
