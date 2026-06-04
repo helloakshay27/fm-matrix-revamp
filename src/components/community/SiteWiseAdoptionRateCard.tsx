@@ -23,7 +23,7 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
       <h3 className="font-semibold text-base mb-4">Site Wise Adoption Rate</h3>
       <div className="flex-1 overflow-auto">
         <table className="min-w-full border text-sm text-center">
-        <thead className="bg-[#ded9cd] text-[#b62527] font-semibold">
+        <thead className="bg-[#D97655] text-white font-semibold">
           <tr>
             {['Site Name', 'Helpdesk', 'Assets', 'Checklist Tech', 'Checklist Non-Tech', 'Inventory', 'Meeting Room'].map((h) => (
               <th key={h} className="border border-gray-300 p-2">{h}</th>

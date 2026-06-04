@@ -12,7 +12,7 @@ interface TicketAnalyticsCardProps {
   type: 'tickets_categorywise' | 'ticket_status' | 'ticket_aging_matrix' | 'unit_categorywise' | 'response_tat' | 'resolution_tat';
 }
 
-const COLORS = ['#C72030', '#8B5CF6', '#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
+const COLORS = ['#76CDC1', '#E39090', '#CDCAF5', '#9EC8BA', '#EDC488', '#8E7BE0'];
 
 export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title, data, type }) => {
   const {
@@ -55,8 +55,8 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="proactive" fill="#10B981" name="Proactive" />
-                  <Bar dataKey="reactive" fill="#C72030" name="Reactive" />
+                  <Bar dataKey="proactive" fill="#9EC8BA" name="Proactive" />
+                  <Bar dataKey="reactive" fill="#DA7756" name="Reactive" />
                 </BarChart>
               </ResponsiveContainer>
               
@@ -152,7 +152,7 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
                   <XAxis type="number" tick={{ fontSize: 12 }} />
                   <YAxis dataKey="range" type="category" tick={{ fontSize: 12 }} width={80} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#C72030" />
+                  <Bar dataKey="count" fill="#DA7756" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -183,7 +183,7 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
                   <XAxis dataKey="category" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="time" fill="#3B82F6" />
+                  <Bar dataKey="time" fill="#8E7BE0" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
