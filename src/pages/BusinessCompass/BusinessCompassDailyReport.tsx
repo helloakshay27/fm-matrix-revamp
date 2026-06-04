@@ -3301,78 +3301,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       <div className="flex-1 min-w-0">
                                         <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
                                       </div>
-                                      {(() => {
-                                        const d = item.originalData;
-                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                        let issueEffort: string | null = null;
-                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                          const totalMin = d.issue_allocation_times.reduce((sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0);
-                                          if (totalMin > 0) {
-                                            const h = Math.floor(totalMin / 60);
-                                            const m = totalMin % 60;
-                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                          }
-                                        }
-                                        let timeLeftLabel: string | null = null;
-                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                          const now = new Date();
-                                          const end = new Date(d.end_date);
-                                          end.setHours(23, 59, 59, 999);
-                                          const diff = end.getTime() - now.getTime();
-                                          if (diff > 0) {
-                                            const days = Math.floor(diff / 86400000);
-                                            const hrs = Math.floor((diff % 86400000) / 3600000);
-                                            const mins = Math.floor((diff % 3600000) / 60000);
-                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                            else timeLeftLabel = `${mins}m left`;
-                                          }
-                                        }
-                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
-                                        if (!hasInfo) return null;
-                                        return (
-                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
-                                            {endDate && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <CalendarIcon size={9} className="shrink-0" />
-                                                {endDate}
-                                              </span>
-                                            )}
-                                            {overdueLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                <AlertCircle size={9} className="shrink-0" />
-                                                {overdueLabel}
-                                              </span>
-                                            )}
-                                            {timeLeftLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                <Clock size={9} className="shrink-0" />
-                                                {timeLeftLabel}
-                                              </span>
-                                            )}
-                                            {effortEst && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <Clock size={9} className="shrink-0" />
-                                                Est: {effortEst}
-                                              </span>
-                                            )}
-                                            {issueEffort && (
-                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                Effort: {issueEffort}
-                                              </span>
-                                            )}
-                                            {item.type === "task" && d?.active_time_till_now && (
-                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
-                                              </span>
-                                            )}
-                                          </div>
-                                        );
-                                      })()}
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                        {item.priority}
+                                      </span>
                                     </div>
                                   ))}
                                 </div>
