@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, forwardRef, useEffect, useMemo } from "react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
@@ -61,6 +62,7 @@ import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
+import { createPortal } from "react-dom";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -68,6 +70,11 @@ const Transition = forwardRef(function Transition(
 ) {
   return <Slide direction="left" ref={ref} {...props} />;
 });
+
+const ModalPortal = ({ children }: { children: React.ReactNode }) => {
+  if (typeof document === "undefined") return null;
+  return createPortal(<>{children}</>, document.body);
+};
 
 interface AttachmentFile {
   id: number;
@@ -3093,101 +3100,88 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {!isCollapsed && (
                                 <div className="space-y-1.5 pl-1">
                                   {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex flex-col gap-1 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      <div className="flex items-center gap-2">
-                                        <Checkbox
-                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                          onCheckedChange={(checked) => {
-                                            if (checked && item.status !== "completed" && item.status !== "closed") {
-                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                            } else {
-                                              markDraftDirty();
-                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
-                                            }
-                                          }}
-                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                        />
-                                        <button
-                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                          title={`View ${item.type} details`}
-                                        >
-                                          <Eye size={14} className="text-amber-600" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                          title={`Edit ${item.type}`}
-                                        >
-                                          <Pencil size={13} />
-                                        </button>
-                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                          {item.type}
-                                        </span>
-                                        <div className="flex-1 min-w-0">
-                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
-                                        </div>
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                          {item.priority}
-                                        </span>
-                                        {/* Add to Tomorrow button */}
-                                        <button
-                                          onClick={() =>
-                                            addedToTomorrowIds.has(item.id)
-                                              ? removeItemFromTomorrow(item)
-                                              : addItemToTomorrow(item)
+                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      <Checkbox
+                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                        onCheckedChange={(checked) => {
+                                          if (checked && item.status !== "completed" && item.status !== "closed") {
+                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                          } else {
+                                            markDraftDirty();
+                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
                                           }
-                                          className={cn(
-                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                            addedToTomorrowIds.has(item.id)
-                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                              : "bg-white border-gray-200 text-gray-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/50 opacity-0 group-hover:opacity-100"
-                                          )}
-                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
-                                        >
-                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
-                                        </button>
+                                        }}
+                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                      />
+                                      <button
+                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                        title={`View ${item.type} details`}
+                                      >
+                                        <Eye size={14} className="text-amber-600" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                        title={`Edit ${item.type}`}
+                                      >
+                                        <Pencil size={13} />
+                                      </button>
+                                      {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                            disabled={playingTaskIds.has(item.originalData.id)}
+                                          >
+                                            <Pause size={14} className="text-orange-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                            disabled={playingTaskIds.has(item.originalData.id)}
+                                          >
+                                            {playingTaskIds.has(item.originalData.id)
+                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
+                                              : <Play size={14} className="text-green-500" />}
+                                          </button>
+                                        )
+                                      )}
+                                      {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.task_management?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                          >
+                                            <Pause size={14} className="text-orange-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                          >
+                                            {playingTaskIds.has(item.originalData.task_management_id)
+                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
+                                              : <Play size={14} className="text-green-500" />}
+                                          </button>
+                                        )
+                                      )}
+                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                        {item.type}
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
                                       </div>
-                                      {(() => {
-                                        const d = item.originalData;
-                                        const endDate = fmtDate(d?.target_date || d?.end_date);
-                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                        let issueEffort: string | null = null;
-                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                          const totalMin = d.issue_allocation_times.reduce(
-                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                          );
-                                          if (totalMin > 0) {
-                                            const h = Math.floor(totalMin / 60);
-                                            const m = totalMin % 60;
-                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                          }
-                                        }
-                                        const hasInfo = endDate || effortEst || issueEffort;
-                                        if (!hasInfo) return null;
-                                        return (
-                                          <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                            {endDate && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                <CalendarIcon size={9} className="shrink-0" />
-                                                {endDate}
-                                              </span>
-                                            )}
-                                            {effortEst && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                <Clock size={9} className="shrink-0" />
-                                                Est: {effortEst}
-                                              </span>
-                                            )}
-                                            {issueEffort && (
-                                              <span className="flex items-center gap-1 text-[10px] text-purple-500">
-                                                <Zap size={9} className="shrink-0" />
-                                                Effort: {issueEffort}
-                                              </span>
-                                            )}
-                                          </div>
-                                        );
-                                      })()}
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                        {item.priority}
+                                      </span>
                                     </div>
                                   ))}
                                 </div>
@@ -5991,64 +5985,68 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       {/* Start Task Confirmation */}
       {pendingPlayTaskId !== null && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <Play size={18} className="text-green-600" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <Play size={18} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mt-0.5">This will start the task.</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                <p className="text-xs text-gray-500 mt-0.5">This will start the task.</p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPlayTaskId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { const id = pendingPlayTaskId; setPendingPlayTaskId(null); handlePlayTask(id); }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                >
+                  Start
+                </button>
               </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setPendingPlayTaskId(null)}
-                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { const id = pendingPlayTaskId; setPendingPlayTaskId(null); handlePlayTask(id); }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-              >
-                Start
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Pause Task Confirmation */}
       {pendingPauseTaskId !== null && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                <Pause size={18} className="text-orange-500" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                  <Pause size={18} className="text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mt-0.5">This will pause the task.</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                <p className="text-xs text-gray-500 mt-0.5">This will pause the task.</p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPauseTaskId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { const id = pendingPauseTaskId; setPendingPauseTaskId(null); setPauseTaskId(id); setIsPauseModalOpen(true); }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+                >
+                  Pause
+                </button>
               </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setPendingPauseTaskId(null)}
-                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { const id = pendingPauseTaskId; setPendingPauseTaskId(null); setPauseTaskId(id); setIsPauseModalOpen(true); }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
-              >
-                Pause
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Pause Reason Modal */}
@@ -6065,38 +6063,40 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       {/* Confirm Action Modal */}
       {pendingConfirmAction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                <AlertCircle size={20} className="text-amber-600" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <AlertCircle size={20} className="text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                    This will {pendingConfirmAction.label}.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                <p className="text-xs text-gray-500 mt-0.5 capitalize">
-                  This will {pendingConfirmAction.label}.
-                </p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingConfirmAction(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    pendingConfirmAction.fn();
+                    setPendingConfirmAction(null);
+                  }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#333] rounded-lg transition-colors"
+                >
+                  Confirm
+                </button>
               </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setPendingConfirmAction(null)}
-                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  pendingConfirmAction.fn();
-                  setPendingConfirmAction(null);
-                }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#333] rounded-lg transition-colors"
-              >
-                Confirm
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
@@ -6120,44 +6120,46 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
-          <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
-        </div>
-        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-          Please provide a reason for pausing this task. This will help track the pause history.
-        </p>
-        <div className="mb-6">
-          <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Enter reason for pausing this task..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
-            rows={4}
-            disabled={isLoading}
-          />
-        </div>
-        <div className="flex gap-3 justify-end">
-          <button
-            onClick={onClose}
-            disabled={isLoading}
-            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
-          >
-            {isLoading ? "Processing..." : "Pause Task"}
-          </button>
+    <ModalPortal>
+      <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+        <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 shadow-xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
+            <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+            Please provide a reason for pausing this task. This will help track the pause history.
+          </p>
+          <div className="mb-6">
+            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Enter reason for pausing this task..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
+              rows={4}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
+            >
+              {isLoading ? "Processing..." : "Pause Task"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 
