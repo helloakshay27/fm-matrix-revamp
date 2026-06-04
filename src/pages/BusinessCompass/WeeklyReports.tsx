@@ -115,11 +115,12 @@ const AutoSizingTextarea = ({
     const adjust = React.useCallback(() => {
         const el = textareaRef.current;
         if (!el) return;
-        const scrollH = el.scrollHeight;
-        const currentH = el.offsetHeight;
-        if (scrollH > currentH) {
-            el.style.height = `${scrollH}px`;
-        }
+
+        // Reset height first
+        el.style.height = "auto";
+
+        // Set to content height
+        el.style.height = `${el.scrollHeight}px`;
     }, []);
 
     React.useEffect(() => {
@@ -164,6 +165,7 @@ type RemarkChipId =
 
 interface WeeklyReportDraft {
     wins?: string[];
+    winDates?: Record<number, string>;
     checkedWins?: Record<number, boolean>;
     starredWins?: Record<number, boolean>;
     starredCompletedItems?: Record<string, boolean>;
@@ -378,6 +380,7 @@ const WeeklyReports = () => {
     }>({});
     const [dailyKpiSummary, setDailyKpiSummary] = useState<any>(null);
     const [wins, setWins] = React.useState<string[]>([]);
+    const [winDates, setWinDates] = React.useState<Record<number, string>>({});
     const [checkedWins, setCheckedWins] = React.useState<Record<number, boolean>>(
         {}
     );
@@ -524,6 +527,8 @@ const WeeklyReports = () => {
     const applyStoredDraft = React.useCallback((draft: WeeklyReportDraft | null) => {
         if (!draft) return;
         if (Array.isArray(draft.wins)) setWins(draft.wins);
+        if (draft.winDates && typeof draft.winDates === "object")
+            setWinDates(draft.winDates);
         if (draft.checkedWins && typeof draft.checkedWins === "object")
             setCheckedWins(draft.checkedWins);
         if (draft.starredWins && typeof draft.starredWins === "object")
@@ -1884,6 +1889,7 @@ const WeeklyReports = () => {
         if (!canPersistDraftRef.current) return;
         const draft: WeeklyReportDraft = {
             wins,
+            winDates,
             checkedWins,
             starredWins,
             starredCompletedItems,
@@ -1901,6 +1907,7 @@ const WeeklyReports = () => {
         localStorage.setItem(weekDraftKey, JSON.stringify(draft));
     }, [
         wins,
+        winDates,
         checkedWins,
         starredWins,
         starredCompletedItems,
@@ -1920,7 +1927,9 @@ const WeeklyReports = () => {
 
     const handleAddWin = () => {
         const newIndex = wins.length;
+        const todayKey = new Date().toISOString().slice(0, 10);
         setWins([...wins, ""]);
+        setWinDates((prev) => ({ ...prev, [newIndex]: todayKey }));
         setCheckedWins((prev) => ({ ...prev, [newIndex]: true }));
     };
 
@@ -1928,11 +1937,17 @@ const WeeklyReports = () => {
         const newWins = wins.filter((_, i) => i !== index);
         setWins(newWins);
         const newChecked: Record<number, boolean> = {};
+        const newWinDates: Record<number, string> = {};
+        const newStarred: Record<number, boolean> = {};
         newWins.forEach((_, i) => {
             const oldIndex = i < index ? i : i + 1;
             newChecked[i] = checkedWins[oldIndex] ?? true;
+            if (winDates[oldIndex] !== undefined) newWinDates[i] = winDates[oldIndex];
+            if (starredWins[oldIndex] !== undefined) newStarred[i] = starredWins[oldIndex];
         });
         setCheckedWins(newChecked);
+        setWinDates(newWinDates);
+        setStarredWins(newStarred);
     };
 
     const handleWinChange = (index: number, value: string) => {
@@ -2842,7 +2857,7 @@ const WeeklyReports = () => {
                         </Card>
 
                         {/* Achievements */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
+                        <Card className={cn("overflow-hidden pb-4", cardChrome)}>
                             <div
                                 className={cn(
                                     "flex items-center justify-between",
@@ -2869,8 +2884,8 @@ const WeeklyReports = () => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="space-y-4 p-6">
-                                {wins.map((win, index) => (
+                            <div className="space-y-4 p-6 max-h-[420px] overflow-y-auto">
+                                {wins.map((win, index) => winDates[index] ? null : (
                                     <div
                                         key={index}
                                         className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
@@ -2904,11 +2919,15 @@ const WeeklyReports = () => {
                                                 )}
                                             />
                                         </button>
-                                        <Textarea
+                                        <AutoSizingTextarea
                                             value={win}
-                                            onChange={(e) => handleWinChange(index, e.target.value)}
+                                            onChange={(val: string) => handleWinChange(index, val)}
                                             placeholder="Describe your win…"
-                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
+                                            className={cn(
+                                                "min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0",
+                                                (checkedWins[index] ?? true) && "line-through opacity-60"
+                                            )}
+                                        // className="flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
                                         />
                                         <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
                                             Note
@@ -2923,11 +2942,31 @@ const WeeklyReports = () => {
                                     </div>
                                 ))}
 
-                                {mergedTasksIssues
-                                    .filter((item: any) =>
+                                {(() => {
+                                    const completedItems = mergedTasksIssues.filter((item: any) =>
                                         ["completed", "closed", "done"].includes(item.status)
-                                    )
-                                    .map((item: any) => (
+                                    );
+                                    const groups: Record<string, { kind: "item" | "win"; data?: any; winIndex?: number }[]> = {};
+                                    const noDateItems: { kind: "item" | "win"; data?: any; winIndex?: number }[] = [];
+                                    completedItems.forEach((item: any) => {
+                                        const raw = item.originalData?.completed_at || item.originalData?.updated_at;
+                                        if (raw) {
+                                            const key = raw.slice(0, 10);
+                                            if (!groups[key]) groups[key] = [];
+                                            groups[key].push({ kind: "item", data: item });
+                                        } else {
+                                            noDateItems.push({ kind: "item", data: item });
+                                        }
+                                    });
+                                    wins.forEach((_, index) => {
+                                        const date = winDates[index];
+                                        if (date) {
+                                            if (!groups[date]) groups[date] = [];
+                                            groups[date].push({ kind: "win", winIndex: index });
+                                        }
+                                    });
+                                    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+                                    const renderItem = (item: any) => (
                                         <div
                                             key={`completed-${item.id}`}
                                             className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
@@ -3060,7 +3099,143 @@ const WeeklyReports = () => {
                                                 <Pencil className="h-4 w-4" />
                                             </button>
                                         </div>
-                                    ))}
+                                    );
+                                    const renderWin = (winIndex: number) => (
+                                        <div
+                                            key={`win-${winIndex}`}
+                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                        >
+                                            <Checkbox
+                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                checked={checkedWins[winIndex] ?? true}
+                                                onCheckedChange={(checked) =>
+                                                    setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setStarredWins((prev) => ({ ...prev, [winIndex]: !prev[winIndex] }))
+                                                }
+                                                className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                            >
+                                                <Star
+                                                    className={cn(
+                                                        "h-4 w-4 transition-colors duration-200",
+                                                        starredWins[winIndex]
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-neutral-300 hover:text-yellow-300"
+                                                    )}
+                                                />
+                                            </button>
+                                            <AutoSizingTextarea
+                                                value={wins[winIndex]}
+                                                onChange={(val: string) => handleWinChange(winIndex, val)}
+                                                placeholder="Describe your win…"
+                                                className={cn(
+                                                    "flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200",
+                                                    (checkedWins[winIndex] ?? true) && "line-through opacity-60"
+                                                )}
+                                            />
+                                            <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                                Note
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveWin(winIndex)}
+                                                className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    );
+                                    return (
+                                        <>
+                                            {sortedKeys.map((dateKey) => {
+                                                const dt = new Date(dateKey + "T00:00:00");
+                                                const groupKey = `completed-${dateKey}`;
+                                                const isCollapsed = collapsedGroups.has(groupKey);
+                                                const label = `${format(dt, "EEEE")} · ${format(dt, "dd MMM yyyy")}`;
+                                                return (
+                                                    <div key={dateKey}>
+                                                        <button
+                                                            className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-emerald-50 hover:bg-emerald-100"
+                                                            onClick={() =>
+                                                                setCollapsedGroups((prev) => {
+                                                                    const next = new Set(prev);
+                                                                    if (next.has(groupKey)) next.delete(groupKey);
+                                                                    else next.add(groupKey);
+                                                                    return next;
+                                                                })
+                                                            }
+                                                        >
+                                                            <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-emerald-700">
+                                                                {label}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                                                {groups[dateKey].length}
+                                                            </span>
+                                                            <ChevronRight
+                                                                size={14}
+                                                                className={cn(
+                                                                    "transition-transform duration-200 ml-1 text-emerald-700",
+                                                                    !isCollapsed && "rotate-90"
+                                                                )}
+                                                            />
+                                                        </button>
+                                                        {!isCollapsed && (
+                                                            <div className="space-y-3 pl-1">
+                                                                {groups[dateKey].map((entry) =>
+                                                                    entry.kind === "win"
+                                                                        ? renderWin(entry.winIndex!)
+                                                                        : renderItem(entry.data)
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                            {noDateItems.length > 0 && (
+                                                <div>
+                                                    <button
+                                                        className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-slate-50 hover:bg-slate-100"
+                                                        onClick={() =>
+                                                            setCollapsedGroups((prev) => {
+                                                                const next = new Set(prev);
+                                                                if (next.has("completed-no-date")) next.delete("completed-no-date");
+                                                                else next.add("completed-no-date");
+                                                                return next;
+                                                            })
+                                                        }
+                                                    >
+                                                        <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-slate-600">
+                                                            No Date
+                                                        </span>
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                            {noDateItems.length}
+                                                        </span>
+                                                        <ChevronRight
+                                                            size={14}
+                                                            className={cn(
+                                                                "transition-transform duration-200 ml-1 text-slate-600",
+                                                                !collapsedGroups.has("completed-no-date") && "rotate-90"
+                                                            )}
+                                                        />
+                                                    </button>
+                                                    {!collapsedGroups.has("completed-no-date") && (
+                                                        <div className="space-y-3 pl-1">
+                                                            {noDateItems.map((entry) =>
+                                                                entry.kind === "win"
+                                                                    ? renderWin(entry.winIndex!)
+                                                                    : renderItem(entry.data)
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
 
                                 <div className="space-y-4 pt-4 border-t border-neutral-100">
                                     <div className="flex items-center justify-between">
@@ -4876,44 +5051,6 @@ const WeeklyReports = () => {
                                                             )}
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            {/* Tasks & Issues */}
-                                            <div className="mt-6 space-y-4">
-                                                <div className="flex items-center gap-2 text-orange-600">
-                                                    <AlertTriangle className="h-5 w-5" />
-                                                    <h4 className="font-bold text-sm">Tasks & Issues</h4>
-                                                </div>
-                                                {reportData.tasks_issues?.length > 0 ? (
-                                                    reportData.tasks_issues.map((ti: any, i: number) => (
-                                                        <div
-                                                            key={i}
-                                                            className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 flex items-center justify-between text-xs"
-                                                        >
-                                                            <div className="flex items-center gap-4">
-                                                                <X className="h-4 w-4 text-neutral-400" />
-                                                                <span className="font-bold text-neutral-800">
-                                                                    {ti.title}
-                                                                </span>
-                                                                <div className="flex gap-2">
-                                                                    <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">
-                                                                        Task
-                                                                    </Badge>
-                                                                    <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">
-                                                                        {ti.status || "open"}
-                                                                    </Badge>
-                                                                </div>
-                                                            </div>
-                                                            <Badge className="bg-[#b45309] hover:bg-[#b45309] text-white text-[10px] font-bold uppercase h-6 px-3">
-                                                                {ti.priority || "medium"}
-                                                            </Badge>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 text-sm text-neutral-500 italic">
-                                                        No issues recorded
-                                                    </div>
-                                                )}
                                             </div>
 
                                             {/* Remarks History */}

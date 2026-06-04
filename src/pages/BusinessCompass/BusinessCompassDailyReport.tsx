@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, forwardRef, useEffect, useMemo } from "react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
@@ -61,6 +62,7 @@ import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
+import { createPortal } from "react-dom";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -68,6 +70,11 @@ const Transition = forwardRef(function Transition(
 ) {
   return <Slide direction="left" ref={ref} {...props} />;
 });
+
+const ModalPortal = ({ children }: { children: React.ReactNode }) => {
+  if (typeof document === "undefined") return null;
+  return createPortal(<>{children}</>, document.body);
+};
 
 interface AttachmentFile {
   id: number;
@@ -348,6 +355,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
   const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
+  const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>({});
 
   const user =
     typeof localStorage !== "undefined"
@@ -2051,6 +2059,77 @@ const BusinessCompassDailyReport: React.FC = () => {
     fetchReportsList();
   }, [selectedMonth, selectedYear, isLocallyDeletedReport]);
 
+  const fetchAndCachePlanSources = React.useCallback(
+    (pairs: { type: string; id: number }[]) => {
+      if (!baseUrl || !token || !pairs.length) return;
+      const urlBase = `https://${baseUrl}`;
+      const headers = { Authorization: `Bearer ${token}` };
+      const fetchOne = async ({ type, id }: { type: string; id: number }) => {
+        const endpoint =
+          type === "task"
+            ? `${urlBase}/task_managements/${id}.json`
+            : type === "issue"
+            ? `${urlBase}/issues/${id}.json`
+            : `${urlBase}/todos/${id}.json`;
+        try {
+          const res = await axios.get(endpoint, { headers });
+          const data =
+            type === "task"
+              ? res.data?.data || res.data
+              : type === "issue"
+              ? res.data?.issue || res.data
+              : res.data?.todo || res.data;
+          return { key: `${type}:${id}`, data };
+        } catch {
+          return { key: `${type}:${id}`, data: null };
+        }
+      };
+      Promise.allSettled(pairs.map(fetchOne)).then((results) => {
+        const newEntries: Record<string, any> = {};
+        for (const r of results) {
+          if (r.status === "fulfilled" && r.value?.data) {
+            newEntries[r.value.key] = r.value.data;
+          }
+        }
+        if (Object.keys(newEntries).length) {
+          setPlanSourceCache((prev) => ({ ...prev, ...newEntries }));
+        }
+      });
+    },
+    [baseUrl, token]
+  );
+
+  // Fetch source data for plan items in historical records
+  React.useEffect(() => {
+    if (!reportsList.length) return;
+    const seen = new Set<string>();
+    const toFetch: { type: string; id: number }[] = [];
+    for (const report of reportsList) {
+      for (const item of getNonEmptyReportItems(report.report_data?.tomorrow_plan) as any[]) {
+        if (item?.source_id && item?.source_type) {
+          const key = `${item.source_type}:${item.source_id}`;
+          if (!seen.has(key) && !planSourceCache[key]) { seen.add(key); toFetch.push({ type: item.source_type, id: item.source_id }); }
+        }
+      }
+    }
+    fetchAndCachePlanSources(toFetch);
+  }, [reportsList]);
+
+  // Fetch source data for plan items in the active editing section
+  React.useEffect(() => {
+    if (!planningItems.length) return;
+    const seen = new Set<string>();
+    const toFetch: { type: string; id: number }[] = [];
+    for (const item of planningItems) {
+      if (item.source_id && item.source_type) {
+        const key = `${item.source_type}:${item.source_id}`;
+        const alreadyLive = mergedTasksIssues.some((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id);
+        if (!seen.has(key) && !planSourceCache[key] && !alreadyLive) { seen.add(key); toFetch.push({ type: item.source_type, id: item.source_id }); }
+      }
+    }
+    fetchAndCachePlanSources(toFetch);
+  }, [planningItems]);
+
   const handleSubmit = async () => {
     // Only completed items should count towards submitting successfully.
     // Use visibleAccomplishments (which excludes items already in auto-added section)
@@ -3093,101 +3172,88 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {!isCollapsed && (
                                 <div className="space-y-1.5 pl-1">
                                   {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex flex-col gap-1 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      <div className="flex items-center gap-2">
-                                        <Checkbox
-                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                          onCheckedChange={(checked) => {
-                                            if (checked && item.status !== "completed" && item.status !== "closed") {
-                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                            } else {
-                                              markDraftDirty();
-                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
-                                            }
-                                          }}
-                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                        />
-                                        <button
-                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                          title={`View ${item.type} details`}
-                                        >
-                                          <Eye size={14} className="text-amber-600" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                          title={`Edit ${item.type}`}
-                                        >
-                                          <Pencil size={13} />
-                                        </button>
-                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                          {item.type}
-                                        </span>
-                                        <div className="flex-1 min-w-0">
-                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
-                                        </div>
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                          {item.priority}
-                                        </span>
-                                        {/* Add to Tomorrow button */}
-                                        <button
-                                          onClick={() =>
-                                            addedToTomorrowIds.has(item.id)
-                                              ? removeItemFromTomorrow(item)
-                                              : addItemToTomorrow(item)
+                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      <Checkbox
+                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                        onCheckedChange={(checked) => {
+                                          if (checked && item.status !== "completed" && item.status !== "closed") {
+                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                          } else {
+                                            markDraftDirty();
+                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
                                           }
-                                          className={cn(
-                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                            addedToTomorrowIds.has(item.id)
-                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                              : "bg-white border-gray-200 text-gray-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/50 opacity-0 group-hover:opacity-100"
-                                          )}
-                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
-                                        >
-                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
-                                        </button>
+                                        }}
+                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                      />
+                                      <button
+                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                        title={`View ${item.type} details`}
+                                      >
+                                        <Eye size={14} className="text-amber-600" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                        title={`Edit ${item.type}`}
+                                      >
+                                        <Pencil size={13} />
+                                      </button>
+                                      {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                            disabled={playingTaskIds.has(item.originalData.id)}
+                                          >
+                                            <Pause size={14} className="text-orange-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                            disabled={playingTaskIds.has(item.originalData.id)}
+                                          >
+                                            {playingTaskIds.has(item.originalData.id)
+                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
+                                              : <Play size={14} className="text-green-500" />}
+                                          </button>
+                                        )
+                                      )}
+                                      {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.task_management?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                          >
+                                            <Pause size={14} className="text-orange-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                          >
+                                            {playingTaskIds.has(item.originalData.task_management_id)
+                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
+                                              : <Play size={14} className="text-green-500" />}
+                                          </button>
+                                        )
+                                      )}
+                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                        {item.type}
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
                                       </div>
-                                      {(() => {
-                                        const d = item.originalData;
-                                        const endDate = fmtDate(d?.target_date || d?.end_date);
-                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                        let issueEffort: string | null = null;
-                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                          const totalMin = d.issue_allocation_times.reduce(
-                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                          );
-                                          if (totalMin > 0) {
-                                            const h = Math.floor(totalMin / 60);
-                                            const m = totalMin % 60;
-                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                          }
-                                        }
-                                        const hasInfo = endDate || effortEst || issueEffort;
-                                        if (!hasInfo) return null;
-                                        return (
-                                          <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                            {endDate && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                <CalendarIcon size={9} className="shrink-0" />
-                                                {endDate}
-                                              </span>
-                                            )}
-                                            {effortEst && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                <Clock size={9} className="shrink-0" />
-                                                Est: {effortEst}
-                                              </span>
-                                            )}
-                                            {issueEffort && (
-                                              <span className="flex items-center gap-1 text-[10px] text-purple-500">
-                                                <Zap size={9} className="shrink-0" />
-                                                Effort: {issueEffort}
-                                              </span>
-                                            )}
-                                          </div>
-                                        );
-                                      })()}
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                        {item.priority}
+                                      </span>
                                     </div>
                                   ))}
                                 </div>
@@ -3636,130 +3702,172 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Your plan
                         </h4>
                         <div className="space-y-4">
-                          {planningItems.map((item) => (
-                            <div
-                              key={item.id}
-                              className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
-                            >
-                              <div className={cn(
-                                "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
-                                item.fromWeeklyPlan
-                                  ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
-                                  : "border-[#f3f4f6] hover:border-[#DA7756]/30"
-                              )}>
-                                <div className="flex items-center gap-4">
-                                  <Star
-                                    size={18}
-                                    className={cn(
-                                      "cursor-pointer transition-all shrink-0",
-                                      item.starred
-                                        ? "text-[#eab308] fill-[#eab308]"
-                                        : "text-gray-300 hover:text-gray-400"
-                                    )}
-                                    onClick={() => togglePlanningStar(item.id)}
-                                  />
-                                  <span className={cn(
-                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                    item.source_type === "task"
-                                      ? "bg-[#DA7756] text-white"
-                                      : item.source_type === "issue"
-                                        ? "bg-violet-600 text-white"
-                                        : item.source_type === "todo"
-                                          ? "bg-amber-500 text-white"
-                                          : "bg-gray-500 text-white"
-                                  )}>
-                                    {item.source_type || "Note"}
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={item.text}
-                                    onChange={(e) =>
-                                      updatePlanningText(item.id, e.target.value)
-                                    }
-                                    placeholder="What's your strategic priority?"
-                                    className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
-                                  />
-                                  {item.originalData?.priority && (
-                                    <span
-                                      className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                      style={{
-                                        backgroundColor: item.originalData.priority === "High" ? "#fee2e2" : item.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                        color: item.originalData.priority === "High" ? "#991b1b" : item.originalData.priority === "Medium" ? "#92400e" : "#166534",
-                                      }}
-                                    >
-                                      {item.originalData.priority}
-                                    </span>
-                                  )}
-                                  <div className="flex items-center gap-2">
-                                    <X
+                          {planningItems.map((item) => {
+                            const matchedTask = item.source_id && item.source_type
+                              ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
+                              : null;
+                            const cachedData = item.source_id && item.source_type
+                              ? planSourceCache[`${item.source_type}:${item.source_id}`]
+                              : null;
+                            const liveData = matchedTask?.originalData || cachedData || item.originalData;
+                            const livePriority = matchedTask?.priority || cachedData?.priority || item.originalData?.priority;
+
+                            return (
+                              <div
+                                key={item.id}
+                                className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
+                              >
+                                <div className={cn(
+                                  "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
+                                  item.fromWeeklyPlan
+                                    ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
+                                    : "border-[#f3f4f6] hover:border-[#DA7756]/30"
+                                )}>
+                                  <div className="flex items-center gap-4">
+                                    <Star
                                       size={18}
-                                      className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                                      onClick={() => removePlanningItem(item.id)}
+                                      className={cn(
+                                        "cursor-pointer transition-all shrink-0",
+                                        item.starred
+                                          ? "text-[#eab308] fill-[#eab308]"
+                                          : "text-gray-300 hover:text-gray-400"
+                                      )}
+                                      onClick={() => togglePlanningStar(item.id)}
                                     />
-                                  </div>
-                                </div>
-                                {item.originalData && (() => {
-                                  const d = item.originalData;
-                                  const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                  const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                  const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                  let timeLeftLabel: string | null = null;
-                                  if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
-                                    const now = new Date();
-                                    const end = new Date(d.end_date);
-                                    end.setHours(23, 59, 59, 999);
-                                    const diff = end.getTime() - now.getTime();
-                                    if (diff > 0) {
-                                      const days = Math.floor(diff / 86400000);
-                                      const hrs = Math.floor((diff % 86400000) / 3600000);
-                                      const mins = Math.floor((diff % 3600000) / 60000);
-                                      if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                      else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                      else timeLeftLabel = `${mins}m left`;
-                                    }
-                                  }
-                                  const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                  if (!hasInfo) return null;
-                                  return (
-                                    <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
-                                      {endDate && (
-                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                          <CalendarIcon size={9} className="shrink-0" />
-                                          {endDate}
-                                        </span>
-                                      )}
-                                      {overdueLabel && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                          <AlertCircle size={9} className="shrink-0" />
-                                          {overdueLabel}
-                                        </span>
-                                      )}
-                                      {timeLeftLabel && (
-                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                          <Clock size={9} className="shrink-0" />
-                                          {timeLeftLabel}
-                                        </span>
-                                      )}
-                                      {effortEst && (
-                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                          <Clock size={9} className="shrink-0" />
-                                          Est: {effortEst}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })()}
-                                {item.fromWeeklyPlan && (
-                                  <div className="pl-7 pt-1">
-                                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                      <CalendarIcon size={10} />
-                                      From Weekly Report
+                                    <span className={cn(
+                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.source_type === "task"
+                                        ? "bg-[#DA7756] text-white"
+                                        : item.source_type === "issue"
+                                          ? "bg-violet-600 text-white"
+                                          : item.source_type === "todo"
+                                            ? "bg-amber-500 text-white"
+                                            : "bg-gray-500 text-white"
+                                    )}>
+                                      {item.source_type || "Note"}
                                     </span>
+                                    <input
+                                      type="text"
+                                      value={item.text}
+                                      onChange={(e) =>
+                                        updatePlanningText(item.id, e.target.value)
+                                      }
+                                      placeholder="What's your strategic priority?"
+                                      className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                    />
+                                    {livePriority && (
+                                      <span
+                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                        style={{
+                                          backgroundColor: livePriority === "High" ? "#fee2e2" : livePriority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                          color: livePriority === "High" ? "#991b1b" : livePriority === "Medium" ? "#92400e" : "#166534",
+                                        }}
+                                      >
+                                        {livePriority}
+                                      </span>
+                                    )}
+                                    <div className="flex items-center gap-1.5">
+                                      {item.source_id && item.source_type && (
+                                        <>
+                                          <button
+                                            onClick={() => {
+                                              if (item.source_type === "todo") {
+                                                const td = matchedTask?.originalData || cachedData;
+                                                if (td) { setSelectedTodo(td); setIsDetailsModalOpen(true); }
+                                              } else {
+                                                navigate(item.source_type === "task" ? `/vas/tasks/${item.source_id}` : `/vas/issues/${item.source_id}`);
+                                              }
+                                            }}
+                                            className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                            title={`View ${item.source_type} details`}
+                                          >
+                                            <Eye size={14} className="text-amber-600" />
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const src = matchedTask?.originalData || cachedData;
+                                              if (item.source_type === "task") { setEditTaskData(src); setIsEditTaskModalOpen(true); }
+                                              else if (item.source_type === "issue") { setEditIssueData(src); setIsEditIssueModalOpen(true); }
+                                              else if (item.source_type === "todo") { setEditTodoData(src); setIsEditTodoModalOpen(true); }
+                                            }}
+                                            className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                            title={`Edit ${item.source_type}`}
+                                          >
+                                            <Pencil size={13} />
+                                          </button>
+                                        </>
+                                      )}
+                                      <X
+                                        size={18}
+                                        className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                        onClick={() => removePlanningItem(item.id)}
+                                      />
+                                    </div>
                                   </div>
-                                )}
+                                  {liveData && (() => {
+                                    const d = liveData;
+                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                    let timeLeftLabel: string | null = null;
+                                    if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                      const now = new Date();
+                                      const end = new Date(d.end_date);
+                                      end.setHours(23, 59, 59, 999);
+                                      const diff = end.getTime() - now.getTime();
+                                      if (diff > 0) {
+                                        const days = Math.floor(diff / 86400000);
+                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                        else timeLeftLabel = `${mins}m left`;
+                                      }
+                                    }
+                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                    if (!hasInfo) return null;
+                                    return (
+                                      <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
+                                        {endDate && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <CalendarIcon size={9} className="shrink-0" />
+                                            {endDate}
+                                          </span>
+                                        )}
+                                        {overdueLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                            <AlertCircle size={9} className="shrink-0" />
+                                            {overdueLabel}
+                                          </span>
+                                        )}
+                                        {timeLeftLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                            <Clock size={9} className="shrink-0" />
+                                            {timeLeftLabel}
+                                          </span>
+                                        )}
+                                        {effortEst && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <Clock size={9} className="shrink-0" />
+                                            Est: {effortEst}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                  {item.fromWeeklyPlan && (
+                                    <div className="pl-7 pt-1">
+                                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                        <CalendarIcon size={10} />
+                                        From Weekly Report
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -5991,64 +6099,68 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       {/* Start Task Confirmation */}
       {pendingPlayTaskId !== null && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <Play size={18} className="text-green-600" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <Play size={18} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mt-0.5">This will start the task.</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                <p className="text-xs text-gray-500 mt-0.5">This will start the task.</p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPlayTaskId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { const id = pendingPlayTaskId; setPendingPlayTaskId(null); handlePlayTask(id); }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                >
+                  Start
+                </button>
               </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setPendingPlayTaskId(null)}
-                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { const id = pendingPlayTaskId; setPendingPlayTaskId(null); handlePlayTask(id); }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-              >
-                Start
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Pause Task Confirmation */}
       {pendingPauseTaskId !== null && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                <Pause size={18} className="text-orange-500" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                  <Pause size={18} className="text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mt-0.5">This will pause the task.</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                <p className="text-xs text-gray-500 mt-0.5">This will pause the task.</p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPauseTaskId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { const id = pendingPauseTaskId; setPendingPauseTaskId(null); setPauseTaskId(id); setIsPauseModalOpen(true); }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+                >
+                  Pause
+                </button>
               </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setPendingPauseTaskId(null)}
-                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { const id = pendingPauseTaskId; setPendingPauseTaskId(null); setPauseTaskId(id); setIsPauseModalOpen(true); }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
-              >
-                Pause
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Pause Reason Modal */}
@@ -6065,38 +6177,40 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       {/* Confirm Action Modal */}
       {pendingConfirmAction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                <AlertCircle size={20} className="text-amber-600" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <AlertCircle size={20} className="text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                    This will {pendingConfirmAction.label}.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                <p className="text-xs text-gray-500 mt-0.5 capitalize">
-                  This will {pendingConfirmAction.label}.
-                </p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingConfirmAction(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    pendingConfirmAction.fn();
+                    setPendingConfirmAction(null);
+                  }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#333] rounded-lg transition-colors"
+                >
+                  Confirm
+                </button>
               </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setPendingConfirmAction(null)}
-                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  pendingConfirmAction.fn();
-                  setPendingConfirmAction(null);
-                }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#333] rounded-lg transition-colors"
-              >
-                Confirm
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
@@ -6120,44 +6234,46 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
-          <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
-        </div>
-        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-          Please provide a reason for pausing this task. This will help track the pause history.
-        </p>
-        <div className="mb-6">
-          <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Enter reason for pausing this task..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
-            rows={4}
-            disabled={isLoading}
-          />
-        </div>
-        <div className="flex gap-3 justify-end">
-          <button
-            onClick={onClose}
-            disabled={isLoading}
-            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
-          >
-            {isLoading ? "Processing..." : "Pause Task"}
-          </button>
+    <ModalPortal>
+      <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+        <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 shadow-xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
+            <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+            Please provide a reason for pausing this task. This will help track the pause history.
+          </p>
+          <div className="mb-6">
+            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Enter reason for pausing this task..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
+              rows={4}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
+            >
+              {isLoading ? "Processing..." : "Pause Task"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 
