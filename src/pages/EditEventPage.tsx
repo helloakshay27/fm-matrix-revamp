@@ -51,7 +51,8 @@ export const EditEventPage = () => {
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
-    eventTime: "",
+    eventStartTime: "",
+    eventEndTime: "",
     eventLocation: "",
     memberCapacity: "",
     perMemberLimit: "",
@@ -95,7 +96,8 @@ export const EditEventPage = () => {
           amountPerPerson: localStorage.getItem('amountPerPerson') || prev.amountPerPerson,
           fromDate: localStorage.getItem('fromDate') || prev.fromDate,
           toDate: localStorage.getItem('toDate') || prev.toDate,
-          eventTime: localStorage.getItem('eventTime') || prev.eventTime,
+          eventStartTime: localStorage.getItem('eventStartTime') || prev.eventStartTime,
+          eventEndTime: localStorage.getItem('eventEndTime') || prev.eventEndTime,
           eventLocation: localStorage.getItem('eventLocation') || prev.eventLocation,
           memberCapacity: localStorage.getItem('memberCapacity') || prev.memberCapacity,
           perMemberLimit: localStorage.getItem('perMemberLimit') || prev.perMemberLimit,
@@ -122,7 +124,7 @@ export const EditEventPage = () => {
         // Cleanup localStorage
         [
           'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
-          'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
+          'eventStartTime', 'eventEndTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
           'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
           'selectedTechParks'
         ].forEach(key => localStorage.removeItem(key));
@@ -166,7 +168,8 @@ export const EditEventPage = () => {
             eventDescription: event.description || "",
             fromDate: fromTime ? format(fromTime, "yyyy-MM-dd") : "",
             toDate: toTime ? format(toTime, "yyyy-MM-dd") : "",
-            eventTime: fromTime ? format(fromTime, "HH:mm") : "",
+            eventStartTime: fromTime ? format(fromTime, "HH:mm") : "",
+            eventEndTime: toTime ? format(toTime, "HH:mm") : "",
             memberCapacity: event.capacity?.toString() || "",
             rsvp: event.rsvp_action === "1" ? "yes" : "no",
             amountPerPerson: event.amount_per_member || "",
@@ -302,7 +305,8 @@ export const EditEventPage = () => {
       localStorage.setItem('amountPerPerson', formData.amountPerPerson);
       localStorage.setItem('fromDate', formData.fromDate);
       localStorage.setItem('toDate', formData.toDate);
-      localStorage.setItem('eventTime', formData.eventTime);
+      localStorage.setItem('eventStartTime', formData.eventStartTime);
+      localStorage.setItem('eventEndTime', formData.eventEndTime);
       localStorage.setItem('eventLocation', formData.eventLocation);
       localStorage.setItem('memberCapacity', formData.memberCapacity);
       localStorage.setItem('perMemberLimit', formData.perMemberLimit);
@@ -383,8 +387,12 @@ export const EditEventPage = () => {
       toast.error("To Date is required");
       return false;
     }
-    if (!formData.eventTime) {
-      toast.error("Event Time is required");
+    if (!formData.eventStartTime) {
+      toast.error("Event Start Time is required");
+      return false;
+    }
+    if (!formData.eventEndTime) {
+      toast.error("Event End Time is required");
       return false;
     }
     if (!formData.eventLocation.trim()) {
@@ -414,8 +422,8 @@ export const EditEventPage = () => {
 
       formDataToSend.append('event[event_name]', formData.eventName);
       formDataToSend.append("event[amount_per_member]", formData.amountPerPerson);
-      formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventTime}`);
-      formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventTime}`);
+      formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventStartTime}`);
+      formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventEndTime}`);
       formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
       formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
@@ -456,7 +464,7 @@ export const EditEventPage = () => {
       // Clean up localStorage after successful submission
       [
         'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
-        'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
+        'eventStartTime', 'eventEndTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
         'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
         'selectedTechParks', 'selectedCommunityIds'
       ].forEach(key => localStorage.removeItem(key));
@@ -671,11 +679,34 @@ export const EditEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Time<span className="text-[#C72030]">*</span></>}
-                  id="eventTime"
-                  name="eventTime"
+                  label={<>Event Start Time<span className="text-[#C72030]">*</span></>}
+                  id="eventStartTime"
+                  name="eventStartTime"
                   type="time"
-                  value={formData.eventTime}
+                  value={formData.eventStartTime}
+                  onChange={handleInputChange}
+                  placeholder="hh:mm"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <TextField
+                  label={<>Event End Time<span className="text-[#C72030]">*</span></>}
+                  id="eventEndTime"
+                  name="eventEndTime"
+                  type="time"
+                  value={formData.eventEndTime}
                   onChange={handleInputChange}
                   placeholder="hh:mm"
                   fullWidth
@@ -1015,7 +1046,8 @@ export const EditEventPage = () => {
                     localStorage.setItem('amountPerPerson', formData.amountPerPerson);
                     localStorage.setItem('fromDate', formData.fromDate);
                     localStorage.setItem('toDate', formData.toDate);
-                    localStorage.setItem('eventTime', formData.eventTime);
+                    localStorage.setItem('eventStartTime', formData.eventStartTime);
+                    localStorage.setItem('eventEndTime', formData.eventEndTime);
                     localStorage.setItem('eventLocation', formData.eventLocation);
                     localStorage.setItem('memberCapacity', formData.memberCapacity);
                     localStorage.setItem('perMemberLimit', formData.perMemberLimit);

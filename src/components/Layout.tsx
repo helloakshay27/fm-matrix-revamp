@@ -66,8 +66,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
-    hostname === "recess-club.panchshil.com" 
-  location.pathname.startsWith("/club-management");
+    hostname === "recess-club.panchshil.com" ||
+    location.pathname.startsWith("/club-management");
 
   // Detect embedded mode - hide sidebar and header when embedded
   const isEmbedded = isEmbeddedMode();
@@ -151,15 +151,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       isOmanSite,
     });
 
-    if (isViSite) {
-      console.warn("✅ Rendering ViSidebar");
-      return <ViSidebar />;
-    }
-
     // Check if user is in Club Management route - render ClubSidebar
     if (isClubManagementRoute) {
       console.warn("✅ Rendering ClubSidebar");
       return <ClubSidebar />;
+    }
+
+    if (isViSite) {
+      console.warn("✅ Rendering ViSidebar");
+      return <ViSidebar />;
     }
 
     if (

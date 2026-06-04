@@ -32,6 +32,7 @@ export interface User {
     role_for: string;
   };
   user_type?: string;
+  user_roster_id?: number;
 }
 
 export interface LoginResponse {
