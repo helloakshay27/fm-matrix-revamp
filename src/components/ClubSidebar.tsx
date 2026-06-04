@@ -117,6 +117,11 @@ const modulesByPackage = {
       icon: Users,
       href: "/pulse/community",
     },
+    {
+      name: "Community",
+      icon: Users,
+      href: "/pulse/community",
+    },
     // {
     //   name: "Invoices",
     //   icon: FileText,

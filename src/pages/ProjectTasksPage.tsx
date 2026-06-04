@@ -690,9 +690,9 @@ const ProjectTasksPage = () => {
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
     const [statuses, setStatuses] = useState([])
     const [taskType, setTaskType] = useState<"all" | "my">(() => {
-        const saved = sessionStorage.getItem("taskType");
-        if (saved) {
-            return saved as "all" | "my";
+        const urlTaskType = searchParams.get("task_type");
+        if (urlTaskType === "all" || urlTaskType === "my") {
+            return urlTaskType;
         }
         // Fallback to path-based logic on initial load
         const path = location.pathname;
@@ -703,12 +703,12 @@ const ProjectTasksPage = () => {
         }
         return "all";
     });
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(() => {
+        const urlPage = Number(searchParams.get("page"));
+        return urlPage > 0 ? urlPage : 1;
+    });
     const [searchTerm, setSearchTerm] = useState<string>('');
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
-    useEffect(() => {
-        sessionStorage.setItem("taskType", taskType);
-    }, [taskType]);
 
     // Sorting state
     const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -935,6 +935,16 @@ const ProjectTasksPage = () => {
         localStorage.setItem("taskPageViewPreference", selectedView);
         updateQueryParams({ view: selectedView }, true);
     }, [selectedView, updateQueryParams]);
+
+    // Sync taskType to URL
+    useEffect(() => {
+        updateQueryParams({ task_type: taskType }, true);
+    }, [taskType, updateQueryParams]);
+
+    // Sync currentPage to URL
+    useEffect(() => {
+        updateQueryParams({ page: currentPage }, true);
+    }, [currentPage, updateQueryParams]);
 
     // Handle click outside for view dropdown
     useEffect(() => {

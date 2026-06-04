@@ -1839,9 +1839,9 @@ const CustomersEdit = () => {
             : `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`;
             
         if (isEdit) {
-            if (editIds.billingId) payload.customer.default_billing_address_attributes.id = editIds.billingId;
-            if (editIds.shippingId) payload.customer.default_shipping_address_attributes.id = editIds.shippingId;
-            if (editIds.primaryGstDetailId) payload.customer.primary_gst_detail_attributes.id = editIds.primaryGstDetailId;
+            if (editIds.billingId) payload.lock_account_customer.default_billing_address_attributes.id = editIds.billingId;
+            if (editIds.shippingId) payload.lock_account_customer.default_shipping_address_attributes.id = editIds.shippingId;
+            if (editIds.primaryGstDetailId) payload.lock_account_customer.primary_gst_detail_attributes.id = editIds.primaryGstDetailId;
         }
 
         setLoading(true);

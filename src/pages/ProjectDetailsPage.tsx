@@ -344,6 +344,9 @@ const ProjectDetailsPage = () => {
         attachments: [],
         project_team: {
             project_team_members: [],
+            team_lead: {
+                name: ""
+            }
         },
     })
 
@@ -803,7 +806,7 @@ const ProjectDetailsPage = () => {
                         {tab === "Member" && (
                             <Members
                                 allNames={projectMembers}
-                                projectOwner={project.project_owner_name}
+                                projectOwner={project?.project_team?.team_lead?.name}
                             />
                         )}
                         {tab === "Documents" && (

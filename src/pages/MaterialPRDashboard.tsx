@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -121,6 +122,7 @@ export const MaterialPRDashboard = () => {
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [materialPR, setMaterialPR] = useState([]);
@@ -130,8 +132,10 @@ export const MaterialPRDashboard = () => {
     supplierName: "",
     approvalStatus: "",
   });
+  // Restore page from URL query param (set by list-back navigation)
+  const urlPage = Number(new URLSearchParams(location.search).get("page")) || 1;
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
   });
@@ -212,7 +216,7 @@ export const MaterialPRDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData({ page: urlPage });
   }, []);
 
   // Invalidate cache and re-fetch when site changes while page is open
@@ -355,7 +359,9 @@ export const MaterialPRDashboard = () => {
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/finance/material-pr/details/${item.id}`);
+            navigate(`/finance/material-pr/details/${item.id}`, {
+              state: { returnTo: `/finance/material-pr?page=${pagination.current_page}` },
+            });
           }}
         >
           <Eye className="w-4 h-4" />

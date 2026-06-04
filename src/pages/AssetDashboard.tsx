@@ -81,6 +81,7 @@ import AssetStatisticsSelector from '@/components/AssetStatisticsSelector';
 import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
 import type { Asset as TableAsset } from '@/hooks/useAssets';
 import { DataArray } from '@mui/icons-material';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -708,7 +709,9 @@ export const AssetDashboard = () => {
   };
 
   const handleViewAsset = (assetId: string) => {
-    navigate(`/maintenance/asset/details/${assetId}`);
+    navigate(`/maintenance/asset/details/${assetId}`, {
+      state: { returnTo: buildReturnToPath(location.pathname, location.search, location.hash) },
+    });
   };
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
