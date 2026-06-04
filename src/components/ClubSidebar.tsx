@@ -117,11 +117,6 @@ const modulesByPackage = {
       icon: Users,
       href: "/pulse/community",
     },
-    {
-      name: "Community",
-      icon: Users,
-      href: "/pulse/community",
-    },
     // {
     //   name: "Invoices",
     //   icon: FileText,
@@ -277,7 +272,7 @@ const modulesByPackage = {
       subItems: [
         { name: "Customers", href: "/accounting/customers" },
         { name: "Quotes", href: "/accounting/quotes" },
-        // { name: "Retainer Invoices", href: "/accounting/retainer-invoices" },
+        // { name: "Retainer Invoice", href: "/accounting/retainer-invoices" },
         { name: "Sales Order", href: "/accounting/sales-order" },
         { name: "Invoices ", href: "/accounting/invoices/list" },
 
@@ -294,7 +289,7 @@ const modulesByPackage = {
       name: "Purchases",
       icon: Truck,
       subItems: [
-        { name: "Vendor", href: "/accounting/vendor" },
+        { name: "Vendor", href: "/maintenance/vendor" },
         { name: "Expense", href: "/accounting/expense" },
         { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
         { name: "Purchase Order", href: "/accounting/purchase-order" },
@@ -355,10 +350,7 @@ const modulesByPackage = {
         },
         {
           name: " Approval Matrix",
-          href: "/accounting/asset-setup/approval-matrix",
-
-
-
+          href: "/settings/asset-setup/approval-matrix",
         },
         {
           name: "Organization",
@@ -474,11 +466,6 @@ const modulesByPackage = {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
-
-
-
-
-
 
         // {
         //   name: "Account Type Summary",
@@ -681,10 +668,6 @@ const modulesByPackage = {
             //   name: "Billable Expense Details",
             //   href: "/accounting/reports/billable-expense-details",
             // },
-
-
-
-
           ],
         },
 
@@ -775,7 +758,6 @@ const modulesByPackage = {
             //   name: "TCS Summary (Form No. 27EQ)",
             //   href: "/accounting/reports/tcs-summary-form-27eq",
             // },
-
           ],
         },
 
