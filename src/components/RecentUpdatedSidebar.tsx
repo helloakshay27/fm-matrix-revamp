@@ -412,8 +412,9 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
         className="bg-white border flex flex-col transition-all duration-300"
         style={{
           boxShadow: "0px 4px 14.2px 0px #0000001A",
-          width: isCollapsed ? 48 : "100%",
-          minWidth: isCollapsed ? 48 : undefined,
+          width: isCollapsed ? 48 : 350,
+          minWidth: isCollapsed ? 48 : 350,
+          maxWidth: isCollapsed ? 48 : 350,
           height: "100%",
           overflow: "hidden",
         }}
@@ -449,7 +450,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
               title={isCollapsed ? "Expand" : "Collapse"}
               className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
             >
-              {isCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
           </div>
         </div>

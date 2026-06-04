@@ -19,7 +19,7 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
   }, [data]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-4 h-full flex flex-col">
+    <div className="bg-white rounded-xl p-5">
       <h3 className="font-semibold text-base mb-4">Site Wise Adoption Rate</h3>
       <div className="flex-1 overflow-auto">
         <table className="min-w-full border text-sm text-center">

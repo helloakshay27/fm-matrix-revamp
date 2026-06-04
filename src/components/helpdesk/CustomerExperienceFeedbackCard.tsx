@@ -32,7 +32,7 @@ export const CustomerExperienceFeedbackCard: React.FC<Props> = ({ data }) => {
   const filledStars = Math.round(rating);
 
   return (
-    <div className="bg-white rounded-xl p-5 h-full">
+    <div className="bg-white rounded-xl p-5">
       <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
         Customer Rating
       </h3>

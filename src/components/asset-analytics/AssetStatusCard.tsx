@@ -36,7 +36,7 @@ export const AssetStatusCard: React.FC<AssetStatusCardProps> = ({ data, onDownlo
   const total = chartData.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm h-full flex flex-col">
+    <div className="bg-white rounded-xl shadow-sm">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
         <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           Asset Status Distribution

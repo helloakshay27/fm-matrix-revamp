@@ -11,9 +11,9 @@ export const CommunityEngagementMetricsCard: React.FC<Props> = ({ data }) => {
   const newUsers = data?.data?.new_users ?? data?.data?.summary?.new_users ?? '-';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-4 h-full flex flex-col">
-      <h3 className="font-semibold text-base mb-3">Community Engagement Metrics</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1">
+    <div className="bg-white rounded-xl p-5">
+      <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>Community Engagement Metrics</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="bg-[#DAD6C9] rounded p-3 flex flex-col justify-between">
           <div className="flex items-start gap-2 mb-3">
             <p className="text-2xl font-bold text-[#C72030] flex-shrink-0">{totalActive}</p>
