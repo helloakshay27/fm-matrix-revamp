@@ -8,7 +8,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       # Checkout code
       - name: Checkout Code
@@ -21,13 +20,22 @@ jobs:
           node-version: 20
           cache: npm
 
+      # Copy .env from EC2 to runner before building
+      - name: Copy .env from EC2
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          scp -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/var/www/html/uat/fm-matrix-revamp/.env .env
+
       # Install dependencies & build (Vite)
       - name: Install & Build
         run: |
           npm ci
           npm run build
 
-      # Clean old deployment on EC2 (VERY IMPORTANT for Vite)
+      # Clean old deployment on EC2
       - name: Clean old build on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -57,3 +65,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo nginx -t && sudo systemctl reload nginx
+
+      # Cleanup SSH key from runner
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
