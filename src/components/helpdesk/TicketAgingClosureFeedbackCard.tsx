@@ -112,7 +112,7 @@ export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureDa
         )}
       </div>
       <table className="min-w-full border-collapse text-sm text-center">
-        <thead className="bg-[#ded9cd] text-[#b62527] font-semibold">
+        <thead className="bg-[#D97655] text-white font-semibold">
           <tr className="border-t border-gray-200 border-b border-gray-200">
             <th className="border-x border-gray-200 px-2 py-3 text-left">Site Name</th>
             {centerNames.map((name, i) => (
@@ -124,7 +124,7 @@ export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureDa
           {rows.map((row, rIdx) => {
             const isLast = rIdx === rows.length - 1;
             return (
-              <tr key={rIdx} className={`${row.shaded ? 'bg-[#ded9cd]' : ''} ${isLast ? 'border-b border-gray-200' : ''}`}>
+              <tr key={rIdx} className={`${row.shaded ? 'bg-[#f5e8e4]' : ''} ${isLast ? 'border-b border-gray-200' : ''}`}>
                 <td className="border-x border-gray-200 px-2 py-3 text-left font-medium">{row.label}</td>
                 {row.values.map((v: any, idx: number) => (
                   <td key={idx} className="border-x border-gray-200 px-2 py-3">{v ?? '-'}</td>

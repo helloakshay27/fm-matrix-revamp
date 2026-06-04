@@ -34,7 +34,7 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
     secondaryLight: '#E8E5DD',
     tertiaryLight: '#E5E9E9',
   };
-  const COLORS = [palette.tertiary, palette.primary];
+  const COLORS = ['#76CDC1', '#E39090', '#CDCAF5'];
 
   const handleDownload = async () => {
     if (onDownload) {

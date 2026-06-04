@@ -39,12 +39,11 @@ const percentToAgeBand = (p: number | string | null | undefined): string => {
 };
 
 const agingColors: Record<string,string> = {
-  // Updated to the colors provided by the user
-  '0-10': 'bg-[#C4B89D]',
-  '11-20': 'bg-[#D5DBDB]',
-  '21-30': 'bg-[#DAD6C9]',
-  '31-40': 'bg-[#C4B89D]',
-  '40+': 'bg-[#F6F4EE]',
+  '0-10': 'bg-[#EFEFFB]',
+  '11-20': 'bg-[#B7DCD4]',
+  '21-30': 'bg-[#85BDF6]',
+  '31-40': 'bg-[#E39090]',
+  '40+': 'bg-[#E39090]',
 };
 
 const displayPercent = (p: any): string => {
@@ -53,7 +52,10 @@ const displayPercent = (p: any): string => {
   return s.endsWith('%') ? s : `${s}%`;
 };
 
-const getTextColor = () => 'text-black';
+const getTextColor = (band: string) => {
+  if (['31-40', '40+'].includes(band)) return 'text-white';
+  return 'text-black';
+};
 
 export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data, onDownload }) => {
   const apiMetrics = data?.data?.metrics ?? data?.metrics ?? [];
@@ -184,8 +186,8 @@ export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data, onDownload
               <div key={index} className="relative h-14 border border-[#C4AE9D] bg-white min-w-0 overflow-hidden px-3">
                 <div className={`absolute inset-0 [clip-path:polygon(0_0,100%_0,100%_100%)] ${agingColors[item.agingBand] || 'bg-white'}`}></div>
                 <div className="absolute inset-0 [clip-path:polygon(0_100%,0_0,100%_100%)] bg-white"></div>
-                <div className={`absolute top-1 right-1 text-[11px] ${getTextColor()}`}><span className="font-bold">{displayPercent(item.volume)}</span></div>
-                <div className={`absolute bottom-1 left-2 text-[11px] ${getTextColor()}`}>{displayPercent(item.closure)}</div>
+                <div className={`absolute top-1 right-1 text-[11px] ${getTextColor(item.agingBand)}`}><span className="font-bold">{displayPercent(item.volume)}</span></div>
+                <div className={`absolute bottom-1 left-2 text-[11px] text-black`}>{displayPercent(item.closure)}</div>
               </div>
             ))}
           </div>

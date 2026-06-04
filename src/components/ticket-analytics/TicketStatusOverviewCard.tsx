@@ -28,6 +28,14 @@ const statusLabels: Record<string, string> = {
   Completed: 'Completed',
 };
 
+const getCardColors = (key: string): { bg: string; numColor: string } => {
+  const openKeys = ['total_open', 'Open', 'Reopen 1', 'Reopen', 'critical_issues_p1'];
+  const closedKeys = ['Closed', 'Completed'];
+  if (openKeys.includes(key)) return { bg: 'rgba(227,144,144,0.15)', numColor: '#D97655' };
+  if (closedKeys.includes(key)) return { bg: 'rgba(183,220,212,0.30)', numColor: '#2E7D6B' };
+  return { bg: '#EFEFFB', numColor: '#6B5EA8' };
+};
+
 const getStatusIcon = (key: string): React.ReactNode => {
   const icons: Record<string, React.ReactNode> = {
     total_issues: <ListTodo className="w-6 h-6 text-[#C72030]" />,
@@ -62,27 +70,27 @@ export const TicketStatusOverviewCard: React.FC<TicketStatusOverviewCardProps> =
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
-              <Card className="bg-[#F6F4EE] border border-gray-100 rounded-lg flex-1">
+              <Card className="border border-gray-100 rounded-lg flex-1" style={{ backgroundColor: 'rgba(227,144,144,0.15)' }}>
                 <CardContent className="p-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[#F6F4EE]">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(227,144,144,0.15)' }}>
                       <AlertCircle className="w-6 h-6 text-[#C72030]" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-2xl font-bold ">{openTickets}</div>
+                      <div className="text-2xl font-bold" style={{ color: '#D97655' }}>{openTickets}</div>
                       <div className="text-sm text-gray-700 mt-1">Open</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-[#F6F4EE] border border-gray-100 rounded-lg flex-1">
+              <Card className="border border-gray-100 rounded-lg flex-1" style={{ backgroundColor: 'rgba(183,220,212,0.30)' }}>
                 <CardContent className="p-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[#F6F4EE]">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(183,220,212,0.30)' }}>
                       <CheckCircle className="w-6 h-6 text-[#C72030]" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-2xl font-bold ">{closedTickets}</div>
+                      <div className="text-2xl font-bold" style={{ color: '#2E7D6B' }}>{closedTickets}</div>
                       <div className="text-sm text-gray-700 mt-1">Closed</div>
                     </div>
                   </div>
@@ -122,21 +130,24 @@ export const TicketStatusOverviewCard: React.FC<TicketStatusOverviewCardProps> =
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
-          {cards.map(card => (
-            <Card key={card.key} className="bg-[#F6F4EE] border border-gray-100 rounded-lg">
+          {cards.map(card => {
+            const { bg, numColor } = getCardColors(card.key);
+            return (
+            <Card key={card.key} className="border border-gray-100 rounded-lg" style={{ backgroundColor: bg }}>
               <CardContent className="p-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[#F6F4EE]">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: bg }}>
                     {getStatusIcon(card.key)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-2xl font-bold">{card.value}</div>
+                    <div className="text-2xl font-bold" style={{ color: numColor }}>{card.value}</div>
                     <div className="text-sm text-gray-700 mt-1">{card.label}</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

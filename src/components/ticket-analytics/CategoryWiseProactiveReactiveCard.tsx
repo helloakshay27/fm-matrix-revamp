@@ -6,12 +6,12 @@ import { TicketCategoryData } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Color palette with lighter shades
+// Color palette
 const CHART_COLORS = {
-  proactiveOpen: '#8B7355',      // Darker brown for Proactive Open
-  proactiveClosed: '#C4B99D',    // Original primary for Proactive Closed
-  reactiveOpen: '#B8AFA0',       // Medium shade for Reactive Open
-  reactiveClosed: '#DAD6CA',     // Original secondary for Reactive Closed
+  proactiveOpen: '#9EC8BA',
+  proactiveClosed: '#DA7756',
+  reactiveOpen: '#8E7BE0',
+  reactiveClosed: '#798C5E',
 };
 
 interface CategoryWiseProactiveReactiveCardProps {

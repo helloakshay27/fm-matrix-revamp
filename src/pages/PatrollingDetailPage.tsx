@@ -586,7 +586,7 @@ export const PatrollingDetailPage: React.FC = () => {
         if (type === "weekdays" && items.length <= 7) {
           const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           const weekdayList = items.map((d) => {
-            const dayNum = parseInt(d);
+            const dayNum = parseInt(d) % 7;
             return dayNames[dayNum] || d;
           });
           return weekdayList.join(", ");

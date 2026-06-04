@@ -176,10 +176,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       return valid
         ? { isValid: true, message: "" }
         : {
-            isValid: false,
-            message:
-              "Please enter a valid email address (e.g. name@example.com).",
-          };
+          isValid: false,
+          message:
+            "Please enter a valid email address (e.g. name@example.com).",
+        };
     }
 
     // Treat as mobile: strip spaces/dashes, allow optional leading +
@@ -188,9 +188,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     return valid
       ? { isValid: true, message: "" }
       : {
-          isValid: false,
-          message: "Please enter a valid mobile number (7–15 digits).",
-        };
+        isValid: false,
+        message: "Please enter a valid mobile number (7–15 digits).",
+      };
   };
 
   const validatePassword = (password: string) => {
@@ -422,6 +422,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
         });
 
         saveBaseUrl(baseUrl);
@@ -467,6 +468,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
         });
 
         saveBaseUrl(baseUrl);
@@ -503,6 +505,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
+        user_roster_id: response?.user_roster_id,
       });
       saveToken(response.access_token);
       setToken(response.access_token);
@@ -636,13 +639,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
-              step === currentStep
-                ? "bg-[#C72030] text-white shadow-lg scale-110"
-                : step < currentStep
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 text-gray-400"
-            }`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
+              ? "bg-[#C72030] text-white shadow-lg scale-110"
+              : step < currentStep
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-400"
+              }`}
           >
             {step < currentStep ? (
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -654,19 +656,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       </div>
       <div className="flex justify-center items-center gap-2">
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
       </div>
       <p className="text-gray-400 text-sm mt-3 font-medium">
@@ -875,7 +874,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       />
 
 
-  {/* CAPTCHA — shown only for Vodafone Idea */}
+      {/* CAPTCHA — shown only for Vodafone Idea */}
       {selectedOrganization?.name === "Vodafone Idea" && (
         <div className="mb-6">
           <p className="text-gray-700 font-medium text-sm mb-2">Please enter the CAPTCHA below</p>
@@ -948,7 +947,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         .
       </div>
 
-    
+
       {/* Login Button */}
       <Button
         onClick={handleLogin}
@@ -998,9 +997,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
             {/* Logo */}
             <div
-              className={`text-center mb-5 flex flex-col items-center space-y-2 ${
-                isViSite ? "-mt-4" : ""
-              }`}
+              className={`text-center mb-5 flex flex-col items-center space-y-2 ${isViSite ? "-mt-4" : ""
+                }`}
             >
               {isOmanSite ? (
                 <svg
@@ -1126,11 +1124,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               )}
 
               <p
-                className={`${
-                  isViSite
-                    ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
-                    : "text-gray-600 text-sm font-medium"
-                }`}
+                className={`${isViSite
+                  ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
+                  : "text-gray-600 text-sm font-medium"
+                  }`}
               >
                 Sign in to your account
               </p>

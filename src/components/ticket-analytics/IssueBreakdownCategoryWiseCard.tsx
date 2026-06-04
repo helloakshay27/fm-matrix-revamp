@@ -48,22 +48,22 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
           <div className="min-w-[600px] px-3 sm:px-0">
             <table className="w-full border-collapse border border-gray-300">
               <thead>
-                <tr style={{ backgroundColor: '#EDE4D8' }}>
-                  <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">
+                <tr style={{ backgroundColor: '#D97655' }}>
+                  <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-white">
                     Category
                   </th>
-                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                     Total Issues
                   </th>
                   {statusKeys.map(key => (
-                    <th key={key} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                    <th key={key} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                       {key}
                     </th>
                   ))}
-                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                     Critical P1
                   </th>
-                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                     Avg TAT Days
                   </th>
                 </tr>
@@ -91,7 +91,7 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
                   </tr>
                 ))}
                 {totals && (
-                  <tr style={{ backgroundColor: '#EDE4D8' }}>
+                  <tr style={{ backgroundColor: '#f5e8e4' }}>
                     <td className="border border-gray-300 p-2 sm:p-3 font-bold text-black text-xs sm:text-sm">
                       Total
                     </td>

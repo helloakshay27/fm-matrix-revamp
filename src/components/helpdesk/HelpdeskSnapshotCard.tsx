@@ -67,11 +67,29 @@ export const HelpdeskSnapshotCard: React.FC<Props> = ({ data }) => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {items.map((it) => {
           const labelText = String(it.label || "");
-          const isOpen = /open/i.test(labelText);
-          const isClosed = /closed/i.test(labelText);
 
-          // color classes are handled by Tailwind; exact typography is applied inline to match design
-          const valueColorClass = isOpen ? "text-red-600" : isClosed ? "text-green-600" : "text-black";
+          // Determine card background and value color by ticket type
+          let cardBg: string;
+          let valueColor: string;
+          if (/total tickets/i.test(labelText)) {
+            cardBg = '#EFEFFB';
+            valueColor = '#6B5EA8';
+          } else if (/open tickets/i.test(labelText)) {
+            cardBg = 'rgba(227,144,144,0.15)';
+            valueColor = '#D97655';
+          } else if (/closed tickets/i.test(labelText)) {
+            cardBg = 'rgba(183,220,212,0.30)';
+            valueColor = '#2E7D6B';
+          } else if (/fm tickets/i.test(labelText)) {
+            cardBg = '#EFEFFB';
+            valueColor = '#6B5EA8';
+          } else if (/customer tickets/i.test(labelText)) {
+            cardBg = 'rgba(133,189,246,0.20)';
+            valueColor = '#85BDF6';
+          } else {
+            cardBg = '#EFEFFB';
+            valueColor = '#6B5EA8';
+          }
 
           const labelClass = `mt-1 text-black`;
 
@@ -93,15 +111,15 @@ export const HelpdeskSnapshotCard: React.FC<Props> = ({ data }) => {
           }
 
           return (
-            <div key={it.label} className="bg-[#F6F4EE] rounded px-4 py-6 text-center flex flex-col items-center justify-center">
+            <div key={it.label} className="rounded px-4 py-6 text-center flex flex-col items-center justify-center" style={{ backgroundColor: cardBg }}>
               <div
-                className={valueColorClass}
                 style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 700,
                   fontSize: '24px',
                   lineHeight: '100%',
                   letterSpacing: '0%',
+                  color: valueColor,
                 }}
               >
                 {it.value}

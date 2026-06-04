@@ -813,7 +813,7 @@ export const RosterEditPage: React.FC = () => {
       if (!response.ok) throw new Error("API error");
 
       toast.success("Roster template updated successfully!");
-      navigate(`/settings/roster/detail/${id}`);
+      navigate(`/settings/account/roster`);
     } catch (error) {
       console.error("Error updating roster template:", error);
       toast.error("Failed to update roster template. Please try again.");
