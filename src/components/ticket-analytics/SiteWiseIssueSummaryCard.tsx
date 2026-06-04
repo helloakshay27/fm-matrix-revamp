@@ -7,8 +7,8 @@ interface SiteWiseIssueSummaryCardProps {
   className?: string;
 }
 
-const HEADER_BG = '#EDE4D8';
-const HEADER_TEXT = '#000000';
+const HEADER_BG = '#D97655';
+const HEADER_TEXT = '#FFFFFF';
 const ROW_ALT = '#f8f7f4';
 
 export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> = ({
@@ -88,8 +88,8 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
                   <tr>
                     {allCategories.map(cat => (
                       <React.Fragment key={cat}>
-                        <th style={{ ...thStyle, backgroundColor: '#EDE4D8', fontWeight: 500 }}>Open</th>
-                        <th style={{ ...thStyle, backgroundColor: '#EDE4D8', fontWeight: 500 }}>Closed</th>
+                        <th style={{ ...thStyle, backgroundColor: '#D97655', color: '#FFFFFF', fontWeight: 500 }}>Open</th>
+                        <th style={{ ...thStyle, backgroundColor: '#D97655', color: '#FFFFFF', fontWeight: 500 }}>Closed</th>
                       </React.Fragment>
                     ))}
                   </tr>

@@ -3222,89 +3222,84 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {!isCollapsed && (
                                 <div className="space-y-1.5 pl-1">
                                   {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex flex-col rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      <div className="flex items-center gap-2 p-2.5">
-                                        <Checkbox
-                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                          onCheckedChange={(checked) => {
-                                            if (checked && item.status !== "completed" && item.status !== "closed") {
-                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                            } else {
-                                              markDraftDirty();
-                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
-                                            }
-                                          }}
-                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                        />
-                                        <button
-                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                          title={`View ${item.type} details`}
-                                        >
-                                          <Eye size={14} className="text-amber-600" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                          title={`Edit ${item.type}`}
-                                        >
-                                          <Pencil size={13} />
-                                        </button>
-                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.is_started ? (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Pause task"
-                                              disabled={playingTaskIds.has(item.originalData.id)}
-                                            >
-                                              <Pause size={14} className="text-orange-500" />
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Start task"
-                                              disabled={playingTaskIds.has(item.originalData.id)}
-                                            >
-                                              {playingTaskIds.has(item.originalData.id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
-                                            </button>
-                                          )
-                                        )}
-                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.task_management?.is_started ? (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Pause task"
-                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                            >
-                                              <Pause size={14} className="text-orange-500" />
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Start task"
-                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                            >
-                                              {playingTaskIds.has(item.originalData.task_management_id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
-                                            </button>
-                                          )
-                                        )}
-                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                          {item.type}
-                                        </span>
-                                        <div className="flex-1 min-w-0">
-                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
-                                        </div>
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                          {item.priority}
-                                        </span>
+                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      <Checkbox
+                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                        onCheckedChange={(checked) => {
+                                          if (checked && item.status !== "completed" && item.status !== "closed") {
+                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                          } else {
+                                            markDraftDirty();
+                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                          }
+                                        }}
+                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                      />
+                                      <button
+                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                        title={`View ${item.type} details`}
+                                      >
+                                        <Eye size={14} className="text-amber-600" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                        title={`Edit ${item.type}`}
+                                      >
+                                        <Pencil size={13} />
+                                      </button>
+                                      {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                            disabled={playingTaskIds.has(item.originalData.id)}
+                                          >
+                                            <Pause size={14} className="text-red-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                            disabled={playingTaskIds.has(item.originalData.id)}
+                                          >
+                                            {playingTaskIds.has(item.originalData.id)
+                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                              : <Play size={14} className="text-green-600" />}
+                                          </button>
+                                        )
+                                      )}
+                                      {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.task_management?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                          >
+                                            <Pause size={14} className="text-red-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                          >
+                                            {playingTaskIds.has(item.originalData.task_management_id)
+                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                              : <Play size={14} className="text-green-600" />}
+                                          </button>
+                                        )
+                                      )}
+                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                        {item.type}
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
                                       </div>
                                       {(() => {
                                         const d = item.originalData;
@@ -3590,7 +3585,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               title="Pause task"
                                               disabled={playingTaskIds.has(item.originalData.id)}
                                             >
-                                              <Pause size={14} className="text-orange-500" />
+                                              <Pause size={14} className="text-red-500" />
                                             </button>
                                           ) : (
                                             <button
@@ -3600,8 +3595,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               disabled={playingTaskIds.has(item.originalData.id)}
                                             >
                                               {playingTaskIds.has(item.originalData.id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
                                             </button>
                                           )
                                         )}
@@ -3615,7 +3610,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               title="Pause task"
                                               disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                             >
-                                              <Pause size={14} className="text-orange-500" />
+                                              <Pause size={14} className="text-red-500" />
                                             </button>
                                           ) : (
                                             <button
@@ -3625,8 +3620,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                             >
                                               {playingTaskIds.has(item.originalData.task_management_id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
                                             </button>
                                           )
                                         )}
@@ -6260,8 +6255,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
             <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                  <Pause size={18} className="text-orange-500" />
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <Pause size={18} className="text-red-500" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Are you sure?</p>

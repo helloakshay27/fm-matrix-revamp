@@ -99,10 +99,7 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
   const [approvalLevels, setApprovalLevels] = useState<any[]>([]);
   const [activityInvoiceId, setActivityInvoiceId] = useState<number | null>(null);
   const [activityView, setActivityView] = useState<"activity" | "approval">("activity");
-  const [filters, setFilters] = useState({
-    fromDate: "01/03/2026",
-    toDate: "31/03/2026",
-  });
+  const [filters, setFilters] = useState({ fromDate: "", toDate: "" });
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -117,13 +114,15 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
       const token = localStorage.getItem("token");
       const lockAccountId = localStorage.getItem("lock_account_id");
 
+      const params: Record<string, any> = {
+        lock_account_id: lockAccountId,
+        "q[recurring_eq]": 1,
+      };
+      if (fromDate) params["q[date_gteq]"] = fromDate;
+      if (toDate) params["q[date_lteq]"] = toDate;
+
       const response = await axios.get(`https://${baseUrl}/lock_account_invoices.json`, {
-        params: {
-          lock_account_id: lockAccountId,
-          "q[recurring_eq]": 1,
-          "q[date_gteq]": fromDate,
-          "q[date_lteq]": toDate,
-        },
+        params,
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -253,7 +252,9 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
           {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Recurring Invoice Details</h1>
-          <p className="mt-1 text-sm text-[#475467]">From {filters.fromDate} To {filters.toDate}</p>
+          {filters.fromDate && filters.toDate && (
+            <p className="mt-1 text-sm text-[#475467]">From {filters.fromDate} To {filters.toDate}</p>
+          )}
         </div>
 
         <div className="p-4">

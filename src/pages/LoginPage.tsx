@@ -368,6 +368,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
         });
 
         saveBaseUrl(baseUrl);
@@ -413,6 +414,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
         });
 
         saveBaseUrl(baseUrl);
@@ -449,6 +451,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
+        user_roster_id: response?.user_roster_id,
       });
       saveToken(response.access_token);
       setToken(response.access_token);
@@ -777,9 +780,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
             {/* Logo */}
             <div
-              className={`text-center mb-5 flex flex-col items-center space-y-2 ${
-                isViSite ? "-mt-4" : ""
-              }`}
+              className={`text-center mb-5 flex flex-col items-center space-y-2 ${isViSite ? "-mt-4" : ""
+                }`}
             >
               {isOmanSite ? (
                 <svg
@@ -905,11 +907,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               )}
 
               <p
-                className={`${
-                  isViSite
-                    ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
-                    : "text-gray-600 text-sm font-medium"
-                }`}
+                className={`${isViSite
+                  ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
+                  : "text-gray-600 text-sm font-medium"
+                  }`}
               >
                 Sign in to your account
               </p>

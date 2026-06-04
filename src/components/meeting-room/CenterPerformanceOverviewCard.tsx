@@ -39,7 +39,7 @@ export const CenterPerformanceOverviewCard: React.FC<CenterPerformanceOverviewCa
       </div>
       <div className="p-4 overflow-x-auto">
         <table className="min-w-full border text-sm text-center">
-          <thead className="bg-[#ded9cd] text-[#b62527] font-semibold text-sm">
+          <thead className="bg-[#D97655] text-white font-semibold text-sm">
             <tr>
               <th className="border border-black p-3 text-left align-middle" rowSpan={2}>
                 Site Name

@@ -3608,9 +3608,9 @@ const WeeklyReports = () => {
                                                                                             title="Pause task"
                                                                                         >
                                                                                             {updatingPlayPauseIds[item.id] ? (
-                                                                                                <Loader2 size={14} className="text-orange-500 animate-spin" />
+                                                                                                <Loader2 size={14} className="text-red-500 animate-spin" />
                                                                                             ) : (
-                                                                                                <Pause size={14} className="text-orange-500" />
+                                                                                                <Pause size={14} className="text-red-500" />
                                                                                             )}
                                                                                         </button>
                                                                                     ) : (
@@ -3624,9 +3624,9 @@ const WeeklyReports = () => {
                                                                                             title="Start task"
                                                                                         >
                                                                                             {updatingPlayPauseIds[item.id] ? (
-                                                                                                <Loader2 size={14} className="text-green-500 animate-spin" />
+                                                                                                <Loader2 size={14} className="text-green-600 animate-spin" />
                                                                                             ) : (
-                                                                                                <Play size={14} className="text-green-500" />
+                                                                                                <Play size={14} className="text-green-600" />
                                                                                             )}
                                                                                         </button>
                                                                                     )
@@ -3770,6 +3770,195 @@ const WeeklyReports = () => {
                                 high-level analysis?
                             </p>
                         </div>
+
+                        {/* Plan for coming week */}
+                        <Card className="rounded-[16px] border border-[#DA7756]/20 overflow-hidden bg-white shadow-sm">
+                            <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
+                                <div className="flex items-center gap-3">
+                                    <Calendar className="h-5 w-5 text-[#DA7756]" />
+                                    <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                        Plan for Coming Week
+                                    </h3>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Badge className={badgePoints}>
+                                        {weeklyScore.breakdown.planning}/20 PTS
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <div className="space-y-5">
+                                {upcomingDays.map((day) => (
+                                    <div key={day.key} className="space-y-3">
+                                        <div
+                                            className={cn(
+                                                "flex items-center justify-between rounded-[10px] border px-3 py-2",
+                                                day.canAdd
+                                                    ? "border-[#DA7756]/15 bg-[#fafafa]"
+                                                    : "border-gray-100 bg-gray-50"
+                                            )}
+                                        >
+                                            <span
+                                                className={cn(
+                                                    "text-xs font-bold uppercase tracking-wider",
+                                                    day.canAdd ? "text-gray-500" : "text-gray-400"
+                                                )}
+                                            >
+                                                {day.short}
+                                            </span>
+                                            {day.canAdd ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
+                                                    className="inline-flex items-center gap-1 rounded-[8px] bg-[#DA7756] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#c9673f]"
+                                                >
+                                                    <Plus className="h-3 w-3" /> Add
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] text-neutral-400">—</span>
+                                            )}
+                                        </div>
+                                        <div className="space-y-3">
+                                            {/* Next week scheduled items — read-only, not in payload */}
+                                            {nextWeekScheduledLoading && !nextWeekScheduledItems.length ? (
+                                                <div className="flex items-center gap-2 py-3 text-gray-300">
+                                                    <Loader2 size={13} className="animate-spin shrink-0" />
+                                                    <span className="text-xs font-medium">Fetching upcoming assignments...</span>
+                                                </div>
+                                            ) : (
+                                                nextWeekScheduledByDay[day.key]?.map((item: any) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className="relative flex min-h-[56px] items-center gap-3 rounded-[10px] border border-gray-200 bg-gray-50 px-4 py-2 shadow-sm cursor-not-allowed select-none"
+                                                    >
+                                                        <span className={cn(
+                                                            "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                            item.type === "task" ? "bg-[#DA7756]/10 text-[#9e4f36]" : item.type === "issue" ? "bg-violet-100 text-violet-700" : "bg-yellow-100 text-yellow-700"
+                                                        )}>
+                                                            {item.type}
+                                                        </span>
+                                                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-500">
+                                                            {item.title}
+                                                        </p>
+                                                        {item.priority && (
+                                                            <span
+                                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                                style={{
+                                                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                }}
+                                                            >
+                                                                {item.priority}
+                                                            </span>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (item.type === "todo") {
+                                                                    setSelectedTodo(item.originalData);
+                                                                    setIsTodoDetailsModalOpen(true);
+                                                                } else {
+                                                                    navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                                }
+                                                            }}
+                                                            className="relative z-20 shrink-0 rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                            title={`View ${item.type}`}
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            )}
+                                            {dayPlans[day.key]?.map((planObj, index) => (
+                                                <div
+                                                    key={planObj.id}
+                                                    id={`plan-${planObj.id}`}
+                                                    className="relative flex min-h-[56px] items-center gap-3 rounded-[10px] border border-[#f3f4f6] bg-[#fafafa] px-4 py-2 shadow-sm transition-all hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleTogglePlanStar(day.key, index)}
+                                                        className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
+                                                    >
+                                                        <Star
+                                                            className={cn(
+                                                                "h-[18px] w-[18px] transition-colors duration-200",
+                                                                planObj.starred
+                                                                    ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                                                    : "text-gray-300 hover:text-gray-400"
+                                                            )}
+                                                        />
+                                                    </button>
+                                                    <span className={cn(
+                                                        "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                        planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-gray-500 text-white"
+                                                    )}>
+                                                        {planObj.source_type || "Note"}
+                                                    </span>
+                                                    {planObj.source_type ? (
+                                                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-700 cursor-not-allowed select-none">
+                                                            {planObj.text}
+                                                        </p>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            value={planObj.text}
+                                                            onChange={(event) =>
+                                                                handlePlanChange(day.key, index, event.target.value)
+                                                            }
+                                                            placeholder="What's your strategic priority?"
+                                                            className="min-w-0 flex-1 bg-transparent border-none p-0 text-sm font-medium text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
+                                                        />
+                                                    )}
+                                                    {planObj.originalData?.priority && (
+                                                        <span
+                                                            className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                            style={{
+                                                                backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                                            }}
+                                                        >
+                                                            {planObj.originalData.priority}
+                                                        </span>
+                                                    )}
+                                                    <div className="flex items-center gap-1 relative z-20 shrink-0">
+                                                        {!planObj.source_type && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleMovePlan(day.key, index, "up")}
+                                                                    disabled={index === 0}
+                                                                    className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                                                                >
+                                                                    <ChevronUp className="h-4 w-4" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleMovePlan(day.key, index, "down")}
+                                                                    disabled={index === (dayPlans[day.key]?.length ?? 0) - 1}
+                                                                    className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                                                                >
+                                                                    <ChevronDown className="h-4 w-4" />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemovePlan(day.key, index)}
+                                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            </div>
+                        </Card>
 
                         {/* SOPs Health & Status */}
                         <Card className={cn("overflow-hidden", cardChrome)}>
@@ -3917,307 +4106,6 @@ const WeeklyReports = () => {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        </Card>
-
-                        {/* Plan for coming week */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
-                            <div
-                                className={cn(
-                                    "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between",
-                                    sectionHeader
-                                )}
-                            >
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Target className="h-5 w-5 text-[#DA7756]" />
-                                    <h3 className="font-bold text-neutral-900">
-                                        Plan for Coming Week
-                                    </h3>
-                                    <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700">
-                                        Optional
-                                    </Badge>
-                                    <Info className="h-4 w-4 cursor-help text-neutral-400" />
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Badge className={badgePoints}>
-                                        {weeklyScore.breakdown.planning}/20 pts
-                                    </Badge>
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-4 p-4">
-                                {upcomingDays.map((day) => (
-                                    <div key={day.key} className="flex flex-col gap-2">
-                                        <div
-                                            className={cn(
-                                                "flex items-center justify-between rounded-xl border border-[#DA7756]/15 p-3",
-                                                day.color
-                                            )}
-                                        >
-                                            <span
-                                                className={cn(
-                                                    "text-sm font-bold",
-                                                    day.canAdd ? "text-[#DA7756]" : "text-neutral-400"
-                                                )}
-                                            >
-                                                {day.short}
-                                            </span>
-                                            {day.canAdd ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2.5 py-1.5 text-xs font-bold text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45"
-                                                >
-                                                    <Plus className="h-3 w-3" /> Add
-                                                </button>
-                                            ) : (
-                                                <span className="text-[10px] text-neutral-400">—</span>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            {/* Next week scheduled items — read-only, not in payload */}
-                                            {nextWeekScheduledLoading && !nextWeekScheduledItems.length ? (
-                                                <div className="flex items-center gap-2 ml-2 py-2">
-                                                    <Loader2 size={12} className="animate-spin text-gray-400" />
-                                                    <span className="text-[11px] text-gray-400">Loading scheduled...</span>
-                                                </div>
-                                            ) : (
-                                                nextWeekScheduledByDay[day.key]?.map((item: any) => (
-                                                    <div
-                                                        key={item.id}
-                                                        className="relative ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm transition-all duration-200 hover:border-[#DA7756]/30 hover:shadow-md"
-                                                    >
-                                                        <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={cn(
-                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                                )}>
-                                                                    {item.type}
-                                                                </span>
-                                                                {item.priority && (
-                                                                    <span
-                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
-                                                                        style={{
-                                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                                                        }}
-                                                                    >
-                                                                        {item.priority}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
-                                                                {item.title}
-                                                            </p>
-                                                            {(() => {
-                                                                const d = item.originalData;
-                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                                                let timeLeftLabel: string | null = null;
-                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                                                    const now = new Date();
-                                                                    const end = new Date(d.end_date);
-                                                                    end.setHours(23, 59, 59, 999);
-                                                                    const diff = end.getTime() - now.getTime();
-                                                                    if (diff > 0) {
-                                                                        const days = Math.floor(diff / 86400000);
-                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                                                        else timeLeftLabel = `${mins}m left`;
-                                                                    }
-                                                                }
-                                                                const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                                                if (!hasInfo) return null;
-                                                                return (
-                                                                    <div className="flex items-center gap-3 flex-wrap">
-                                                                        {endDate && (
-                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                                {endDate}
-                                                                            </span>
-                                                                        )}
-                                                                        {overdueLabel && (
-                                                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                                                <AlertCircle className="h-2.5 w-2.5 shrink-0" />
-                                                                                {overdueLabel}
-                                                                            </span>
-                                                                        )}
-                                                                        {timeLeftLabel && (
-                                                                            <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                                {timeLeftLabel}
-                                                                            </span>
-                                                                        )}
-                                                                        {effortEst && (
-                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                                Est: {effortEst}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })()}
-                                                        </div>
-                                                        <div className="flex flex-col gap-1 relative z-20">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    if (item.type === "todo") {
-                                                                        setSelectedTodo(item.originalData);
-                                                                        setIsTodoDetailsModalOpen(true);
-                                                                    } else {
-                                                                        navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
-                                                                    }
-                                                                }}
-                                                                className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                title={`View ${item.type}`}
-                                                            >
-                                                                <Eye className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                            {dayPlans[day.key]?.map((planObj, index) => (
-                                                <div
-                                                    key={planObj.id}
-                                                    id={`plan-${planObj.id}`}
-                                                    className="relative ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm transition-all duration-200 hover:border-[#DA7756]/30 hover:shadow-md"
-                                                >
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleTogglePlanStar(day.key, index)}
-                                                        className="mt-1 shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
-                                                    >
-                                                        <Star
-                                                            className={cn(
-                                                                "h-4 w-4 transition-colors duration-200",
-                                                                planObj.starred
-                                                                    ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                                                    : "text-neutral-300 hover:text-yellow-300"
-                                                            )}
-                                                        />
-                                                    </button>
-                                                    <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className={cn(
-                                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-gray-500 text-white"
-                                                            )}>
-                                                                {planObj.source_type || "Note"}
-                                                            </span>
-                                                            {planObj.originalData?.priority && (
-                                                                <span
-                                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
-                                                                    style={{
-                                                                        backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                        color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
-                                                                    }}
-                                                                >
-                                                                    {planObj.originalData.priority}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {planObj.source_type ? (
-                                                            <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
-                                                                {planObj.text}
-                                                            </p>
-                                                        ) : (
-                                                            <AutoSizingTextarea
-                                                                value={planObj.text}
-                                                                onChange={(val: string) =>
-                                                                    handlePlanChange(day.key, index, val)
-                                                                }
-                                                                placeholder="What's your strategic priority?"
-                                                                className="rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
-                                                            />
-                                                        )}
-                                                        {planObj.originalData && (() => {
-                                                            const d = planObj.originalData;
-                                                            const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                                            const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                            const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                                            let timeLeftLabel: string | null = null;
-                                                            if (planObj.source_type === "issue" && d?.end_date && !overdueLabel) {
-                                                                const now = new Date();
-                                                                const end = new Date(d.end_date);
-                                                                end.setHours(23, 59, 59, 999);
-                                                                const diff = end.getTime() - now.getTime();
-                                                                if (diff > 0) {
-                                                                    const days = Math.floor(diff / 86400000);
-                                                                    const hrs = Math.floor((diff % 86400000) / 3600000);
-                                                                    const mins = Math.floor((diff % 3600000) / 60000);
-                                                                    if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                                                    else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                                                    else timeLeftLabel = `${mins}m left`;
-                                                                }
-                                                            }
-                                                            const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                                            if (!hasInfo) return null;
-                                                            return (
-                                                                <div className="flex items-center gap-3 flex-wrap">
-                                                                    {endDate && (
-                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                            <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                            {endDate}
-                                                                        </span>
-                                                                    )}
-                                                                    {overdueLabel && (
-                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                                            <AlertCircle className="h-2.5 w-2.5 shrink-0" />
-                                                                            {overdueLabel}
-                                                                        </span>
-                                                                    )}
-                                                                    {timeLeftLabel && (
-                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                            {timeLeftLabel}
-                                                                        </span>
-                                                                    )}
-                                                                    {effortEst && (
-                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                            Est: {effortEst}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                    <div className="flex flex-col gap-1 relative z-20">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemovePlan(day.key, index)}
-                                                            className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756]"
-                                                        >
-                                                            <X className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleMovePlan(day.key, index, "up")}
-                                                            disabled={index === 0 || !!planObj.source_type}
-                                                            className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            <ChevronUp className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleMovePlan(day.key, index, "down")}
-                                                            disabled={index === (dayPlans[day.key]?.length ?? 0) - 1 || !!planObj.source_type}
-                                                            className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            <ChevronDown className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
                         </Card>
 

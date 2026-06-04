@@ -78,7 +78,7 @@ const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data, onDownload })
         <div className="overflow-x-auto">
           <table className="min-w-full border text-xs text-center">
             <thead>
-              <tr className="bg-[#ded9cd] text-[#b62527]">
+              <tr className="bg-[#D97655] text-white">
                 <th className="border p-2 text-left">Site</th>
                 {headers.map((h) => (
                   <th key={h} className="border p-2 whitespace-nowrap">{h}</th>

@@ -5,14 +5,14 @@ import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Color palette with lighter shades
+// Color palette
 const CHART_COLORS = {
-  primary: '#C4B99D',
-  secondary: '#DAD6CA',
-  tertiary: '#D5DBDB',
-  primaryLight: '#DDD4C4',    // Lighter shade of primary
-  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
-  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+  primary: '#9EC8BA',
+  secondary: '#DA7756',
+  tertiary: '#8E7BE0',
+  primaryLight: '#EDC488',
+  secondaryLight: '#798C5E',
+  tertiaryLight: '#CDCAF5',
 };
 
 interface ResolutionTATData {
@@ -161,13 +161,13 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm border-collapse border border-gray-300">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 p-2 text-left">Category</th>
-                    <th className="border border-gray-300 p-2 text-center">Breached</th>
-                    <th className="border border-gray-300 p-2 text-center">Achieved</th>
-                    <th className="border border-gray-300 p-2 text-center">Total</th>
-                    <th className="border border-gray-300 p-2 text-center">% Breached</th>
-                    <th className="border border-gray-300 p-2 text-center">% Achieved</th>
+                  <tr style={{ backgroundColor: '#D97655' }}>
+                    <th className="border border-gray-300 p-2 text-left text-white">Category</th>
+                    <th className="border border-gray-300 p-2 text-center text-white">Breached</th>
+                    <th className="border border-gray-300 p-2 text-center text-white">Achieved</th>
+                    <th className="border border-gray-300 p-2 text-center text-white">Total</th>
+                    <th className="border border-gray-300 p-2 text-center text-white">% Breached</th>
+                    <th className="border border-gray-300 p-2 text-center text-white">% Achieved</th>
                   </tr>
                 </thead>
                 <tbody>
