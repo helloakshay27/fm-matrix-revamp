@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [orgsFetched, setOrgsFetched] = useState(false);
   const [lastFetchedEmail, setLastFetchedEmail] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const hostname = window.location.hostname;
 
@@ -560,6 +563,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       }
     } finally {
       setLoginLoading(false);
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     }
   };
 
@@ -706,6 +711,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             }}
           />
 
+          {/* CAPTCHA */}
+          <div className="flex justify-center mb-4">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
+              onChange={(token) => setCaptchaToken(token)}
+              onExpired={() => setCaptchaToken(null)}
+            />
+          </div>
+
           <div className="text-center text-sm text-gray-300 mb-4">
             By clicking Log in you are accepting our{" "}
             <span className="text-blue-300 hover:underline cursor-pointer">Privacy Policy</span>{" "}
@@ -715,7 +730,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
           <Button
             onClick={handleLogin}
-            disabled={!password || loginLoading}
+            disabled={!password || !captchaToken || loginLoading}
             className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loginLoading ? (
