@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -160,6 +160,7 @@ export const PatrollingDashboard = () => {
   const [appliedFilters, setAppliedFilters] = useState<PatrollingFilters>({});
   const [patrollingData, setPatrollingData] = useState<PatrollingItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshLoading, setRefreshLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -454,6 +455,46 @@ export const PatrollingDashboard = () => {
     }
   };
 
+  const handleRefreshSchedules = async () => {
+    setRefreshLoading(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      if (!baseUrl || !token) {
+        throw new Error('API configuration is missing');
+      }
+
+      const apiUrl = getFullUrl('/patrolling/create_sessions');
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success('Patrol schedules refreshed successfully!', {
+        duration: 3000,
+      });
+
+      fetchPatrollingData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    } catch (error: any) {
+      console.error('Error refreshing patrol schedules:', error);
+      toast.error(`Failed to refresh schedules: ${error.message}`, {
+        duration: 5000,
+      });
+    } finally {
+      setRefreshLoading(false);
+    }
+  };
+
   const handleToggleStatus = async (id: number, currentStatus: boolean) => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
@@ -521,10 +562,25 @@ export const PatrollingDashboard = () => {
         loading={loading}
         leftActions={(
           <Button
+            size="sm"
             className='bg-[#C72030] text-white hover:bg-[#C72030]/90'
             onClick={() => setShowActionPanel((prev) => !prev)}
           >
             <Plus className="w-4 h-4 mr-2" /> Action
+          </Button>
+        )}
+        rightActions={(
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleRefreshSchedules}
+            disabled={refreshLoading}
+          >
+            {refreshLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
           </Button>
         )}
       />
