@@ -3135,7 +3135,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             title="Pause task"
                                             disabled={playingTaskIds.has(item.originalData.id)}
                                           >
-                                            <Pause size={14} className="text-orange-500" />
+                                            <Pause size={14} className="text-red-500" />
                                           </button>
                                         ) : (
                                           <button
@@ -3145,8 +3145,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             disabled={playingTaskIds.has(item.originalData.id)}
                                           >
                                             {playingTaskIds.has(item.originalData.id)
-                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                              : <Play size={14} className="text-green-500" />}
+                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                              : <Play size={14} className="text-green-600" />}
                                           </button>
                                         )
                                       )}
@@ -3158,7 +3158,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             title="Pause task"
                                             disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                           >
-                                            <Pause size={14} className="text-orange-500" />
+                                            <Pause size={14} className="text-red-500" />
                                           </button>
                                         ) : (
                                           <button
@@ -3168,8 +3168,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                           >
                                             {playingTaskIds.has(item.originalData.task_management_id)
-                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                              : <Play size={14} className="text-green-500" />}
+                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                              : <Play size={14} className="text-green-600" />}
                                           </button>
                                         )
                                       )}
@@ -3394,7 +3394,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               title="Pause task"
                                               disabled={playingTaskIds.has(item.originalData.id)}
                                             >
-                                              <Pause size={14} className="text-orange-500" />
+                                              <Pause size={14} className="text-red-500" />
                                             </button>
                                           ) : (
                                             <button
@@ -3404,8 +3404,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               disabled={playingTaskIds.has(item.originalData.id)}
                                             >
                                               {playingTaskIds.has(item.originalData.id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
                                             </button>
                                           )
                                         )}
@@ -3419,7 +3419,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               title="Pause task"
                                               disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                             >
-                                              <Pause size={14} className="text-orange-500" />
+                                              <Pause size={14} className="text-red-500" />
                                             </button>
                                           ) : (
                                             <button
@@ -3429,8 +3429,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                             >
                                               {playingTaskIds.has(item.originalData.task_management_id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
                                             </button>
                                           )
                                         )}
@@ -6022,8 +6022,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
             <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                  <Pause size={18} className="text-orange-500" />
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <Pause size={18} className="text-red-500" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
