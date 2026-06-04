@@ -5,12 +5,12 @@ import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Color palette matching CategoryWiseProactiveReactiveCard
+// Color palette
 const CHART_COLORS = {
-  openAchieved: '#8B7355',      // Darker brown for Open Achieved
-  openBreached: '#C4B99D',      // Original primary for Open Breached
-  closeAchieved: '#B8AFA0',     // Medium shade for Close Achieved
-  closeBreached: '#DAD6CA',     // Original secondary for Close Breached
+  openAchieved: '#9EC8BA',
+  openBreached: '#DA7756',
+  closeAchieved: '#8E7BE0',
+  closeBreached: '#798C5E',
 };
 
 interface ResponseTATData {

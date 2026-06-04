@@ -30,11 +30,11 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
             <h4 className="text-sm font-semibold text-gray-700 text-center">Proactive</h4>
             
             {/* Proactive Open Card */}
-            <Card className="bg-[#F6F4EE]">
+            <Card className="bg-[#E3909026]">
               <CardContent className="p-4">
                 <div className="flex items-center justify-center">
                   <div>
-                    <p className="text-lg font-semibold text-[#C72030] text-center">
+                    <p className="text-lg font-semibold text-[#D97655] text-center">
                       {proactiveOpenTickets}
                     </p>
                     <p className="text-sm text-gray-600 text-center">Open</p>
@@ -44,11 +44,11 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
             </Card>
 
             {/* Proactive Closed Card */}
-            <Card className="bg-[#F6F4EE]">
+            <Card className="bg-[#EFEFFB]">
               <CardContent className="p-4">
                 <div className="flex items-center justify-center">
                   <div>
-                    <p className="text-lg font-semibold text-[#C72030] text-center">
+                    <p className="text-lg font-semibold text-[#6B5EA8] text-center">
                       {proactiveClosedTickets}
                     </p>
                     <p className="text-sm text-gray-600 text-center">Closed</p>
@@ -63,11 +63,11 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
             <h4 className="text-sm font-semibold text-gray-700 text-center">Reactive</h4>
             
             {/* Reactive Open Card */}
-            <Card className="bg-[#F6F4EE]">
+            <Card className="bg-[#E3909026]">
               <CardContent className="p-4">
                 <div className="flex items-center justify-center">
                   <div>
-                    <p className="text-lg font-semibold text-[#C72030] text-center">
+                    <p className="text-lg font-semibold text-[#D97655] text-center">
                       {reactiveOpenTickets}
                     </p>
                     <p className="text-sm text-gray-600 text-center">Open</p>
@@ -77,11 +77,11 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
             </Card>
 
             {/* Reactive Closed Card */}
-            <Card className="bg-[#F6F4EE]">
+            <Card className="bg-[#EFEFFB]">
               <CardContent className="p-4">
                 <div className="flex items-center justify-center">
                   <div>
-                    <p className="text-lg font-semibold text-[#C72030] text-center">
+                    <p className="text-lg font-semibold text-[#6B5EA8] text-center">
                       {reactiveClosedTickets}
                     </p>
                     <p className="text-sm text-gray-600 text-center">Closed</p>

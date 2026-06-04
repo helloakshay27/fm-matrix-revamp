@@ -65,7 +65,7 @@ export const CustomerRatingOverviewCard: React.FC<Props> = ({ data, onDownload }
 				</div>
 
 				<table className="min-w-[600px] w-full text-sm border-collapse text-center">
-					<thead className="bg-[#ded9cd] text-[#b62527] font-semibold">
+					<thead className="bg-[#D97655] text-white font-semibold">
 						<tr className="border-t border-gray-200 border-b border-gray-200">
 							<th className="border-x border-gray-200 px-2 py-2 text-left w-48 whitespace-nowrap">Site Name</th>
 							{table.headers.map((h, i) => (
@@ -78,8 +78,8 @@ export const CustomerRatingOverviewCard: React.FC<Props> = ({ data, onDownload }
 								{table.rows.map((r, idx) => {
 									const isTotal = r.label === 'Total %';
 									return (
-										<tr key={idx} className={isTotal ? 'bg-[#DAD6C9]' : ''}>
-											<td className={`border-x border-gray-200 px-2 py-2 font-medium whitespace-nowrap ${isTotal ? '' : 'bg-[#F3F1EB80]'}`}>
+										<tr key={idx} className={isTotal ? 'bg-[#f5e8e4]' : ''}>
+											<td className={`border-x border-gray-200 px-2 py-2 font-medium whitespace-nowrap ${isTotal ? '' : 'bg-transparent'}`}>
 												{r.label}
 											</td>
 											{r.values.map((v, j) => (

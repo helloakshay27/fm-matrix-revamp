@@ -355,12 +355,31 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
   const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
+  const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>({});
 
   const user =
     typeof localStorage !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "{}")
       : {};
   const userId = user?.id;
+
+  const [rosterWorkingDays, setRosterWorkingDays] = useState<Record<string, string[]> | null>(null);
+
+  useEffect(() => {
+    const rosterId = user?.user_roster_id;
+    if (!rosterId || !baseUrl || !token) return;
+    axios
+      .get(`https://${baseUrl}/pms/admin/user_roasters/${rosterId}.json`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const noOfDays = res.data?.no_of_days?.[0];
+        if (noOfDays && typeof noOfDays === "object") {
+          setRosterWorkingDays(noOfDays as Record<string, string[]>);
+        }
+      })
+      .catch(() => { });
+  }, []);
 
   // Fetch todos with same date and completed filter as tasks and issues
 
@@ -418,12 +437,32 @@ const BusinessCompassDailyReport: React.FC = () => {
     fetchTodos();
   }, [startDate, baseUrl, token, userId]);
 
+  const isRosterHoliday = (date: Date): boolean => {
+    const jsDay = date.getDay();
+    const rosterDay = jsDay === 0 ? 7 : jsDay;
+    const weekOfMonth = Math.ceil(date.getDate() / 7).toString();
+    if (rosterWorkingDays) {
+      return !rosterWorkingDays[weekOfMonth]?.includes(rosterDay.toString());
+    }
+    return jsDay === 0 || jsDay === 6;
+  };
+
   const getNextWorkingDay = (dateStr: string): string => {
     const [y, m, d] = dateStr.split("-").map(Number);
     const date = new Date(y, m - 1, d);
     date.setDate(date.getDate() + 1);
-    while (date.getDay() === 0 || date.getDay() === 6) {
+    while (isRosterHoliday(date)) {
       date.setDate(date.getDate() + 1);
+    }
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  };
+
+  const getPrevWorkingDay = (dateStr: string): string => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() - 1);
+    while (isRosterHoliday(date)) {
+      date.setDate(date.getDate() - 1);
     }
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   };
@@ -1534,7 +1573,12 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isToday = date.getTime() === today.getTime();
       const isPast = date.getTime() < today.getTime();
       const isFuture = date.getTime() > today.getTime();
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      const jsDay = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      const rosterDay = jsDay === 0 ? 7 : jsDay; // convert to 1=Mon..6=Sat, 7=Sun
+      const weekOfMonth = Math.ceil(date.getDate() / 7).toString();
+      const isNonWorkingDay = rosterWorkingDays
+        ? !rosterWorkingDays[weekOfMonth]?.includes(rosterDay.toString())
+        : jsDay === 0 || jsDay === 6; // fallback to weekend if roster not loaded
       const report = reportsList.find(
         (r) =>
           getReportDateKey(r.start_date) === dateStr &&
@@ -1547,7 +1591,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         status = report.report_data?.total_score
           ? `+${report.report_data.total_score}`
           : "Done";
-      } else if (isWeekend) {
+      } else if (isNonWorkingDay) {
         type = "holiday";
         status = "Holiday";
       } else if (isPast || isToday) {
@@ -1569,7 +1613,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       date.setDate(date.getDate() + 1);
     }
     return result;
-  }, [viewStartDate, reportsList, isLocallyDeletedReport]);
+  }, [viewStartDate, reportsList, isLocallyDeletedReport, rosterWorkingDays]);
 
   const handlePrevWeek = () => {
     const newDate = new Date(viewStartDate);
@@ -1727,7 +1771,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       if (isNaN(dateObj.getTime())) return "";
       const nextDay = new Date(dateObj);
       nextDay.setDate(nextDay.getDate() + 1);
-      if (nextDay.getDay() === 0) nextDay.setDate(nextDay.getDate() + 1);
+      while (isRosterHoliday(nextDay)) {
+        nextDay.setDate(nextDay.getDate() + 1);
+      }
       return nextDay.toLocaleDateString("en-GB", {
         weekday: "short",
         day: "numeric",
@@ -1736,14 +1782,15 @@ const BusinessCompassDailyReport: React.FC = () => {
     } catch (e) {
       return "";
     }
-  }, [selectedDate, selectedMonth, selectedYear]);
+  }, [selectedDate, selectedMonth, selectedYear, rosterWorkingDays]);
 
-  // Get next day's date in YYYY-MM-DD format for APIs
+  // Get next working day's date in YYYY-MM-DD format for APIs
   const getNextDayDate = () => {
     const nextDate = new Date(startDate);
     nextDate.setDate(nextDate.getDate() + 1);
-    // Skip weekends for task/issue dates
-    if (nextDate.getDay() === 0) nextDate.setDate(nextDate.getDate() + 1);
+    while (isRosterHoliday(nextDate)) {
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
     return nextDate.toLocaleDateString("en-CA");
   };
 
@@ -1802,15 +1849,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           return;
         }
 
-        // Safely extract year, month, and day to avoid Javascript Date UTC shift bugs
-        const [year, month, day] = startDate.split("-");
-        const prevDateObj = new Date(
-          Number(year),
-          Number(month) - 1,
-          Number(day)
-        );
-        prevDateObj.setDate(prevDateObj.getDate() - 1);
-        const prevDateStr = `${prevDateObj.getFullYear()}-${String(prevDateObj.getMonth() + 1).padStart(2, "0")}-${String(prevDateObj.getDate()).padStart(2, "0")}`;
+        // Go back to the last working day (skips holidays per roster, falls back to skipping weekends)
+        const prevDateStr = getPrevWorkingDay(startDate);
 
         const queryParams = new URLSearchParams();
         queryParams.append("q[journal_type_eq]", "daily");
@@ -2008,6 +2048,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     applyStoredDraft,
     applyDraftForMissingReport,
     isLocallyDeletedReport,
+    rosterWorkingDays,
   ]);
 
   const fetchReportsList = async () => {
@@ -2057,6 +2098,77 @@ const BusinessCompassDailyReport: React.FC = () => {
   React.useEffect(() => {
     fetchReportsList();
   }, [selectedMonth, selectedYear, isLocallyDeletedReport]);
+
+  const fetchAndCachePlanSources = React.useCallback(
+    (pairs: { type: string; id: number }[]) => {
+      if (!baseUrl || !token || !pairs.length) return;
+      const urlBase = `https://${baseUrl}`;
+      const headers = { Authorization: `Bearer ${token}` };
+      const fetchOne = async ({ type, id }: { type: string; id: number }) => {
+        const endpoint =
+          type === "task"
+            ? `${urlBase}/task_managements/${id}.json`
+            : type === "issue"
+              ? `${urlBase}/issues/${id}.json`
+              : `${urlBase}/todos/${id}.json`;
+        try {
+          const res = await axios.get(endpoint, { headers });
+          const data =
+            type === "task"
+              ? res.data?.data || res.data
+              : type === "issue"
+                ? res.data?.issue || res.data
+                : res.data?.todo || res.data;
+          return { key: `${type}:${id}`, data };
+        } catch {
+          return { key: `${type}:${id}`, data: null };
+        }
+      };
+      Promise.allSettled(pairs.map(fetchOne)).then((results) => {
+        const newEntries: Record<string, any> = {};
+        for (const r of results) {
+          if (r.status === "fulfilled" && r.value?.data) {
+            newEntries[r.value.key] = r.value.data;
+          }
+        }
+        if (Object.keys(newEntries).length) {
+          setPlanSourceCache((prev) => ({ ...prev, ...newEntries }));
+        }
+      });
+    },
+    [baseUrl, token]
+  );
+
+  // Fetch source data for plan items in historical records
+  React.useEffect(() => {
+    if (!reportsList.length) return;
+    const seen = new Set<string>();
+    const toFetch: { type: string; id: number }[] = [];
+    for (const report of reportsList) {
+      for (const item of getNonEmptyReportItems(report.report_data?.tomorrow_plan) as any[]) {
+        if (item?.source_id && item?.source_type) {
+          const key = `${item.source_type}:${item.source_id}`;
+          if (!seen.has(key) && !planSourceCache[key]) { seen.add(key); toFetch.push({ type: item.source_type, id: item.source_id }); }
+        }
+      }
+    }
+    fetchAndCachePlanSources(toFetch);
+  }, [reportsList]);
+
+  // Fetch source data for plan items in the active editing section
+  React.useEffect(() => {
+    if (!planningItems.length) return;
+    const seen = new Set<string>();
+    const toFetch: { type: string; id: number }[] = [];
+    for (const item of planningItems) {
+      if (item.source_id && item.source_type) {
+        const key = `${item.source_type}:${item.source_id}`;
+        const alreadyLive = mergedTasksIssues.some((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id);
+        if (!seen.has(key) && !planSourceCache[key] && !alreadyLive) { seen.add(key); toFetch.push({ type: item.source_type, id: item.source_id }); }
+      }
+    }
+    fetchAndCachePlanSources(toFetch);
+  }, [planningItems]);
 
   const handleSubmit = async () => {
     // Only completed items should count towards submitting successfully.
@@ -2173,6 +2285,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 status: selectedTasksIssues[item.id] === true ? "completed" : item.status,
                 type: item.type,
               })),
+            tomorrow_plan_date: getNextWorkingDay(startDate),
             tomorrow_plan: tomorrowPlanPayload,
             past_kpis: kpis.map((kpi) => ({
               kpi_id: kpi.kpi_id,
@@ -2411,7 +2524,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         item.type === "missed" &&
                         "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
                         item.type === "holiday" &&
-                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
+                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 cursor-not-allowed pointer-events-none opacity-70",
                         item.type === "upcoming" &&
                         "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
                         item.type === "filled" &&
@@ -2420,7 +2533,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           ? "ring-4 ring-blue-500/20 scale-105 z-10 text-white"
                           : "border-transparent"
                       )}
-                      onClick={() => !item.isFuture && handleSelectDate(item)}
+                      onClick={() => !item.isFuture && item.type !== "holiday" && handleSelectDate(item)}
                     >
                       <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
                         {item.day}
@@ -2693,6 +2806,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
                                   <CalendarIcon size={10} />
                                   From Yesterday
+                                </span>
+                              </div>
+                            )}
+
+                            {item.completed && (
+                              <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                  <CalendarIcon size={9} className="shrink-0" />
+                                  {fmtDate(startDate)}
                                 </span>
                               </div>
                             )}
@@ -3630,130 +3752,172 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Your plan
                         </h4>
                         <div className="space-y-4">
-                          {planningItems.map((item) => (
-                            <div
-                              key={item.id}
-                              className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
-                            >
-                              <div className={cn(
-                                "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
-                                item.fromWeeklyPlan
-                                  ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
-                                  : "border-[#f3f4f6] hover:border-[#DA7756]/30"
-                              )}>
-                                <div className="flex items-center gap-4">
-                                  <Star
-                                    size={18}
-                                    className={cn(
-                                      "cursor-pointer transition-all shrink-0",
-                                      item.starred
-                                        ? "text-[#eab308] fill-[#eab308]"
-                                        : "text-gray-300 hover:text-gray-400"
-                                    )}
-                                    onClick={() => togglePlanningStar(item.id)}
-                                  />
-                                  <span className={cn(
-                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                    item.source_type === "task"
-                                      ? "bg-[#DA7756] text-white"
-                                      : item.source_type === "issue"
-                                        ? "bg-violet-600 text-white"
-                                        : item.source_type === "todo"
-                                          ? "bg-amber-500 text-white"
-                                          : "bg-gray-500 text-white"
-                                  )}>
-                                    {item.source_type || "Note"}
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={item.text}
-                                    onChange={(e) =>
-                                      updatePlanningText(item.id, e.target.value)
-                                    }
-                                    placeholder="What's your strategic priority?"
-                                    className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
-                                  />
-                                  {item.originalData?.priority && (
-                                    <span
-                                      className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                      style={{
-                                        backgroundColor: item.originalData.priority === "High" ? "#fee2e2" : item.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                        color: item.originalData.priority === "High" ? "#991b1b" : item.originalData.priority === "Medium" ? "#92400e" : "#166534",
-                                      }}
-                                    >
-                                      {item.originalData.priority}
-                                    </span>
-                                  )}
-                                  <div className="flex items-center gap-2">
-                                    <X
+                          {planningItems.map((item) => {
+                            const matchedTask = item.source_id && item.source_type
+                              ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
+                              : null;
+                            const cachedData = item.source_id && item.source_type
+                              ? planSourceCache[`${item.source_type}:${item.source_id}`]
+                              : null;
+                            const liveData = matchedTask?.originalData || cachedData || item.originalData;
+                            const livePriority = matchedTask?.priority || cachedData?.priority || item.originalData?.priority;
+
+                            return (
+                              <div
+                                key={item.id}
+                                className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
+                              >
+                                <div className={cn(
+                                  "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
+                                  item.fromWeeklyPlan
+                                    ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
+                                    : "border-[#f3f4f6] hover:border-[#DA7756]/30"
+                                )}>
+                                  <div className="flex items-center gap-4">
+                                    <Star
                                       size={18}
-                                      className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                                      onClick={() => removePlanningItem(item.id)}
+                                      className={cn(
+                                        "cursor-pointer transition-all shrink-0",
+                                        item.starred
+                                          ? "text-[#eab308] fill-[#eab308]"
+                                          : "text-gray-300 hover:text-gray-400"
+                                      )}
+                                      onClick={() => togglePlanningStar(item.id)}
                                     />
-                                  </div>
-                                </div>
-                                {item.originalData && (() => {
-                                  const d = item.originalData;
-                                  const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                  const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                  const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                  let timeLeftLabel: string | null = null;
-                                  if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
-                                    const now = new Date();
-                                    const end = new Date(d.end_date);
-                                    end.setHours(23, 59, 59, 999);
-                                    const diff = end.getTime() - now.getTime();
-                                    if (diff > 0) {
-                                      const days = Math.floor(diff / 86400000);
-                                      const hrs = Math.floor((diff % 86400000) / 3600000);
-                                      const mins = Math.floor((diff % 3600000) / 60000);
-                                      if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                      else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                      else timeLeftLabel = `${mins}m left`;
-                                    }
-                                  }
-                                  const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                  if (!hasInfo) return null;
-                                  return (
-                                    <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
-                                      {endDate && (
-                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                          <CalendarIcon size={9} className="shrink-0" />
-                                          {endDate}
-                                        </span>
-                                      )}
-                                      {overdueLabel && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                          <AlertCircle size={9} className="shrink-0" />
-                                          {overdueLabel}
-                                        </span>
-                                      )}
-                                      {timeLeftLabel && (
-                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                          <Clock size={9} className="shrink-0" />
-                                          {timeLeftLabel}
-                                        </span>
-                                      )}
-                                      {effortEst && (
-                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                          <Clock size={9} className="shrink-0" />
-                                          Est: {effortEst}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })()}
-                                {item.fromWeeklyPlan && (
-                                  <div className="pl-7 pt-1">
-                                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                      <CalendarIcon size={10} />
-                                      From Weekly Report
+                                    <span className={cn(
+                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.source_type === "task"
+                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                        : item.source_type === "issue"
+                                          ? "bg-violet-100 text-violet-700"
+                                          : item.source_type === "todo"
+                                            ? "bg-yellow-100 text-yellow-700"
+                                            : "bg-gray-500 text-white"
+                                    )}>
+                                      {item.source_type || "Note"}
                                     </span>
+                                    <input
+                                      type="text"
+                                      value={item.text}
+                                      onChange={(e) =>
+                                        updatePlanningText(item.id, e.target.value)
+                                      }
+                                      placeholder="What's your strategic priority?"
+                                      className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                    />
+                                    {livePriority && (
+                                      <span
+                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                        style={{
+                                          backgroundColor: livePriority === "High" ? "#fee2e2" : livePriority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                          color: livePriority === "High" ? "#991b1b" : livePriority === "Medium" ? "#92400e" : "#166534",
+                                        }}
+                                      >
+                                        {livePriority}
+                                      </span>
+                                    )}
+                                    <div className="flex items-center gap-1.5">
+                                      {item.source_id && item.source_type && (
+                                        <>
+                                          <button
+                                            onClick={() => {
+                                              if (item.source_type === "todo") {
+                                                const td = matchedTask?.originalData || cachedData;
+                                                if (td) { setSelectedTodo(td); setIsDetailsModalOpen(true); }
+                                              } else {
+                                                navigate(item.source_type === "task" ? `/vas/tasks/${item.source_id}` : `/vas/issues/${item.source_id}`);
+                                              }
+                                            }}
+                                            className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                            title={`View ${item.source_type} details`}
+                                          >
+                                            <Eye size={14} className="text-amber-600" />
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const src = matchedTask?.originalData || cachedData;
+                                              if (item.source_type === "task") { setEditTaskData(src); setIsEditTaskModalOpen(true); }
+                                              else if (item.source_type === "issue") { setEditIssueData(src); setIsEditIssueModalOpen(true); }
+                                              else if (item.source_type === "todo") { setEditTodoData(src); setIsEditTodoModalOpen(true); }
+                                            }}
+                                            className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                            title={`Edit ${item.source_type}`}
+                                          >
+                                            <Pencil size={13} />
+                                          </button>
+                                        </>
+                                      )}
+                                      <X
+                                        size={18}
+                                        className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                        onClick={() => removePlanningItem(item.id)}
+                                      />
+                                    </div>
                                   </div>
-                                )}
+                                  {liveData && (() => {
+                                    const d = liveData;
+                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                    let timeLeftLabel: string | null = null;
+                                    if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                      const now = new Date();
+                                      const end = new Date(d.end_date);
+                                      end.setHours(23, 59, 59, 999);
+                                      const diff = end.getTime() - now.getTime();
+                                      if (diff > 0) {
+                                        const days = Math.floor(diff / 86400000);
+                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                        else timeLeftLabel = `${mins}m left`;
+                                      }
+                                    }
+                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                    if (!hasInfo) return null;
+                                    return (
+                                      <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
+                                        {endDate && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <CalendarIcon size={9} className="shrink-0" />
+                                            {endDate}
+                                          </span>
+                                        )}
+                                        {overdueLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                            <AlertCircle size={9} className="shrink-0" />
+                                            {overdueLabel}
+                                          </span>
+                                        )}
+                                        {timeLeftLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                            <Clock size={9} className="shrink-0" />
+                                            {timeLeftLabel}
+                                          </span>
+                                        )}
+                                        {effortEst && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <Clock size={9} className="shrink-0" />
+                                            Est: {effortEst}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                  {item.fromWeeklyPlan && (
+                                    <div className="pl-7 pt-1">
+                                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                        <CalendarIcon size={10} />
+                                        From Weekly Report
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}

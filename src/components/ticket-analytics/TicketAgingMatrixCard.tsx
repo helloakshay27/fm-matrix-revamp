@@ -79,29 +79,29 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
             <div className="min-w-[500px] px-3 sm:px-0">
               <table className="w-full border-collapse border border-gray-300">
                 <thead>
-                  <tr style={{ backgroundColor: '#EDE4D8' }}>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">
+                  <tr style={{ backgroundColor: '#D97655' }}>
+                    <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-white">
                       Priority
                     </th>
-                    <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                    <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                       No. of Days
                     </th>
                   </tr>
-                  <tr style={{ backgroundColor: '#EDE4D8' }}>
+                  <tr style={{ backgroundColor: '#D97655' }}>
                     <th className="border border-gray-300 p-2 sm:p-3"></th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                       0-10
                     </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                       11-20
                     </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                       21-30
                     </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                       31-40
                     </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
+                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
                       41-50
                     </th>
                   </tr>
@@ -136,7 +136,7 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
 
           {/* Summary Box - Full Width Below Table */}
           <div className="w-full">
-            <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
+            <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#f5e8e4' }}>
               <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
                 {data?.average_days || 0} Days
               </div>
