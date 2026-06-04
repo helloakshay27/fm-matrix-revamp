@@ -266,6 +266,13 @@ const emptyInventoryItem = (): GDNInventoryItem => ({
   comment: "",
 });
 
+const getCurrentStockQuantity = (currentStock: string) => {
+  const normalizedStock = currentStock.replace(/,/g, "");
+  const stockMatch = normalizedStock.match(/-?\d+(?:\.\d+)?/);
+
+  return stockMatch ? Number(stockMatch[0]) : NaN;
+};
+
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="flex items-center gap-3 mb-5">
     <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030]">
@@ -409,7 +416,7 @@ export const AddGDNPage = () => {
 
   const handleSubmit = async () => {
     const hasMissingInventory = inventoryItems.some(
-      (item) => !item.inventory || !item.quantity || !item.companyStaffId
+      (item) => !item.inventory || !item.quantity
       // !item.assetId ||
       // !item.consumingIn.trim() ||
       // !item.reason.trim()
@@ -421,12 +428,34 @@ export const AddGDNPage = () => {
     }
 
     const hasInvalidNumbers = inventoryItems.some(
-      (item) => Number(item.quantity) <= 0 || Number(item.companyStaffId) <= 0
+      (item) => {
+        const quantity = Number(item.quantity);
+        return !Number.isFinite(quantity) || quantity <= 0;
+      }
       // Number(item.assetId) <= 0
     );
 
     if (hasInvalidNumbers) {
-      toast.error("Please enter valid quantity and staff ID.");
+      toast.error("Please enter a valid quantity.");
+      return;
+    }
+
+    const hasUnavailableStock = inventoryItems.some(
+      (item) => !Number.isFinite(getCurrentStockQuantity(item.currentStock))
+    );
+
+    if (hasUnavailableStock) {
+      toast.error("Please wait for current stock to load before submitting.");
+      return;
+    }
+
+    const stockExceededIndex = inventoryItems.findIndex(
+      (item) =>
+        Number(item.quantity) > getCurrentStockQuantity(item.currentStock)
+    );
+
+    if (stockExceededIndex !== -1) {
+      toast.error("Quantity cannot be more than current stock");
       return;
     }
 
@@ -503,16 +532,13 @@ export const AddGDNPage = () => {
         GDN Generation &gt; GDN Request Add
       </div>
 
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">ADD GDN</h1>
-        <Button
-          variant="outline"
-          className="gap-2"
+      <div className="flex items-center gap-4 mb-6">
+        <button
           onClick={() => navigate("/finance/gdn/request-list")}
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">ADD GDN</h1>
       </div>
 
       <div className="space-y-4">
@@ -539,8 +565,6 @@ export const AddGDNPage = () => {
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Description"
                 fullWidth
-                multiline
-                minRows={2}
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={compactFieldSx}
