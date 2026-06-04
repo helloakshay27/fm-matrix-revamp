@@ -272,9 +272,18 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   const handleOrganizationSelect = (org: Organization) => {
     const baseUrl = `${org.sub_domain}.${org.domain}`;
+    const selectedOrgPayload = JSON.stringify({
+      id: org.id,
+      name: org.name,
+      domain: org.domain,
+      sub_domain: org.sub_domain,
+      backend_url: org.backend_url,
+      backend_domain: org.backend_domain,
+    });
 
     // Save org details
     localStorage.setItem("selectedOrg", org.name);
+    localStorage.setItem("selectedOrganization", selectedOrgPayload);
     localStorage.setItem("org_id", org.id.toString());
 
     // Use saveBaseUrl for normalized URL storage
@@ -282,6 +291,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     //Session Storage For App-Level
     sessionStorage.setItem("selectedOrg", org.name);
+    sessionStorage.setItem("selectedOrganization", selectedOrgPayload);
     sessionStorage.setItem("baseUrl", baseUrl); // Session storage doesn't need normalization
     sessionStorage.setItem("org_id", org.id.toString());
 
