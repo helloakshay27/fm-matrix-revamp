@@ -863,7 +863,6 @@ const modulesByPackage = {
     {
       name: "Location Master",
       icon: MapPin,
-      href: "/master/location",
       subItems: [
         {
           name: "Account",
