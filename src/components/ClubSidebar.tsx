@@ -972,6 +972,40 @@ export const ClubSidebar: React.FC = () => {
     isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const lastNavigatedSection = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    // Collect every href defined in the given module list (recursive)
+    const collectHrefs = (items: SidebarItem[]): string[] =>
+      items.flatMap((item) => [
+        ...(item.href ? [item.href] : []),
+        ...(item.subItems ? collectHrefs(item.subItems) : []),
+      ]);
+
+    const sectionModules =
+      modulesByPackage[currentSection as keyof typeof modulesByPackage] || [];
+    const sectionHrefs = collectHrefs(sectionModules);
+
+    const currentPath = location.pathname;
+    const belongsToSection = sectionHrefs.some(
+      (href) => currentPath === href || currentPath.startsWith(href + "/")
+    );
+
+    // Only navigate if we're on a route that doesn't belong to the new section
+    // and we haven't already navigated for this section switch (prevents loops)
+    if (!belongsToSection && lastNavigatedSection.current !== currentSection) {
+      const defaultHref = sectionModules.find((item) => item.href)?.href;
+      if (defaultHref) {
+        lastNavigatedSection.current = currentSection;
+        setExpandedItems([]);
+        navigate(defaultHref);
+      }
+    }
+
+    if (belongsToSection) {
+      lastNavigatedSection.current = null;
+    }
+  }, [currentSection, location.pathname, navigate]);
 
   const toggleExpand = (name: string) => {
     setExpandedItems((prev) =>
