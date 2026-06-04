@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Mail,
@@ -33,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -47,6 +49,7 @@ import { format, parse, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { getBaseUrl, getToken, getUser } from "@/utils/auth";
+import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import {
   userService,
   ProfileAccountResponse,
@@ -275,10 +278,12 @@ type AiModel = {
 };
 
 type UserAiConfig = {
+  id?: number;
   code?: number;
   user_id?: number;
   user_name?: string;
   configured?: boolean;
+  is_active?: boolean;
   message?: string;
   provider?: string | {
     id?: string;
@@ -288,6 +293,7 @@ type UserAiConfig = {
   model?: string | AiModel;
   model_name?: string;
   api_key?: string;
+  source_type?: string;
   endpoint?: string;
 };
 
@@ -314,11 +320,6 @@ const normalizeUserKpis = (raw: any): UserKpi[] => {
   }));
 };
 
-const getAiConfigBaseUrl = () => {
-  const baseUrl = getBaseUrl();
-  if (!baseUrl) throw new Error("API base URL is not configured");
-  return baseUrl.replace(/\/+$/, "");
-};
 
 const getAiConfigProviderId = (config?: UserAiConfig | null) => {
   if (!config) return "";
@@ -348,7 +349,221 @@ const getAiConfigModelDisplayName = (config?: UserAiConfig | null) => {
   return config.model || config.model_name || "";
 };
 
+const maskApiKey = (value: string) => {
+  if (!value) return "";
+
+  const key = value.trim();
+  if (key.length <= 8) {
+    return `${key.slice(0, 2)}********${key.slice(-2)}`;
+  }
+
+  if (key.length <= 18) {
+    return `${key.slice(0, 4)}********${key.slice(-4)}`;
+  }
+
+  return `${key.slice(0, 8)}************${key.slice(-6)}`;
+};
+
+const getStoredOrganizationName = () => {
+  const directName =
+    localStorage.getItem("selectedOrg") ||
+    sessionStorage.getItem("selectedOrg") ||
+    localStorage.getItem("selectedOrganizationName") ||
+    sessionStorage.getItem("selectedOrganizationName");
+
+  if (directName?.trim()) return directName.trim();
+
+  const storedOrg =
+    localStorage.getItem("selectedOrganization") ||
+    sessionStorage.getItem("selectedOrganization");
+
+  if (!storedOrg) return "";
+
+  try {
+    const parsed = JSON.parse(storedOrg);
+    return typeof parsed?.name === "string" ? parsed.name.trim() : "";
+  } catch {
+    return storedOrg.trim();
+  }
+};
+
+const parseStoredOrganizationId = (
+  value?: string | number | null
+): number | null => {
+  if (value === null || value === undefined) return null;
+  const parsed = Number(String(value).trim());
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getStoredOrganizationId = () => {
+  const directId =
+    localStorage.getItem("org_id") ||
+    sessionStorage.getItem("org_id") ||
+    localStorage.getItem("organization_id") ||
+    sessionStorage.getItem("organization_id");
+
+  const parsedDirectId = parseStoredOrganizationId(directId);
+  if (parsedDirectId !== null) return parsedDirectId;
+
+  const storedOrg =
+    localStorage.getItem("selectedOrganization") ||
+    sessionStorage.getItem("selectedOrganization");
+
+  if (!storedOrg) return null;
+
+  try {
+    const parsed = JSON.parse(storedOrg);
+    return parseStoredOrganizationId(
+      parsed?.id ?? parsed?.organization_id ?? parsed?.org_id
+    );
+  } catch {
+    return null;
+  }
+};
+
+const buildUserAiConfigPath = (
+  userId: string,
+  organizationId: number | null
+) => {
+  const params = new URLSearchParams();
+  if (organizationId) {
+    const orgId = String(organizationId);
+    params.set("organization_id", orgId);
+    params.set("org_id", orgId);
+  }
+
+  const query = params.toString();
+  return `/user_ai_config/user/${encodeURIComponent(userId)}${
+    query ? `?${query}` : ""
+  }`;
+};
+
+const AI_PROVIDER_LINKS = [
+  {
+    name: "Claude",
+    label: "Anthropic",
+    url: "https://console.anthropic.com/settings/keys",
+    bg: "bg-[#c96442]/10",
+    border: "border-[#c96442]/30",
+    text: "text-[#c96442]",
+    icon: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg",
+  },
+];
+
+const AiProviderLinksDropdown = () => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  // return (
+    // <div className="relative" ref={ref}>
+    //   <button
+    //     type="button"
+    //     onClick={() => setOpen((v) => !v)}
+    //     className="flex items-center gap-1.5 text-xs font-semibold text-[#c96442] hover:text-[#a8502e] border border-[#c96442]/30 hover:border-[#c96442]/60 bg-[#c96442]/10 hover:bg-[#c96442]/20 rounded-md px-2.5 py-1 transition-colors"
+    //   >
+    //     <Globe size={12} />
+    //     Link with Claude
+    //     <ChevronDown size={11} className={cn("transition-transform duration-200", open && "rotate-180")} />
+    //   </button>
+
+    //   {open && (
+    //     <div className="absolute left-0 top-full mt-2 z-50 w-64 rounded-xl border border-blue-100 bg-white shadow-xl ring-1 ring-black/5 overflow-hidden">
+    //       <p className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100">
+    //         Get API Key from Provider
+    //       </p>
+    //       <div className="p-2 space-y-1">
+    //         {AI_PROVIDER_LINKS.map((provider) => (
+    //           <a
+    //             key={provider.name}
+    //             href={provider.url}
+    //             target="_blank"
+    //             rel="noopener noreferrer"
+    //             onClick={() => setOpen(false)}
+    //             className={cn(
+    //               "flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all hover:scale-[1.01]",
+    //               provider.bg,
+    //               provider.border
+    //             )}
+    //           >
+    //             <img
+    //               src={provider.icon}
+    //               alt={provider.name}
+    //               className="w-5 h-5 rounded object-contain shrink-0"
+    //               onError={(e) => {
+    //                 (e.target as HTMLImageElement).style.display = "none";
+    //               }}
+    //             />
+    //             <div className="min-w-0 flex-1">
+    //               <p className={cn("text-sm font-bold leading-none", provider.text)}>
+    //                 {provider.name}
+    //               </p>
+    //               <p className="text-[10px] text-gray-400 mt-0.5">{provider.label}</p>
+    //             </div>
+    //             <span className="text-[10px] font-semibold text-gray-400 shrink-0">
+    //               Get Key →
+    //             </span>
+    //           </a>
+    //         ))}
+    //       </div>
+    //     </div>
+    //   )}
+    // </div>
+//   );
+// };
+
+  return null;
+};
+
+const OrganizationCheckbox = ({
+  name,
+  organizationId,
+  checked,
+  onCheckedChange,
+}: {
+  name: string;
+  organizationId: number | null;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) => (
+  <label
+    className={cn(
+      "flex min-h-10 max-w-full cursor-pointer items-center gap-2 rounded-md border px-3 shadow-sm",
+      organizationId
+        ? "border-blue-100 bg-blue-50 text-blue-700"
+        : "cursor-not-allowed border-amber-100 bg-amber-50 text-amber-700 opacity-80"
+    )}
+  >
+    <Checkbox
+      checked={checked}
+      disabled={!organizationId}
+      onCheckedChange={(value) => onCheckedChange(value === true)}
+      className="border-current data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
+    />
+    <Building2 size={15} className="shrink-0" />
+    <span className="min-w-0">
+      <span className="block text-[10px] font-bold uppercase leading-none tracking-widest opacity-75">
+        Organization
+      </span>
+      <span className="block max-w-[220px] truncate text-sm font-bold">
+        {name || "Not selected"}
+      </span>
+    </span>
+  </label>
+);
+
 const BusinessCompassProfile = () => {
+  const navigate = useNavigate();
+
   type ProfileFormData = {
     displayName: string;
     email: string;
@@ -520,13 +735,27 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const [selectedAiProvider, setSelectedAiProvider] = useState("");
   const [selectedAiModel, setSelectedAiModel] = useState("");
   const [aiApiKey, setAiApiKey] = useState("");
+  const [isAiApiKeyFocused, setIsAiApiKeyFocused] = useState(false);
   const [userAiConfig, setUserAiConfig] = useState<UserAiConfig | null>(null);
   const [isAiProvidersLoading, setIsAiProvidersLoading] = useState(false);
   const [isAiModelsLoading, setIsAiModelsLoading] = useState(false);
   const [isAiConfigLoading, setIsAiConfigLoading] = useState(false);
+  const [aiConfigTab, setAiConfigTab] = useState<"api_key" | "auth_connect">("api_key");
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+  const [isOAuthExchanging, setIsOAuthExchanging] = useState(false);
+  const [oauthUrl, setOauthUrl] = useState<string | null>(null);
+  const [oauthState, setOauthState] = useState<string | null>(null);
+  const [oauthCode, setOauthCode] = useState("");
+  const [oauthCooldown, setOauthCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isAiConfigSaving, setIsAiConfigSaving] = useState(false);
   const [isAiConfigDeleting, setIsAiConfigDeleting] = useState(false);
+  const [isAiConfigToggling, setIsAiConfigToggling] = useState(false);
+  const [isAiConfigActive, setIsAiConfigActive] = useState(false);
   const [aiConfigError, setAiConfigError] = useState<string | null>(null);
+  const storedOrganizationId = getStoredOrganizationId();
+  const [includeOrganizationInAiConfig, setIncludeOrganizationInAiConfig] =
+    useState(() => Boolean(storedOrganizationId));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const docFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -535,16 +764,19 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const getAuthHeaders = () => {
-    const token = getToken();
-    return {
-      Accept: "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-  };
 
   const currentUserId =
     localStorage.getItem("userId") || String(getUser()?.id || "");
+  const organizationIdForAiPayload =
+    includeOrganizationInAiConfig && storedOrganizationId
+      ? storedOrganizationId
+      : null;
+
+  useEffect(() => {
+    if (!storedOrganizationId && includeOrganizationInAiConfig) {
+      setIncludeOrganizationInAiConfig(false);
+    }
+  }, [storedOrganizationId, includeOrganizationInAiConfig]);
 
   useEffect(() => {
     const fetchProfileDetails = async () => {
@@ -628,8 +860,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       try {
         setIsAiProvidersLoading(true);
         setAiConfigError(null);
-        const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/providers`, {
-          headers: getAuthHeaders(),
+        const response = await fetch(getFullUrl("/user_ai_config/providers"), {
+          headers: { Authorization: getAuthHeader(), Accept: "application/json" },
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -652,14 +884,31 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiConfigLoading(true);
         setAiConfigError(null);
         const response = await fetch(
-          `${getAiConfigBaseUrl()}/user_ai_config/${encodeURIComponent(currentUserId)}`,
-          { headers: getAuthHeaders() }
+          getFullUrl(
+            buildUserAiConfigPath(currentUserId, storedOrganizationId)
+          ),
+          { headers: { Authorization: getAuthHeader(), Accept: "application/json" } }
         );
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        const data: UserAiConfig = await response.json();
+        const json = await response.json();
+        const config = json?.config ?? json;
+        const data: UserAiConfig = {
+          ...json,
+          ...config,
+          id: config?.id,
+          configured: config?.is_active ?? false,
+          is_active: config?.is_active ?? false,
+        };
         setUserAiConfig(data);
+        setIsAiConfigActive(data.is_active ?? false);
+        if (
+          storedOrganizationId &&
+          (config?.organization_id || config?.org_id)
+        ) {
+          setIncludeOrganizationInAiConfig(true);
+        }
 
         const provider = getAiConfigProviderId(data);
         const model = getAiConfigModelName(data);
@@ -669,6 +918,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       } catch (error: any) {
         console.error("Failed to load user AI config", error);
         setUserAiConfig(null);
+        setIsAiConfigActive(false);
         setAiConfigError(error?.message || "Failed to load user AI config");
       } finally {
         setIsAiConfigLoading(false);
@@ -677,7 +927,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
     fetchAiProviders();
     fetchUserAiConfig();
-  }, [currentUserId]);
+  }, [currentUserId, storedOrganizationId]);
 
   useEffect(() => {
     const fetchAiModels = async () => {
@@ -691,8 +941,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiModelsLoading(true);
         setAiConfigError(null);
         const response = await fetch(
-          `${getAiConfigBaseUrl()}/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`,
-          { headers: getAuthHeaders() }
+          getFullUrl(`/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`),
+          { headers: { Authorization: getAuthHeader(), Accept: "application/json" } }
         );
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -738,16 +988,25 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsAiConfigSaving(true);
       setAiConfigError(null);
 
-      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config`, {
-        method: "POST",
+      const configId = userAiConfig?.id;
+      const url = configId
+        ? getFullUrl(`/user_ai_config/${configId}`)
+        : getFullUrl("/user_ai_config");
+      const method = configId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: {
-          ...getAuthHeaders(),
+          Authorization: getAuthHeader(),
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           provider: selectedAiProvider,
           model: selectedAiModel,
           api_key: aiApiKey.trim(),
+          organization_id: organizationIdForAiPayload,
+          org_id: organizationIdForAiPayload,
         }),
       });
 
@@ -758,28 +1017,32 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         );
       }
 
+      const config = data?.config || data;
       setUserAiConfig((prev) => ({
         ...prev,
-        ...data,
-        configured: data?.configured ?? true,
-        provider: data?.provider || {
+        ...config,
+        id: config?.id ?? prev?.id,
+        configured: config?.is_active ?? config?.configured ?? true,
+        is_active: config?.is_active ?? true,
+        provider: config?.provider || {
           id: selectedAiProvider,
           display_name:
-            aiProviders.find((provider) => provider.provider_id === selectedAiProvider)
+            aiProviders.find((p) => p.provider_id === selectedAiProvider)
               ?.display_name || selectedAiProvider,
         },
-        provider_id: data?.provider_id || selectedAiProvider,
-        model: data?.model || {
+        provider_id: config?.provider_id || selectedAiProvider,
+        model: config?.model || {
           model_name: selectedAiModel,
           display_name:
-            aiModels.find((model) => model.model_name === selectedAiModel)
+            aiModels.find((m) => m.model_name === selectedAiModel)
               ?.display_name || selectedAiModel,
         },
-        model_name: data?.model_name || selectedAiModel,
-        user_id: data?.user_id || prev?.user_id || Number(currentUserId) || undefined,
-        user_name: data?.user_name || prev?.user_name || formData.displayName,
+        model_name: config?.model_name || selectedAiModel,
+        api_key: config?.api_key || aiApiKey.trim(),
+        user_id: config?.user_id || prev?.user_id || Number(currentUserId) || undefined,
+        user_name: config?.user_name || prev?.user_name || formData.displayName,
       }));
-      toast.success("AI configuration saved successfully");
+      toast.success(data?.message || "AI configuration saved successfully");
     } catch (error: any) {
       console.error("Failed to save AI config", error);
       const message = error?.message || "Failed to save AI configuration";
@@ -791,8 +1054,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   };
 
   const handleDeleteAiApiKey = async () => {
-    if (!selectedAiProvider) {
-      toast.error("Please select an AI provider");
+    const configId = userAiConfig?.id;
+    if (!configId) {
+      toast.error("No AI configuration found to delete");
       return;
     }
 
@@ -800,52 +1064,206 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsAiConfigDeleting(true);
       setAiConfigError(null);
 
-      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/remove_key`, {
+      const response = await fetch(getFullUrl(`/user_ai_config/${configId}`), {
         method: "DELETE",
+        headers: { Authorization: getAuthHeader(), Accept: "application/json" },
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
+      }
+
+      setAiApiKey("");
+      setSelectedAiProvider("");
+      setSelectedAiModel("");
+      setUserAiConfig(null);
+      setIsAiConfigActive(false);
+      toast.success(data?.message || "Config deleted successfully");
+    } catch (error: any) {
+      console.error("Failed to delete AI config", error);
+      const message = error?.message || "Failed to delete AI configuration";
+      setAiConfigError(message);
+      toast.error(message);
+    } finally {
+      setIsAiConfigDeleting(false);
+    }
+  };
+
+  const handleOAuthConnect = async () => {
+    try {
+      setIsOAuthLoading(true);
+      setAiConfigError(null);
+
+      const params = new URLSearchParams();
+      if (selectedAiProvider) params.append("provider", selectedAiProvider);
+      if (selectedAiModel) params.append("model", selectedAiModel);
+
+      const response = await fetch(getFullUrl(`/user_ai_config/oauth/cli_start?${params.toString()}`), {
+        method: "GET",
+        headers: { Authorization: getAuthHeader(), Accept: "application/json" },
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
+      }
+
+      if (data?.url) {
+        // Decode unicode-escaped ampersands then strip invalid code=true param
+        const cleanUrl = data.url
+          .replace(/\\u0026/g, "&")
+          .replace(/&code=true/g, "")
+          .replace(/code=true&/g, "")
+          .replace(/[?&]code=true$/g, "");
+
+        // Extract state from URL if not returned as top-level field
+        const stateFromUrl = new URL(cleanUrl).searchParams.get("state");
+        setOauthUrl(cleanUrl);
+        setOauthState(data?.state || stateFromUrl || null);
+
+        window.open(cleanUrl, "_blank", "noopener,noreferrer");
+        toast.info(data?.message || "Open the URL, authorize, then paste the code back here");
+      } else {
+        throw new Error("No authorization URL received");
+      }
+    } catch (error: any) {
+      console.error("Failed to get OAuth URL", error);
+      const message = error?.message || "Failed to initiate OAuth connection";
+      setAiConfigError(message);
+      toast.error(message);
+    } finally {
+      setIsOAuthLoading(false);
+    }
+  };
+
+  const handleOAuthExchange = async () => {
+    if (!oauthCode.trim()) {
+      toast.error("Please paste the authentication code from Claude");
+      return;
+    }
+
+    const payload = {
+      code: oauthCode.trim(),
+      model: selectedAiModel,
+      organization_id: organizationIdForAiPayload,
+      org_id: organizationIdForAiPayload,
+    };
+
+    try {
+      setIsOAuthExchanging(true);
+      setAiConfigError(null);
+
+      const response = await fetch(getFullUrl("/user_ai_config/oauth/cli_complete"), {
+        method: "POST",
         headers: {
-          ...getAuthHeaders(),
+          Authorization: getAuthHeader(),
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 422 || response.status === 429) {
+        const body = JSON.stringify(data).toLowerCase();
+        const isRateLimit = body.includes("rate_limit") || body.includes("rate limited");
+        const isExpired = body.includes("expired") || body.includes("invalid");
+
+        const startCooldown = (seconds: number) => {
+          setOauthCooldown(seconds);
+          cooldownRef.current = setInterval(() => {
+            setOauthCooldown((prev) => {
+              if (prev <= 1) {
+                clearInterval(cooldownRef.current!);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        };
+
+        if (isRateLimit) {
+          startCooldown(30);
+          toast.error("Claude rate limit hit. Please wait 30 seconds, get a fresh code and try again.");
+        } else if (isExpired) {
+          toast.error("Auth code expired. Click 'Get New Code' to restart.");
+        } else {
+          toast.error(data?.message || data?.error || "Exchange failed. Get a fresh code and try again.");
+        }
+        setOauthCode("");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
+      }
+
+      const config = data?.config ?? data;
+      setUserAiConfig((prev) => ({
+        ...prev,
+        ...config,
+        id: config?.id ?? prev?.id,
+        configured: config?.is_active ?? true,
+        is_active: config?.is_active ?? true,
+      }));
+      setIsAiConfigActive(config?.is_active ?? true);
+      setOauthCode("");
+      setOauthUrl(null);
+      setOauthState(null);
+      toast.success(data?.message || "Claude connected successfully!");
+    } catch (error: any) {
+      console.error("Failed to exchange OAuth code", error);
+      const message = error?.message || "Failed to complete OAuth connection";
+      setAiConfigError(message);
+      toast.error(message);
+    } finally {
+      setIsOAuthExchanging(false);
+    }
+  };
+
+  const handleToggleAiConfig = async () => {
+    const configId = userAiConfig?.id;
+    if (!configId) {
+      toast.error("No AI configuration found to toggle");
+      return;
+    }
+
+    try {
+      setIsAiConfigToggling(true);
+      setAiConfigError(null);
+
+      const response = await fetch(getFullUrl(`/user_ai_config/${configId}/toggle`), {
+        method: "PATCH",
+        headers: {
+          Authorization: getAuthHeader(),
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          provider: selectedAiProvider,
+          action_type: isAiConfigActive ? "deactivate" : "activate",
         }),
       });
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(
-          data?.message || data?.error || `HTTP ${response.status}`
-        );
+        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
       }
 
-      setAiApiKey("");
-      setUserAiConfig((prev) => ({
-        ...prev,
-        ...data,
-        configured: false,
-        api_key: "",
-        message: data?.message || "API key removed",
-        provider: prev?.provider || {
-          id: selectedAiProvider,
-          display_name:
-            aiProviders.find((provider) => provider.provider_id === selectedAiProvider)
-              ?.display_name || selectedAiProvider,
-        },
-        model: prev?.model || {
-          model_name: selectedAiModel,
-          display_name:
-            aiModels.find((model) => model.model_name === selectedAiModel)
-              ?.display_name || selectedAiModel,
-        },
-      }));
-      toast.success(data?.message || "API key removed successfully");
+      const newActive = data?.config?.is_active ?? !isAiConfigActive;
+      setIsAiConfigActive(newActive);
+      setUserAiConfig((prev) =>
+        prev ? { ...prev, ...data.config, is_active: newActive, configured: newActive } : prev
+      );
+      toast.success(data?.message || (newActive ? "Config activated" : "Config deactivated"));
     } catch (error: any) {
-      console.error("Failed to delete AI API key", error);
-      const message = error?.message || "Failed to delete API key";
+      console.error("Failed to toggle AI config", error);
+      const message = error?.message || "Failed to toggle AI configuration";
       setAiConfigError(message);
       toast.error(message);
     } finally {
-      setIsAiConfigDeleting(false);
+      setIsAiConfigToggling(false);
     }
   };
 
@@ -1078,6 +1496,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const aiConfigProviderDisplayName = getAiConfigProviderDisplayName(userAiConfig);
   const aiConfigModelName = getAiConfigModelName(userAiConfig);
   const aiConfigModelDisplayName = getAiConfigModelDisplayName(userAiConfig);
+  const selectedOrganizationName = getStoredOrganizationName();
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins bg-[#F6F4EE]/30 min-h-screen">
@@ -1451,189 +1870,464 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
       <Card className="rounded-[16px] border border-blue-100 bg-white shadow-sm ring-1 ring-blue-50">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg font-bold text-blue-700">
+          <CardTitle className="flex items-center gap-3 text-lg font-bold text-blue-700">
             <Bot size={20} className="text-blue-500" />
             AI Configuration
+            <AiProviderLinksDropdown />
           </CardTitle>
-          <Badge
-            variant="outline"
-            className={cn(
-              "px-3 h-6 rounded-full font-bold",
-              userAiConfig?.configured
-                ? "bg-green-50 text-green-700 border-green-200"
-                : "bg-amber-50 text-amber-700 border-amber-200"
-            )}
-          >
-            {isAiConfigLoading
-              ? "Checking"
-              : userAiConfig?.configured
-                ? "Configured"
-                : "Not Configured"}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge
+              variant="outline"
+              className={cn(
+                "px-3 h-6 rounded-full font-bold",
+                userAiConfig?.configured
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : "bg-amber-50 text-amber-700 border-amber-200"
+              )}
+            >
+              {isAiConfigLoading
+                ? "Checking"
+                : userAiConfig?.configured
+                  ? "Configured"
+                  : "Not Configured"}
+            </Badge>
+            {/* <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleToggleAiConfig}
+                disabled={isAiConfigToggling || isAiConfigLoading || !userAiConfig?.id}
+                title={isAiConfigActive ? "Click to Deactivate" : "Click to Activate"}
+                className={cn(
+                  "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 transition-colors duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
+                  isAiConfigActive
+                    ? "bg-green-500 border-green-500"
+                    : "bg-gray-300 border-gray-300"
+                )}
+              >
+                <span
+                  className={cn(
+                    "inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform duration-200",
+                    isAiConfigActive ? "translate-x-5" : "translate-x-0.5"
+                  )}
+                />
+              </button>
+              <span
+                className={cn(
+                  "text-xs font-bold min-w-[60px]",
+                  isAiConfigToggling
+                    ? "text-gray-400"
+                    : isAiConfigActive
+                      ? "text-green-600"
+                      : "text-gray-400"
+                )}
+              >
+                {isAiConfigToggling
+                  ? "Updating..."
+                  : isAiConfigActive
+                    ? "Active"
+                  : "Inactive"}
+              </span>
+            </div> */}
+          </div>
         </CardHeader>
-        <CardContent className="py-6 space-y-5">
+        <CardContent className="py-4 space-y-5">
+
+          {/* ── Tab Buttons ── */}
+          <div className="flex gap-2 border-b border-gray-100 pb-1">
+            <button
+              type="button"
+              onClick={() => setAiConfigTab("api_key")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
+                aiConfigTab === "api_key"
+                  ? "border-blue-600 text-blue-700 bg-blue-50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              )}
+            >
+              <KeyRound size={14} />
+              API Key Setup
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAiConfigTab("auth_connect");
+                // Auto-select Anthropic provider
+                const anthropicProvider = aiProviders.find(
+                  (p) =>
+                    p.provider_id?.toLowerCase().includes("anthropic") ||
+                    p.display_name?.toLowerCase().includes("anthropic") ||
+                    p.provider_id?.toLowerCase().includes("claude")
+                );
+                if (anthropicProvider && selectedAiProvider !== anthropicProvider.provider_id) {
+                  setSelectedAiProvider(anthropicProvider.provider_id);
+                  setSelectedAiModel("");
+                }
+              }}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
+                aiConfigTab === "auth_connect"
+                  ? "border-[#c96442] text-[#c96442] bg-[#c96442]/5"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              )}
+            >
+              <Globe size={14} />
+              Auth Connect
+            </button>
+          </div>
+
           {aiConfigError && (
             <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
               {aiConfigError}
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Bot size={14} className="text-blue-500" />
-                <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
-                  Provider
-                </span>
+          {/* ── Tab 1: API Key Setup ── */}
+          {aiConfigTab === "api_key" && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Bot size={14} className="text-blue-500" />
+                    <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                      Provider
+                    </span>
+                  </div>
+                  <Select
+                    value={selectedAiProvider}
+                    onValueChange={(value) => {
+                      setSelectedAiProvider(value);
+                      setSelectedAiModel("");
+                    }}
+                    disabled={isAiProvidersLoading}
+                  >
+                    <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                      <SelectValue
+                        placeholder={
+                          isAiProvidersLoading ? "Loading providers..." : "Select Provider"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiProviders.map((provider) => (
+                        <SelectItem key={provider.provider_id} value={provider.provider_id}>
+                          {provider.display_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Cpu size={14} className="text-indigo-500" />
+                    <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                      Models
+                    </span>
+                  </div>
+                  <Select
+                    value={selectedAiModel}
+                    onValueChange={setSelectedAiModel}
+                    disabled={!selectedAiProvider || isAiModelsLoading}
+                  >
+                    <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                      <SelectValue
+                        placeholder={
+                          !selectedAiProvider
+                            ? "Select provider first"
+                            : isAiModelsLoading
+                              ? "Loading models..."
+                              : "Select Model"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiModels.map((model) => (
+                        <SelectItem key={model.model_name} value={model.model_name}>
+                          {model.display_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
+                    User AI Config
+                  </p>
+                  <p className="mt-2 text-sm font-bold text-gray-800">
+                    {userAiConfig?.user_name || formData.displayName}
+                  </p>
+                  {aiConfigProviderDisplayName && (
+                    <p className="mt-2 text-xs font-semibold text-gray-500">
+                      Provider:{" "}
+                      <span className="text-gray-800">{aiConfigProviderDisplayName}</span>
+                    </p>
+                  )}
+                  {(aiConfigModelDisplayName || aiConfigModelName) && (
+                    <p className="mt-1 text-xs font-semibold text-gray-500">
+                      Model:{" "}
+                      <span className="text-gray-800">
+                        {aiConfigModelDisplayName || aiConfigModelName}
+                      </span>
+                    </p>
+                  )}
+                  {!userAiConfig?.configured && userAiConfig?.message && (
+                    <p className="mt-2 text-xs font-semibold text-amber-700">
+                      {userAiConfig.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              <Select
-                value={selectedAiProvider}
-                onValueChange={(value) => {
-                  setSelectedAiProvider(value);
-                  setSelectedAiModel("");
-                }}
-                disabled={isAiProvidersLoading}
-              >
-                <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
-                  <SelectValue
-                    placeholder={
-                      isAiProvidersLoading ? "Loading providers..." : "Select Provider"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {aiProviders.map((provider) => (
-                    <SelectItem
-                      key={provider.provider_id}
-                      value={provider.provider_id}
-                    >
-                      {provider.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Cpu size={14} className="text-indigo-500" />
-                <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
-                  Models
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <KeyRound size={14} className="text-slate-500" />
+                  <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                    API Key
+                  </span>
+                </div>
+                <Textarea
+                  value={
+                    isAiApiKeyFocused || !aiApiKey
+                      ? aiApiKey
+                      : maskApiKey(aiApiKey)
+                  }
+                  onChange={(event) => setAiApiKey(event.target.value)}
+                  onFocus={() => setIsAiApiKeyFocused(true)}
+                  onBlur={() => setIsAiApiKeyFocused(false)}
+                  placeholder="Enter API key"
+                  disabled={isAiConfigSaving}
+                  className="min-h-[96px] bg-[#FAFAFA] text-sm"
+                />
               </div>
-              <Select
-                value={selectedAiModel}
-                onValueChange={setSelectedAiModel}
-                disabled={!selectedAiProvider || isAiModelsLoading}
-              >
-                <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
-                  <SelectValue
-                    placeholder={
-                      !selectedAiProvider
-                        ? "Select provider first"
-                        : isAiModelsLoading
-                          ? "Loading models..."
-                          : "Select Model"
+
+              <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <OrganizationCheckbox
+                  name={selectedOrganizationName}
+                  organizationId={storedOrganizationId}
+                  checked={includeOrganizationInAiConfig && Boolean(storedOrganizationId)}
+                  onCheckedChange={setIncludeOrganizationInAiConfig}
+                />
+                <div className="flex flex-col justify-end gap-3 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteAiApiKey}
+                    disabled={isAiConfigDeleting || isAiConfigSaving || !selectedAiProvider || !aiApiKey.trim()}
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+                  >
+                    {isAiConfigDeleting ? (
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 size={16} className="mr-2" strokeWidth={2.5} />
+                    )}
+                    {isAiConfigDeleting ? "Deleting..." : "Delete"}
+                  </Button>
+                  <Button
+                    onClick={handleSaveAiConfig}
+                    disabled={
+                      isAiConfigSaving || isAiConfigDeleting || isAiProvidersLoading ||
+                      isAiModelsLoading || !selectedAiProvider || !selectedAiModel || !aiApiKey.trim()
                     }
+                    className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm"
+                  >
+                    {isAiConfigSaving ? (
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Save size={16} className="mr-2" strokeWidth={2.5} />
+                    )}
+                    {isAiConfigSaving ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tab 2: Auth Connect ── */}
+          {aiConfigTab === "auth_connect" && (
+            <div className="space-y-5">
+
+              {/* Provider + Models + Config summary */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Bot size={14} className="text-blue-500" />
+                    <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                      Provider
+                    </span>
+                  </div>
+                  <div className="h-10 flex items-center gap-2.5 rounded-md border border-gray-300 bg-[#FAFAFA] px-3">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg"
+                      alt="Claude"
+                      className="w-5 h-5 rounded object-contain shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <span className="text-sm font-semibold text-gray-800">Anthropic</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Cpu size={14} className="text-indigo-500" />
+                    <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                      Models
+                    </span>
+                  </div>
+                  <Select
+                    value={selectedAiModel}
+                    onValueChange={setSelectedAiModel}
+                    disabled={!selectedAiProvider || isAiModelsLoading}
+                  >
+                    <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                      <SelectValue
+                        placeholder={
+                          !selectedAiProvider
+                            ? "Select provider first"
+                            : isAiModelsLoading
+                              ? "Loading models..."
+                              : "Select Model"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiModels.map((model) => (
+                        <SelectItem key={model.model_name} value={model.model_name}>
+                          {model.display_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
+                    User AI Config
+                  </p>
+                  <p className="mt-2 text-sm font-bold text-gray-800">
+                    {userAiConfig?.user_name || formData.displayName}
+                  </p>
+                  {aiConfigProviderDisplayName && (
+                    <p className="mt-2 text-xs font-semibold text-gray-500">
+                      Provider: <span className="text-gray-800">{aiConfigProviderDisplayName}</span>
+                    </p>
+                  )}
+                  {(aiConfigModelDisplayName || aiConfigModelName) && (
+                    <p className="mt-1 text-xs font-semibold text-gray-500">
+                      Model: <span className="text-gray-800">{aiConfigModelDisplayName || aiConfigModelName}</span>
+                    </p>
+                  )}
+                  {!userAiConfig?.configured && userAiConfig?.message && (
+                    <p className="mt-2 text-xs font-semibold text-amber-700">{userAiConfig.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4" />
+
+              {/* Claude OAuth connect card */}
+              <div className="rounded-xl border border-[#c96442]/20 bg-[#c96442]/5 p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-5 h-5 rounded-full bg-[#c96442] text-white flex items-center justify-center text-[10px] font-black shrink-0">1</div>
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg"
+                    alt="Claude"
+                    className="w-7 h-7 rounded-lg object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
-                </SelectTrigger>
-                <SelectContent>
-                  {aiModels.map((model) => (
-                    <SelectItem key={model.model_name} value={model.model_name}>
-                      {model.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
-                User AI Config
-              </p>
-              <p className="mt-2 text-sm font-bold text-gray-800">
-                {userAiConfig?.user_name || formData.displayName}
-              </p>
-              {aiConfigProviderDisplayName && (
-                <p className="mt-2 text-xs font-semibold text-gray-500">
-                  Provider:{" "}
-                  <span className="text-gray-800">
-                    {aiConfigProviderDisplayName}
-                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-[#c96442]">Claude by Anthropic</p>
+                    <p className="text-xs text-gray-500">Connect your account via OAuth</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                  Connect directly with your Anthropic account without needing to manage API keys manually.
                 </p>
-              )}
-              {(aiConfigModelDisplayName || aiConfigModelName) && (
-                <p className="mt-1 text-xs font-semibold text-gray-500">
-                  Model:{" "}
-                  <span className="text-gray-800">
-                    {aiConfigModelDisplayName || aiConfigModelName}
-                  </span>
+                <Button
+                  className="w-full bg-[#c96442] hover:bg-[#a8502e] text-white font-bold h-10 shadow-sm"
+                  onClick={handleOAuthConnect}
+                  disabled={isOAuthLoading || !selectedAiModel}
+                >
+                  {isOAuthLoading ? (
+                    <Loader2 size={15} className="mr-2 animate-spin" />
+                  ) : (
+                    <Globe size={15} className="mr-2" />
+                  )}
+                  {isOAuthLoading ? "Redirecting..." : "Connect with Claude"}
+                </Button>
+                {!selectedAiModel && (
+                  <p className="text-[11px] text-amber-600 font-semibold mt-2 text-center">
+                    Please select a model before connecting.
+                  </p>
+                )}
+              </div>
+
+              {/* ── Step 2: Paste Code ── */}
+              <div className="rounded-xl border border-green-100 bg-green-50/50 p-5 space-y-4">
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500 font-medium">
+                    Copy the full code from Claude Platform and paste it below:
+                  </p>
+                  <Textarea
+                    value={oauthCode}
+                    onChange={(e) => setOauthCode(e.target.value)}
+                    placeholder="e.g. nsRdj0lCU38CQ9BH...#FRhkNKp68rilbIW..."
+                    className="min-h-[80px] bg-white text-sm font-mono border-green-200 focus-visible:border-green-400"
+                    disabled={isOAuthExchanging}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <OrganizationCheckbox
+                    name={selectedOrganizationName}
+                    organizationId={storedOrganizationId}
+                    checked={includeOrganizationInAiConfig && Boolean(storedOrganizationId)}
+                    onCheckedChange={setIncludeOrganizationInAiConfig}
+                  />
+                  <Button
+                    onClick={handleOAuthExchange}
+                    disabled={isOAuthExchanging || !!oauthCooldown || !oauthCode.trim() || !selectedAiModel}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-10 shadow-sm disabled:opacity-60 sm:flex-1"
+                  >
+                  {isOAuthExchanging ? (
+                    <Loader2 size={15} className="mr-2 animate-spin" />
+                  ) : (
+                    <ShieldCheck size={15} className="mr-2" />
+                  )}
+                  {isOAuthExchanging
+                    ? "Connecting..."
+                    : oauthCooldown > 0
+                      ? `Rate limited — wait ${oauthCooldown}s`
+                      : "Submit Code & Connect"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                <p className="text-xs text-gray-400 font-medium">
+                  OAuth authentication will redirect you to Anthropic's authorization page. You'll be brought back automatically after granting access.
                 </p>
-              )}
-              {!userAiConfig?.configured && userAiConfig?.message && (
-                <p className="mt-2 text-xs font-semibold text-amber-700">
-                  {userAiConfig.message}
-                </p>
+              </div>
+
+              {userAiConfig?.id && (
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteAiApiKey}
+                    disabled={isAiConfigDeleting}
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+                  >
+                    {isAiConfigDeleting ? (
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 size={16} className="mr-2" strokeWidth={2.5} />
+                    )}
+                    {isAiConfigDeleting ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
               )}
             </div>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <KeyRound size={14} className="text-slate-500" />
-              <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
-                API Key
-              </span>
-            </div>
-            <Textarea
-              value={aiApiKey}
-              onChange={(event) => setAiApiKey(event.target.value)}
-              placeholder="Enter API key"
-              disabled={isAiConfigSaving}
-              className="min-h-[96px] bg-[#FAFAFA] text-sm"
-            />
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-100 pt-4">
-            <Button
-              variant="outline"
-              onClick={handleDeleteAiApiKey}
-              disabled={
-                isAiConfigDeleting ||
-                isAiConfigSaving ||
-                !selectedAiProvider ||
-                !aiApiKey.trim()
-              }
-              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
-            >
-              {isAiConfigDeleting ? (
-                <Loader2 size={16} className="mr-2 animate-spin" />
-              ) : (
-                <Trash2 size={16} className="mr-2" strokeWidth={2.5} />
-              )}
-              {isAiConfigDeleting ? "Deleting..." : "Delete"}
-            </Button>
-            <Button
-              onClick={handleSaveAiConfig}
-              disabled={
-                isAiConfigSaving ||
-                isAiConfigDeleting ||
-                isAiProvidersLoading ||
-                isAiModelsLoading ||
-                !selectedAiProvider ||
-                !selectedAiModel ||
-                !aiApiKey.trim()
-              }
-              className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm"
-            >
-              {isAiConfigSaving ? (
-                <Loader2 size={16} className="mr-2 animate-spin" />
-              ) : (
-                <Save size={16} className="mr-2" strokeWidth={2.5} />
-              )}
-              {isAiConfigSaving ? "Saving..." : "Save"}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
