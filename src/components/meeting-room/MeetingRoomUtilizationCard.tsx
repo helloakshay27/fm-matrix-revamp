@@ -7,11 +7,10 @@ interface MeetingRoomUtilizationCardProps {
   dateRange?: DateRange;
 }
 
-const getCellColor = (range: string) => {
-  if (range === "Less 30%" || range === "30%-39%") return "bg-red-100";
-  if (range === "40%-50%" || range === "50%-60%" || range === "60%-69%")
-    return "bg-yellow-100";
-  return "bg-green-100";
+const getCellColor = (range: string): string => {
+  if (range === "Less 30%" || range === "30%-39%") return "#E3909026";
+  if (range === "40%-50%" || range === "50%-60%" || range === "60%-69%") return "#EFEFFB";
+  return "#F6F4EE";
 };
 
 const parseRange = (label: string) => {
@@ -77,15 +76,15 @@ export const MeetingRoomUtilizationCard: React.FC<
         </h3>
         <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-red-100 border border-red-200" />
+            <span className="w-3 h-3 rounded-sm border border-gray-200" style={{ backgroundColor: '#E3909026' }} />
             0–39%
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-yellow-100 border border-yellow-200" />
+            <span className="w-3 h-3 rounded-sm border border-gray-200" style={{ backgroundColor: '#EFEFFB' }} />
             40–69%
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-green-100 border border-green-200" />
+            <span className="w-3 h-3 rounded-sm border border-gray-200" style={{ backgroundColor: '#F6F4EE' }} />
             70–100%
           </div>
         </div>
@@ -116,7 +115,8 @@ export const MeetingRoomUtilizationCard: React.FC<
                     return (
                       <div
                         key={rangeIndex}
-                        className={`border-l border-t border-gray-300 p-2 text-xs font-semibold text-center ${cellColor} min-h-[80px] flex items-center justify-center`}
+                        className="border-l border-t border-gray-300 p-2 text-xs font-semibold text-center min-h-[80px] flex items-center justify-center"
+                        style={{ backgroundColor: cellColor }}
                       >
                         {roomName ? (
                           <div className="leading-tight">

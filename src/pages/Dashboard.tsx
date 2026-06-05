@@ -497,7 +497,19 @@ export const Dashboard = () => {
       try {
         const parsedLayout = JSON.parse(savedLayout);
         console.log("✅ Parsed saved layout:", parsedLayout);
-        setLayouts(parsedLayout);
+        // Enforce minimum heights for cards that were previously too short
+        const cardMinHeights: Record<string, number> = {
+          'customer_rating_overview': 8,
+        };
+        const migratedLayout = parsedLayout.map((item: GridLayout.Layout) => {
+          const endpoint = item.i?.replace(/^[^_]+_/, '') ?? '';
+          const minH = cardMinHeights[endpoint];
+          if (minH && item.h < minH) {
+            return { ...item, h: minH, minH };
+          }
+          return item;
+        });
+        setLayouts(migratedLayout);
       } catch (e) {
         console.error("❌ Failed to parse saved layout", e);
       }
@@ -562,13 +574,21 @@ export const Dashboard = () => {
       // Cards that should use compact height (simple stat cards only)
       const compactCards = [
         'customer_experience_feedback',
-        'customer_rating_overview',
         'helpdesk_snapshot',
         'amc_contract_summary',
         'engagement_metrics',
       ];
 
+      // Table-heavy cards that need extra height to show all rows
+      const tallCards = [
+        'customer_rating_overview',
+      ];
+
       const isCompactCard = compactCards.includes(analytic.endpoint);
+      const isTallCard = tallCards.includes(analytic.endpoint);
+
+      const cardH = isCompactCard ? 4 : isTallCard ? 8 : 6;
+      const cardMinH = isCompactCard ? 3 : isTallCard ? 7 : 5;
 
       // Find the maximum y position to place new cards below existing ones
       const maxY = layouts.length > 0
@@ -582,11 +602,11 @@ export const Dashboard = () => {
       return {
         i: analytic.id,
         x: 0, // Start at column 0 for full width
-        y: maxY + row * (isCompactCard ? 4 : 6),
+        y: maxY + row * cardH,
         w: 12, // Full width (12 columns)
-        h: isCompactCard ? 4 : 6,
+        h: cardH,
         minW: 4,
-        minH: isCompactCard ? 3 : 5,
+        minH: cardMinH,
       };
     });
 
