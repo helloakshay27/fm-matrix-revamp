@@ -479,5 +479,628 @@
 .bc-legend-yellow { background-color: #facd55; }
 .bc-legend-gray { background-color: #e2e8f0; }
 
+/* Daily Report — Figma layout */
+.bc-daily-page {
+  padding: 24px 32px 80px;
+  max-width: 1440px;
+  margin: 0 auto;
+  font-family: 'Poppins', sans-serif;
+  color: #1a1a1a;
+}
 
+.bc-daily-header-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+}
+
+.bc-daily-header-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.bc-daily-review-btn {
+  border: 1.5px solid #DA7756;
+  color: #DA7756;
+  background: white;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bc-daily-review-btn:hover {
+  background: rgba(218, 119, 86, 0.06);
+}
+
+.bc-ai-banner {
+  background: #fdf8f5;
+  border: 1px solid rgba(218, 119, 86, 0.2);
+  border-radius: 16px;
+  padding: 18px 22px;
+}
+
+.bc-ai-insight-card {
+  background: white;
+  border: 1px solid #ede8e3;
+  border-radius: 12px;
+  padding: 12px 14px;
+  flex: 1;
+  min-width: 0;
+  transition: box-shadow 0.15s;
+}
+
+.bc-ai-insight-card:hover {
+  box-shadow: 0 2px 8px rgba(218, 119, 86, 0.1);
+}
+
+.bc-daily-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .bc-daily-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bc-daily-card {
+  background: white;
+  border: 1px solid rgba(218, 119, 86, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.bc-daily-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bc-daily-card-body {
+  padding: 20px;
+  position: relative;
+}
+
+.bc-points-badge {
+  background: #CECBF6;
+  color: #5c5a8a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.bc-add-outline-btn {
+  border: 1.5px solid #DA7756;
+  color: #DA7756;
+  background: white;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bc-add-outline-btn:hover {
+  background: rgba(218, 119, 86, 0.06);
+}
+
+.bc-calendar-day {
+  min-width: 88px;
+  height: 96px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  background: white;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.bc-calendar-day:hover:not(.bc-calendar-day-future):not(.bc-calendar-day-holiday) {
+  border-color: rgba(218, 119, 86, 0.35);
+}
+
+.bc-calendar-day-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  border-radius: 14px 14px 0 0;
+}
+
+.bc-calendar-day-selected {
+  border-color: #E57373;
+  box-shadow: 0 0 0 1px rgba(229, 115, 115, 0.2);
+  background: #ffffff;
+}
+
+.bc-calendar-day-holiday,
+.bc-calendar-day-future {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  cursor: default;
+}
+
+.bc-calendar-day-holiday .bc-calendar-day-day,
+.bc-calendar-day-future .bc-calendar-day-day {
+  color: #9ca3af;
+}
+
+.bc-calendar-day-holiday .bc-calendar-day-date,
+.bc-calendar-day-future .bc-calendar-day-date {
+  color: #6b7280;
+}
+
+.bc-calendar-day-future {
+  pointer-events: none;
+}
+
+.bc-calendar-day-upcoming-dot {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #DA7756;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.bc-calendar-legend-bar {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.bc-calendar-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.bc-calendar-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bc-calendar-strip-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  flex: 1;
+  padding: 12px 4px 8px;
+  scrollbar-width: none;
+}
+
+.bc-calendar-strip-track::-webkit-scrollbar {
+  display: none;
+}
+
+.bc-calendar-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bc-calendar-nav-btn:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.bc-calendar-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.bc-calendar-day-day {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: capitalize;
+  margin-top: 6px;
+}
+
+.bc-calendar-day-date {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.bc-calendar-day-scheduled {
+  opacity: 1;
+}
+
+.bc-live-score-card {
+  background: white;
+  border: 1px solid #f0ece8;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.bc-live-metric {
+  background: #fdf8f5;
+  border: 1px solid #f0ece8;
+  border-radius: 10px;
+  padding: 14px 8px;
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.bc-live-metric-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.bc-live-metric-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #DA7756;
+  line-height: 1.1;
+}
+
+.bc-task-filter-tab {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.bc-task-filter-open { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+.bc-task-filter-overdue { color: #dc2626; background: white; border-color: #fca5a5; }
+.bc-task-filter-progress { color: #ffffff; background: #DA7756; border-color: #DA7756; }
+.bc-task-filter-hold { color: #6b7280; background: white; border-color: #e5e7eb; }
+
+.bc-tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bc-tasks-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.bc-tasks-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f9fafb;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.bc-tasks-table tr:hover td {
+  background: #fafafa;
+}
+
+.bc-tasks-card-wrap {
+  position: relative;
+  overflow: visible;
+}
+
+.bc-accomplishment-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.bc-accomplishment-input-row:hover {
+  border-color: rgba(218, 119, 86, 0.3);
+  background: #fdf8f5;
+}
+
+.bc-ai-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 110%, rgba(252, 180, 140, 0.65) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 50% at 30% 20%, rgba(255, 255, 255, 0.9) 0%, transparent 70%),
+    linear-gradient(160deg, rgba(255, 252, 249, 0.95) 0%, rgba(255, 238, 225, 0.82) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #b85c3a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -1px 2px rgba(194, 125, 95, 0.08),
+    0 0 0 1px rgba(230, 126, 94, 0.1),
+    0 0 28px rgba(230, 126, 94, 0.28),
+    0 8px 28px rgba(194, 125, 95, 0.22);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.bc-ai-fab:hover {
+  transform: scale(1.06);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.95),
+    0 0 0 1px rgba(230, 126, 94, 0.16),
+    0 0 36px rgba(230, 126, 94, 0.38),
+    0 10px 32px rgba(194, 125, 95, 0.28);
+}
+
+.bc-ai-fab:active {
+  transform: scale(1.02);
+}
+
+.bc-ai-fab-icon {
+  width: 28px;
+  height: 28px;
+  color: #b85c3a;
+  filter: drop-shadow(0 1px 1px rgba(184, 92, 58, 0.15));
+}
+
+.bc-absent-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid #DA7756;
+  border-radius: 10px;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: #DA7756;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.bc-absent-btn:hover {
+  background: rgba(218, 119, 86, 0.05);
+}
+
+.bc-submit-btn {
+  width: 100%;
+  height: 56px;
+  border: none;
+  border-radius: 14px;
+  background: #DA7756;
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(218, 119, 86, 0.3);
+}
+
+.bc-submit-btn:hover:not(:disabled) {
+  background: #c45f3a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(218, 119, 86, 0.4);
+}
+
+.bc-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bc-score-info-bar {
+  background: white;
+  border: 1px solid rgba(218, 119, 86, 0.12);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.bc-score-info-bar:hover {
+  background: rgba(218, 119, 86, 0.04);
+}
+
+.bc-tasks-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid #f3f4f6;
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.bc-tasks-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bc-live-metric-value-warn {
+  color: #e7848e !important;
+}
+
+.bc-priority-high {
+  color: #e7848e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bc-priority-medium {
+  color: #DA7756;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bc-priority-low {
+  color: #798C5E;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bc-plan-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.bc-ai-banner-glow {
+  box-shadow: 0 2px 12px rgba(218, 119, 86, 0.08);
+}
+
+/* ── AI Inline Popup (inside tasks card body) ────────── */
+
+.bc-ai-inline-popup {
+  position: absolute;
+  top: 40px;
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+  border-radius: 24px;
+  border: 1px solid #e8e8e8;
+  background: #fafafa;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bc-ai-inline-tabs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bc-ai-popup-tab {
+  padding: 14px 28px;
+  border-radius: 9999px;
+  border: 1.5px solid #d4d4d4;
+  background: #f5f5f5;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333333;
+  cursor: pointer;
+  line-height: 1.3;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bc-ai-popup-tab:hover {
+  background: #ebebeb;
+  border-color: #c0c0c0;
+}
+
+.bc-ai-popup-tab-active {
+  background: #1a1a1a;
+  color: #ffffff;
+  border-color: #1a1a1a;
+}
+
+.bc-ai-popup-tab-active:hover {
+  background: #2a2a2a;
+  border-color: #2a2a2a;
+}
+
+.bc-ai-popup-input-wrap {
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1.5px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.bc-ai-popup-input {
+  display: block;
+  width: 100%;
+  min-height: 160px;
+  resize: none;
+  border: none;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 18px 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #1a1a1a;
+  outline: none;
+  font-family: inherit;
+}
+
+.bc-ai-popup-input:focus {
+  background: #ffffff;
+}
+
+.bc-ai-popup-input::placeholder {
+  color: #b8b8b8;
+  font-size: 16px;
+  font-weight: 400;
+}
 
