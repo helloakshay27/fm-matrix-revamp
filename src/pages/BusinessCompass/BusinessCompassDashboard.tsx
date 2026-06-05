@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import "./BusinessCompass.css";
-import { getBaseUrl, getToken } from "@/utils/auth";
+import { getBaseUrl, getToken, getUser } from "@/utils/auth";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface CriticalNumber {
@@ -333,7 +333,18 @@ const BusinessCompassDashboard: React.FC = () => {
   const kpis = d?.critical_numbers?.items ?? [];
   const issues = d?.top_stuck_issues?.items ?? [];
   const counters = d?.counters;
-  const profileName = d?.profile?.user_name ?? "User";
+  const profileName = useMemo(() => {
+    try {
+      const saved = localStorage.getItem("bc-profile-data");
+      if (saved) {
+        const p = JSON.parse(saved);
+        if (p.displayName?.trim()) return p.displayName.trim();
+      }
+    } catch (_) { /* ignore */ }
+    const u = getUser();
+    const fullName = [u?.firstname, u?.lastname].filter(Boolean).join(" ").trim();
+    return fullName || d?.profile?.user_name || "User";
+  }, [d]);
 
   // ── Profile completion ─────────────────────────────────────────────────
   const profileComplete = useMemo(() => {
