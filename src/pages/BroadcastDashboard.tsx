@@ -298,7 +298,7 @@ export const BroadcastDashboard = () => {
               checked={isChecked}
               onCheckedChange={(checked) => handleStatusChange(item, checked)}
               disabled={updatingStatus[item.id]}
-              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+              className="data-[state=checked]:!bg-green-400"
             />
             {isChecked ? "Active" : "Inactive"}
           </div>
@@ -312,7 +312,7 @@ export const BroadcastDashboard = () => {
               checked={isShowOnHomeScreenChecked}
               onCheckedChange={(checked) => handleShowOnHomeScreenChange(item, checked)}
               disabled={updatingStatus[`home_${item.id}`]}
-              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+              className="data-[state=checked]:!bg-green-400"
             />
             {isShowOnHomeScreenChecked ? "Active" : "Inactive"}
           </div>
@@ -326,7 +326,7 @@ export const BroadcastDashboard = () => {
               checked={isVisibleAfterExpireChecked}
               onCheckedChange={(checked) => handleVisibleAfterExpireChange(item, checked)}
               disabled={updatingStatus[`expire_${item.id}`]}
-              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+              className="data-[state=checked]:!bg-green-400"
             />
             {isVisibleAfterExpireChecked ? "Active" : "Inactive"}
           </div>
