@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { SiteWiseIssueSummary } from '@/services/ticketAnalyticsAPI';
 
 interface SiteWiseIssueSummaryCardProps {
@@ -7,9 +7,9 @@ interface SiteWiseIssueSummaryCardProps {
   className?: string;
 }
 
-const HEADER_BG = '#EDE4D8';
-const HEADER_TEXT = '#000000';
-const ROW_ALT = '#f8f7f4';
+const HEADER_BG = '#D97655';
+const HEADER_TEXT = '#FFFFFF';
+const ROW_ALT = '#F6F4EE';
 
 export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> = ({
   data,
@@ -29,8 +29,7 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
   const thStyle: React.CSSProperties = {
     backgroundColor: HEADER_BG,
     color: HEADER_TEXT,
-    border: '1px solid #d1d5db',
-    padding: '8px 10px',
+    padding: '10px 12px',
     textAlign: 'center',
     fontSize: '12px',
     fontWeight: 600,
@@ -38,8 +37,8 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
   };
 
   const tdStyle = (alt: boolean): React.CSSProperties => ({
-    border: '1px solid #d1d5db',
-    padding: '7px 10px',
+    borderBottom: '1px solid #f3f4f6',
+    padding: '8px 12px',
     textAlign: 'center',
     fontSize: '12px',
     backgroundColor: alt ? ROW_ALT : '#ffffff',
@@ -54,42 +53,43 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
   });
 
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           Site / Project-wise Issue Summary
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h3>
+      </div>
+      <div className="p-5">
         {buildings.length === 0 ? (
           <div className="text-center text-gray-500 py-8 text-sm">No data available</div>
         ) : (
           <div className="overflow-x-auto -mx-3 sm:mx-0">
             <div className="px-3 sm:px-0" style={{ minWidth: `${600 + allCategories.length * 140}px` }}>
+              <div className="rounded-xl overflow-hidden border border-gray-200">
               <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                 <thead>
                   {/* Top header row */}
                   <tr>
-                    <th rowSpan={2} style={{ ...thStyle, textAlign: 'left', minWidth: 140 }}>
+                    <th rowSpan={2} className="analytics-header" style={{ ...thStyle, textAlign: 'left', minWidth: 140 }}>
                       Building
                     </th>
                     {allCategories.map(cat => (
-                      <th key={cat} colSpan={2} style={thStyle}>
+                      <th key={cat} colSpan={2} className="analytics-header" style={thStyle}>
                         {cat}
                       </th>
                     ))}
-                    <th rowSpan={2} style={thStyle}>Total Open</th>
-                    <th rowSpan={2} style={thStyle}>Total Closed</th>
-                    <th rowSpan={2} style={thStyle}>Critical</th>
-                    <th rowSpan={2} style={thStyle}>Escalated</th>
-                    <th rowSpan={2} style={thStyle}>Avg TAT (days)</th>
+                    <th rowSpan={2} className="analytics-header" style={thStyle}>Total Open</th>
+                    <th rowSpan={2} className="analytics-header" style={thStyle}>Total Closed</th>
+                    <th rowSpan={2} className="analytics-header" style={thStyle}>Critical</th>
+                    <th rowSpan={2} className="analytics-header" style={thStyle}>Escalated</th>
+                    <th rowSpan={2} className="analytics-header" style={thStyle}>Avg TAT (days)</th>
                   </tr>
                   {/* Sub-header row for Open/Closed */}
                   <tr>
                     {allCategories.map(cat => (
                       <React.Fragment key={cat}>
-                        <th style={{ ...thStyle, backgroundColor: '#EDE4D8', fontWeight: 500 }}>Open</th>
-                        <th style={{ ...thStyle, backgroundColor: '#EDE4D8', fontWeight: 500 }}>Closed</th>
+                        <th className="analytics-header" style={{ ...thStyle, backgroundColor: '#D97655', color: '#FFFFFF', fontWeight: 500 }}>Open</th>
+                        <th className="analytics-header" style={{ ...thStyle, backgroundColor: '#D97655', color: '#FFFFFF', fontWeight: 500 }}>Closed</th>
                       </React.Fragment>
                     ))}
                   </tr>
@@ -124,10 +124,11 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

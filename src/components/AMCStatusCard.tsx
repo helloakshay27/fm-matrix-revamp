@@ -25,34 +25,24 @@ interface AMCStatusCardProps {
   headerClassName?: string;
 }
 
-export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, onDownload, colorPalette, headerClassName }) => {
+const CARD_COLORS = [
+  { bg: '#B7DCD44D', text: '#2E7D6B' },
+  { bg: '#E3909026', text: '#D97655' },
+  { bg: '#85BDF633', text: '#85BDF6' },
+  { bg: '#EFEFFB',   text: '#6B5EA8' },
+];
+
+export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, onDownload, colorPalette: _colorPalette, headerClassName }) => {
   const { toast } = useToast();
 
-  const palette = colorPalette || {
-    primary: '#C4B99D',
-    secondary: '#DAD6CA',
-    tertiary: '#D5DBDB',
-    primaryLight: '#DDD4C4',
-    secondaryLight: '#E8E5DD',
-    tertiaryLight: '#E5E9E9',
-  };
-
-  const BASE_COLORS = [palette.primary, palette.tertiary, palette.primaryLight, palette.primaryLight];
-  const toBg = (hex: string) => {
-    const r = parseInt(hex.slice(1,3),16);
-    const g = parseInt(hex.slice(3,5),16);
-    const b = parseInt(hex.slice(5,7),16);
-    return `rgba(${r}, ${g}, ${b}, 0.18)`;
-  };
-
-  const cards: Array<{ label: string; value: number; color: string; key: string }> = data ? [
-    { key: 'total', label: 'Total AMCs', value: data.totalAMCs, color: BASE_COLORS[0] },
-    { key: 'active', label: 'Active', value: data.activeAMCs, color: BASE_COLORS[1] },
-    { key: 'inactive', label: 'Inactive', value: data.inactiveAMCs, color: BASE_COLORS[2] },
-    { key: 'critical', label: 'Critical Assets Under AMC', value: data.criticalAssetsUnderAMC, color: BASE_COLORS[3] },
-    { key: 'missing', label: 'Missed Visit', value: data.missingAMC, color: BASE_COLORS[0] },
-    { key: 'comp', label: 'Comprehensive', value: data.comprehensiveAMCs, color: BASE_COLORS[1] },
-    { key: 'noncomp', label: 'Non-Comprehensive', value: data.nonComprehensiveAMCs, color: BASE_COLORS[2] },
+  const cards: Array<{ label: string; value: number; bg: string; text: string; key: string }> = data ? [
+    { key: 'total',    label: 'Total AMCs',               value: data.totalAMCs,               ...CARD_COLORS[0] },
+    { key: 'active',   label: 'Active',                   value: data.activeAMCs,              ...CARD_COLORS[1] },
+    { key: 'inactive', label: 'Inactive',                 value: data.inactiveAMCs,            ...CARD_COLORS[2] },
+    { key: 'critical', label: 'Critical Assets Under AMC',value: data.criticalAssetsUnderAMC,  ...CARD_COLORS[3] },
+    { key: 'missing',  label: 'Missed Visit',             value: data.missingAMC,              ...CARD_COLORS[0] },
+    { key: 'comp',     label: 'Comprehensive',            value: data.comprehensiveAMCs,       ...CARD_COLORS[1] },
+    { key: 'noncomp',  label: 'Non-Comprehensive',        value: data.nonComprehensiveAMCs,    ...CARD_COLORS[2] },
   ] : [];
 
   const handleDownload = async () => {
@@ -92,11 +82,11 @@ export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, o
             {cards.map(card => (
               <div
                 key={card.key}
-                className="text-center p-2 sm:p-3 lg:p-4 rounded-lg border shadow-sm"
-                style={{ background: toBg(card.color), borderColor: card.color + '55' }}
+                className="text-center p-2 sm:p-3 lg:p-4 rounded-lg"
+                style={{ backgroundColor: card.bg }}
               >
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#1A1A1A]">{card.value}</div>
-                <div className="text-xs sm:text-sm font-medium mt-1 text-[#1A1A1A] line-clamp-2">{card.label}</div>
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold" style={{ color: card.text }}>{card.value}</div>
+                <div className="text-xs sm:text-sm font-medium mt-1 text-gray-700 line-clamp-2">{card.label}</div>
               </div>
             ))}
           </div>

@@ -639,6 +639,9 @@ const lock_account_id = localStorage.getItem("lock_account_id");
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">All Transactions</h1>
+      </div>
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">
         {searchLoading && (

@@ -27,28 +27,15 @@ interface AssetAnalyticsCardProps {
   info?: string;
 }
 
-const DEFAULT_COLORS = [
-  "#C4AE9D",
-  "#C4B99D",
-  "#DAD6CA",
-  "#D5DBDB",
-  "#8B5A3C",
-  "#A0A0A0",
-  "#FFB366",
-  "#FF8C42",
-  "#6B8E23",
-];
-
-const CATEGORY_COLORS = [
-  "#C8B89E",
-  "#E2D9C9",
-  "#D5CBB4",
-  "#BEB39D",
-  "#E8E0D2",
-  "#CDC2AB",
-  "#B7B09E",
-  "#D9D0C0",
-  "#C2B9A5",
+const PIE_COLORS = [
+  "#76CDC1",
+  "#E39090",
+  "#CDCAF5",
+  "#9EC8BA",
+  "#EDC488",
+  "#8E7BE0",
+  "#DA7756",
+  "#798C5E",
 ];
 
 export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
@@ -94,7 +81,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
               />
               <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill="#C4AE9D" />
+                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                 ))}
               </Bar>
             </BarChart>
@@ -102,7 +89,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
         );
 
       case 'categoryWise': {
-        const palette = CATEGORY_COLORS;
+        const palette = PIE_COLORS;
         return (
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
@@ -161,7 +148,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 {data.map((entry: any, index: number) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                    fill={entry.color || PIE_COLORS[index % PIE_COLORS.length]}
                   />
                 ))}
               </Pie>
@@ -198,7 +185,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 {data.map((entry: any, index: number) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                    fill={entry.color || PIE_COLORS[index % PIE_COLORS.length]}
                   />
                 ))}
               </Pie>

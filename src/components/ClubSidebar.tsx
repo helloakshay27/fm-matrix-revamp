@@ -289,7 +289,7 @@ const modulesByPackage = {
       name: "Purchases",
       icon: Truck,
       subItems: [
-        { name: "Vendor", href: "/maintenance/vendor" },
+        { name: "Vendor", href: "/accounting/vendor" },
         { name: "Expense", href: "/accounting/expense" },
         { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
         { name: "Purchase Order", href: "/accounting/purchase-order" },
@@ -452,10 +452,10 @@ const modulesByPackage = {
               name: "Sales by Item",
               href: "/accounting/reports/sales-by-item",
             },
-            // {
-            //   name: "Sales by Sales Person",
-            //   href: "/accounting/reports/sales-by-sales-person",
-            // },
+            {
+              name: "Sales by Sales Person",
+              href: "/accounting/reports/sales-by-sales-person",
+            },
             {
               name: "Sales Summary",
               href: "/accounting/reports/sales-summary",

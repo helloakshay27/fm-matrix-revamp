@@ -153,7 +153,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-             const lock_account_id = localStorage.getItem("lock_account_id");
+            const lock_account_id = localStorage.getItem("lock_account_id");
             const params = new URLSearchParams({
                 lock_account_id: lock_account_id,
                 // page: String(page),
@@ -268,7 +268,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
-                  {/* {order.status !== "sent" && ( */}
+                {/* {order.status !== "sent" && ( */}
                 <input
                     type="checkbox"
                     checked={selectedRows.includes(order.id)}
@@ -281,7 +281,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                     }}
                     className="cursor-pointer"
                 />
-                 {/* )} */}
+                {/* )} */}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -485,7 +485,8 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                 leftActions={(
                     <div className="flex items-center gap-2">
                         <Button
-                            className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            // className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            className='fm-button-fix fm-button-brand px-4 py-2P'
                             onClick={() => navigate('/accounting/invoices/add')}
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add

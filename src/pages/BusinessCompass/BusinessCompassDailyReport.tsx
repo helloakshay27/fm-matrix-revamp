@@ -354,6 +354,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>([]);
   const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
+  const [hiddenTomorrowScheduledIds, setHiddenTomorrowScheduledIds] = useState<Set<string>>(new Set());
   const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
   const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>({});
 
@@ -362,6 +363,24 @@ const BusinessCompassDailyReport: React.FC = () => {
       ? JSON.parse(localStorage.getItem("user") || "{}")
       : {};
   const userId = user?.id;
+
+  const [rosterWorkingDays, setRosterWorkingDays] = useState<Record<string, string[]> | null>(null);
+
+  useEffect(() => {
+    const rosterId = user?.user_roster_id;
+    if (!rosterId || !baseUrl || !token) return;
+    axios
+      .get(`https://${baseUrl}/pms/admin/user_roasters/${rosterId}.json`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const noOfDays = res.data?.no_of_days?.[0];
+        if (noOfDays && typeof noOfDays === "object") {
+          setRosterWorkingDays(noOfDays as Record<string, string[]>);
+        }
+      })
+      .catch(() => { });
+  }, []);
 
   // Fetch todos with same date and completed filter as tasks and issues
 
@@ -419,12 +438,32 @@ const BusinessCompassDailyReport: React.FC = () => {
     fetchTodos();
   }, [startDate, baseUrl, token, userId]);
 
+  const isRosterHoliday = (date: Date): boolean => {
+    const jsDay = date.getDay();
+    const rosterDay = jsDay === 0 ? 7 : jsDay;
+    const weekOfMonth = Math.ceil(date.getDate() / 7).toString();
+    if (rosterWorkingDays) {
+      return !rosterWorkingDays[weekOfMonth]?.includes(rosterDay.toString());
+    }
+    return jsDay === 0 || jsDay === 6;
+  };
+
   const getNextWorkingDay = (dateStr: string): string => {
     const [y, m, d] = dateStr.split("-").map(Number);
     const date = new Date(y, m - 1, d);
     date.setDate(date.getDate() + 1);
-    while (date.getDay() === 0 || date.getDay() === 6) {
+    while (isRosterHoliday(date)) {
       date.setDate(date.getDate() + 1);
+    }
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  };
+
+  const getPrevWorkingDay = (dateStr: string): string => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() - 1);
+    while (isRosterHoliday(date)) {
+      date.setDate(date.getDate() - 1);
     }
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   };
@@ -860,15 +899,16 @@ const BusinessCompassDailyReport: React.FC = () => {
     return ids;
   }, [mergedTasksIssues, planningItems]);
 
-  // Next-day scheduled items deduped against manual plan entries (never in payload)
+  // Next-day scheduled items shown as lightweight rows; starred selections live in planningItems.
   const dedupedTomorrowItems = useMemo(() => {
-    const manualTitles = new Set(
-      planningItems.map((p) => cleanReportText(p.text).toLowerCase())
-    );
     return tomorrowScheduledItems.filter(
-      (item) => !manualTitles.has(cleanReportText(item.title).toLowerCase())
+      (item) => !hiddenTomorrowScheduledIds.has(item.id)
     );
-  }, [planningItems, tomorrowScheduledItems]);
+  }, [hiddenTomorrowScheduledIds, tomorrowScheduledItems]);
+
+  useEffect(() => {
+    setHiddenTomorrowScheduledIds(new Set());
+  }, [startDate]);
 
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpiLoading, setKpiLoading] = useState(false);
@@ -1062,6 +1102,21 @@ const BusinessCompassDailyReport: React.FC = () => {
     setHiddenAutoIds((prev) => new Set([...prev, sourceId]));
   };
 
+  const planningItemMatchesSourceItem = (
+    plan: { text: string; source_id?: number | null; source_type?: string | null },
+    item: any
+  ) => {
+    const sourceId = item.originalData?.id ?? null;
+    const itemText = cleanReportText(item.title || item.text || "").toLowerCase();
+    return (
+      (plan.source_id != null &&
+        sourceId != null &&
+        plan.source_id === sourceId &&
+        (!plan.source_type || plan.source_type === item.type)) ||
+      cleanReportText(plan.text).toLowerCase() === itemText
+    );
+  };
+
   const addItemToTomorrow = (item: any) => {
     const text = cleanReportText(item.title || item.text || "");
     if (!text) return;
@@ -1079,12 +1134,48 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
+  const toggleScheduledTomorrowStar = (item: any) => {
+    const text = cleanReportText(item.title || item.text || "");
+    if (!text) return;
+
+    setPlanningItems((prev) => {
+      let found = false;
+      const updated = prev.map((plan) => {
+        if (!found && planningItemMatchesSourceItem(plan, item)) {
+          found = true;
+          return { ...plan, starred: !plan.starred };
+        }
+        return plan;
+      });
+
+      if (found) return updated;
+
+      return [
+        ...updated,
+        {
+          id: `tomorrow-${item.id}-${Date.now()}`,
+          text,
+          starred: true,
+          source_id: item.originalData?.id ?? null,
+          source_type: item.type ?? null,
+          originalData: item.originalData ?? null,
+        },
+      ];
+    });
+    markDraftDirty();
+  };
+
   const removeItemFromTomorrow = (item: any) => {
     const text = cleanReportText(item.title || item.text || "").toLowerCase();
     setPlanningItems((prev) =>
       prev.filter((p) => cleanReportText(p.text).toLowerCase() !== text)
     );
     markDraftDirty();
+  };
+
+  const hideTomorrowScheduledItem = (item: any) => {
+    setHiddenTomorrowScheduledIds((prev) => new Set([...prev, item.id]));
+    removeItemFromTomorrow(item);
   };
 
   const addAllOverdueToTomorrow = () => {
@@ -1535,7 +1626,12 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isToday = date.getTime() === today.getTime();
       const isPast = date.getTime() < today.getTime();
       const isFuture = date.getTime() > today.getTime();
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      const jsDay = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      const rosterDay = jsDay === 0 ? 7 : jsDay; // convert to 1=Mon..6=Sat, 7=Sun
+      const weekOfMonth = Math.ceil(date.getDate() / 7).toString();
+      const isNonWorkingDay = rosterWorkingDays
+        ? !rosterWorkingDays[weekOfMonth]?.includes(rosterDay.toString())
+        : jsDay === 0 || jsDay === 6; // fallback to weekend if roster not loaded
       const report = reportsList.find(
         (r) =>
           getReportDateKey(r.start_date) === dateStr &&
@@ -1548,7 +1644,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         status = report.report_data?.total_score
           ? `+${report.report_data.total_score}`
           : "Done";
-      } else if (isWeekend) {
+      } else if (isNonWorkingDay) {
         type = "holiday";
         status = "Holiday";
       } else if (isPast || isToday) {
@@ -1570,7 +1666,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       date.setDate(date.getDate() + 1);
     }
     return result;
-  }, [viewStartDate, reportsList, isLocallyDeletedReport]);
+  }, [viewStartDate, reportsList, isLocallyDeletedReport, rosterWorkingDays]);
 
   const handlePrevWeek = () => {
     const newDate = new Date(viewStartDate);
@@ -1728,7 +1824,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       if (isNaN(dateObj.getTime())) return "";
       const nextDay = new Date(dateObj);
       nextDay.setDate(nextDay.getDate() + 1);
-      if (nextDay.getDay() === 0) nextDay.setDate(nextDay.getDate() + 1);
+      while (isRosterHoliday(nextDay)) {
+        nextDay.setDate(nextDay.getDate() + 1);
+      }
       return nextDay.toLocaleDateString("en-GB", {
         weekday: "short",
         day: "numeric",
@@ -1737,14 +1835,15 @@ const BusinessCompassDailyReport: React.FC = () => {
     } catch (e) {
       return "";
     }
-  }, [selectedDate, selectedMonth, selectedYear]);
+  }, [selectedDate, selectedMonth, selectedYear, rosterWorkingDays]);
 
-  // Get next day's date in YYYY-MM-DD format for APIs
+  // Get next working day's date in YYYY-MM-DD format for APIs
   const getNextDayDate = () => {
     const nextDate = new Date(startDate);
     nextDate.setDate(nextDate.getDate() + 1);
-    // Skip weekends for task/issue dates
-    if (nextDate.getDay() === 0) nextDate.setDate(nextDate.getDate() + 1);
+    while (isRosterHoliday(nextDate)) {
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
     return nextDate.toLocaleDateString("en-CA");
   };
 
@@ -1803,15 +1902,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           return;
         }
 
-        // Safely extract year, month, and day to avoid Javascript Date UTC shift bugs
-        const [year, month, day] = startDate.split("-");
-        const prevDateObj = new Date(
-          Number(year),
-          Number(month) - 1,
-          Number(day)
-        );
-        prevDateObj.setDate(prevDateObj.getDate() - 1);
-        const prevDateStr = `${prevDateObj.getFullYear()}-${String(prevDateObj.getMonth() + 1).padStart(2, "0")}-${String(prevDateObj.getDate()).padStart(2, "0")}`;
+        // Go back to the last working day (skips holidays per roster, falls back to skipping weekends)
+        const prevDateStr = getPrevWorkingDay(startDate);
 
         const queryParams = new URLSearchParams();
         queryParams.append("q[journal_type_eq]", "daily");
@@ -2009,6 +2101,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     applyStoredDraft,
     applyDraftForMissingReport,
     isLocallyDeletedReport,
+    rosterWorkingDays,
   ]);
 
   const fetchReportsList = async () => {
@@ -2069,16 +2162,16 @@ const BusinessCompassDailyReport: React.FC = () => {
           type === "task"
             ? `${urlBase}/task_managements/${id}.json`
             : type === "issue"
-            ? `${urlBase}/issues/${id}.json`
-            : `${urlBase}/todos/${id}.json`;
+              ? `${urlBase}/issues/${id}.json`
+              : `${urlBase}/todos/${id}.json`;
         try {
           const res = await axios.get(endpoint, { headers });
           const data =
             type === "task"
               ? res.data?.data || res.data
               : type === "issue"
-              ? res.data?.issue || res.data
-              : res.data?.todo || res.data;
+                ? res.data?.issue || res.data
+                : res.data?.todo || res.data;
           return { key: `${type}:${id}`, data };
         } catch {
           return { key: `${type}:${id}`, data: null };
@@ -2245,6 +2338,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 status: selectedTasksIssues[item.id] === true ? "completed" : item.status,
                 type: item.type,
               })),
+            tomorrow_plan_date: getNextWorkingDay(startDate),
             tomorrow_plan: tomorrowPlanPayload,
             past_kpis: kpis.map((kpi) => ({
               kpi_id: kpi.kpi_id,
@@ -2483,7 +2577,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         item.type === "missed" &&
                         "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
                         item.type === "holiday" &&
-                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
+                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 cursor-not-allowed pointer-events-none opacity-70",
                         item.type === "upcoming" &&
                         "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
                         item.type === "filled" &&
@@ -2492,7 +2586,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           ? "ring-4 ring-blue-500/20 scale-105 z-10 text-white"
                           : "border-transparent"
                       )}
-                      onClick={() => !item.isFuture && handleSelectDate(item)}
+                      onClick={() => !item.isFuture && item.type !== "holiday" && handleSelectDate(item)}
                     >
                       <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
                         {item.day}
@@ -2765,6 +2859,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
                                   <CalendarIcon size={10} />
                                   From Yesterday
+                                </span>
+                              </div>
+                            )}
+
+                            {item.completed && (
+                              <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                  <CalendarIcon size={9} className="shrink-0" />
+                                  {fmtDate(startDate)}
                                 </span>
                               </div>
                             )}
@@ -3207,7 +3310,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             title="Pause task"
                                             disabled={playingTaskIds.has(item.originalData.id)}
                                           >
-                                            <Pause size={14} className="text-orange-500" />
+                                            <Pause size={14} className="text-red-500" />
                                           </button>
                                         ) : (
                                           <button
@@ -3217,8 +3320,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             disabled={playingTaskIds.has(item.originalData.id)}
                                           >
                                             {playingTaskIds.has(item.originalData.id)
-                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                              : <Play size={14} className="text-green-500" />}
+                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                              : <Play size={14} className="text-green-600" />}
                                           </button>
                                         )
                                       )}
@@ -3230,7 +3333,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             title="Pause task"
                                             disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                           >
-                                            <Pause size={14} className="text-orange-500" />
+                                            <Pause size={14} className="text-red-500" />
                                           </button>
                                         ) : (
                                           <button
@@ -3240,8 +3343,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                           >
                                             {playingTaskIds.has(item.originalData.task_management_id)
-                                              ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                              : <Play size={14} className="text-green-500" />}
+                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                              : <Play size={14} className="text-green-600" />}
                                           </button>
                                         )
                                       )}
@@ -3466,7 +3569,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               title="Pause task"
                                               disabled={playingTaskIds.has(item.originalData.id)}
                                             >
-                                              <Pause size={14} className="text-orange-500" />
+                                              <Pause size={14} className="text-red-500" />
                                             </button>
                                           ) : (
                                             <button
@@ -3476,8 +3579,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               disabled={playingTaskIds.has(item.originalData.id)}
                                             >
                                               {playingTaskIds.has(item.originalData.id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
                                             </button>
                                           )
                                         )}
@@ -3491,7 +3594,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               title="Pause task"
                                               disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                             >
-                                              <Pause size={14} className="text-orange-500" />
+                                              <Pause size={14} className="text-red-500" />
                                             </button>
                                           ) : (
                                             <button
@@ -3501,8 +3604,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               disabled={playingTaskIds.has(item.originalData.task_management_id)}
                                             >
                                               {playingTaskIds.has(item.originalData.task_management_id)
-                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
-                                                : <Play size={14} className="text-green-500" />}
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
                                             </button>
                                           )
                                         )}
@@ -3702,7 +3805,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Your plan
                         </h4>
                         <div className="space-y-4">
-                          {planningItems.map((item) => {
+                          {planningItems
+                            .map((item, index) => ({ item, index }))
+                            .filter(
+                              ({ item }) =>
+                                !dedupedTomorrowItems.some((scheduledItem) =>
+                                  planningItemMatchesSourceItem(item, scheduledItem)
+                                )
+                            )
+                            .map(({ item }) => {
                             const matchedTask = item.source_id && item.source_type
                               ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
                               : null;
@@ -3737,11 +3848,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     <span className={cn(
                                       "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
                                       item.source_type === "task"
-                                        ? "bg-[#DA7756] text-white"
+                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
                                         : item.source_type === "issue"
-                                          ? "bg-violet-600 text-white"
+                                          ? "bg-violet-100 text-violet-700"
                                           : item.source_type === "todo"
-                                            ? "bg-amber-500 text-white"
+                                            ? "bg-yellow-100 text-yellow-700"
                                             : "bg-gray-500 text-white"
                                     )}>
                                       {item.source_type || "Note"}
@@ -3889,14 +4000,34 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            {dedupedTomorrowItems.map((item) => (
+                            {dedupedTomorrowItems.map((item) => {
+                              const plannedItem = planningItems.find((plan) =>
+                                planningItemMatchesSourceItem(plan, item)
+                              );
+
+                              return (
                               <div
                                 key={item.id}
                                 className="relative animate-in fade-in slide-in-from-top-1 duration-200"
                               >
-                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
+                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
                                   <div className="flex items-center gap-3">
-                                    <Star size={18} className="text-gray-300 shrink-0" />
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleScheduledTomorrowStar(item)}
+                                      className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                      title={plannedItem?.starred ? "Unstar" : "Star this priority"}
+                                    >
+                                      <Star
+                                        size={18}
+                                        className={cn(
+                                          "transition-colors duration-200",
+                                          plannedItem?.starred
+                                            ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                            : "text-gray-300 hover:text-yellow-400"
+                                        )}
+                                      />
+                                    </button>
                                     <span className={cn(
                                       "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
                                       item.type === "task"
@@ -3921,6 +4052,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         {item.priority}
                                       </span>
                                     )}
+                                    <button
+                                      type="button"
+                                      onClick={() => hideTomorrowScheduledItem(item)}
+                                      className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                    >
+                                      <X size={16} />
+                                    </button>
                                   </div>
                                   {(() => {
                                     const d = item.originalData;
@@ -3975,7 +4113,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   })()}
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -6136,8 +6275,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
             <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                  <Pause size={18} className="text-orange-500" />
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <Pause size={18} className="text-red-500" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Are you sure?</p>

@@ -254,15 +254,15 @@ const AmcExpiringContractsCard: React.FC<Props> = ({ data, onDownload }) => {
       
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-6">
-        <div className="bg-[#f2f0eb] border border-gray-300 py-6 px-4 text-center">
+        <div className="bg-[#EFEFFB] border border-gray-300 py-6 px-4 text-center">
           <div className="text-xl text-black font-semibold mb-4">Active AMC Contracts</div>
           <div className="text-4xl font-bold text-[#C72030]">{summary.active.toLocaleString()}</div>
         </div>
-        <div className="bg-[#f2f0eb] border border-gray-300 py-6 px-4 text-center">
+        <div className="bg-[#B7DCD44D] border border-gray-300 py-6 px-4 text-center">
           <div className="text-xl text-black font-semibold mb-4">Contract Expiry in 90 Days</div>
           <div className="text-4xl font-bold text-[#C72030]">{summary.expiry90.toLocaleString()}</div>
         </div>
-        <div className="bg-[#f2f0eb] border border-gray-300 py-6 px-4 text-center">
+        <div className="bg-[#E3909026] border border-gray-300 py-6 px-4 text-center">
           <div className="text-xl text-black font-semibold mb-4">Contract Expired</div>
           <div className="text-4xl font-bold text-[#C72030]">{summary.expired.toLocaleString()}</div>
         </div>

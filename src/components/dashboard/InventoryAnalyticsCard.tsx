@@ -12,7 +12,7 @@ interface InventoryAnalyticsCardProps {
   type: 'items_status' | 'category_wise' | 'green_consumption' | 'aging_matrix' | 'low_stock' | 'high_value';
 }
 
-const COLORS = ['#10B981', '#F59E0B', '#C72030', '#3B82F6', '#8B5CF6', '#EF4444'];
+const COLORS = ['#76CDC1', '#E39090', '#CDCAF5', '#9EC8BA', '#EDC488', '#8E7BE0'];
 
 export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ title, data, type }) => {
   const {
@@ -100,7 +100,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#10B981" name="Items" />
+                  <Bar dataKey="count" fill="#9EC8BA" name="Items" />
                 </BarChart>
               </ResponsiveContainer>
 
@@ -243,7 +243,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                   <XAxis dataKey="range" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#F59E0B" />
+                  <Bar dataKey="count" fill="#EDC488" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

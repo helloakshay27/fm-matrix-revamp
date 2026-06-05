@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Color palette matching CategoryWiseProactiveReactiveCard
+// Color palette
 const CHART_COLORS = {
-  openAchieved: '#8B7355',      // Darker brown for Open Achieved
-  openBreached: '#C4B99D',      // Original primary for Open Breached
-  closeAchieved: '#B8AFA0',     // Medium shade for Close Achieved
-  closeBreached: '#DAD6CA',     // Original secondary for Close Breached
+  openAchieved: '#9EC8BA',
+  openBreached: '#DA7756',
+  closeAchieved: '#8E7BE0',
+  closeBreached: '#798C5E',
 };
 
 interface ResponseTATData {
@@ -77,10 +76,9 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
   };
   if (!data || !data.response) {
     return (
-      <Card className={`bg-white ${className} relative z-0`}>
-        <CardHeader className="relative z-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
+      <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>Response {'&'} Resolution TAT</h3>
             <Download
               data-no-drag="true"
               className="w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50"
@@ -97,14 +95,13 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
               }}
               style={{ pointerEvents: 'auto' }}
             />
-          </div>
-        </CardHeader>
-        <CardContent className="relative z-0">
+        </div>
+        <div className="p-5">
           <div className="flex items-center justify-center h-48">
-            <p className="text-gray-500">No data available</p>
+            <p className="text-gray-400 text-sm">No data available</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -150,29 +147,21 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
     data.response.resolution_tat.close.breached;
 
   return (
-    <Card className={`bg-white ${className} relative z-0`}>
-      <CardHeader className="relative z-0">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
-          <Download
-            data-no-drag="true"
-            className={`w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50 ${isDownloading ? 'opacity-50' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            style={{ pointerEvents: 'auto' }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent className="relative z-0">
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Response {'&'} Resolution TAT
+        </h3>
+        <Download
+          data-no-drag="true"
+          className={`w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors z-50 ${isDownloading ? 'opacity-50' : ''}`}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          style={{ pointerEvents: 'auto' }}
+        />
+      </div>
+      <div className="p-5">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Response TAT Chart */}
           <div className="text-center">
@@ -308,7 +297,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
             <span className="text-xs font-medium text-gray-700 whitespace-nowrap">Breached</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
