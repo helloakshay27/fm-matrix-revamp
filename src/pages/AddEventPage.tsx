@@ -51,7 +51,8 @@ export const AddEventPage = () => {
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
-    eventTime: "",
+    eventStartTime: "",
+    eventEndTime: "",
     eventLocation: "",
     memberCapacity: "",
     perMemberLimit: "",
@@ -85,7 +86,8 @@ export const AddEventPage = () => {
     const savedAmountPerPerson = localStorage.getItem('amountPerPerson');
     const savedFromDate = localStorage.getItem('fromDate');
     const savedToDate = localStorage.getItem('toDate');
-    const savedEventTime = localStorage.getItem('eventTime');
+    const savedEventStartTime = localStorage.getItem('eventStartTime');
+    const savedEventEndTime = localStorage.getItem('eventEndTime');
     const savedEventLocation = localStorage.getItem('eventLocation');
     const savedMemberCapacity = localStorage.getItem('memberCapacity');
     const savedPerMemberLimit = localStorage.getItem('perMemberLimit');
@@ -108,7 +110,8 @@ export const AddEventPage = () => {
         amountPerPerson: savedAmountPerPerson || prev.amountPerPerson,
         fromDate: savedFromDate || prev.fromDate,
         toDate: savedToDate || prev.toDate,
-        eventTime: savedEventTime || prev.eventTime,
+        eventStartTime: savedEventStartTime || prev.eventStartTime,
+        eventEndTime: savedEventEndTime || prev.eventEndTime,
         eventLocation: savedEventLocation || prev.eventLocation,
         memberCapacity: savedMemberCapacity || prev.memberCapacity,
         perMemberLimit: savedPerMemberLimit || prev.perMemberLimit,
@@ -139,7 +142,8 @@ export const AddEventPage = () => {
     localStorage.removeItem('amountPerPerson');
     localStorage.removeItem('fromDate');
     localStorage.removeItem('toDate');
-    localStorage.removeItem('eventTime');
+    localStorage.removeItem('eventStartTime');
+    localStorage.removeItem('eventEndTime');
     localStorage.removeItem('eventLocation');
     localStorage.removeItem('memberCapacity');
     localStorage.removeItem('perMemberLimit');
@@ -232,7 +236,8 @@ export const AddEventPage = () => {
       localStorage.setItem('amountPerPerson', formData.amountPerPerson);
       localStorage.setItem('fromDate', formData.fromDate);
       localStorage.setItem('toDate', formData.toDate);
-      localStorage.setItem('eventTime', formData.eventTime);
+      localStorage.setItem('eventStartTime', formData.eventStartTime);
+      localStorage.setItem('eventEndTime', formData.eventEndTime);
       localStorage.setItem('eventLocation', formData.eventLocation);
       localStorage.setItem('memberCapacity', formData.memberCapacity);
       localStorage.setItem('perMemberLimit', formData.perMemberLimit);
@@ -298,8 +303,12 @@ export const AddEventPage = () => {
       toast.error("To Date is required");
       return false;
     }
-    if (!formData.eventTime) {
-      toast.error("Event Time is required");
+    if (!formData.eventStartTime) {
+      toast.error("Event Start Time is required");
+      return false;
+    }
+    if (!formData.eventEndTime) {
+      toast.error("Event End Time is required");
       return false;
     }
     if (!formData.eventLocation.trim()) {
@@ -329,8 +338,8 @@ export const AddEventPage = () => {
 
       formDataToSend.append('event[event_name]', formData.eventName);
       formDataToSend.append("event[amount_per_member]", formData.amountPerPerson);
-      formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventTime}`);
-      formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventTime}`);
+      formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventStartTime}`);
+      formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventEndTime}`);
       formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
       formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
@@ -375,7 +384,8 @@ export const AddEventPage = () => {
       localStorage.removeItem('amountPerPerson');
       localStorage.removeItem('fromDate');
       localStorage.removeItem('toDate');
-      localStorage.removeItem('eventTime');
+      localStorage.removeItem('eventStartTime');
+      localStorage.removeItem('eventEndTime');
       localStorage.removeItem('eventLocation');
       localStorage.removeItem('memberCapacity');
       localStorage.removeItem('perMemberLimit');
@@ -587,11 +597,34 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Time<span className="text-[#C72030]">*</span></>}
-                  id="eventTime"
-                  name="eventTime"
+                  label={<>Event Start Time<span className="text-[#C72030]">*</span></>}
+                  id="eventStartTime"
+                  name="eventStartTime"
                   type="time"
-                  value={formData.eventTime}
+                  value={formData.eventStartTime}
+                  onChange={handleInputChange}
+                  placeholder="hh:mm"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <TextField
+                  label={<>Event End Time<span className="text-[#C72030]">*</span></>}
+                  id="eventEndTime"
+                  name="eventEndTime"
+                  type="time"
+                  value={formData.eventEndTime}
                   onChange={handleInputChange}
                   placeholder="hh:mm"
                   fullWidth
@@ -958,7 +991,8 @@ export const AddEventPage = () => {
                     localStorage.setItem('amountPerPerson', formData.amountPerPerson);
                     localStorage.setItem('fromDate', formData.fromDate);
                     localStorage.setItem('toDate', formData.toDate);
-                    localStorage.setItem('eventTime', formData.eventTime);
+                    localStorage.setItem('eventStartTime', formData.eventStartTime);
+                    localStorage.setItem('eventEndTime', formData.eventEndTime);
                     localStorage.setItem('eventLocation', formData.eventLocation);
                     localStorage.setItem('memberCapacity', formData.memberCapacity);
                     localStorage.setItem('perMemberLimit', formData.perMemberLimit);

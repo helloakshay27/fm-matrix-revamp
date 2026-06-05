@@ -3181,7 +3181,19 @@ export const Dashboard = () => {
     }
   };
 
-  const effectiveLayouts = layouts || [];
+  const effectiveLayouts = React.useMemo(() => {
+    try {
+      return (layouts || []).map((l) => {
+        const analytic = selectedAnalytics.find((a) => a.id === l.i);
+        if (analytic && /snapshot/i.test(analytic.endpoint)) {
+          return { ...l, h: 3, minH: 2 } as GridLayout.Layout;
+        }
+        return l;
+      });
+    } catch (e) {
+      return layouts;
+    }
+  }, [layouts, selectedAnalytics]);
 
   return (
     <>
@@ -3439,7 +3451,7 @@ export const Dashboard = () => {
               </div>
 
               {/* Recent Updates Sidebar - Always Visible */}
-              <div className="flex-shrink-0 self-stretch">
+              <div className="w-[350px] flex-shrink-0">
                 <RecentUpdatedSidebar />
               </div>
             </div>

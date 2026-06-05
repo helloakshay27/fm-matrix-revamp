@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -48,6 +49,7 @@ import { format, parse, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { getBaseUrl, getToken, getUser } from "@/utils/auth";
+import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import {
   userService,
   ProfileAccountResponse,
@@ -318,15 +320,6 @@ const normalizeUserKpis = (raw: any): UserKpi[] => {
   }));
 };
 
-const getAiConfigBaseUrl = () => {
-  const baseUrl = getBaseUrl();
-  if (!baseUrl) throw new Error("API base URL is not configured");
-  try {
-    return new URL(baseUrl).origin;
-  } catch {
-    return baseUrl.replace(/\/+$/, "");
-  }
-};
 
 const getAiConfigProviderId = (config?: UserAiConfig | null) => {
   if (!config) return "";
@@ -354,6 +347,95 @@ const getAiConfigModelDisplayName = (config?: UserAiConfig | null) => {
     return config.model?.display_name || config.model?.model_name || "";
   }
   return config.model || config.model_name || "";
+};
+
+const maskApiKey = (value: string) => {
+  if (!value) return "";
+
+  const key = value.trim();
+  if (key.length <= 8) {
+    return `${key.slice(0, 2)}********${key.slice(-2)}`;
+  }
+
+  if (key.length <= 18) {
+    return `${key.slice(0, 4)}********${key.slice(-4)}`;
+  }
+
+  return `${key.slice(0, 8)}************${key.slice(-6)}`;
+};
+
+const getStoredOrganizationName = () => {
+  const directName =
+    localStorage.getItem("selectedOrg") ||
+    sessionStorage.getItem("selectedOrg") ||
+    localStorage.getItem("selectedOrganizationName") ||
+    sessionStorage.getItem("selectedOrganizationName");
+
+  if (directName?.trim()) return directName.trim();
+
+  const storedOrg =
+    localStorage.getItem("selectedOrganization") ||
+    sessionStorage.getItem("selectedOrganization");
+
+  if (!storedOrg) return "";
+
+  try {
+    const parsed = JSON.parse(storedOrg);
+    return typeof parsed?.name === "string" ? parsed.name.trim() : "";
+  } catch {
+    return storedOrg.trim();
+  }
+};
+
+const parseStoredOrganizationId = (
+  value?: string | number | null
+): number | null => {
+  if (value === null || value === undefined) return null;
+  const parsed = Number(String(value).trim());
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getStoredOrganizationId = () => {
+  const directId =
+    localStorage.getItem("org_id") ||
+    sessionStorage.getItem("org_id") ||
+    localStorage.getItem("organization_id") ||
+    sessionStorage.getItem("organization_id");
+
+  const parsedDirectId = parseStoredOrganizationId(directId);
+  if (parsedDirectId !== null) return parsedDirectId;
+
+  const storedOrg =
+    localStorage.getItem("selectedOrganization") ||
+    sessionStorage.getItem("selectedOrganization");
+
+  if (!storedOrg) return null;
+
+  try {
+    const parsed = JSON.parse(storedOrg);
+    return parseStoredOrganizationId(
+      parsed?.id ?? parsed?.organization_id ?? parsed?.org_id
+    );
+  } catch {
+    return null;
+  }
+};
+
+const buildUserAiConfigPath = (
+  userId: string,
+  organizationId: number | null
+) => {
+  const params = new URLSearchParams();
+  if (organizationId) {
+    const orgId = String(organizationId);
+    params.set("organization_id", orgId);
+    params.set("org_id", orgId);
+  }
+
+  const query = params.toString();
+  return `/user_ai_config/user/${encodeURIComponent(userId)}${
+    query ? `?${query}` : ""
+  }`;
 };
 
 const AI_PROVIDER_LINKS = [
@@ -441,6 +523,43 @@ const AiProviderLinksDropdown = () => {
 
   return null;
 };
+
+const OrganizationCheckbox = ({
+  name,
+  organizationId,
+  checked,
+  onCheckedChange,
+}: {
+  name: string;
+  organizationId: number | null;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) => (
+  <label
+    className={cn(
+      "flex min-h-10 max-w-full cursor-pointer items-center gap-2 rounded-md border px-3 shadow-sm",
+      organizationId
+        ? "border-blue-100 bg-blue-50 text-blue-700"
+        : "cursor-not-allowed border-amber-100 bg-amber-50 text-amber-700 opacity-80"
+    )}
+  >
+    <Checkbox
+      checked={checked}
+      disabled={!organizationId}
+      onCheckedChange={(value) => onCheckedChange(value === true)}
+      className="border-current data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
+    />
+    <Building2 size={15} className="shrink-0" />
+    <span className="min-w-0">
+      <span className="block text-[10px] font-bold uppercase leading-none tracking-widest opacity-75">
+        Organization
+      </span>
+      <span className="block max-w-[220px] truncate text-sm font-bold">
+        {name || "Not selected"}
+      </span>
+    </span>
+  </label>
+);
 
 const BusinessCompassProfile = () => {
   const navigate = useNavigate();
@@ -616,6 +735,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const [selectedAiProvider, setSelectedAiProvider] = useState("");
   const [selectedAiModel, setSelectedAiModel] = useState("");
   const [aiApiKey, setAiApiKey] = useState("");
+  const [isAiApiKeyFocused, setIsAiApiKeyFocused] = useState(false);
   const [userAiConfig, setUserAiConfig] = useState<UserAiConfig | null>(null);
   const [isAiProvidersLoading, setIsAiProvidersLoading] = useState(false);
   const [isAiModelsLoading, setIsAiModelsLoading] = useState(false);
@@ -633,6 +753,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const [isAiConfigToggling, setIsAiConfigToggling] = useState(false);
   const [isAiConfigActive, setIsAiConfigActive] = useState(false);
   const [aiConfigError, setAiConfigError] = useState<string | null>(null);
+  const storedOrganizationId = getStoredOrganizationId();
+  const [includeOrganizationInAiConfig, setIncludeOrganizationInAiConfig] =
+    useState(() => Boolean(storedOrganizationId));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const docFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -641,16 +764,19 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const getAuthHeaders = () => {
-    const token = getToken();
-    return {
-      Accept: "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-  };
 
   const currentUserId =
     localStorage.getItem("userId") || String(getUser()?.id || "");
+  const organizationIdForAiPayload =
+    includeOrganizationInAiConfig && storedOrganizationId
+      ? storedOrganizationId
+      : null;
+
+  useEffect(() => {
+    if (!storedOrganizationId && includeOrganizationInAiConfig) {
+      setIncludeOrganizationInAiConfig(false);
+    }
+  }, [storedOrganizationId, includeOrganizationInAiConfig]);
 
   useEffect(() => {
     const fetchProfileDetails = async () => {
@@ -734,8 +860,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       try {
         setIsAiProvidersLoading(true);
         setAiConfigError(null);
-        const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/providers`, {
-          headers: getAuthHeaders(),
+        const response = await fetch(getFullUrl("/user_ai_config/providers"), {
+          headers: { Authorization: getAuthHeader(), Accept: "application/json" },
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -758,8 +884,10 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiConfigLoading(true);
         setAiConfigError(null);
         const response = await fetch(
-          `${getAiConfigBaseUrl()}/user_ai_config/user/${encodeURIComponent(currentUserId)}`,
-          { headers: getAuthHeaders() }
+          getFullUrl(
+            buildUserAiConfigPath(currentUserId, storedOrganizationId)
+          ),
+          { headers: { Authorization: getAuthHeader(), Accept: "application/json" } }
         );
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -775,6 +903,12 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         };
         setUserAiConfig(data);
         setIsAiConfigActive(data.is_active ?? false);
+        if (
+          storedOrganizationId &&
+          (config?.organization_id || config?.org_id)
+        ) {
+          setIncludeOrganizationInAiConfig(true);
+        }
 
         const provider = getAiConfigProviderId(data);
         const model = getAiConfigModelName(data);
@@ -793,7 +927,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
     fetchAiProviders();
     fetchUserAiConfig();
-  }, [currentUserId]);
+  }, [currentUserId, storedOrganizationId]);
 
   useEffect(() => {
     const fetchAiModels = async () => {
@@ -807,8 +941,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiModelsLoading(true);
         setAiConfigError(null);
         const response = await fetch(
-          `${getAiConfigBaseUrl()}/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`,
-          { headers: getAuthHeaders() }
+          getFullUrl(`/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`),
+          { headers: { Authorization: getAuthHeader(), Accept: "application/json" } }
         );
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -856,20 +990,23 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
       const configId = userAiConfig?.id;
       const url = configId
-        ? `${getAiConfigBaseUrl()}/user_ai_config/${configId}`
-        : `${getAiConfigBaseUrl()}/user_ai_config`;
+        ? getFullUrl(`/user_ai_config/${configId}`)
+        : getFullUrl("/user_ai_config");
       const method = configId ? "PATCH" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          ...getAuthHeaders(),
+          Authorization: getAuthHeader(),
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           provider: selectedAiProvider,
           model: selectedAiModel,
           api_key: aiApiKey.trim(),
+          organization_id: organizationIdForAiPayload,
+          org_id: organizationIdForAiPayload,
         }),
       });
 
@@ -927,9 +1064,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsAiConfigDeleting(true);
       setAiConfigError(null);
 
-      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/${configId}`, {
+      const response = await fetch(getFullUrl(`/user_ai_config/${configId}`), {
         method: "DELETE",
-        headers: getAuthHeaders(),
+        headers: { Authorization: getAuthHeader(), Accept: "application/json" },
       });
 
       const data = await response.json().catch(() => ({}));
@@ -962,9 +1099,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       if (selectedAiProvider) params.append("provider", selectedAiProvider);
       if (selectedAiModel) params.append("model", selectedAiModel);
 
-      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/oauth/cli_start?${params.toString()}`, {
+      const response = await fetch(getFullUrl(`/user_ai_config/oauth/cli_start?${params.toString()}`), {
         method: "GET",
-        headers: getAuthHeaders(),
+        headers: { Authorization: getAuthHeader(), Accept: "application/json" },
       });
 
       const data = await response.json().catch(() => ({}));
@@ -974,7 +1111,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
       if (data?.url) {
         // Decode unicode-escaped ampersands then strip invalid code=true param
-        let cleanUrl = data.url
+        const cleanUrl = data.url
           .replace(/\\u0026/g, "&")
           .replace(/&code=true/g, "")
           .replace(/code=true&/g, "")
@@ -1009,16 +1146,19 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     const payload = {
       code: oauthCode.trim(),
       model: selectedAiModel,
+      organization_id: organizationIdForAiPayload,
+      org_id: organizationIdForAiPayload,
     };
 
     try {
       setIsOAuthExchanging(true);
       setAiConfigError(null);
 
-      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/oauth/cli_complete`, {
+      const response = await fetch(getFullUrl("/user_ai_config/oauth/cli_complete"), {
         method: "POST",
         headers: {
-          ...getAuthHeaders(),
+          Authorization: getAuthHeader(),
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
@@ -1094,10 +1234,11 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsAiConfigToggling(true);
       setAiConfigError(null);
 
-      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/${configId}/toggle`, {
+      const response = await fetch(getFullUrl(`/user_ai_config/${configId}/toggle`), {
         method: "PATCH",
         headers: {
-          ...getAuthHeaders(),
+          Authorization: getAuthHeader(),
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -1355,6 +1496,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const aiConfigProviderDisplayName = getAiConfigProviderDisplayName(userAiConfig);
   const aiConfigModelName = getAiConfigModelName(userAiConfig);
   const aiConfigModelDisplayName = getAiConfigModelDisplayName(userAiConfig);
+  const selectedOrganizationName = getStoredOrganizationName();
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins bg-[#F6F4EE]/30 min-h-screen">
@@ -1749,7 +1891,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   ? "Configured"
                   : "Not Configured"}
             </Badge>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleToggleAiConfig}
@@ -1783,9 +1925,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   ? "Updating..."
                   : isAiConfigActive
                     ? "Active"
-                    : "Inactive"}
+                  : "Inactive"}
               </span>
-            </div>
+            </div> */}
           </div>
         </CardHeader>
         <CardContent className="py-4 space-y-5">
@@ -1945,43 +2087,57 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   </span>
                 </div>
                 <Textarea
-                  value={aiApiKey}
+                  value={
+                    isAiApiKeyFocused || !aiApiKey
+                      ? aiApiKey
+                      : maskApiKey(aiApiKey)
+                  }
                   onChange={(event) => setAiApiKey(event.target.value)}
+                  onFocus={() => setIsAiApiKeyFocused(true)}
+                  onBlur={() => setIsAiApiKeyFocused(false)}
                   placeholder="Enter API key"
                   disabled={isAiConfigSaving}
                   className="min-h-[96px] bg-[#FAFAFA] text-sm"
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-100 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleDeleteAiApiKey}
-                  disabled={isAiConfigDeleting || isAiConfigSaving || !selectedAiProvider || !aiApiKey.trim()}
-                  className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
-                >
-                  {isAiConfigDeleting ? (
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                  ) : (
-                    <Trash2 size={16} className="mr-2" strokeWidth={2.5} />
-                  )}
-                  {isAiConfigDeleting ? "Deleting..." : "Delete"}
-                </Button>
-                <Button
-                  onClick={handleSaveAiConfig}
-                  disabled={
-                    isAiConfigSaving || isAiConfigDeleting || isAiProvidersLoading ||
-                    isAiModelsLoading || !selectedAiProvider || !selectedAiModel || !aiApiKey.trim()
-                  }
-                  className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm"
-                >
-                  {isAiConfigSaving ? (
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                  ) : (
-                    <Save size={16} className="mr-2" strokeWidth={2.5} />
-                  )}
-                  {isAiConfigSaving ? "Saving..." : "Save"}
-                </Button>
+              <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <OrganizationCheckbox
+                  name={selectedOrganizationName}
+                  organizationId={storedOrganizationId}
+                  checked={includeOrganizationInAiConfig && Boolean(storedOrganizationId)}
+                  onCheckedChange={setIncludeOrganizationInAiConfig}
+                />
+                <div className="flex flex-col justify-end gap-3 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteAiApiKey}
+                    disabled={isAiConfigDeleting || isAiConfigSaving || !selectedAiProvider || !aiApiKey.trim()}
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+                  >
+                    {isAiConfigDeleting ? (
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 size={16} className="mr-2" strokeWidth={2.5} />
+                    )}
+                    {isAiConfigDeleting ? "Deleting..." : "Delete"}
+                  </Button>
+                  <Button
+                    onClick={handleSaveAiConfig}
+                    disabled={
+                      isAiConfigSaving || isAiConfigDeleting || isAiProvidersLoading ||
+                      isAiModelsLoading || !selectedAiProvider || !selectedAiModel || !aiApiKey.trim()
+                    }
+                    className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm"
+                  >
+                    {isAiConfigSaving ? (
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Save size={16} className="mr-2" strokeWidth={2.5} />
+                    )}
+                    {isAiConfigSaving ? "Saving..." : "Save"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -2120,11 +2276,18 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   />
                 </div>
 
-                <Button
-                  onClick={handleOAuthExchange}
-                  disabled={isOAuthExchanging || !!oauthCooldown || !oauthCode.trim() || !selectedAiModel}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-10 shadow-sm disabled:opacity-60"
-                >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <OrganizationCheckbox
+                    name={selectedOrganizationName}
+                    organizationId={storedOrganizationId}
+                    checked={includeOrganizationInAiConfig && Boolean(storedOrganizationId)}
+                    onCheckedChange={setIncludeOrganizationInAiConfig}
+                  />
+                  <Button
+                    onClick={handleOAuthExchange}
+                    disabled={isOAuthExchanging || !!oauthCooldown || !oauthCode.trim() || !selectedAiModel}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-10 shadow-sm disabled:opacity-60 sm:flex-1"
+                  >
                   {isOAuthExchanging ? (
                     <Loader2 size={15} className="mr-2 animate-spin" />
                   ) : (
@@ -2135,7 +2298,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                     : oauthCooldown > 0
                       ? `Rate limited — wait ${oauthCooldown}s`
                       : "Submit Code & Connect"}
-                </Button>
+                  </Button>
+                </div>
               </div>
 
               <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">

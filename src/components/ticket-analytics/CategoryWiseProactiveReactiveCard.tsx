@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { TicketCategoryData } from '@/services/ticketAnalyticsAPI';
@@ -58,107 +58,58 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
   })) : [];
 
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base sm:text-lg font-bold text-[#1A1A1A]">
-            Category Wise Proactive / Reactives
-          </CardTitle>
-          <Download
-            data-no-drag="true"
-            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            style={{ pointerEvents: 'auto' }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Category Wise Proactive / Reactive
+        </h3>
+        <Download
+          data-no-drag="true"
+          className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          style={{ pointerEvents: 'auto' }}
+        />
+      </div>
+      <div className="p-5">
         <div className="w-full overflow-x-auto">
-          <div className="space-y-4">
-            {chartData.length > 0 ? (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={chartData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                    <XAxis
-                      dataKey="category"
-                      angle={-45}
-                      textAnchor="end"
-                      height={100}
-                      fontSize={10}
-                      tick={{ fill: '#374151' }}
-                    />
-                    <YAxis
-                      fontSize={12}
-                      tick={{ fill: '#374151' }}
-                      allowDecimals={false}
-                      domain={[0, data && data.length > 0 ? Math.max(3, Math.ceil(Math.max(...chartData.map(d => d.proactiveTotal || 0, ...chartData.map(d => d.reactiveTotal || 0))) * 1.2)) : 3]}
-                    />
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0].payload;
-                          return (
-                            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                              <p className="font-semibold text-gray-800 mb-2">{label}</p>
-                              <div className="space-y-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="font-medium" style={{ color: CHART_COLORS.proactiveOpen }}>Proactive Open:</span>
-                                  <span className="text-gray-700">{data.proactiveOpen}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="font-medium" style={{ color: CHART_COLORS.proactiveClosed }}>Proactive Closed:</span>
-                                  <span className="text-gray-700">{data.proactiveClosed}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="font-medium" style={{ color: CHART_COLORS.reactiveOpen }}>Reactive Open:</span>
-                                  <span className="text-gray-700">{data.reactiveOpen}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="font-medium" style={{ color: CHART_COLORS.reactiveClosed }}>Reactive Closed:</span>
-                                  <span className="text-gray-700">{data.reactiveClosed}</span>
-                                </div>
-                                <div className="pt-1 border-t border-gray-200">
-                                  <div className="flex justify-between items-center font-semibold">
-                                    <span>Total:</span>
-                                    <span>{data.proactiveTotal + data.reactiveTotal}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar dataKey="proactiveOpen" stackId="proactive" fill={CHART_COLORS.proactiveOpen} name="Proactive Open" />
-                    <Bar dataKey="proactiveClosed" stackId="proactive" fill={CHART_COLORS.proactiveClosed} name="Proactive Closed" />
-                    <Bar dataKey="reactiveOpen" stackId="reactive" fill={CHART_COLORS.reactiveOpen} name="Reactive Open" />
-                    <Bar dataKey="reactiveClosed" stackId="reactive" fill={CHART_COLORS.reactiveClosed} name="Reactive Closed" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No category-wise data available for the selected date range
-              </div>
-            )}
-          </div>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300} className="min-w-[380px]">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 55 }} barSize={24}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="category" angle={-35} textAnchor="end" height={65} tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
+                <Bar dataKey="proactiveOpen" stackId="proactive" fill={CHART_COLORS.proactiveOpen} name="Proactive Open" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="proactiveClosed" stackId="proactive" fill={CHART_COLORS.proactiveClosed} name="Proactive Closed" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="reactiveOpen" stackId="reactive" fill={CHART_COLORS.reactiveOpen} name="Reactive Open" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="reactiveClosed" stackId="reactive" fill={CHART_COLORS.reactiveClosed} name="Reactive Closed" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              No category-wise data available for the selected date range
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+        {/* Legend */}
+        {chartData.length > 0 && (
+          <div className="flex flex-wrap gap-3 mt-3 justify-center">
+            {[
+              { label: 'Proactive Open', color: CHART_COLORS.proactiveOpen },
+              { label: 'Proactive Closed', color: CHART_COLORS.proactiveClosed },
+              { label: 'Reactive Open', color: CHART_COLORS.reactiveOpen },
+              { label: 'Reactive Closed', color: CHART_COLORS.reactiveClosed },
+            ].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5 text-xs text-gray-500">
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: l.color }} />
+                {l.label}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

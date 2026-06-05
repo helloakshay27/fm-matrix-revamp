@@ -2195,20 +2195,41 @@ const DashboardUI: React.FC = () => {
             />
           )}
           {selectedCharts.includes("tasksOverview") && (
-            <div>
-              <SectionHeader
-                title="Tasks Overview"
-                icon={<ClipboardList className="w-5 h-5 text-[#A0856C]" />}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {taskCards.length > 0 ? (
-                  taskCards.map((c, i) => <KpiCard key={i} {...c} />)
-                ) : (
-                  <div className="col-span-full text-center text-gray-400 py-6">
-                    No task data available
+            <div className="bg-white rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+                Tasks Overview
+              </h3>
+              {taskCards.length > 0 ? (() => {
+                const assigned = kpis?.tasks?.total ?? 0;
+                const completed = kpis?.tasks?.completed ?? 0;
+                const overdue = kpis?.tasks?.overdue ?? 0;
+                const completionRate = assigned > 0 ? Math.round((completed / assigned) * 100) : 0;
+                const overviewCards = [
+                  { label: 'Assigned', value: assigned, bg: '#EFEFFB', color: '#6B5EA8' },
+                  { label: 'Completed', value: completed, bg: 'rgba(183,220,212,0.30)', color: '#2E7D6B' },
+                  { label: 'Overdue', value: overdue, bg: 'rgba(227,144,144,0.15)', color: '#D97655' },
+                ];
+                return (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      {overviewCards.map((card) => (
+                        <div key={card.label} className="rounded-2xl px-4 py-6 text-center" style={{ backgroundColor: card.bg }}>
+                          <div className="text-3xl font-bold mb-1" style={{ color: card.color }}>{card.value.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">{card.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${completionRate}%`, backgroundColor: '#76CDC1' }} />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1.5">{completionRate}% task completion rate</p>
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })() : (
+                <div className="text-center text-gray-400 py-6 text-sm">No task data available</div>
+              )}
             </div>
           )}
           {selectedCharts.includes("issuesOverview") && (

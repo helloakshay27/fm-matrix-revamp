@@ -94,16 +94,14 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full border text-sm">
+        <div className="overflow-x-auto px-1 pb-4">
+          <div className="rounded-xl overflow-hidden border border-gray-200">
+          <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-[#DAD6C9] text-[#C72030] text-left">
-                <th className="py-3 px-4">Site Name</th>
-                <th className="py-3 px-4">Open</th>
-                <th className="py-3 px-4">In Progress</th>
-                <th className="py-3 px-4">Overdue</th>
-                <th className="py-3 px-4">Partially Closed</th>
-                <th className="py-3 px-4">Closed</th>
+              <tr>
+                {['Site Name', 'Open', 'In Progress', 'Overdue', 'Partially Closed', 'Closed'].map((h, i) => (
+                  <th key={h} className={`py-3 px-4 font-semibold text-xs whitespace-nowrap analytics-header ${i === 0 ? 'text-left' : ''}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -146,12 +144,12 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
                   const closedArrowDown = diffClosed < 0;
 
                   return (
-                    <tr key={row.site_name + i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                      <td className="py-4 px-4 bg-[#F6F4EE]">{row.site_name}</td>
-                      <td className="py-4 px-4">{fmtPct(curOpen)}</td>
-                      <td className="py-4 px-4">{fmtPct(curInProgress)}</td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-1">
+                    <tr key={row.site_name + i} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                      <td className="py-3 px-4 font-medium text-gray-800 border-b border-gray-100">{row.site_name}</td>
+                      <td className="py-3 px-4 text-center border-b border-gray-100">{fmtPct(curOpen)}</td>
+                      <td className="py-3 px-4 text-center border-b border-gray-100">{fmtPct(curInProgress)}</td>
+                      <td className="py-3 px-4 text-center border-b border-gray-100">
+                        <div className="flex items-center gap-1 justify-center">
                           <span>{fmtPct(curOverdue)}</span>
                           {(overdueArrowUp || overdueArrowDown) && (
                             <>
@@ -162,9 +160,9 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-4">{fmtPct(curPartiallyClosed)}</td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-1">
+                      <td className="py-3 px-4 text-center border-b border-gray-100">{fmtPct(curPartiallyClosed)}</td>
+                      <td className="py-3 px-4 text-center border-b border-gray-100">
+                        <div className="flex items-center gap-1 justify-center">
                           <span>{fmtPct(curClosed)}</span>
                           {(closedArrowUp || closedArrowDown) && (
                             <>
@@ -181,6 +179,7 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
               )}
             </tbody>
           </table>
+          </div>
         </div>
         <div className="p-3 rounded-md">
           <p className="text-xs text-gray-700">

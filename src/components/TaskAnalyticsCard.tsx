@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { taskAnalyticsDownloadAPI } from '@/services/taskAnalyticsDownloadAPI';
 
+type TaskCategoryValue = { open?: number; closed?: number; work_in_progress?: number; overdue?: number };
+type TopTenItem = { type?: string; count?: number };
+
 interface TaskAnalyticsCardProps {
   title: string;
-  data: any;
+  data: Record<string, TaskCategoryValue> | TopTenItem[] | unknown;
   type: 'technical' | 'nonTechnical' | 'topTen' | 'siteWise';
   className?: string;
   dateRange?: {
@@ -84,7 +85,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
           );
         }
 
-        const chartData = Object.entries(responseData).map(([key, value]: [string, any]) => ({
+        const chartData = Object.entries(responseData as Record<string, TaskCategoryValue>).map(([key, value]) => ({
           name: key,
           open: value?.open || 0,
           closed: value?.closed || 0,
@@ -166,7 +167,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
           CHART_COLORS.secondaryLight,
           CHART_COLORS.tertiaryLight
         ];
-        const chartData = responseData.slice(0, 10).map((item: any, index: number) => ({
+        const chartData = (responseData as TopTenItem[]).slice(0, 10).map((item, index) => ({
           ...item,
           fill: topTenColors[index % topTenColors.length]
         }));
@@ -182,8 +183,8 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   <YAxis width={40} />
                   <Tooltip cursor={{ fill: 'rgba(180,180,180,0.15)' }} />
                   <Bar dataKey="count">
-                    {chartData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill as string} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -201,7 +202,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {responseData.slice(0, 10).map((item: any, index: number) => (
+                  {(responseData as TopTenItem[]).slice(0, 10).map((item, index) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="p-2 font-medium">#{index + 1}</td>
                       <td className="p-2">{item.type || 'N/A'}</td>
@@ -225,7 +226,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
           );
         }
 
-        const chartData = Object.entries(responseData).map(([siteName, value]: [string, any]) => ({
+        const chartData = Object.entries(responseData as Record<string, TaskCategoryValue>).map(([siteName, value]) => ({
           site: siteName,
           open: value?.open || 0,
           closed: value?.closed || 0,
@@ -295,28 +296,22 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
   };
 
   return (
-    <Card
-      className={`flex flex-col transition-all duration-200 hover:shadow-lg border-gray-200 group ${className}`}
-      style={{ height: '520px' }}
-    >
-      <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-5 flex flex-row items-center justify-between gap-2 flex-shrink-0">
-        <CardTitle className="text-sm sm:text-base lg:text-lg font-semibold truncate flex-1">{title}</CardTitle>
+    <div className={`bg-white rounded-xl shadow-sm flex flex-col ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="text-base font-semibold text-gray-900 truncate flex-1" style={{ fontFamily: 'Work Sans, sans-serif' }}>{title}</h3>
         {dateRange && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className="flex items-center gap-1 flex-shrink-0"
-            data-download-button
+            className="flex items-center gap-1 flex-shrink-0 p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
           >
-            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-          </Button>
+            <Download className="w-4 h-4" />
+          </button>
         )}
-      </CardHeader>
-      <CardContent className="pt-0 px-4 sm:px-6 pb-4 flex-1 min-h-0 overflow-hidden">
+      </div>
+      <div className="flex-1 min-h-0 p-5 flex flex-col overflow-auto">
         {renderContent()}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

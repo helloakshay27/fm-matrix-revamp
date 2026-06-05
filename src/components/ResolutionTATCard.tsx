@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Color palette
+// Per-bar colors per guideline
+const BAR_COLORS = ['#9EC8BA', '#8E7BE0', '#DA7756', '#798C5E', '#EDC488'];
 const CHART_COLORS = {
   primary: '#9EC8BA',
   secondary: '#DA7756',
@@ -65,34 +65,22 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
   };
   if (!data || !data.response) {
     return (
-      <Card className={`bg-white ${className}`}>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold text-[#1A1A1A]">Resolution TAT Report</CardTitle>
-            <Download
-              data-no-drag="true"
-              className="w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleDownload();
-              }}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-              }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-              }}
-              style={{ pointerEvents: 'auto' }}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-48">
-            <p className="text-gray-500">No data available</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>Resolution TAT Report</h3>
+          <Download
+            data-no-drag="true"
+            className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors z-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        </div>
+        <div className="p-5 flex items-center justify-center h-48">
+          <p className="text-gray-400 text-sm">No data available</p>
+        </div>
+      </div>
     );
   }
 
@@ -102,57 +90,53 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
     achieved: data.response.achieved[index] || 0,
     total: data.response.total[index] || 0,
     percentage_breached: data.response.percentage_breached[index] || 0,
-    percentage_achieved: data.response.percentage_achieved[index] || 0
-  })).filter(item => item.total > 0); // Only show categories with data
+    percentage_achieved: data.response.percentage_achieved[index] || 0,
+    color: BAR_COLORS[index % BAR_COLORS.length],
+  })).filter(item => item.total > 0);
 
   return (
-    <Card className={`bg-white ${className}`}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-bold text-[#1A1A1A]">Resolution TAT Report</CardTitle>
-          <Download
-            data-no-drag="true"
-            className={`w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50 ${isDownloading ? 'opacity-50' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            style={{ pointerEvents: 'auto' }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>Resolution TAT Report</h3>
+        <Download
+          data-no-drag="true"
+          className={`w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors z-50 ${isDownloading ? 'opacity-50' : ''}`}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          style={{ pointerEvents: 'auto' }}
+        />
+      </div>
+      <div className="p-5">
         {chartData.length > 0 ? (
           <>
             <div className="w-full overflow-x-auto">
-              <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="category" 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={80} 
+              <ResponsiveContainer width="100%" height={280} className="min-w-[340px]">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 55 }} barSize={36}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="category"
+                    angle={-35}
+                    textAnchor="end"
+                    height={70}
                     tick={{ fill: '#6b7280', fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                  <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
-                  <Tooltip 
+                  <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip
                     formatter={(value, name) => {
                       const key = String(name || '').toLowerCase();
-                      const label = key === 'breached' || key.includes('breach') ? 'Breached' : key === 'achieved' || key.includes('achiev') ? 'Achieved' : String(name);
-                      return [value, label];
+                      return [value, key.includes('breach') ? 'Breached' : 'Achieved'];
                     }}
                     labelFormatter={(label) => `Category: ${label}`}
+                    contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
                   />
-                  <Bar dataKey="breached" fill={CHART_COLORS.secondary} name="Breached" />
-                  <Bar dataKey="achieved" fill={CHART_COLORS.primary} name="Achieved" />
+                  <Bar dataKey="total" name="Total" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -190,7 +174,7 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
             <p className="text-gray-500">No resolution TAT data available</p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
