@@ -57,6 +57,16 @@ interface Asset {
   wing?: { name: string };
   area?: { name: string };
   asset_type_category?: string;
+  asset_breakdown_histories?: {
+    reason: string;
+    type: string;
+    severity: string;
+    date: string;
+    expected_repair_duration: string;
+    in_use_date: string | null;
+    submitted_by: string;
+    breakdown_attachments: any[];
+  }[];
 }
 
 interface ActivityHistoryEntry {
@@ -69,6 +79,7 @@ interface ActivityHistoryEntry {
 export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }) => {
   const [activeTab, setActiveTab] = useState<'history-details' | 'logs'>('history-details');
   const [activityHistory, setActivityHistory] = useState<ActivityHistoryEntry[]>([]);
+  const [breakdownHistories, setBreakdownHistories] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -81,6 +92,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
       }
 
       try {
+        // Fetch from history API - returns both activity_history and asset_breakdown_histories
         const response = await axios.get(
           `${API_CONFIG.BASE_URL}/pms/assets/${idToUse}/get_asset_history.json`,
           {
@@ -89,10 +101,32 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
             },
           }
         );
-        setActivityHistory(response.data.activity_history || []);
+        
+        console.log('Full API Response:', response.data);
+        
+        // Extract activity history
+        if (response.data.activity_history) {
+          console.log('Activity history:', response.data.activity_history);
+          setActivityHistory(response.data.activity_history);
+        } else {
+          console.log('No activity_history found');
+          setActivityHistory([]);
+        }
+        
+        // Extract breakdown histories from root level
+        if (response.data.asset_breakdown_histories && Array.isArray(response.data.asset_breakdown_histories)) {
+          console.log('Breakdown histories found:', response.data.asset_breakdown_histories);
+          console.log('Breakdown count:', response.data.asset_breakdown_histories.length);
+          setBreakdownHistories(response.data.asset_breakdown_histories);
+        } else {
+          console.log('No asset_breakdown_histories found in response');
+          console.log('Available keys:', Object.keys(response.data));
+          setBreakdownHistories([]);
+        }
       } catch (error) {
         console.error('Failed to fetch asset history:', error);
         setActivityHistory([]);
+        setBreakdownHistories([]);
       }
     };
     fetchHistory();
@@ -188,6 +222,65 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           </div>
         </CardContent>
       </Card>
+
+      {/* Breakdown History Table */}
+      {breakdownHistories && breakdownHistories.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-[#1A1A1A]">Asset Breakdown History</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="font-medium">Date</TableHead>
+                      <TableHead className="font-medium">Reason</TableHead>
+                      <TableHead className="font-medium">Type</TableHead>
+                      <TableHead className="font-medium">Severity</TableHead>
+                      <TableHead className="font-medium">Repair Duration (days)</TableHead>
+                      <TableHead className="font-medium">Restored On</TableHead>
+                      <TableHead className="font-medium">Submitted By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {breakdownHistories.map((breakdown, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="text-sm">
+                          {breakdown.date ? new Date(breakdown.date).toLocaleString() : '-'}
+                        </TableCell>
+                        <TableCell className="text-sm">{breakdown.reason || '-'}</TableCell>
+                        <TableCell className="text-sm">{breakdown.type || '-'}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              breakdown.severity === 'Critical'
+                                ? 'bg-red-100 text-red-800'
+                                : breakdown.severity === 'High'
+                                ? 'bg-orange-100 text-orange-800'
+                                : breakdown.severity === 'Medium'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {breakdown.severity || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm">{breakdown.expected_repair_duration || '-'}</TableCell>
+                        <TableCell className="text-sm">
+                          {breakdown.in_use_date ? new Date(breakdown.in_use_date).toLocaleString() : 'Not restored'}
+                        </TableCell>
+                        <TableCell className="text-sm">{breakdown.submitted_by || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 

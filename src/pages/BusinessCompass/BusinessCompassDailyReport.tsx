@@ -34,6 +34,11 @@ import {
   Play,
   Pause,
   Check,
+  Sparkles,
+  ChevronDown,
+  AlertTriangle,
+  Send,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -257,6 +262,28 @@ const hasMeaningfulDraftData = (draft: DailyReportDraft | null) => {
   );
 };
 
+const AiSparkleIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    aria-hidden="true"
+  >
+    <path
+      d="M5.5 2.5L6.55 6.85L10.9 7.9L6.55 8.95L5.5 13.3L4.45 8.95L0.1 7.9L4.45 6.85L5.5 2.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M17.2 5.5L17.75 7.65L19.9 8.2L17.75 8.75L17.2 10.9L16.65 8.75L14.5 8.2L16.65 7.65L17.2 5.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M9.8 13.8L10.55 16.75L13.5 17.5L10.55 18.25L9.8 21.2L9.05 18.25L6.1 17.5L9.05 16.75L9.8 13.8Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 const BusinessCompassDailyReport: React.FC = () => {
   const navigate = useNavigate();
   const now = new Date();
@@ -331,6 +358,11 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [pendingReopenItem, setPendingReopenItem] = useState<any>(null);
   const [reopenReason, setReopenReason] = useState("");
   const [isReopenLoading, setIsReopenLoading] = useState(false);
+  const [isAiPopupOpen, setIsAiPopupOpen] = useState(false);
+  const [aiPopupTab, setAiPopupTab] = useState<"accomplishments" | "plan">(
+    "accomplishments"
+  );
+  const [aiPromptText, setAiPromptText] = useState("");
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -1590,6 +1622,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [reportsList, setReportsList] = useState<DailyReport[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("submit");
+  const [taskStatusFilter, setTaskStatusFilter] = useState<
+    "open" | "overdue" | "in_progress" | "on_hold"
+  >("open");
+  const tasksSectionRef = useRef<HTMLDivElement>(null);
+  const accomplishmentsSectionRef = useRef<HTMLDivElement>(null);
+  const planningSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAiPopupOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsAiPopupOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isAiPopupOpen]);
 
   const resetReportFormState = React.useCallback(() => {
     canPersistDraftRef.current = false;
@@ -2413,11 +2460,178 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
-  const badgePoints =
-    "border-0 bg-[#DA7756] px-3 py-1 text-xs text-white hover:bg-[#DA7756]";
+  const badgePoints = "bc-points-badge border-0 shadow-none hover:bg-[#CECBF6]";
+
+  const formattedSelectedDate = useMemo(() => {
+    const d = new Date(`${startDate}T00:00:00`);
+    if (isNaN(d.getTime())) return `${selectedDate} ${selectedMonth}, ${selectedYear}`;
+    return d.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }, [startDate, selectedDate, selectedMonth, selectedYear]);
+
+  const livePreviewMetrics = useMemo(() => {
+    const kpiPct = dailyScore.details.kpi.hasKPIs
+      ? Math.round(dailyScore.details.kpi.averageAchievement)
+      : 0;
+    const accPct = Math.round(
+      dailyScore.details.accomplishments.completionPercentage || 0
+    );
+    const planTotal = Math.max(
+      6,
+      planningItems.filter((p) => cleanReportText(p.text) !== "").length +
+        dedupedTomorrowItems.length
+    );
+    const planFilled = planningItems.filter(
+      (p) => cleanReportText(p.text) !== ""
+    ).length;
+    const timingTotal = 4;
+    const timingSet = mergedTasksIssues.filter((item) => {
+      const allocations =
+        item.originalData?.task_allocation_times ||
+        item.originalData?.issue_allocation_times ||
+        [];
+      return allocations.some(
+        (t: { date?: string; hours?: number; minutes?: number }) =>
+          t.date === startDate && ((t.hours ?? 0) > 0 || (t.minutes ?? 0) > 0)
+      );
+    }).length;
+    return {
+      kpiPct,
+      accPct,
+      tasksCount: taskIssueCounts.total,
+      planning: `${planFilled}/${planTotal}`,
+      timing: `${Math.min(timingSet, timingTotal)}/${timingTotal}`,
+    };
+  }, [
+    dailyScore,
+    planningItems,
+    dedupedTomorrowItems,
+    mergedTasksIssues,
+    startDate,
+    taskIssueCounts.total,
+  ]);
+
+  const aiInsights = useMemo(() => {
+    const insights: Array<{
+      id: string;
+      title: string;
+      description: string;
+      action: string;
+      color: string;
+      icon: React.ReactNode;
+      onAction: () => void;
+    }> = [];
+
+    if (taskIssueCounts.overdue > 0) {
+      insights.push({
+        id: "overdue",
+        title: `${taskIssueCounts.overdue} Overdue Task${taskIssueCounts.overdue > 1 ? "s" : ""}`,
+        description: "Overdue items from yesterday need attention. Review and complete or reschedule them.",
+        action: "View Tasks",
+        color: "#dc2626",
+        icon: <Clock size={16} className="text-red-500" />,
+        onAction: () => {
+          setTaskStatusFilter("overdue");
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      });
+    }
+
+    const accRate = livePreviewMetrics.accPct;
+    if (accRate < 80) {
+      const needed = Math.max(0, Math.ceil((80 - accRate) / 20));
+      insights.push({
+        id: "accomplishments",
+        title: "Boost Accomplishments",
+        description: `Your rate is ${accRate}% today — completing ${needed || 1} more item${needed !== 1 ? "s" : ""} will improve your score.`,
+        action: "Add Tasks",
+        color: "#16a34a",
+        icon: <TrendingUp size={16} className="text-green-600" />,
+        onAction: () => {
+          accomplishmentsSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+          addAccomplishment();
+        },
+      });
+    }
+
+    const planCount = planningItems.filter(
+      (p) => cleanReportText(p.text) !== ""
+    ).length;
+    if (planCount < 6) {
+      insights.push({
+        id: "planning",
+        title: "Fill Your Daily Plan",
+        description: `${planCount}/6 planning items completed. Set strategic priorities for ${nextDayLabel || "tomorrow"}.`,
+        action: "Open Plan",
+        color: "#ea580c",
+        icon: <CalendarCheck size={16} className="text-orange-500" />,
+        onAction: () => {
+          planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      });
+    }
+
+    const timingSet = parseInt(livePreviewMetrics.timing.split("/")[0], 10);
+    if (timingSet < 4) {
+      insights.push({
+        id: "timing",
+        title: "Assign Task Timings",
+        description: `${livePreviewMetrics.timing} timing slots set. Adding time estimates helps track your day.`,
+        action: "Set Timing",
+        color: "#7c3aed",
+        icon: <Target size={16} className="text-purple-600" />,
+        onAction: () => {
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      });
+    }
+
+    return insights;
+  }, [
+    taskIssueCounts.overdue,
+    livePreviewMetrics,
+    planningItems,
+    nextDayLabel,
+    addAccomplishment,
+  ]);
+
+  const filteredTasksForTable = useMemo(() => {
+    const statusMap = {
+      open: ["open", "pending", "reopen", "reopened"],
+      overdue: ["overdue", "overdued"],
+      in_progress: ["in_progress", "started"],
+      on_hold: ["on_hold"],
+    };
+    return mergedTasksIssues.filter((item) =>
+      statusMap[taskStatusFilter].includes(item.status)
+    );
+  }, [mergedTasksIssues, taskStatusFilter]);
+
+  const getTaskTypeIcon = (type: string) => {
+    if (type === "issue")
+      return <AlertTriangle size={14} className="text-[#e7848e] shrink-0" />;
+    if (type === "todo")
+      return <FileText size={14} className="text-[#6B9BCC] shrink-0" />;
+    return <LayoutGrid size={14} className="text-[#DA7756] shrink-0" />;
+  };
+
+  const getPriorityClass = (priority?: string) => {
+    if (priority === "High") return "bc-priority-high";
+    if (priority === "Medium") return "bc-priority-medium";
+    return "bc-priority-low";
+  };
+
+  const submitDateLabel = useMemo(() => {
+    const d = new Date(`${startDate}T00:00:00`);
+    if (isNaN(d.getTime())) return `${selectedDate} ${selectedMonth.slice(0, 3)}`;
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }, [startDate, selectedDate, selectedMonth]);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins pb-20 text-[#1a1a1a]">
+    <div className="bc-daily-page space-y-6">
       {/* Interactive Info Banner Card */}
       {/* {isBannerVisible && (
         <Card
@@ -2528,120 +2742,220 @@ const BusinessCompassDailyReport: React.FC = () => {
       )} */}
 
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-[#1a1a1a] tracking-tight">
-            Daily Report
-          </h1>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
+            <h1 className="bc-daily-header-title">Daily Report</h1>
+            <p className="bc-daily-header-subtitle">
+              Track your daily performance, tasks and accomplishments
+            </p>
+          </div>
+          <button
+            type="button"
+            className="bc-daily-review-btn shrink-0"
+            onClick={() => {
+              setActiveTab(activeTab === "history" ? "submit" : "history");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            {activeTab === "history" ? "Back to Report" : "Review History"}
+          </button>
         </div>
 
+        {activeTab === "submit" && aiInsights.length > 0 && (
+          <div className="bc-ai-banner bc-ai-banner-glow">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-[#DA7756] rounded-[8px] p-1.5 flex items-center justify-center shrink-0">
+                  <AiSparkleIcon className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm font-bold text-[#1a1a1a]">
+                  AI Suggestions{" "}
+                  <span className="font-normal text-gray-500">— Focus areas to improve your daily report</span>
+                </span>
+              </div>
+              <span className="bc-points-badge">{aiInsights.length} Insights</span>
+            </div>
+            <div className="flex flex-col lg:flex-row gap-3">
+              {aiInsights.map((insight) => (
+                <div key={insight.id} className="bc-ai-insight-card">
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-2">
+                      {insight.icon}
+                      <span className="text-xs font-bold text-[#1a1a1a] leading-tight">
+                        {insight.title}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={insight.onAction}
+                      className="text-[11px] font-semibold flex items-center gap-0.5 hover:underline shrink-0"
+                      style={{ color: insight.color }}
+                    >
+                      {insight.action} <ChevronRight size={11} />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-relaxed pl-6">
+                    {insight.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-[#DA7756] p-1.5 rounded-[12px] h-auto inline-flex shadow-inner mb-6">
-            <TabsTrigger
-              value="submit"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-md bg-transparent text-white transition-all font-bold text-sm"
-            >
-              Submit Report
-            </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-md bg-transparent text-white transition-all font-bold text-sm"
-            >
-              Report History
-            </TabsTrigger>
+          <TabsList className="hidden">
+            <TabsTrigger value="submit">Submit</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="submit" className="space-y-6 mt-0">
+            <div className="bc-daily-grid">
+              <div className="space-y-6">
             {/* Calendar Card */}
-            <Card className="rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm overflow-hidden">
-              <CardContent className="p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-50 p-2 rounded-lg">
-                      <CalendarIcon size={20} className="text-blue-600" />
-                    </div>
-                    <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
-                      Daily Report for {selectedDate}{" "}
-                      {selectedMonth.slice(0, 3)}, {selectedYear}
-                    </span>
-                  </div>
+            <div className="bc-daily-card">
+              <div className="bc-daily-card-header">
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-bold text-[#1a1a1a]">
+                    Daily Report for {formattedSelectedDate}
+                  </span>
+                  <ChevronDown size={16} className="text-gray-400" />
                 </div>
-
-                <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-                  {days.map((item, index) => (
+                <button
+                  type="button"
+                  className="bc-absent-btn"
+                  onClick={() => {
+                    markDraftDirty();
+                    setIsAbsent(!isAbsent);
+                  }}
+                >
+                  <Checkbox
+                    checked={isAbsent}
+                    className="h-4 w-4 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                    onCheckedChange={() => {}}
+                  />
+                  Mark as Absent
+                </button>
+              </div>
+              <div className="bc-daily-card-body">
+                <div className="bc-calendar-strip mb-2">
+                  <button
+                    type="button"
+                    onClick={handlePrevWeek}
+                    className="bc-calendar-nav-btn"
+                    aria-label="Previous dates"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <div className="bc-calendar-strip-track">
+                  {days.map((item, index) => {
+                    const barColor =
+                      item.type === "filled"
+                        ? "#4DB6AC"
+                        : item.type === "missed"
+                          ? "#E57373"
+                          : item.type === "holiday"
+                            ? "#D1D5DB"
+                            : "transparent";
+                    const isSelected = startDate === item.fullDate;
+                    const nextWorkDay = getNextWorkingDay(startDate);
+                    const hasScheduledForDay =
+                      item.fullDate === nextWorkDay &&
+                      tomorrowScheduledItems.length > 0;
+                    const showUpcomingDot =
+                      item.isFuture &&
+                      item.type !== "holiday" &&
+                      (hasScheduledForDay || item.type === "upcoming");
+                    return (
                     <div
                       key={index}
                       className={cn(
-                        "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-pointer border-2 transition-all shrink-0 snap-center shadow-sm relative group",
-                        item.isFuture &&
-                        "opacity-40 grayscale cursor-not-allowed pointer-events-none",
-                        item.type === "missed" &&
-                        "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
-                        item.type === "holiday" &&
-                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 cursor-not-allowed pointer-events-none opacity-70",
-                        item.type === "upcoming" &&
-                        "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
-                        item.type === "filled" &&
-                        "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
-                        selectedDate === item.date && !item.isFuture
-                          ? "ring-4 ring-blue-500/20 scale-105 z-10 text-white"
-                          : "border-transparent"
+                        "bc-calendar-day",
+                        item.type === "holiday" && "bc-calendar-day-holiday",
+                        item.isFuture && item.type !== "holiday" && "bc-calendar-day-future",
+                        hasScheduledForDay && "bc-calendar-day-scheduled",
+                        isSelected && "bc-calendar-day-selected"
                       )}
-                      onClick={() => !item.isFuture && item.type !== "holiday" && handleSelectDate(item)}
+                      onClick={() =>
+                        !item.isFuture &&
+                        item.type !== "holiday" &&
+                        handleSelectDate(item)
+                      }
                     >
-                      <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
-                        {item.day}
-                      </span>
-                      <span className="text-3xl font-black tracking-tighter">
-                        {item.date}
-                      </span>
-                      {item.status && (
-                        <Badge
-                          className={cn(
-                            "text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter",
-                            item.type === "missed" || item.type === "filled"
-                              ? "bg-white/20 text-white"
-                              : "bg-black/10 text-[#854d0e]",
-                            selectedDate === item.date &&
-                            "bg-white/20 text-white"
-                          )}
-                        >
-                          {item.status}
-                        </Badge>
+                      {showUpcomingDot && (
+                        <div className="bc-calendar-day-upcoming-dot" />
                       )}
-                      {selectedDate === item.date && (
-                        <div className="absolute -top-1 -right-1 h-3 w-3 bg-white rounded-full border-2 border-blue-500 shadow-sm" />
+                      {barColor !== "transparent" && (
+                        <div
+                          className="bc-calendar-day-bar"
+                          style={{ backgroundColor: barColor }}
+                        />
                       )}
+                      <span className="bc-calendar-day-day">{item.day}</span>
+                      <span className="bc-calendar-day-date">{item.date}</span>
+                    </div>
+                    );
+                  })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleNextWeek}
+                    className="bc-calendar-nav-btn"
+                    aria-label="Next dates"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
+                <div className="bc-calendar-legend-row">
+                  {[
+                    { color: "#4DB6AC", label: "Filled" },
+                    { color: "#E57373", label: "Missed" },
+                    { color: "#D1D5DB", label: "Holiday" },
+                    { color: "#DA7756", label: "Upcoming tasks", dot: true },
+                  ].map(({ color, label, dot }) => (
+                    <div
+                      key={label}
+                      className="flex items-center gap-2 text-xs text-gray-500 font-medium"
+                    >
+                      {dot ? (
+                        <div
+                          className="bc-calendar-legend-dot"
+                          style={{ backgroundColor: color }}
+                        />
+                      ) : (
+                        <div
+                          className="bc-calendar-legend-bar"
+                          style={{ backgroundColor: color }}
+                        />
+                      )}
+                      <span>{label}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Legend */}
-                <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
-                  {[
-                    { color: "bg-[#22c55e]", label: "Filled" },
-                    { color: "bg-[#ef4444]", label: "Missed (click to fill)" },
-                    { color: "bg-[#facd55]", label: "Holiday" },
-                    {
-                      color: "bg-[#f1f5f9] border border-gray-100",
-                      label: "Upcoming",
-                    },
-                  ].map(({ color, label }) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider"
-                    >
-                      <div
-                        className={cn(
-                          "w-3.5 h-3.5 rounded-[5px] shadow-sm",
-                          color
-                        )}
-                      />
-                      <span className="opacity-80">{label}</span>
-                    </div>
-                  ))}
+                <div className="pt-5 mt-4 border-t border-gray-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-bold text-[#1a1a1a]">
+                      Self Rating (1-10)
+                    </Label>
+                    <span className="text-sm font-bold text-[#DA7756]">
+                      {selfRating[0]}/10
+                    </span>
+                  </div>
+                  <Slider
+                    value={selfRating}
+                    onValueChange={(value) => {
+                      markDraftDirty();
+                      setSelfRating(value);
+                    }}
+                    max={10}
+                    step={1}
+                    className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {!isAbsent && (
               <div className="space-y-6 animate-in fade-in duration-500">
@@ -2757,29 +3071,30 @@ const BusinessCompassDailyReport: React.FC = () => {
                 )}
 
                 {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
-                <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
-                  <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-6 w-6 shrink-0 text-[#DA7756]" />
-                      <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                        Today's Accomplishments
+                <div className="bc-daily-card" ref={accomplishmentsSectionRef}>
+                  <div className="bc-daily-card-header">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-[#DA7756]" />
+                      <h3 className="text-sm font-bold text-[#1a1a1a]">
+                        Today&apos;s Accomplishments
                       </h3>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <Badge className={badgePoints}>
-                        {dailyScore.accomplishmentsScore}/20 PTS
+                        {dailyScore.accomplishmentsScore}/20 Pts
                       </Badge>
-                      <Button
-                        className="rounded-[8px] shadow-lg font-semibold text-sm"
+                      <button
+                        type="button"
+                        className="bc-add-outline-btn"
                         onClick={addAccomplishment}
                       >
                         <Plus size={14} />
                         Add Item
-                      </Button>
+                      </button>
                     </div>
                   </div>
 
-                  <CardContent className="p-6 space-y-6">
+                  <div className="bc-daily-card-body space-y-6">
                     <div className="space-y-3">
 
                       {/* ── Manual accomplishment items ── */}
@@ -3016,33 +3331,29 @@ const BusinessCompassDailyReport: React.FC = () => {
                         );
                       })}
 
-                      {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
-                        <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
-                          <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
-                            <CheckCircle2 size={32} className="text-[#10b981]/30" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-base font-bold text-[#065f46]">
-                              What did you get done today?
-                            </p>
-                            <p className="text-xs text-gray-500 font-medium">
-                              Complete tasks to auto-populate this section, or add entries manually.
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                      {/* Empty placeholder rows to match Figma design */}
+                      {Array.from({ length: Math.max(1, 4 - visibleAccomplishments.length - autoAddedAccomplishments.length) }).map((_, i) => (
+                        <button
+                          key={`placeholder-${i}`}
+                          type="button"
+                          className="bc-accomplishment-input-row w-full text-left"
+                          onClick={addAccomplishment}
+                        >
+                          <div className="h-5 w-5 rounded border-2 border-gray-300 shrink-0" />
+                          <span className="text-sm text-gray-400">
+                            Describe your accomplishments...
+                          </span>
+                        </button>
+                      ))}
 
                     </div>
 
-                    <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[10px] text-[#DA7756] font-black uppercase tracking-widest bg-[#DA7756]/10 px-3 py-1.5 rounded-full border border-[#DA7756]/20">
-                        <Info size={14} />
-                        <span>Limits: Images 2MB, Others 5MB</span>
+                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                        <Info size={14} className="text-gray-400" />
+                        <span>Limits: Images 2MB, Others 5 MB</span>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs font-bold text-gray-400">
-                          {uploadedFiles.length + reportAttachments.length}/5
-                        </span>
+                      <div className="flex items-center gap-3">
                         <input
                           type="file"
                           ref={fileInputRef}
@@ -3051,18 +3362,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                           className="hidden"
                         />
                         <button
+                          type="button"
                           disabled={uploadedFiles.length + reportAttachments.length >= 5}
                           onClick={triggerFileUpload}
-                          style={{
-                            backgroundColor: uploadedFiles.length + reportAttachments.length >= 5 ? '#d1d5db' : '#DA7756',
-                            color: '#ffffff',
-                            cursor: uploadedFiles.length + reportAttachments.length >= 5 ? 'not-allowed' : 'pointer',
-                            opacity: uploadedFiles.length + reportAttachments.length >= 5 ? 0.5 : 1,
-                          }}
-                          className="flex items-center gap-2 px-6 h-10 rounded-[8px] text-xs font-black shadow-md transition-all border-none"
+                          className="bc-add-outline-btn disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Upload size={16} />
-                          File Upload
+                          <Upload size={14} />
+                          Upload File
                         </button>
                       </div>
                     </div>
@@ -3171,633 +3477,34 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-
-                {/* Tasks & Issues Card */}
-                <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-[#fff] shadow-sm mt-6">
-                  <div className="bg-white p-4 border-b border-[#b91c1c]/10">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <CheckSquare className="h-6 w-6 text-[#DA7756]" />
-                          <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                            Tasks, Issues & Todos
-                          </h3>
-                        </div>
-                        {/* <p className="text-[11px] text-gray-500 font-medium">
-                          {tasksLoading || issuesLoading
-                            ? "Loading..."
-                            : `Total: ${taskIssueCounts.total} items`}
-                        </p> */}
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {/* <Badge
-                            variant="outline"
-                            className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
-                          >
-                            Completed: {taskIssueCounts.completed}
-                          </Badge> */}
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
-                          >
-                            Open: {taskIssueCounts.open}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
-                          >
-                            Overdue: {taskIssueCounts.overdue}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
-                          >
-                            In Progress: {taskIssueCounts.inProgress}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-gray-200 px-3 py-1 text-[10px] font-bold text-gray-800"
-                          >
-                            On Hold: {taskIssueCounts.onHold}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge className={badgePoints}>
-                          {taskIssueCounts.completed}/20 PTS
-                        </Badge>
-                        <Button
-                          className="rounded-[8px] shadow-lg font-semibold text-sm"
-                          onClick={(e) =>
-                            setTaskIssueMenuAnchor(e.currentTarget)
-                          }
-                        >
-                          <Plus size={14} />
-                          Add
-                        </Button>
-                      </div>
-                    </div>
                   </div>
-
-                  <CardContent className="p-4">
-                    {tasksLoading || issuesLoading ? (
-                      <div className="flex flex-col items-center justify-center text-center py-10">
-                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
-                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
-                      </div>
-                    ) : mergedTasksIssues.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center text-center py-10">
-                        <div className="flex flex-col items-center gap-3 opacity-30">
-                          <CheckSquare size={40} className="text-[#DA7756]/20" />
-                          <p className="text-base font-bold text-gray-400 tracking-tight">No open tasks or issues</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="max-h-[600px] overflow-y-auto space-y-3 pr-1" ref={scrollContainerRef}>
-
-                        {/* ── From Yesterday section ── */}
-                        {yesterdaySourceIds.size > 0 && (() => {
-                          const yItems = mergedTasksIssues.filter((item: any) => yesterdaySourceIds.has(item.id));
-                          if (yItems.length === 0) return null;
-                          const isCollapsed = collapsedGroups.has("from_yesterday");
-                          return (
-                            <div key="from_yesterday">
-                              <button
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-amber-50 hover:bg-amber-100"
-                                onClick={() => setCollapsedGroups((prev) => { const next = new Set(prev); if (next.has("from_yesterday")) next.delete("from_yesterday"); else next.add("from_yesterday"); return next; })}
-                              >
-                                <CalendarIcon size={12} className="text-amber-700 shrink-0" />
-                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-amber-700">Plan for Today</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{yItems.length}</span>
-                                <ChevronRight size={14} className={cn("transition-transform duration-200 ml-1 text-amber-700", !isCollapsed && "rotate-90")} />
-                              </button>
-                              {!isCollapsed && (
-                                <div className="space-y-1.5 pl-1">
-                                  {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      <Checkbox
-                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                        onCheckedChange={(checked) => {
-                                          if (checked && item.status !== "completed" && item.status !== "closed") {
-                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                          } else {
-                                            markDraftDirty();
-                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
-                                          }
-                                        }}
-                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                      />
-                                      <button
-                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                        title={`View ${item.type} details`}
-                                      >
-                                        <Eye size={14} className="text-amber-600" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                        title={`Edit ${item.type}`}
-                                      >
-                                        <Pencil size={13} />
-                                      </button>
-                                      {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                                        item.originalData?.is_started ? (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Pause task"
-                                            disabled={playingTaskIds.has(item.originalData.id)}
-                                          >
-                                            <Pause size={14} className="text-red-500" />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Start task"
-                                            disabled={playingTaskIds.has(item.originalData.id)}
-                                          >
-                                            {playingTaskIds.has(item.originalData.id)
-                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                              : <Play size={14} className="text-green-600" />}
-                                          </button>
-                                        )
-                                      )}
-                                      {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                                        item.originalData?.task_management?.is_started ? (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Pause task"
-                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                          >
-                                            <Pause size={14} className="text-red-500" />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Start task"
-                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                          >
-                                            {playingTaskIds.has(item.originalData.task_management_id)
-                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                              : <Play size={14} className="text-green-600" />}
-                                          </button>
-                                        )
-                                      )}
-                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                        {item.type}
-                                      </span>
-                                      <div className="flex-1 min-w-0">
-                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
-                                      </div>
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                        {item.priority}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-
-                        {(
-                          [
-                            // {
-                            //   key: "completed_today",
-                            //   label: "Completed Today",
-                            //   statuses: ["completed", "closed", "done"],
-                            //   colorClass: "text-emerald-700",
-                            //   bgItem: "bg-emerald-50/60 border-emerald-200",
-                            //   headerBg: "bg-emerald-50 hover:bg-emerald-100",
-                            //   pillBg: "bg-emerald-100 text-emerald-700",
-                            //   showAddToTomorrow: false,
-                            //   showBulkAdd: false,
-                            // },
-                            {
-                              key: "overdue",
-                              label: "Overdue",
-                              statuses: ["overdue", "overdued"],
-                              colorClass: "text-red-700",
-                              bgItem: "bg-red-50/60 border-red-200",
-                              headerBg: "bg-red-50 hover:bg-red-100",
-                              pillBg: "bg-red-100 text-red-700",
-                              showAddToTomorrow: true,
-                              showBulkAdd: true,
-                            },
-                            {
-                              key: "in_progress",
-                              label: "In Progress",
-                              statuses: ["in_progress", "started"],
-                              colorClass: "text-sky-700",
-                              bgItem: "bg-sky-50/60 border-sky-200",
-                              headerBg: "bg-sky-50 hover:bg-sky-100",
-                              pillBg: "bg-sky-100 text-sky-700",
-                              showAddToTomorrow: true,
-                              showBulkAdd: false,
-                            },
-                            {
-                              key: "pending",
-                              label: "Open",
-                              statuses: ["open", "pending"],
-                              colorClass: "text-slate-600",
-                              bgItem: "bg-slate-50/60 border-slate-200",
-                              headerBg: "bg-slate-50 hover:bg-slate-100",
-                              pillBg: "bg-slate-100 text-slate-600",
-                              showAddToTomorrow: true,
-                              showBulkAdd: false,
-                            },
-                            {
-                              key: "on_hold",
-                              label: "On Hold",
-                              statuses: ["on_hold"],
-                              colorClass: "text-orange-700",
-                              bgItem: "bg-orange-50/60 border-orange-200",
-                              headerBg: "bg-orange-50 hover:bg-orange-100",
-                              pillBg: "bg-orange-100 text-orange-700",
-                              showAddToTomorrow: true,
-                              showBulkAdd: false,
-                            },
-                            {
-                              key: "reopened",
-                              label: "Reopened",
-                              statuses: ["reopen", "reopened"],
-                              colorClass: "text-purple-700",
-                              bgItem: "bg-purple-50/60 border-purple-200",
-                              headerBg: "bg-purple-50 hover:bg-purple-100",
-                              pillBg: "bg-purple-100 text-purple-700",
-                              showAddToTomorrow: true,
-                              showBulkAdd: false,
-                            },
-                          ] as const
-                        ).map((group) => {
-                          const items = mergedTasksIssues.filter((item: any) =>
-                            (group.statuses as readonly string[]).includes(item.status) &&
-                            !yesterdaySourceIds.has(item.id)
-                          );
-                          if (items.length === 0) return null;
-                          const isCollapsed = collapsedGroups.has(group.key);
-
-                          return (
-                            <div key={group.key}>
-                              {/* Group header */}
-                              <button
-                                className={cn(
-                                  "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
-                                  group.headerBg
-                                )}
-                                onClick={() =>
-                                  setCollapsedGroups((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(group.key)) next.delete(group.key);
-                                    else next.add(group.key);
-                                    return next;
-                                  })
-                                }
-                              >
-                                <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
-                                  {group.label}
-                                </span>
-                                <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
-                                  {items.length}
-                                </span>
-                                {group.showBulkAdd && items.length > 0 && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addAllOverdueToTomorrow();
-                                    }}
-                                    className="text-[10px] font-bold text-red-700 bg-white hover:bg-red-50 border border-red-200 px-2 py-1 rounded-[6px] transition-all ml-1"
-                                  >
-                                    Add all to tomorrow
-                                  </button>
-                                )}
-                                <ChevronRight
-                                  size={14}
-                                  className={cn(
-                                    "transition-transform duration-200 ml-1",
-                                    group.colorClass,
-                                    !isCollapsed && "rotate-90"
-                                  )}
-                                />
-                              </button>
-
-                              {/* Group items */}
-                              {!isCollapsed && (
-                                <div className="space-y-1.5 pl-1">
-                                  {items.map((item: any) => (
-                                    <div
-                                      key={item.id}
-                                      className={cn(
-                                        "flex flex-col rounded-[10px] border transition-all group",
-                                        group.bgItem
-                                      )}
-                                    >
-                                      <div className="flex items-center gap-2 p-2.5">
-                                        <Checkbox
-                                          checked={
-                                            selectedTasksIssues[item.id] ||
-                                            item.status === "completed" ||
-                                            item.status === "closed"
-                                          }
-                                          onCheckedChange={(checked) => {
-                                            if (checked && item.status !== "completed" && item.status !== "closed") {
-                                              setPendingConfirmAction({
-                                                fn: () => handleCompleteItem(item),
-                                                label: `complete this ${item.type}`,
-                                              });
-                                            } else {
-                                              markDraftDirty();
-                                              setSelectedTasksIssues((prev) => ({
-                                                ...prev,
-                                                [item.id]: checked as boolean,
-                                              }));
-                                            }
-                                          }}
-                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                        />
-
-                                        <button
-                                          onClick={() => {
-                                            if (item.type === "todo") {
-                                              setSelectedTodo(item.originalData);
-                                              setIsDetailsModalOpen(true);
-                                            } else {
-                                              navigate(
-                                                item.type === "task"
-                                                  ? `/vas/tasks/${item.originalData?.id}`
-                                                  : `/vas/issues/${item.originalData?.id}`
-                                              );
-                                            }
-                                          }}
-                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                          title={`View ${item.type} details`}
-                                        >
-                                          <Eye size={14} className="text-[#DA7756]" />
-                                        </button>
-
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (item.type === "task") {
-                                              setEditTaskData(item.originalData);
-                                              setIsEditTaskModalOpen(true);
-                                            } else if (item.type === "issue") {
-                                              setEditIssueData(item.originalData);
-                                              setIsEditIssueModalOpen(true);
-                                            } else if (item.type === "todo") {
-                                              setEditTodoData(item.originalData);
-                                              setIsEditTodoModalOpen(true);
-                                            }
-                                          }}
-                                          className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                          title={`Edit ${item.type}`}
-                                        >
-                                          <Pencil size={13} />
-                                        </button>
-
-                                        {/* Play/Pause for tasks */}
-                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.is_started ? (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Pause task"
-                                              disabled={playingTaskIds.has(item.originalData.id)}
-                                            >
-                                              <Pause size={14} className="text-red-500" />
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Start task"
-                                              disabled={playingTaskIds.has(item.originalData.id)}
-                                            >
-                                              {playingTaskIds.has(item.originalData.id)
-                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                                : <Play size={14} className="text-green-600" />}
-                                            </button>
-                                          )
-                                        )}
-
-                                        {/* Play/Pause for todos linked to tasks */}
-                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.task_management?.is_started ? (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Pause task"
-                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                            >
-                                              <Pause size={14} className="text-red-500" />
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Start task"
-                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                            >
-                                              {playingTaskIds.has(item.originalData.task_management_id)
-                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                                : <Play size={14} className="text-green-600" />}
-                                            </button>
-                                          )
-                                        )}
-
-                                        {/* Type badge */}
-                                        <span className={cn(
-                                          "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                          item.type === "task" ? "bg-[#DA7756] text-white" :
-                                            item.type === "issue" ? "bg-violet-600 text-white" :
-                                              "bg-amber-500 text-white"
-                                        )}>
-                                          {item.type}
-                                        </span>
-
-                                        {/* Title + status */}
-                                        <div className="flex-1 min-w-0">
-                                          <p className={cn(
-                                            "text-sm font-medium truncate",
-                                            (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
-                                          )}>
-                                            {item.title}
-                                          </p>
-                                        </div>
-
-                                        {/* Priority badge */}
-                                        <span
-                                          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                          style={{
-                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                          }}
-                                        >
-                                          {item.priority}
-                                        </span>
-
-                                        {/* Add to Tomorrow button */}
-                                        {group.showAddToTomorrow && (
-                                          <button
-                                            onClick={() =>
-                                              addedToTomorrowIds.has(item.id)
-                                                ? removeItemFromTomorrow(item)
-                                                : addItemToTomorrow(item)
-                                            }
-                                            className={cn(
-                                              "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                              addedToTomorrowIds.has(item.id)
-                                                ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
-                                            )}
-                                            title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
-                                          >
-                                            {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
-                                          </button>
-                                        )}
-                                      </div>{/* end inner controls row */}
-
-                                      {/* Info row */}
-                                      {(() => {
-                                        const d = item.originalData;
-                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-
-                                        // Issue: effort duration from issue_allocation_times
-                                        let issueEffort: string | null = null;
-                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                          const totalMin = d.issue_allocation_times.reduce(
-                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                          );
-                                          if (totalMin > 0) {
-                                            const h = Math.floor(totalMin / 60);
-                                            const m = totalMin % 60;
-                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                          }
-                                        }
-
-                                        // Issue: time left (when not overdue) from end_date
-                                        let timeLeftLabel: string | null = null;
-                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                          const now = new Date();
-                                          const end = new Date(d.end_date);
-                                          end.setHours(23, 59, 59, 999);
-                                          const diff = end.getTime() - now.getTime();
-                                          if (diff > 0) {
-                                            const days = Math.floor(diff / 86400000);
-                                            const hrs = Math.floor((diff % 86400000) / 3600000);
-                                            const mins = Math.floor((diff % 3600000) / 60000);
-                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                            else timeLeftLabel = `${mins}m left`;
-                                          }
-                                        }
-
-                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
-                                        if (!hasInfo) return null;
-                                        return (
-                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
-                                            {endDate && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <CalendarIcon size={9} className="shrink-0" />
-                                                {endDate}
-                                              </span>
-                                            )}
-                                            {overdueLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                <AlertCircle size={9} className="shrink-0" />
-                                                {overdueLabel}
-                                              </span>
-                                            )}
-                                            {timeLeftLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                <Clock size={9} className="shrink-0" />
-                                                {timeLeftLabel}
-                                              </span>
-                                            )}
-                                            {effortEst && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <Clock size={9} className="shrink-0" />
-                                                Est: {effortEst}
-                                              </span>
-                                            )}
-                                            {issueEffort && (
-                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                Effort: {issueEffort}
-                                              </span>
-                                            )}
-                                            {item.type === "task" && d?.active_time_till_now && (
-                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
-                                              </span>
-                                            )}
-                                          </div>
-                                        );
-                                      })()}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-
-                        {isLoadingMore && (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
-                            <p className="text-xs text-gray-500 font-medium">Loading more...</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Bottom Tip Banner */}
-                {/* <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
-                  <div className="bg-white p-1.5 rounded-full shadow-inner border border-[#fef08a]">
-                    <Lightbulb size={18} className="text-[#ca8a04]" />
-                  </div>
-                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
-                    <span className="font-bold text-[#ca8a04]">
-                      Delegate or Delete:
-                    </span>{" "}
-                    Look at your list. What doesn't actually need doing?
-                  </p>
-                </div> */}
+                </div>
 
                 {/* Plan Card */}
-                <Card className="rounded-[16px] border border-[#DA7756]/20 overflow-hidden bg-white shadow-sm mt-6">
-                  <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
-                    <div className="flex items-center gap-3">
+                <div className="bc-daily-card" ref={planningSectionRef}>
+                  <div className="bc-daily-card-header">
+                    <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5 text-[#DA7756]" />
-                      <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                      <h3 className="text-sm font-bold text-[#1a1a1a]">
                         Plan for {nextDayLabel || "Tomorrow"}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <Badge className={badgePoints}>
-                        {dailyScore.planningScore}/20 PTS
+                        {dailyScore.planningScore}/20 Pts
                       </Badge>
-                      <Button
-                        className="rounded-[8px] shadow-md font-semibold text-sm px-4"
+                      <button
+                        type="button"
+                        className="bc-add-outline-btn"
                         onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
                         title="Add Task, Issue, or Todo for next day"
                       >
-                        <Plus size={14} /> Add
-                      </Button>
+                        <Plus size={14} /> Add Item
+                      </button>
                     </div>
                   </div>
 
-                  <CardContent className="p-6">
+                  <div className="bc-daily-card-body">
                     {/* Manual planning items */}
                     {planningItems.length > 0 && (
                       <div className="mb-4">
@@ -3851,11 +3558,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         ? "bg-[#DA7756]/10 text-[#9e4f36]"
                                         : item.source_type === "issue"
                                           ? "bg-violet-100 text-violet-700"
-                                          : item.source_type === "todo"
-                                            ? "bg-yellow-100 text-yellow-700"
-                                            : "bg-gray-500 text-white"
+                                          : "bg-amber-100 text-amber-700"
                                     )}>
-                                      {item.source_type || "Note"}
+                                      {item.source_type || "note"}
                                     </span>
                                     <input
                                       type="text"
@@ -3864,109 +3569,24 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         updatePlanningText(item.id, e.target.value)
                                       }
                                       placeholder="What's your strategic priority?"
-                                      className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                      className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700"
                                     />
-                                    {livePriority && (
-                                      <span
-                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                        style={{
-                                          backgroundColor: livePriority === "High" ? "#fee2e2" : livePriority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                          color: livePriority === "High" ? "#991b1b" : livePriority === "Medium" ? "#92400e" : "#166534",
-                                        }}
-                                      >
-                                        {livePriority}
-                                      </span>
-                                    )}
-                                    <div className="flex items-center gap-1.5">
-                                      {item.source_id && item.source_type && (
-                                        <>
-                                          <button
-                                            onClick={() => {
-                                              if (item.source_type === "todo") {
-                                                const td = matchedTask?.originalData || cachedData;
-                                                if (td) { setSelectedTodo(td); setIsDetailsModalOpen(true); }
-                                              } else {
-                                                navigate(item.source_type === "task" ? `/vas/tasks/${item.source_id}` : `/vas/issues/${item.source_id}`);
-                                              }
-                                            }}
-                                            className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                            title={`View ${item.source_type} details`}
-                                          >
-                                            <Eye size={14} className="text-amber-600" />
-                                          </button>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              const src = matchedTask?.originalData || cachedData;
-                                              if (item.source_type === "task") { setEditTaskData(src); setIsEditTaskModalOpen(true); }
-                                              else if (item.source_type === "issue") { setEditIssueData(src); setIsEditIssueModalOpen(true); }
-                                              else if (item.source_type === "todo") { setEditTodoData(src); setIsEditTodoModalOpen(true); }
-                                            }}
-                                            className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                            title={`Edit ${item.source_type}`}
-                                          >
-                                            <Pencil size={13} />
-                                          </button>
-                                        </>
-                                      )}
-                                      <X
-                                        size={18}
-                                        className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                                        onClick={() => removePlanningItem(item.id)}
-                                      />
-                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                      onClick={() => removePlanningItem(item.id)}
+                                    >
+                                      <X size={16} className="text-red-500" />
+                                    </Button>
                                   </div>
-                                  {liveData && (() => {
-                                    const d = liveData;
-                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                    let timeLeftLabel: string | null = null;
-                                    if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
-                                      const now = new Date();
-                                      const end = new Date(d.end_date);
-                                      end.setHours(23, 59, 59, 999);
-                                      const diff = end.getTime() - now.getTime();
-                                      if (diff > 0) {
-                                        const days = Math.floor(diff / 86400000);
-                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                        else timeLeftLabel = `${mins}m left`;
-                                      }
-                                    }
-                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                    if (!hasInfo) return null;
-                                    return (
-                                      <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
-                                        {endDate && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <CalendarIcon size={9} className="shrink-0" />
-                                            {endDate}
-                                          </span>
-                                        )}
-                                        {overdueLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                            <AlertCircle size={9} className="shrink-0" />
-                                            {overdueLabel}
-                                          </span>
-                                        )}
-                                        {timeLeftLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                            <Clock size={9} className="shrink-0" />
-                                            {timeLeftLabel}
-                                          </span>
-                                        )}
-                                        {effortEst && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <Clock size={9} className="shrink-0" />
-                                            Est: {effortEst}
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                  })()}
+                                  {livePriority && (
+                                    <div className="pl-7 pt-1">
+                                      <span className="text-[10px] font-bold text-gray-500">
+                                        Priority: {livePriority}
+                                      </span>
+                                    </div>
+                                  )}
                                   {item.fromWeeklyPlan && (
                                     <div className="pl-7 pt-1">
                                       <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
@@ -3983,16 +3603,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    {/* ── Next-day scheduled items — disabled, not included in payload ── */}
                     {(tomorrowScheduledLoading || (tomorrowFetchDone && dedupedTomorrowItems.length > 0)) && (
                       <div className="mb-4">
-                        {/* {planningItems.length > 0 && (
-                          <div className="flex items-center gap-3 py-2 mb-3">
-                            <div className="flex-1 h-px bg-gray-100" />
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Next Day</span>
-                            <div className="flex-1 h-px bg-gray-100" />
-                          </div>
-                        )} */}
                         {tomorrowScheduledLoading ? (
                           <div className="flex items-center gap-2 py-3 text-gray-300">
                             <Loader2 size={13} className="animate-spin shrink-0" />
@@ -4024,34 +3636,21 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           "transition-colors duration-200",
                                           plannedItem?.starred
                                             ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                            : "text-gray-300 hover:text-yellow-400"
+                                            : "text-gray-300 hover:text-gray-400"
                                         )}
                                       />
                                     </button>
                                     <span className={cn(
-                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.type === "task"
-                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                        : item.type === "issue"
-                                          ? "bg-violet-100 text-violet-700"
-                                          : "bg-yellow-100 text-yellow-700"
+                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.type === "task" ? "bg-[#DA7756] text-white" :
+                                        item.type === "issue" ? "bg-violet-600 text-white" :
+                                          "bg-amber-500 text-white"
                                     )}>
                                       {item.type}
                                     </span>
-                                    <span className="flex-1 text-sm font-medium text-gray-500 truncate">
+                                    <span className="flex-1 text-sm font-medium text-gray-700 truncate">
                                       {item.title}
                                     </span>
-                                    {item.priority && (
-                                      <span
-                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                        style={{
-                                          backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                          color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                        }}
-                                      >
-                                        {item.priority}
-                                      </span>
-                                    )}
                                     <button
                                       type="button"
                                       onClick={() => hideTomorrowScheduledItem(item)}
@@ -4060,57 +3659,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       <X size={16} />
                                     </button>
                                   </div>
-                                  {(() => {
-                                    const d = item.originalData;
-                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                    let timeLeftLabel: string | null = null;
-                                    if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                      const now = new Date();
-                                      const end = new Date(d.end_date);
-                                      end.setHours(23, 59, 59, 999);
-                                      const diff = end.getTime() - now.getTime();
-                                      if (diff > 0) {
-                                        const days = Math.floor(diff / 86400000);
-                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                        else timeLeftLabel = `${mins}m left`;
-                                      }
-                                    }
-                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                    if (!hasInfo) return null;
-                                    return (
-                                      <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
-                                        {endDate && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <CalendarIcon size={9} className="shrink-0" />
-                                            {endDate}
-                                          </span>
-                                        )}
-                                        {overdueLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                            <AlertCircle size={9} className="shrink-0" />
-                                            {overdueLabel}
-                                          </span>
-                                        )}
-                                        {timeLeftLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                            <Clock size={9} className="shrink-0" />
-                                            {timeLeftLabel}
-                                          </span>
-                                        )}
-                                        {effortEst && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <Clock size={9} className="shrink-0" />
-                                            Est: {effortEst}
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                  })()}
                                 </div>
                               </div>
                               );
@@ -4120,229 +3668,390 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    {planningItems.length === 0 && !tomorrowScheduledLoading && dedupedTomorrowItems.length === 0 && (
-                      <div className="flex flex-col items-center gap-4 text-center mb-8">
-                        <div className="flex flex-col items-center gap-3 opacity-30">
-                          <Calendar
-                            size={40}
-                            className="text-[#DA7756]/20"
-                          />
-                          <p className="text-base font-bold text-gray-400 tracking-tight">
-                            Plan your next working day!
-                          </p>
-                        </div>
-                        <p className="text-xs text-gray-500 font-medium -mt-2">
-                          List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
-                          to stay focused.
-                        </p>
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      className="bc-plan-input-row w-full text-left"
+                      onClick={addPlanningItem}
+                    >
+                      <Star size={18} className="text-gray-300 shrink-0" />
+                      <span className="text-sm text-gray-400">
+                        What&apos;s your strategic priority?
+                      </span>
+                    </button>
+                  </div>
+                </div>
 
-                    {/* <div className="mt-4">
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 border-[#DA7756]/30 text-[#DA7756] font-bold text-sm bg-white hover:bg-[#DA7756]/5 rounded-[8px] flex items-center justify-center gap-2"
-                        onClick={addPlanningItem}
-                      >
-                        <Plus size={18} />
-                        Add Item
-                      </Button>
-                    </div> */}
-                  </CardContent>
-                </Card>
+                <div
+                  className="bc-score-info-bar"
+                  onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
+                >
+                  <div className="flex items-center gap-2">
+                    <HelpCircle size={16} className="text-[#DA7756]" />
+                    <span className="text-sm font-medium text-gray-600">
+                      How is the Automated Daily score calculated?{" "}
+                      <span className="text-[#DA7756] font-semibold">
+                        Expand to know more
+                      </span>
+                    </span>
+                  </div>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      "text-gray-400 transition-transform",
+                      isScoreInfoExpanded && "rotate-180"
+                    )}
+                  />
+                </div>
+
               </div>
             )}
 
-            {/* Submission Section */}
-            <Card className="rounded-[16px] border border-[#DA7756]/20 shadow-sm bg-white p-6 mt-6">
-              <div className="flex flex-col gap-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="flex-1 w-full space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-bold text-black">
-                        Self Rating (1-10)
-                      </Label>
-                      <span className="text-sm font-black text-[#DA7756]">
-                        {selfRating[0]}/10
-                      </span>
-                    </div>
-                    <Slider
-                      value={selfRating}
-                      onValueChange={(value) => {
-                        markDraftDirty();
-                        setSelfRating(value);
-                      }}
-                      max={10}
-                      step={1}
-                      className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3 bg-[#DA7756]/5 px-4 py-3 rounded-[10px] border border-[#DA7756]/20 min-w-[150px] justify-center">
-                    <Checkbox
-                      id="absent"
-                      checked={isAbsent}
-                      onCheckedChange={(checked) => {
-                        markDraftDirty();
-                        setIsAbsent(checked as boolean);
-                      }}
-                      className="h-5 w-5 rounded-[4px] border-[#DA7756]/40 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
-                    />
-                    <label
-                      htmlFor="absent"
-                      className="text-sm font-bold text-[#1a1a1a] cursor-pointer"
-                    >
-                      Mark as Absent
-                    </label>
-                  </div>
-                </div>
-
-                {isAbsent && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <Label className="text-sm font-bold text-gray-700 flex items-center gap-1">
-                      Reason for Absence <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      placeholder="Why are you absent today?"
-                      value={absenceReason}
-                      onChange={(e) => {
-                        markDraftDirty();
-                        setAbsenceReason(e.target.value);
-                      }}
-                      className="h-12 rounded-[10px] border-gray-200 focus:ring-[#22c55e]/20"
-                    />
-                  </div>
-                )}
-
-                <div className="pt-2">
-                  {submitError && (
-                    <div className="mb-4 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
-                      <AlertCircle size={16} />
-                      {submitError}
-                    </div>
-                  )}
-                  {submitSuccess && (
-                    <div className="mb-4 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-green-100">
-                      <CheckCircle2 size={16} />
-                      {currentReportId
-                        ? "Daily report updated successfully. Redirecting to history..."
-                        : "Daily report submitted successfully. Redirecting to history..."}
-                    </div>
-                  )}
-                  <button
-                    className={cn(
-                      "w-full h-[56px] font-black text-[18px] rounded-[14px] transition-all duration-200 ease-in-out border-none flex items-center justify-center gap-2",
-                      isSubmitting
-                        ? "opacity-60 cursor-not-allowed"
-                        : "cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(218,119,86,0.35)] active:translate-y-0 active:shadow-sm",
-                      currentReportId
-                        ? "!bg-[#c45f3a] hover:!bg-[#b3532f]"
-                        : "!bg-[#DA7756] hover:!bg-[#c45f3a]"
-                    )}
-                    style={{ color: "#ffffff" }}
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2
-                          size={20}
-                          className="animate-spin"
-                          style={{ color: "#ffffff" }}
-                        />
-                        <span style={{ color: "#ffffff" }}>
-                          {currentReportId ? "Updating..." : "Submitting..."}
-                        </span>
-                      </>
-                    ) : (
-                      <span style={{ color: "#ffffff" }}>
-                        {currentReportId ? "Update" : "Submit"} Daily Report
-                        (for {selectedDate} {selectedMonth.slice(0, 3)})
-                      </span>
-                    )}
-                  </button>
-                </div>
               </div>
-            </Card>
 
-            {!isAbsent &&
-              accomplishments.filter((a) => a.completed).length === 0 &&
-              autoAddedAccomplishments.length === 0 && (
-                <p className="mt-4 text-xs text-red-500 text-center font-bold animate-in fade-in duration-500">
-                  Please complete at least one accomplishment before submitting
-                </p>
-              )}
-
-            {/* Live Score Preview Section */}
-            {!isAbsent && (
-              <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Card className="rounded-[16px] border border-[#DA7756]/20 shadow-sm overflow-hidden bg-white">
-                  <CardContent className="p-6 space-y-6">
-                    <div className="flex items-center justify-between">
+              <div className="space-y-6">
+                {/* Live Score Preview */}
+                {!isAbsent && (
+                  <div className="bc-live-score-card">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="bg-[#DA7756]/10 p-1.5 rounded-full">
-                          <Target size={18} className="text-[#DA7756]" />
-                        </div>
-                        <h3 className="text-sm font-bold text-[#1a1a1a] flex items-center gap-1.5">
+                        <Target size={18} className="text-[#DA7756]" />
+                        <h3 className="text-sm font-bold text-[#1a1a1a]">
                           Live Score Preview
-                          <HelpCircle
-                            size={14}
-                            className="text-[#DA7756]/60 cursor-pointer"
-                          />
                         </h3>
                       </div>
-                      <span className="text-3xl font-black text-[#DA7756] tracking-tighter">
-                        {dailyScore.totalScore}/100
-                      </span>
+                      <Badge className={badgePoints}>
+                        {Math.round(dailyScore.totalScore)}/100 Pts
+                      </Badge>
                     </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div className="flex gap-2">
                       {[
-                        {
-                          label: "KPIs",
-                          score: `${dailyScore.kpiScore}/20`,
-                          color: "text-green-600",
-                        },
-                        {
-                          label: "Accomplishments",
-                          score: `${dailyScore.accomplishmentsScore}/20`,
-                          color: "text-purple-600",
-                        },
-                        {
-                          label: "Tasks",
-                          score: `${dailyScore.tasksIssuesScore}/20`,
-                          color: "text-[#ea580c]",
-                        },
-                        {
-                          label: "Planning",
-                          score: `${dailyScore.planningScore}/20`,
-                          color: "text-blue-600",
-                        },
-                        {
-                          label: "Timing",
-                          score: `${dailyScore.timingScore}/20`,
-                          color: "text-orange-600",
-                        },
-                      ].map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-[#fafafa] p-4 rounded-[10px] border border-[#f3f4f6] flex flex-col items-center gap-1 shadow-sm"
-                        >
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                            {item.label}
-                          </span>
-                          <span
-                            className={cn(
-                              "text-xl font-black tracking-tight",
-                              item.color
-                            )}
-                          >
-                            {item.score}
-                          </span>
+                        { label: "KPI", value: `${livePreviewMetrics.kpiPct}%`, warn: livePreviewMetrics.kpiPct < 50 },
+                        { label: "Accomplishments", value: `${livePreviewMetrics.accPct}%`, warn: livePreviewMetrics.accPct < 50 },
+                        { label: "Tasks", value: String(livePreviewMetrics.tasksCount), warn: false },
+                        { label: "Planning", value: livePreviewMetrics.planning, warn: livePreviewMetrics.planning.startsWith("0/") },
+                        { label: "Timing", value: livePreviewMetrics.timing, warn: livePreviewMetrics.timing.startsWith("0/") },
+                      ].map((metric) => (
+                        <div key={metric.label} className="bc-live-metric">
+                          <div className="bc-live-metric-label">{metric.label}</div>
+                          <div className={cn("bc-live-metric-value", metric.warn && "bc-live-metric-value-warn")}>
+                            {metric.value}
+                          </div>
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
 
-                    <div className="pt-4 border-t border-[#DA7756]/10">
+                {/* Tasks & Issues Card */}
+                <div className="bc-daily-card bc-tasks-card-wrap" ref={tasksSectionRef}>
+                  <div className="bc-daily-card-header flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <CheckSquare className="h-5 w-5 text-[#DA7756]" />
+                      <h3 className="text-sm font-bold text-[#1a1a1a]">
+                        Tasks, Issues &amp; To Do&apos;s
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className={badgePoints}>
+                        {dailyScore.tasksIssuesScore}/20 Pts
+                      </Badge>
+                      <button
+                        type="button"
+                        className="bc-add-outline-btn"
+                        onClick={(e) =>
+                          setTaskIssueMenuAnchor(e.currentTarget)
+                        }
+                      >
+                        <Plus size={14} />
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                  <div className="px-5 py-3 border-b border-gray-100 flex flex-wrap gap-2">
+                    {(
+                      [
+                        { key: "open" as const, label: "Opened", count: taskIssueCounts.open, cls: "bc-task-filter-open" },
+                        { key: "overdue" as const, label: "Over Due", count: taskIssueCounts.overdue, cls: "bc-task-filter-overdue" },
+                        { key: "in_progress" as const, label: "In Progress", count: taskIssueCounts.inProgress, cls: "bc-task-filter-progress" },
+                        { key: "on_hold" as const, label: "On Hold", count: taskIssueCounts.onHold, cls: "bc-task-filter-hold" },
+                      ]
+                    ).map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        className={cn(
+                          "bc-task-filter-tab",
+                          taskStatusFilter === tab.key
+                            ? tab.cls
+                            : tab.key === "open"
+                              ? "text-[#2563eb] bg-[#eff6ff]/60 border border-[#bfdbfe]/50"
+                              : tab.key === "overdue"
+                                ? "text-[#e7848e] border border-[#e7848e]/30 bg-white"
+                                : tab.key === "in_progress"
+                                  ? "text-[#DA7756] border border-[#DA7756]/30 bg-white"
+                                  : "text-gray-500 bg-white border border-gray-200"
+                        )}
+                        onClick={() => setTaskStatusFilter(tab.key)}
+                      >
+                        {tab.label}
+                        {tab.count > 0 && (
+                          <span className="ml-1 opacity-70">({tab.count})</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="bc-daily-card-body p-0">
+                    {isAiPopupOpen && (
+                      <div className="bc-ai-inline-popup">
+                        <div className="bc-ai-inline-tabs">
+                          <button
+                            type="button"
+                            className={cn("bc-ai-popup-tab", aiPopupTab === "accomplishments" && "bc-ai-popup-tab-active")}
+                            onClick={() => setAiPopupTab("accomplishments")}
+                          >
+                            Fill my accomplishments
+                          </button>
+                          <button
+                            type="button"
+                            className={cn("bc-ai-popup-tab", aiPopupTab === "plan" && "bc-ai-popup-tab-active")}
+                            onClick={() => setAiPopupTab("plan")}
+                          >
+                            Plan for next day
+                          </button>
+                        </div>
+                        <div className="bc-ai-popup-input-wrap">
+                          <textarea
+                            value={aiPromptText}
+                            onChange={(e) => setAiPromptText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                setIsAiPopupOpen(false);
+                                setAiPromptText("");
+                                if (aiPopupTab === "accomplishments") {
+                                  accomplishmentsSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+                                  addAccomplishment();
+                                } else {
+                                  planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+                                }
+                              }
+                            }}
+                            placeholder="Ask anything..."
+                            className="bc-ai-popup-input"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {tasksLoading || issuesLoading ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
+                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
+                      </div>
+                    ) : mergedTasksIssues.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <div className="flex flex-col items-center gap-3 opacity-30">
+                          <CheckSquare size={40} className="text-[#DA7756]/20" />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">No open tasks or issues</p>
+                        </div>
+                      </div>
+                    ) : filteredTasksForTable.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <p className="text-sm font-medium text-gray-400">
+                          No items in this category
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="max-h-[480px] overflow-y-auto" ref={scrollContainerRef}>
+                        <table className="bc-tasks-table">
+                          <thead>
+                            <tr>
+                              <th>
+                                Task / Issue / To Do&apos;s ({filteredTasksForTable.length})
+                              </th>
+                              <th>Priority</th>
+                              <th>Target Date</th>
+                              <th className="text-center w-16">Completed</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredTasksForTable.map((item: any) => {
+                              const d = item.originalData;
+                              const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                              const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                              const isDone = item.status === "completed" || item.status === "closed";
+                              return (
+                                <tr key={item.id} className="group">
+                                  <td>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      {getTaskTypeIcon(item.type)}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (item.type === "todo") {
+                                            setSelectedTodo(item.originalData);
+                                            setIsDetailsModalOpen(true);
+                                          } else {
+                                            navigate(
+                                              item.type === "task"
+                                                ? `/vas/tasks/${item.originalData?.id}`
+                                                : `/vas/issues/${item.originalData?.id}`
+                                            );
+                                          }
+                                        }}
+                                        className={cn(
+                                          "text-left text-sm font-medium truncate hover:text-[#DA7756] transition-colors",
+                                          isDone && "line-through opacity-60"
+                                        )}
+                                      >
+                                        {item.title}
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span className={getPriorityClass(item.priority)}>
+                                      {item.priority || "—"}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <div className="flex flex-col gap-0.5">
+                                      <span className="text-xs text-gray-600">{endDate || "—"}</span>
+                                      {overdueLabel && (
+                                        <span className="text-[10px] font-semibold text-red-600">
+                                          Over Due
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="text-center">
+                                    <Checkbox
+                                      checked={selectedTasksIssues[item.id] || isDone}
+                                      onCheckedChange={(checked) => {
+                                        if (checked && !isDone) {
+                                          setPendingConfirmAction({
+                                            fn: () => handleCompleteItem(item),
+                                            label: `complete this ${item.type}`,
+                                          });
+                                        } else {
+                                          markDraftDirty();
+                                          setSelectedTasksIssues((prev) => ({
+                                            ...prev,
+                                            [item.id]: checked as boolean,
+                                          }));
+                                        }
+                                      }}
+                                      className="h-4 w-4 rounded border-gray-300 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                                    />
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {isLoadingMore && (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
+                            <p className="text-xs text-gray-500 font-medium">Loading more...</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="bc-tasks-legend">
+                      <span className="bc-tasks-legend-item">
+                        <LayoutGrid size={12} className="text-[#DA7756]" /> Task
+                      </span>
+                      <span className="bc-tasks-legend-item">
+                        <AlertTriangle size={12} className="text-[#e7848e]" /> Issue
+                      </span>
+                      <span className="bc-tasks-legend-item">
+                        <FileText size={12} className="text-[#6B9BCC]" /> To Do
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Tip Banner */}
+                {/* <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
+                  <div className="bg-white p-1.5 rounded-full shadow-inner border border-[#fef08a]">
+                    <Lightbulb size={18} className="text-[#ca8a04]" />
+                  </div>
+                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                    <span className="font-bold text-[#ca8a04]">
+                      Delegate or Delete:
+                    </span>{" "}
+                    Look at your list. What doesn't actually need doing?
+                  </p>
+                </div> */}
+
+              </div>
+            </div>
+
+            {isAbsent && (
+              <div className="bc-daily-card">
+                <div className="bc-daily-card-body space-y-4">
+                  <Label className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                    Reason for Absence <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    placeholder="Why are you absent today?"
+                    value={absenceReason}
+                    onChange={(e) => {
+                      markDraftDirty();
+                      setAbsenceReason(e.target.value);
+                    }}
+                    className="h-12 rounded-[10px] border-gray-200 focus:ring-[#DA7756]/20"
+                  />
+                </div>
+              </div>
+            )}
+
+            {submitError && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
+                <AlertCircle size={16} />
+                {submitError}
+              </div>
+            )}
+            {submitSuccess && (
+              <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-green-100">
+                <CheckCircle2 size={16} />
+                {currentReportId
+                  ? "Daily report updated successfully. Redirecting to history..."
+                  : "Daily report submitted successfully. Redirecting to history..."}
+              </div>
+            )}
+            {!isAbsent &&
+              accomplishments.filter((a) => a.completed).length === 0 &&
+              autoAddedAccomplishments.length === 0 && (
+                <p className="text-xs text-red-500 text-center font-bold">
+                  Please complete at least one accomplishment before submitting
+                </p>
+              )}
+            <button
+              type="button"
+              className="bc-submit-btn"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  {currentReportId ? "Updating..." : "Submitting..."}
+                </>
+              ) : (
+                <>
+                  <Send size={18} />
+                  {currentReportId ? "Update" : "Submit"} Daily Report ({submitDateLabel})
+                </>
+              )}
+            </button>
+
+            {/* Detailed Score Calculation - collapsible */}
+            {!isAbsent && (
+              <div className="mt-4 space-y-4">
+                <div className="bc-daily-card">
+                  <div className="bc-daily-card-body">
+                    <div className="pt-2 border-t border-[#DA7756]/10">
                       <div
                         className="flex items-center justify-between text-gray-400 group cursor-pointer hover:text-[#DA7756] transition-colors"
                         onClick={() =>
@@ -4715,7 +4424,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="flex justify-center">
+                    <div className="flex justify-center mt-4">
                       <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-[#DA7756]/5 px-4 py-1.5 rounded-full">
                         <Zap
                           size={12}
@@ -4727,48 +4436,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             )}
 
-            <div className="mt-8">
+            {isScoreInfoExpanded && (
+              <div className="mt-4">
               <div
-                className={cn(
-                  "bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden transition-all duration-300 shadow-sm",
-                  isScoreInfoExpanded ? "max-h-[3000px]" : "max-h-[80px]"
-                )}
+                className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden shadow-sm"
               >
-                <div
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#DA7756]/10 transition-all border-b border-transparent"
-                  onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-white p-1.5 rounded-full shadow-sm">
-                      <HelpCircle size={18} className="text-[#DA7756]" />
-                    </div>
-                    <span className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                      How is the Automated Daily Score Calculated?
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!isScoreInfoExpanded && (
-                      <span className="text-xs font-bold text-[#DA7756] uppercase tracking-wider">
-                        Click to Expand
-                      </span>
-                    )}
-                    <ChevronRight
-                      size={18}
-                      className={cn(
-                        "text-[#DA7756]/60 transition-transform duration-300",
-                        isScoreInfoExpanded ? "-rotate-90" : "rotate-90"
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {isScoreInfoExpanded && (
-                  <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="grid grid-cols-1 gap-6">
                       {[
                         {
@@ -4985,10 +4663,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </li>
                       </ul>
                     </div>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
+            )}
           </TabsContent>
 
           <TabsContent value="history" className="mt-0 pt-0">
@@ -6351,6 +6029,20 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </ModalPortal>
       )}
+
+      {activeTab === "submit" &&
+        createPortal(
+          <button
+            type="button"
+            className="bc-ai-fab"
+            title="AI Suggestions"
+            aria-label="AI Suggestions"
+            onClick={() => setIsAiPopupOpen((open) => !open)}
+          >
+            <AiSparkleIcon className="bc-ai-fab-icon" />
+          </button>,
+          document.body
+        )}
     </div>
   );
 };
