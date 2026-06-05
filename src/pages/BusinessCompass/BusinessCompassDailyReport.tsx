@@ -3275,88 +3275,134 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {!isCollapsed && (
                                 <div className="space-y-1.5 pl-1">
                                   {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      <Checkbox
-                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                        onCheckedChange={(checked) => {
-                                          if (checked && item.status !== "completed" && item.status !== "closed") {
-                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                          } else {
-                                            markDraftDirty();
-                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
-                                          }
-                                        }}
-                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                      />
-                                      <button
-                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                        title={`View ${item.type} details`}
-                                      >
-                                        <Eye size={14} className="text-amber-600" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                        title={`Edit ${item.type}`}
-                                      >
-                                        <Pencil size={13} />
-                                      </button>
-                                      {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                                        item.originalData?.is_started ? (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Pause task"
-                                            disabled={playingTaskIds.has(item.originalData.id)}
-                                          >
-                                            <Pause size={14} className="text-red-500" />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Start task"
-                                            disabled={playingTaskIds.has(item.originalData.id)}
-                                          >
-                                            {playingTaskIds.has(item.originalData.id)
-                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                              : <Play size={14} className="text-green-600" />}
-                                          </button>
-                                        )
-                                      )}
-                                      {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                                        item.originalData?.task_management?.is_started ? (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Pause task"
-                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                          >
-                                            <Pause size={14} className="text-red-500" />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Start task"
-                                            disabled={playingTaskIds.has(item.originalData.task_management_id)}
-                                          >
-                                            {playingTaskIds.has(item.originalData.task_management_id)
-                                              ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                              : <Play size={14} className="text-green-600" />}
-                                          </button>
-                                        )
-                                      )}
-                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                        {item.type}
-                                      </span>
-                                      <div className="flex-1 min-w-0">
-                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                    <div key={item.id} className="flex flex-col rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      {/* Controls row */}
+                                      <div className="flex items-center gap-2 p-2.5">
+                                        <Checkbox
+                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                          onCheckedChange={(checked) => {
+                                            if (checked && item.status !== "completed" && item.status !== "closed") {
+                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                            } else {
+                                              markDraftDirty();
+                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                            }
+                                          }}
+                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                        />
+                                        <button
+                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                          title={`View ${item.type} details`}
+                                        >
+                                          <Eye size={14} className="text-amber-600" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                          title={`Edit ${item.type}`}
+                                        >
+                                          <Pencil size={13} />
+                                        </button>
+                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.is_started ? (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Pause task" disabled={playingTaskIds.has(item.originalData.id)}>
+                                              <Pause size={14} className="text-red-500" />
+                                            </button>
+                                          ) : (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Start task" disabled={playingTaskIds.has(item.originalData.id)}>
+                                              {playingTaskIds.has(item.originalData.id) ? <Loader2 size={14} className="text-green-600 animate-spin" /> : <Play size={14} className="text-green-600" />}
+                                            </button>
+                                          )
+                                        )}
+                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.task_management?.is_started ? (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Pause task" disabled={playingTaskIds.has(item.originalData.task_management_id)}>
+                                              <Pause size={14} className="text-red-500" />
+                                            </button>
+                                          ) : (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Start task" disabled={playingTaskIds.has(item.originalData.task_management_id)}>
+                                              {playingTaskIds.has(item.originalData.task_management_id) ? <Loader2 size={14} className="text-green-600 animate-spin" /> : <Play size={14} className="text-green-600" />}
+                                            </button>
+                                          )
+                                        )}
+                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                          {item.type}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                        </div>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                          {item.priority}
+                                        </span>
+                                        {/* Tomorrow button */}
+                                        <button
+                                          onClick={() => addedToTomorrowIds.has(item.id) ? removeItemFromTomorrow(item) : addItemToTomorrow(item)}
+                                          className={cn(
+                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                            addedToTomorrowIds.has(item.id)
+                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                              : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                          )}
+                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                        >
+                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                        </button>
                                       </div>
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                        {item.priority}
-                                      </span>
+                                      {/* Info row */}
+                                      {(() => {
+                                        const d = item.originalData;
+                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                        let issueEffort: string | null = null;
+                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                          const totalMin = d.issue_allocation_times.reduce((sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0);
+                                          if (totalMin > 0) { const h = Math.floor(totalMin / 60); const m = totalMin % 60; issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`; }
+                                        }
+                                        let timeLeftLabel: string | null = null;
+                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                          const now = new Date(); const end = new Date(d.end_date); end.setHours(23, 59, 59, 999); const diff = end.getTime() - now.getTime();
+                                          if (diff > 0) { const days = Math.floor(diff / 86400000); const hrs = Math.floor((diff % 86400000) / 3600000); const mins = Math.floor((diff % 3600000) / 60000); timeLeftLabel = days > 0 ? `${days}d ${hrs}h left` : hrs > 0 ? `${hrs}h ${mins}m left` : `${mins}m left`; }
+                                        }
+                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                        if (!hasInfo) return null;
+                                        return (
+                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                            {endDate && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <CalendarIcon size={9} className="shrink-0" />{endDate}
+                                              </span>
+                                            )}
+                                            {overdueLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                <AlertCircle size={9} className="shrink-0" />{overdueLabel}
+                                              </span>
+                                            )}
+                                            {timeLeftLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                <Clock size={9} className="shrink-0" />{timeLeftLabel}
+                                              </span>
+                                            )}
+                                            {effortEst && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <Clock size={9} className="shrink-0" />Est: {effortEst}
+                                              </span>
+                                            )}
+                                            {issueEffort && (
+                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                <Zap size={9} className="shrink-0" />Effort: {issueEffort}
+                                              </span>
+                                            )}
+                                            {item.type === "task" && d?.active_time_till_now && (
+                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                <Zap size={9} className="shrink-0" />
+                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   ))}
                                 </div>
