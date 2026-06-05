@@ -10,7 +10,7 @@ const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) 
   const root = data?.data ?? data ?? {};
   const rows: any[] = Array.isArray(root.center_metrics) ? root.center_metrics : [];
 
-  const thCls = 'px-3 py-3 text-white font-semibold text-xs text-center whitespace-nowrap border-r border-white/20 last:border-r-0';
+  const thCls = 'px-3 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header';
   const tdCls = 'px-3 py-2.5 text-center text-sm border-b border-gray-100';
   const tdLeft = `${tdCls} text-left font-medium text-gray-800`;
 
@@ -31,25 +31,26 @@ const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) 
           />
         )}
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse" style={{ minWidth: 700 }}>
+      <div className="overflow-x-auto px-4 pb-4">
+        <div className="rounded-xl overflow-hidden border border-gray-200" style={{ minWidth: 700 }}>
+        <table className="w-full text-sm border-collapse">
           <thead>
-            <tr style={{ backgroundColor: '#D97655' }}>
-              <th rowSpan={2} className={`${thCls} text-left`}>Site Name</th>
-              <th rowSpan={2} className={thCls}>Total Assets</th>
-              <th colSpan={2} className={thCls}>Critical</th>
-              <th colSpan={2} className={thCls}>Non-Critical</th>
+            <tr>
+              <th rowSpan={2} className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site Name</th>
+              <th rowSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total Assets</th>
+              <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Critical</th>
+              <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Non-Critical</th>
             </tr>
-            <tr style={{ backgroundColor: '#c4654a' }}>
-              <th className={thCls}>Breakdowns</th>
-              <th className={thCls}>Avg Days</th>
-              <th className={thCls}>Breakdowns</th>
-              <th className={thCls}>Avg Days</th>
+            <tr>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breakdowns</th>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Avg Days</th>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breakdowns</th>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Avg Days</th>
             </tr>
           </thead>
           <tbody>
             {rows.length ? rows.map((r, i) => (
-              <tr key={i} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
                 <td className={tdLeft}>{r.site_name ?? '-'}</td>
                 <td className={`${tdCls} font-semibold text-gray-900`}>{r.total_assets ?? 0}</td>
                 <td className={`${tdCls} text-[#D97655] font-semibold`}>{r.critical?.breakdown ?? 0}</td>
@@ -64,6 +65,7 @@ const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) 
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

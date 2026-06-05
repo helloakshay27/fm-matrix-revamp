@@ -46,73 +46,43 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
       <div className="p-5">
         <div className="overflow-x-auto -mx-3 sm:mx-0">
           <div className="min-w-[600px] px-3 sm:px-0">
-            <table className="w-full border-collapse border border-gray-300">
+            <div className="rounded-xl overflow-hidden border border-gray-200">
+            <table className="w-full">
               <thead>
-                <tr style={{ backgroundColor: '#D97655' }}>
-                  <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-white">
-                    Category
-                  </th>
-                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                    Total Issues
-                  </th>
-                  {statusKeys.map(key => (
-                    <th key={key} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      {key}
+                <tr>
+                  {['Category', 'Total Issues', ...statusKeys, 'Critical P1', 'Avg TAT Days'].map((h, i) => (
+                    <th key={i} className={`px-3 py-2.5 text-xs sm:text-sm font-semibold text-white analytics-header ${i === 0 ? 'text-left' : 'text-center'}`} style={{ backgroundColor: '#D97655' }}>
+                      {h}
                     </th>
                   ))}
-                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                    Critical P1
-                  </th>
-                  <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                    Avg TAT Days
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 {categories.map((cat, index) => (
-                  <tr key={index} className="bg-white">
-                    <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">
-                      {cat.category}
-                    </td>
-                    <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                      {cat.total_issues}
-                    </td>
+                  <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                    <td className="px-3 py-2.5 font-medium text-gray-800 text-xs sm:text-sm border-b border-gray-100">{cat.category}</td>
+                    <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.total_issues}</td>
                     {statusKeys.map(key => (
-                      <td key={key} className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {cat.statuses?.[key] ?? 0}
-                      </td>
+                      <td key={key} className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.statuses?.[key] ?? 0}</td>
                     ))}
-                    <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                      {cat.critical_p1}
-                    </td>
-                    <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                      {cat.avg_tat_days?.toFixed(2) ?? '0.00'}
-                    </td>
+                    <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.critical_p1}</td>
+                    <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.avg_tat_days?.toFixed(2) ?? '0.00'}</td>
                   </tr>
                 ))}
                 {totals && (
-                  <tr style={{ backgroundColor: '#f5e8e4' }}>
-                    <td className="border border-gray-300 p-2 sm:p-3 font-bold text-black text-xs sm:text-sm">
-                      Total
-                    </td>
-                    <td className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-black text-xs sm:text-sm">
-                      {totals.total_issues}
-                    </td>
+                  <tr style={{ backgroundColor: '#EFEFFB' }}>
+                    <td className="px-3 py-2.5 font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">Total</td>
+                    <td className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.total_issues}</td>
                     {statusKeys.map(key => (
-                      <td key={key} className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-black text-xs sm:text-sm">
-                        {totals.statuses?.[key] ?? 0}
-                      </td>
+                      <td key={key} className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.statuses?.[key] ?? 0}</td>
                     ))}
-                    <td className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-black text-xs sm:text-sm">
-                      {totals.critical_p1}
-                    </td>
-                    <td className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-black text-xs sm:text-sm">
-                      {totals.avg_tat_days?.toFixed(2) ?? '0.00'}
-                    </td>
+                    <td className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.critical_p1}</td>
+                    <td className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.avg_tat_days?.toFixed(2) ?? '0.00'}</td>
                   </tr>
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>

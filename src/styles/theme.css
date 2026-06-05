@@ -972,7 +972,7 @@ nav [class*="text-[#C72030]"],
    =========================================== */
 
 /* Table header */
-thead th,
+thead th:not(.analytics-header),
 .table-header,
 [class*="TableHead"] {
   background-color: var(--color-bg) !important;
@@ -2169,11 +2169,11 @@ circle[fill="#e5e9e9"] {
 :root {
   /* 6 Unified Chart Colors — updated per design guide April 2026 */
   --analytics-color-1: #6b9bcc; /* Info Blue          */
-  --analytics-color-2: #d3d1c6; /* Warm Light Grey    */
+  --analytics-color-2: #9ec8ba; /* Teal (Current Period) */
   --analytics-color-3: #f4c37e; /* Amber/Yellow       */
   --analytics-color-4: #e9704d; /* Orange-Red         */
   --analytics-color-5: #f28c8f; /* Salmon Pink        */
-  --analytics-color-6: #d4dbdb; /* Cool Grey          */
+  --analytics-color-6: #E39090 ; /* Cool Grey          */
 
   /* Light variants for backgrounds */
   --analytics-color-1-light: rgba(107, 155, 204, 0.15);
@@ -2346,9 +2346,9 @@ h4[class*="text-[#1A1A1A]"],
 }
 
 /* Table headers - BLACK text on brand background */
-table th,
-thead th,
-[class*="table"] th {
+table th:not(.analytics-header),
+thead th:not(.analytics-header),
+[class*="table"] th:not(.analytics-header) {
   color: var(--color-text) !important;
   background-color: var(--color-bg) !important;
   font-weight: 600 !important;
@@ -2661,9 +2661,9 @@ rect[fill="#E8E5DD"],
    =========================================== */
 
 /* Table headers in analytics */
-table th,
-[class*="table"] th,
-thead th {
+table th:not(.analytics-header),
+[class*="table"] th:not(.analytics-header),
+thead th:not(.analytics-header) {
   background-color: var(--color-bg) !important;
   color: var(--color-text) !important;
   font-weight: 600 !important;

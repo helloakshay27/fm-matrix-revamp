@@ -485,7 +485,7 @@ export class JobSheetPDFStyles {
           border: 0.5px solid #CCCCCC;
         }
 
-        .checklist-table th {
+        .checklist- {
           background: #f5f5f5;
           border: 0.5px solid #CCCCCC;
           padding: 12px 8px;

@@ -14,7 +14,7 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
   const total_percent = Number(root?.total_maintenance_percent ?? 0);
 
   const headers = ['Rank', 'Asset Name / ID', 'Category', 'Site Name', 'Maintenance Cost ₹', 'Total %', 'Remark'];
-  const thCls = 'px-3 py-3 text-white font-semibold text-xs text-center whitespace-nowrap border-r border-white/20 last:border-r-0';
+  const thCls = 'px-3 py-3 font-semibold text-xs whitespace-nowrap analytics-header';
   const tdCls = 'px-3 py-2.5 text-sm text-center border-b border-gray-100';
 
   return (
@@ -34,11 +34,14 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
           />
         )}
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse" style={{ minWidth: 760 }}>
+      <div className="overflow-x-auto px-4 pb-4">
+        <div className="rounded-xl overflow-hidden border border-gray-200" style={{ minWidth: 760 }}>
+        <table className="w-full text-sm border-collapse">
           <thead>
-            <tr style={{ backgroundColor: '#D97655' }}>
-              {headers.map(h => <th key={h} className={thCls}>{h}</th>)}
+            <tr>
+              {headers.map(h => (
+                <th key={h} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -47,7 +50,7 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
             ) : (
               <>
                 {rows.map((r, i) => (
-                  <tr key={i} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                  <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
                     <td className={`${tdCls} font-semibold text-gray-700`}>{r.rank ?? i + 1}</td>
                     <td className={`${tdCls} text-left font-medium text-gray-800`}>{r.asset_name_id ?? '-'}</td>
                     <td className={tdCls}>{r.asset_category ?? '-'}</td>
@@ -59,18 +62,19 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
                     <td className={`${tdCls} text-left text-gray-500`}>{r.remark ?? '-'}</td>
                   </tr>
                 ))}
-                <tr className="bg-gray-100 font-semibold">
-                  <td colSpan={4} className="px-3 py-2.5 text-right text-sm text-gray-700">Total</td>
-                  <td className="px-3 py-2.5 text-center text-sm" style={{ color: '#D97655' }}>
+                <tr style={{ backgroundColor: '#EFEFFB' }}>
+                  <td colSpan={4} className="px-3 py-2.5 text-right text-sm font-semibold text-gray-700">Total</td>
+                  <td className="px-3 py-2.5 text-center text-sm font-semibold" style={{ color: '#D97655' }}>
                     ₹{total_cost.toLocaleString()}
                   </td>
-                  <td className="px-3 py-2.5 text-center text-sm">{total_percent.toFixed(2)}%</td>
+                  <td className="px-3 py-2.5 text-center text-sm font-semibold">{total_percent.toFixed(2)}%</td>
                   <td />
                 </tr>
               </>
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -67,60 +67,42 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
           {/* Table - Horizontally scrollable on mobile */}
           <div className="overflow-x-auto -mx-3 sm:mx-0">
             <div className="min-w-[500px] px-3 sm:px-0">
-              <table className="w-full border-collapse border border-gray-300">
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+              <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: '#D97655' }}>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-white">
+                  <tr>
+                    <th className="px-3 py-2.5 text-left text-xs sm:text-sm font-semibold text-white analytics-header" style={{ backgroundColor: '#D97655' }}>
                       Priority
                     </th>
-                    <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
+                    <th colSpan={5} className="px-3 py-2.5 text-center text-xs sm:text-sm font-semibold text-white analytics-header" style={{ backgroundColor: '#D97655' }}>
                       No. of Days
                     </th>
                   </tr>
-                  <tr style={{ backgroundColor: '#D97655' }}>
-                    <th className="border border-gray-300 p-2 sm:p-3"></th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      0-10
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      11-20
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      21-30
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      31-40
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      41-50
-                    </th>
+                  <tr>
+                    <th className="px-3 py-2 analytics-header" style={{ backgroundColor: '#D97655', borderTop: '1px solid rgba(255,255,255,0.2)' }}></th>
+                    {['0-10', '11-20', '21-30', '31-40', '41-50'].map(label => (
+                      <th key={label} className="px-3 py-2 text-center text-xs sm:text-sm font-semibold text-white analytics-header" style={{ backgroundColor: '#D97655', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                        {label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {agingMatrixData.map((row, index) => (
-                    <tr key={index} className="bg-white">
-                      <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">
+                    <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                      <td className="px-3 py-2.5 font-medium text-gray-800 text-xs sm:text-sm border-b border-gray-100">
                         {row.priority}
                       </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T1}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T2}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T3}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T4}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T5}
-                      </td>
+                      <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{row.T1}</td>
+                      <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{row.T2}</td>
+                      <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{row.T3}</td>
+                      <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{row.T4}</td>
+                      <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{row.T5}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
 

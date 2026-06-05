@@ -14,7 +14,7 @@ export const CommunityEngagementMetricsCard: React.FC<Props> = ({ data }) => {
     <div className="bg-white rounded-xl p-5">
       <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>Community Engagement Metrics</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-[#DAD6C9] rounded p-3 flex flex-col justify-between">
+        <div className="bg-[#E3909026] rounded p-3 flex flex-col justify-between">
           <div className="flex items-start gap-2 mb-3">
             <p className="text-2xl font-bold text-[#C72030] flex-shrink-0">{totalActive}</p>
             <div className="min-w-0">
@@ -33,7 +33,7 @@ export const CommunityEngagementMetricsCard: React.FC<Props> = ({ data }) => {
             </div>
           </div>
         </div>
-        <div className="bg-[#DAD6C9] rounded p-3 flex items-center justify-center">
+        <div className="bg-[#EFEFFB] rounded p-3 flex items-center justify-center">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
               <p className="text-2xl font-bold text-[#C72030]">{newUsers}</p>
@@ -42,7 +42,7 @@ export const CommunityEngagementMetricsCard: React.FC<Props> = ({ data }) => {
             <p className="text-black font-semibold text-xs mt-1">New Users</p>
           </div>
         </div>
-        <div className="bg-[#DAD6C9] rounded p-3 flex items-center justify-center">
+        <div className="bg-[#B7DCD44D] rounded p-3 flex items-center justify-center">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
               <p className="text-2xl font-bold text-[#C72030]">{totalActive}</p>
