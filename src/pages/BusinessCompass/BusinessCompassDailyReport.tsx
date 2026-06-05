@@ -354,6 +354,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>([]);
   const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
+  const [hiddenTomorrowScheduledIds, setHiddenTomorrowScheduledIds] = useState<Set<string>>(new Set());
   const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
   const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>({});
 
@@ -898,15 +899,16 @@ const BusinessCompassDailyReport: React.FC = () => {
     return ids;
   }, [mergedTasksIssues, planningItems]);
 
-  // Next-day scheduled items deduped against manual plan entries (never in payload)
+  // Next-day scheduled items shown as lightweight rows; starred selections live in planningItems.
   const dedupedTomorrowItems = useMemo(() => {
-    const manualTitles = new Set(
-      planningItems.map((p) => cleanReportText(p.text).toLowerCase())
-    );
     return tomorrowScheduledItems.filter(
-      (item) => !manualTitles.has(cleanReportText(item.title).toLowerCase())
+      (item) => !hiddenTomorrowScheduledIds.has(item.id)
     );
-  }, [planningItems, tomorrowScheduledItems]);
+  }, [hiddenTomorrowScheduledIds, tomorrowScheduledItems]);
+
+  useEffect(() => {
+    setHiddenTomorrowScheduledIds(new Set());
+  }, [startDate]);
 
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpiLoading, setKpiLoading] = useState(false);
@@ -1100,6 +1102,21 @@ const BusinessCompassDailyReport: React.FC = () => {
     setHiddenAutoIds((prev) => new Set([...prev, sourceId]));
   };
 
+  const planningItemMatchesSourceItem = (
+    plan: { text: string; source_id?: number | null; source_type?: string | null },
+    item: any
+  ) => {
+    const sourceId = item.originalData?.id ?? null;
+    const itemText = cleanReportText(item.title || item.text || "").toLowerCase();
+    return (
+      (plan.source_id != null &&
+        sourceId != null &&
+        plan.source_id === sourceId &&
+        (!plan.source_type || plan.source_type === item.type)) ||
+      cleanReportText(plan.text).toLowerCase() === itemText
+    );
+  };
+
   const addItemToTomorrow = (item: any) => {
     const text = cleanReportText(item.title || item.text || "");
     if (!text) return;
@@ -1117,12 +1134,48 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
+  const toggleScheduledTomorrowStar = (item: any) => {
+    const text = cleanReportText(item.title || item.text || "");
+    if (!text) return;
+
+    setPlanningItems((prev) => {
+      let found = false;
+      const updated = prev.map((plan) => {
+        if (!found && planningItemMatchesSourceItem(plan, item)) {
+          found = true;
+          return { ...plan, starred: !plan.starred };
+        }
+        return plan;
+      });
+
+      if (found) return updated;
+
+      return [
+        ...updated,
+        {
+          id: `tomorrow-${item.id}-${Date.now()}`,
+          text,
+          starred: true,
+          source_id: item.originalData?.id ?? null,
+          source_type: item.type ?? null,
+          originalData: item.originalData ?? null,
+        },
+      ];
+    });
+    markDraftDirty();
+  };
+
   const removeItemFromTomorrow = (item: any) => {
     const text = cleanReportText(item.title || item.text || "").toLowerCase();
     setPlanningItems((prev) =>
       prev.filter((p) => cleanReportText(p.text).toLowerCase() !== text)
     );
     markDraftDirty();
+  };
+
+  const hideTomorrowScheduledItem = (item: any) => {
+    setHiddenTomorrowScheduledIds((prev) => new Set([...prev, item.id]));
+    removeItemFromTomorrow(item);
   };
 
   const addAllOverdueToTomorrow = () => {
@@ -3301,78 +3354,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       <div className="flex-1 min-w-0">
                                         <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
                                       </div>
-                                      {(() => {
-                                        const d = item.originalData;
-                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                        let issueEffort: string | null = null;
-                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                          const totalMin = d.issue_allocation_times.reduce((sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0);
-                                          if (totalMin > 0) {
-                                            const h = Math.floor(totalMin / 60);
-                                            const m = totalMin % 60;
-                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                          }
-                                        }
-                                        let timeLeftLabel: string | null = null;
-                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                          const now = new Date();
-                                          const end = new Date(d.end_date);
-                                          end.setHours(23, 59, 59, 999);
-                                          const diff = end.getTime() - now.getTime();
-                                          if (diff > 0) {
-                                            const days = Math.floor(diff / 86400000);
-                                            const hrs = Math.floor((diff % 86400000) / 3600000);
-                                            const mins = Math.floor((diff % 3600000) / 60000);
-                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                            else timeLeftLabel = `${mins}m left`;
-                                          }
-                                        }
-                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
-                                        if (!hasInfo) return null;
-                                        return (
-                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
-                                            {endDate && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <CalendarIcon size={9} className="shrink-0" />
-                                                {endDate}
-                                              </span>
-                                            )}
-                                            {overdueLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                <AlertCircle size={9} className="shrink-0" />
-                                                {overdueLabel}
-                                              </span>
-                                            )}
-                                            {timeLeftLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                <Clock size={9} className="shrink-0" />
-                                                {timeLeftLabel}
-                                              </span>
-                                            )}
-                                            {effortEst && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <Clock size={9} className="shrink-0" />
-                                                Est: {effortEst}
-                                              </span>
-                                            )}
-                                            {issueEffort && (
-                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                Effort: {issueEffort}
-                                              </span>
-                                            )}
-                                            {item.type === "task" && d?.active_time_till_now && (
-                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
-                                              </span>
-                                            )}
-                                          </div>
-                                        );
-                                      })()}
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                        {item.priority}
+                                      </span>
                                     </div>
                                   ))}
                                 </div>
@@ -3821,7 +3805,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Your plan
                         </h4>
                         <div className="space-y-4">
-                          {planningItems.map((item) => {
+                          {planningItems
+                            .map((item, index) => ({ item, index }))
+                            .filter(
+                              ({ item }) =>
+                                !dedupedTomorrowItems.some((scheduledItem) =>
+                                  planningItemMatchesSourceItem(item, scheduledItem)
+                                )
+                            )
+                            .map(({ item }) => {
                             const matchedTask = item.source_id && item.source_type
                               ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
                               : null;
@@ -4008,14 +4000,34 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            {dedupedTomorrowItems.map((item) => (
+                            {dedupedTomorrowItems.map((item) => {
+                              const plannedItem = planningItems.find((plan) =>
+                                planningItemMatchesSourceItem(plan, item)
+                              );
+
+                              return (
                               <div
                                 key={item.id}
                                 className="relative animate-in fade-in slide-in-from-top-1 duration-200"
                               >
-                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
+                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
                                   <div className="flex items-center gap-3">
-                                    <Star size={18} className="text-gray-300 shrink-0" />
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleScheduledTomorrowStar(item)}
+                                      className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                      title={plannedItem?.starred ? "Unstar" : "Star this priority"}
+                                    >
+                                      <Star
+                                        size={18}
+                                        className={cn(
+                                          "transition-colors duration-200",
+                                          plannedItem?.starred
+                                            ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                            : "text-gray-300 hover:text-yellow-400"
+                                        )}
+                                      />
+                                    </button>
                                     <span className={cn(
                                       "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
                                       item.type === "task"
@@ -4040,6 +4052,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         {item.priority}
                                       </span>
                                     )}
+                                    <button
+                                      type="button"
+                                      onClick={() => hideTomorrowScheduledItem(item)}
+                                      className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                    >
+                                      <X size={16} />
+                                    </button>
                                   </div>
                                   {(() => {
                                     const d = item.originalData;
@@ -4094,7 +4113,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   })()}
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

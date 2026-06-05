@@ -4,6 +4,7 @@ import {
   MessageSquare,
   Flag,
   ChevronRight,
+  ChevronLeft,
   Building2,
   User,
   Globe,
@@ -12,6 +13,8 @@ import {
   Building2Icon,
   EyeIcon,
   Activity,
+  Plus,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddCommentModal } from "./AddCommentModal";
@@ -56,6 +59,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
 
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
 
   // Save to localStorage whenever state changes
@@ -404,19 +408,68 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
   };
   return (
     <>
-      <div className="w-full bg-[#fff] border p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col" style={{ boxShadow: '0px 4px 14.2px 0px #0000001A' }}>
+      <div
+        className="bg-white border flex flex-col transition-all duration-300"
+        style={{
+          boxShadow: "0px 4px 14.2px 0px #0000001A",
+          width: isCollapsed ? 48 : 350,
+          minWidth: isCollapsed ? 48 : 350,
+          maxWidth: isCollapsed ? 48 : 350,
+          height: "100%",
+          overflow: "hidden",
+        }}
+      >
         {/* Header */}
-        <div className="mb-6">
-          <h2
-            className="text-lg font-semibold mb-2"
-            style={{ color: "#c72030" }}
-          >
-            Recent Updates
-          </h2>
+        <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+          {!isCollapsed && (
+            <h2 className="text-base font-semibold" style={{ color: "#c72030" }}>
+              Recent Updates
+            </h2>
+          )}
+          <div className={`flex items-center gap-1 ${isCollapsed ? "flex-col" : ""}`}>
+            {/* {!isCollapsed && (
+              <>
+                <button
+                  onClick={fetchRecentTickets}
+                  title="Refresh"
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => navigate("/maintenance/ticket/create")}
+                  title="Add new ticket"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-[#C72030] hover:bg-[#a01828] text-white"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )} */}
+            <button
+              onClick={() => setIsCollapsed((v) => !v)}
+              title={isCollapsed ? "Expand" : "Collapse"}
+              className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
+            >
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
+        {/* Collapsed vertical label */}
+        {isCollapsed && (
+          <div className="flex-1 flex items-center justify-center">
+            <span
+              className="text-xs font-semibold tracking-widest"
+              style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+            >
+              Recent Updates
+            </span>
+          </div>
+        )}
+
         {/* Tickets List */}
-        <div className="flex-1  space-y-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ">
+        {!isCollapsed && (
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center py-12">
@@ -835,6 +888,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
             })
           )}
         </div>
+        )}
       </div>
 
       <AddCommentModal

@@ -38,12 +38,13 @@ const percentToAgeBand = (p: number | string | null | undefined): string => {
   return '40+';
 };
 
+// Guideline colors: #FFFFFF - #EFEFFB, #FFFFFF - #B7DCD4, #FFFFFF - #85BDF6, #FFFFFF - #E39090
 const agingColors: Record<string,string> = {
-  '0-10': 'bg-[#EFEFFB]',
+  '0-10':  'bg-[#EFEFFB]',
   '11-20': 'bg-[#B7DCD4]',
   '21-30': 'bg-[#85BDF6]',
   '31-40': 'bg-[#E39090]',
-  '40+': 'bg-[#E39090]',
+  '40+':   'bg-[#E39090]',
 };
 
 const displayPercent = (p: any): string => {

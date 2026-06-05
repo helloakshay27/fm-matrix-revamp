@@ -1,20 +1,11 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { UnitCategorywiseData } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Color palette
-const CHART_COLORS = {
-  primary: '#9EC8BA',
-  secondary: '#DA7756',
-  tertiary: '#8E7BE0',
-  primaryLight: '#EDC488',
-  secondaryLight: '#798C5E',
-  tertiaryLight: '#CDCAF5',
-};
 
 interface UnitCategoryWiseCardProps {
   data: UnitCategorywiseData | null;
@@ -57,88 +48,31 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
   })) : [];
 
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-            Unit Category-wise Tickets
-          </CardTitle>
-          <Download
-            data-no-drag="true"
-            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            style={{ pointerEvents: 'auto' }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
+    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Unit Category-wise Tickets
+        </h3>
+        <Download
+          data-no-drag="true"
+          className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          style={{ pointerEvents: 'auto' }}
+        />
+      </div>
+      <div className="p-5">
         <div className="w-full overflow-x-auto">
-          <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
+          <ResponsiveContainer width="100%" height={280} className="min-w-[380px]">
             {chartData.length > 0 ? (
-              <BarChart 
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45} 
-                  textAnchor="end" 
-                  height={80} 
-                  tick={{
-                    fill: '#374151',
-                    fontSize: 10
-                  }} 
-                  className="text-xs" 
-                />
-                <YAxis tick={{
-                  fill: '#374151',
-                  fontSize: 10
-                }} />
-                <Tooltip 
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const openValue = payload.find(p => p.dataKey === 'open')?.value || 0;
-                      const closedValue = payload.find(p => p.dataKey === 'closed')?.value || 0;
-                      const totalValue = Number(openValue) + Number(closedValue);
-                      
-                      return (
-                        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                          <p className="font-semibold text-gray-800 mb-2">{label}</p>
-                          <div className="space-y-1">
-                            <div className="flex justify-between items-center">
-                              <span className="text-yellow-600 font-medium">Open:</span>
-                              <span className="text-gray-700">{openValue}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-green-600 font-medium">Closed:</span>
-                              <span className="text-gray-700">{closedValue}</span>
-                            </div>
-                            <div className="pt-1 border-t border-gray-200">
-                              <div className="flex justify-between items-center font-semibold">
-                                <span>Total:</span>
-                                <span>{totalValue}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="open" fill={CHART_COLORS.primary} name="Open" />
-                <Bar dataKey="closed" fill={CHART_COLORS.secondary} name="Closed" />
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 60 }} barSize={28}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="name" angle={-35} textAnchor="end" height={65} tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
+                <Bar dataKey="open" fill="#E39090" name="Open" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="closed" fill="#76CDC1" name="Closed" radius={[4, 4, 0, 0]} />
               </BarChart>
             ) : (
               <div className="flex items-center justify-center h-full">
@@ -149,7 +83,7 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
             )}
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

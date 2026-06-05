@@ -99,36 +99,45 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
             return <div className="text-center text-analytics-muted py-8">No status data available</div>;
           }
 
+          const totalVal = statusData.reduce((s, d) => s + d.value, 0);
+
           return (
             <div className="space-y-4">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="relative">
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={70}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v, n) => [v, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center total */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{totalVal.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-3 text-xs">
                 {statusData.map((item, index) => (
-                  <div key={item.name} className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <span className="text-analytics-text">{item.name}: {item.value}</span>
+                  <div key={item.name} className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                    <span className="text-gray-600">{item.name}</span>
                   </div>
                 ))}
               </div>
