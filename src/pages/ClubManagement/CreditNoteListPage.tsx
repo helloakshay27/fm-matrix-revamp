@@ -378,10 +378,11 @@ export const CreditNoteListPage: React.FC = () => {
                 leftActions={(
                     <div className="flex items-center gap-2">
                         <Button
-                            className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            // className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            className='fm-button-fix fm-button-brand px-4 py-2P'
                             onClick={() => navigate('/accounting/credit-note/add')}
                         >
-                            <Plus className="w-4 h-4 mr-2" /> New
+                            <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
                         {selectedRows.length > 0 && (
                             <Button

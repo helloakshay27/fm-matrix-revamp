@@ -572,20 +572,6 @@ const AnalyticsTab = ({
                       activeDot={{ r: 6 }}
                       name="Reports"
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="accomplishments"
-                      stroke="#2ECC71"
-                      strokeWidth={3}
-                      dot={{
-                        fill: "#2ECC71",
-                        r: 3,
-                        strokeWidth: 2,
-                        stroke: "#fff",
-                      }}
-                      activeDot={{ r: 6 }}
-                      name="Accomplishments"
-                    />
                   </ReLineChart>
                 </ResponsiveContainer>
               </div>

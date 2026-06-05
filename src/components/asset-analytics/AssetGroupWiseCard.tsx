@@ -1,8 +1,9 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Download, Users } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Download } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+// Guideline bar colors
+const BAR_COLORS = ['#9EC8BA', '#8E7BE0', '#DA7756', '#798C5E', '#EDC488'];
 
 interface AssetGroupWiseCardProps {
   data: any;
@@ -10,25 +11,17 @@ interface AssetGroupWiseCardProps {
 }
 
 export const AssetGroupWiseCard: React.FC<AssetGroupWiseCardProps> = ({ data, onDownload }) => {
-  // Process data for chart - support both new and legacy structures
   const processData = () => {
-    if (!data) {
-      return [];
-    }
-
+    if (!data) return [];
     let groupAssets: Array<{ group_name: string; asset_count?: number; count?: number }> = [];
-
     if (data.assets_statistics?.assets_group_count_by_name) {
-      // New structure
       groupAssets = data.assets_statistics.assets_group_count_by_name;
     } else if (data.group_wise_assets) {
-      // Legacy structure
       groupAssets = data.group_wise_assets;
     }
-
     return groupAssets.slice(0, 10).map((item: any) => ({
       name: item.group_name,
-      value: item.asset_count || item.count || 0
+      value: item.asset_count ?? item.count ?? 0,
     }));
   };
 
@@ -36,49 +29,55 @@ export const AssetGroupWiseCard: React.FC<AssetGroupWiseCardProps> = ({ data, on
   const hasData = chartData.length > 0;
 
   return (
-    <Card className="h-96">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-2 text-base font-medium">
-          <Users className="w-4 h-4" />
+    <div className="bg-white rounded-xl shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           Assets Group-Wise
-        </CardTitle>
+        </h3>
         {onDownload && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDownload}
-            className="h-8 w-8 p-0"
-            data-download-button
-          >
-            <Download className="w-4 h-4" />
-          </Button>
+          <Download
+            data-no-drag="true"
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
+            style={{ pointerEvents: 'auto' }}
+          />
         )}
-      </CardHeader>
-      <CardContent>
+      </div>
+
+      <div className="flex-1 p-5 min-h-0">
         {hasData ? (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  fontSize={12}
-                />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#6366F1" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 60 }} barSize={28}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+              <XAxis
+                dataKey="name"
+                angle={-35}
+                textAnchor="end"
+                height={65}
+                tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                formatter={(v: any) => [v, 'Assets']}
+              />
+              <Bar dataKey="value" name="Assets" radius={[4, 4, 0, 0]}>
+                {chartData.map((_, i) => (
+                  <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
             No data available
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

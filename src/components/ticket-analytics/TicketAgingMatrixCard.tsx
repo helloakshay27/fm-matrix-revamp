@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Download } from 'lucide-react';
 import { TicketAgingMatrix } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
@@ -47,106 +47,71 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
     }
   };
 
-  return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="pb-4 sm:pb-6">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-            Tickets Ageing Matrix
-          </CardTitle>
-          <Download
-            data-no-drag="true"
-            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            style={{ pointerEvents: 'auto' }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4 sm:space-y-6">
-          {/* Table - Horizontally scrollable on mobile */}
-          <div className="overflow-x-auto -mx-3 sm:mx-0">
-            <div className="min-w-[500px] px-3 sm:px-0">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr style={{ backgroundColor: '#D97655' }}>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-white">
-                      Priority
-                    </th>
-                    <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      No. of Days
-                    </th>
-                  </tr>
-                  <tr style={{ backgroundColor: '#D97655' }}>
-                    <th className="border border-gray-300 p-2 sm:p-3"></th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      0-10
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      11-20
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      21-30
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      31-40
-                    </th>
-                    <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-white">
-                      41-50
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agingMatrixData.map((row, index) => (
-                    <tr key={index} className="bg-white">
-                      <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">
-                        {row.priority}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T1}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T2}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T3}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T4}
-                      </td>
-                      <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                        {row.T5}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+  const thCls = 'px-3 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header';
+  const tdCls = 'px-3 py-2.5 text-center text-sm border-b border-gray-100';
 
-          {/* Summary Box - Full Width Below Table */}
-          <div className="w-full">
-            <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#f5e8e4' }}>
-              <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
-                {data?.average_days || 0} Days
-              </div>
-              <div className="text-sm sm:text-base text-black">
-                Average Time Taken To Resolve A Ticket
-              </div>
-            </div>
+  return (
+    <div className={`bg-white rounded-xl shadow-sm overflow-hidden ${className}`}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Tickets Ageing Matrix
+        </h3>
+        <Download
+          data-no-drag="true"
+          className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          style={{ pointerEvents: 'auto' }}
+        />
+      </div>
+
+      <div className="overflow-x-auto px-4 pt-4 pb-2">
+        <div className="rounded-xl overflow-hidden border border-gray-200" style={{ minWidth: 500 }}>
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr>
+                <th rowSpan={2} className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                  Priority
+                </th>
+                <th colSpan={5} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                  No. of Days
+                </th>
+              </tr>
+              <tr>
+                {['0-10', '11-20', '21-30', '31-40', '41-50'].map(label => (
+                  <th key={label} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {agingMatrixData.map((row, index) => (
+                <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                  <td className={`${tdCls} text-left font-medium text-gray-800`}>{row.priority}</td>
+                  <td className={`${tdCls} text-gray-700`}>{row.T1}</td>
+                  <td className={`${tdCls} text-gray-700`}>{row.T2}</td>
+                  <td className={`${tdCls} text-gray-700`}>{row.T3}</td>
+                  <td className={`${tdCls} text-gray-700`}>{row.T4}</td>
+                  <td className={`${tdCls} text-gray-700`}>{row.T5}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="px-4 pb-4 pt-2">
+        <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#f5e8e4' }}>
+          <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
+            {data?.average_days || 0} Days
+          </div>
+          <div className="text-sm sm:text-base text-black">
+            Average Time Taken To Resolve A Ticket
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

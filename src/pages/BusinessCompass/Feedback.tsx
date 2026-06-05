@@ -62,16 +62,11 @@ import { z } from "zod";
 import {
   Calendar as CalendarIcon,
   ChevronDown,
-  ChevronRight,
-  Inbox,
-  Lightbulb,
   MessageSquare,
   Pencil,
   Search,
-  Send,
   Star,
   Trash2,
-  TrendingUp,
   X,
   Loader2,
   CheckCircle,
@@ -80,7 +75,6 @@ import {
 } from "lucide-react";
 import { RootState } from "@/store/store";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -114,7 +108,68 @@ const BRAND = {
   panelBorder: "rgba(218, 119, 86, 0.18)",
   softRowBg: "rgba(218, 119, 86, 0.04)",
   danger: "#C72030",
+  starFilled: "#ffb000",
+  starEmpty: "#e5e7eb",
+  starEmptyMuted: "#e8edf5",
 } as const;
+
+const FEEDBACK_ANIMATION_STYLES = `
+  @keyframes feedbackModalBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes feedbackModalCardIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes feedbackTabIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes feedbackCollapseIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 560px;
+    }
+  }
+
+  .feedback-modal-backdrop {
+    animation: feedbackModalBackdropIn 180ms ease-out both;
+  }
+
+  .feedback-modal-card {
+    animation: feedbackModalCardIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .feedback-tab-panel[data-state="active"] {
+    animation: feedbackTabIn 220ms ease-out both;
+  }
+
+  .feedback-collapse-panel {
+    animation: feedbackCollapseIn 240ms ease-out both;
+  }
+`;
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1429,7 +1484,7 @@ const UserSelectFeedback = ({
           setSearch(e.target.value);
           setOpen(true);
         }}
-        className="h-12 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="h-[34px] w-full rounded-[10px] border-0 bg-white px-4 text-[12px] text-[#111827] placeholder:text-[#9ca3af] shadow-none outline-none transition-all focus:ring-1 focus:ring-[#DA7756]/20 disabled:cursor-not-allowed disabled:opacity-50"
         style={{ paddingRight: "40px", fontFamily: "inherit" }}
       />
       <div
@@ -1616,7 +1671,7 @@ const UserSelectReceived = ({
           setSearch(e.target.value);
           setOpen(true);
         }}
-        className="h-10 w-[240px] rounded-xl border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-900 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="h-10 w-[168px] rounded-[10px] border border-[#e7eaf0] bg-white px-4 text-[13px] font-medium text-[#111827] shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ paddingRight: "36px", fontFamily: "inherit" }}
       />
       <div
@@ -1845,17 +1900,17 @@ function FeedbackEmptyState() {
 function StarRatingRow({ value }: { value: number }) {
   return (
     <div
-      className="flex shrink-0 gap-0.5"
+      className="flex shrink-0 gap-[1px]"
       aria-label={`${value} out of 5 stars`}
     >
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
           className={cn(
-            "h-4 w-4",
+            "h-3.5 w-3.5",
             i <= value
-              ? "fill-amber-400 text-amber-400"
-              : "fill-transparent text-neutral-300"
+              ? "fill-[#ffb000] text-[#ffb000]"
+              : "fill-[#e5e7eb] text-[#e5e7eb]"
           )}
           strokeWidth={i <= value ? 0 : 1.5}
         />
@@ -1870,12 +1925,14 @@ function GivenFeedbackList({
   direction,
   filterUserId,
   itemsOverride,
+  filterPrefix,
 }: {
   onGiveFeedbackClick: () => void;
   onEditFeedback: (item: FeedbackItem) => void;
   direction: "to" | "from";
   filterUserId?: number | null;
   itemsOverride?: FeedbackItem[];
+  filterPrefix?: React.ReactNode;
 }) {
   const fetchDirection = direction === "to" ? "given" : "received";
   const {
@@ -1900,18 +1957,22 @@ function GivenFeedbackList({
   );
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const [lastStableItems, setLastStableItems] = useState<FeedbackItem[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [localReadOverrides, setLocalReadOverrides] = useState<
     Record<string, boolean>
   >({});
+  const hasAutoExpandedRef = useRef(false);
 
   useEffect(() => {
     if (!isError && items.length > 0) {
       setLastStableItems(items);
     }
   }, [items, isError]);
+
+  useEffect(() => {
+    hasAutoExpandedRef.current = false;
+    setExpandedId(null);
+  }, [direction, filterUserId, itemsOverride]);
 
   const sourceItems =
     itemsOverride !== undefined
@@ -1959,15 +2020,6 @@ function GivenFeedbackList({
     }
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   const filtered = useMemo(
     () =>
       sourceItems.filter((item) => {
@@ -2001,65 +2053,95 @@ function GivenFeedbackList({
     ]
   );
 
-  const avgRating =
-    filtered.length > 0
-      ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(
-          1
-        )
-      : "0.0";
-  const avgRatingNum = Number(avgRating);
-  const totalFeedback = filtered.length;
-  const points = (() => {
-    let calculatedPoints = 0;
-    filtered.forEach((item) => {
-      if (item.rating === 1) calculatedPoints -= 10;
-      else if (item.rating === 2) calculatedPoints -= 5;
-      else if (item.rating === 4) calculatedPoints += 5;
-      else if (item.rating === 5) calculatedPoints += 10;
-    });
-    return calculatedPoints;
-  })();
+  useEffect(() => {
+    if (
+      direction !== "from" ||
+      filtered.length === 0 ||
+      hasAutoExpandedRef.current
+    ) {
+      return;
+    }
 
-  const allSelected =
-    filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id));
-  const handleSelectAll = () => {
-    if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filtered.map((i) => i.id)));
-  };
+    hasAutoExpandedRef.current = true;
+    const firstId = filtered[0].id;
+    setExpandedId(firstId);
+
+    const existingItem = sourceItems.find((i) => i.id === firstId);
+    if (existingItem) {
+      setDetailCache((prev) => ({ ...prev, [firstId]: existingItem }));
+    }
+
+    if (!detailCache[firstId]) {
+      setLoadingDetailId(firstId);
+      fetchFeedbackDetail(firstId)
+        .then((detail) => {
+          if (detail) {
+            setDetailCache((prev) => ({
+              ...prev,
+              [firstId]: {
+                ...(existingItem ?? {}),
+                ...detail,
+                positiveOpening:
+                  detail.positiveOpening ?? existingItem?.positiveOpening,
+                constructiveFeedback:
+                  detail.constructiveFeedback ??
+                  existingItem?.constructiveFeedback,
+                positiveClosing:
+                  detail.positiveClosing ?? existingItem?.positiveClosing,
+              } as FeedbackItem,
+            }));
+          }
+        })
+        .catch(() => {
+          /* ignore */
+        })
+        .finally(() => {
+          setLoadingDetailId(null);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direction, filtered]);
 
   const getAvatarBg = (name: string) => {
-    const colors = [
-      "#3B82F6",
-      "#8B5CF6",
-      "#10B981",
-      "#F59E0B",
-      "#EF4444",
-      "#06B6D4",
+    const gradients = [
+      ["#fb7185", "#f97316"],
+      ["#8b5cf6", "#3b82f6"],
+      ["#10b981", "#06b6d4"],
+      ["#f59e0b", "#ef4444"],
+      ["#ec4899", "#8b5cf6"],
+      ["#14b8a6", "#22c55e"],
     ];
-    const idx = (name.charCodeAt(0) || 0) % colors.length;
-    return colors[idx];
+    const seed = name
+      .split("")
+      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const [from, to] = gradients[seed % gradients.length];
+    return `linear-gradient(135deg, ${from}, ${to})`;
   };
 
   return (
-    <div className="flex flex-col gap-5 pb-4">
+    <div className="flex flex-col gap-4 pb-4">
       {/* Search and Filter Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div className="flex flex-1 items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name or content..."
-              className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all"
-            />
-          </div>
+      <div className="flex flex-wrap items-center gap-3">
+        {filterPrefix}
+        <div className="relative w-full max-w-[238px]">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748b]"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={
+              direction === "to"
+                ? "Search by name or content"
+                : "Search feedback..."
+            }
+            className="h-10 w-full rounded-[14px] border border-[#e5e8ee] bg-white py-2 pl-8 pr-3 text-[13px] text-[#111827] placeholder:text-[#64748b] outline-none transition-all focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20"
+          />
+        </div>
           <Select value={ratingFilter} onValueChange={setRatingFilter}>
-            <SelectTrigger className="h-10 w-[130px] rounded-xl border border-neutral-200 bg-white text-sm focus:ring-[#DA7756]/20">
+            <SelectTrigger className="h-10 w-[126px] rounded-[14px] border border-[#e5e8ee] bg-white text-[13px] text-[#64748b] focus:ring-[#DA7756]/20">
               <SelectValue placeholder="All Ratings" />
             </SelectTrigger>
             <SelectContent className="rounded-xl border border-neutral-200">
@@ -2072,7 +2154,7 @@ function GivenFeedbackList({
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-10 w-[100px] rounded-xl border border-neutral-200 bg-white text-sm focus:ring-[#DA7756]/20">
+            <SelectTrigger className="h-10 w-[62px] rounded-[14px] border border-[#e5e8ee] bg-white text-[13px] text-[#64748b] focus:ring-[#DA7756]/20">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent className="rounded-xl border border-neutral-200">
@@ -2081,60 +2163,6 @@ function GivenFeedbackList({
               <SelectItem value="read">Read</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSelectAll}
-          className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50"
-        >
-          <input
-            type="checkbox"
-            checked={allSelected}
-            readOnly
-            className="h-4 w-4 cursor-pointer"
-            style={{ accentColor: BRAND.primary }}
-          />
-          {allSelected ? "Deselect All" : "Select All"}
-        </button>
-
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-3 ml-2">
-            <span className="text-sm font-medium text-neutral-600">
-              {selectedIds.size} selected
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                const selectedItems = filtered.filter((item) =>
-                  selectedIds.has(item.id)
-                );
-                const hasBlockedItem = selectedItems.some(
-                  (item) => !canModifyFeedback(item)
-                );
-                if (hasBlockedItem) {
-                  showFeedbackAccessDenied();
-                  return;
-                }
-                if (
-                  !window.confirm(
-                    `Delete ${selectedIds.size} selected feedback item${selectedIds.size > 1 ? "s" : ""}?`
-                  )
-                )
-                  return;
-                selectedItems.forEach((item) =>
-                  deleteMutation.mutate({ id: item.id })
-                );
-                setSelectedIds(new Set());
-              }}
-              disabled={deleteMutation.isPending}
-              className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-60 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete Selected
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="space-y-3">
@@ -2167,31 +2195,53 @@ function GivenFeedbackList({
               direction === "from"
                 ? item.ratingFromName || item.recipientName
                 : item.recipientName;
-            const initial = (displayName || "T").charAt(0).toUpperCase();
+            const initial = (displayName || "T")
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((part) => part.charAt(0).toUpperCase())
+              .join("");
             const avatarBg = getAvatarBg(displayName || "T");
+            const summaryText =
+              detail.detailPreview ||
+              detail.positiveOpening ||
+              detail.reviews ||
+              "Feedback details available.";
+            const whatWentWellText =
+              detail.reviews ||
+              detail.positiveOpening ||
+              detail.detailPreview ||
+              "No notes shared.";
+            const improveText =
+              detail.constructiveFeedback ||
+              detail.positiveOpening ||
+              detail.detailPreview ||
+              "No improvement notes shared.";
+            const impactText =
+              detail.positiveClosing ||
+              detail.detailPreview ||
+              "No impact notes shared.";
+            const previewText = summaryText;
 
             return (
               <div
                 key={item.id}
                 className={cn(
-                  "rounded-2xl border transition-all duration-200 bg-white shadow-sm hover:shadow-md",
+                  "group overflow-hidden rounded-[18px] border bg-white transition-all duration-300 ease-out",
                   expanded
-                    ? "border-[#DA7756] ring-1 ring-[#DA7756]/10"
-                    : "border-neutral-200 hover:border-[#DA7756]/40"
+                    ? "border-[#e5e8ee] shadow-[0_10px_28px_rgba(15,23,42,0.04)]"
+                    : "border-[#e5e8ee] hover:border-[#d7dce5]"
                 )}
               >
-                <div className="flex items-start gap-4 p-5">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(item.id)}
-                    onChange={() => toggleSelect(item.id)}
-                    className="mt-1.5 h-4 w-4 cursor-pointer shrink-0"
-                    style={{ accentColor: BRAND.primary }}
-                  />
-
+                <div
+                  className={cn(
+                    "flex items-center gap-4 px-5 py-3.5",
+                    expanded && "border-b border-[#edf0f4]"
+                  )}
+                >
                   <div
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
-                    style={{ backgroundColor: avatarBg }}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white"
+                    style={{ background: avatarBg }}
                   >
                     {initial}
                   </div>
@@ -2202,237 +2252,244 @@ function GivenFeedbackList({
                       className="w-full text-left focus:outline-none"
                       onClick={() => handleExpand(item.id)}
                     >
-                      <p className="font-bold text-neutral-900 text-[15px]">
-                        {direction === "from" ? "From: " : "To: "}
-                        {displayName}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <CalendarIcon className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-                        <span className="text-[13px] text-neutral-500">
-                          {item.date}
-                        </span>
-                        <span
-                          className={cn(
-                            "rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                            displayStatus === "unread"
-                              ? "bg-blue-50 text-blue-700 border border-blue-200"
-                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          )}
-                        >
-                          {displayStatus === "unread" ? "Unread" : "Read"}
-                        </span>
-                      </div>
-                      {!expanded && (
-                        <p className="text-xs text-neutral-400 italic mt-1.5">
-                          Click to expand feedback details
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[14px] font-bold leading-tight text-[#111827]">
+                          {displayName}
                         </p>
-                      )}
-                    </button>
-
-                    {expanded && (
-                      <div className="mt-4 space-y-3">
-                        {isLoadingDetail ? (
-                          <div className="flex items-center gap-2 text-xs text-neutral-400">
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Loading details...
-                          </div>
-                        ) : (
-                          <>
-                            {detail.positiveOpening && (
-                              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                                  ✓ What You're Doing Well
-                                </p>
-                                <p className="text-sm text-neutral-800 leading-relaxed">
-                                  {detail.positiveOpening}
-                                </p>
-                              </div>
-                            )}
-                            {detail.constructiveFeedback && (
-                              <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
-                                <p className="text-xs font-bold uppercase tracking-wider text-orange-600 mb-1">
-                                  → Area for Growth
-                                </p>
-                                <p className="text-sm text-neutral-800 leading-relaxed">
-                                  {detail.constructiveFeedback}
-                                </p>
-                              </div>
-                            )}
-                            {detail.positiveClosing && (
-                              <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
-                                <p className="text-xs font-bold uppercase tracking-wider text-sky-700 mb-1">
-                                  ★ Encouragement
-                                </p>
-                                <p className="text-sm text-neutral-800 leading-relaxed">
-                                  {detail.positiveClosing}
-                                </p>
-                              </div>
-                            )}
-                            {!detail.positiveOpening &&
-                              !detail.constructiveFeedback &&
-                              !detail.positiveClosing &&
-                              detail.detailPreview && (
-                                <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-                                  <p className="text-sm text-neutral-800 leading-relaxed">
-                                    {detail.detailPreview}
-                                  </p>
-                                </div>
-                              )}
-
-                            {direction === "from" &&
-                              displayStatus === "unread" && (
-                                <div className="mt-4 space-y-3 border-t border-neutral-100 pt-4">
-                                  <div>
-                                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-                                      Your Notes / Action Items{" "}
-                                      <span className="font-normal normal-case text-neutral-400">
-                                        (Optional)
-                                      </span>
-                                    </label>
-                                    <textarea
-                                      rows={2}
-                                      value={notes[item.id] || ""}
-                                      onChange={(e) =>
-                                        setNotes((prev) => ({
-                                          ...prev,
-                                          [item.id]: e.target.value,
-                                        }))
-                                      }
-                                      placeholder="Add your notes about how you'll act on this feedback..."
-                                      className="mt-1.5 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 resize-y"
-                                    />
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      markAsReadMutation.mutate(
-                                        {
-                                          id: item.id,
-                                          readComment: notes[item.id]?.trim()
-                                            ? notes[item.id].trim()
-                                            : "Reviewed",
-                                        },
-                                        {
-                                          onSuccess: () => {
-                                            setLocalReadOverrides((prev) => ({
-                                              ...prev,
-                                              [item.id]: true,
-                                            }));
-                                          },
-                                          onError: () => {
-                                            setLocalReadOverrides((prev) => {
-                                              const next = { ...prev };
-                                              delete next[item.id];
-                                              return next;
-                                            });
-                                          },
-                                        }
-                                      );
-                                    }}
-                                    disabled={markAsReadMutation.isPending}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-[#10b981] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#059669] transition-colors shadow-sm disabled:opacity-50"
-                                  >
-                                    <CheckCircle className="h-4 w-4" />
-                                    {markAsReadMutation.isPending
-                                      ? "Marking..."
-                                      : "Mark as Read"}
-                                  </button>
-                                </div>
-                              )}
-
-                            {direction === "from" &&
-                              displayStatus === "read" &&
-                              detail.readComment &&
-                              detail.readComment !== "Reviewed" && (
-                                <div className="mt-4 border-t border-neutral-100 pt-4">
-                                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1">
-                                    Your Saved Notes
-                                  </p>
-                                  <div className="rounded-xl bg-neutral-50 px-4 py-3 border border-neutral-100">
-                                    <p className="text-sm text-neutral-800 leading-relaxed italic">
-                                      "{detail.readComment}"
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-                          </>
-                        )}
                       </div>
-                    )}
+                      <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[#555b66]">
+                        {previewText}
+                      </p>
+                    </button>
                   </div>
 
-                  <div className="flex shrink-0 flex-col items-end gap-2">
-                    <StarRatingRow value={item.rating} />
+                  <div className="flex shrink-0 items-center gap-3">
+                    <div className="flex flex-col items-end gap-1">
+                      <StarRatingRow value={item.rating} />
+                      <span
+                        className={cn(
+                          "text-[11px] font-medium",
+                          direction === "from"
+                            ? "text-[#BC7D64]"
+                            : "text-[#9ca3af]"
+                        )}
+                      >
+                        {item.date}
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
+                      className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full border border-[#e5e8ee] bg-white transition-colors hover:bg-[#fff7f4]",
+                        direction === "from"
+                          ? "text-[#BC7D64]"
+                          : "text-[#9ca3af]"
+                      )}
                       aria-expanded={expanded}
                       aria-label={expanded ? "Collapse" : "Expand"}
                       onClick={() => handleExpand(item.id)}
                     >
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 transition-transform",
+                          "h-4 w-4 transition-transform duration-200 ease-out",
                           expanded && "rotate-180"
                         )}
                       />
                     </button>
-                    {direction === "to" && (
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <button
-                          type="button"
-                          className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 hover:border-neutral-300"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!canModifyFeedback(item)) {
-                              showFeedbackAccessDenied();
-                              return;
-                            }
-                            onEditFeedback(item);
-                          }}
-                        >
-                          <Pencil className="h-3.5 w-3.5 text-neutral-500" />
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
-                          className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-100/70 disabled:opacity-50"
-                          disabled={
-                            deleteMutation.isPending &&
-                            deleteMutation.variables?.id === item.id
-                          }
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!canModifyFeedback(item)) {
-                              showFeedbackAccessDenied();
-                              return;
-                            }
-                            if (
-                              window.confirm(
-                                "Are you sure you want to delete this feedback?"
-                              )
-                            ) {
-                              deleteMutation.mutate({ id: item.id });
-                            }
-                          }}
-                        >
-                          {deleteMutation.isPending &&
-                          deleteMutation.variables?.id === item.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                          {deleteMutation.isPending &&
-                          deleteMutation.variables?.id === item.id
-                            ? "Deleting..."
-                            : "Delete"}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
+
+                {expanded && (
+                  <div className="feedback-collapse-panel overflow-hidden px-5 pb-5">
+                    {isLoadingDetail ? (
+                      <div className="flex items-center gap-2 py-5 text-xs text-neutral-400">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Loading details...
+                      </div>
+                    ) : (
+                      <>
+                        <p className="mb-4 text-[13px] leading-relaxed text-[#555b66]">
+                          {summaryText}
+                        </p>
+                        <div className="grid gap-3 lg:grid-cols-3">
+                          {[
+                            {
+                              label: "What went well",
+                              dot: "bg-[#3b82f6]",
+                              bg: "bg-[#eef6ff]",
+                              text: whatWentWellText,
+                            },
+                            {
+                              label: "Improve",
+                              dot: "bg-[#eab308]",
+                              bg: "bg-[#fff9e8]",
+                              text: improveText,
+                            },
+                            {
+                              label: "Impact",
+                              dot: "bg-[#10b981]",
+                              bg: "bg-[#e9f8f3]",
+                              text: impactText,
+                            },
+                          ].map((panel) => (
+                            <div
+                              key={panel.label}
+                              className={cn(
+                                "min-h-[184px] rounded-[14px] px-4 py-4",
+                                panel.bg
+                              )}
+                            >
+                              <p className="flex items-center gap-2 text-[11px] font-bold text-[#111827]">
+                                <span
+                                  className={cn(
+                                    "h-1.5 w-1.5 rounded-full",
+                                    panel.dot
+                                  )}
+                                />
+                                {panel.label}
+                              </p>
+                              <p className="mt-3 text-[14px] leading-relaxed text-[#111827]">
+                                {panel.text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {direction === "to" && (
+                          <div className="mt-4 flex items-center justify-end gap-2 border-t border-neutral-100 pt-4">
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!canModifyFeedback(item)) {
+                                  showFeedbackAccessDenied();
+                                  return;
+                                }
+                                onEditFeedback(item);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5 text-neutral-500" />
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-100/70 disabled:opacity-50"
+                              disabled={
+                                deleteMutation.isPending &&
+                                deleteMutation.variables?.id === item.id
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!canModifyFeedback(item)) {
+                                  showFeedbackAccessDenied();
+                                  return;
+                                }
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to delete this feedback?"
+                                  )
+                                ) {
+                                  deleteMutation.mutate({ id: item.id });
+                                }
+                              }}
+                            >
+                              {deleteMutation.isPending &&
+                              deleteMutation.variables?.id === item.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                              {deleteMutation.isPending &&
+                              deleteMutation.variables?.id === item.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          </div>
+                        )}
+
+                        {direction === "from" &&
+                          displayStatus === "unread" && (
+                            <div className="mt-4 space-y-3 border-t border-neutral-100 pt-4">
+                              <div>
+                                <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                                  Your Notes / Action Items{" "}
+                                  <span className="font-normal normal-case text-neutral-400">
+                                    (Optional)
+                                  </span>
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={notes[item.id] || ""}
+                                  onChange={(e) =>
+                                    setNotes((prev) => ({
+                                      ...prev,
+                                      [item.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Add your notes about how you'll act on this feedback..."
+                                  className="mt-1.5 w-full resize-y rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20"
+                                />
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  markAsReadMutation.mutate(
+                                    {
+                                      id: item.id,
+                                      readComment: notes[item.id]?.trim()
+                                        ? notes[item.id].trim()
+                                        : "Reviewed",
+                                    },
+                                    {
+                                      onSuccess: () => {
+                                        setLocalReadOverrides((prev) => ({
+                                          ...prev,
+                                          [item.id]: true,
+                                        }));
+                                      },
+                                      onError: () => {
+                                        setLocalReadOverrides((prev) => {
+                                          const next = { ...prev };
+                                          delete next[item.id];
+                                          return next;
+                                        });
+                                      },
+                                    }
+                                  );
+                                }}
+                                disabled={markAsReadMutation.isPending}
+                                className="inline-flex h-[34px] items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-4 text-xs font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 disabled:opacity-50"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                {markAsReadMutation.isPending
+                                  ? "Marking..."
+                                  : "Mark as Read"}
+                              </button>
+                            </div>
+                          )}
+
+                        {direction === "from" &&
+                          displayStatus === "read" &&
+                          detail.readComment &&
+                          detail.readComment !== "Reviewed" && (
+                            <div className="mt-4 border-t border-neutral-100 pt-4">
+                              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-neutral-500">
+                                Your Saved Notes
+                              </p>
+                              <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3">
+                                <p className="text-sm italic leading-relaxed text-neutral-800">
+                                  "{detail.readComment}"
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })
@@ -2507,106 +2564,90 @@ function EditFeedbackModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl flex flex-col">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-100 bg-white px-6 py-4">
-          <h2 className="text-[17px] font-bold text-neutral-900">
-            Edit Feedback
-          </h2>
+    <div className="feedback-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+      <div className="feedback-modal-card relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-xl">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h2 className="text-[17px] font-bold text-[#111827]">Edit Feedback</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
+            className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="space-y-1.5">
-            <Label className="text-[13px] font-bold text-neutral-800">
-              Star Rating
-            </Label>
-            <div
-              className="flex gap-1"
-              role="group"
-              aria-label="Star rating"
-            >
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  aria-pressed={rating === n}
-                  aria-label={`${n} star${n === 1 ? "" : "s"}`}
-                  onClick={() => setRating(n)}
-                  className="rounded-lg transition-transform hover:scale-110 focus:outline-none"
-                >
-                  <Star
-                    className={cn(
-                      "h-8 w-8 sm:h-10 sm:w-10 drop-shadow-sm",
-                      n <= rating
-                        ? "fill-[#facc15] text-[#facc15]"
-                        : "fill-transparent text-neutral-200"
-                    )}
-                    strokeWidth={n <= rating ? 0 : 1.5}
-                  />
-                </button>
-              ))}
+        <div className="w-full rounded-[16px] bg-[#f5f2eb] px-5 py-5">
+          <div className="space-y-4">
+            {[
+              {
+                title: "Situation",
+                value: context,
+                onChange: setContext,
+                placeholder: "When and where did this happen?",
+              },
+              {
+                title: "Behavior",
+                value: constructive,
+                onChange: setConstructive,
+                placeholder: "What specifically did they do or say?",
+              },
+              {
+                title: "Impact",
+                value: positiveClose,
+                onChange: setPositiveClose,
+                placeholder: "What was the result of this?",
+              },
+            ].map(({ title, value, onChange, placeholder }) => (
+              <div key={title} className="space-y-2">
+                <Label className="text-[12px] font-bold text-[#111827]">
+                  {title}
+                </Label>
+                <Textarea
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  placeholder={placeholder}
+                  className="min-h-[58px] resize-none rounded-[12px] border-0 bg-white px-4 py-3 text-[12px] text-[#111827] shadow-none outline-none placeholder:text-[#9ca3af] focus:ring-1 focus:ring-[#DA7756]/20"
+                />
+              </div>
+            ))}
+
+            <div className="space-y-2">
+              <Label className="text-[12px] font-bold text-[#111827]">
+                Rating
+              </Label>
+              <div className="flex gap-0.5" role="group" aria-label="Star rating">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={rating === n}
+                    aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                    onClick={() => setRating(n)}
+                    className="rounded-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
+                  >
+                    <Star
+                      className={cn(
+                        "h-5 w-5",
+                        n <= rating
+                          ? "fill-[#ffb000] text-[#ffb000]"
+                          : "fill-[#e8edf5] text-[#e8edf5]"
+                      )}
+                      strokeWidth={n <= rating ? 0 : 1.5}
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-[13px] font-bold text-neutral-800">
-              Context (Optional)
-            </Label>
-            <input
-              type="text"
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-              className="h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-[13px] font-bold text-emerald-700 flex items-center gap-1.5">
-              <span>✓</span> Positive Opening
-            </Label>
-            <Textarea
-              value={positiveOpen}
-              onChange={(e) => setPositiveOpen(e.target.value)}
-              className="min-h-[80px] resize-y rounded-xl border-emerald-100 bg-emerald-50/50 p-3 text-sm shadow-sm focus:border-emerald-300 focus:ring-emerald-200 transition-all"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-[13px] font-bold text-[#d97706] flex items-center gap-1.5">
-              <span>→</span> Constructive Feedback
-            </Label>
-            <Textarea
-              value={constructive}
-              onChange={(e) => setConstructive(e.target.value)}
-              className="min-h-[80px] resize-y rounded-xl border-orange-100 bg-[#fffbeb] p-3 text-sm shadow-sm focus:border-orange-300 focus:ring-orange-200 transition-all"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-[13px] font-bold text-blue-600 flex items-center gap-1.5">
-              <span>★</span> Positive Closing
-            </Label>
-            <Textarea
-              value={positiveClose}
-              onChange={(e) => setPositiveClose(e.target.value)}
-              className="min-h-[80px] resize-y rounded-xl border-blue-100 bg-blue-50/50 p-3 text-sm shadow-sm focus:border-blue-300 focus:ring-blue-200 transition-all"
-            />
           </div>
         </div>
 
-        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-neutral-100 bg-white px-6 py-4">
+        <div className="mt-4 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={updateMutation.isPending}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-bold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-60 transition-colors"
+            className="inline-flex h-[34px] items-center justify-center rounded-[7px] border border-neutral-200 bg-white px-5 text-[12px] font-bold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 disabled:opacity-60"
           >
             Cancel
           </button>
@@ -2614,7 +2655,7 @@ function EditFeedbackModal({
             type="button"
             onClick={handleSubmit}
             disabled={updateMutation.isPending}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-bold text-white shadow-sm hover:bg-[#BC6B4A] disabled:opacity-60 transition-all"
+            className="inline-flex h-[34px] items-center justify-center gap-2 rounded-[7px] bg-[#e77252] px-8 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] disabled:opacity-60"
           >
             {updateMutation.isPending ? (
               <>
@@ -2750,19 +2791,10 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
   const displayError = localError || mutationError?.message;
 
   return (
-    <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
-      <div className="rounded-xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm leading-relaxed text-sky-900 shadow-sm">
-        <span className="font-bold">Sandwich technique: </span>
-        Start with something positive, share constructive feedback in the
-        middle, and close with encouragement —{" "}
-        <span className="font-bold underline decoration-sky-300 underline-offset-2">
-          Positive → Constructive → Positive
-        </span>
-        .
-      </div>
-
+    <div className="w-full rounded-[16px] bg-[#f5f2eb] px-5 py-6">
+      <h2 className="text-[15px] font-bold text-[#111827]">New Feedback</h2>
       {displayError && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4 shadow-sm">
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4 shadow-sm">
           <AlertCircle
             className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
             strokeWidth={2}
@@ -2784,22 +2816,22 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
         </div>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="mt-6 space-y-5">
         {/* ── Searchable recipient dropdown (BhagSection style) ── */}
         <div className="space-y-2">
-          <Label className="text-sm font-bold text-neutral-800">
-            Give Feedback To <span className="text-[#DA7756]">*</span>
+          <Label className="text-[12px] font-bold text-[#111827]">
+            Select Employee
           </Label>
           <UserSelectFeedback
             value={recipient}
             onChange={setRecipient}
             users={teamMembers}
             disabled={teamMembersLoading}
-            placeholder="Search team member..."
+            placeholder="Select"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="hidden">
           <Label
             htmlFor="feedback-date"
             className="text-sm font-bold text-neutral-800"
@@ -2842,157 +2874,71 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
             </PopoverContent>
           </Popover>
         </div>
-      </div>
 
-      <div className="space-y-3">
-        <div>
-          <Label className="text-sm font-bold text-neutral-800">
-            Star Rating <span className="text-[#DA7756]">*</span>
-          </Label>
-          <p className="mt-1 text-xs text-neutral-500">
-            Rate overall performance (1–5 stars)
-          </p>
-        </div>
-        <div
-          className="flex gap-1.5"
-          role="group"
-          aria-label="Star rating"
-        >
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              aria-pressed={rating === n}
-              aria-label={`${n} star${n === 1 ? "" : "s"}`}
-              onClick={() => setRating(n)}
-              className="rounded-lg p-1 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/40"
-            >
-              <Star
-                className={cn(
-                  "h-9 w-9 sm:h-10 sm:w-10 drop-shadow-sm",
-                  n <= rating
-                    ? "fill-amber-400 text-amber-400"
-                    : "fill-transparent text-neutral-200"
-                )}
-                strokeWidth={n <= rating ? 0 : 1.5}
-              />
-            </button>
-          ))}
-        </div>
-        <div className="overflow-hidden rounded-xl border border-neutral-200 shadow-sm mt-2">
-          <div className="flex divide-x divide-white/20">
-            {RATING_SEGMENTS.map((seg) => (
-              <button
-                key={seg.stars}
-                type="button"
-                onClick={() => setRating(seg.stars)}
-                className={cn(
-                  "min-w-0 flex-1 px-1 py-3 text-center transition-all",
-                  seg.bg,
-                  seg.text,
-                  rating === seg.stars &&
-                    "relative z-10 ring-2 ring-inset ring-neutral-900/40 shadow-inner brightness-90"
-                )}
-              >
-                <span className="block text-[11px] font-bold leading-tight sm:text-[13px]">
-                  {seg.stars}★
-                </span>
-                <span className="mt-0.5 block text-[10px] font-semibold opacity-90 sm:text-[11px]">
-                  {seg.pts}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label
-          htmlFor="feedback-context"
-          className="text-sm font-bold text-neutral-800"
-        >
-          Context / Situation{" "}
-          <span className="font-medium text-neutral-400">(Optional)</span>
-        </Label>
-        <input
-          id="feedback-context"
-          type="text"
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          placeholder="e.g., Regarding the client presentation last week..."
-          className="h-12 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all"
-        />
-      </div>
-
-      <div className="space-y-6 border-t border-neutral-200 pt-6">
         {[
           {
-            step: 1,
-            color: "bg-[#10b981]",
-            title: "Positive opening",
-            desc: "Start with genuine appreciation and what they're doing well.",
-            value: positiveOpen,
-            onChange: setPositiveOpen,
-            placeholder: "Share what is working well…",
+            title: "Situation",
+            value: context,
+            onChange: setContext,
+            placeholder: "When and where did this happen?",
           },
           {
-            step: 2,
-            color: "bg-[#f59e0b]",
-            title: "Constructive feedback",
-            desc: "Provide specific, actionable feedback for improvement.",
+            title: "Behavior",
             value: constructive,
             onChange: setConstructive,
-            placeholder: "Be clear and kind…",
+            placeholder: "What specifically did they do or say?",
           },
           {
-            step: 3,
-            color: "bg-[#3b82f6]",
-            title: "Positive closing",
-            desc: "End with encouragement and confidence in their abilities.",
+            title: "Impact",
             value: positiveClose,
             onChange: setPositiveClose,
-            placeholder: "Close on a supportive note…",
+            placeholder: "What was the result of this?",
           },
-        ].map(({ step, color, title, desc, value, onChange, placeholder }) => (
-          <div key={step} className="space-y-3">
-            <div className="flex gap-3 items-center">
-              <div
-                className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white shadow-sm",
-                  color
-                )}
-              >
-                {step}
-              </div>
-              <div>
-                <h3 className="font-bold text-neutral-900">{title}</h3>
-                <p className="text-[13px] text-neutral-500">{desc}</p>
-              </div>
-            </div>
+        ].map(({ title, value, onChange, placeholder }) => (
+          <div key={title} className="space-y-2">
+            <Label className="text-[12px] font-bold text-[#111827]">
+              {title}
+            </Label>
             <Textarea
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
-              className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white p-4 text-sm shadow-sm focus:border-[#DA7756]/40 focus:ring-[#DA7756]/20 transition-all"
+              className="min-h-[68px] resize-none rounded-[12px] border-0 bg-white px-4 py-3 text-[12px] text-[#111827] placeholder:text-[#9ca3af] shadow-none outline-none focus:ring-1 focus:ring-[#DA7756]/20"
             />
           </div>
         ))}
-      </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:justify-end">
-        <button
-          type="button"
-          onClick={clearForm}
-          disabled={isPending}
-          className="inline-flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-white px-6 text-sm font-bold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-60 transition-colors"
-        >
-          Clear form
-        </button>
+        <div className="space-y-2">
+          <Label className="text-[12px] font-bold text-[#111827]">Rating</Label>
+          <div className="flex gap-0.5" role="group" aria-label="Star rating">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={rating === n}
+                aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                onClick={() => setRating(n)}
+                className="rounded-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
+              >
+                <Star
+                  className={cn(
+                    "h-5 w-5",
+                    n <= rating
+                      ? "fill-[#ffb000] text-[#ffb000]"
+                      : "fill-[#e8edf5] text-[#e8edf5]"
+                  )}
+                  strokeWidth={n <= rating ? 0 : 1.5}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={handleSubmit}
           disabled={isPending || teamMembersLoading}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-8 text-sm font-bold text-white shadow-sm hover:bg-[#BC6B4A] disabled:opacity-60 transition-all"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[10px] bg-[#e77252] px-8 text-[13px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] disabled:opacity-60"
         >
           {isPending ? (
             <>
@@ -3000,10 +2946,7 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
               Sending…
             </>
           ) : (
-            <>
-              <Send className="h-4 w-4" strokeWidth={2} />
-              Send feedback
-            </>
+            "Submit Feedback"
           )}
         </button>
       </div>
@@ -3038,12 +2981,10 @@ function FeedbackPage() {
     selectedReceivedUserId
   );
   const givenFeedback = givenFeedbackData.items;
-  const givenSummary = givenFeedbackData.summary;
 
   const { data: selectedReceivedFeedbackData = { items: [] } } =
     useFeedbackList("received", selectedReceivedUserId);
   const selectedReceivedFeedback = selectedReceivedFeedbackData.items;
-  const selectedReceivedSummary = selectedReceivedFeedbackData.summary;
 
   const selectedReceivedMember =
     selectedReceivedUserId == null
@@ -3054,26 +2995,27 @@ function FeedbackPage() {
 
   const receivedFeedback = selectedReceivedFeedback;
 
-  // ── Count for badge: use selected user's actual feedback count ──
-  const receivedBadgeCount = selectedReceivedFeedback.length;
-
   return (
     <div
-      className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6"
+      className="min-h-[calc(100vh-5rem)] bg-white px-8 py-7"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
-            <MessageSquare className="h-7 w-7 text-white" strokeWidth={2} />
+      <style>{FEEDBACK_ANIMATION_STYLES}</style>
+      <div className="w-full max-w-[1020px] space-y-6">
+        <header className="flex items-start gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f7f7f6]">
+            <MessageSquare
+              className="h-4 w-4 text-[#ef6f4f]"
+              strokeWidth={2}
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
+            <h1 className="text-[24px] font-extrabold leading-tight tracking-tight text-[#111827]">
               Team Feedback
             </h1>
-            <p className="mt-1 text-sm font-medium text-neutral-500">
-              Give and receive constructive feedback using the Sandwich
-              technique
+            <p className="mt-1 text-[13px] font-medium text-[#64748b]">
+              Give and receive constructive feedback using the Sandwich{" "}
+              <span className="text-[#ef6f4f]">technique</span>.
             </p>
           </div>
         </header>
@@ -3083,53 +3025,34 @@ function FeedbackPage() {
           onValueChange={(v) => setFeedbackTab(v as any)}
           className="w-full"
         >
-          <TabsList className="inline-flex h-auto p-1.5 w-full items-center justify-start gap-1 rounded-[16px] border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm sm:w-auto">
+          <TabsList className="inline-flex h-11 w-auto items-center justify-start gap-1 rounded-full border border-[#edf0f4] bg-white p-1 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
             <TabsTrigger
               value="received"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
+              className="h-9 rounded-full border border-transparent px-5 text-[13px] font-semibold text-[#64748b] transition-colors hover:bg-[#fff7f4] data-[state=active]:border-[#e77252] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
             >
-              <Inbox className="mr-2 h-4 w-4" />
               Received
-              {receivedBadgeCount > 0 && (
-                <span
-                  className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm"
-                  style={{ backgroundColor: BRAND.danger }}
-                >
-                  {receivedBadgeCount}
-                </span>
-              )}
             </TabsTrigger>
             <TabsTrigger
               value="given"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
+              className="h-9 rounded-full border border-transparent px-5 text-[13px] font-semibold text-[#64748b] transition-colors hover:bg-[#fff7f4] data-[state=active]:border-[#e77252] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
             >
-              <Send className="mr-2 h-4 w-4" />
               Given
-              {givenFeedback.length > 0 && (
-                <span
-                  className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm"
-                  style={{ backgroundColor: BRAND.danger }}
-                >
-                  {givenFeedback.length}
-                </span>
-              )}
             </TabsTrigger>
             <TabsTrigger
               value="give"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
+              className="h-9 rounded-full border border-transparent px-5 text-[13px] font-semibold text-[#64748b] transition-colors hover:bg-[#fff7f4] data-[state=active]:border-[#e77252] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
             >
-              <Pencil className="mr-2 h-4 w-4" />
               Give Feedback
             </TabsTrigger>
           </TabsList>
 
           <TabsContent
             value="received"
-            className="mt-6 space-y-4 focus-visible:outline-none"
+            className="feedback-tab-panel mt-6 space-y-4 focus-visible:outline-none"
           >
-            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm">
-              <div className="flex items-center gap-3 border-b border-[rgba(218,119,86,0.10)] bg-[#FFF9F6] px-5 py-4">
-                <span className="text-sm text-neutral-600 font-bold uppercase tracking-wider">
+            <div className="space-y-5">
+              <div className="inline-flex items-center gap-3 rounded-[14px] bg-[#f5f2eb] p-2">
+                <span className="pl-2 text-[13px] font-medium text-[#111827]">
                   View feedback for:
                 </span>
                 {/* ── Searchable dropdown (BhagSection style) ── */}
@@ -3142,7 +3065,7 @@ function FeedbackPage() {
                   disabled={teamMembersLoading}
                 />
               </div>
-              <div className="p-5">
+              <div>
                 <AsyncBoundary>
                   <GivenFeedbackList
                     key={`received-${receivedView}`}
@@ -3157,42 +3080,37 @@ function FeedbackPage() {
                   />
                 </AsyncBoundary>
               </div>
-            </Card>
+            </div>
           </TabsContent>
 
           <TabsContent
             value="given"
-            className="mt-6 focus-visible:outline-none"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
           >
-            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm">
-              <div className="p-5">
-                <AsyncBoundary>
-                  <GivenFeedbackList
-                    key={`given-${receivedView}`}
-                    onGiveFeedbackClick={() => setFeedbackTab("give")}
-                    onEditFeedback={(item) => {
-                      setEditingFeedback(item);
-                      setIsEditModalOpen(true);
-                    }}
-                    direction="to"
-                    filterUserId={selectedReceivedUserId}
-                    itemsOverride={givenFeedback}
-                  />
-                </AsyncBoundary>
-              </div>
-            </Card>
+            <AsyncBoundary>
+              <GivenFeedbackList
+                key={`given-${receivedView}`}
+                onGiveFeedbackClick={() => setFeedbackTab("give")}
+                onEditFeedback={(item) => {
+                  setEditingFeedback(item);
+                  setIsEditModalOpen(true);
+                }}
+                direction="to"
+                filterUserId={selectedReceivedUserId}
+                itemsOverride={givenFeedback}
+              />
+            </AsyncBoundary>
           </TabsContent>
 
-          <TabsContent value="give" className="mt-6 focus-visible:outline-none">
-            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm">
-              <div className="p-2 sm:p-4">
-                <AsyncBoundary>
-                  <GiveFeedbackForm
-                    onSubmitted={() => setFeedbackTab("given")}
-                  />
-                </AsyncBoundary>
+          <TabsContent
+            value="give"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
+          >
+            <AsyncBoundary>
+              <div className="max-w-[760px]">
+                <GiveFeedbackForm onSubmitted={() => setFeedbackTab("given")} />
               </div>
-            </Card>
+            </AsyncBoundary>
           </TabsContent>
         </Tabs>
       </div>

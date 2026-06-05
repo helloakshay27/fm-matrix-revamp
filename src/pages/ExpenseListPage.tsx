@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Eye, Edit2, Trash2, Edit } from 'lucide-react';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
@@ -365,15 +365,15 @@ export const ExpenseListPage: React.FC = () => {
                 >
                     <Eye className="h-4 w-4" />
                 </Button>
-                {/* <Button
+                <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEdit(expense.id)}
                     className="h-8 w-8"
                 >
-                    <Edit2 className="h-4 w-4" />
+                    <Edit className="w-4 h-4" />
                 </Button>
-                <Button
+                {/* <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDelete(expense.id)}
@@ -457,9 +457,13 @@ export const ExpenseListPage: React.FC = () => {
                 onSearchChange={handleSearch}
                 loading={loading}
                 leftActions={(
-                    <Button onClick={() => navigate('/accounting/expense/create')} className="fm-button-fix fm-button-brand gap-2 px-4 py-2">
+                    <Button onClick={() => navigate('/accounting/expense/create')} 
+                    // className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+                     className='fm-button-fix fm-button-brand px-4 py-2P'
+                    >
+                         
                         <Plus className="h-4 w-4" />
-                        New Expense
+                        Add
                     </Button>
                 )}
             />

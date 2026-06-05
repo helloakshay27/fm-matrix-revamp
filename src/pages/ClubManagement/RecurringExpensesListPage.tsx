@@ -287,10 +287,11 @@ const RecurringExpensesListPage: React.FC = () => {
         leftActions={
           <Button
             onClick={() => navigate("/accounting/recurring-expenses/create")}
-            className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+            // className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+             className='fm-button-fix fm-button-brand px-4 py-2P'
           >
             <Plus className="h-4 w-4" />
-            New
+            Add
           </Button>
         }
       />

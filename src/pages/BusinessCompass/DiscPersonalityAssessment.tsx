@@ -1,20 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Brain,
-  Briefcase,
   Calendar,
   CheckCircle2,
-  ClipboardList,
+  ExternalLink,
   Eye,
-  FileCode2,
+  Gauge,
   Loader2,
   Mail,
   Search,
   Sparkles,
-  Star,
-  TrendingUp,
   Users,
+  UserRound,
   UsersRound,
 } from "lucide-react";
 import {
@@ -126,6 +125,12 @@ const PATTERN_BY_BLEND: Record<string, string> = {
   CD: "Objective Thinker",
   CI: "Specialist",
   CS: "Quality Guardian",
+};
+
+const fadeUpMotion = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.28, ease: "easeOut" },
 };
 
 function patternNameFor(primary: DiscLetter, secondary: DiscLetter): string {
@@ -496,13 +501,13 @@ function DiscDonut({
   color: string;
   label: string;
 }) {
-  const r = 38;
+  const r = 34;
   const c = 2 * Math.PI * r;
   const pct = Math.min(100, Math.max(0, (score / (totalAnswers || 15)) * 100));
   const dash = (pct / 100) * c;
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="relative h-[7.5rem] w-[7.5rem]">
+      <div className="relative h-[66px] w-[66px]">
         <svg
           className="h-full w-full -rotate-90"
           viewBox="0 0 100 100"
@@ -513,8 +518,8 @@ function DiscDonut({
             cy={50}
             r={r}
             fill="none"
-            className="stroke-neutral-100"
-            strokeWidth={10}
+            className="stroke-[#f4f0eb]"
+            strokeWidth={8}
           />
           <circle
             cx={50}
@@ -522,18 +527,18 @@ function DiscDonut({
             r={r}
             fill="none"
             stroke={color}
-            strokeWidth={10}
+            strokeWidth={8}
             strokeLinecap="round"
             strokeDasharray={`${dash} ${c}`}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-3xl font-bold tabular-nums text-neutral-800">
+          <span className="text-[18px] font-extrabold tabular-nums" style={{ color }}>
             {score}
           </span>
         </div>
       </div>
-      <span className="text-xs font-bold uppercase tracking-widest text-neutral-600">
+      <span className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color }}>
         {label}
       </span>
     </div>
@@ -550,80 +555,20 @@ function MemberHeaderBanner({
   primaryType: DiscLetter;
 }) {
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
-  const discColor = DISC_STYLE[primaryType].chart;
   return (
-    <div
-      style={{
-        width: "100%",
-        borderRadius: 16,
-        overflow: "hidden",
-        background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-        border: "1px solid rgba(218,119,86,0.18)",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 20,
-          padding: "24px 28px",
-        }}
-      >
-        <div
-          style={{
-            background: discColor,
-            width: 72,
-            height: 72,
-            minWidth: 72,
-            borderRadius: 18,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 32,
-            fontWeight: 800,
-            color: "#ffffff",
-            border: "3px solid rgba(255,255,255,0.3)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            lineHeight: "72px",
-            textAlign: "center" as const,
-          }}
-        >
+    <div className="rounded-[10px] bg-gradient-to-r from-[#b77bd2] via-[#cfabe0] to-[#eee5ef] px-5 py-5">
+      <div className="flex items-center gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white bg-[#e77252] text-[18px] font-extrabold text-white shadow-sm">
           {initial}
         </div>
-        <div
-          style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}
-        >
-          <span
-            style={{
-              fontSize: 26,
-              fontWeight: 800,
-              color: "#ffffff",
-              lineHeight: 1.2,
-              letterSpacing: "-0.02em",
-            }}
-          >
+        <div className="min-w-0">
+          <p className="truncate text-[18px] font-extrabold text-[#2f2638]">
             {displayName}
+          </p>
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-semibold tracking-[0.05em] text-white shadow-sm backdrop-blur-md">
+            <span className="text-[12px] leading-none">✦</span>
+            {DISC_STYLE[primaryType].label}
           </span>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "#9333ea",
-              borderRadius: 999,
-              padding: "6px 14px",
-              width: "fit-content",
-            }}
-          >
-            <Star
-              style={{ width: 14, height: 14, color: "rgba(255,255,255,0.8)" }}
-              strokeWidth={2}
-            />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>
-              {patternName}
-            </span>
-          </div>
         </div>
       </div>
     </div>
@@ -663,116 +608,99 @@ function DiscProfileReport({
     Number.isInteger(value)
       ? `${value}%`
       : `${value.toFixed(2).replace(/\.?0+$/, "")}%`;
-  const [expandedAccordion, setExpandedAccordion] = useState<
-    string | undefined
-  >(undefined);
+  const [expandedAccordion, setExpandedAccordion] = useState<string[]>([]);
   const toggleAll = () =>
-    setExpandedAccordion(expandedAccordion ? undefined : "p1");
+    setExpandedAccordion((current) =>
+      current.length === 3 ? [] : ["p1", "p2", "p3"]
+    );
 
   const card =
-    "rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm overflow-hidden";
-  const cardHeader =
-    "flex items-center gap-3 border-b border-[rgba(218,119,86,0.10)] p-5 bg-[#FFFAF8]";
-  const iconBox = (bg: string) =>
-    `flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${bg}`;
+    "overflow-hidden rounded-[14px] border border-[#ddd8d1] bg-white shadow-none";
+  const scoreTileStyle: Record<
+    DiscLetter,
+    { bg: string; border: string; primaryBorder: string; text: string; bar: string }
+  > = {
+    D: {
+      bg: "bg-[#fde8e8]",
+      border: "border-transparent",
+      primaryBorder: "border-[#f16b6b]",
+      text: "text-[#e85f5f]",
+      bar: "bg-[#e85f5f]",
+    },
+    I: {
+      bg: "bg-[#fff5dc]",
+      border: "border-transparent",
+      primaryBorder: "border-[#f2bd57]",
+      text: "text-[#d99205]",
+      bar: "bg-[#e6c98e]",
+    },
+    S: {
+      bg: "bg-[#e7f5ef]",
+      border: "border-transparent",
+      primaryBorder: "border-[#76bfae]",
+      text: "text-[#218b73]",
+      bar: "bg-[#b8d8cf]",
+    },
+    C: {
+      bg: "bg-[#e6f0fb]",
+      border: "border-transparent",
+      primaryBorder: "border-[#6aa0d6]",
+      text: "text-[#1f78b8]",
+      bar: "bg-[#b7cde4]",
+    },
+  };
 
   return (
-    <div
-      className="mx-auto max-w-5xl space-y-5"
+    <motion.div
+      {...fadeUpMotion}
+      className="w-full space-y-3"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* Retake + Assessed On bar */}
-      {showRetake && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "linear-gradient(90deg, #3b2f7a 0%, #2d2470 100%)",
-            borderRadius: 16,
-            padding: "14px 20px",
-            gap: 12,
-          }}
-        >
-          <button
-            type="button"
-            onClick={onRetake}
-            style={{
-              background: "transparent",
-              border: "2px solid rgba(255,255,255,0.55)",
-              borderRadius: 10,
-              padding: "8px 20px",
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#ffffff",
-              cursor: "pointer",
-              letterSpacing: "0.01em",
-              whiteSpace: "nowrap" as const,
-            }}
-          >
-            Retake Assessment
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Calendar
-              style={{ width: 16, height: 16, color: "rgba(255,255,255,0.7)" }}
-              strokeWidth={2}
-            />
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.9)",
-                whiteSpace: "nowrap" as const,
-              }}
+      <div className="rounded-[14px] border border-[#ddd8d1] bg-white p-5">
+        {showRetake && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={onRetake}
+              className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#ef6f4f] bg-white px-4 text-[12px] font-semibold text-[#111827] transition-colors hover:bg-[#fff7f4]"
             >
-              Assessed on:{" "}
-              {completed.toLocaleDateString("en-US", {
-                month: "numeric",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
+              <Brain className="h-3.5 w-3.5" />
+              Retake Assessment
+            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Member Header Banner */}
-      <MemberHeaderBanner
-        displayName={displayName}
-        patternName={result.patternName}
-        primaryType={result.primary}
-      />
+        <MemberHeaderBanner
+          displayName={displayName}
+          patternName={result.patternName}
+          primaryType={result.primary}
+        />
 
-      {/* 1. DISC Scores */}
-      <div className={card}>
-        <div className="flex flex-col gap-4 px-6 pt-5 pb-3 sm:flex-row sm:items-center sm:justify-between border-b border-[rgba(218,119,86,0.10)] bg-[#FFFAF8]">
-          <div className="flex items-center gap-3">
-            <div className={iconBox("bg-[#FFF0E8] border border-[#F6E1D7]")}>
-              <Brain className="h-5 w-5 text-[#CE8261]" strokeWidth={2} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
-                DISC Profile
-              </p>
-              <p className="text-sm font-semibold text-neutral-800">
-                {result.blendLabel} — {result.patternName}
-              </p>
-            </div>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#9a958f]">
+              DISC Profile
+            </p>
+            <p className="mt-1 text-[12px] font-semibold text-[#111827]">
+              {result.totalAnswers}/{result.totalAnswers} —{" "}
+              {DISC_STYLE[result.primary].label}
+            </p>
           </div>
-          <div className="flex flex-col items-end gap-1 text-[12px] text-neutral-400">
+          <div className="flex flex-col gap-1 text-[11px] font-medium text-[#9a958f] sm:items-end">
             <div className="flex items-center gap-1.5">
               <Mail className="h-3.5 w-3.5" />
               {emailHint}
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
-              Assessed: {dateStr}
+              Assessed {dateStr}
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 p-5 lg:grid-cols-4">
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {DISC_ORDER.map((L) => {
-            const s = DISC_STYLE[L];
+            const s = scoreTileStyle[L];
             const sc = result.scores[L];
             const isPrimary = L === result.primary;
             const isSecondary =
@@ -781,45 +709,35 @@ function DiscProfileReport({
               <div
                 key={L}
                 className={cn(
-                  "relative flex flex-col items-center rounded-2xl border-2 p-4 shadow-sm transition-all",
-                  s.border,
-                  isPrimary ? "ring-2 ring-offset-2 ring-[#DA7756]/30" : ""
+                  "relative rounded-[9px] border p-4",
+                  s.bg,
+                  isPrimary ? s.primaryBorder : s.border
                 )}
               >
                 {isPrimary && (
-                  <div className="absolute -top-[10px] left-1/2 -translate-x-1/2 rounded-full bg-[#DA7756] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                  <div className="absolute -top-[8px] left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-[#ef6f4f] shadow-sm">
                     Primary
                   </div>
                 )}
                 {isSecondary && (
-                  <div className="absolute -top-[10px] left-1/2 -translate-x-1/2 rounded-full border border-[#3b82f6] bg-white px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#3b82f6]">
+                  <div className="absolute -top-[8px] left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-[#c98905] shadow-sm">
                     Secondary
                   </div>
                 )}
-                <span className={cn("text-sm font-semibold", s.text)}>
-                  {s.label}
-                </span>
-                <div
-                  className={cn(
-                    "mt-3 flex w-full flex-col items-center justify-center rounded-xl py-5 text-white shadow-sm",
-                    s.fill
-                  )}
-                >
-                  <span className="text-5xl font-bold leading-none">{sc}</span>
-                </div>
-                <div className="mt-3 w-full space-y-1.5">
-                  <div className="h-2 w-full rounded-full bg-neutral-100 overflow-hidden">
+                <p className={cn("text-[10px] font-extrabold uppercase tracking-[0.12em]", s.text)}>
+                  {DISC_STYLE[L].label}
+                </p>
+                <p className={cn("mt-1 text-[28px] font-extrabold leading-none", s.text)}>
+                  {sc}
+                </p>
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-0.5 w-full overflow-hidden rounded-full bg-black/10">
                     <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-500",
-                        s.fill
-                      )}
-                      style={{
-                        width: `${percentFor(L)}%`,
-                      }}
+                      className={cn("h-full rounded-full", s.bar)}
+                      style={{ width: `${percentFor(L)}%` }}
                     />
                   </div>
-                  <p className="text-center text-xs font-semibold text-neutral-500">
+                  <p className={cn("text-[10px] font-medium", s.text)}>
                     {percentLabel(percentFor(L))}
                   </p>
                 </div>
@@ -830,60 +748,41 @@ function DiscProfileReport({
       </div>
 
       {/* 2. Understanding Your Personality */}
-      <div className={cn(card, "relative")}>
-        <div
-          className={cn(
-            "absolute bottom-0 left-0 top-0 w-1.5 rounded-l-2xl",
-            DISC_STYLE[result.primary].fill
-          )}
-        />
-        <div className="ml-2 p-6 space-y-4">
+      <div className={card}>
+        <div className="p-5">
           <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white shadow-sm",
-                DISC_STYLE[result.primary].fill
-              )}
-            >
-              {result.primary}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#fff0eb] text-[#ef6f4f]">
+              <Sparkles className="h-4 w-4" />
             </div>
-            <h3 className="text-xl font-bold text-neutral-800">
-              {DISC_STYLE[result.primary].label} — {copy.archetype}
-            </h3>
+            <div>
+              <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+                {DISC_STYLE[result.primary].label} — {copy.archetype}
+              </h3>
+              <p className={cn("mt-0.5 text-[12px] font-semibold", DISC_STYLE[result.primary].text)}>
+                Understanding Your Personality Type
+              </p>
+            </div>
           </div>
-          <div>
-            <h4
-              className={cn(
-                "text-[14px] font-semibold mb-2",
-                DISC_STYLE[result.primary].text
-              )}
-            >
-              Understanding Your Personality Type
-            </h4>
-            <p className="text-[14px] leading-relaxed text-neutral-600">
-              {copy.understanding}
-            </p>
-          </div>
+          <p className="mt-4 text-[13px] leading-[1.8] text-[#5f5a55]">
+            {copy.understanding}
+          </p>
         </div>
       </div>
 
       {/* 3. Score Distribution */}
       <div className={card}>
-        <div className={cardHeader}>
-          <div className={iconBox("bg-[#FFF0E8] border border-[#F6E1D7]")}>
-            <TrendingUp className="h-5 w-5 text-[#CE8261]" strokeWidth={2} />
-          </div>
+        <div className="p-5 pb-2">
           <div>
-            <h3 className="text-base font-bold text-neutral-800">
+            <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+              <span className="mr-2">📊</span>
               DISC Score Distribution
             </h3>
-            <p className="text-xs text-neutral-400">
-              Your behavioural dimension scores (out of{" "}
-              {result.totalAnswers || 15})
+            <p className="mt-1 text-[11px] font-medium text-[#a29d97]">
+              Your DISC assessment scores (out of {result.totalAnswers || 15})
             </p>
           </div>
         </div>
-        <div className="p-6 flex flex-wrap justify-center gap-10 sm:justify-between sm:px-10">
+        <div className="grid grid-cols-2 gap-x-10 gap-y-5 px-7 py-4 sm:grid-cols-4">
           {DISC_ORDER.map((L) => (
             <DiscDonut
               key={L}
@@ -894,39 +793,23 @@ function DiscProfileReport({
             />
           ))}
         </div>
-      </div>
-
-      {/* 4. Pattern Line Chart */}
-      <div className={card}>
-        <div className={cardHeader}>
-          <div className={iconBox("bg-purple-100")}>
-            <ClipboardList
-              className="h-5 w-5 text-purple-600"
-              strokeWidth={2}
-            />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-neutral-800">
-              {result.patternName}
-            </h3>
-            <p className="text-xs text-neutral-400">Your Exact DISC Pattern</p>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="h-64 w-full max-w-3xl mx-auto">
+        <p className="text-center text-[11px] font-medium text-[#aaa49d]">
+          Your DISC Profile Visualisation
+        </p>
+        <div className="px-7 pb-5 pt-2">
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={chartData}
-                margin={{ top: 10, right: 30, left: -10, bottom: 0 }}
+                margin={{ top: 10, right: 16, left: -18, bottom: 0 }}
               >
                 <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#f0ebe8"
+                  strokeDasharray="2 3"
+                  stroke="#eee8e1"
                 />
                 <XAxis
                   dataKey="axis"
-                  tick={{ fontSize: 14, fontWeight: 600, fill: "#1f2937" }}
+                  tick={{ fontSize: 11, fill: "#9a958f" }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -934,7 +817,7 @@ function DiscProfileReport({
                   domain={[0, result.totalAnswers || 15]}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: "#6b7280" }}
+                  tick={{ fontSize: 11, fill: "#9a958f" }}
                 />
                 <Tooltip
                   formatter={(v: number) => [`${v}`, "Score"]}
@@ -951,18 +834,15 @@ function DiscProfileReport({
                   type="linear"
                   dataKey="score"
                   stroke="#DA7756"
-                  strokeWidth={2.5}
-                  dot={{ r: 6, fill: "#DA7756", strokeWidth: 0 }}
+                  strokeWidth={2.25}
+                  dot={{ r: 5, fill: "#DA7756", strokeWidth: 0 }}
                   activeDot={{ r: 8 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="mt-3 text-center text-xs font-semibold text-neutral-400">
-            Your DISC Profile Visualisation
-          </p>
-          <div className="mt-6 border-l-4 border-[#DA7756]/60 bg-[#FFF9F6] p-5 rounded-r-xl">
-            <p className="text-[14px] leading-relaxed text-neutral-700">
+          <div className="mt-6 rounded-[8px] border border-[#efd6a5] bg-[#fff9f1] px-4 py-4">
+            <p className="text-[13px] leading-relaxed text-[#5f5a55]">
               {copy.patternNote}
             </p>
           </div>
@@ -971,33 +851,29 @@ function DiscProfileReport({
 
       {/* 5. Action Plan */}
       <div className={card}>
-        <div className={cn(cardHeader, "justify-between")}>
+        <div className="flex items-center justify-between gap-3 px-5 pt-5">
           <div className="flex items-center gap-3">
-            <div className={iconBox("bg-[#FFF0E8] border border-[#F6E1D7]")}>
-              <ClipboardList
-                className="h-5 w-5 text-[#CE8261]"
-                strokeWidth={2}
-              />
-            </div>
             <div>
-              <h3 className="text-base font-bold text-neutral-800">
+              <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+                <span className="mr-2">📋</span>
                 Your Personalised Action Plan
               </h3>
-              <p className="text-xs text-neutral-400">{copy.archetype}</p>
+              <p className="mt-1 text-[11px] font-medium text-[#a29d97]">
+                One Sentence Action
+              </p>
             </div>
           </div>
           <button
             onClick={toggleAll}
-            className="text-xs font-semibold text-[#CE8261] hover:text-[#BC6B4A] border border-[rgba(218,119,86,0.30)] bg-white px-3 py-1.5 rounded-xl transition-colors"
+            className="text-[11px] font-semibold text-[#e77252] transition-colors hover:text-[#c95f44]"
           >
-            {expandedAccordion ? "Collapse All" : "Expand All"}
+            {expandedAccordion.length === 3 ? "Collapse All" : "Expand All"}
           </button>
         </div>
         <div className="p-5">
           <Accordion
-            type="single"
-            collapsible
-            className="space-y-3"
+            type="multiple"
+            className="space-y-2"
             value={expandedAccordion}
             onValueChange={setExpandedAccordion}
           >
@@ -1005,67 +881,56 @@ function DiscProfileReport({
               {
                 id: "p1",
                 title: "Part 1: Your Superpowers (Top Strengths)",
-                icon: CheckCircle2,
-                iconClass: "text-[#10b981]",
+                number: 1,
                 items: copy.superpowers,
               },
               {
                 id: "p2",
-                title: "Part 2: Your Growth Zones (Focus Areas)",
-                icon: TrendingUp,
-                iconClass: "text-[#f59e0b]",
+                title: "Part 2: Growth Edges",
+                number: 2,
                 items: copy.growth,
               },
               {
                 id: "p3",
-                title: "Part 3: Where You Thrive (Best Roles)",
-                icon: Briefcase,
-                iconClass: "text-[#DA7756]",
-                items: copy.roles,
-              },
-              {
-                id: "p4",
-                title:
-                  "Part 4: Your Interpersonal Toolkit (Working With Others)",
-                icon: UsersRound,
-                iconClass: "text-[#9333ea]",
-                items: copy.toolkit,
+                title: "Part 3: Personal Commitment",
+                number: 3,
+                items: [
+                  {
+                    title: "Your Next Steps",
+                    desc:
+                      "Choose one specific communication action for this week and review it with a teammate.",
+                  },
+                ],
               },
             ].map((section) => (
               <AccordionItem
                 key={section.id}
                 value={section.id}
-                className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white px-2 shadow-sm data-[state=open]:border-[rgba(218,119,86,0.35)]"
+                className="rounded-[7px] border border-[#ddd8d1] bg-white px-2 shadow-none data-[state=open]:border-[#ddd8d1]"
               >
-                <AccordionTrigger className="px-4 py-3.5 text-left hover:no-underline [&>svg]:text-neutral-400">
+                <AccordionTrigger className="px-3 py-3 text-left hover:no-underline [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-[#9a958f]">
                   <span className="flex items-center gap-3">
-                    <section.icon
-                      className={cn("h-5 w-5", section.iconClass)}
-                      strokeWidth={2}
-                    />
-                    <span className="text-[14px] font-semibold text-neutral-700">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#fff0eb] text-[11px] font-extrabold text-[#e77252]">
+                      {section.number}
+                    </span>
+                    <span className="text-[13px] font-semibold text-[#2f2d2b]">
                       {section.title}
                     </span>
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-5 pt-1">
-                  <div className="space-y-3 pl-8">
+                <AccordionContent className="px-3 pb-4 pt-0">
+                  <div className="space-y-2 pl-8">
                     {section.items.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex items-start gap-3 rounded-xl bg-[#FFF9F6] p-4 border border-[rgba(218,119,86,0.14)]"
+                        className="rounded-[8px] bg-[#faf8f5] p-3"
                       >
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-xs font-bold text-white shadow-sm mt-0.5">
-                          {idx + 1}
-                        </div>
-                        <div>
-                          <h5 className="font-bold text-neutral-800">
-                            {item.title}
-                          </h5>
-                          <p className="mt-1 text-sm text-neutral-600 leading-relaxed">
-                            {item.desc}
-                          </p>
-                        </div>
+                        <h5 className="text-[13px] font-bold text-[#2f2d2b]">
+                          {item.title}
+                        </h5>
+                        <p className="mt-1 text-[12px] leading-relaxed text-[#6d6862]">
+                          {item.desc}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -1076,118 +941,60 @@ function DiscProfileReport({
         </div>
       </div>
 
-      {/* 6. Personal Commitment */}
-      <div className={card}>
-        <div className={cardHeader}>
-          <div className={iconBox("bg-neutral-100")}>
-            <ClipboardList
-              className="h-5 w-5 text-neutral-600"
-              strokeWidth={2}
-            />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-neutral-800">
-              Personal Commitment (Your Next Steps)
-            </h3>
-            <p className="text-xs text-neutral-400">
-              Reflective questions to anchor your growth
-            </p>
-          </div>
-        </div>
-        <div className="p-5 space-y-4">
-          {[
-            "Which 'Growth Zone' is currently holding you back the most?",
-            "What is ONE specific action you will take this week to improve your communication with a team member who has a different DISC style?",
-            "What is one area where you can delegate authority (not just tasks) to let someone else take the lead this month?",
-          ].map((q, i) => (
-            <div
-              key={i}
-              className="flex gap-4 border-b border-dashed border-[rgba(218,119,86,0.18)] pb-4 last:border-0"
-            >
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-xs font-bold text-white">
-                {i + 1}
-              </div>
-              <p className="text-[14px] font-semibold text-neutral-800 pt-0.5">
-                {q}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* 7. How You Work With Others */}
       <div className={card}>
-        <div className={cardHeader}>
-          <div className={iconBox("bg-pink-100")}>
-            <Users className="h-5 w-5 text-pink-600" strokeWidth={2} />
-          </div>
+        <div className="px-5 pt-5">
           <div>
-            <h3 className="text-base font-bold text-neutral-800">
+            <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+              <span className="mr-2">🤝</span>
               How You Work With Others
             </h3>
-            <p className="text-xs text-neutral-400">
+            <p className="mt-1 text-[11px] font-medium text-[#a29d97]">
               Tips for collaborating across DISC styles
             </p>
           </div>
         </div>
         <div className="p-5">
-          <div className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)]">
-            <table className="w-full text-left text-[14px]">
+          <div className="overflow-hidden">
+            <table className="w-full text-left text-[13px]">
               <thead>
-                <tr className="bg-[#FFF9F6]">
-                  <th className="px-5 py-3.5 font-semibold text-neutral-700 w-1/3 text-sm">
+                <tr className="rounded-[6px] bg-[#f7f4ef]">
+                  <th className="w-[260px] rounded-l-[6px] px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#9a958f]">
                     When working with...
                   </th>
-                  <th className="px-5 py-3.5 font-semibold text-neutral-700 text-sm">
+                  <th className="rounded-r-[6px] px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#9a958f]">
                     Tips for the {result.primary}-Style
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(218,119,86,0.10)]">
+              <tbody className="divide-y divide-[#ece8e2]">
                 {copy.withOthers.map((row) => {
                   const sType = row.withType.charAt(0) as DiscLetter;
                   const circleBg: Record<DiscLetter, string> = {
-                    D: "#e11d48",
-                    I: "#f59e0b",
-                    S: "#10b981",
-                    C: "#3b82f6",
+                    D: "#ee8f94",
+                    I: "#f5c879",
+                    S: "#9bd1c3",
+                    C: "#6aa0d6",
                   };
                   return (
                     <tr
                       key={row.withType}
-                      className="bg-white hover:bg-[#FFF9F6] transition-colors"
+                      className="bg-white"
                     >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3 font-semibold text-neutral-800">
-                          <svg
-                            width="40"
-                            height="40"
-                            viewBox="0 0 40 40"
-                            style={{ display: "block", margin: 0, padding: 0 }}
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3 font-semibold text-[#2f2d2b]">
+                          <span
+                            className="relative h-7 w-7 shrink-0 rounded-full text-white"
+                            style={{ backgroundColor: circleBg[sType] }}
                           >
-                            <circle
-                              cx="20"
-                              cy="20"
-                              r="20"
-                              fill={circleBg[sType]}
-                            />
-                            <text
-                              x="20"
-                              y="20"
-                              textAnchor="middle"
-                              dominantBaseline="central"
-                              fill="#ffffff"
-                              fontSize="18"
-                              fontWeight="900"
-                              fontFamily="inherit"
-                            >
+                            <span className="absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-[45%] text-[13px] font-extrabold leading-none">
                               {sType}
-                            </text>
-                          </svg>
-                          <span>{row.label}</span>
+                            </span>
+                          </span>
+                          <span className="text-[13px]">{row.label}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-neutral-600 leading-relaxed text-sm">
+                      <td className="px-4 py-4 text-[13px] leading-relaxed text-[#5f5a55]">
                         {row.tip}
                       </td>
                     </tr>
@@ -1198,69 +1005,100 @@ function DiscProfileReport({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 function TeamMemberCard({ member }: { member: any }) {
+  const primaryType = (member.primary_type || "D") as DiscLetter;
+  const secondaryType = member.secondary_type as DiscLetter | undefined;
   const avatarLetter = member.name?.[0]?.toUpperCase() || "?";
-  const getDiscColor = (type: string) => {
-    switch (type) {
-      case "D":
-        return "bg-[#e11d48]";
-      case "I":
-        return "bg-[#f59e0b]";
-      case "S":
-        return "bg-[#10b981]";
-      case "C":
-        return "bg-[#3b82f6]";
-      default:
-        return "bg-[#DA7756]";
-    }
+  const bannerColors: Record<DiscLetter, string> = {
+    D: "#e58d91",
+    I: "#efc985",
+    S: "#9fcabb",
+    C: "#6e9fd0",
   };
-  return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm hover:shadow-md hover:border-[rgba(218,119,86,0.35)] transition-all">
-      <div className="flex gap-4 p-5">
-        <div
-          className={cn(
-            "flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] text-lg font-bold text-white shadow-sm",
-            getDiscColor(member.primary_type)
-          )}
-        >
-          {avatarLetter}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-neutral-900">{member.name}</h3>
-          <p className="mt-0.5 text-sm text-neutral-500">{member.department}</p>
-        </div>
-      </div>
-      <div
-        className={cn(
-          "mx-4 mb-4 rounded-2xl px-4 py-4 text-white",
-          getDiscColor(member.primary_type)
-        )}
+  const badgeColors: Record<DiscLetter, { bg: string; text: string }> = {
+    D: { bg: "#ffe3e5", text: "#d94d55" },
+    I: { bg: "#fff1d4", text: "#c88705" },
+    S: { bg: "#e0f2eb", text: "#23836d" },
+    C: { bg: "#dfefff", text: "#2f74ad" },
+  };
+  const profileName = member.profile_name || "Specialist";
+  const typeBadge = (type: DiscLetter, label: string) => (
+    <span
+      className="inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-extrabold"
+      style={{
+        backgroundColor: badgeColors[type].bg,
+        color: badgeColors[type].text,
+      }}
+    >
+      <span
+        className="flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-black text-white"
+        style={{ backgroundColor: bannerColors[type] }}
       >
-        <p className="text-xs font-medium text-white/80">DISC Score</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">
-          {member.score_string || "0000"}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {member.primary_type && (
-            <span className="rounded-xl bg-white/20 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {member.primary_type} Primary
-            </span>
-          )}
-          {member.secondary_type && (
-            <span className="rounded-xl bg-white/10 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {member.secondary_type} Secondary
-            </span>
-          )}
+        {type}
+      </span>
+      {label}
+    </span>
+  );
+
+  return (
+    <motion.div
+      {...fadeUpMotion}
+      whileHover={{ y: -3, boxShadow: "0 10px 24px rgba(15, 23, 42, 0.10)" }}
+      className="flex flex-col overflow-hidden rounded-[12px] border border-[#ded8cf] bg-white shadow-sm transition-all hover:shadow-md"
+    >
+      <style>
+        {`
+          .disc-team-score-text,
+          .disc-team-score-text * {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+          }
+          .disc-team-score-label {
+            color: rgba(255, 255, 255, 0.82) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.82) !important;
+          }
+        `}
+      </style>
+      <div
+        className="px-5 py-4 text-white"
+        style={{ backgroundColor: bannerColors[primaryType] }}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/25 text-[16px] font-extrabold text-white">
+              {avatarLetter}
+            </div>
+            <div className="min-w-0">
+              <h3 className="truncate text-[14px] font-extrabold leading-tight text-white">
+                {member.name}
+              </h3>
+              <p className="mt-1 truncate text-[11px] font-medium text-white/85">
+                {member.department || "Team"}
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="disc-team-score-label text-[9px] font-bold uppercase tracking-[0.11em]">
+              DISC Score
+            </p>
+            <p className="disc-team-score-text mt-0.5 text-[21px] font-extrabold leading-none tracking-tight">
+              {member.score_string || "0000"}
+            </p>
+          </div>
         </div>
-        <p className="mt-3 w-fit border-b border-dotted border-white/70 text-sm font-medium text-white">
-          {member.profile_name}
-        </p>
       </div>
-      <div className="mt-auto p-4 pt-0">
+      <div className="flex flex-1 flex-col gap-4 px-5 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {typeBadge(primaryType, "Primary")}
+          {secondaryType && typeBadge(secondaryType, "Secondary")}
+          <span className="inline-flex h-6 items-center rounded-full bg-[#f3f0ec] px-3 text-[11px] font-semibold text-[#6c6660]">
+            {profileName}
+          </span>
+        </div>
         <button
           type="button"
           onClick={() =>
@@ -1269,13 +1107,13 @@ function TeamMemberCard({ member }: { member: any }) {
               member.name
             )
           }
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#DA7756] py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#BC6B4A]"
+          className="mt-auto flex h-10 w-full items-center justify-center gap-2 rounded-[7px] border border-[#ddd6ce] bg-white text-[12px] font-bold text-[#2f2d2b] transition-colors hover:bg-[#faf8f5]"
         >
-          <Eye className="h-4 w-4" strokeWidth={2} />
+          <ExternalLink className="h-3.5 w-3.5" strokeWidth={2.2} />
           View Full Profile
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1327,69 +1165,52 @@ function TeamProfilesTabContent({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-1.5 min-w-0 flex-1">
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest">
-              Search by name
-            </label>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search team members..."
-                className="h-10 w-full rounded-xl border border-[rgba(218,119,86,0.20)] bg-white pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.25)]"
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest">
-              Filter by DISC type
-            </label>
-            <Select value={discFilter} onValueChange={setDiscFilter}>
-              <SelectTrigger className="h-10 rounded-xl border-[rgba(218,119,86,0.20)] bg-white">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="D">D — Dominance</SelectItem>
-                <SelectItem value="I">I — Influence</SelectItem>
-                <SelectItem value="S">S — Steadiness</SelectItem>
-                <SelectItem value="C">C — Conscientiousness</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest">
-              Filter by Department
-            </label>
-            <Select value={deptFilter} onValueChange={setDeptFilter}>
-              <SelectTrigger className="h-10 rounded-xl border-[rgba(218,119,86,0.20)] bg-white">
-                <SelectValue placeholder="All Departments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full sm:w-[240px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a5a29f]" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search team members"
+            className="h-10 w-full rounded-full border border-[#e5e8ee] bg-white pl-9 pr-3 text-[13px] font-medium text-[#2f2d2b] placeholder:text-[#aaa6a2] focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.18)]"
+          />
         </div>
+        <Select value={discFilter} onValueChange={setDiscFilter}>
+          <SelectTrigger className="h-10 w-[104px] rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none">
+            <SelectValue placeholder="All type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All type</SelectItem>
+            <SelectItem value="D">D</SelectItem>
+            <SelectItem value="I">I</SelectItem>
+            <SelectItem value="S">S</SelectItem>
+            <SelectItem value="C">C</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={deptFilter} onValueChange={setDeptFilter}>
+          <SelectTrigger className="h-10 w-[142px] rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none">
+            <SelectValue placeholder="All department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All department</SelectItem>
+            {departments.map((dept) => (
+              <SelectItem key={dept} value={dept}>
+                {dept}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] py-16 text-center shadow-sm">
+        <div className="rounded-[12px] border border-[#ded8cf] bg-white py-16 text-center shadow-sm">
           <Users className="mx-auto h-10 w-10 text-neutral-300" />
           <p className="mt-3 text-sm text-neutral-500">
             No team members match your filters.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((member, idx) => (
             <TeamMemberCard
               key={member.attempt_id || idx}
@@ -1423,96 +1244,102 @@ function AssessmentInterface({
   onFinish: () => void;
   isSubmitting?: boolean;
 }) {
+  const answered = selectedAnswer !== null;
+  const isLastQuestion = currentQuestion === totalQuestions - 1;
+
   return (
-    <div className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] p-6 shadow-sm sm:p-8 w-full">
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between text-xs font-semibold text-neutral-500 mb-2 uppercase tracking-widest">
-          <span>
-            Question {currentQuestion + 1} of {totalQuestions}
-          </span>
-          <span>
-            {Math.round(((currentQuestion + 1) / totalQuestions) * 100)}%
-            Complete
-          </span>
-        </div>
-        <div className="h-2 w-full rounded-full bg-[#F0EBE8] overflow-hidden">
-          <div
-            className="h-full bg-[#DA7756] rounded-full transition-all duration-300 ease-out"
-            style={{
-              width: `${((currentQuestion + 1) / totalQuestions) * 100}%`,
-            }}
-          />
+    <motion.div
+      key={currentQuestion}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.24, ease: "easeOut" }}
+      className="w-full space-y-3"
+    >
+      <div>
+        <p className="mb-2 text-[12px] font-semibold text-[#252525]">
+          {currentQuestion + 1} of {totalQuestions} questions
+        </p>
+        <div className="grid w-full gap-1.5" style={{ gridTemplateColumns: `repeat(${totalQuestions}, minmax(0, 1fr))` }}>
+          {Array.from({ length: totalQuestions }).map((_, idx) => (
+            <span
+              key={idx}
+              className={cn(
+                "h-1.5 rounded-full transition-colors duration-300",
+                idx <= currentQuestion ? "bg-[#e87355]" : "bg-[#e5e5e5]"
+              )}
+            />
+          ))}
         </div>
       </div>
-      <h2 className="text-lg font-bold text-neutral-900 mb-5">
-        {question.text}
-      </h2>
-      <div className="space-y-3 mb-8">
-        {question.options.map((option, index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => onAnswerSelect(index)}
-            className={cn(
-              "w-full text-left p-4 rounded-2xl border transition-all duration-200",
-              "hover:border-[rgba(218,119,86,0.40)] hover:bg-[rgba(218,119,86,0.04)]",
-              selectedAnswer === index
-                ? "border-[#DA7756] bg-[rgba(218,119,86,0.08)] shadow-sm"
-                : "border-[rgba(218,119,86,0.18)] bg-white"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.985 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        className="rounded-[16px] border border-[#e4e4e4] bg-white px-5 pb-5 pt-6"
+      >
+        <h2 className="text-[14px] font-extrabold text-[#111827]">
+          {question.text}
+        </h2>
+        <div className="my-6 h-px w-full bg-[#eeeeee]" />
+        <div className="space-y-4">
+          {question.options.map((option, index) => (
+            <motion.button
+              key={index}
+              type="button"
+              onClick={() => onAnswerSelect(index)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: index * 0.04 }}
+              whileHover={{ x: 3 }}
+              whileTap={{ scale: 0.99 }}
+              className="flex h-12 w-full items-center gap-3 rounded-[12px] bg-[#f4f1ec] px-4 text-left transition-colors hover:bg-[#eeeae4]"
+            >
+              <span
                 className={cn(
-                  "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
+                  "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors",
                   selectedAnswer === index
-                    ? "border-[#DA7756] bg-[#DA7756]"
-                    : "border-neutral-300 bg-white"
+                    ? "border-[#e87355]"
+                    : "border-[#9b9b9b] bg-transparent"
                 )}
               >
                 {selectedAnswer === index && (
-                  <div className="h-2 w-2 rounded-full bg-white" />
+                  <span className="h-2 w-2 rounded-full bg-[#e87355]" />
                 )}
-              </div>
-              <span
-                className={cn(
-                  "text-sm font-medium",
-                  selectedAnswer === index
-                    ? "text-[#DA7756]"
-                    : "text-neutral-900"
-                )}
-              >
+              </span>
+              <span className="text-[13px] font-extrabold text-[#111827]">
                 {option.label}
               </span>
-            </div>
-          </button>
-        ))}
-      </div>
-      <div className="flex gap-3 justify-between">
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+
+      <div className="flex justify-between gap-3">
         <button
           type="button"
           onClick={onPrevious}
           disabled={currentQuestion === 0}
           className={cn(
-            "px-6 py-3 rounded-2xl font-semibold text-sm transition-colors",
+            "h-10 rounded-[8px] px-5 text-[13px] font-semibold transition-colors",
             currentQuestion === 0
-              ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-              : "border border-[rgba(218,119,86,0.30)] bg-white text-[#CE8261] hover:bg-[#FFF9F6]"
+              ? "cursor-not-allowed border border-[#e8e8e8] bg-white text-[#c9c9c9]"
+              : "border border-[#e87355] bg-white text-[#e87355] hover:bg-[#fff7f4]"
           )}
         >
           Previous
         </button>
-        {currentQuestion === totalQuestions - 1 ? (
+        {isLastQuestion ? (
           <button
             type="button"
             onClick={onFinish}
-            disabled={selectedAnswer === null || isSubmitting}
+            disabled={!answered || isSubmitting}
             className={cn(
-              "px-6 py-3 rounded-2xl font-semibold text-sm text-white transition-colors flex items-center gap-2",
-              selectedAnswer === null || isSubmitting
-                ? "bg-neutral-300 cursor-not-allowed"
-                : "bg-[#DA7756] hover:bg-[#BC6B4A] shadow-sm"
+              "flex h-10 items-center gap-2 rounded-[8px] px-5 text-[13px] font-semibold text-white transition-colors",
+              !answered || isSubmitting
+                ? "cursor-not-allowed bg-[#d1d1d1]"
+                : "bg-[#e87355] shadow-sm hover:bg-[#d96648]"
             )}
           >
             {isSubmitting ? (
@@ -1527,19 +1354,19 @@ function AssessmentInterface({
           <button
             type="button"
             onClick={onNext}
-            disabled={selectedAnswer === null}
+            disabled={!answered}
             className={cn(
-              "px-6 py-3 rounded-2xl font-semibold text-sm text-white transition-colors",
-              selectedAnswer === null
-                ? "bg-neutral-300 cursor-not-allowed"
-                : "bg-[#DA7756] hover:bg-[#BC6B4A] shadow-sm"
+              "h-10 rounded-[8px] px-5 text-[13px] font-semibold text-white transition-colors",
+              !answered
+                ? "cursor-not-allowed bg-[#d1d1d1]"
+                : "bg-[#e87355] shadow-sm hover:bg-[#d96648]"
             )}
           >
             Next
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1900,22 +1727,37 @@ const DiscPersonalityAssessment = () => {
 
   return (
     <div
-      className="w-full bg-[#F6F1EE] px-4 py-6 sm:px-6"
+      className="min-h-[calc(100vh-5rem)] w-full bg-white px-8 py-8"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="w-full space-y-7">
         {/* Page Header */}
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
-              <Brain className="h-6 w-6 text-white" strokeWidth={2} />
+            <div className="grid h-10 w-10 shrink-0 grid-cols-2 gap-0.5">
+              {[
+                { letter: "D", bg: "bg-[#f27655]" },
+                { letter: "I", bg: "bg-[#f7c86f]" },
+                { letter: "S", bg: "bg-[#56a8d6]" },
+                { letter: "C", bg: "bg-[#94d4ce]" },
+              ].map((item) => (
+                <span
+                  key={item.letter}
+                  className={cn(
+                    "flex items-center justify-center rounded-[4px] text-[9px] font-extrabold leading-none text-white",
+                    item.bg
+                  )}
+                >
+                  {item.letter}
+                </span>
+              ))}
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
+              <h1 className="text-[24px] font-extrabold leading-tight tracking-tight text-[#111827]">
                 DISC Personality Assessment
               </h1>
-              <p className="mt-0.5 text-sm text-neutral-500">
-                Discover your DISC profile and understand your team
+              <p className="mt-1 text-[13px] font-medium text-[#64748b]">
+                Discover your DISC profile and understand your team.
               </p>
             </div>
           </div>
@@ -1929,19 +1771,19 @@ const DiscPersonalityAssessment = () => {
           }}
           className="w-full"
         >
-          <TabsList className="grid h-auto w-full grid-cols-1 gap-1 rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] p-2 sm:grid-cols-3 shadow-sm">
+          <TabsList className="inline-flex h-11 w-auto items-center justify-start gap-1 rounded-full border border-[#edf0f4] bg-white p-1 shadow-[0_6px_16px_rgba(15,23,42,0.06)]">
             {[
-              { value: "report", icon: FileCode2, label: "Get Your Report" },
-              { value: "profile", icon: Eye, label: "Your Profile" },
-              { value: "team", icon: Users, label: "Team Profiles" },
+              { value: "report", icon: Gauge, label: "Assessment" },
+              { value: "profile", icon: UserRound, label: "Your report" },
+              { value: "team", icon: UsersRound, label: "Team" },
             ].map((t) => (
               <TabsTrigger
                 key={t.value}
                 value={t.value}
                 className={cn(
-                  "gap-2 rounded-xl py-2.5 text-sm font-semibold text-neutral-500 transition-all",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm",
-                  "data-[state=inactive]:hover:bg-[rgba(218,119,86,0.08)] data-[state=inactive]:hover:text-neutral-900"
+                  "h-9 gap-2 rounded-full px-4 text-[13px] font-semibold text-[#111827] transition-all",
+                  "data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm",
+                  "data-[state=inactive]:hover:bg-[#fff7f4]"
                 )}
               >
                 <t.icon className="h-4 w-4 shrink-0" />
@@ -1953,18 +1795,18 @@ const DiscPersonalityAssessment = () => {
           {/* ── Get Your Report Tab ── */}
           <TabsContent
             value="report"
-            className="mt-5 space-y-5 focus-visible:outline-none"
+            className="mt-7 space-y-4 focus-visible:outline-none"
           >
             {assessmentStarted ? (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-neutral-500">
+                  <p className="text-[12px] font-medium text-[#6d6d6d]">
                     Answer all questions to discover your profile
                   </p>
                   <button
                     type="button"
                     onClick={() => setAssessmentStarted(false)}
-                    className="px-4 py-2 text-sm font-semibold text-[#CE8261] border border-[rgba(218,119,86,0.30)] bg-white rounded-xl hover:bg-[#FFF9F6] transition-colors"
+                    className="h-9 rounded-[8px] border border-[#e87355] bg-white px-5 text-[13px] font-semibold text-[#2f2d2b] transition-colors hover:bg-[#fff7f4]"
                   >
                     Exit
                   </button>
@@ -1986,85 +1828,39 @@ const DiscPersonalityAssessment = () => {
               </div>
             ) : (
               <>
-                {/* Already has profile banner */}
-                {savedProfile && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      background:
-                        "linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)",
-                      borderRadius: 14,
-                      padding: "14px 18px",
-                    }}
-                  >
-                    <CheckCircle2
-                      style={{
-                        width: 20,
-                        height: 20,
-                        color: "#ffffff",
-                        flexShrink: 0,
-                      }}
-                      strokeWidth={2}
-                    />
-                    <p
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: "#ffffff",
-                        margin: 0,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      ✓ You already have a DISC profile from{" "}
-                      <strong>
-                        {new Date(savedProfile.completedAt).toLocaleDateString(
-                          "en-US",
-                          { month: "numeric", day: "numeric", year: "numeric" }
-                        )}
-                      </strong>
-                      . Retake to update it.{" "}
-                      <button
-                        type="button"
-                        onClick={() => setMainTab("profile")}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#ffffff",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                          fontSize: 14,
-                          padding: 0,
-                        }}
-                      >
-                        View your profile →
-                      </button>
-                    </p>
-                  </div>
-                )}
-
                 {/* ── What is DISC accordion — warm brand colors ── */}
-                <Accordion type="single" collapsible>
+                <Accordion type="single" collapsible defaultValue="what-is">
                   <AccordionItem
                     value="what-is"
-                    className="overflow-hidden rounded-2xl border shadow-sm"
-                    style={{
-                      background: "#FFF9F6",
-                      borderColor: "rgba(218,119,86,0.25)",
-                    }}
+                    className="overflow-hidden rounded-[18px] border border-[#e5e8ee] bg-white shadow-none"
                   >
-                    <AccordionTrigger className="px-5 py-4 text-left hover:no-underline hover:bg-[rgba(218,119,86,0.04)] [&>svg]:text-[#CE8261] [&>svg]:h-5 [&>svg]:w-5">
+                    <AccordionTrigger className="border-b border-[#edf0f4] px-5 py-5 text-left hover:no-underline [&>svg]:h-6 [&>svg]:w-6 [&>svg]:rounded-full [&>svg]:border [&>svg]:border-[#e5e8ee] [&>svg]:p-1 [&>svg]:text-[#f06f4f]">
                       <span className="flex items-center gap-3">
-                        <Brain className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                        <span className="text-base font-bold text-neutral-900">
-                          What is DISC & How Will It Benefit You?
+                        <span className="grid h-5 w-5 shrink-0 grid-cols-2 gap-0.5">
+                          {[
+                            ["D", "bg-[#f27655]"],
+                            ["I", "bg-[#f7c86f]"],
+                            ["S", "bg-[#56a8d6]"],
+                            ["C", "bg-[#94d4ce]"],
+                          ].map(([letter, bg]) => (
+                            <span
+                              key={letter}
+                              className={cn(
+                                "flex items-center justify-center rounded-[2px] text-[5px] font-extrabold text-white",
+                                bg
+                              )}
+                            >
+                              {letter}
+                            </span>
+                          ))}
+                        </span>
+                        <span className="text-[13px] font-extrabold text-[#111827]">
+                          What is DISC & how will it benefit you?
                         </span>
                       </span>
                     </AccordionTrigger>
-                    <AccordionContent className="px-5 pb-5 pt-0">
-                      <p className="text-sm leading-relaxed text-neutral-600">
+                    <AccordionContent className="px-5 pb-6 pt-4">
+                      <p className="rounded-[14px] bg-[#eef6ff] px-4 py-5 text-[14px] font-medium leading-relaxed text-[#111827]">
                         DISC is a behavioural assessment tool that measures four
                         dimensions of personality — Dominance, Influence,
                         Steadiness, and Conscientiousness. Taking this
@@ -2080,17 +1876,13 @@ const DiscPersonalityAssessment = () => {
                 <Accordion type="single" collapsible>
                   <AccordionItem
                     value="discover"
-                    className="overflow-hidden rounded-2xl border shadow-sm"
-                    style={{
-                      background: "#FFF9F6",
-                      borderColor: "rgba(218,119,86,0.25)",
-                    }}
+                    className="overflow-hidden rounded-[18px] border border-[#e5e8ee] bg-white shadow-none"
                   >
-                    <AccordionTrigger className="px-5 py-4 text-left hover:no-underline hover:bg-[rgba(218,119,86,0.04)] [&>svg]:text-[#CE8261] [&>svg]:h-5 [&>svg]:w-5">
+                    <AccordionTrigger className="px-5 py-5 text-left hover:no-underline [&>svg]:h-6 [&>svg]:w-6 [&>svg]:rounded-full [&>svg]:border [&>svg]:border-[#e5e8ee] [&>svg]:p-1 [&>svg]:text-[#f06f4f]">
                       <span className="flex items-center gap-3">
-                        <Sparkles className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                        <span className="text-base font-bold text-neutral-900">
-                          What you'll discover
+                        <Sparkles className="h-5 w-5 shrink-0 text-[#f97316]" />
+                        <span className="text-[13px] font-extrabold text-[#111827]">
+                          What you will discover?
                         </span>
                       </span>
                     </AccordionTrigger>
@@ -2158,16 +1950,17 @@ const DiscPersonalityAssessment = () => {
                   </AccordionItem>
                 </Accordion>
 
-                <div className="grid gap-4 rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] md:items-center">
-                  <div className="space-y-3">
+                <div className="rounded-[18px] border border-[#e5e8ee] bg-white px-5 pb-3 pt-4 shadow-none">
+                  <p className="mb-5 text-[13px] font-extrabold uppercase tracking-[0.28em] text-[#111827]">
+                    Ready when you are
+                  </p>
+                  <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_330px] md:items-center">
+                  <div className="rounded-[14px] bg-[#fff6e5] px-4 py-5">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#CE8261]">
-                        Ready when you are
-                      </p>
-                      <h3 className="mt-1 text-lg font-bold text-neutral-900">
+                      <h3 className="text-[14px] font-extrabold text-[#111827]">
                         Complete your DISC assessment
                       </h3>
-                      <p className="mt-1 max-w-xl text-sm leading-relaxed text-neutral-500">
+                      <p className="mt-5 max-w-xl text-[14px] font-medium leading-relaxed text-[#111827]">
                         Answer a few quick questions to understand your work
                         style, communication patterns, and best-fit
                         collaboration approach.
@@ -2176,7 +1969,7 @@ const DiscPersonalityAssessment = () => {
                     <button
                       type="button"
                       className={cn(
-                        "inline-flex w-full items-center justify-center rounded-2xl bg-[#DA7756] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#BC6B4A] active:scale-[0.99] sm:w-auto",
+                        "mt-3 inline-flex h-10 w-full items-center justify-center rounded-[8px] bg-[#e77252] px-5 text-[13px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] active:scale-[0.99] sm:w-auto",
                         (loadingQuestions || questions.length === 0) &&
                           "opacity-60 cursor-not-allowed"
                       )}
@@ -2197,12 +1990,12 @@ const DiscPersonalityAssessment = () => {
                   {/* ── Watch: What is DISC? Video — warm brand colors ── */}
                   <div
                     style={{
-                      background: "#FFF9F6",
+                      background: "#FFF6E5",
                       borderRadius: 14,
                       overflow: "hidden",
-                      border: "1px solid rgba(218,119,86,0.25)",
+                      border: "0",
                       width: "100%",
-                      boxShadow: "0 8px 18px rgba(26,26,26,0.05)",
+                      boxShadow: "none",
                     }}
                   >
                     <div style={{ padding: "8px 12px 5px 12px" }}>
@@ -2279,7 +2072,7 @@ const DiscPersonalityAssessment = () => {
                           borderRadius: 10,
                           overflow: "hidden",
                           cursor: "pointer",
-                          height: 128,
+                          height: 118,
                         }}
                       >
                         <img
@@ -2369,6 +2162,7 @@ const DiscPersonalityAssessment = () => {
                       </a>
                     </div>
                   </div>
+                  </div>
                 </div>
               </>
             )}
@@ -2430,17 +2224,13 @@ const DiscPersonalityAssessment = () => {
           <TabsContent value="team" className="mt-5 focus-visible:outline-none">
             {selectedMemberReport ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-[rgba(218,119,86,0.18)] pb-4">
+                <div className="flex items-center border-b border-[rgba(218,119,86,0.18)] pb-4">
                   <button
                     onClick={() => setSelectedMemberReport(null)}
                     className="flex items-center gap-2 text-sm font-semibold text-[#CE8261] hover:text-[#BC6B4A] border border-[rgba(218,119,86,0.25)] bg-white rounded-xl px-3 py-2 transition-colors shadow-sm"
                   >
                     <ArrowLeft className="h-4 w-4" /> Back to Team
                   </button>
-                  <div className="flex items-center gap-2 font-bold text-neutral-700 text-sm">
-                    <Users className="h-4 w-4 text-[#DA7756]" />
-                    {selectedMemberName}
-                  </div>
                 </div>
                 {loadingReport ? (
                   <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6]">
