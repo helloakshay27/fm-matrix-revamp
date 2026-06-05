@@ -19,11 +19,7 @@ export const fetchEvents = createAsyncThunk(
             );
             return response.data;
         } catch (error) {
-            const message =
-                error.response?.data?.message ||
-                error.message ||
-                "Failed to create subcategory";
-            return rejectWithValue(message);
+            return rejectWithValue(error);
         }
     }
 )

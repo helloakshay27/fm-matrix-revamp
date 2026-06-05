@@ -361,6 +361,9 @@ export const PaymentsReceivedListPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold">All Payment Received</h1>
+            </header>
       {/* <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="relative">
@@ -417,10 +420,11 @@ export const PaymentsReceivedListPage: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            // className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className='fm-button-fix fm-button-brand px-4 py-2P'
             onClick={() => navigate("/accounting/payments-received/create")}
           >
-            <Plus className="w-4 h-4 mr-2" /> New
+            <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
         }
       />
