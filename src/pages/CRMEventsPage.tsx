@@ -47,38 +47,45 @@ export const CRMEventsPage = () => {
     total_registrations: ""
   });
 
+  // Helper function to map events from either API format
+  const mapEventData = (event: any) => ({
+    id: event.id,
+    event_name: event.event_name,
+    unit: event.event_at || '-',
+    created_by: event.created_by || 'Unknown',
+    from_time: event.from_time,
+    to_time: event.to_time,
+    is_paid: event.is_paid || false,
+    event_type: event.shared === 0 ? "General" : "Personal",
+    event_location: event.event_at,
+    amount: event.amount_per_member || '',
+    member_capacity: event.capacity,
+    active: event.active,
+    status: event.status,
+    is_expired: event.is_expired === 1,
+    attachments: event.documents || [],
+    created_at: event.created_at,
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await dispatch(fetchEvents({ baseUrl, token, page: pagination.current_page, per_page: 10 })).unwrap();
-        const mappedEvents = response.classifieds.map(event => ({
-          id: event.id,
-          event_name: event.event_name,
-          unit: event.event_at || '-',
-          created_by: event.created_by || 'Unknown',
-          from_time: event.from_time,
-          to_time: event.to_time,
-          is_paid: event.is_paid,
-          event_type: event.shared === 0 ? "General" : "Personal",
-          event_location: event.event_at,
-          amount: event.amount_per_member,
-          member_capacity: event.capacity,
-          active: event.active,
-          status: event.status,
-          is_expired: event.is_expired === 1,
-          attachments: event.documents || [],
-          created_at: event.created_at,
-        }));
+        console.log(response)
+        const mappedEvents = (response.classifieds || response.events).map(mapEventData);
         setEvents(mappedEvents);
+
+        // Handle both dashboard and stats response formats
+        const stats = response.dashboard || response.stats || {};
         setCardData({
-          total_events: response.dashboard.total_events || "0",
-          upcoming_events: response.dashboard.upcoming_events || "0",
-          past_events: response.dashboard.past_events || "0",
-          complementary_events: response.dashboard.complementary_events || "0",
-          paid_events: response.dashboard.paid_events || "0",
-          requestable_events: response.dashboard.requestable_events || "0",
-          pending_requests: response.dashboard.pending_requests || "0",
-          total_registrations: response.dashboard.total_registrations || "0"
+          total_events: stats.total_events || "0",
+          upcoming_events: stats.upcoming_events || "0",
+          past_events: stats.past_events || "0",
+          complementary_events: stats.complementary_events || "0",
+          paid_events: stats.paid_events || "0",
+          requestable_events: stats.requestable_events || "0",
+          pending_requests: stats.pending_requests || "0",
+          total_registrations: stats.total_registrations || "0"
         });
         setPagination({
           current_page: response.pagination.current_page,
@@ -148,25 +155,8 @@ export const CRMEventsPage = () => {
 
     try {
       const response = await dispatch(fetchEvents({ baseUrl, token, params: queryString, page: pagination.current_page, per_page: 10 })).unwrap();
-      console.log(response.classifieds)
-      const mappedEvents = response.classifieds.map(event => ({
-        id: event.id,
-        event_name: event.event_name,
-        unit: event.event_at || '-',
-        created_by: event.created_by || 'Unknown',
-        from_time: event.from_time,
-        to_time: event.to_time,
-        is_paid: event.is_paid,
-        event_type: event.shared === 0 ? "General" : "Personal",
-        event_location: event.event_at,
-        amount: event.amount_per_member,
-        member_capacity: event.capacity,
-        active: event.active,
-        status: event.status,
-        is_expired: event.is_expired === 1,
-        attachments: event.documents || [],
-        created_at: event.created_at,
-      }));
+      console.log(response.classifieds || response.events)
+      const mappedEvents = (response.classifieds || response.events).map(mapEventData);
       setEvents(mappedEvents);
       setPagination({
         current_page: response.pagination.current_page,
@@ -322,19 +312,7 @@ export const CRMEventsPage = () => {
     }));
     try {
       const response = await dispatch(fetchEvents({ baseUrl, token, page: page, per_page: 10 })).unwrap();
-      const mappedEvents = response.classifieds.map(event => ({
-        id: event.id,
-        event_name: event.event_name,
-        unit: event.event_at || '-',
-        created_by: event.created_by || 'Unknown',
-        from_time: event.from_time,
-        to_time: event.to_time,
-        event_type: event.shared === 0 ? "General" : "Personal",
-        status: event.status,
-        is_expired: event.is_expired === 1,
-        attachments: event.documents || [],
-        created_at: event.created_at,
-      }));
+      const mappedEvents = (response.classifieds || response.events).map(mapEventData);
       setEvents(mappedEvents);
       setPagination({
         current_page: response.pagination.current_page,
