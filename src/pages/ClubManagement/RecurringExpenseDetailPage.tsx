@@ -13,7 +13,14 @@ import {
   User,
   CreditCard,
   AlertCircle,
+  Edit,
+  MoreVertical,
 } from "lucide-react";
+import {
+  Menu,
+  MenuItem,
+} from "@mui/material";
+import { toast } from "sonner";
 
 // ─── API Config ────────────────────────────────────────────────────────────────
 // The component automatically fetches baseUrl and token from localStorage
@@ -106,6 +113,8 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("expense-details");
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // ── Fetch from API ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -162,6 +171,102 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
 
     fetchExpense();
   }, [id, propBaseUrl, propToken]);
+
+  // ── Menu handlers ───────────────────────────────────────────────────────────
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+  };
+
+  const updateRecurringExpenseStatus = async (active: boolean) => {
+    if (!id) return;
+    setIsUpdating(true);
+    try {
+      const baseUrl = propBaseUrl || localStorage.getItem('baseUrl');
+      const token = propToken || localStorage.getItem('token');
+      const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+
+      const response = await fetch(
+        `${apiUrl}/recurring_expenses/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ recurring_expense: { active } }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update recurring expense");
+      }
+
+      const updatedData: RecurringExpenseAPI = await response.json();
+      setItem(updatedData);
+      handleMenuClose();
+      const statusMsg = active ? "Recurring expense resumed" : "Recurring expense stopped";
+      toast.success(statusMsg);
+    } catch (err: any) {
+      console.error("Failed to update recurring expense:", err);
+      toast.error("Failed to update recurring expense status");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleStop = () => {
+    updateRecurringExpenseStatus(false);
+  };
+
+  const handleResume = () => {
+    updateRecurringExpenseStatus(true);
+  };
+
+  const handleCreateExpense = () => {
+    handleMenuClose();
+    navigate(`/accounting/expense/create`);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!window.confirm("Are you sure you want to delete this recurring expense?")) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const baseUrl = propBaseUrl || localStorage.getItem('baseUrl');
+      const token = propToken || localStorage.getItem('token');
+      const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+
+      const response = await fetch(
+        `${apiUrl}/recurring_expenses/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete recurring expense");
+      }
+
+      toast.success("Recurring expense deleted successfully");
+      navigate("/accounting/recurring-expenses");
+    } catch (err: any) {
+      console.error("Failed to delete recurring expense:", err);
+      toast.error("Failed to delete recurring expense");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
@@ -260,9 +365,55 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
             </div>
           </div>
 
-          <Badge className={`${getStatusColor(item.active)} border`}>
-            {statusLabel}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate(`/accounting/expense/edit/${id}`)}
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleMenuOpen}
+              disabled={isUpdating}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+            <Menu
+              anchorEl={menuAnchor}
+              open={Boolean(menuAnchor)}
+              onClose={handleMenuClose}
+            >
+              {item?.active ? (
+                <>
+                  <MenuItem onClick={handleStop} disabled={isUpdating}>
+                    Stop
+                  </MenuItem>
+                  <MenuItem onClick={handleCreateExpense}>
+                    Create Expense
+                  </MenuItem>
+                  <MenuItem onClick={handleDelete} disabled={isUpdating}>
+                    Delete
+                  </MenuItem>
+                </>
+              ) : (
+                <>
+                  <MenuItem onClick={handleResume} disabled={isUpdating}>
+                    Resume
+                  </MenuItem>
+                  <MenuItem onClick={handleDelete} disabled={isUpdating}>
+                    Delete
+                  </MenuItem>
+                </>
+              )}
+            </Menu>
+            <Badge className={`${getStatusColor(item?.active)} border`}>
+              {statusLabel}
+            </Badge>
+          </div>
         </div>
 
         {/* ── Tabs ── */}
