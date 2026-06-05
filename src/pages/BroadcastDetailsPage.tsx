@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil, FileVideo, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil, FileVideo, FileSpreadsheet, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
 import { toast } from 'sonner';
@@ -132,6 +132,60 @@ export const BroadcastDetailsPage = () => {
       if (field === 'active') setIsActive(!value);
       else if (field === 'show_on_home_screen') setShowOnHomeScreen(!value);
       else if (field === 'visible_after_expire') setVisibleAfterExpire(!value);
+    }
+  };
+
+  const handleDownloadAttachment = async (attachment: any) => {
+    const attachmentId = attachment.id || attachment.attachment_id;
+    const fileName = attachment.document_name || attachment.document_file_name || 'document';
+    const downloadUrl = attachment.url || attachment.document_url || attachment.document || attachment.file_url;
+
+    if (attachmentId) {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/attachfiles/${attachmentId}?show_file=true`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob',
+          }
+        );
+        const contentType = response.headers['content-type'] || 'application/octet-stream';
+        const blob = new Blob([response.data], { type: contentType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success('File downloaded successfully');
+      } catch (error) {
+        console.error('API download failed:', error);
+        if (downloadUrl) {
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = fileName;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success('File download initiated');
+        } else {
+          toast.error('Failed to download file');
+        }
+      }
+    } else if (downloadUrl) {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('File download initiated');
+    } else {
+      toast.error('No download URL available');
     }
   };
 
@@ -397,17 +451,24 @@ export const BroadcastDetailsPage = () => {
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">
                     {index === 0 ? 'Attachments' : ''}
                   </h4>
-                  <a
-                    href={attachment.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                  <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                    onClick={() => attachment.url && window.open(attachment.url, '_blank')}
                   >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadAttachment(attachment);
+                      }}
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+                      title="Download"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
                     <span className="text-xs text-gray-600 mb-3 text-center truncate max-w-full px-1">
                       {attachment.document_name || `Attachment ${index + 1}`}
                     </span>
                     {renderAttachmentPreview(attachment)}
-                  </a>
+                  </div>
                 </div>
               ))
             ) : (
@@ -423,12 +484,24 @@ export const BroadcastDetailsPage = () => {
             <div>
               <h4 className="text-sm font-semibold text-gray-900 mb-4">Cover Image</h4>
               {broadcastDetails?.cover_image ? (
-                <a
-                  href={broadcastDetails.cover_image?.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                <div
+                  onClick={() => broadcastDetails.cover_image?.url && window.open(broadcastDetails.cover_image.url, '_blank')}
+                  className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
                 >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadAttachment({
+                        id: broadcastDetails.cover_image?.id,
+                        document_name: broadcastDetails.cover_image?.name || "Cover Image",
+                        url: broadcastDetails.cover_image?.url
+                      });
+                    }}
+                    className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+                    title="Download"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
                   <span className="text-xs text-gray-600 mb-3 text-center truncate max-w-full px-1">
                     {broadcastDetails.cover_image?.name || "Cover Image"}
                   </span>
@@ -437,7 +510,7 @@ export const BroadcastDetailsPage = () => {
                     alt="Cover"
                     className="w-16 h-16 object-contain rounded"
                   />
-                </a>
+                </div>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
                   <span className="text-sm text-gray-400">No cover image</span>
