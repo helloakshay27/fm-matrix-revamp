@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
-import { Download } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from "react";
+import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
+import { Download } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 interface AMCTypeDistributionCardProps {
   data: Array<{
@@ -23,18 +23,20 @@ interface AMCTypeDistributionCardProps {
   headerClassName?: string;
 }
 
-export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = ({ data, className, onDownload, colorPalette, headerClassName }) => {
+export const AMCTypeDistributionCard: React.FC<
+  AMCTypeDistributionCardProps
+> = ({ data, className, onDownload, colorPalette, headerClassName }) => {
   const { toast } = useToast();
 
   const palette = colorPalette || {
-    primary: '#C4B99D',
-    secondary: '#DAD6CA',
-    tertiary: '#D5DBDB',
-    primaryLight: '#DDD4C4',
-    secondaryLight: '#E8E5DD',
-    tertiaryLight: '#E5E9E9',
+    primary: "#C4B99D",
+    secondary: "#DAD6CA",
+    tertiary: "#D5DBDB",
+    primaryLight: "#DDD4C4",
+    secondaryLight: "#E8E5DD",
+    tertiaryLight: "#E5E9E9",
   };
-  const COLORS = ['#76CDC1', '#E39090', '#CDCAF5'];
+  const COLORS = ["#76CDC1", "#E39090", "#CDCAF5"];
 
   const handleDownload = async () => {
     if (onDownload) {
@@ -42,14 +44,18 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
         await onDownload();
         toast({
           title: "Success",
-          description: "Breakdown vs preventive visit data downloaded successfully"
+          description:
+            "Breakdown vs preventive visit data downloaded successfully",
         });
       } catch (error) {
-        console.error('Error downloading breakdown vs preventive visit data:', error);
+        console.error(
+          "Error downloading breakdown vs preventive visit data:",
+          error
+        );
         toast({
           title: "Error",
           description: "Failed to download breakdown vs preventive visit data",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     }
@@ -59,10 +65,13 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
     name: item.type,
     value: item.count,
     percentage: item.percentage,
-    color: COLORS[index % COLORS.length]
+    color: COLORS[index % COLORS.length],
   }));
 
-  const [chartSize, setChartSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const [chartSize, setChartSize] = useState<{ w: number; h: number }>({
+    w: 0,
+    h: 0,
+  });
 
   // Custom label placed just outside the slice; clamps to chart bounds
   const renderOuterLabel = (props: any) => {
@@ -70,7 +79,7 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
     const RADIAN = Math.PI / 180;
     const offset = 14;
     const r = (outerRadius || 0) + offset;
-    let rawX = cx + r * Math.cos(-midAngle * RADIAN);
+    const rawX = cx + r * Math.cos(-midAngle * RADIAN);
     const y = cy + r * Math.sin(-midAngle * RADIAN);
     const labelText = `${payload.name}: ${payload.percentage.toFixed(1)}%`;
     const padding = 6;
@@ -94,12 +103,12 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
       <text
         x={x}
         y={y}
-        fill={payload.color || '#111827'}
+        fill={payload.color || "#111827"}
         fontSize={12}
         fontWeight={500}
-        textAnchor={isRight ? 'start' : 'end'}
+        textAnchor={isRight ? "start" : "end"}
         dominantBaseline="central"
-        style={{ pointerEvents: 'none' }}
+        style={{ pointerEvents: "none" }}
       >
         {labelText}
       </text>
@@ -107,23 +116,42 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
-      <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
-        <h3 className={`text-base sm:text-lg font-bold ${headerClassName || 'text-[#1A1A1A]'}`}>Breakdown vs Preventive Visits</h3>
+    <div
+      className={`bg-white rounded-xl shadow-sm h-full flex flex-col ${className}`}
+    >
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3
+          className="text-base font-semibold text-gray-900"
+          style={{ fontFamily: "Work Sans, sans-serif" }}
+        >
+          Type Distribution
+        </h3>
         {onDownload && (
           <Download
-            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer ${headerClassName || 'text-[#1A1A1A]'} hover:opacity-80"
-            onClick={handleDownload}
+            data-no-drag="true"
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{ pointerEvents: "auto" }}
           />
         )}
       </div>
 
-      <div className="flex-1 overflow-auto p-3 sm:p-6 pt-0">
+      <div className="flex-1 overflow-auto p-5">
         {data && data.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Pie Chart */}
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%" onResize={(w, h) => setChartSize({ w, h })}>
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                onResize={(w, h) => setChartSize({ w, h })}
+              >
                 <PieChart margin={{ top: 20, right: 70, bottom: 20, left: 70 }}>
                   <Pie
                     data={chartData}
@@ -142,7 +170,7 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
                   <Tooltip
                     formatter={(value: number, name: string, props: any) => [
                       `${value} (${props.payload.percentage.toFixed(1)}%)`,
-                      name
+                      name,
                     ]}
                   />
                 </PieChart>
@@ -151,19 +179,30 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
 
             {/* Legend and Stats */}
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Visit Type Breakdown</h4>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                Visit Type Breakdown
+              </h4>
               {chartData?.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {item.name}
+                    </span>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-gray-900">{item.value}</div>
-                    <div className="text-xs text-gray-500">{item.percentage.toFixed(1)}%</div>
+                    <div className="text-sm font-bold text-gray-900">
+                      {item.value}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {item.percentage.toFixed(1)}%
+                    </div>
                   </div>
                 </div>
               ))}
@@ -171,7 +210,8 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            No breakdown vs preventive visit data available for the selected date range
+            No breakdown vs preventive visit data available for the selected
+            date range
           </div>
         )}
       </div>
