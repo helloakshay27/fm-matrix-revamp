@@ -16,6 +16,7 @@ import InputLabel from '@mui/material/InputLabel';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, DollarSign, NotepadText } from "lucide-react";
 
 
 
@@ -208,9 +209,25 @@ const TransactionsAdd = () => {
     //     // Submit logic here
     // };
 
+    const handleClose = () => {
+		navigate("/accounting/transactions");
+	};
     return (
         <div className="w-full min-h-screen bg-gray-50 p-0 m-0">
             <div className="w-full max-w-full px-8 py-8 mx-auto">
+                <div className="mb-6">
+                                    <div className="flex items-end justify-between gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={handleClose}
+                                            className="p-0"
+                                        >
+                                            <ArrowLeft className="w-4 h-4 mr-2" />
+                                            Back to Transactions List
+                                        </Button>
+                
+                                    </div>
+                                </div>
                 <h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">New Transaction</h2>
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

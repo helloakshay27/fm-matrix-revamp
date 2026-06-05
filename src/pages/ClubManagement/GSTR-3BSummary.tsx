@@ -174,6 +174,18 @@ const GSTR3BSummary: React.FC = () => {
     );
   };
 
+  const handleDetailNavigation = (boxType: string, subBoxType: string) => {
+    const params = new URLSearchParams({
+      box_type: boxType,
+      filter_by: "CustomDate",
+      from_date: startDate,
+      state_code: "",
+      sub_box_type: subBoxType,
+      to_date: endDate,
+    });
+    navigate(`/gstr3bdetails?${params.toString()}`);
+  };
+
   if (loading) {
     return <div className="p-6">Loading GSTR-3B Summary...</div>;
   }
@@ -472,7 +484,7 @@ const GSTR3BSummary: React.FC = () => {
           </thead>
 
           <tbody>
-            <tr>
+            <tr className="cursor-pointer hover:bg-gray-50" onClick={() => handleDetailNavigation("rcm_ecommerce_supplies", "rcm_supplies_through_ecommerce")}>
               <td className="border px-4 py-3">
                 <p>
                   (i) Taxable supplies on which electronic commerce operator pays tax under Sub-section (5) of Section 9
@@ -488,7 +500,7 @@ const GSTR3BSummary: React.FC = () => {
               <td className="border px-4 py-2 text-right">₹0.00</td>
             </tr>
 
-            <tr>
+            <tr className="cursor-pointer hover:bg-gray-50" onClick={() => handleDetailNavigation("rcm_ecommerce_supplies", "rcm_supplies_through_ecommerce")}>
               <td className="border px-4 py-3">
                 <p>
                   (ii) <span className="font-semibold">
@@ -606,7 +618,7 @@ const GSTR3BSummary: React.FC = () => {
               <td className="border px-4 py-2"></td>
             </tr>
 
-            <tr>
+            <tr className="cursor-pointer hover:bg-gray-50" onClick={() => handleDetailNavigation("itc_eligible_inward_supplies", "import_of_goods")}>
               <td className="border px-4 py-2">
                 (1) Import of Goods
               </td>
@@ -616,7 +628,7 @@ const GSTR3BSummary: React.FC = () => {
               <td className="border px-4 py-2 text-right">₹0.00</td>
             </tr>
 
-            <tr>
+            <tr className="cursor-pointer hover:bg-gray-50" onClick={() => handleDetailNavigation("itc_eligible_inward_supplies", "import_of_services")}>
               <td className="border px-4 py-2">
                 (2) Import of Services
               </td>
@@ -626,7 +638,7 @@ const GSTR3BSummary: React.FC = () => {
               <td className="border px-4 py-2 text-right">₹0.00</td>
             </tr>
 
-            <tr>
+            <tr className="cursor-pointer hover:bg-gray-50" onClick={() => handleDetailNavigation("itc_eligible_inward_supplies", "inward_supplies")}>
               <td className="border px-4 py-2">
                 (3) Inward supplies liable to reverse charge (other than 1 & 2 above)
               </td>
@@ -644,7 +656,7 @@ const GSTR3BSummary: React.FC = () => {
               </td>
             </tr>
 
-            <tr>
+            <tr className="cursor-pointer hover:bg-gray-50" onClick={() => handleDetailNavigation("itc_eligible_inward_supplies", "other_inward_supplies")}>
               <td className="border px-4 py-2">
                 (5) All other ITC
               </td>

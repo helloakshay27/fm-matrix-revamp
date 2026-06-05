@@ -62,16 +62,11 @@ import { z } from "zod";
 import {
   Calendar as CalendarIcon,
   ChevronDown,
-  ChevronRight,
-  Inbox,
-  Lightbulb,
   MessageSquare,
   Pencil,
   Search,
-  Send,
   Star,
   Trash2,
-  TrendingUp,
   X,
   Loader2,
   CheckCircle,
@@ -113,7 +108,68 @@ const BRAND = {
   panelBorder: "rgba(218, 119, 86, 0.18)",
   softRowBg: "rgba(218, 119, 86, 0.04)",
   danger: "#C72030",
+  starFilled: "#ffb000",
+  starEmpty: "#e5e7eb",
+  starEmptyMuted: "#e8edf5",
 } as const;
+
+const FEEDBACK_ANIMATION_STYLES = `
+  @keyframes feedbackModalBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes feedbackModalCardIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes feedbackTabIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes feedbackCollapseIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 560px;
+    }
+  }
+
+  .feedback-modal-backdrop {
+    animation: feedbackModalBackdropIn 180ms ease-out both;
+  }
+
+  .feedback-modal-card {
+    animation: feedbackModalCardIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .feedback-tab-panel[data-state="active"] {
+    animation: feedbackTabIn 220ms ease-out both;
+  }
+
+  .feedback-collapse-panel {
+    animation: feedbackCollapseIn 240ms ease-out both;
+  }
+`;
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1869,12 +1925,14 @@ function GivenFeedbackList({
   direction,
   filterUserId,
   itemsOverride,
+  filterPrefix,
 }: {
   onGiveFeedbackClick: () => void;
   onEditFeedback: (item: FeedbackItem) => void;
   direction: "to" | "from";
   filterUserId?: number | null;
   itemsOverride?: FeedbackItem[];
+  filterPrefix?: React.ReactNode;
 }) {
   const fetchDirection = direction === "to" ? "given" : "received";
   const {
@@ -1903,12 +1961,18 @@ function GivenFeedbackList({
   const [localReadOverrides, setLocalReadOverrides] = useState<
     Record<string, boolean>
   >({});
+  const hasAutoExpandedRef = useRef(false);
 
   useEffect(() => {
     if (!isError && items.length > 0) {
       setLastStableItems(items);
     }
   }, [items, isError]);
+
+  useEffect(() => {
+    hasAutoExpandedRef.current = false;
+    setExpandedId(null);
+  }, [direction, filterUserId, itemsOverride]);
 
   const sourceItems =
     itemsOverride !== undefined
@@ -1989,24 +2053,54 @@ function GivenFeedbackList({
     ]
   );
 
-  const avgRating =
-    filtered.length > 0
-      ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(
-          1
-        )
-      : "0.0";
-  const avgRatingNum = Number(avgRating);
-  const totalFeedback = filtered.length;
-  const points = (() => {
-    let calculatedPoints = 0;
-    filtered.forEach((item) => {
-      if (item.rating === 1) calculatedPoints -= 10;
-      else if (item.rating === 2) calculatedPoints -= 5;
-      else if (item.rating === 4) calculatedPoints += 5;
-      else if (item.rating === 5) calculatedPoints += 10;
-    });
-    return calculatedPoints;
-  })();
+  useEffect(() => {
+    if (
+      direction !== "from" ||
+      filtered.length === 0 ||
+      hasAutoExpandedRef.current
+    ) {
+      return;
+    }
+
+    hasAutoExpandedRef.current = true;
+    const firstId = filtered[0].id;
+    setExpandedId(firstId);
+
+    const existingItem = sourceItems.find((i) => i.id === firstId);
+    if (existingItem) {
+      setDetailCache((prev) => ({ ...prev, [firstId]: existingItem }));
+    }
+
+    if (!detailCache[firstId]) {
+      setLoadingDetailId(firstId);
+      fetchFeedbackDetail(firstId)
+        .then((detail) => {
+          if (detail) {
+            setDetailCache((prev) => ({
+              ...prev,
+              [firstId]: {
+                ...(existingItem ?? {}),
+                ...detail,
+                positiveOpening:
+                  detail.positiveOpening ?? existingItem?.positiveOpening,
+                constructiveFeedback:
+                  detail.constructiveFeedback ??
+                  existingItem?.constructiveFeedback,
+                positiveClosing:
+                  detail.positiveClosing ?? existingItem?.positiveClosing,
+              } as FeedbackItem,
+            }));
+          }
+        })
+        .catch(() => {
+          /* ignore */
+        })
+        .finally(() => {
+          setLoadingDetailId(null);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direction, filtered]);
 
   const getAvatarBg = (name: string) => {
     const gradients = [
@@ -2027,25 +2121,25 @@ function GivenFeedbackList({
   return (
     <div className="flex flex-col gap-4 pb-4">
       {/* Search and Filter Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-1 flex-wrap items-center gap-3">
-          <div className="relative w-full max-w-[238px]">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748b]"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={
-                direction === "to"
-                  ? "Search by name or content"
-                  : "Search feedback..."
-              }
-              className="h-10 w-full rounded-[14px] border border-[#e5e8ee] bg-white py-2 pl-8 pr-3 text-[13px] text-[#111827] placeholder:text-[#64748b] outline-none transition-all focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20"
-            />
-          </div>
+      <div className="flex flex-wrap items-center gap-3">
+        {filterPrefix}
+        <div className="relative w-full max-w-[238px]">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748b]"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={
+              direction === "to"
+                ? "Search by name or content"
+                : "Search feedback..."
+            }
+            className="h-10 w-full rounded-[14px] border border-[#e5e8ee] bg-white py-2 pl-8 pr-3 text-[13px] text-[#111827] placeholder:text-[#64748b] outline-none transition-all focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20"
+          />
+        </div>
           <Select value={ratingFilter} onValueChange={setRatingFilter}>
             <SelectTrigger className="h-10 w-[126px] rounded-[14px] border border-[#e5e8ee] bg-white text-[13px] text-[#64748b] focus:ring-[#DA7756]/20">
               <SelectValue placeholder="All Ratings" />
@@ -2069,12 +2163,6 @@ function GivenFeedbackList({
               <SelectItem value="read">Read</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <p className="min-w-[90px] text-center text-[12px] font-medium text-[#64748b]">
-          {totalFeedback} {totalFeedback === 1 ? "item" : "items"}
-        </p>
-
       </div>
 
       <div className="space-y-3">
@@ -2094,7 +2182,7 @@ function GivenFeedbackList({
         ) : filtered.length === 0 ? (
           <FeedbackEmptyState />
         ) : (
-          filtered.map((item, index) => {
+          filtered.map((item) => {
             const expanded = expandedId === item.id;
             const detail = detailCache[item.id] ?? item;
             const isLoadingDetail = loadingDetailId === item.id;
@@ -2114,27 +2202,32 @@ function GivenFeedbackList({
               .map((part) => part.charAt(0).toUpperCase())
               .join("");
             const avatarBg = getAvatarBg(displayName || "T");
-            const situationText =
+            const summaryText =
+              detail.detailPreview ||
+              detail.positiveOpening ||
+              detail.reviews ||
+              "Feedback details available.";
+            const whatWentWellText =
               detail.reviews ||
               detail.positiveOpening ||
               detail.detailPreview ||
-              "No situation shared.";
-            const behaviorText =
+              "No notes shared.";
+            const improveText =
               detail.constructiveFeedback ||
               detail.positiveOpening ||
               detail.detailPreview ||
-              "No behavior notes shared.";
+              "No improvement notes shared.";
             const impactText =
               detail.positiveClosing ||
               detail.detailPreview ||
               "No impact notes shared.";
-            const isLatestFeedback = index === 0;
+            const previewText = summaryText;
 
             return (
               <div
                 key={item.id}
                 className={cn(
-                  "group rounded-[18px] border bg-white transition-all duration-200",
+                  "group overflow-hidden rounded-[18px] border bg-white transition-all duration-300 ease-out",
                   expanded
                     ? "border-[#e5e8ee] shadow-[0_10px_28px_rgba(15,23,42,0.04)]"
                     : "border-[#e5e8ee] hover:border-[#d7dce5]"
@@ -2163,42 +2256,42 @@ function GivenFeedbackList({
                         <p className="text-[14px] font-bold leading-tight text-[#111827]">
                           {displayName}
                         </p>
-                        {displayStatus === "unread" && (
-                          <span
-                            className="h-2 w-2 rounded-full bg-[#e77252]"
-                            aria-label="Unread feedback"
-                          />
-                        )}
-                        {isLatestFeedback && (
-                          <span className="rounded-full bg-[#fff0eb] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#f06f4f]">
-                            New
-                          </span>
-                        )}
                       </div>
                       <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[#555b66]">
-                        {detail.detailPreview ||
-                          detail.reviews ||
-                          detail.positiveOpening ||
-                          "Feedback details available."}
+                        {previewText}
                       </p>
                     </button>
                   </div>
 
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <StarRatingRow value={item.rating} />
-                    <span className="text-[11px] font-medium text-[#f06f4f]">
-                      {item.date}
-                    </span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <div className="flex flex-col items-end gap-1">
+                      <StarRatingRow value={item.rating} />
+                      <span
+                        className={cn(
+                          "text-[11px] font-medium",
+                          direction === "from"
+                            ? "text-[#BC7D64]"
+                            : "text-[#9ca3af]"
+                        )}
+                      >
+                        {item.date}
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      className="mt-1 flex h-8 w-8 items-center justify-center rounded-full border border-[#e5e8ee] bg-white text-[#f06f4f] transition-colors hover:bg-[#fff7f4]"
+                      className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full border border-[#e5e8ee] bg-white transition-colors hover:bg-[#fff7f4]",
+                        direction === "from"
+                          ? "text-[#BC7D64]"
+                          : "text-[#9ca3af]"
+                      )}
                       aria-expanded={expanded}
                       aria-label={expanded ? "Collapse" : "Expand"}
                       onClick={() => handleExpand(item.id)}
                     >
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 transition-transform",
+                          "h-4 w-4 transition-transform duration-200 ease-out",
                           expanded && "rotate-180"
                         )}
                       />
@@ -2207,7 +2300,7 @@ function GivenFeedbackList({
                 </div>
 
                 {expanded && (
-                  <div className="px-5 pb-5">
+                  <div className="feedback-collapse-panel overflow-hidden px-5 pb-5">
                     {isLoadingDetail ? (
                       <div className="flex items-center gap-2 py-5 text-xs text-neutral-400">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -2215,19 +2308,22 @@ function GivenFeedbackList({
                       </div>
                     ) : (
                       <>
+                        <p className="mb-4 text-[13px] leading-relaxed text-[#555b66]">
+                          {summaryText}
+                        </p>
                         <div className="grid gap-3 lg:grid-cols-3">
                           {[
                             {
-                              label: "Situation",
+                              label: "What went well",
                               dot: "bg-[#3b82f6]",
                               bg: "bg-[#eef6ff]",
-                              text: situationText,
+                              text: whatWentWellText,
                             },
                             {
-                              label: "Behavior",
+                              label: "Improve",
                               dot: "bg-[#eab308]",
                               bg: "bg-[#fff9e8]",
-                              text: behaviorText,
+                              text: improveText,
                             },
                             {
                               label: "Impact",
@@ -2468,8 +2564,8 @@ function EditFeedbackModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
-      <div className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-xl">
+    <div className="feedback-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+      <div className="feedback-modal-card relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between px-1">
           <h2 className="text-[17px] font-bold text-[#111827]">Edit Feedback</h2>
           <button
@@ -2500,7 +2596,7 @@ function EditFeedbackModal({
                 title: "Impact",
                 value: positiveClose,
                 onChange: setPositiveClose,
-                placeholder: "What was the result or effect?",
+                placeholder: "What was the result of this?",
               },
             ].map(({ title, value, onChange, placeholder }) => (
               <div key={title} className="space-y-2">
@@ -2724,14 +2820,14 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
         {/* ── Searchable recipient dropdown (BhagSection style) ── */}
         <div className="space-y-2">
           <Label className="text-[12px] font-bold text-[#111827]">
-            To
+            Select Employee
           </Label>
           <UserSelectFeedback
             value={recipient}
             onChange={setRecipient}
             users={teamMembers}
             disabled={teamMembersLoading}
-            placeholder=""
+            placeholder="Select"
           />
         </div>
 
@@ -2796,7 +2892,7 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
             title: "Impact",
             value: positiveClose,
             onChange: setPositiveClose,
-            placeholder: "What was the result or effect?",
+            placeholder: "What was the result of this?",
           },
         ].map(({ title, value, onChange, placeholder }) => (
           <div key={title} className="space-y-2">
@@ -2842,7 +2938,7 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
           type="button"
           onClick={handleSubmit}
           disabled={isPending || teamMembersLoading}
-          className="inline-flex h-[34px] w-full items-center justify-center gap-2 rounded-[7px] bg-[#e77252] px-8 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] disabled:opacity-60"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[10px] bg-[#e77252] px-8 text-[13px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] disabled:opacity-60"
         >
           {isPending ? (
             <>
@@ -2885,12 +2981,10 @@ function FeedbackPage() {
     selectedReceivedUserId
   );
   const givenFeedback = givenFeedbackData.items;
-  const givenSummary = givenFeedbackData.summary;
 
   const { data: selectedReceivedFeedbackData = { items: [] } } =
     useFeedbackList("received", selectedReceivedUserId);
   const selectedReceivedFeedback = selectedReceivedFeedbackData.items;
-  const selectedReceivedSummary = selectedReceivedFeedbackData.summary;
 
   const selectedReceivedMember =
     selectedReceivedUserId == null
@@ -2901,14 +2995,12 @@ function FeedbackPage() {
 
   const receivedFeedback = selectedReceivedFeedback;
 
-  // ── Count for badge: use selected user's actual feedback count ──
-  const receivedBadgeCount = selectedReceivedFeedback.length;
-
   return (
     <div
       className="min-h-[calc(100vh-5rem)] bg-white px-8 py-7"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
+      <style>{FEEDBACK_ANIMATION_STYLES}</style>
       <div className="w-full max-w-[1020px] space-y-6">
         <header className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f7f7f6]">
@@ -2922,8 +3014,8 @@ function FeedbackPage() {
               Team Feedback
             </h1>
             <p className="mt-1 text-[13px] font-medium text-[#64748b]">
-              Give and receive constructive feedback using the Sandwich
-              <span className="text-[#ef6f4f]"> technique</span>
+              Give and receive constructive feedback using the Sandwich{" "}
+              <span className="text-[#ef6f4f]">technique</span>.
             </p>
           </div>
         </header>
@@ -2933,47 +3025,30 @@ function FeedbackPage() {
           onValueChange={(v) => setFeedbackTab(v as any)}
           className="w-full"
         >
-          <TabsList className="inline-flex h-11 w-auto items-center justify-start gap-1 rounded-full border border-[#edf0f4] bg-white p-1 shadow-[0_6px_16px_rgba(15,23,42,0.06)]">
+          <TabsList className="inline-flex h-11 w-auto items-center justify-start gap-1 rounded-full border border-[#edf0f4] bg-white p-1 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
             <TabsTrigger
               value="received"
-              className="h-9 rounded-full px-4 text-[13px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
+              className="h-9 rounded-full border border-transparent px-5 text-[13px] font-semibold text-[#64748b] transition-colors hover:bg-[#fff7f4] data-[state=active]:border-[#e77252] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
             >
-              <Inbox className="mr-2 h-4 w-4" />
               Received
-              {receivedBadgeCount > 0 && (
-                <span
-                  className="ml-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[10px] font-extrabold text-[#e77252]"
-                >
-                  {receivedBadgeCount}
-                </span>
-              )}
             </TabsTrigger>
             <TabsTrigger
               value="given"
-              className="h-9 rounded-full px-4 text-[13px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
+              className="h-9 rounded-full border border-transparent px-5 text-[13px] font-semibold text-[#64748b] transition-colors hover:bg-[#fff7f4] data-[state=active]:border-[#e77252] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
             >
-              <Send className="mr-2 h-4 w-4" />
               Given
-              {givenFeedback.length > 0 && (
-                <span
-                  className="ml-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[10px] font-extrabold text-[#e77252]"
-                >
-                  {givenFeedback.length}
-                </span>
-              )}
             </TabsTrigger>
             <TabsTrigger
               value="give"
-              className="h-9 rounded-full px-4 text-[13px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
+              className="h-9 rounded-full border border-transparent px-5 text-[13px] font-semibold text-[#64748b] transition-colors hover:bg-[#fff7f4] data-[state=active]:border-[#e77252] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
             >
-              <Pencil className="mr-2 h-4 w-4" />
               Give Feedback
             </TabsTrigger>
           </TabsList>
 
           <TabsContent
             value="received"
-            className="mt-6 space-y-4 focus-visible:outline-none"
+            className="feedback-tab-panel mt-6 space-y-4 focus-visible:outline-none"
           >
             <div className="space-y-5">
               <div className="inline-flex items-center gap-3 rounded-[14px] bg-[#f5f2eb] p-2">
@@ -3010,7 +3085,7 @@ function FeedbackPage() {
 
           <TabsContent
             value="given"
-            className="mt-6 focus-visible:outline-none"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
           >
             <AsyncBoundary>
               <GivenFeedbackList
@@ -3027,9 +3102,14 @@ function FeedbackPage() {
             </AsyncBoundary>
           </TabsContent>
 
-          <TabsContent value="give" className="mt-6 focus-visible:outline-none">
+          <TabsContent
+            value="give"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
+          >
             <AsyncBoundary>
-              <GiveFeedbackForm onSubmitted={() => setFeedbackTab("given")} />
+              <div className="max-w-[760px]">
+                <GiveFeedbackForm onSubmitted={() => setFeedbackTab("given")} />
+              </div>
             </AsyncBoundary>
           </TabsContent>
         </Tabs>

@@ -473,7 +473,8 @@ export const RecurringInvoicesListPage: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            // className="bg-primary text-primary-foreground hover:bg-primary/90"
+             className='fm-button-fix fm-button-brand px-4 py-2P'
             onClick={() => navigate("/accounting/recurring-invoices/create")}
           >
             <Plus className="w-4 h-4 mr-2" /> Add

@@ -2020,8 +2020,8 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
+                        <div className="border border-border rounded-lg overflow-x-auto">
+                            <table className="w-full min-w-[900px]">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
@@ -2038,34 +2038,45 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                     {items.map((item, index) => (
                                         <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <ItemSearchInput
-                                                        value={item.name}
-                                                        itemOptions={itemOptions}
-                                                        onSelect={(selected) => {
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            let taxFields: Partial<Item> = {};
-                                                            if (selected.tax_preference === 'non_taxable') {
-                                                                taxFields = { item_tax_type: 'non_taxable', tax_exemption_id: selected.tax_exemption_id };
-                                                            } else if (selected.tax_preference === 'taxable') {
-                                                                taxFields = { item_tax_type: isSameState ? 'tax_group' : 'tax_rate', tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
-                                                            } else if (selected.tax_preference === 'out_of_scope') {
-                                                                taxFields = { item_tax_type: 'out_of_scope' };
-                                                            } else if (selected.tax_preference === 'non_gst_supply') {
-                                                                taxFields = { item_tax_type: 'non_gst_supply' };
-                                                            }
-                                                            updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
-                                                        }}
-                                                        onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
-                                                    />
-                                                </FormControl>
+                                                <ItemSearchInput
+                                                    value={item.name}
+                                                    itemOptions={itemOptions}
+                                                    onSelect={(selected) => {
+                                                        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                        let taxFields: Partial<Item> = {};
+                                                        if (selected.tax_preference === 'non_taxable') {
+                                                            taxFields = { item_tax_type: 'non_taxable', tax_exemption_id: selected.tax_exemption_id };
+                                                        } else if (selected.tax_preference === 'taxable') {
+                                                            taxFields = {
+                                                                item_tax_type: isSameState ? 'tax_group' : 'tax_rate',
+                                                                tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id
+                                                            };
+                                                        } else if (selected.tax_preference === 'out_of_scope') {
+                                                            taxFields = { item_tax_type: 'out_of_scope' };
+                                                        } else if (selected.tax_preference === 'non_gst_supply') {
+                                                            taxFields = { item_tax_type: 'non_gst_supply' };
+                                                        }
+                                                        updateItemFields(index, {
+                                                            item_id: String(selected.id),
+                                                            name: selected.name,
+                                                            rate: selected.rate || 0,
+                                                            description: selected.description || '',
+                                                            ...taxFields
+                                                        });
+                                                    }}
+                                                    onType={(typed) => {
+                                                        updateItemFields(index, { item_id: null, name: typed });
+                                                    }}
+                                                />
                                                 <TextField
                                                     fullWidth
+                                                    label="Item Description"
                                                     size="small"
                                                     placeholder="Description"
                                                     value={item.description}
                                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 1 }}
+                                                    sx={{ mt: 2 }}
+                                                    InputLabelProps={{ shrink: true }}
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
