@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 
 type DateRange = { startDate: Date; endDate: Date };
 
@@ -8,13 +8,15 @@ interface MeetingRoomUtilizationCardProps {
 }
 
 const getCellColor = (range: string) => {
-  if (range === 'Less 30%' || range === '30%-39%') return 'bg-red-100';
-  if (range === '40%-50%' || range === '50%-60%' || range === '60%-69%') return 'bg-yellow-100';
-  return 'bg-green-100';
+  if (range === "Less 30%" || range === "30%-39%") return "bg-red-100";
+  if (range === "40%-50%" || range === "50%-60%" || range === "60%-69%")
+    return "bg-yellow-100";
+  return "bg-green-100";
 };
 
 const parseRange = (label: string) => {
-  if (!label || typeof label !== 'string') return { min: -Infinity, max: Infinity };
+  if (!label || typeof label !== "string")
+    return { min: -Infinity, max: Infinity };
   const lessMatch = label.match(/Less\s*(\d+)%?/i);
   if (lessMatch) {
     const max = Number(lessMatch[1]);
@@ -29,81 +31,107 @@ const parseRange = (label: string) => {
   return { min: -Infinity, max: Infinity };
 };
 
-export const MeetingRoomUtilizationCard: React.FC<MeetingRoomUtilizationCardProps> = ({ data }) => {
+export const MeetingRoomUtilizationCard: React.FC<
+  MeetingRoomUtilizationCardProps
+> = ({ data }) => {
   const centerList = useMemo(() => {
-    const apiCenters = data?.data?.center_utilization_data ?? data?.center_utilization_data ?? null;
+    const apiCenters =
+      data?.data?.center_utilization_data ??
+      data?.center_utilization_data ??
+      null;
     return Array.isArray(apiCenters) ? apiCenters : [];
   }, [data]);
 
   const rangeList = useMemo(() => {
-    const ranges = data?.data?.utilization_ranges ?? data?.utilization_ranges ?? null;
-    if (ranges && typeof ranges === 'object') return Object.keys(ranges);
+    const ranges =
+      data?.data?.utilization_ranges ?? data?.utilization_ranges ?? null;
+    if (ranges && typeof ranges === "object") return Object.keys(ranges);
     return [] as string[];
   }, [data]);
 
   const getRoomsForRange = (center: any, rangeLabel: string) => {
     const rooms = center?.rooms ?? [];
-    if (!Array.isArray(rooms) || rooms.length === 0) return '';
+    if (!Array.isArray(rooms) || rooms.length === 0) return "";
     const { min, max } = parseRange(rangeLabel);
     const matched = rooms
       .filter((r: any) => {
-        const pct = Number(r.utilization_percentage ?? r.utilization_percentage_percentage ?? NaN);
+        const pct = Number(
+          r.utilization_percentage ?? r.utilization_percentage_percentage ?? NaN
+        );
         if (Number.isNaN(pct)) return false;
         return pct >= min && pct <= max;
       })
-      .map((r: any) => r.room_name || '')
+      .map((r: any) => r.room_name || "")
       .filter(Boolean);
-    return matched.join(', ');
+    return matched.join(", ");
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-md">
-      <div className="px-4 py-3 border-b font-semibold flex items-center justify-between">
-        <span>Center Wise - Meeting Room Utilization</span>
-        {/* Legend */}
-        <div className="hidden sm:flex items-center gap-6 text-[13px] text-gray-700">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3.5 h-3.5 rounded-full border border-gray-300 bg-red-100" />
-            <span>0–39%</span>
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3
+          className="text-base font-semibold text-gray-900"
+          style={{ fontFamily: "Work Sans, sans-serif" }}
+        >
+          Center Wise - Meeting Room Utilization
+        </h3>
+        <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-red-100 border border-red-200" />
+            0–39%
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3.5 h-3.5 rounded-full border border-gray-300 bg-yellow-100" />
-            <span>40–69%</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-yellow-100 border border-yellow-200" />
+            40–69%
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3.5 h-3.5 rounded-full border border-gray-300 bg-green-100" />
-            <span>70–100%</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-green-100 border border-green-200" />
+            70–100%
           </div>
         </div>
       </div>
-      <div className="p-4">
+      <div className="p-5">
         {centerList.length === 0 || rangeList.length === 0 ? (
-          <div className="text-sm text-gray-600">No utilization data available.</div>
+          <div className="text-sm text-gray-600">
+            No utilization data available.
+          </div>
         ) : (
           <div className="border border-gray-300">
             {centerList.map((center: any, siteIndex: number) => (
-              <div key={siteIndex} className="grid grid-cols-9 border-b border-gray-300">
+              <div
+                key={siteIndex}
+                className="grid grid-cols-9 border-b border-gray-300"
+              >
                 <div className="p-3 font-medium text-sm text-right border-b border-gray-300 bg-[#F6F4EE]">
-                  {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
+                  {center.center_name ||
+                    center.site_name ||
+                    center.name ||
+                    `Center ${siteIndex + 1}`}
                 </div>
-                {rangeList.slice(0, 8).map((range: string, rangeIndex: number) => {
-                  const roomName = getRoomsForRange(center, range);
-                  const cellColor = getCellColor(range);
-                  return (
-                    <div
-                      key={rangeIndex}
-                      className={`border-l border-t border-gray-300 p-2 text-xs font-semibold text-center ${cellColor} min-h-[80px] flex items-center justify-center`}
-                    >
-                      {roomName ? (
-                        <div className="leading-tight">
-                          {roomName.includes(',')
-                            ? roomName.split(',').map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
-                            : roomName}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
+                {rangeList
+                  .slice(0, 8)
+                  .map((range: string, rangeIndex: number) => {
+                    const roomName = getRoomsForRange(center, range);
+                    const cellColor = getCellColor(range);
+                    return (
+                      <div
+                        key={rangeIndex}
+                        className={`border-l border-t border-gray-300 p-2 text-xs font-semibold text-center ${cellColor} min-h-[80px] flex items-center justify-center`}
+                      >
+                        {roomName ? (
+                          <div className="leading-tight">
+                            {roomName.includes(",")
+                              ? roomName
+                                  .split(",")
+                                  .map((name: string, i: number) => (
+                                    <div key={i}>{name.trim()}</div>
+                                  ))
+                              : roomName}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
               </div>
             ))}
             <div className="grid grid-cols-9">
@@ -121,7 +149,9 @@ export const MeetingRoomUtilizationCard: React.FC<MeetingRoomUtilizationCardProp
         )}
       </div>
       <div className="px-4 py-3 text-xs text-gray-600 border-t">
-        Note: This table presents meeting room-wise utilization along with corresponding utilization percentages, providing a center-wise comparison.
+        Note: This table presents meeting room-wise utilization along with
+        corresponding utilization percentages, providing a center-wise
+        comparison.
       </div>
     </div>
   );
