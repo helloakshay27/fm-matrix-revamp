@@ -354,6 +354,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>([]);
   const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
+  const [hiddenTomorrowScheduledIds, setHiddenTomorrowScheduledIds] = useState<Set<string>>(new Set());
   const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
   const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>({});
 
@@ -898,15 +899,16 @@ const BusinessCompassDailyReport: React.FC = () => {
     return ids;
   }, [mergedTasksIssues, planningItems]);
 
-  // Next-day scheduled items deduped against manual plan entries (never in payload)
+  // Next-day scheduled items shown as lightweight rows; starred selections live in planningItems.
   const dedupedTomorrowItems = useMemo(() => {
-    const manualTitles = new Set(
-      planningItems.map((p) => cleanReportText(p.text).toLowerCase())
-    );
     return tomorrowScheduledItems.filter(
-      (item) => !manualTitles.has(cleanReportText(item.title).toLowerCase())
+      (item) => !hiddenTomorrowScheduledIds.has(item.id)
     );
-  }, [planningItems, tomorrowScheduledItems]);
+  }, [hiddenTomorrowScheduledIds, tomorrowScheduledItems]);
+
+  useEffect(() => {
+    setHiddenTomorrowScheduledIds(new Set());
+  }, [startDate]);
 
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpiLoading, setKpiLoading] = useState(false);
@@ -1100,6 +1102,21 @@ const BusinessCompassDailyReport: React.FC = () => {
     setHiddenAutoIds((prev) => new Set([...prev, sourceId]));
   };
 
+  const planningItemMatchesSourceItem = (
+    plan: { text: string; source_id?: number | null; source_type?: string | null },
+    item: any
+  ) => {
+    const sourceId = item.originalData?.id ?? null;
+    const itemText = cleanReportText(item.title || item.text || "").toLowerCase();
+    return (
+      (plan.source_id != null &&
+        sourceId != null &&
+        plan.source_id === sourceId &&
+        (!plan.source_type || plan.source_type === item.type)) ||
+      cleanReportText(plan.text).toLowerCase() === itemText
+    );
+  };
+
   const addItemToTomorrow = (item: any) => {
     const text = cleanReportText(item.title || item.text || "");
     if (!text) return;
@@ -1117,12 +1134,48 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
+  const toggleScheduledTomorrowStar = (item: any) => {
+    const text = cleanReportText(item.title || item.text || "");
+    if (!text) return;
+
+    setPlanningItems((prev) => {
+      let found = false;
+      const updated = prev.map((plan) => {
+        if (!found && planningItemMatchesSourceItem(plan, item)) {
+          found = true;
+          return { ...plan, starred: !plan.starred };
+        }
+        return plan;
+      });
+
+      if (found) return updated;
+
+      return [
+        ...updated,
+        {
+          id: `tomorrow-${item.id}-${Date.now()}`,
+          text,
+          starred: true,
+          source_id: item.originalData?.id ?? null,
+          source_type: item.type ?? null,
+          originalData: item.originalData ?? null,
+        },
+      ];
+    });
+    markDraftDirty();
+  };
+
   const removeItemFromTomorrow = (item: any) => {
     const text = cleanReportText(item.title || item.text || "").toLowerCase();
     setPlanningItems((prev) =>
       prev.filter((p) => cleanReportText(p.text).toLowerCase() !== text)
     );
     markDraftDirty();
+  };
+
+  const hideTomorrowScheduledItem = (item: any) => {
+    setHiddenTomorrowScheduledIds((prev) => new Set([...prev, item.id]));
+    removeItemFromTomorrow(item);
   };
 
   const addAllOverdueToTomorrow = () => {
@@ -3752,7 +3805,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Your plan
                         </h4>
                         <div className="space-y-4">
-                          {planningItems.map((item) => {
+                          {planningItems
+                            .map((item, index) => ({ item, index }))
+                            .filter(
+                              ({ item }) =>
+                                !dedupedTomorrowItems.some((scheduledItem) =>
+                                  planningItemMatchesSourceItem(item, scheduledItem)
+                                )
+                            )
+                            .map(({ item }) => {
                             const matchedTask = item.source_id && item.source_type
                               ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
                               : null;
@@ -3939,14 +4000,34 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            {dedupedTomorrowItems.map((item) => (
+                            {dedupedTomorrowItems.map((item) => {
+                              const plannedItem = planningItems.find((plan) =>
+                                planningItemMatchesSourceItem(plan, item)
+                              );
+
+                              return (
                               <div
                                 key={item.id}
                                 className="relative animate-in fade-in slide-in-from-top-1 duration-200"
                               >
-                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
+                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
                                   <div className="flex items-center gap-3">
-                                    <Star size={18} className="text-gray-300 shrink-0" />
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleScheduledTomorrowStar(item)}
+                                      className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                      title={plannedItem?.starred ? "Unstar" : "Star this priority"}
+                                    >
+                                      <Star
+                                        size={18}
+                                        className={cn(
+                                          "transition-colors duration-200",
+                                          plannedItem?.starred
+                                            ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                            : "text-gray-300 hover:text-yellow-400"
+                                        )}
+                                      />
+                                    </button>
                                     <span className={cn(
                                       "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
                                       item.type === "task"
@@ -3971,6 +4052,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         {item.priority}
                                       </span>
                                     )}
+                                    <button
+                                      type="button"
+                                      onClick={() => hideTomorrowScheduledItem(item)}
+                                      className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                    >
+                                      <X size={16} />
+                                    </button>
                                   </div>
                                   {(() => {
                                     const d = item.originalData;
@@ -4025,7 +4113,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   })()}
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

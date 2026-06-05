@@ -342,6 +342,7 @@ const WeeklyReports = () => {
     const [planWeekOpenItemId, setPlanWeekOpenItemId] = useState<string | null>(null);
     const [nextWeekScheduledItems, setNextWeekScheduledItems] = useState<any[]>([]);
     const [nextWeekScheduledLoading, setNextWeekScheduledLoading] = useState(false);
+    const [hiddenNextWeekScheduledIds, setHiddenNextWeekScheduledIds] = useState<Set<string>>(new Set());
     const [starredCompletedItems, setStarredCompletedItems] = useState<Record<string, boolean>>({});
     const [showClosureModal, setShowClosureModal] = useState(false);
     const [closureItem, setClosureItem] = useState<any>(null);
@@ -1620,6 +1621,7 @@ const WeeklyReports = () => {
     const nextWeekScheduledByDay = useMemo(() => {
         const grouped: Record<string, any[]> = {};
         nextWeekScheduledItems.forEach((item) => {
+            if (hiddenNextWeekScheduledIds.has(item.id)) return;
             const dateStr = item.date ? item.date.slice(0, 10) : null;
             const dayKey = dateStr ? nextWeekDateToKey[dateStr] : null;
             const key = dayKey ?? upcomingDays[0]?.key;
@@ -1628,7 +1630,11 @@ const WeeklyReports = () => {
             grouped[key].push(item);
         });
         return grouped;
-    }, [nextWeekScheduledItems, nextWeekDateToKey, upcomingDays]);
+    }, [hiddenNextWeekScheduledIds, nextWeekDateToKey, nextWeekScheduledItems, upcomingDays]);
+
+    useEffect(() => {
+        setHiddenNextWeekScheduledIds(new Set());
+    }, [weekStart]);
 
     useEffect(() => {
         const fetchSystemSops = async () => {
@@ -2094,7 +2100,21 @@ const WeeklyReports = () => {
         return ids;
     }, [mergedTasksIssues, dayPlans]);
 
-    const addItemToNextWeek = (item: any, dayKey?: string) => {
+    const planMatchesSourceItem = (
+        plan: { text: string; source_id?: any; source_type?: string },
+        item: any
+    ) => {
+        const sourceId = item.originalData?.id ?? item.id;
+        const titleLower = (item.title || "").toLowerCase().trim();
+        return (
+            (plan.source_id != null &&
+                plan.source_id === sourceId &&
+                (!plan.source_type || plan.source_type === item.type)) ||
+            plan.text.toLowerCase().trim() === titleLower
+        );
+    };
+
+    const addItemToNextWeek = (item: any, dayKey?: string, starred = false) => {
         const text = (item.title || "").trim();
         if (!text) return;
         const targetDay = dayKey ?? upcomingDays[0]?.key;
@@ -2114,7 +2134,7 @@ const WeeklyReports = () => {
                     {
                         id: crypto.randomUUID(),
                         text,
-                        starred: false,
+                        starred,
                         source_id: item.originalData?.id ?? item.id,
                         source_type: item.type,
                         originalData: item.originalData ?? null,
@@ -2123,6 +2143,48 @@ const WeeklyReports = () => {
             }));
         }
         setPlanWeekOpenItemId(null);
+    };
+
+    const toggleScheduledItemPlanStar = (item: any, dayKey: string) => {
+        const text = (item.title || "").trim();
+        if (!text) return;
+
+        setDayPlans((prev) => {
+            let found = false;
+            const updated: typeof prev = {};
+
+            for (const [key, tasks] of Object.entries(prev)) {
+                updated[key] = tasks.map((task) => {
+                    if (!found && planMatchesSourceItem(task, item)) {
+                        found = true;
+                        return { ...task, starred: !task.starred };
+                    }
+                    return task;
+                });
+            }
+
+            if (!found) {
+                updated[dayKey] = [
+                    {
+                        id: crypto.randomUUID(),
+                        text,
+                        starred: true,
+                        source_id: item.originalData?.id ?? item.id,
+                        source_type: item.type,
+                        originalData: item.originalData ?? null,
+                    },
+                    ...(updated[dayKey] || []),
+                ];
+            }
+
+            return updated;
+        });
+        setPlanWeekOpenItemId(null);
+    };
+
+    const hideNextWeekScheduledItem = (item: any) => {
+        setHiddenNextWeekScheduledIds((prev) => new Set([...prev, item.id]));
+        removeItemFromNextWeek(item);
     };
 
     const removeItemFromNextWeek = (item: any) => {
@@ -2874,14 +2936,14 @@ const WeeklyReports = () => {
                                     <Badge className={badgePoints}>
                                         {weeklyScore.breakdown.achievements}/6 pts
                                     </Badge>
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={handleAddWin}
-                                        className="h-9 rounded-[10px] bg-[#f5ebe8] px-3 text-[12px] font-bold text-[#881337] transition-colors hover:bg-[#eaddd7] flex items-center justify-center gap-1.5 shadow-none border-none"
+                                        className="rounded-[8px] shadow-lg font-semibold text-sm"
                                     >
-                                        <Plus className="h-3.5 w-3.5" />
+                                        <Plus size={14} />
                                         Add Win
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                             <div className="space-y-4 p-6 max-h-[420px] overflow-y-auto">
@@ -3826,11 +3888,31 @@ const WeeklyReports = () => {
                                                     <span className="text-xs font-medium">Fetching upcoming assignments...</span>
                                                 </div>
                                             ) : (
-                                                nextWeekScheduledByDay[day.key]?.map((item: any) => (
+                                                nextWeekScheduledByDay[day.key]?.map((item: any) => {
+                                                    const plannedItem = Object.values(dayPlans)
+                                                        .flat()
+                                                        .find((plan) => planMatchesSourceItem(plan, item));
+
+                                                    return (
                                                     <div
                                                         key={item.id}
-                                                        className="relative flex min-h-[56px] items-center gap-3 rounded-[10px] border border-gray-200 bg-gray-50 px-4 py-2 shadow-sm cursor-not-allowed select-none"
+                                                        className="relative flex min-h-[56px] items-center gap-3 rounded-[10px] border border-gray-200 bg-gray-50 px-4 py-2 shadow-sm transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]"
                                                     >
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleScheduledItemPlanStar(item, day.key)}
+                                                            className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                            title={plannedItem?.starred ? "Unstar" : "Star this priority"}
+                                                        >
+                                                            <Star
+                                                                className={cn(
+                                                                    "h-[18px] w-[18px] transition-colors duration-200",
+                                                                    plannedItem?.starred
+                                                                        ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                                                        : "text-gray-300 hover:text-yellow-400"
+                                                                )}
+                                                            />
+                                                        </button>
                                                         <span className={cn(
                                                             "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
                                                             item.type === "task" ? "bg-[#DA7756]/10 text-[#9e4f36]" : item.type === "issue" ? "bg-violet-100 text-violet-700" : "bg-yellow-100 text-yellow-700"
@@ -3866,10 +3948,26 @@ const WeeklyReports = () => {
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => hideNextWeekScheduledItem(item)}
+                                                            className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
                                                     </div>
-                                                ))
+                                                    );
+                                                })
                                             )}
-                                            {dayPlans[day.key]?.map((planObj, index) => (
+                                            {dayPlans[day.key]
+                                                ?.map((planObj, index) => ({ planObj, index }))
+                                                .filter(
+                                                    ({ planObj }) =>
+                                                        !nextWeekScheduledByDay[day.key]?.some((item: any) =>
+                                                            planMatchesSourceItem(planObj, item)
+                                                        )
+                                                )
+                                                .map(({ planObj, index }) => (
                                                 <div
                                                     key={planObj.id}
                                                     id={`plan-${planObj.id}`}
@@ -3946,7 +4044,7 @@ const WeeklyReports = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemovePlan(day.key, index)}
-                                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500"
+                                                            className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
                                                         >
                                                             <X className="h-4 w-4" />
                                                         </button>
