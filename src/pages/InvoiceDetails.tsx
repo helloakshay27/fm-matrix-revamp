@@ -346,12 +346,21 @@ export const InvoiceDetails = () => {
             return;
         }
 
+        const payload = {
+            level_id: Number(levelId),
+            user_id: Number(userId),
+            approve: false,
+            rejection_reason: rejectComment.trim(),
+        };
+
         try {
-            toast.success("PO rejected successfully");
+            await dispatch(approveInvoice({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+            toast.success("Invoice rejected successfully");
+            refreshPendingApprovalsCount();
             navigate(`/finance/pending-approvals`);
         } catch (error) {
-            console.error("Error rejecting PO:", error);
-            toast.error(String(error) || "Failed to reject PO");
+            console.error("Error rejecting invoice:", error);
+            toast.error(String(error) || "Failed to reject invoice");
         } finally {
             setOpenRejectDialog(false);
             setRejectComment("");
