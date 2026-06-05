@@ -7,51 +7,8 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { CreateEmailRuleDialogNew } from '@/components/dialogs/CreateEmailRuleDialogNew';
 import { EditEmailRuleDialog } from '@/components/dialogs/EditEmailRuleDialog';
 import { EmailRule } from '@/types/emailRule';
-import { emailRuleService } from '@/services/emailRuleService';
+import { emailRuleService, mockEmailRules } from '@/services/emailRuleService';
 import { toast } from 'sonner';
-
-// Mock data
-const mockEmailRules: EmailRule[] = [
-  {
-    id: '1',
-    srNo: 1,
-    ruleName: 'PPM Reminder - Equipment',
-    triggerType: 'PPM',
-    triggerTo: 'Supplier',
-    role: 'Maintenance Manager',
-    periodValue: 7,
-    periodType: 'days',
-    createdOn: '2024-01-15',
-    createdBy: 'Admin User',
-    active: true,
-  },
-  {
-    id: '2',
-    srNo: 2,
-    ruleName: 'AMC Expiry Alert',
-    triggerType: 'AMC',
-    triggerTo: 'Occupant Admin',
-    role: 'Facility Manager',
-    periodValue: 30,
-    periodType: 'days',
-    createdOn: '2024-01-14',
-    createdBy: 'System Admin',
-    active: false,
-  },
-  {
-    id: '3',
-    srNo: 3,
-    ruleName: 'Weekly PPM Check',
-    triggerType: 'PPM',
-    triggerTo: 'Site Admin',
-    role: 'Technician',
-    periodValue: 1,
-    periodType: 'weeks',
-    createdOn: '2024-01-13',
-    createdBy: 'Admin User',
-    active: true,
-  },
-];
 
 export const EmailRuleSetupPage: React.FC = () => {
   const [emailRules, setEmailRules] = useState<EmailRule[]>([]);
@@ -97,26 +54,65 @@ export const EmailRuleSetupPage: React.FC = () => {
   const handleCreateRule = (data: Omit<EmailRule, 'id' | 'srNo' | 'createdOn' | 'createdBy' | 'active'>) => {
     const newRule: EmailRule = {
       ...data,
-      id: String(emailRules.length + 1),
+      id: `local_${Date.now()}`,
       srNo: emailRules.length + 1,
       createdOn: new Date().toISOString().split('T')[0],
       createdBy: 'Current User',
       active: true,
     };
+
+    // Save to localStorage to persist across refreshes
+    const localRulesJson = localStorage.getItem('local_email_rules');
+    const localRules: EmailRule[] = localRulesJson ? JSON.parse(localRulesJson) : [];
+    if (!localRules.some(r => r.ruleName.toLowerCase() === newRule.ruleName.toLowerCase())) {
+      localRules.push(newRule);
+      localStorage.setItem('local_email_rules', JSON.stringify(localRules));
+    }
+
     setEmailRules([...emailRules, newRule]);
   };
 
   const handleEditRule = (id: string, data: Partial<EmailRule>) => {
-    setEmailRules(emailRules.map(rule => 
+    // Update local storage to ensure persistence
+    const localRulesJson = localStorage.getItem('local_email_rules');
+    const localRules: EmailRule[] = localRulesJson ? JSON.parse(localRulesJson) : [];
+    const localRuleIndex = localRules.findIndex(r => r.id === id);
+    if (localRuleIndex !== -1) {
+      localRules[localRuleIndex] = { ...localRules[localRuleIndex], ...data };
+    } else {
+      const originalRule = emailRules.find(r => r.id === id);
+      if (originalRule) {
+        localRules.push({ ...originalRule, ...data });
+      }
+    }
+    localStorage.setItem('local_email_rules', JSON.stringify(localRules));
+
+    setEmailRules(prevRules => prevRules.map(rule => 
       rule.id === id ? { ...rule, ...data } : rule
     ));
     toast.success('Email rule updated successfully');
   };
 
   const handleToggleActive = (id: string) => {
-    setEmailRules(emailRules.map(rule => {
+    setEmailRules(prevRules => prevRules.map(rule => {
       if (rule.id === id) {
         const newStatus = !rule.active;
+        
+        // Update status in localStorage to ensure persistence across refreshes
+        const localRulesJson = localStorage.getItem('local_email_rules');
+        const localRules: EmailRule[] = localRulesJson ? JSON.parse(localRulesJson) : [];
+        const localRuleIndex = localRules.findIndex(r => r.id === id);
+        
+        if (localRuleIndex !== -1) {
+          localRules[localRuleIndex].active = newStatus;
+        } else {
+          const originalRule = prevRules.find(r => r.id === id);
+          if (originalRule) {
+            localRules.push({ ...originalRule, active: newStatus });
+          }
+        }
+        localStorage.setItem('local_email_rules', JSON.stringify(localRules));
+        
         toast.success(`Email rule ${newStatus ? 'activated' : 'deactivated'} successfully`);
         return { ...rule, active: newStatus };
       }
