@@ -8,9 +8,6 @@ import { updateMoM, fetchMoMDetail } from "../store/slices/momSlice";
 import { toast } from "sonner";
 import { useLayout } from "@/contexts/LayoutContext";
 import axios from "axios";
-//mom pdf feature
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import MoMPdf , {MomData} from "./setup/MomPdf";
 import {
   TextField,
   Paper,
@@ -20,11 +17,9 @@ import {
   IconButton,
   FormControlLabel,
   Checkbox,
-  Box,
 } from "@mui/material";
 import { Button as SButton } from "../components/ui/button";
 import MuiSelectField from "../components/MuiSelectField";
-import JoditEditor from "jodit-react";
 
 interface Attendee {
   id: number;
@@ -46,13 +41,6 @@ interface DiscussionPoint {
   tags: any[];
 }
 
-interface MomPoint {
-  id: number;
-  title: string;
-  pointType: string;
-  discussion: string;
-}
-
 interface FormData {
   title: string;
   date: string;
@@ -64,8 +52,6 @@ interface FormData {
 }
 
 const EditMoMPage = () => {
-  //MOM PDF
-  //  const { id } = useParams();
   const { setCurrentSection } = useLayout();
   const { id } = useParams<{ id: string }>();
 
@@ -120,9 +106,6 @@ const EditMoMPage = () => {
     },
   ]);
   const [deletedPointIds, setDeletedPointIds] = useState<number[]>([]);
-  const [momPoints, setMomPoints] = useState<MomPoint[]>([
-    { id: Date.now(), title: "", pointType: "", discussion: "" },
-  ]);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
   const attachmentRef = useRef<HTMLInputElement>(null);
@@ -337,32 +320,6 @@ const EditMoMPage = () => {
       toast.error("At least one discussion point is required");
     }
   };
-  //New functionality for add mom points
-
-  const handleAddMomPoint = () => {
-    setMomPoints((prev) => [
-      ...prev,
-      { id: Date.now(), title: "", pointType: "", discussion: "" },
-    ]);
-  };
-
-  const handleRemoveMomPoint = (momIndex: number) => {
-    if (momPoints.length > 1) {
-      setMomPoints((prev) => prev.filter((_, i) => i !== momIndex));
-    } else {
-      toast.error("At least one point type is required");
-    }
-  };
-
-  const handleMomPointChange = (
-    momIndex: number,
-    field: keyof MomPoint,
-    value: string
-  ) => {
-    const updated = [...momPoints];
-    updated[momIndex] = { ...updated[momIndex], [field]: value };
-    setMomPoints(updated);
-  };
 
   const handlePointChange = (
     index: number,
@@ -509,8 +466,7 @@ const EditMoMPage = () => {
 
       formDataPayload.append(
         `mom_detail[mom_tasks_attributes][${index}][id]`,
-        // point.id
-         String(point.id ?? "")
+        point.id
       );
       formDataPayload.append(
         `mom_detail[mom_tasks_attributes][${index}][description]`,
@@ -561,22 +517,6 @@ const EditMoMPage = () => {
           );
         });
       }
-    });
-
-    // payload for mom points
-    momPoints.forEach((momPoint, index) => {
-      formDataPayload.append(
-        `mom_detail[mom_points_attributes][${index}][title]`,
-        momPoint.title || ""
-      );
-      formDataPayload.append(
-        `mom_detail[mom_points_attributes][${index}][description]`,
-        momPoint.discussion || ""
-      );
-      formDataPayload.append(
-        `mom_detail[mom_points_attributes][${index}][point_type]`,
-        momPoint.pointType || ""
-      );
     });
 
     // Add deleted attendees with _destroy: true flag for soft delete
@@ -634,40 +574,6 @@ const EditMoMPage = () => {
 
   const raisedByOptions = getRaisedByOptions();
 
-
-// Inside your component: Add Pdf Feature
-const [momData, setMomData] = useState<MomData | null>(null);
-const [momLoading, setMomLoading] = useState(true);
- 
-useEffect(() => {
-  const fetchMom = async () => {
-    //Get token and baseUrl from LocalStorage
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    //Temporary Check
-    console.log("ID:",id); //Check what ID is
-    console.log("TOKEN:",token); //Check if token is loaded
-try {
-      const res = await fetch(
-        `https://${baseUrl}/mom_details/${id}.json`,
-        {
-          headers:{
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const json = await res.json();
-      //Temporary Check
-      console.log("API RESPONSE:" ,json); //Check what data comes back
-      setMomData(json);
-    } catch (e) {
-      console.error("Failed to fetch MOM:", e);
-    } finally {
-      setMomLoading(false);
-    }
-  };
-  if (id) fetchMom();
-}, [id]);
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -675,37 +581,13 @@ try {
       </div>
     );
   }
-return (
+
+  return (
     <div className="h-full overflow-y-auto bg-white p-6 font-sans">
-      <div className="flex justify-between items-center mb-4">
-        <SButton variant="ghost" onClick={() => navigate(-1)} className="p-0">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </SButton>
-
-        {/* adding pdf feature */} 
-
-        {/* ✅ PDF Button (correct placement) */}
-        <div>
-          {momLoading || !momData ? (
-            <Button disabled className="bg-green-600 text-white">
-              Loading PDF data...
-            </Button>
-          ) : (
-            <PDFDownloadLink 
-              document={<MoMPdf data={momData} />}
-              fileName={`MOM_${id}.pdf`}
-            >
-              {({ loading, error }) => (
-                <Button className="bg-green-600 text-white" disabled={loading}>
-                  {loading ? "Preparing PDF..." : error ? "Error — retry" : "Download PDF"}
-                </Button>
-              )}
-            </PDFDownloadLink>
-          )}
-        </div>
-      </div>
- 
+      <SButton variant="ghost" onClick={() => navigate(-1)} className="p-0">
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </SButton>
 
       <Paper elevation={0} className="my-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
@@ -735,7 +617,7 @@ return (
                   value={formData.meetingType}
                   onChange={(e) =>
                     handleInputChange("meetingType", e.target.value as string)
-                  } 
+                  }
                   fullWidth
                 />
               </div>
@@ -1104,90 +986,7 @@ return (
           </div>
         </div>
 
-        {/* Mom Points UI */}
-
-        <div className="border-b border-dashed border-red-500 mt-6 mb-6 opacity-50"></div>
-
-        {momPoints.map((momPoint, momIndex) => (
-          <div key={momPoint.id} className="mb-6">
-            <div className="flex justify-end mb-1">
-              <IconButton
-                onClick={() => handleRemoveMomPoint(momIndex)}
-                color="error"
-                size="small"
-                disabled={momPoints.length === 1}
-              >
-                <Trash2 size={16} />
-              </IconButton>
-            </div>
-
-            <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                  Title <span style={{ color: "#C72030" }}>*</span>
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Enter title"
-                  value={momPoint.title}
-                  onChange={(e) =>
-                    handleMomPointChange(momIndex, "title", e.target.value)
-                  }
-                  sx={{ "& .MuiOutlinedInput-root": { bgcolor: "white" } }}
-                />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                  Point Type <span style={{ color: "#C72030" }}>*</span>
-                </Typography>
-                <MuiSelectField
-                  options={[
-                    { label: "Action Item", value: "action_item" },
-                    { label: "Decision", value: "decision" },
-                    { label: "Risk", value: "risk" },
-                    { label: "Information", value: "information" },
-                  ]}
-                  value={momPoint.pointType}
-                  onChange={(e) =>
-                    handleMomPointChange(momIndex, "pointType", e.target.value as string)
-                  }
-                  fullWidth
-                />
-              </Box>
-            </Box>
-
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                Discussion <span style={{ color: "#C72030" }}>*</span>
-              </Typography>
-              <JoditEditor
-                value={momPoint.discussion}
-                onChange={(html) =>
-                  handleMomPointChange(momIndex, "discussion", html)
-                }
-              />
-            </Box>
-          </div>
-        ))}
-
-        <Button
-          variant="outlined"
-          sx={{
-            textTransform: "none",
-            borderColor: "#C72030",
-            color: "#C72030",
-            mt: 1,
-            mb: 3,
-            "&:hover": { borderColor: "#A01020", bgcolor: "rgba(199, 32, 48, 0.04)" },
-          }}
-          startIcon={<Plus size={18} />}
-          onClick={handleAddMomPoint}
-        >
-          Add Point Type
-        </Button>
-      {/* end here for mom points UI */}
-         <div className="border-b border-dashed border-red-500 mb-8 opacity-50"></div>
+        <div className="border-b border-dashed border-red-500 mb-8 opacity-50"></div>
 
         <div className="mb-8">
           <Typography variant="subtitle1" fontWeight="600" color="text.primary">
@@ -1258,7 +1057,7 @@ return (
                     </IconButton>
                   </div>
                 </div>
-              </div>  
+              </div>
             ))}
           </div>
 

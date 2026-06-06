@@ -24,7 +24,6 @@ import MuiMultiSelect from "../components/MuiMultiSelect";
 import { API_CONFIG } from "../config/apiConfig";
 import { toast } from "sonner";
 import { useLayout } from "@/contexts/LayoutContext";
-import JoditEditor from "jodit-react";
 
 // Define types for form data
 interface Attendee {
@@ -47,14 +46,6 @@ interface DiscussionPoint {
   isTask: boolean;
   tags: any[]; // Array of tag objects with value and label
 }
-
-interface MomPoint{
-  id:number;
-  title:string;
-  pointType:string;
-  discussion:string;
-}
-
 
 interface FormData {
   title: string;
@@ -115,10 +106,6 @@ const AddMoMPage = () => {
       tags: [],
     },
   ]);
-
-  const [momPoints,setMomPoints]= useState<MomPoint[]>([
-    {id:Date.now(),title:"",pointType:"",discussion:""}
-  ])
   const [attachments, setAttachments] = useState<File[]>([]);
   const attachmentRef = useRef<HTMLInputElement>(null);
 
@@ -256,35 +243,6 @@ const AddMoMPage = () => {
     updated[index] = { ...updated[index], [field]: value };
     setPoints(updated);
   };
-
-  //Three functions for mom points - add, remove and change handlers
-  const handleAddMomPoint = () => {
-  setMomPoints((prev) => [
-    ...prev,
-    { id: Date.now(), title: "", pointType: "", discussion: "" },
-  ]);
-};
-
-const handleRemoveMomPoint = (momIndex: number) => {
-  if (momPoints.length > 1) {
-    setMomPoints((prev) => prev.filter((_, i) => i !== momIndex));
-  } else {
-    toast.error("At least one summary is required");
-  }
-};
-
-
-const handleMomPointChange = (
-  momIndex: number,
-  field: keyof MomPoint,
-  value: string
-) => {
-  const updated = [...momPoints];
-  updated[momIndex] = { ...updated[momIndex], [field]: value };
-  setMomPoints(updated);
-};
-
-
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -482,21 +440,6 @@ const handleMomPointChange = (
       }
     });
 
-    //payload for mom points
-   momPoints.forEach((momPoint, index) => {
-  formDataPayload.append(
-    `mom_detail[mom_points_attributes][${index}][title]`,
-    momPoint.title || ""
-  );
-  formDataPayload.append(
-    `mom_detail[mom_points_attributes][${index}][description]`,
-    momPoint.discussion || ""
-  );
-  formDataPayload.append(
-    `mom_detail[mom_points_attributes][${index}][point_type]`,
-    momPoint.pointType || ""
-  );
-});
     if (attachments.length > 0) {
       for (let i = 0; i < attachments.length; i++) {
         formDataPayload.append("attachments[]", attachments[i]);
@@ -538,7 +481,7 @@ const handleMomPointChange = (
                 placeholder="Enter meeting Title"
                 fullWidth
                 variant="outlined"
-                value={formData.title}  
+                value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
                 size="small"
                 sx={{ "& .MuiOutlinedInput-root": { bgcolor: "white" } }}
@@ -637,13 +580,13 @@ const handleMomPointChange = (
                     opacity: 1,
                   },
                 }}
-              />  
+              />
               <span
                 className={`text-sm font-medium ${isExternal ? "text-black" : "text-gray-500"}`}
-              > 
+              >
                 Client
               </span>
-              </div>
+            </div>
 
             <div className="flex-1 w-full space-y-4">
               {isExternal
@@ -971,100 +914,8 @@ const handleMomPointChange = (
             </Button>
           </div>
         </div>
-       
 
-        {/* add point ,point type and discussion fields */}
-        <div>
-        {true && (
-  <>
-    <div className="border-b border-dashed border-red-500 mt-6 mb-6 opacity-50"></div>
-
-    {momPoints.map((momPoint, momIndex) => (
-      <div key={momPoint.id} className="mb-6">
-
-        <div className="flex justify-end mb-1">
-          <IconButton
-            onClick={() => handleRemoveMomPoint(momIndex)}
-            color="error"
-            size="small"
-            disabled={momPoints.length === 1}
-          >
-            <Trash2 size={16} />
-          </IconButton>
-        </div>
- 
-        <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-              Title <span style={{ color: "#C72030" }}>*</span>
-            </Typography>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Enter title"
-              value={momPoint.title}
-              onChange={(e) =>
-                handleMomPointChange(momIndex, "title", e.target.value)
-              }
-              sx={{ "& .MuiOutlinedInput-root": { bgcolor: "white" } }}
-            />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-              Point Type <span style={{ color: "#C72030" }}>*</span>
-            </Typography>
-            <MuiSelectField
-              options={[
-                { label: "Action Item", value: "action_item" },
-                { label: "Decision", value: "decision" },
-                { label: "Risk", value: "risk" },
-                { label: "Information", value: "information" },
-              ]}
-              value={momPoint.pointType}
-              onChange={(e) =>
-                handleMomPointChange(momIndex, "pointType", e.target.value as string)
-              }
-              fullWidth
-            />
-          </Box>
-        </Box>
-
-        <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            Discussion <span style={{ color: "#C72030" }}>*</span>
-          </Typography>
-          <JoditEditor
-            value={momPoint.discussion}
-            onChange={(html) =>
-              handleMomPointChange(momIndex, "discussion", html)
-            }
-            // placeholder="Enter discussion summary..."
-          />
-        </Box>
-      </div>
-    ))}
-
-    <Button
-      variant="outlined"
-      sx={{
-        textTransform: "none",
-        borderColor: "#C72030",
-        color: "#C72030",
-        mt: 1,
-        mb:3,
-        "&:hover": { borderColor: "#A01020", bgcolor: "rgba(199, 32, 48, 0.04)" },
-      }}
-      startIcon={<Plus size={18} />}
-      onClick={handleAddMomPoint}
-    >
-      Add Point Type
-    </Button>
-  </>
-)}
-
-</div>
-
-  <div className="border-b border-dashed border-red-500 mb-8 opacity-50"></div>
+        <div className="border-b border-dashed border-red-500 mb-8 opacity-50"></div>
 
         <div className="mb-8">
           <Typography variant="subtitle1" fontWeight="600" color="text.primary">

@@ -23,8 +23,6 @@ import {
   Star,
   Trash2,
   Flag,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { useLocation} from "react-router-dom";
 
@@ -75,10 +73,6 @@ export const TaskDetailsPage = () => {
   const [jobSheetData, setJobSheetData] = useState<any>(null);
   const [jobSheetLoading, setJobSheetLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("task-details");
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
-
-  const toggleSection = (key: string) =>
-    setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   // Legacy form state (can be removed if not needed elsewhere)
   const [formData, setFormData] = useState({
@@ -206,7 +200,7 @@ export const TaskDetailsPage = () => {
           },
           // Map activity/checklist responses - if responses exist, map them; otherwise map questions
           activity: {
-            resp: Array.isArray(rawDetails.checklist_responses) && rawDetails.checklist_responses.length > 0
+            resp: rawDetails.checklist_responses
               ? rawDetails.checklist_responses.map((item: any) => ({
                 label: item.label || item.activity,
                 hint: item.hint || item.help_text || "",
@@ -400,11 +394,6 @@ export const TaskDetailsPage = () => {
           }
         }
       } catch (error) {
-        console.error("❌ Failed to load task details:", error);
-        console.error("Error details:", {
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : "N/A",
-        });
         sonnerToast.error("Failed to load task details");
       } finally {
         setLoading(false);
@@ -745,7 +734,6 @@ export const TaskDetailsPage = () => {
         rating: item.rating || "-",
         attachments: item.attachments || [],
         values: item.values || [],
-        type: item.type || "",
         group_name: item.group_name || "",
         sub_group_name: item.sub_group_name || "",
         group_id: groupId,
@@ -1014,7 +1002,7 @@ export const TaskDetailsPage = () => {
                 const key = typeof valueObj === "string"
                   ? valueObj
                   : (valueObj?.label || valueObj?.value || `Item ${index + 1}`);
-                return key === data ? data : `${key}: ${data}`;
+                return `${key}: ${data}`;
               })
               .filter((text: string | null) => text !== null)
               .join(" | ") || "-";
@@ -1993,54 +1981,39 @@ export const TaskDetailsPage = () => {
                 taskDetails?.activity?.resp?.length > 0 ? (
                 <div className="space-y-6">
                   {/* Grouped Checklist Sections */}
-                  {getGroupedActivityData().map((section, sectionIndex) => {
-                    const isCollapsed = !!collapsedSections[section.sectionKey];
-                    return (
-                      <div key={section.sectionKey} className="border border-gray-200 rounded-lg overflow-hidden">
-                        {/* Section Header — clickable */}
-                        <button
-                          type="button"
-                          className="w-full bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-3 border-l-4 border-[#C72030AD] flex items-center justify-between hover:from-gray-200 hover:to-gray-100 transition-colors"
-                          onClick={() => toggleSection(section.sectionKey)}
-                        >
-                          <div className="flex items-center gap-3 text-left">
-                            <div>
-                              <h4 className="text-base font-semibold text-gray-800">
-                                {section.group_name}
-                              </h4>
-                              {section.sub_group_name && (
-                                <p className="text-sm text-gray-500 mt-0.5">
-                                  {section.sub_group_name}
-                                </p>
-                              )}
-                            </div>
-                            <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
-                              {section.activities.length} {section.activities.length === 1 ? 'task' : 'tasks'}
-                            </Badge>
+                  {getGroupedActivityData().map((section, sectionIndex) => (
+                    <div key={section.sectionKey} className="space-y-3">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-semibold text-gray-800">
+                              {section.group_name}
+                            </h4>
+                            {section.sub_group_name && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {section.sub_group_name}
+                              </p>
+                            )}
                           </div>
-                          {isCollapsed
-                            ? <ChevronDown className="w-5 h-5 text-gray-500 shrink-0" />
-                            : <ChevronUp className="w-5 h-5 text-gray-500 shrink-0" />
-                          }
-                        </button>
-
-                        {/* Section Table — hidden when collapsed */}
-                        {!isCollapsed && (
-                          <div className="border-t border-gray-200">
-                            <EnhancedTable
-                              data={section.activities}
-                              columns={activityColumns}
-                              renderCell={renderActivityCell}
-                              emptyMessage="No activities found in this section."
-                              hideTableExport={true}
-                              hideTableSearch={true}
-                              hideColumnsButton={true}
-                            />
-                          </div>
-                        )}
+                          <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                            Section {sectionIndex + 1}
+                          </Badge>
+                        </div>
                       </div>
-                    );
-                  })}
+
+                      {/* Section Table */}
+                      <EnhancedTable
+                        data={section.activities}
+                        columns={activityColumns}
+                        renderCell={renderActivityCell}
+                        emptyMessage="No activities found in this section."
+                        hideTableExport={true}
+                        hideTableSearch={true}
+                        hideColumnsButton={true}
+                      />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p className="text-gray-500 text-center py-8">
