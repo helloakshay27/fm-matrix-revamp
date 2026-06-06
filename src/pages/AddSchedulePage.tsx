@@ -2165,12 +2165,46 @@ export const AddSchedulePage = () => {
           };
         });
 
-        // Update the first section with template tasks
-        setQuestionSections(sections =>
-          sections.map((section, index) =>
-            index === 0 ? { ...section, tasks: templateTasks } : section
-          )
+        // Group tasks by group_id + sub_group_id → one section per unique pair
+        const sectionOrder: string[] = [];
+        const sectionTaskMap: Record<string, typeof templateTasks> = {};
+
+        templateTasks.forEach(task => {
+          const key = `${task.group}__${task.subGroup}`;
+          if (!sectionTaskMap[key]) {
+            sectionOrder.push(key);
+            sectionTaskMap[key] = [];
+          }
+          sectionTaskMap[key].push(task);
+        });
+
+        const newSections = sectionOrder.map((key, i) => ({
+          id: (Date.now() + i).toString(),
+          title: 'Questions',
+          autoTicket: false,
+          ticketLevel: 'checklist',
+          ticketAssignedTo: '',
+          ticketCategory: '',
+          tasks: sectionTaskMap[key],
+        }));
+
+        setQuestionSections(
+          newSections.length > 0
+            ? newSections
+            : [{
+                id: Date.now().toString(),
+                title: 'Questions',
+                autoTicket: false,
+                ticketLevel: 'checklist',
+                ticketAssignedTo: '',
+                ticketCategory: '',
+                tasks: templateTasks,
+              }]
         );
+
+        // Populate sub-group options for every group_id present in the template
+        const uniqueGroupIds = [...new Set(templateTasks.map((t: any) => t.group).filter(Boolean))];
+        uniqueGroupIds.forEach((gid: string) => loadTaskSubGroups(gid));
 
         // Only update form data if fields are empty (don't overwrite user input)
         setFormData(prev => ({

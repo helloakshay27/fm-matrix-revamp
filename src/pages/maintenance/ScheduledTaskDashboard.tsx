@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+
+
 import {
   Pagination,
   PaginationContent,
@@ -72,6 +75,7 @@ import { Toaster } from "sonner";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
 import { TaskExportModal } from "@/components/TaskExportModal";
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
@@ -282,6 +286,8 @@ export const ScheduledTaskDashboard = () => {
     };
   };
   const navigate = useNavigate();
+    const location = useLocation();
+
   const [dateFrom, setDateFrom] = useState("01/07/2025");
   const [dateTo, setDateTo] = useState("31/07/2025");
   const [searchTaskId, setSearchTaskId] = useState("");
@@ -368,6 +374,7 @@ export const ScheduledTaskDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [showAll, setShowAll] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedStatus, setSelectedStatus] = useState<string | null>("Open");
   const [statusCounts, setStatusCounts] = useState({
     scheduled_count: 0,
@@ -549,12 +556,18 @@ export const ScheduledTaskDashboard = () => {
     }
   };
 
-  // Initial load on component mount
+  // Sync page state with the URL when the component mounts or when the user navigates back
   useEffect(() => {
-    fetchTasks();
+    const pageParam = searchParams.get("page");
+    const pageNumber = pageParam ? Number(pageParam) : 1;
+    const safePage = Number.isInteger(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+
+    setCurrentPage(safePage);
+    fetchTasks(currentFilters, safePage, debouncedSearchQuery, selectedStatus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
-  // Load tasks when filters, search, or status change (reset to page 1)
+  // Load tasks when filters, search, or status change (reset to first page)
   useEffect(() => {
     console.log(
       "Effect triggered - debouncedSearchQuery:",
@@ -563,6 +576,19 @@ export const ScheduledTaskDashboard = () => {
     fetchTasks(currentFilters, 1, debouncedSearchQuery, selectedStatus);
     setCurrentPage(1); // Reset to first page when filters change
   }, [currentFilters, debouncedSearchQuery, selectedStatus, showAll]);
+
+  // Update task page when the URL query changes (browser back/forward)
+  useEffect(() => {
+    const pageParam = searchParams.get("page");
+    const pageNumber = pageParam ? Number(pageParam) : 1;
+    const safePage = Number.isInteger(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+
+    if (safePage !== currentPage) {
+      setCurrentPage(safePage);
+      fetchTasks(currentFilters, safePage, debouncedSearchQuery, selectedStatus);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Handle filter application
   const handleApplyFilters = (filters: TaskFilters) => {
@@ -575,6 +601,11 @@ export const ScheduledTaskDashboard = () => {
   const handlePageChange = (page: number) => {
     if (page !== currentPage) {
       setCurrentPage(page);
+      setSearchParams((prevParams) => {
+        const params = new URLSearchParams(prevParams.toString());
+        params.set("page", String(page));
+        return params;
+      });
       fetchTasks(currentFilters, page, debouncedSearchQuery, selectedStatus);
     }
   };
@@ -670,7 +701,9 @@ export const ScheduledTaskDashboard = () => {
   }, [activeTab, calendarFilters]);
 
   const handleViewTask = (taskId: string) => {
-    navigate(`/maintenance/task/task-details/${taskId}`);
+    navigate(`/maintenance/task/task-details/${taskId}`, {
+      state: { returnTo: buildReturnToPath(location.pathname, location.search, location.hash) },
+    });
   };
 
   const handleAdvancedFilter = (filters: any) => {

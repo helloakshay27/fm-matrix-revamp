@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2, Eye, Download, File, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2, Eye, Download, File, FileSpreadsheet, Layers, FolderOpen } from 'lucide-react';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Typography, Tooltip } from '@mui/material';
@@ -98,6 +98,7 @@ export const ViewSchedulePage = () => {
   const [showSetApprovalModal, setShowSetApprovalModal] = useState(false);
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [subGroupOptions, setSubGroupOptions] = useState<any[]>([]);
+  const [subGroupsMap, setSubGroupsMap] = useState<Record<string, { id: number; name: string }[]>>({});
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
@@ -231,6 +232,28 @@ export const ViewSchedulePage = () => {
     fetchSubGroups();
   }, [selectedGroupId]);
 
+
+  // Fetch sub-groups for every unique group_id present in content
+  useEffect(() => {
+    if (!customForm?.content) return;
+    const uniqueGroupIds: string[] = [
+      ...new Set(
+        (customForm.content as any[])
+          .map((q) => q.group_id)
+          .filter(Boolean)
+      ),
+    ];
+    uniqueGroupIds.forEach(async (gid) => {
+      try {
+        const res = await fetch(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_SUB_GROUPS}?group_id=${gid}`,
+          { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } }
+        );
+        const data = await res.json();
+        setSubGroupsMap((prev) => ({ ...prev, [gid]: data.asset_groups || [] }));
+      } catch {}
+    });
+  }, [customForm?.content]);
 
   // Format date function
   const formatDate = (dateStr: string | null | undefined) => {
@@ -580,223 +603,199 @@ export const ViewSchedulePage = () => {
 
           <TabsContent value="task" className="p-4 sm:p-6">
             <div className="space-y-6">
-              {/* Task Information Card */}
-              <Card className="w-full">
-                <CardHeader className="pb-4 lg:pb-6">
-                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <Box className="w-6 h-6" style={{ color: '#C72030' }} />
-                    </div>
-                    <span className="uppercase tracking-wide">Task Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Group</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">
-                        {groupOptions.find(group => group.id === Number(selectedGroupId))?.name || '--'}
-                      </span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Sub Group</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">
-                        {subGroupOptions.find(subGroup => subGroup.id === Number(selectedSubGroupId))?.name || '--'}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Dynamic Tasks Card */}
-              {customForm?.content && customForm.content.length > 0 && (
-                <Card className="w-full">
-                  <CardHeader className="pb-4 lg:pb-6">
-                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <span className="uppercase tracking-wide">Task Details</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-6">
-                      {customForm.content.map((task, index) => (
-                        <div key={index} className="p-4 border rounded-lg bg-gray-50">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-4">
-                            <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">Task Name</span>
-                              <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{task.label || '--'}</span>
-                            </div>
-                            <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">Input Type</span>
-                              <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">
-                                {task.type === 'text' ? 'Text' :
-                                  task.type === 'radio-group' ? 'Radio' :
-                                    task.type === 'numeric' ? 'Numeric' :
-                                      task.type === 'select' ? 'Dropdown' :
-                                        task.type === 'checkbox' ? 'Checkbox' :
-                                          task.type}
+              {customForm?.content && customForm.content.length > 0 && (() => {
+                // Group content by group_id → sub_group_id
+                type TaskItem = typeof customForm.content[0];
+                const groupOrder: string[] = [];
+                const groupMap: Record<string, { sgOrder: string[]; sgMap: Record<string, TaskItem[]> }> = {};
+
+                (customForm.content as TaskItem[]).forEach((task: any) => {
+                  const gid: string = task.group_id || '';
+                  const sgid: string = task.sub_group_id || '';
+                  if (!groupMap[gid]) { groupOrder.push(gid); groupMap[gid] = { sgOrder: [], sgMap: {} }; }
+                  if (!groupMap[gid].sgMap[sgid]) { groupMap[gid].sgOrder.push(sgid); groupMap[gid].sgMap[sgid] = []; }
+                  groupMap[gid].sgMap[sgid].push(task);
+                });
+
+                const getGroupName = (gid: string) =>
+                  groupOptions.find((g: any) => g.id === Number(gid))?.name || null;
+                const getSubGroupName = (gid: string, sgid: string) =>
+                  subGroupsMap[gid]?.find((sg) => sg.id === Number(sgid))?.name || null;
+
+                return (
+                  <Card className="w-full">
+                    <CardHeader className="pb-4 lg:pb-6">
+                      <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                          <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                        </div>
+                        <span className="uppercase tracking-wide">Task Details</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-8">
+                        {groupOrder.map((gid, gi) => (
+                          <div key={gid}>
+                            {/* Group header */}
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#C72030]">
+                              <Layers className="w-4 h-4 text-[#C72030]" />
+                              <span className="font-semibold text-base text-gray-900 uppercase tracking-wide">
+                                {getGroupName(gid) || `Group ${gi + 1}`}
                               </span>
                             </div>
-                            <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">Mandatory</span>
-                              <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{task.required === 'true' ? 'Yes' : 'No'}</span>
-                            </div>
-                            <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">Reading</span>
-                              <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{task.is_reading === 'true' ? 'Yes' : 'No'}</span>
-                            </div>
-                            {task.rating_enabled === 'true' && (
-                              <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Rating Enabled</span>
-                                <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">Yes</span>
-                              </div>
-                            )}
-                            {task.weightage && (
-                              <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Weightage</span>
-                                <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{task.weightage}</span>
-                              </div>
-                            )}
-                            {task.hint && (
-                              <div className="flex items-start col-span-2">
-                                <span className="text-gray-500 min-w-[140px]">Help Text</span>
-                                <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{task.hint}</span>
-                              </div>
-                            )}
-                          </div>
 
-                          {/* Task Values */}
-                          {Array.isArray(task.values) && task.values.length > 0 && (
-                            <div className="mt-4">
-                              <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Available Options</span>
-                                <span className="text-gray-500 mx-2">:</span>
-                                <div className="flex flex-wrap gap-2">
-                                  {task.values.map((value, valueIndex) => (
-                                    <span key={valueIndex} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                                      {value.label} ({value.type === 'positive' ? 'P' : 'N'})
-                                    </span>
+                            {groupMap[gid].sgOrder.map((sgid, si) => (
+                              <div key={sgid} className="mb-6 ml-2">
+                                {/* Sub-group header */}
+                                <div className="flex items-center gap-2 mb-3 pb-1 border-b border-gray-300">
+                                  <FolderOpen className="w-4 h-4 text-gray-500" />
+                                  <span className="font-medium text-sm text-gray-700">
+                                    {getSubGroupName(gid, sgid) || `Sub Group ${si + 1}`}
+                                  </span>
+                                </div>
+
+                                <div className="space-y-3 ml-2">
+                                  {groupMap[gid].sgMap[sgid].map((task: any, index: number) => (
+                                    <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                                      {/* Task label + badges */}
+                                      <div className="flex items-start justify-between gap-2 mb-3">
+                                        <h4 className="font-medium text-gray-900 text-sm">
+                                          {index + 1}. {task.label || '--'}
+                                        </h4>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          {task.required === 'true' && (
+                                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Required</span>
+                                          )}
+                                          {task.is_reading === 'true' && (
+                                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Reading</span>
+                                          )}
+                                          {task.rating_enabled === 'true' && (
+                                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Rating</span>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                        <div className="flex items-start">
+                                          <span className="text-gray-500 min-w-[120px]">Type</span>
+                                          <span className="text-gray-500 mx-2">:</span>
+                                          <span className="text-gray-800 font-medium">
+                                            {task.type === 'text' ? 'Text Input' :
+                                              task.type === 'radio-group' ? 'Radio Buttons' :
+                                              task.type === 'number' ? 'Number Input' :
+                                              task.type === 'textarea' ? 'Multi-line Text' :
+                                              task.type === 'select' && task.subtype === 'input' ? 'Dropdown with Input' :
+                                              task.type === 'select' ? 'Dropdown' :
+                                              task.type === 'checkbox-group' ? 'Checkboxes' :
+                                              task.type === 'date' ? 'Date' :
+                                              task.type}
+                                          </span>
+                                        </div>
+                                        {weightageEnabled && task.weightage && (
+                                          <div className="flex items-start">
+                                            <span className="text-gray-500 min-w-[120px]">Weightage</span>
+                                            <span className="text-gray-500 mx-2">:</span>
+                                            <span className="text-gray-800 font-medium">{task.weightage}</span>
+                                          </div>
+                                        )}
+                                        {(task.hint || task.question_hint) && (
+                                          <div className="flex items-start col-span-2">
+                                            <span className="text-gray-500 min-w-[120px]">Hint</span>
+                                            <span className="text-gray-500 mx-2">:</span>
+                                            <span className="text-gray-800 font-medium">{task.hint || task.question_hint}</span>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Options */}
+                                      {Array.isArray(task.values) && task.values.length > 0 && (
+                                        <div className="mt-3">
+                                          <span className="text-xs text-gray-500 font-medium block mb-1">Options:</span>
+                                          <div className="flex flex-wrap gap-1.5">
+                                            {task.values.map((value: any, vi: number) => (
+                                              <span key={vi} className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                                                value.type === 'positive' ? 'bg-green-100 text-green-700' :
+                                                value.type === 'negative' ? 'bg-red-100 text-red-700' :
+                                                'bg-gray-100 text-gray-700'
+                                              }`}>
+                                                {value.label}{value.type ? ` (${value.type === 'positive' ? 'P' : 'N'})` : ''}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Hint images */}
+                                      {task.question_hint_image_url && task.question_hint_image_url.length > 0 && (
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                          {task.question_hint_image_url.map((image: any, imgIndex: number) => {
+                                            const url = image.url || image.document;
+                                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                                            const isPdf = /\.pdf$/i.test(url);
+                                            const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                                            const isWord = /\.(doc|docx)$/i.test(url);
+                                            const isDownloadable = isPdf || isExcel || isWord;
+                                            return (
+                                              <div
+                                                key={image.id || imgIndex}
+                                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                              >
+                                                {isImage ? (
+                                                  <>
+                                                    <button
+                                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                      title="View"
+                                                      onClick={() => { setSelectedDoc({ ...image, url, type: 'image' }); setShowImagePreview(true); }}
+                                                      type="button"
+                                                    >
+                                                      <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <img
+                                                      src={url}
+                                                      alt={image.filename || `Help Image ${imgIndex + 1}`}
+                                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                      onClick={() => { setSelectedDoc({ ...image, url, type: 'image' }); setShowImagePreview(true); }}
+                                                    />
+                                                  </>
+                                                ) : isPdf ? (
+                                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2"><FileText className="w-6 h-6" /></div>
+                                                ) : isExcel ? (
+                                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2"><FileSpreadsheet className="w-6 h-6" /></div>
+                                                ) : isWord ? (
+                                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2"><FileText className="w-6 h-6" /></div>
+                                                ) : (
+                                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2"><File className="w-6 h-6" /></div>
+                                                )}
+                                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                  {image.filename || image.document_name || url.split('/').pop() || `File ${imgIndex + 1}`}
+                                                </span>
+                                                {isDownloadable && (
+                                                  <Button
+                                                    size="icon" variant="ghost"
+                                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                    onClick={() => { setSelectedDoc({ ...image, url, type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file' }); setShowImagePreview(true); }}
+                                                  >
+                                                    <Download className="w-4 h-4" />
+                                                  </Button>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
                                   ))}
                                 </div>
                               </div>
-                            </div>
-                          )}
-
-                          {/* Help Text Images */}
-                          {task.question_hint_image_url && task.question_hint_image_url.length > 0 && (
-                            <div className="mt-4">
-                              <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Help Images</span>
-                                <span className="text-gray-500 mx-2">:</span>
-                                <div className="flex items-center flex-wrap gap-4">
-                                  {task.question_hint_image_url.map((image: any, imgIndex: number) => {
-                                    const url = image.url || image.document;
-                                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                                    const isPdf = /\.pdf$/i.test(url);
-                                    const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
-                                    const isWord = /\.(doc|docx)$/i.test(url);
-                                    const isDownloadable = isPdf || isExcel || isWord;
-
-                                    return (
-                                      <div
-                                        key={image.id || imgIndex}
-                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                                      >
-                                        {isImage ? (
-                                          <>
-                                            <button
-                                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                              title="View"
-                                              onClick={() => {
-                                                setSelectedDoc({
-                                                  ...image,
-                                                  url,
-                                                  type: 'image'
-                                                });
-                                                setShowImagePreview(true);
-                                              }}
-                                              type="button"
-                                            >
-                                              <Eye className="w-4 h-4" />
-                                            </button>
-                                            <img
-                                              src={url}
-                                              alt={image.filename || image.document_name || `Help Image ${imgIndex + 1}`}
-                                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                              onClick={() => {
-                                                setSelectedDoc({
-                                                  ...image,
-                                                  url,
-                                                  type: 'image'
-                                                });
-                                                setShowImagePreview(true);
-                                              }}
-                                            />
-                                          </>
-                                        ) : isPdf ? (
-                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                            <FileText className="w-6 h-6" />
-                                          </div>
-                                        ) : isExcel ? (
-                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                            <FileSpreadsheet className="w-6 h-6" />
-                                          </div>
-                                        ) : isWord ? (
-                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                            <FileText className="w-6 h-6" />
-                                          </div>
-                                        ) : (
-                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                            <File className="w-6 h-6" />
-                                          </div>
-                                        )}
-                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                          {image.filename ||
-                                            image.document_name ||
-                                            url.split('/').pop() ||
-                                            `Help Image ${imgIndex + 1}`}
-                                        </span>
-                                        {isDownloadable && (
-                                          <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                            onClick={() => {
-                                              setSelectedDoc({
-                                                ...image,
-                                                url,
-                                                type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
-                                              });
-                                              setShowImagePreview(true);
-                                            }}
-                                          >
-                                            <Download className="w-4 h-4" />
-                                          </Button>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
             </div>
           </TabsContent>
 

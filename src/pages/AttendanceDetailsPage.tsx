@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { getReturnToFromState } from '@/utils/listBackNavigation';
 interface AttUser {
   id: number;
   name: string | null;
@@ -26,6 +27,7 @@ interface AttendanceResponse {
 }
 export const AttendanceDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     id
   } = useParams();
@@ -68,7 +70,10 @@ export const AttendanceDetailsPage = () => {
       <div className="flex items-center mb-2">
 
         <button
-          onClick={() => navigate('/maintenance/attendance')}
+          onClick={() => {
+            const returnTo = getReturnToFromState(location.state);
+            navigate(returnTo ?? '/maintenance/attendance');
+          }}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
