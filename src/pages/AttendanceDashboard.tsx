@@ -1,7 +1,8 @@
 import { useDebounce } from '@/hooks/useDebounce';
 import React, { useState, useEffect, useMemo } from 'react';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, Trash2, BarChart3, Download, Loader2 } from 'lucide-react';
@@ -82,6 +83,7 @@ const columns: ColumnConfig[] = [
 
 export const AttendanceDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
 
   // Redux state
@@ -89,7 +91,10 @@ export const AttendanceDashboard = () => {
 
   // Local state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'departmentChart', 'trendsChart', 'matrixChart'
@@ -121,6 +126,14 @@ export const AttendanceDashboard = () => {
     dispatch(fetchAttendanceData({ departmentFilter, page: currentPage, perPage }));
   }, [dispatch, debouncedSearchQuery, currentPage]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlPage = Number(params.get('page')) || 1;
+    if (urlPage !== currentPage) {
+      navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+    }
+  }, [currentPage]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -138,7 +151,9 @@ export const AttendanceDashboard = () => {
   const handleViewDetails = (row: any) => {
     const id = row.user_id;
     if (id) {
-      navigate(`/maintenance/attendance/details/${id}`);
+      navigate(`/maintenance/attendance/details/${id}`, {
+        state: { returnTo: buildReturnToPath(location.pathname, `?page=${currentPage}`) },
+      });
     }
   };
 

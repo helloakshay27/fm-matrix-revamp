@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, FileText, Eye, Settings, AlertCircle, X, Flag } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
 import { ServiceFilterModal } from '@/components/ServiceFilterModal';
@@ -97,6 +98,7 @@ const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const servicesState = useAppSelector((state) => state.services);
   const apiData = servicesState.data as ServicesApiData | undefined;
@@ -114,7 +116,10 @@ export const ServiceDashboard = () => {
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track which summary tile is selected; null => no highlight on initial load
@@ -127,6 +132,14 @@ export const ServiceDashboard = () => {
     };
     dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: filtersWithSearch }));
   }, [dispatch, activeFilter, currentPage, appliedFilters, debouncedSearchQuery]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlPage = Number(params.get('page')) || 1;
+    if (urlPage !== currentPage) {
+      navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+    }
+  }, [currentPage]);
 
   const servicesData = useMemo(
     () => (apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData),
@@ -531,7 +544,13 @@ export const ServiceDashboard = () => {
       setDownloadingQR(false);
     }
   }, [downloadingQR, selectedItems, servicesData, downloadedQRCodes]);
-  const handleViewService = useCallback((id: number) => navigate(`/maintenance/service/details/${id}`), [navigate]);
+  const handleViewService = useCallback(
+    (id: number) =>
+      navigate(`/maintenance/service/details/${id}`, {
+        state: { returnTo: buildReturnToPath(location.pathname, `?page=${currentPage}`) },
+      }),
+    [navigate, location.pathname, currentPage]
+  );
 
   const handleTotalServicesClick = () => {
     setActiveFilter(undefined);
