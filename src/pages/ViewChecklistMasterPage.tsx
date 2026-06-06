@@ -25,10 +25,15 @@ interface Question {
   weightage?: string;
   rating_enabled?: boolean | string;
   consumption_type?: string;
-  consumption_unit_type?: number | null;
+  consumption_unit_type?: number | string | null;
   question_hint?: string | null;
+  hint?: string | null;                  // alias used in content[] responses
   question_hint_image_url?: { id: number; filename: string; url: string }[];
   values?: QuestionValue[];
+  // present in flat content[] responses
+  group_id?: string;
+  sub_group_id?: string;
+  name?: string;
 }
 
 interface SubGroup {
@@ -60,6 +65,39 @@ const getTypeLabel = (type: string, subtype?: string | null) => {
   return TYPE_LABELS[type] ?? type;
 };
 
+// Groups a flat content[] (which embeds group_id / sub_group_id per question)
+// into an ordered list of { groupId, subGroups: { subGroupId, questions }[] }
+const groupContentQuestions = (content: Question[]) => {
+  const groupOrder: string[] = [];
+  const groupMap: Record<string, { sgOrder: string[]; sgMap: Record<string, Question[]> }> = {};
+
+  content.forEach((q) => {
+    const gid = q.group_id ?? '';
+    const sgid = q.sub_group_id ?? '';
+
+    if (!groupMap[gid]) {
+      groupOrder.push(gid);
+      groupMap[gid] = { sgOrder: [], sgMap: {} };
+    }
+    const g = groupMap[gid];
+    if (!g.sgMap[sgid]) {
+      g.sgOrder.push(sgid);
+      g.sgMap[sgid] = [];
+    }
+    g.sgMap[sgid].push(q);
+  });
+
+  return groupOrder.map((gid, gi) => ({
+    groupId: gid,
+    groupIndex: gi + 1,
+    subGroups: groupMap[gid].sgOrder.map((sgid, si) => ({
+      subGroupId: sgid,
+      subGroupIndex: si + 1,
+      questions: groupMap[gid].sgMap[sgid],
+    })),
+  }));
+};
+
 // ─── QuestionCard ─────────────────────────────────────────────────────────────
 
 const QuestionCard = ({
@@ -76,6 +114,8 @@ const QuestionCard = ({
   const hasHintImages =
     Array.isArray(question.question_hint_image_url) &&
     question.question_hint_image_url.length > 0;
+  const hintText = question.question_hint || question.hint || null;
+  const consumptionType = question.consumption_type || null;
 
   return (
     <div className="p-4 border rounded-lg bg-gray-50">
@@ -121,26 +161,25 @@ const QuestionCard = ({
           </div>
         )}
 
-        {question.type === 'number' && question.consumption_type && (
+        {question.type === 'number' && consumptionType && (
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[120px]">Consumption</span>
             <span className="text-gray-500 mx-2">:</span>
             <span className="text-gray-800 font-medium capitalize">
-              {question.consumption_type}
-              {question.consumption_unit_type != null
+              {consumptionType}
+              {question.consumption_unit_type != null &&
+              question.consumption_unit_type !== ''
                 ? ` (Unit ${question.consumption_unit_type})`
                 : ''}
             </span>
           </div>
         )}
 
-        {question.question_hint && (
+        {hintText && (
           <div className="flex items-start col-span-2">
             <span className="text-gray-500 min-w-[120px]">Hint</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-800 font-medium">
-              {question.question_hint}
-            </span>
+            <span className="text-gray-800 font-medium">{hintText}</span>
           </div>
         )}
       </div>
@@ -527,19 +566,71 @@ export const ViewChecklistMasterPage = () => {
                       )}
                     </div>
                   ) : Array.isArray(checklistData.content) &&
-                    checklistData.content.length > 0 ? (
-                    /* Fallback: old flat content array */
-                    <div className="space-y-3">
-                      {(checklistData.content as Question[]).map((q, qi) => (
-                        <QuestionCard
-                          key={qi}
-                          question={q}
-                          index={qi}
-                          weightageEnabled={checklistData.weightage_enabled}
-                        />
-                      ))}
-                    </div>
-                  ) : (
+                    checklistData.content.length > 0 ? (() => {
+                    /* content[] with embedded group_id / sub_group_id */
+                    const hasGroups = (checklistData.content as Question[]).some(
+                      (q) => q.group_id
+                    );
+
+                    if (!hasGroups) {
+                      return (
+                        <div className="space-y-3">
+                          {(checklistData.content as Question[]).map((q, qi) => (
+                            <QuestionCard
+                              key={qi}
+                              question={q}
+                              index={qi}
+                              weightageEnabled={checklistData.weightage_enabled}
+                            />
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    const grouped = groupContentQuestions(
+                      checklistData.content as Question[]
+                    );
+                    return (
+                      <div className="space-y-8">
+                        {grouped.map((g) => (
+                          <div key={g.groupId}>
+                            {/* Group header */}
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#C72030]">
+                              <Layers className="w-4 h-4 text-[#C72030]" />
+                              <span className="font-semibold text-base text-gray-900 uppercase tracking-wide">
+                                Group {g.groupIndex}
+                              </span>
+                            </div>
+
+                            {g.subGroups.map((sg) => (
+                              <div key={sg.subGroupId} className="mb-6 ml-2">
+                                {/* Sub-group header */}
+                                <div className="flex items-center gap-2 mb-3 pb-1 border-b border-gray-300">
+                                  <FolderOpen className="w-4 h-4 text-gray-500" />
+                                  <span className="font-medium text-sm text-gray-700">
+                                    Sub Group {sg.subGroupIndex}
+                                  </span>
+                                </div>
+
+                                <div className="space-y-3 ml-2">
+                                  {sg.questions.map((q, qi) => (
+                                    <QuestionCard
+                                      key={qi}
+                                      question={q}
+                                      index={qi}
+                                      weightageEnabled={
+                                        checklistData.weightage_enabled
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })() : (
                     <div className="text-center text-gray-500 py-8">
                       No tasks found
                     </div>
