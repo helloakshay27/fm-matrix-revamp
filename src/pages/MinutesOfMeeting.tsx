@@ -10,7 +10,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { fetchMoMs } from "@/store/slices/momSlice";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
-
+ 
 // Function to generate smooth, light random colors for participant badges
 const generateLightColor = (seed: number): string => {
     // Use seed to generate consistent but varied colors
@@ -97,6 +97,7 @@ const columns: ColumnConfig[] = [
     },
 ]
 
+
 const MinutesOfMeeting = () => {
     const { setCurrentSection } = useLayout();
     const { shouldShow } = useDynamicPermissions();
@@ -131,6 +132,7 @@ const MinutesOfMeeting = () => {
     useEffect(() => {
         fetchMoMsData();
     }, [fetchMoMsData]);
+ 
 
     useEffect(() => {
         if (momsData && Array.isArray(momsData)) {
@@ -198,10 +200,11 @@ const MinutesOfMeeting = () => {
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
-                )}
+                )} 
             </div>
         )
     };
+
 
     const renderCell = (item: MeetingData, columnKey: string) => {
         switch (columnKey) {
@@ -212,8 +215,9 @@ const MinutesOfMeeting = () => {
             default:
                 return (item as any)[columnKey] || "-";
         }
-    }
+    } 
 
+    
     const leftActions = (
         <>
             {shouldShow("employee_project_minutes_of_meeting", "create") && (
@@ -226,8 +230,8 @@ const MinutesOfMeeting = () => {
                 </Button>
             )}
         </>
-    );
-
+    );  
+   
     return (
         <div className="p-6">
             <EnhancedTable
@@ -243,5 +247,6 @@ const MinutesOfMeeting = () => {
         </div>
     )
 }
+export default MinutesOfMeeting 
 
-export default MinutesOfMeeting
+
