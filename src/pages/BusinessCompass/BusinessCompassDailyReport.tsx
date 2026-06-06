@@ -2460,7 +2460,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
-  const badgePoints = "bc-points-badge border-0 shadow-none hover:bg-[#CECBF6]";
+  const badgePoints = "bc-points-badge border-0 shadow-none !bg-[#CECBF6] !text-[#5c5a8a] hover:!bg-[#c4c1f0]";
 
   const formattedSelectedDate = useMemo(() => {
     const d = new Date(`${startDate}T00:00:00`);
@@ -2972,7 +2972,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </h3>
                       </div>
                       {/* Total KPI score badge */}
-                      <Badge className={badgePoints}>
+                      <Badge variant="outline" className={badgePoints}>
                         {dailyScore.kpiScore}/20 pts
                       </Badge>
                     </div>
@@ -3080,7 +3080,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </h3>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge className={badgePoints}>
+                      <Badge variant="outline" className={badgePoints}>
                         {dailyScore.accomplishmentsScore}/20 Pts
                       </Badge>
                       <button
@@ -3490,7 +3490,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </h3>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge className={badgePoints}>
+                      <Badge variant="outline" className={badgePoints}>
                         {dailyScore.planningScore}/20 Pts
                       </Badge>
                       <button
@@ -3708,7 +3708,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
               </div>
 
-              <div className="space-y-6">
+              <div className="flex flex-col gap-6">
                 {/* Live Score Preview */}
                 {!isAbsent && (
                   <div className="bc-live-score-card">
@@ -3719,7 +3719,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Live Score Preview
                         </h3>
                       </div>
-                      <Badge className={badgePoints}>
+                      <Badge variant="outline" className={badgePoints}>
                         {Math.round(dailyScore.totalScore)}/100 Pts
                       </Badge>
                     </div>
@@ -3743,7 +3743,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 )}
 
                 {/* Tasks & Issues Card */}
-                <div className="bc-daily-card bc-tasks-card-wrap" ref={tasksSectionRef}>
+                <div className="bc-daily-card bc-tasks-card-wrap flex flex-1 flex-col" ref={tasksSectionRef}>
                   <div className="bc-daily-card-header flex-wrap">
                     <div className="flex items-center gap-2">
                       <CheckSquare className="h-5 w-5 text-[#DA7756]" />
@@ -3752,7 +3752,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </h3>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge className={badgePoints}>
+                      <Badge variant="outline" className={badgePoints}>
                         {dailyScore.tasksIssuesScore}/20 Pts
                       </Badge>
                       <button
@@ -3801,7 +3801,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="bc-daily-card-body p-0">
+                  <div className="bc-daily-card-body p-0 flex-1 flex flex-col">
                     {isAiPopupOpen && (
                       <div className="bc-ai-inline-popup">
                         <div className="bc-ai-inline-tabs">
@@ -3863,7 +3863,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </p>
                       </div>
                     ) : (
-                      <div className="max-h-[480px] overflow-y-auto" ref={scrollContainerRef}>
+                      <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
                         <table className="bc-tasks-table">
                           <thead>
                             <tr>

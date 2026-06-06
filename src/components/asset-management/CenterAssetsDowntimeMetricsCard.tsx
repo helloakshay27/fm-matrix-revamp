@@ -41,7 +41,7 @@ const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) 
               <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Critical</th>
               <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Non-Critical</th>
             </tr>
-            <tr>
+            <tr style={{ borderTop: '1px solid rgba(255,255,255,0.4)' }}>
               <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breakdowns</th>
               <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Avg Days</th>
               <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breakdowns</th>

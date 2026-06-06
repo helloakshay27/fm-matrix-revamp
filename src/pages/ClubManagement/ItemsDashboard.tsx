@@ -99,8 +99,9 @@ export const ItemsDashboard = () => {
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
   const [bulkUploadDragActive, setBulkUploadDragActive] = useState(false);
-  const [bulkUploadStatus, setBulkUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [bulkUploadStatus, setBulkUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'warning' | 'error'>('idle');
   const [bulkUploadMessage, setBulkUploadMessage] = useState('');
+  const [bulkUploadResults, setBulkUploadResults] = useState<Array<{ row: number; status: string; message: string }>>([]);
   const bulkUploadInputRef = useRef<HTMLInputElement>(null);
   const validateBulkFile = (file: File) => {
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -154,6 +155,24 @@ export const ItemsDashboard = () => {
 
       const contentType = response.headers.get('content-type') || '';
 
+      if (response.status === 422) {
+        const errData = contentType.includes('application/json')
+          ? await response.json().catch(() => ({}))
+          : {};
+        const results: Array<{ row: number; status: string; message: string }> = errData.results || [];
+        setBulkUploadStatus('warning');
+        setBulkUploadMessage(errData.message || errData.error || 'Upload completed with issues.');
+        setBulkUploadResults(results);
+        const toastMessage = errData.message || errData.error || 'Upload completed with issues.';
+        const detail = results.map(r => `Row ${r.row}: ${r.message}`).join('\n');
+        toast.warning(toastMessage, {
+          description: detail || undefined,
+          duration: 6000,
+        });
+        closeBulkUploadDialog();
+        return;
+      }
+
       if (!response.ok) {
         const errData = contentType.includes('application/json')
           ? await response.json().catch(() => ({}))
@@ -199,6 +218,7 @@ export const ItemsDashboard = () => {
     setBulkUploadFile(null);
     setBulkUploadStatus('idle');
     setBulkUploadMessage('');
+    setBulkUploadResults([]);
     if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = '';
   };
 
@@ -1036,19 +1056,54 @@ export const ItemsDashboard = () => {
 
           {/* Status */}
           {bulkUploadStatus !== 'idle' && (
-            <div
-              className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
-                bulkUploadStatus === 'uploading'
-                  ? 'bg-blue-50 text-blue-700'
-                  : bulkUploadStatus === 'success'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
-              }`}
-            >
-              {bulkUploadStatus === 'uploading' && <Loader2 className="w-4 h-4 animate-spin" />}
-              {bulkUploadStatus === 'success' && <CheckCircle className="w-4 h-4" />}
-              {bulkUploadStatus === 'error' && <AlertCircle className="w-4 h-4" />}
-              <span>{bulkUploadStatus === 'uploading' ? 'Uploading...' : bulkUploadMessage}</span>
+            <div className="space-y-2">
+              <div
+                className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+                  bulkUploadStatus === 'uploading'
+                    ? 'bg-blue-50 text-blue-700'
+                    : bulkUploadStatus === 'success'
+                      ? 'bg-green-50 text-green-700'
+                      : bulkUploadStatus === 'warning'
+                        ? 'bg-yellow-50 text-yellow-800'
+                        : 'bg-red-50 text-red-700'
+                }`}
+              >
+                {bulkUploadStatus === 'uploading' && <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />}
+                {bulkUploadStatus === 'success' && <CheckCircle className="w-4 h-4 flex-shrink-0" />}
+                {bulkUploadStatus === 'warning' && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                {bulkUploadStatus === 'error' && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                <span>{bulkUploadStatus === 'uploading' ? 'Uploading...' : bulkUploadMessage}</span>
+              </div>
+              {bulkUploadResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Row</th>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Status</th>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Message</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {bulkUploadResults.map((result, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 py-2 text-gray-700">{result.row}</td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${
+                              result.status === 'success' ? 'bg-green-100 text-green-700' :
+                              result.status === 'skipped' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {result.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-700">{result.message}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 

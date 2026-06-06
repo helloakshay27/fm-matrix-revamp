@@ -1505,7 +1505,7 @@ export const AddVendorClub = () => {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <button
-            onClick={() => navigate('/maintenance/vendor')}
+            onClick={() => navigate('/accounting/vendor')}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
             aria-label="Go back"
           >

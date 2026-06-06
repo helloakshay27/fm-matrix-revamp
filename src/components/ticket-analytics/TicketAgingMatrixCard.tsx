@@ -78,7 +78,7 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
                   No. of Days
                 </th>
               </tr>
-              <tr>
+              <tr style={{ borderTop: '1px solid rgba(255,255,255,0.4)' }}>
                 {['0-10', '11-20', '21-30', '31-40', '41-50'].map(label => (
                   <th key={label} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
                     {label}
