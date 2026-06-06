@@ -17,7 +17,7 @@ import {
   MessageSquare,
   Megaphone,
   Trophy,
-  Brain,
+  Gauge,
   HelpCircle,
   Bug,
   FileText,
@@ -76,7 +76,7 @@ const businessCompassNavigation: Record<string, any> = {
     href: "/business-compass/leaderboard",
   },
   DISC: {
-    icon: Brain,
+    icon: Gauge,
     href: "/business-compass/disc-personality-assessment",
   },
   "Help Center": {

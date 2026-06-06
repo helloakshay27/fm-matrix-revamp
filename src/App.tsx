@@ -25,6 +25,14 @@ import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminLayout } from "./components/AdminLayout";
 import { PWALayoutWrapper } from "./components/PWALayoutWrapper";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+
+//import club vendor pages
+
+const VendorClubDashboard = lazy(() => import("./pages/VendorClubDashboard").then(m => ({ default: m.VendorClubDashboard })));
+// const VendorClubEdit = lazy(() => import("./pages/VendorClubEdit").then(m => ({ default: m.VendorClubEdit })));
+const AddVendorClub = lazy(() => import("./pages/AddVendorClub").then(m => ({ default: m.AddVendorClub })));
+const DetailVendorClub = lazy(() => import("./pages/DetailVendorClub"));
+
 const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const DashboardConfiguration = lazy(() => import("./pages/DashboardConfiguration"));
 const ParkingBookingListSiteWise = lazy(() => import("./pages/ParkingBookingListSiteWise"));
@@ -4697,16 +4705,28 @@ function App() {
                               element={<ViewPerformancePage />}
                             />
                             <Route
-                              path="/accounting/vendor"
+                              path="/maintenance/vendor"
                               element={<VendorPage />}
                             />
                             <Route
-                              path="/accounting/vendor/add"
+                              path="/maintenance/vendor/add"
                               element={<AddVendorPage />}
                             />
                             <Route
-                              path="/accounting/vendor/view/:id"
+                              path="/maintenance/vendor/view/:id"
                               element={<DetailsVendorPage />}
+                            />
+                            <Route
+                              path="/accounting/vendor"
+                              element={<VendorClubDashboard />}
+                            />
+                            <Route
+                              path="/accounting/vendor/add"
+                              element={<AddVendorClub />}
+                            />
+                            <Route
+                              path="/accounting/vendor/view/:id"
+                              element={<DetailVendorClub />}
                             />
                             <Route
                               path="/accounting/vendor/edit/:id"

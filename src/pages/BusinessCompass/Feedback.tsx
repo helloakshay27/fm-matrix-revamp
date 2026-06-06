@@ -113,6 +113,64 @@ const BRAND = {
   starEmptyMuted: "#e8edf5",
 } as const;
 
+const FEEDBACK_ANIMATION_STYLES = `
+  @keyframes feedbackModalBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes feedbackModalCardIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes feedbackTabIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes feedbackCollapseIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 560px;
+    }
+  }
+
+  .feedback-modal-backdrop {
+    animation: feedbackModalBackdropIn 180ms ease-out both;
+  }
+
+  .feedback-modal-card {
+    animation: feedbackModalCardIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .feedback-tab-panel[data-state="active"] {
+    animation: feedbackTabIn 220ms ease-out both;
+  }
+
+  .feedback-collapse-panel {
+    animation: feedbackCollapseIn 240ms ease-out both;
+  }
+`;
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export type FeedbackItem = {
@@ -2169,7 +2227,7 @@ function GivenFeedbackList({
               <div
                 key={item.id}
                 className={cn(
-                  "group rounded-[18px] border bg-white transition-all duration-200",
+                  "group overflow-hidden rounded-[18px] border bg-white transition-all duration-300 ease-out",
                   expanded
                     ? "border-[#e5e8ee] shadow-[0_10px_28px_rgba(15,23,42,0.04)]"
                     : "border-[#e5e8ee] hover:border-[#d7dce5]"
@@ -2233,7 +2291,7 @@ function GivenFeedbackList({
                     >
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 transition-transform",
+                          "h-4 w-4 transition-transform duration-200 ease-out",
                           expanded && "rotate-180"
                         )}
                       />
@@ -2242,7 +2300,7 @@ function GivenFeedbackList({
                 </div>
 
                 {expanded && (
-                  <div className="px-5 pb-5 pt-1">
+                  <div className="feedback-collapse-panel overflow-hidden px-5 pb-5">
                     {isLoadingDetail ? (
                       <div className="flex items-center gap-2 py-5 text-xs text-neutral-400">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -2506,8 +2564,8 @@ function EditFeedbackModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
-      <div className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-xl">
+    <div className="feedback-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+      <div className="feedback-modal-card relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between px-1">
           <h2 className="text-[17px] font-bold text-[#111827]">Edit Feedback</h2>
           <button
@@ -2942,6 +3000,7 @@ function FeedbackPage() {
       className="min-h-[calc(100vh-5rem)] bg-white px-8 py-7"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
+      <style>{FEEDBACK_ANIMATION_STYLES}</style>
       <div className="w-full max-w-[1020px] space-y-6">
         <header className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f7f7f6]">
@@ -2989,41 +3048,44 @@ function FeedbackPage() {
 
           <TabsContent
             value="received"
-            className="mt-6 space-y-4 focus-visible:outline-none"
+            className="feedback-tab-panel mt-6 space-y-4 focus-visible:outline-none"
           >
-            <AsyncBoundary>
-              <GivenFeedbackList
-                key={`received-${receivedView}`}
-                onGiveFeedbackClick={() => setFeedbackTab("give")}
-                onEditFeedback={(item) => {
-                  setEditingFeedback(item);
-                  setIsEditModalOpen(true);
-                }}
-                direction="from"
-                filterUserId={null}
-                itemsOverride={receivedFeedback}
-                filterPrefix={
-                  <div className="inline-flex items-center gap-3 rounded-[14px] bg-[#f5f2eb] px-3 py-1.5">
-                    <span className="text-[13px] font-medium text-[#111827] whitespace-nowrap">
-                      View Feedback for:
-                    </span>
-                    <UserSelectReceived
-                      value={receivedView}
-                      onChange={setReceivedView}
-                      users={teamMembers}
-                      myselfLabel={myselfLabel}
-                      currentUserId={currentUserId}
-                      disabled={teamMembersLoading}
-                    />
-                  </div>
-                }
-              />
-            </AsyncBoundary>
+            <div className="space-y-5">
+              <div className="inline-flex items-center gap-3 rounded-[14px] bg-[#f5f2eb] p-2">
+                <span className="pl-2 text-[13px] font-medium text-[#111827]">
+                  View feedback for:
+                </span>
+                {/* ── Searchable dropdown (BhagSection style) ── */}
+                <UserSelectReceived
+                  value={receivedView}
+                  onChange={setReceivedView}
+                  users={teamMembers}
+                  myselfLabel={myselfLabel}
+                  currentUserId={currentUserId}
+                  disabled={teamMembersLoading}
+                />
+              </div>
+              <div>
+                <AsyncBoundary>
+                  <GivenFeedbackList
+                    key={`received-${receivedView}`}
+                    onGiveFeedbackClick={() => setFeedbackTab("give")}
+                    onEditFeedback={(item) => {
+                      setEditingFeedback(item);
+                      setIsEditModalOpen(true);
+                    }}
+                    direction="from"
+                    filterUserId={null}
+                    itemsOverride={receivedFeedback}
+                  />
+                </AsyncBoundary>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent
             value="given"
-            className="mt-6 focus-visible:outline-none"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
           >
             <AsyncBoundary>
               <GivenFeedbackList
@@ -3040,7 +3102,10 @@ function FeedbackPage() {
             </AsyncBoundary>
           </TabsContent>
 
-          <TabsContent value="give" className="mt-6 focus-visible:outline-none">
+          <TabsContent
+            value="give"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
+          >
             <AsyncBoundary>
               <div className="max-w-[760px]">
                 <GiveFeedbackForm onSubmitted={() => setFeedbackTab("given")} />

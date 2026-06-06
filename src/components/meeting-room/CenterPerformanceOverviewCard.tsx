@@ -56,10 +56,10 @@ export const CenterPerformanceOverviewCard: React.FC<CenterPerformanceOverviewCa
                     Meeting Room
                   </th>
                 </tr>
-                <tr>
-                  <th className={`${thCls} `} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Utilization<br />Rate (in %)</th>
-                  <th className={`${thCls} `} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Cancellation<br />Rate (in %)</th>
-                  <th className={`${thCls} `} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Revenue<br />(in ₹)</th>
+                <tr style={{ borderTop: '1px solid rgba(255,255,255,0.4)' }}>
+                  <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Utilization<br />Rate (in %)</th>
+                  <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Cancellation<br />Rate (in %)</th>
+                  <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Revenue<br />(in ₹)</th>
                 </tr>
               </thead>
               <tbody>

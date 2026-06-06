@@ -372,6 +372,7 @@ const WeeklyReports = () => {
     const [tasksLoading, setTasksLoading] = useState(false);
     const [issuesLoading, setIssuesLoading] = useState(false);
     const [todosData, setTodosData] = useState<any[]>([]);
+    const [fetchedSourceData, setFetchedSourceData] = useState<Record<string, any>>({});
     const [todosLoading, setTodosLoading] = useState(false);
     const [kpis, setKpis] = useState<any[]>([]);
     const [kpiLoading, setKpiLoading] = useState(false);
@@ -571,7 +572,62 @@ const WeeklyReports = () => {
         setCurrentIssuesPage(1);
         setMergedTasksIssues([]);
         setTodosData([]);
+        setFetchedSourceData({});
     }, [weekEnd, userId]);
+
+    // Fetch source record details (task/issue/todo) for day-plan items that have a source_id
+    // but no originalData and cannot be resolved from the already-loaded lists.
+    useEffect(() => {
+        if (!normalizedBaseUrl || !token) return;
+
+        const allItems = [...nextWeekScheduledItems, ...mergedTasksIssues];
+        const isAlreadyLoaded = (source_type: string, source_id: any) =>
+            allItems.some(
+                (item) =>
+                    item.type === source_type &&
+                    (String(item.originalData?.id) === String(source_id) ||
+                        String(item.id) === String(source_id))
+            );
+
+        const toFetch: { source_id: any; source_type: string }[] = [];
+        Object.values(dayPlans).flat().forEach((planObj) => {
+            if (planObj.source_id == null || !planObj.source_type || planObj.originalData) return;
+            const key = `${planObj.source_type}:${planObj.source_id}`;
+            if (!fetchedSourceData[key] && !isAlreadyLoaded(planObj.source_type, planObj.source_id)) {
+                toFetch.push({ source_id: planObj.source_id, source_type: planObj.source_type });
+            }
+        });
+
+        if (toFetch.length === 0) return;
+
+        const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
+        const urlFor = (source_type: string, source_id: any) => {
+            if (source_type === "task") return `${normalizedBaseUrl}/task_managements/${source_id}.json`;
+            if (source_type === "issue") return `${normalizedBaseUrl}/issues/${source_id}.json`;
+            if (source_type === "todo") return `${normalizedBaseUrl}/todos/${source_id}.json`;
+            return null;
+        };
+
+        (async () => {
+            const newData: Record<string, any> = {};
+            await Promise.allSettled(
+                toFetch.map(async ({ source_id, source_type }) => {
+                    const url = urlFor(source_type, source_id);
+                    if (!url) return;
+                    try {
+                        const res = await fetch(url, { headers });
+                        if (!res.ok) return;
+                        const json = await res.json();
+                        const record = json.task_management || json.issue || json.todo || json;
+                        newData[`${source_type}:${source_id}`] = record;
+                    } catch {}
+                })
+            );
+            if (Object.keys(newData).length > 0) {
+                setFetchedSourceData((prev) => ({ ...prev, ...newData }));
+            }
+        })();
+    }, [dayPlans, nextWeekScheduledItems, mergedTasksIssues, normalizedBaseUrl, token]);
 
     useEffect(() => {
         const fetchWeeklyTasks = async () => {
@@ -1803,7 +1859,7 @@ const WeeklyReports = () => {
 
                 const newDayPlans: Record<
                     string,
-                    { id: string; text: string; starred?: boolean }[]
+                    { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]
                 > = {};
                 Object.entries(dayKeyedObject).forEach(([dayKey, dayTasks]) => {
                     const dayAbbr = dayMapping[dayKey.toLowerCase()];
@@ -1823,6 +1879,8 @@ const WeeklyReports = () => {
                                     id: t.id || crypto.randomUUID(),
                                     text: t.text || t.title || "",
                                     starred: t.starred || t.is_starred || false,
+                                    ...(t.source_id != null && { source_id: t.source_id }),
+                                    ...(t.source_type && { source_type: t.source_type }),
                                 };
                             });
                         }
@@ -1871,6 +1929,38 @@ const WeeklyReports = () => {
                 populateForm(existing);
             }
             applyStoredDraft(getStoredDraft());
+
+            // Patch: the draft overwrites dayPlans and loses source_id/source_type.
+            // Re-apply them from the API response using the plan item's id as the key.
+            if (existing?.report_data?.upcoming_week_plan) {
+                const apiPlansObj = Array.isArray(existing.report_data.upcoming_week_plan)
+                    ? (existing.report_data.upcoming_week_plan[0] ?? {})
+                    : existing.report_data.upcoming_week_plan;
+                const apiPlanById = new Map<string, { source_id?: any; source_type?: string }>();
+                Object.values(apiPlansObj).forEach((dayTasks: any) => {
+                    if (!Array.isArray(dayTasks)) return;
+                    dayTasks.forEach((t: any) => {
+                        if (t?.id && (t.source_id != null || t.source_type)) {
+                            apiPlanById.set(t.id, { source_id: t.source_id, source_type: t.source_type });
+                        }
+                    });
+                });
+                if (apiPlanById.size > 0) {
+                    setDayPlans((prev) => {
+                        const patched: typeof prev = {};
+                        for (const [dayKey, tasks] of Object.entries(prev)) {
+                            patched[dayKey] = tasks.map((task) => {
+                                const apiData = apiPlanById.get(task.id);
+                                if (apiData && (!task.source_type || task.source_id == null)) {
+                                    return { ...task, ...apiData };
+                                }
+                                return task;
+                            });
+                        }
+                        return patched;
+                    });
+                }
+            }
         } catch (error) {
             console.error("Failed to fetch weekly reports history:", error);
             applyStoredDraft(getStoredDraft());
@@ -2078,6 +2168,7 @@ const WeeklyReports = () => {
                     starred: false,
                     source_id: item.originalData?.id ?? item.id,
                     source_type: item.type,
+                    originalData: item.originalData ?? null,
                 },
             ],
         }));
@@ -3850,179 +3941,224 @@ const WeeklyReports = () => {
                             </div>
                             <div className="p-6">
                                 <div className="space-y-5">
-                                {upcomingDays.map((day) => (
-                                    <div key={day.key} className="space-y-3">
-                                        <div
-                                            className={cn(
-                                                "flex items-center justify-between rounded-[10px] border px-3 py-2",
-                                                day.canAdd
-                                                    ? "border-[#DA7756]/15 bg-[#fafafa]"
-                                                    : "border-gray-100 bg-gray-50"
-                                            )}
-                                        >
-                                            <span
+                                    {upcomingDays.map((day) => (
+                                        <div key={day.key} className="space-y-3">
+                                            <div
                                                 className={cn(
-                                                    "text-xs font-bold uppercase tracking-wider",
-                                                    day.canAdd ? "text-gray-500" : "text-gray-400"
+                                                    "flex items-center justify-between rounded-[10px] border px-3 py-2",
+                                                    day.canAdd
+                                                        ? "border-[#DA7756]/15 bg-[#fafafa]"
+                                                        : "border-gray-100 bg-gray-50"
                                                 )}
                                             >
-                                                {day.short}
-                                            </span>
-                                            {day.canAdd ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
-                                                    className="inline-flex items-center gap-1 rounded-[8px] bg-[#DA7756] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#c9673f]"
+                                                <span
+                                                    className={cn(
+                                                        "text-xs font-bold uppercase tracking-wider",
+                                                        day.canAdd ? "text-gray-500" : "text-gray-400"
+                                                    )}
                                                 >
-                                                    <Plus className="h-3 w-3" /> Add
-                                                </button>
-                                            ) : (
-                                                <span className="text-[10px] text-neutral-400">—</span>
-                                            )}
-                                        </div>
-                                        <div className="space-y-3">
-                                            {/* Next week scheduled items — read-only, not in payload */}
-                                            {nextWeekScheduledLoading && !nextWeekScheduledItems.length ? (
-                                                <div className="flex items-center gap-2 py-3 text-gray-300">
-                                                    <Loader2 size={13} className="animate-spin shrink-0" />
-                                                    <span className="text-xs font-medium">Fetching upcoming assignments...</span>
-                                                </div>
-                                            ) : (
-                                                nextWeekScheduledByDay[day.key]?.map((item: any) => {
-                                                    const plannedItem = Object.values(dayPlans)
-                                                        .flat()
-                                                        .find((plan) => planMatchesSourceItem(plan, item));
-
-                                                    return (
-                                                    <div
-                                                        key={item.id}
-                                                        className="relative flex min-h-[56px] items-center gap-3 rounded-[10px] border border-gray-200 bg-gray-50 px-4 py-2 shadow-sm transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]"
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => toggleScheduledItemPlanStar(item, day.key)}
-                                                            className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                                            title={plannedItem?.starred ? "Unstar" : "Star this priority"}
-                                                        >
-                                                            <Star
-                                                                className={cn(
-                                                                    "h-[18px] w-[18px] transition-colors duration-200",
-                                                                    plannedItem?.starred
-                                                                        ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                                                        : "text-gray-300 hover:text-yellow-400"
-                                                                )}
-                                                            />
-                                                        </button>
-                                                        <span className={cn(
-                                                            "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                                            item.type === "task" ? "bg-[#DA7756]/10 text-[#9e4f36]" : item.type === "issue" ? "bg-violet-100 text-violet-700" : "bg-yellow-100 text-yellow-700"
-                                                        )}>
-                                                            {item.type}
-                                                        </span>
-                                                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-500">
-                                                            {item.title}
-                                                        </p>
-                                                        {item.priority && (
-                                                            <span
-                                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                                                style={{
-                                                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                                                }}
-                                                            >
-                                                                {item.priority}
-                                                            </span>
-                                                        )}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                if (item.type === "todo") {
-                                                                    setSelectedTodo(item.originalData);
-                                                                    setIsTodoDetailsModalOpen(true);
-                                                                } else {
-                                                                    navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
-                                                                }
-                                                            }}
-                                                            className="relative z-20 shrink-0 rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                            title={`View ${item.type}`}
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => hideNextWeekScheduledItem(item)}
-                                                            className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
-                                                        >
-                                                            <X className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-                                                    );
-                                                })
-                                            )}
-                                            {dayPlans[day.key]
-                                                ?.map((planObj, index) => ({ planObj, index }))
-                                                .filter(
-                                                    ({ planObj }) =>
-                                                        !nextWeekScheduledByDay[day.key]?.some((item: any) =>
-                                                            planMatchesSourceItem(planObj, item)
-                                                        )
-                                                )
-                                                .map(({ planObj, index }) => (
-                                                <div
-                                                    key={planObj.id}
-                                                    id={`plan-${planObj.id}`}
-                                                    className="relative flex min-h-[56px] items-center gap-3 rounded-[10px] border border-[#f3f4f6] bg-[#fafafa] px-4 py-2 shadow-sm transition-all hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
-                                                >
+                                                    {day.short}
+                                                </span>
+                                                {day.canAdd ? (
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleTogglePlanStar(day.key, index)}
-                                                        className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
+                                                        onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
+                                                        className="inline-flex items-center gap-1 rounded-[8px] bg-[#DA7756] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#c9673f]"
                                                     >
-                                                        <Star
-                                                            className={cn(
-                                                                "h-[18px] w-[18px] transition-colors duration-200",
-                                                                planObj.starred
-                                                                    ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                                                    : "text-gray-300 hover:text-gray-400"
-                                                            )}
-                                                        />
+                                                        <Plus className="h-3 w-3" /> Add
                                                     </button>
-                                                    <span className={cn(
-                                                        "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                                        planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-gray-500 text-white"
-                                                    )}>
-                                                        {planObj.source_type || "Note"}
-                                                    </span>
-                                                    {planObj.source_type ? (
-                                                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-700 cursor-not-allowed select-none">
-                                                            {planObj.text}
-                                                        </p>
-                                                    ) : (
-                                                        <input
-                                                            type="text"
-                                                            value={planObj.text}
-                                                            onChange={(event) =>
-                                                                handlePlanChange(day.key, index, event.target.value)
-                                                            }
-                                                            placeholder="What's your strategic priority?"
-                                                            className="min-w-0 flex-1 bg-transparent border-none p-0 text-sm font-medium text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
-                                                        />
-                                                    )}
-                                                    {planObj.originalData?.priority && (
-                                                        <span
-                                                            className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                                            style={{
-                                                                backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
-                                                            }}
+                                                ) : (
+                                                    <span className="text-[10px] text-neutral-400">—</span>
+                                                )}
+                                            </div>
+                                            <div className="space-y-3">
+                                                {/* Next week scheduled items — read-only, not in payload */}
+                                                {nextWeekScheduledLoading && !nextWeekScheduledItems.length ? (
+                                                    <div className="flex items-center gap-2 py-3 text-gray-300">
+                                                        <Loader2 size={13} className="animate-spin shrink-0" />
+                                                        <span className="text-xs font-medium">Fetching upcoming assignments...</span>
+                                                    </div>
+                                                ) : (
+                                                    nextWeekScheduledByDay[day.key]?.map((item: any) => {
+                                                        const plannedItem = Object.values(dayPlans)
+                                                            .flat()
+                                                            .find((plan) => planMatchesSourceItem(plan, item));
+
+                                                        return (
+                                                            <div
+                                                                key={item.id}
+                                                                className="relative flex min-h-[56px] items-center gap-3 rounded-[10px] border border-gray-200 bg-gray-50 px-4 py-2 shadow-sm transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]"
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => toggleScheduledItemPlanStar(item, day.key)}
+                                                                    className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                                    title={plannedItem?.starred ? "Unstar" : "Star this priority"}
+                                                                >
+                                                                    <Star
+                                                                        className={cn(
+                                                                            "h-[18px] w-[18px] transition-colors duration-200",
+                                                                            plannedItem?.starred
+                                                                                ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                                                                : "text-gray-300 hover:text-yellow-400"
+                                                                        )}
+                                                                    />
+                                                                </button>
+                                                                <span className={cn(
+                                                                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                                    item.type === "task" ? "bg-[#DA7756]/10 text-[#9e4f36]" : item.type === "issue" ? "bg-violet-100 text-violet-700" : "bg-yellow-100 text-yellow-700"
+                                                                )}>
+                                                                    {item.type}
+                                                                </span>
+                                                                <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-500">
+                                                                    {item.title}
+                                                                </p>
+                                                                {item.priority && (
+                                                                    <span
+                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                                        style={{
+                                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                        }}
+                                                                    >
+                                                                        {item.priority}
+                                                                    </span>
+                                                                )}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (item.type === "todo") {
+                                                                            setSelectedTodo(item.originalData);
+                                                                            setIsTodoDetailsModalOpen(true);
+                                                                        } else {
+                                                                            navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                                        }
+                                                                    }}
+                                                                    className="relative z-20 shrink-0 rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                    title={`View ${item.type}`}
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => hideNextWeekScheduledItem(item)}
+                                                                    className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                                {dayPlans[day.key]
+                                                    ?.map((planObj, index) => ({ planObj, index }))
+                                                    .filter(
+                                                        ({ planObj }) =>
+                                                            !nextWeekScheduledByDay[day.key]?.some((item: any) =>
+                                                                planMatchesSourceItem(planObj, item)
+                                                            )
+                                                    )
+                                                    .map(({ planObj, index }) => {
+                                                        const matchById = (item: any) =>
+                                                            item.type === planObj.source_type &&
+                                                            (String(item.originalData?.id) === String(planObj.source_id) ||
+                                                             String(item.id) === String(planObj.source_id));
+                                                        const sourceItem = planObj.source_type
+                                                            ? (nextWeekScheduledItems.find(matchById) || mergedTasksIssues.find(matchById))
+                                                            : null;
+                                                        const fetchedRecord = planObj.source_type && planObj.source_id != null
+                                                            ? fetchedSourceData[`${planObj.source_type}:${planObj.source_id}`]
+                                                            : null;
+                                                        const rawData = planObj.originalData || sourceItem?.originalData || fetchedRecord;
+                                                        const priority = rawData?.priority || sourceItem?.priority;
+                                                        const sourceId = rawData?.id || planObj.source_id;
+                                                        // Info row — mirrors task section exactly
+                                                        const planEndDate = fmtDate(rawData?.target_date || rawData?.due_date || rawData?.end_date || sourceItem?.date);
+                                                        const planOverdueLabel = getOverdueLabel(rawData?.target_date || rawData?.due_date || rawData?.end_date || sourceItem?.date);
+                                                        const planEffortEst = fmtHours(rawData?.total_allocated_hours || rawData?.estimated_hour);
+                                                        let planIssueEffort: string | null = null;
+                                                        if (planObj.source_type === "issue" && Array.isArray(rawData?.issue_allocation_times) && rawData.issue_allocation_times.length > 0) {
+                                                            const totalMin = rawData.issue_allocation_times.reduce((sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0);
+                                                            if (totalMin > 0) { const h = Math.floor(totalMin / 60); const m = totalMin % 60; planIssueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`; }
+                                                        }
+                                                        let planTimeLeftLabel: string | null = null;
+                                                        if (planObj.source_type === "issue" && (rawData?.end_date) && !planOverdueLabel) {
+                                                            const now = new Date(); const end = new Date(rawData.end_date); end.setHours(23, 59, 59, 999); const diff = end.getTime() - now.getTime();
+                                                            if (diff > 0) { const days = Math.floor(diff / 86400000); const hrs = Math.floor((diff % 86400000) / 3600000); const mins = Math.floor((diff % 3600000) / 60000); planTimeLeftLabel = days > 0 ? `${days}d ${hrs}h left` : hrs > 0 ? `${hrs}h ${mins}m left` : `${mins}m left`; }
+                                                        }
+                                                        const planHasInfo = planObj.source_type && (planEndDate || planOverdueLabel || planEffortEst || planIssueEffort || planTimeLeftLabel || (planObj.source_type === "task" && rawData?.active_time_till_now));
+                                                        return (
+                                                        <div
+                                                            key={planObj.id}
+                                                            id={`plan-${planObj.id}`}
+                                                            className="relative flex flex-col rounded-[10px] border border-[#f3f4f6] bg-[#fafafa] px-4 py-2 shadow-sm transition-all hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
                                                         >
-                                                            {planObj.originalData.priority}
-                                                        </span>
-                                                    )}
-                                                    <div className="flex items-center gap-1 relative z-20 shrink-0">
-                                                        {!planObj.source_type && (
-                                                            <>
+                                                            <div className="flex min-h-[40px] items-center gap-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleTogglePlanStar(day.key, index)}
+                                                                className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                                title={planObj.starred ? "Unstar" : "Star this priority"}
+                                                            >
+                                                                <Star
+                                                                    className={cn(
+                                                                        "h-[18px] w-[18px] transition-colors duration-200",
+                                                                        planObj.starred
+                                                                            ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                                                            : "text-gray-300 hover:text-gray-400"
+                                                                    )}
+                                                                />
+                                                            </button>
+                                                            <span className={cn(
+                                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                                planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-gray-500 text-white"
+                                                            )}>
+                                                                {planObj.source_type || "Note"}
+                                                            </span>
+                                                            {planObj.source_type ? (
+                                                                <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-700 cursor-not-allowed select-none">
+                                                                    {planObj.text}
+                                                                </p>
+                                                            ) : (
+                                                                <input
+                                                                    type="text"
+                                                                    value={planObj.text}
+                                                                    onChange={(event) =>
+                                                                        handlePlanChange(day.key, index, event.target.value)
+                                                                    }
+                                                                    placeholder="What's your strategic priority?"
+                                                                    className="min-w-0 flex-1 bg-transparent border-none p-0 text-sm font-medium text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
+                                                                />
+                                                            )}
+                                                            {priority && (
+                                                                <span
+                                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                                    style={{
+                                                                        backgroundColor: priority === "High" ? "#fee2e2" : priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                        color: priority === "High" ? "#991b1b" : priority === "Medium" ? "#92400e" : "#166534",
+                                                                    }}
+                                                                >
+                                                                    {priority}
+                                                                </span>
+                                                            )}
+                                                            {planObj.source_type && sourceId && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (planObj.source_type === "todo") {
+                                                                            setSelectedTodo(rawData);
+                                                                            setIsTodoDetailsModalOpen(true);
+                                                                        } else {
+                                                                            navigate(planObj.source_type === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+                                                                        }
+                                                                    }}
+                                                                    className="relative z-20 shrink-0 rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                    title={`View ${planObj.source_type}`}
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                            <div className="flex items-center gap-1 relative z-20 shrink-0">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleMovePlan(day.key, index, "up")}
@@ -4039,22 +4175,62 @@ const WeeklyReports = () => {
                                                                 >
                                                                     <ChevronDown className="h-4 w-4" />
                                                                 </button>
-                                                            </>
-                                                        )}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemovePlan(day.key, index)}
-                                                            className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
-                                                        >
-                                                            <X className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemovePlan(day.key, index)}
+                                                                    className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                            </div>
+                                                            {planHasInfo && (
+                                                                <div className="flex items-center gap-3 mt-1 pl-7 pb-0.5 flex-wrap">
+                                                                    {planEndDate && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Calendar size={9} className="shrink-0" />
+                                                                            {planEndDate}
+                                                                        </span>
+                                                                    )}
+                                                                    {planOverdueLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                            <AlertCircle size={9} className="shrink-0" />
+                                                                            {planOverdueLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {planTimeLeftLabel && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                            <Clock size={9} className="shrink-0" />
+                                                                            {planTimeLeftLabel}
+                                                                        </span>
+                                                                    )}
+                                                                    {planEffortEst && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                            <Clock size={9} className="shrink-0" />
+                                                                            Est: {planEffortEst}
+                                                                        </span>
+                                                                    )}
+                                                                    {planIssueEffort && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                                            <Zap size={9} className="shrink-0" />
+                                                                            Effort: {planIssueEffort}
+                                                                        </span>
+                                                                    )}
+                                                                    {planObj.source_type === "task" && rawData?.active_time_till_now && (
+                                                                        <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                                            <Zap size={9} className="shrink-0" />
+                                                                            <ActiveTimer activeTimeTillNow={rawData.active_time_till_now} isStarted={rawData.is_started} />
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        );
+                                                    })}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
                             </div>
                         </Card>
 
