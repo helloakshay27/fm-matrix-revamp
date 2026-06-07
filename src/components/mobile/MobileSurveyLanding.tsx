@@ -1590,6 +1590,55 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Render loading state
+  // Show Coming Soon page for specific domains or org_ids
+  const orgId = new URLSearchParams(window.location.search).get("org_id");
+  const hostname = window.location.hostname;
+  if (hostname === "oig.gophygital.work" || hostname === "localhost" ) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6"
+        style={{ background: 'linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)' }}>
+        {/* Logo */}
+        <div className="mb-8">
+       
+        </div>
+
+        {/* Rocket icon */}
+        <div className="mb-6">
+          <div className="w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(199,32,48,0.08)' }}>
+            <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+                fill="rgba(199,32,48,0.12)" />
+              <path d="M13.41 7.59L9 12l4.41 4.41L15 14.83l-2.83-2.83L15 9.17l-1.59-1.58z"
+                fill="#C72030" />
+              <circle cx="12" cy="12" r="3" fill="#C72030" opacity="0.3" />
+              <path d="M12 5l2 4H10l2-4zM12 19l-2-4h4l-2 4z" fill="#C72030" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="text-center max-w-sm">
+          <h1 className="text-2xl font-bold text-gray-900 mb-3"
+            style={{ fontFamily: 'Work Sans, sans-serif' }}>
+            Coming Soon
+          </h1>
+         
+
+          {/* Decorative dots */}
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+        </div>
+
+        {/* Footer */}
+       
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
