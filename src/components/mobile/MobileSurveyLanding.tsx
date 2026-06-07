@@ -1590,40 +1590,64 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Render loading state
-  // Show Coming Soon page for specific domains or org_ids
-  const orgId = new URLSearchParams(window.location.search).get("org_id");
+  // Show Coming Soon page for specific domains
   const hostname = window.location.hostname;
-  if (hostname.includes("oig.gophygital.work") || hostname === "localhost" ) {
+  if (hostname.includes("oig.gophygital.work")) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ background: 'linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)' }}>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-6"
+        style={{ background: 'linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)' }}
+      >
         {/* Logo */}
         <div className="mb-8">
-       
+          <img
+            src="/Without bkg.svg"
+            alt="OIG Logo"
+            className="h-16 object-contain"
+          />
         </div>
 
         {/* Rocket icon */}
         <div className="mb-6">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(199,32,48,0.08)' }}>
+          <div
+            className="w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(199,32,48,0.08)' }}
+          >
             <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-                fill="rgba(199,32,48,0.12)" />
-              <path d="M13.41 7.59L9 12l4.41 4.41L15 14.83l-2.83-2.83L15 9.17l-1.59-1.58z"
-                fill="#C72030" />
-              <circle cx="12" cy="12" r="3" fill="#C72030" opacity="0.3" />
-              <path d="M12 5l2 4H10l2-4zM12 19l-2-4h4l-2 4z" fill="#C72030" />
+              <path
+                d="M12 2.5C12 2.5 7 7 7 13c0 2.76 2.24 5 5 5s5-2.24 5-5c0-6-5-10.5-5-10.5z"
+                fill="rgba(199,32,48,0.15)"
+                stroke="#C72030"
+                strokeWidth="1.2"
+              />
+              <path
+                d="M12 2.5C12 2.5 7 7 7 13c0 2.76 2.24 5 5 5s5-2.24 5-5c0-6-5-10.5-5-10.5z"
+                fill="none"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M9 17.5l-2 3.5h2l1-1.5 1 1.5h2l-2-3.5"
+                fill="#C72030"
+                opacity="0.6"
+              />
+              <circle cx="12" cy="13" r="2" fill="#C72030" />
+              <path d="M7 10.5l-2 2M17 10.5l2 2" stroke="#C72030" strokeWidth="1.2" strokeLinecap="round" />
             </svg>
           </div>
         </div>
 
         {/* Text */}
         <div className="text-center max-w-sm">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3"
-            style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          <h1
+            className="text-3xl font-bold text-gray-900 mb-2"
+            style={{ fontFamily: 'Work Sans, sans-serif' }}
+          >
             Coming Soon
           </h1>
-         
+          <p className="text-gray-500 text-sm mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+            We're working on something amazing. Stay tuned!
+          </p>
 
           {/* Decorative dots */}
           <div className="flex items-center justify-center gap-2 mt-2">
@@ -1634,7 +1658,11 @@ export const MobileSurveyLanding: React.FC = () => {
         </div>
 
         {/* Footer */}
-       
+        <div className="absolute bottom-6 text-center">
+          <p className="text-xs text-gray-400" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+            Powered by <span className="font-semibold text-gray-500">Gophygital</span>
+          </p>
+        </div>
       </div>
     );
   }
