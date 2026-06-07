@@ -1189,48 +1189,12 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
         }}
       >
         {/* OIG Logo */}
-        <div className="flex justify-end">
-          <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
-            {surveyData?.company_logo_url ? (
-              <img
-                src={surveyData.company_logo_url}
-                alt="Company Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : window.location.origin === "https://oig.gophygital.work" ? (
-              <img
-                src="/Without bkg.svg"
-                alt="OIG Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : window.location.origin === "https://web.gophygital.work" &&
-              new URLSearchParams(window.location.search).get("org_id") ===
-                "3" ? (
-              <img
-                src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
-                alt="PSIPL Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : window.location.origin === "https://web.gophygital.work" ? (
-              <img
-                src="/PSIPL-logo (1).png"
-                alt="PSIPL Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
-              <img
-                src="/gophygital-logo-min.jpg"
-                alt="gophygital Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <img
-                src="/gophygital-logo-min.jpg"
-                alt="gophygital Logo"
-                className="w-full h-full object-contain"
-              />
-            )}
-          </div>
+        <div className="mb-8 flex justify-center">
+          <img
+            src="/Without bkg.svg"
+            alt="OIG Logo"
+            className="h-14 sm:h-16 object-contain"
+          />
         </div>
 
         {/* Coming soon illustration */}
