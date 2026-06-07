@@ -1629,6 +1629,15 @@ export const MobileSurveyLanding: React.FC = () => {
           background: "linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)",
         }}
       >
+        {/* OIG Logo */}
+        <div className="mb-8 flex justify-center">
+          <img
+            src="/Without bkg.svg"
+            alt="OIG Logo"
+            className="h-14 sm:h-16 object-contain"
+          />
+        </div>
+
         {/* Coming soon illustration */}
         <div className="mb-8 flex justify-center">
           <img
