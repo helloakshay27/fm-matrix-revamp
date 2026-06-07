@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Users, Shield, ArrowRight } from "lucide-react";
+import { Users, Shield, ArrowRight, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -116,59 +116,49 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[600px] bg-white [&>button]:hidden">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center text-[#1a1a1a]">
+      <DialogContent className="w-[calc(100vw-32px)] border-0 bg-white p-5 shadow-xl sm:max-w-[596px] sm:p-6 [&>button]:hidden">
+        <DialogHeader className="space-y-2 text-center">
+          <DialogTitle className="text-center text-[26px] font-bold leading-tight text-[#111111]">
             Welcome! Choose Your View
           </DialogTitle>
-          <DialogDescription className="text-center text-gray-600 mt-2">
+          <DialogDescription className="text-center text-[15px] text-[#5f6775]">
             Select how you want to access the system
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Admin View Card */}
           <button
+            type="button"
+            aria-pressed={selectedView === "admin"}
             onClick={() => setSelectedView("admin")}
-            className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
+            className={`relative min-h-[244px] rounded-lg border-2 p-6 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 ${
               selectedView === "admin"
-                ? "border-[#C72030] bg-red-50 shadow-lg"
-                : "border-gray-200 bg-white hover:border-gray-300"
+                ? "border-[#DA7756] bg-[#fff6f2] shadow-[0_10px_20px_rgba(218,119,86,0.18)]"
+                : "border-[#e1e5ea] bg-white hover:border-[#d4d9e1] hover:shadow-md"
             }`}
           >
-            <div className="flex flex-col items-center text-center space-y-4">
+            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                className={`flex h-20 w-20 items-center justify-center rounded-full ${
                   selectedView === "admin"
-                    ? "bg-[#C72030] text-white"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-[#DA7756] text-white"
+                    : "bg-[#f3f4f6] text-[#4b5563]"
                 }`}
               >
-                <Shield className="w-10 h-10" />
+                <Shield className="h-10 w-10" strokeWidth={2.4} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">
+                <h3 className="mb-2 text-[21px] font-bold leading-tight text-[#202027]">
                   Admin View
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-[15px] leading-5 text-[#5f6775]">
                   Full access to manage projects, sites, and all system features
                 </p>
               </div>
               {selectedView === "admin" && (
-                <div className="absolute top-3 right-3">
-                  <div className="w-6 h-6 rounded-full bg-[#C72030] flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#DA7756] text-white">
+                  <Check className="h-4 w-4" strokeWidth={3} />
                 </div>
               )}
             </div>
@@ -176,47 +166,37 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
 
           {/* Employee View Card */}
           <button
+            type="button"
+            aria-pressed={selectedView === "employee"}
             onClick={() => setSelectedView("employee")}
-            className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
+            className={`relative min-h-[244px] rounded-lg border-2 p-6 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 ${
               selectedView === "employee"
-                ? "border-[#C72030] bg-red-50 shadow-lg"
-                : "border-gray-200 bg-white hover:border-gray-300"
+                ? "border-[#DA7756] bg-[#fff6f2] shadow-[0_10px_20px_rgba(218,119,86,0.18)]"
+                : "border-[#e1e5ea] bg-white hover:border-[#d4d9e1] hover:shadow-md"
             }`}
           >
-            <div className="flex flex-col items-center text-center space-y-4">
+            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                className={`flex h-20 w-20 items-center justify-center rounded-full ${
                   selectedView === "employee"
-                    ? "bg-[#C72030] text-white"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-[#DA7756] text-white"
+                    : "bg-[#f3f4f6] text-[#4b5563]"
                 }`}
               >
-                <Users className="w-10 h-10" />
+                <Users className="h-10 w-10" strokeWidth={2.4} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">
+                <h3 className="mb-2 text-[21px] font-bold leading-tight text-[#202027]">
                   Employee View
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-[15px] leading-5 text-[#5f6775]">
                   Access your personal portal, tickets, and employee-specific
                   features
                 </p>
               </div>
               {selectedView === "employee" && (
-                <div className="absolute top-3 right-3">
-                  <div className="w-6 h-6 rounded-full bg-[#C72030] flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#DA7756] text-white">
+                  <Check className="h-4 w-4" strokeWidth={3} />
                 </div>
               )}
             </div>
@@ -224,24 +204,24 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
         </div>
 
         {/* Continue Button */}
-        <div className="mt-8 flex justify-center">
+        <div className="mt-12 flex justify-center">
           <Button
             onClick={() => selectedView && handleViewSelection(selectedView)}
             disabled={!selectedView}
-            className={`px-8 py-6 text-lg font-semibold rounded-lg transition-all duration-300 ${
+            className={`h-12 min-w-[188px] rounded-none px-8 text-[19px] font-bold transition-all duration-300 ${
               selectedView
-                ? "bg-[#C72030] hover:bg-[#a01828] text-white shadow-lg hover:shadow-xl"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "!bg-[#F2EEE9] !text-[#111111] shadow-[0_8px_16px_rgba(17,24,39,0.12)] hover:!bg-[#ece3dc] [&_svg]:!text-[#DA7756]"
+                : "cursor-not-allowed !bg-gray-200 !text-gray-400 [&_svg]:!text-gray-400"
             }`}
           >
             Continue
-            <ArrowRight className="ml-2 w-5 h-5" />
+            <ArrowRight className="ml-2 h-5 w-5" strokeWidth={2.5} />
           </Button>
         </div>
 
         {/* Info Footer */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-300">
-          <p className="text-sm text-gray-700 text-center">
+        <div className="mt-10 border border-[#d1d5db] bg-[#fafafa] p-4">
+          <p className="text-center text-sm text-[#1f2937]">
             <strong>Note:</strong> You can switch between views anytime from the
             header menu
           </p>
