@@ -1,47 +1,110 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-  ArrowLeft, Settings, QrCode, Sparkles, Wrench, Monitor,
-  ShieldCheck, Plus, X, Wifi, Zap, Wind, Droplets
-} from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+  ArrowLeft,
+  Settings,
+  QrCode,
+  Sparkles,
+  Wrench,
+  Monitor,
+  ShieldCheck,
+  Plus,
+  X,
+  Wifi,
+  Zap,
+  Wind,
+  Droplets,
+} from "lucide-react";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ticketManagementAPI, CategoryResponse, SubCategoryResponse } from '@/services/ticketManagementAPI';
-import { getUser } from '@/utils/auth';
-import { useToast } from '@/hooks/use-toast';
-import { co } from 'node_modules/@fullcalendar/core/internal-common';
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ticketManagementAPI,
+  CategoryResponse,
+  SubCategoryResponse,
+} from "@/services/ticketManagementAPI";
+import { getUser } from "@/utils/auth";
+import { useToast } from "@/hooks/use-toast";
+import comingSoonSign from "@/assets/coming-soon-sign.svg";
+import { co } from "node_modules/@fullcalendar/core/internal-common";
 
-const CATEGORY_ICON_LIST = [Sparkles, Wrench, Monitor, ShieldCheck, Wifi, Zap, Wind, Droplets];
+const CATEGORY_ICON_LIST = [
+  Sparkles,
+  Wrench,
+  Monitor,
+  ShieldCheck,
+  Wifi,
+  Zap,
+  Wind,
+  Droplets,
+];
 const PRIORITY_OPTIONS = [
-  { value: 'P1', label: 'P1 - Critical' },
-  { value: 'P2', label: 'P2 - Very High' },
-  { value: 'P3', label: 'P3 - High' },
-  { value: 'P4', label: 'P4 - Medium' },
-  { value: 'P5', label: 'P5 - Low' }
+  { value: "P1", label: "P1 - Critical" },
+  { value: "P2", label: "P2 - Very High" },
+  { value: "P3", label: "P3 - High" },
+  { value: "P4", label: "P4 - Medium" },
+  { value: "P5", label: "P5 - Low" },
 ];
 
 const PROACTIVE_REACTIVE_OPTIONS = [
-  { value: 'Proactive', label: 'Proactive' },
-  { value: 'Reactive', label: 'Reactive' }
+  { value: "Proactive", label: "Proactive" },
+  { value: "Reactive", label: "Reactive" },
 ];
 
 const SEVERITY_OPTIONS = [
-  { value: 'Major', label: 'Major' },
-  { value: 'Minor', label: 'Minor' }
+  { value: "Major", label: "Major" },
+  { value: "Minor", label: "Minor" },
 ];
 const getCategoryIcon = (name: string, index: number) => {
   const lower = name.toLowerCase();
-  if (lower.includes('house') || lower.includes('clean')) return Sparkles;
-  if (lower.includes('tech') || lower.includes('maint') || lower.includes('mechanic')) return Wrench;
-  if (lower.includes('it') || lower.includes('computer') || lower.includes('network')) return Monitor;
-  if (lower.includes('safe') || lower.includes('secur') || lower.includes('fire')) return ShieldCheck;
-  if (lower.includes('wifi') || lower.includes('internet') || lower.includes('telecom')) return Wifi;
-  if (lower.includes('electric') || lower.includes('power')) return Zap;
-  if (lower.includes('air') || lower.includes('hvac') || lower.includes('ac')) return Wind;
-  if (lower.includes('plumb') || lower.includes('water') || lower.includes('sanit')) return Droplets;
+  if (lower.includes("house") || lower.includes("clean")) return Sparkles;
+  if (
+    lower.includes("tech") ||
+    lower.includes("maint") ||
+    lower.includes("mechanic")
+  )
+    return Wrench;
+  if (
+    lower.includes("it") ||
+    lower.includes("computer") ||
+    lower.includes("network")
+  )
+    return Monitor;
+  if (
+    lower.includes("safe") ||
+    lower.includes("secur") ||
+    lower.includes("fire")
+  )
+    return ShieldCheck;
+  if (
+    lower.includes("wifi") ||
+    lower.includes("internet") ||
+    lower.includes("telecom")
+  )
+    return Wifi;
+  if (lower.includes("electric") || lower.includes("power")) return Zap;
+  if (lower.includes("air") || lower.includes("hvac") || lower.includes("ac"))
+    return Wind;
+  if (
+    lower.includes("plumb") ||
+    lower.includes("water") ||
+    lower.includes("sanit")
+  )
+    return Droplets;
   return CATEGORY_ICON_LIST[index % CATEGORY_ICON_LIST.length];
 };
 
@@ -51,20 +114,23 @@ const getCategoryIcon = (name: string, index: number) => {
 const getBaseApiDomain = (): string => {
   const hostname = window.location.hostname;
 
-  if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
-    return 'https://oig-api.gophygital.work';
+  if (hostname === "localhost" || hostname.includes("127.0.0.1")) {
+    return "https://oig-api.gophygital.work";
   }
 
-  if (hostname === 'oig.gophygital.work' || hostname.includes('oig.gophygital.work')) {
-    return 'https://oig-api.gophygital.work';
+  if (
+    hostname === "oig.gophygital.work" ||
+    hostname.includes("oig.gophygital.work")
+  ) {
+    return "https://oig-api.gophygital.work";
   }
 
-  if (hostname === 'fm-matrix.lockated.com' || hostname.includes('fm-matrix')) {
-    return 'https://fm-uat-api.lockated.com';
+  if (hostname === "fm-matrix.lockated.com" || hostname.includes("fm-matrix")) {
+    return "https://fm-uat-api.lockated.com";
   }
 
   // Default to live API for all other cases
-  return 'https://live-api.lockated.com';
+  return "https://live-api.lockated.com";
 };
 
 /**
@@ -73,7 +139,7 @@ const getBaseApiDomain = (): string => {
 interface SnagQuestion {
   id: number;
   descr: string;
-  qtype: 'text' | 'email' | 'number' | 'date' | 'textarea';
+  qtype: "text" | "email" | "number" | "date" | "textarea";
   quest_mandatory: boolean;
 }
 interface ComplaintCustomField {
@@ -100,17 +166,19 @@ const dynamicSiteService = {
   /**
    * Get the site base URL from the organizations API
    */
-  async getSiteBaseUrl(siteId: number): Promise<{ base_url: string, site_name: string, company_logo: string }> {
+  async getSiteBaseUrl(
+    siteId: number
+  ): Promise<{ base_url: string; site_name: string; company_logo: string }> {
     try {
       const baseApiDomain = getBaseApiDomain();
       const url = `${baseApiDomain}/organizations/site_base_url?site_id=${siteId}`;
 
-      console.log('🔍 Fetching site base URL from:', url);
+      console.log("🔍 Fetching site base URL from:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -119,12 +187,12 @@ const dynamicSiteService = {
       }
 
       const data = await response.json();
-      console.log('✅ Site base URL response:', data);
-      return data || { base_url: '', site_name: "Unknown Site", company_logo: "" };
-
-
+      console.log("✅ Site base URL response:", data);
+      return (
+        data || { base_url: "", site_name: "Unknown Site", company_logo: "" }
+      );
     } catch (error) {
-      console.error('❌ Error fetching site base URL:', error);
+      console.error("❌ Error fetching site base URL:", error);
       throw error;
     }
   },
@@ -132,16 +200,19 @@ const dynamicSiteService = {
   /**
    * Get helpdesk categories for a site
    */
-  async getCategories(siteDomain: string, siteId: number): Promise<CategoryResponse[]> {
+  async getCategories(
+    siteDomain: string,
+    siteId: number
+  ): Promise<CategoryResponse[]> {
     try {
       const url = `https://${siteDomain}/pms/admin/helpdesk_categories/get_categories.json?site_id=${siteId}`;
 
-      console.log('🔍 Fetching categories from:', url);
+      console.log("🔍 Fetching categories from:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -150,10 +221,10 @@ const dynamicSiteService = {
       }
 
       const data = await response.json();
-      console.log('✅ Categories response:', data);
+      console.log("✅ Categories response:", data);
       return data.categories || [];
     } catch (error) {
-      console.error('❌ Error fetching categories:', error);
+      console.error("❌ Error fetching categories:", error);
       throw error;
     }
   },
@@ -161,16 +232,19 @@ const dynamicSiteService = {
   /**
    * Get subcategories for a category
    */
-  async getSubcategories(siteDomain: string, categoryTypeId: number): Promise<SubCategoryResponse[]> {
+  async getSubcategories(
+    siteDomain: string,
+    categoryTypeId: number
+  ): Promise<SubCategoryResponse[]> {
     try {
       const url = `https://${siteDomain}/pms/admin/helpdesk_categories/get_sub_categories_site.json?category_type_id=${categoryTypeId}`;
 
-      console.log('🔍 Fetching subcategories from:', url);
+      console.log("🔍 Fetching subcategories from:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -179,10 +253,10 @@ const dynamicSiteService = {
       }
 
       const data = await response.json();
-      console.log('✅ Subcategories response:', data);
+      console.log("✅ Subcategories response:", data);
       return data.sub_categories || [];
     } catch (error) {
-      console.error('❌ Error fetching subcategories:', error);
+      console.error("❌ Error fetching subcategories:", error);
       throw error;
     }
   },
@@ -190,17 +264,20 @@ const dynamicSiteService = {
   /**
    * Get complaint/requester fields for a site
    */
-  async getComplaintFields(siteDomain: string, siteId: number): Promise<ComplaintFieldsResponse> {
+  async getComplaintFields(
+    siteDomain: string,
+    siteId: number
+  ): Promise<ComplaintFieldsResponse> {
     try {
       const baseApiDomain = getBaseApiDomain();
       const url = `https://${siteDomain}/pms/admin/complaints/get_fields.json?site_id=${siteId}`;
 
-      console.log('🔍 Fetching complaint fields from:', url);
+      console.log("🔍 Fetching complaint fields from:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -209,10 +286,10 @@ const dynamicSiteService = {
       }
 
       const data = await response.json();
-      console.log('✅ Complaint fields response:', data);
+      console.log("✅ Complaint fields response:", data);
       return data;
     } catch (error) {
-      console.error('❌ Error fetching complaint fields:', error);
+      console.error("❌ Error fetching complaint fields:", error);
       throw error;
     }
   },
@@ -223,12 +300,12 @@ const dynamicSiteService = {
     try {
       const url = `https://${siteDomain}/pms/admin/complaints/get_complaint_custom_fields.json?site_id=${siteId}`;
 
-      console.log('🔍 Fetching complaint custom fields from:', url);
+      console.log("🔍 Fetching complaint custom fields from:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -237,11 +314,11 @@ const dynamicSiteService = {
       }
 
       const data = await response.json();
-      console.log('✅ Complaint custom fields response:', data);
+      console.log("✅ Complaint custom fields response:", data);
 
       return data;
     } catch (error) {
-      console.error('❌ Error fetching complaint custom fields:', error);
+      console.error("❌ Error fetching complaint custom fields:", error);
       throw error;
     }
   },
@@ -249,8 +326,8 @@ const dynamicSiteService = {
     const url = `https://${siteDomain}/api/pms/buildings.json?site_id=${siteId}`;
 
     const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -265,8 +342,8 @@ const dynamicSiteService = {
     const url = `https://${siteDomain}/api/pms/buildings/wings.json?building_id=${buildingId}`;
 
     const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -274,18 +351,18 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return Array.isArray(data) ? data : (data.wings || []);
+    return Array.isArray(data) ? data : data.wings || [];
   },
 
   async getAreas(siteDomain: string, buildingId: string, wingId?: string) {
     const params = new URLSearchParams({ building_id: buildingId });
-    if (wingId) params.append('wing_id', wingId);
+    if (wingId) params.append("wing_id", wingId);
 
     const url = `https://${siteDomain}/api/pms/buildings/areas.json?${params.toString()}`;
 
     const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -293,19 +370,24 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return Array.isArray(data) ? data : (data.areas || []);
+    return Array.isArray(data) ? data : data.areas || [];
   },
 
-  async getFloors(siteDomain: string, buildingId: string, wingId?: string, areaId?: string) {
+  async getFloors(
+    siteDomain: string,
+    buildingId: string,
+    wingId?: string,
+    areaId?: string
+  ) {
     const params = new URLSearchParams({ building_id: buildingId });
-    if (wingId) params.append('wing_id', wingId);
-    if (areaId) params.append('area_id', areaId);
+    if (wingId) params.append("wing_id", wingId);
+    if (areaId) params.append("area_id", areaId);
 
     const url = `https://${siteDomain}/api/pms/buildings/floors.json?${params.toString()}`;
 
     const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -313,7 +395,7 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return Array.isArray(data) ? data : (data.floors || []);
+    return Array.isArray(data) ? data : data.floors || [];
   },
 
   async getRooms(
@@ -325,15 +407,15 @@ const dynamicSiteService = {
   ) {
     const params = new URLSearchParams({ building_id: buildingId });
 
-    if (wingId) params.append('wing_id', wingId);
-    if (areaId) params.append('area_id', areaId);
-    if (floorId) params.append('floor_id', floorId);
+    if (wingId) params.append("wing_id", wingId);
+    if (areaId) params.append("area_id", areaId);
+    if (floorId) params.append("floor_id", floorId);
 
     const url = `https://${siteDomain}/api/pms/buildings/rooms.json?${params.toString()}`;
 
     const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -341,14 +423,14 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return Array.isArray(data) ? data : (data.rooms || []);
+    return Array.isArray(data) ? data : data.rooms || [];
   },
 
   async getFieldsToShow(siteDomain: string, customFieldId: string) {
     const url = `https://${siteDomain}/pms/account_setups/get_fields_to_show.json?custom_field_id=${customFieldId}`;
     const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
@@ -360,44 +442,51 @@ interface MobileNewTicketPageProps {
   onSuccess: () => void;
 }
 
-export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack, onSuccess }) => {
+export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
+  onBack,
+  onSuccess,
+}) => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const user = getUser();
 
   // Extract site_id from URL or use default
-  const siteIdParam = searchParams.get('site_id');
+  const siteIdParam = searchParams.get("site_id");
   const siteId = siteIdParam ? parseInt(siteIdParam) : 2189;
 
   // Location params injected by QR scan
-  const buildingIdParam = searchParams.get('building_id');
-  const wingIdParam = searchParams.get('wing_id');
-  const areaIdParam = searchParams.get('area_id');
-  const floorIdParam = searchParams.get('floor');
-  const roomIdParam = searchParams.get('room');
-  const customFieldIdParam = searchParams.get('custom_field_id');
+  const buildingIdParam = searchParams.get("building_id");
+  const wingIdParam = searchParams.get("wing_id");
+  const areaIdParam = searchParams.get("area_id");
+  const floorIdParam = searchParams.get("floor");
+  const roomIdParam = searchParams.get("room");
+  const customFieldIdParam = searchParams.get("custom_field_id");
   const isLocationFromUrl = !!buildingIdParam;
 
-  const [siteDomain, setSiteDomain] = useState<string>('');
-  const [siteError, setSiteError] = useState<string>('');
+  const [siteDomain, setSiteDomain] = useState<string>("");
+  const [siteError, setSiteError] = useState<string>("");
 
   const [formData, setFormData] = useState({
-    fullName: user ? `${user.firstname || ''} ${user.lastname || ''}`.trim() : '',
-    employeeId: user?.id ? `EMP-${String(user.id).padStart(4, '0')}` : 'EMP-0000',
-    contactNumber: user?.mobile || user?.phone || '',
-    category: '',
-    categoryName: '',
-    subCategory: '',
-    description: '',
-    building: '',
-    wing: '',
-    floor: '',
-    area: '',
-    room: '',
-    proactiveReactive: '',
-    severity: '',
-    adminPriority: '',
+    fullName: user
+      ? `${user.firstname || ""} ${user.lastname || ""}`.trim()
+      : "",
+    employeeId: user?.id
+      ? `EMP-${String(user.id).padStart(4, "0")}`
+      : "EMP-0000",
+    contactNumber: user?.mobile || user?.phone || "",
+    category: "",
+    categoryName: "",
+    subCategory: "",
+    description: "",
+    building: "",
+    wing: "",
+    floor: "",
+    area: "",
+    room: "",
+    proactiveReactive: "",
+    severity: "",
+    adminPriority: "",
   });
 
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
@@ -409,10 +498,14 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
   const [complaintFields, setComplaintFields] = useState<SnagQuestion[]>([]);
   const [loadingComplaintFields, setLoadingComplaintFields] = useState(false);
-  const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<number, string>>({});
-  const [site_name, setSiteName] = useState('Unknown Site');
-  const [companyLogo, setCompanyLogo] = useState('');
-  const [customFieldConfig, setCustomFieldConfig] = useState<Record<string, boolean>>({});
+  const [dynamicFieldValues, setDynamicFieldValues] = useState<
+    Record<number, string>
+  >({});
+  const [site_name, setSiteName] = useState("Unknown Site");
+  const [companyLogo, setCompanyLogo] = useState("");
+  const [customFieldConfig, setCustomFieldConfig] = useState<
+    Record<string, boolean>
+  >({});
   const [checklistId, setChecklistId] = useState<number | null>(null);
   const [showRequesterDetails, setShowRequesterDetails] = useState(true);
   const [buildings, setBuildings] = useState<any[]>([]);
@@ -431,58 +524,69 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
       try {
         setLoadingCategories(true);
         setLoadingComplaintFields(true);
-        setSiteError('');
+        setSiteError("");
 
-        console.log('📌 Initializing with site_id:', siteId);
+        console.log("📌 Initializing with site_id:", siteId);
 
         // Step 1: Get site base URL
         const siteUrlResponse = await dynamicSiteService.getSiteBaseUrl(siteId);
         const domain = siteUrlResponse.base_url;
-        const siteName = siteUrlResponse.site_name || 'Unknown Site';
-        const companyLogo = siteUrlResponse.company_logo || '';
+        const siteName = siteUrlResponse.site_name || "Unknown Site";
+        const companyLogo = siteUrlResponse.company_logo || "";
 
         if (!domain) {
-          throw new Error('No domain returned from site base URL API');
+          throw new Error("No domain returned from site base URL API");
         }
 
-        console.log('✅ Site domain:', domain);
-        console.log('✅ Site name:', siteName);
+        console.log("✅ Site domain:", domain);
+        console.log("✅ Site name:", siteName);
 
         setSiteDomain(domain);
         setSiteName(siteName);
         setCompanyLogo(companyLogo);
-        const buildingsData = await dynamicSiteService.getBuildings(domain, siteId);
+        const buildingsData = await dynamicSiteService.getBuildings(
+          domain,
+          siteId
+        );
         setBuildings(buildingsData);
 
         if (isLocationFromUrl && buildingIdParam) {
           // Set form values from URL params — location lists are loaded in the siteDomain useEffect below
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             building: buildingIdParam,
-            wing: wingIdParam || '',
-            area: areaIdParam || '',
-            floor: floorIdParam || '',
-            room: roomIdParam || '',
+            wing: wingIdParam || "",
+            area: areaIdParam || "",
+            floor: floorIdParam || "",
+            room: roomIdParam || "",
           }));
         } else {
-          const buildingId = buildingsData[0]?.id ? String(buildingsData[0].id) : '';
-          console.log('✅ Default building selected:', buildingId);
+          const buildingId = buildingsData[0]?.id
+            ? String(buildingsData[0].id)
+            : "";
+          console.log("✅ Default building selected:", buildingId);
           if (buildingId) {
-            field('building', buildingId);
+            field("building", buildingId);
             await handleBuildingChange(buildingId);
           }
         }
 
         // Step 2: Fetch categories
-        const categoriesData = await dynamicSiteService.getCategories(domain, siteId);
+        const categoriesData = await dynamicSiteService.getCategories(
+          domain,
+          siteId
+        );
         setCategories(categoriesData);
-        console.log('✅ Categories loaded:', categoriesData.length);
+        console.log("✅ Categories loaded:", categoriesData.length);
 
         // Step 3: Fetch requester fields
-        const fieldsData = await dynamicSiteService.getComplaintFields(domain, siteId);
+        const fieldsData = await dynamicSiteService.getComplaintFields(
+          domain,
+          siteId
+        );
         setComplaintFields(fieldsData.snag_questions || []);
         console.log(
-          '✅ Complaint fields loaded:',
+          "✅ Complaint fields loaded:",
           fieldsData.snag_questions?.length || 0
         );
         setChecklistId(fieldsData.snag_checklist_id);
@@ -491,37 +595,50 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         const customFieldsData =
           await dynamicSiteService.getComplaintCustomFields(domain, siteId);
 
-        const config = (customFieldsData.fields || []).reduce((acc, item) => {
-          acc[item.field_name] = item.field_value === 'true';
-          return acc;
-        }, {} as Record<string, boolean>);
+        const config = (customFieldsData.fields || []).reduce(
+          (acc, item) => {
+            acc[item.field_name] = item.field_value === "true";
+            return acc;
+          },
+          {} as Record<string, boolean>
+        );
 
         setCustomFieldConfig(config);
-        console.log('✅ Custom field config:', config);
+        console.log("✅ Custom field config:", config);
 
         // Step 5: Fetch fields-to-show config when custom_field_id is in URL (QR scan)
         if (customFieldIdParam) {
           try {
-            const fieldsToShow = await dynamicSiteService.getFieldsToShow(domain, customFieldIdParam);
-            console.log('✅ Fields to show:', fieldsToShow);
-            const showReq = fieldsToShow.show_requester ?? fieldsToShow.show_requester_details;
-            setShowRequesterDetails(showReq === true || String(showReq) === 'true');
+            const fieldsToShow = await dynamicSiteService.getFieldsToShow(
+              domain,
+              customFieldIdParam
+            );
+            console.log("✅ Fields to show:", fieldsToShow);
+            const showReq =
+              fieldsToShow.show_requester ??
+              fieldsToShow.show_requester_details;
+            setShowRequesterDetails(
+              showReq === true || String(showReq) === "true"
+            );
           } catch {
-            console.warn('⚠️ get_fields_to_show failed, defaulting to show requester');
+            console.warn(
+              "⚠️ get_fields_to_show failed, defaulting to show requester"
+            );
           }
         }
       } catch (error) {
-        console.error('❌ Error initializing site data:', error);
+        console.error("❌ Error initializing site data:", error);
 
         setSiteError(
-          `Failed to load site data: ${error instanceof Error ? error.message : 'Unknown error'
+          `Failed to load site data: ${
+            error instanceof Error ? error.message : "Unknown error"
           }`
         );
 
         toast({
-          title: 'Error',
-          description: 'Failed to load categories. Please try again.',
-          variant: 'destructive',
+          title: "Error",
+          description: "Failed to load categories. Please try again.",
+          variant: "destructive",
         });
       } finally {
         setLoadingCategories(false);
@@ -539,9 +656,20 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
     const loadUrlLocationData = async () => {
       const [wingsData, areasData, floorsData] = await Promise.all([
-        dynamicSiteService.getWings(siteDomain, buildingIdParam).catch(() => []),
-        dynamicSiteService.getAreas(siteDomain, buildingIdParam, wingIdParam || undefined).catch(() => []),
-        dynamicSiteService.getFloors(siteDomain, buildingIdParam, wingIdParam || undefined, areaIdParam || undefined).catch(() => []),
+        dynamicSiteService
+          .getWings(siteDomain, buildingIdParam)
+          .catch(() => []),
+        dynamicSiteService
+          .getAreas(siteDomain, buildingIdParam, wingIdParam || undefined)
+          .catch(() => []),
+        dynamicSiteService
+          .getFloors(
+            siteDomain,
+            buildingIdParam,
+            wingIdParam || undefined,
+            areaIdParam || undefined
+          )
+          .catch(() => []),
       ]);
       setWings(wingsData);
       setAreas(areasData);
@@ -549,7 +677,13 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
       if (floorIdParam) {
         const roomsData = await dynamicSiteService
-          .getRooms(siteDomain, buildingIdParam, wingIdParam || undefined, areaIdParam || undefined, floorIdParam)
+          .getRooms(
+            siteDomain,
+            buildingIdParam,
+            wingIdParam || undefined,
+            areaIdParam || undefined,
+            floorIdParam
+          )
           .catch(() => []);
         setRooms(roomsData);
       }
@@ -560,36 +694,47 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
   const isFieldEnabled = (fieldName: string) =>
     customFieldConfig[fieldName] !== false;
-  const handleCategorySelect = useCallback(async (id: string, name: string) => {
-    setFormData(prev => ({ ...prev, category: id, categoryName: name, subCategory: '' }));
-    setSubcategories([]);
-    setLoadingSubcategories(true);
-    try {
-      if (!siteDomain) {
-        throw new Error('Site domain not initialized');
+  const handleCategorySelect = useCallback(
+    async (id: string, name: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        category: id,
+        categoryName: name,
+        subCategory: "",
+      }));
+      setSubcategories([]);
+      setLoadingSubcategories(true);
+      try {
+        if (!siteDomain) {
+          throw new Error("Site domain not initialized");
+        }
+
+        const subs = await dynamicSiteService.getSubcategories(
+          siteDomain,
+          parseInt(id)
+        );
+        setSubcategories(subs);
+        console.log("✅ Subcategories loaded:", subs.length);
+      } catch (error) {
+        console.error("❌ Error fetching subcategories:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load subcategories. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingSubcategories(false);
       }
-
-      const subs = await dynamicSiteService.getSubcategories(siteDomain, parseInt(id));
-      setSubcategories(subs);
-      console.log('✅ Subcategories loaded:', subs.length);
-    } catch (error) {
-      console.error('❌ Error fetching subcategories:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load subcategories. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingSubcategories(false);
-    }
-  }, [siteDomain, toast]);
+    },
+    [siteDomain, toast]
+  );
   const handleBuildingChange = async (buildingId: string) => {
-    field('building', buildingId);
+    field("building", buildingId);
 
-    field('wing', '');
-    field('area', '');
-    field('floor', '');
-    field('room', '');
+    field("wing", "");
+    field("area", "");
+    field("floor", "");
+    field("room", "");
 
     setWings([]);
     setAreas([]);
@@ -610,11 +755,11 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   };
 
   const handleWingChange = async (wingId: string) => {
-    field('wing', wingId);
+    field("wing", wingId);
 
-    field('area', '');
-    field('floor', '');
-    field('room', '');
+    field("area", "");
+    field("floor", "");
+    field("room", "");
 
     setAreas([]);
     setFloors([]);
@@ -632,10 +777,10 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   };
 
   const handleAreaChange = async (areaId: string) => {
-    field('area', areaId);
+    field("area", areaId);
 
-    field('floor', '');
-    field('room', '');
+    field("floor", "");
+    field("room", "");
 
     setFloors([]);
     setRooms([]);
@@ -653,9 +798,9 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   };
 
   const handleFloorChange = async (floorId: string) => {
-    field('floor', floorId);
+    field("floor", floorId);
 
-    field('room', '');
+    field("room", "");
     setRooms([]);
 
     if (!formData.building || !siteDomain) return;
@@ -676,40 +821,42 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
     const slots = 5 - attachments.length;
     const newFiles = files.slice(0, slots);
 
-    setAttachments(prev => [...prev, ...newFiles]);
+    setAttachments((prev) => [...prev, ...newFiles]);
 
     console.log("attachments", newFiles);
 
-
     // Generate previews for image files
-    newFiles.forEach(file => {
-      if (file.type.startsWith('image/')) {
+    newFiles.forEach((file) => {
+      if (file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onload = (event) => {
-          setAttachmentPreviews(prev => [...prev, event.target?.result as string]);
+          setAttachmentPreviews((prev) => [
+            ...prev,
+            event.target?.result as string,
+          ]);
         };
         reader.readAsDataURL(file);
       } else {
         // For non-image files, use a placeholder
-        setAttachmentPreviews(prev => [...prev, '']);
+        setAttachmentPreviews((prev) => [...prev, ""]);
       }
     });
 
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleRemoveAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-    setAttachmentPreviews(prev => prev.filter((_, i) => i !== index));
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setAttachmentPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
     if (!formData.category) {
       toast({
-        title: 'Validation Error',
-        description: 'Please select a category',
-        variant: 'destructive',
-        className: 'bg-red-50 border border-red-300 text-red-700',
+        title: "Validation Error",
+        description: "Please select a category",
+        variant: "destructive",
+        className: "bg-red-50 border border-red-300 text-red-700",
       });
       return;
     }
@@ -721,53 +868,56 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
     });
 
     if (showRequesterDetails) {
-    if (missingRequiredFields.length > 0) {
-      const missingField = missingRequiredFields[0];
+      if (missingRequiredFields.length > 0) {
+        const missingField = missingRequiredFields[0];
 
-      toast({
-        title: 'Validation Error',
-        description: `Please fill required field: ${missingField.descr}`,
-        className: 'bg-red-50 border border-red-300 text-red-700',
-      });
-
-      const fieldElement = dynamicFieldRefs.current[missingField.id];
-
-      if (fieldElement) {
-        fieldElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
+        toast({
+          title: "Validation Error",
+          description: `Please fill required field: ${missingField.descr}`,
+          className: "bg-red-50 border border-red-300 text-red-700",
         });
 
-        const input = fieldElement.querySelector(
-          'input, textarea, select'
-        ) as HTMLElement | null;
+        const fieldElement = dynamicFieldRefs.current[missingField.id];
 
-        setTimeout(() => {
-          input?.focus();
-        }, 250);
+        if (fieldElement) {
+          fieldElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          const input = fieldElement.querySelector(
+            "input, textarea, select"
+          ) as HTMLElement | null;
+
+          setTimeout(() => {
+            input?.focus();
+          }, 250);
+        }
+
+        return;
       }
-
-      return;
     }
-  }
 
     setLoading(true);
     try {
       if (!siteDomain) {
-        throw new Error('Site domain not initialized');
+        throw new Error("Site domain not initialized");
       }
-      const basicFields = complaintFields.reduce((acc, question) => {
-        const value = dynamicFieldValues[question.id];
+      const basicFields = complaintFields.reduce(
+        (acc, question) => {
+          const value = dynamicFieldValues[question.id];
 
-        if (value !== undefined && value !== '') {
-          acc[String(question.id)] = {
-            remarks: value,
-            qtype: question.qtype,
-          };
-        }
+          if (value !== undefined && value !== "") {
+            acc[String(question.id)] = {
+              remarks: value,
+              qtype: question.qtype,
+            };
+          }
 
-        return acc;
-      }, {} as Record<string, { remarks: string; qtype: string }>);
+          return acc;
+        },
+        {} as Record<string, { remarks: string; qtype: string }>
+      );
 
       // Prepare attachments - send as object format
       const attachmentsData = attachments.map((file) => ({
@@ -778,51 +928,53 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
       const ticketData = {
         site_id: siteId,
-        on_behalf_of: 'self',
-        of_phase: 'pms',
-        complaint_type: 'complaint',
+        on_behalf_of: "self",
+        of_phase: "pms",
+        complaint_type: "complaint",
         sel_id_user: null,
         fm_user_id: user?.id || null,
         checklist_id: checklistId || null,
-        custom_field_id: customFieldIdParam ? parseInt(customFieldIdParam) : null,
-        
+        custom_field_id: customFieldIdParam
+          ? parseInt(customFieldIdParam)
+          : null,
+
         complaint: {
           heading: formData.description || formData.categoryName,
           text: formData.description,
-          of_phase: 'pms',
-          complaint_type: 'complaint',
+          of_phase: "pms",
+          complaint_type: "complaint",
 
-          ...(isFieldEnabled('category_enabled') &&
+          ...(isFieldEnabled("category_enabled") &&
             formData.category && {
-            category_type_id: parseInt(formData.category),
-          }),
+              category_type_id: parseInt(formData.category),
+            }),
 
-          ...(isFieldEnabled('sub_category_enabled') &&
+          ...(isFieldEnabled("sub_category_enabled") &&
             formData.subCategory && {
-            sub_category_id: parseInt(formData.subCategory),
-          }),
+              sub_category_id: parseInt(formData.subCategory),
+            }),
 
-          priority: 'P3',
+          priority: "P3",
           ...(formData.building && { tower_id: parseInt(formData.building) }),
           ...(formData.wing && { wing_id: parseInt(formData.wing) }),
           ...(formData.area && { area_id: parseInt(formData.area) }),
           ...(formData.floor && { floor_id: parseInt(formData.floor) }),
           ...(formData.room && { room_id: parseInt(formData.room) }),
-          on_behalf_of: 'self',
-          ...(isFieldEnabled('proactive_reactive_enabled') &&
+          on_behalf_of: "self",
+          ...(isFieldEnabled("proactive_reactive_enabled") &&
             formData.proactiveReactive && {
-            proactive_reactive: formData.proactiveReactive,
-          }),
+              proactive_reactive: formData.proactiveReactive,
+            }),
 
-          ...(isFieldEnabled('severity_enabled') &&
+          ...(isFieldEnabled("severity_enabled") &&
             formData.severity && {
-            severity: formData.severity,
-          }),
+              severity: formData.severity,
+            }),
 
-          ...(isFieldEnabled('admin_priority_enabled') &&
+          ...(isFieldEnabled("admin_priority_enabled") &&
             formData.adminPriority && {
-            priority: formData.adminPriority,
-          }),
+              priority: formData.adminPriority,
+            }),
         },
 
         attachments: attachmentsData,
@@ -832,49 +984,47 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
       const payload = new FormData();
 
-      payload.append('site_id', String(ticketData.site_id));
-      payload.append('on_behalf_of', ticketData.on_behalf_of);
-      payload.append('custom_field_id', String(ticketData.custom_field_id));
-      payload.append('of_phase', ticketData.of_phase);
+      payload.append("site_id", String(ticketData.site_id));
+      payload.append("on_behalf_of", ticketData.on_behalf_of);
+      payload.append("custom_field_id", String(ticketData.custom_field_id));
+      payload.append("of_phase", ticketData.of_phase);
       if (ticketData.sel_id_user !== null) {
-        payload.append('sel_id_user', String(ticketData.sel_id_user));
+        payload.append("sel_id_user", String(ticketData.sel_id_user));
       }
-      
 
       if (ticketData.fm_user_id !== null) {
-        payload.append('fm_user_id', String(ticketData.fm_user_id));
+        payload.append("fm_user_id", String(ticketData.fm_user_id));
       }
 
       if (ticketData.checklist_id !== null) {
-        payload.append('checklist_id', String(ticketData.checklist_id));
+        payload.append("checklist_id", String(ticketData.checklist_id));
       }
 
       // complaint
       Object.entries(ticketData.complaint).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           payload.append(`complaint[${key}]`, String(value));
         }
       });
 
       // attachments (real file objects, not base64)
       attachments.forEach((file) => {
-        payload.append('attachments[]', file);
+        payload.append("attachments[]", file);
       });
 
       // basic_fields
-      Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
-        payload.append(
-          `basic_fields[${fieldId}][remarks]`,
-          fieldData.remarks
-        );
+      Object.entries(ticketData.basic_fields).forEach(
+        ([fieldId, fieldData]) => {
+          payload.append(
+            `basic_fields[${fieldId}][remarks]`,
+            fieldData.remarks
+          );
 
-        payload.append(
-          `basic_fields[${fieldId}][qtype]`,
-          fieldData.qtype
-        );
-      });
+          payload.append(`basic_fields[${fieldId}][qtype]`, fieldData.qtype);
+        }
+      );
 
-      console.log('📤 Submitting ticket:', ticketData);
+      console.log("📤 Submitting ticket:", ticketData);
 
       // Try using the dynamic site domain, fallback to ticketManagementAPI
       let ticketResponse: any;
@@ -883,7 +1033,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         const submitUrl = `https://${siteDomain}/pms/admin/complaints/create_site_ticket.json`;
 
         const response = await fetch(submitUrl, {
-          method: 'POST',
+          method: "POST",
           body: payload,
         });
         ticketResponse = await response.json();
@@ -893,48 +1043,55 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        console.log('✅ Ticket submitted successfully via dynamic domain');
+        console.log("✅ Ticket submitted successfully via dynamic domain");
       } catch (dynamicError) {
-        console.warn('⚠️ Dynamic submission failed, trying ticketManagementAPI:', dynamicError);
+        console.warn(
+          "⚠️ Dynamic submission failed, trying ticketManagementAPI:",
+          dynamicError
+        );
         // await ticketManagementAPI.createTicket(ticketData, attachments);
         // ticketResponse = await ticketManagementAPI.createTicket(ticketData, attachments);
-        console.error('❌ Error submitting ticket via dynamic domain:', dynamicError);
-
+        console.error(
+          "❌ Error submitting ticket via dynamic domain:",
+          dynamicError
+        );
       }
-
 
       // toast({ title: 'Success', description: 'Ticket submitted successfully!' });
       // onSuccess();
-      console.log('✅ Ticket submission result:', ticketResponse);
+      console.log("✅ Ticket submission result:", ticketResponse);
       setSuccessData({
         ticketId: String(ticketResponse.complaint_id),
-        message: ticketResponse.message || 'Ticket created successfully',
+        message: ticketResponse.message || "Ticket created successfully",
       });
-
 
       return;
     } catch (error) {
-      console.error('❌ Submit error:', error);
-      toast({ title: 'Error', description: 'Failed to submit ticket. Please try again.', className: 'bg-red-50 border border-red-300 text-red-700' });
+      console.error("❌ Submit error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit ticket. Please try again.",
+        className: "bg-red-50 border border-red-300 text-red-700",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const field = (key: keyof typeof formData, val: string) =>
-    setFormData(prev => ({ ...prev, [key]: val }));
+    setFormData((prev) => ({ ...prev, [key]: val }));
 
   /**
    * Render form input based on field type (qtype)
    */
   const renderDynamicField = (field: SnagQuestion) => {
-    const value = dynamicFieldValues[field.id] || '';
+    const value = dynamicFieldValues[field.id] || "";
     const handleChange = (val: string) => {
-      setDynamicFieldValues(prev => ({ ...prev, [field.id]: val }));
+      setDynamicFieldValues((prev) => ({ ...prev, [field.id]: val }));
     };
 
     switch (field.qtype) {
-      case 'email':
+      case "email":
         return (
           <Input
             key={field.id}
@@ -942,12 +1099,12 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
             required={field.quest_mandatory}
             placeholder={`e.g. ${field.descr.toLowerCase()}@example.com`}
             value={value}
-            onChange={e => handleChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             className="h-10 rounded-lg text-sm md:h-11"
-            style={{ borderColor: '#d3d1c7' }}
+            style={{ borderColor: "#d3d1c7" }}
           />
         );
-      case 'number':
+      case "number":
         return (
           <Input
             key={field.id}
@@ -955,38 +1112,37 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
             required={field.quest_mandatory}
             placeholder={`Enter ${field.descr.toLowerCase()}`}
             value={value}
-            onChange={e => handleChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             className="h-10 rounded-lg text-sm md:h-11"
-            style={{ borderColor: '#d3d1c7' }}
+            style={{ borderColor: "#d3d1c7" }}
           />
         );
-      case 'date':
+      case "date":
         return (
           <Input
             key={field.id}
             type="date"
             value={value}
             required={field.quest_mandatory}
-            onChange={e => handleChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             className="h-10 rounded-lg text-sm md:h-11"
-            style={{ borderColor: '#d3d1c7' }}
+            style={{ borderColor: "#d3d1c7" }}
           />
         );
-      case 'textarea':
+      case "textarea":
         return (
           <Textarea
             key={field.id}
             placeholder={`Enter ${field.descr.toLowerCase()}`}
             value={value}
             required={field.quest_mandatory}
-            onChange={e => handleChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             rows={3}
             className="resize-none rounded-lg text-sm"
-            style={{ borderColor: '#d3d1c7' }}
+            style={{ borderColor: "#d3d1c7" }}
           />
-
         );
-      case 'text':
+      case "text":
       default:
         return (
           <Input
@@ -995,9 +1151,9 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
             placeholder={`Enter ${field.descr.toLowerCase()}`}
             value={value}
             required={field.quest_mandatory}
-            onChange={e => handleChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             className="h-10 rounded-lg text-sm md:h-11"
-            style={{ borderColor: '#d3d1c7' }}
+            style={{ borderColor: "#d3d1c7" }}
           />
         );
     }
@@ -1009,67 +1165,64 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
     await navigator.clipboard.writeText(successData.ticketId);
 
     toast({
-      title: 'Copied',
-      description: 'Ticket ID copied to clipboard',
+      title: "Copied",
+      description: "Ticket ID copied to clipboard",
     });
   };
-  const orgId = new URLSearchParams(window.location.search).get("org_id");
   const hostname = window.location.hostname;
-  if (hostname.includes("oig.gophygital.work") || hostname === "localhost" ) {
+  if (hostname.includes("oig.gophygital.work") || hostname === "localhost") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ background: 'linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)' }}>
-        {/* Logo */}
-        <div className="mb-8">
-          {/* <img
-            src="/gophygital-logo-min.jpg"
-            alt="Logo"
-            className="h-14 object-contain"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          /> */}
-        </div>
-
-        {/* Rocket icon */}
-        <div className="mb-6">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(199,32,48,0.08)' }}>
-            <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-                fill="rgba(199,32,48,0.12)" />
-              <path d="M13.41 7.59L9 12l4.41 4.41L15 14.83l-2.83-2.83L15 9.17l-1.59-1.58z"
-                fill="#C72030" />
-              <circle cx="12" cy="12" r="3" fill="#C72030" opacity="0.3" />
-              <path d="M12 5l2 4H10l2-4zM12 19l-2-4h4l-2 4z" fill="#C72030" />
-            </svg>
-          </div>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-6"
+        style={{
+          background: "linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)",
+        }}
+      >
+        {/* Coming soon illustration */}
+        <div className="mb-8 flex justify-center">
+          <img
+            src={comingSoonSign}
+            alt="Coming soon"
+            className="w-64 max-w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.08)]"
+          />
         </div>
 
         {/* Text */}
         <div className="text-center max-w-sm">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3"
-            style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          <h1
+            className="text-2xl font-bold text-gray-900 mb-3"
+            style={{ fontFamily: "Work Sans, sans-serif" }}
+          >
             Coming Soon
           </h1>
-         
+
           {/* Decorative dots */}
           <div className="flex items-center justify-center gap-2 mt-2">
-            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '300ms' }} />
+            <span
+              className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            />
+            <span
+              className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            />
+            <span
+              className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            />
           </div>
         </div>
 
         {/* Footer */}
-       
       </div>
     );
   }
-  
+
   if (successData) {
     return (
       <div
         className="min-h-screen flex items-center justify-center px-6"
-        style={{ backgroundColor: '#f6f4ee' }}
+        style={{ backgroundColor: "#f6f4ee" }}
       >
         <div className="w-full max-w-md text-center">
           {/* <div
@@ -1096,8 +1249,8 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
           <div
             className="mx-auto mb-6 w-24 h-24 rounded-full flex items-center justify-center border-4 overflow-hidden"
             style={{
-              borderColor: '#18b26a',
-              backgroundColor: 'rgba(24,178,106,0.08)',
+              borderColor: "#18b26a",
+              backgroundColor: "rgba(24,178,106,0.08)",
             }}
           >
             {companyLogo ? (
@@ -1121,29 +1274,23 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               </svg>
             )}
           </div>
-          <h2
-            className="text-3xl font-bold mb-3"
-            style={{ color: '#111827' }}
-          >
+          <h2 className="text-3xl font-bold mb-3" style={{ color: "#111827" }}>
             Request Submitted!
           </h2>
 
-          <p
-            className="text-base leading-7 mb-8"
-            style={{ color: '#6b7280' }}
-          >
-            Your request has been received and assigned to the team.
-            The team will get in touch with you shortly.
+          <p className="text-base leading-7 mb-8" style={{ color: "#6b7280" }}>
+            Your request has been received and assigned to the team. The team
+            will get in touch with you shortly.
           </p>
 
           <div
             className="rounded-3xl px-6 py-6 shadow-lg relative"
-            style={{ backgroundColor: 'rgb(218, 119, 86)' }}
+            style={{ backgroundColor: "rgb(218, 119, 86)" }}
           >
             <button
               onClick={handleCopyTicketId}
               className="absolute top-4 right-4 w-5 h-5 rounded-2xl flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}
+              style={{ backgroundColor: "rgba(255,255,255,0.16)" }}
             >
               <svg
                 width="15"
@@ -1163,14 +1310,14 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
             <div className="flex items-center gap-3 pr-12">
               <p
                 className="text-sm font-semibold tracking-widest whitespace-nowrap"
-                style={{ color: 'rgba(255,255,255,0.7)' }}
+                style={{ color: "rgba(255,255,255,0.7)" }}
               >
                 TICKET ID :
               </p>
 
               <div
                 className="text-xl font-bold leading-none"
-                style={{ color: '#ffffff' }}
+                style={{ color: "#ffffff" }}
               >
                 {successData.ticketId}
               </div>
@@ -1178,7 +1325,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
             <p
               className="text-sm mt-4"
-              style={{ color: 'rgba(255,255,255,0.8)' }}
+              style={{ color: "rgba(255,255,255,0.8)" }}
             >
               Save this ID to track your request status
             </p>
@@ -1202,7 +1349,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
      */
     <div
       className="flex flex-col h-screen md:h-auto md:min-h-screen [&_input::placeholder]:text-gray-300 [&_textarea::placeholder]:text-gray-300"
-      style={{ backgroundColor: '#f6f4ee' }}
+      style={{ backgroundColor: "#f6f4ee" }}
     >
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-center px-4 py-3 bg-white shadow-sm flex-shrink-0 md:sticky md:top-0 md:z-10 md:px-8">
@@ -1212,11 +1359,13 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         <div className="flex justify-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#da7756' }}
+            style={{ backgroundColor: "#da7756" }}
           >
             <QrCode className="h-4 w-4 text-white" />
           </div>
-          <h1 className="text-lg font-semibold" style={{ color: '#2c2c2c' }}>New Ticket</h1>
+          <h1 className="text-lg font-semibold" style={{ color: "#2c2c2c" }}>
+            New Ticket
+          </h1>
         </div>
         {/* <button className="p-1 rounded-lg active:bg-gray-100"> */}
         {/* <Settings className="h-6 w-6" style={{ color: '#2c2c2c' }} /> */}
@@ -1231,17 +1380,15 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
       <div className="flex-1 overflow-y-auto md:flex-none md:overflow-visible">
         {/* Centred content column on desktop */}
         <div className="md:max-w-3xl md:mx-auto md:px-4 md:py-6 pb-6">
-
           {/* Scanned Location */}
           <div
             className="mx-4 mt-4 md:mx-0 rounded-xl p-4 flex items-center gap-3"
-            style={{ backgroundColor: '#dce8f5' }}
+            style={{ backgroundColor: "#dce8f5" }}
           >
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#ffffff' }}
+              style={{ backgroundColor: "#ffffff" }}
             >
-
               {/* <QrCode className="h-5 w-5 text-white" /> */}
               {companyLogo ? (
                 <img
@@ -1254,68 +1401,90 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               ) : (
                 <QrCode className="h-5 w-5 text-white" />
               )}
-
             </div>
             <div>
-              <p className="text-xs font-medium" style={{ color: '#5a7a9a' }}>Scanned Location</p>
-              <p className="text-base font-semibold" style={{ color: '#2c2c2c' }}>{site_name}</p>
+              <p className="text-xs font-medium" style={{ color: "#5a7a9a" }}>
+                Scanned Location
+              </p>
+              <p
+                className="text-base font-semibold"
+                style={{ color: "#2c2c2c" }}
+              >
+                {site_name}
+              </p>
             </div>
           </div>
 
           {/* Requester Details */}
-          {showRequesterDetails && <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm" style={{ color: '#da7756' }}>&#9432;</span>
-              <span className="text-base font-semibold" style={{ color: '#2c2c2c' }}>
-                Requester Details
-              </span>
-            </div>
-
-            {loadingComplaintFields ? (
-              <div className="text-center py-4 text-sm" style={{ color: '#888780' }}>
-                Loading requester fields…
+          {showRequesterDetails && (
+            <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm" style={{ color: "#da7756" }}>
+                  &#9432;
+                </span>
+                <span
+                  className="text-base font-semibold"
+                  style={{ color: "#2c2c2c" }}
+                >
+                  Requester Details
+                </span>
               </div>
-            ) : complaintFields.length === 0 ? (
-              <div className="text-center py-4 text-sm" style={{ color: '#888780' }}>
-                No requester fields available
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {complaintFields.map((question) => (
-                  <div key={question.id}>
-                    <label
-                      className="text-xs font-medium mb-1 block"
-                      style={{ color: '#2c2c2c' }}
-                    >
-                      {question.descr}
-                      {question.quest_mandatory && (
-                        <span style={{ color: '#da7756' }}> *</span>
-                      )}
-                    </label>
 
-                    {/* {renderDynamicField(question)} */}
-                    <div
-                      ref={(el) => {
-                        dynamicFieldRefs.current[question.id] = el;
-                      }}
-                    >
-                      {renderDynamicField(question)}
+              {loadingComplaintFields ? (
+                <div
+                  className="text-center py-4 text-sm"
+                  style={{ color: "#888780" }}
+                >
+                  Loading requester fields…
+                </div>
+              ) : complaintFields.length === 0 ? (
+                <div
+                  className="text-center py-4 text-sm"
+                  style={{ color: "#888780" }}
+                >
+                  No requester fields available
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {complaintFields.map((question) => (
+                    <div key={question.id}>
+                      <label
+                        className="text-xs font-medium mb-1 block"
+                        style={{ color: "#2c2c2c" }}
+                      >
+                        {question.descr}
+                        {question.quest_mandatory && (
+                          <span style={{ color: "#da7756" }}> *</span>
+                        )}
+                      </label>
+
+                      {/* {renderDynamicField(question)} */}
+                      <div
+                        ref={(el) => {
+                          dynamicFieldRefs.current[question.id] = el;
+                        }}
+                      >
+                        {renderDynamicField(question)}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>}
-          {isFieldEnabled('location_enabled') && (
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {isFieldEnabled("location_enabled") && (
             <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-base font-semibold" style={{ color: '#2c2c2c' }}>
-                  Location <span style={{ color: '#da7756' }}>*</span>
+                <p
+                  className="text-base font-semibold"
+                  style={{ color: "#2c2c2c" }}
+                >
+                  Location <span style={{ color: "#da7756" }}>*</span>
                 </p>
                 {isLocationFromUrl && (
                   <span
                     className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: '#dce8f5', color: '#5a7a9a' }}
+                    style={{ backgroundColor: "#dce8f5", color: "#5a7a9a" }}
                   >
                     Pre-filled from QR
                   </span>
@@ -1323,14 +1492,28 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               </div>
 
               <div className="mb-3">
-                <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                <label
+                  className="text-xs font-medium mb-1 block"
+                  style={{ color: "#888780" }}
+                >
                   Building
                 </label>
-                <Select value={formData.building} onValueChange={handleBuildingChange} disabled={isLocationFromUrl}>
-                  <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                <Select
+                  value={formData.building}
+                  onValueChange={handleBuildingChange}
+                  disabled={isLocationFromUrl}
+                >
+                  <SelectTrigger
+                    className="h-11 rounded-lg text-sm"
+                    style={{ borderColor: "#d3d1c7" }}
+                  >
                     <SelectValue placeholder="Select Building">
                       {isLocationFromUrl
-                        ? buildings.find(b => String(b.id) === formData.building)?.name || formData.building || undefined
+                        ? buildings.find(
+                            (b) => String(b.id) === formData.building
+                          )?.name ||
+                          formData.building ||
+                          undefined
                         : undefined}
                     </SelectValue>
                   </SelectTrigger>
@@ -1346,7 +1529,10 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                 <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                  <label
+                    className="text-xs font-medium mb-1 block"
+                    style={{ color: "#888780" }}
+                  >
                     Wing
                   </label>
                   <Select
@@ -1354,10 +1540,16 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                     onValueChange={handleWingChange}
                     disabled={isLocationFromUrl || !formData.building}
                   >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                    <SelectTrigger
+                      className="h-11 rounded-lg text-sm"
+                      style={{ borderColor: "#d3d1c7" }}
+                    >
                       <SelectValue placeholder="Select Wing">
                         {isLocationFromUrl
-                          ? wings.find(w => String(w.id) === formData.wing)?.name || formData.wing || undefined
+                          ? wings.find((w) => String(w.id) === formData.wing)
+                              ?.name ||
+                            formData.wing ||
+                            undefined
                           : undefined}
                       </SelectValue>
                     </SelectTrigger>
@@ -1371,7 +1563,10 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                   </Select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                  <label
+                    className="text-xs font-medium mb-1 block"
+                    style={{ color: "#888780" }}
+                  >
                     Area
                   </label>
                   <Select
@@ -1379,10 +1574,16 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                     onValueChange={handleAreaChange}
                     disabled={isLocationFromUrl || !formData.building}
                   >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                    <SelectTrigger
+                      className="h-11 rounded-lg text-sm"
+                      style={{ borderColor: "#d3d1c7" }}
+                    >
                       <SelectValue placeholder="Select Area">
                         {isLocationFromUrl
-                          ? areas.find(a => String(a.id) === formData.area)?.name || formData.area || undefined
+                          ? areas.find((a) => String(a.id) === formData.area)
+                              ?.name ||
+                            formData.area ||
+                            undefined
                           : undefined}
                       </SelectValue>
                     </SelectTrigger>
@@ -1399,7 +1600,10 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                  <label
+                    className="text-xs font-medium mb-1 block"
+                    style={{ color: "#888780" }}
+                  >
                     Floor
                   </label>
                   <Select
@@ -1407,10 +1611,16 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                     onValueChange={handleFloorChange}
                     disabled={isLocationFromUrl || !formData.building}
                   >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                    <SelectTrigger
+                      className="h-11 rounded-lg text-sm"
+                      style={{ borderColor: "#d3d1c7" }}
+                    >
                       <SelectValue placeholder="Select Floor">
                         {isLocationFromUrl
-                          ? floors.find(f => String(f.id) === formData.floor)?.name || formData.floor || undefined
+                          ? floors.find((f) => String(f.id) === formData.floor)
+                              ?.name ||
+                            formData.floor ||
+                            undefined
                           : undefined}
                       </SelectValue>
                     </SelectTrigger>
@@ -1425,18 +1635,27 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                  <label
+                    className="text-xs font-medium mb-1 block"
+                    style={{ color: "#888780" }}
+                  >
                     Room
                   </label>
                   <Select
                     value={formData.room}
-                    onValueChange={(val) => field('room', val)}
+                    onValueChange={(val) => field("room", val)}
                     disabled={isLocationFromUrl || !formData.floor}
                   >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                    <SelectTrigger
+                      className="h-11 rounded-lg text-sm"
+                      style={{ borderColor: "#d3d1c7" }}
+                    >
                       <SelectValue placeholder="Select Room">
                         {isLocationFromUrl
-                          ? rooms.find(r => String(r.id) === formData.room)?.name || formData.room || undefined
+                          ? rooms.find((r) => String(r.id) === formData.room)
+                              ?.name ||
+                            formData.room ||
+                            undefined
                           : undefined}
                       </SelectValue>
                     </SelectTrigger>
@@ -1453,22 +1672,25 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
             </div>
           )}
 
-          {isFieldEnabled('category_enabled') && (
+          {isFieldEnabled("category_enabled") && (
             <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
               {/* Category */}
-              <p className="text-base font-semibold mb-3" style={{ color: '#2c2c2c' }}>
-                Category <span style={{ color: '#da7756' }}>*</span>
+              <p
+                className="text-base font-semibold mb-3"
+                style={{ color: "#2c2c2c" }}
+              >
+                Category <span style={{ color: "#da7756" }}>*</span>
               </p>
 
               {siteError && (
                 <div
                   className="mb-4 p-3 rounded-lg"
                   style={{
-                    backgroundColor: '#fee',
-                    borderLeft: '3px solid #da7756',
+                    backgroundColor: "#fee",
+                    borderLeft: "3px solid #da7756",
                   }}
                 >
-                  <p className="text-sm" style={{ color: '#c00' }}>
+                  <p className="text-sm" style={{ color: "#c00" }}>
                     ⚠️ {siteError}
                   </p>
                 </div>
@@ -1477,21 +1699,21 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               {loadingCategories ? (
                 <div
                   className="text-center py-6 text-sm"
-                  style={{ color: '#888780' }}
+                  style={{ color: "#888780" }}
                 >
                   Loading categories…
                 </div>
               ) : categories.length === 0 ? (
                 <div
                   className="text-center py-6 text-sm"
-                  style={{ color: '#888780' }}
+                  style={{ color: "#888780" }}
                 >
                   No categories available
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {categories.map((cat, idx) => {
-                    const Icon = cat?.icon_url
+                    const Icon = cat?.icon_url;
                     const selected = formData.category === cat.id.toString();
 
                     return (
@@ -1502,10 +1724,10 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                         }
                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all active:scale-95 hover:shadow-sm"
                         style={{
-                          borderColor: selected ? '#da7756' : '#e8e4dc',
+                          borderColor: selected ? "#da7756" : "#e8e4dc",
                           backgroundColor: selected
-                            ? 'rgba(218,119,86,0.08)'
-                            : '#fff',
+                            ? "rgba(218,119,86,0.08)"
+                            : "#fff",
                         }}
                       >
                         {cat.icon_url ? (
@@ -1520,14 +1742,14 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                           React.createElement(Icon, {
                             className: "h-7 w-7",
                             style: {
-                              color: selected ? '#da7756' : '#888780',
+                              color: selected ? "#da7756" : "#888780",
                             },
                           })
                         ) : null}
                         <span
                           className="text-xs font-medium text-center leading-tight"
                           style={{
-                            color: selected ? '#da7756' : '#2c2c2c',
+                            color: selected ? "#da7756" : "#2c2c2c",
                           }}
                         >
                           {cat.name}
@@ -1541,31 +1763,44 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
           )}
 
           {/* Subcategory */}
-          {isFieldEnabled('sub_category_enabled') && (
-
+          {isFieldEnabled("sub_category_enabled") && (
             <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
-              <label className="text-base font-semibold mb-3 block" style={{ color: '#2c2c2c' }}>
-                Subcategory <span style={{ color: '#da7756' }}>*</span>
+              <label
+                className="text-base font-semibold mb-3 block"
+                style={{ color: "#2c2c2c" }}
+              >
+                Subcategory <span style={{ color: "#da7756" }}>*</span>
               </label>
               <Select
                 value={formData.subCategory}
-                onValueChange={val => field('subCategory', val)}
+                onValueChange={(val) => field("subCategory", val)}
                 disabled={!formData.category || loadingSubcategories}
               >
-                <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                <SelectTrigger
+                  className="h-11 rounded-lg text-sm"
+                  style={{ borderColor: "#d3d1c7" }}
+                >
                   <SelectValue
                     placeholder={
                       !formData.category
-                        ? 'Select a category first'
+                        ? "Select a category first"
                         : loadingSubcategories
-                          ? 'Loading…'
-                          : 'Select subcategory'
+                          ? "Loading…"
+                          : "Select subcategory"
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="max-h-60" style={{ borderColor: '#d3d1c7', backgroundColor: '#d3d1c7 !important' }}>
-                  {subcategories.map(sub => (
-                    <SelectItem key={sub.id} value={sub.id.toString()}>{sub.name}</SelectItem>
+                <SelectContent
+                  className="max-h-60"
+                  style={{
+                    borderColor: "#d3d1c7",
+                    backgroundColor: "#d3d1c7 !important",
+                  }}
+                >
+                  {subcategories.map((sub) => (
+                    <SelectItem key={sub.id} value={sub.id.toString()}>
+                      {sub.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1573,143 +1808,153 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
           )}
 
           {/* Description */}
-          {isFieldEnabled('description_enabled') && (
+          {isFieldEnabled("description_enabled") && (
             <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
-              <label className="text-base font-semibold mb-1 block" style={{ color: '#2c2c2c' }}>
+              <label
+                className="text-base font-semibold mb-1 block"
+                style={{ color: "#2c2c2c" }}
+              >
                 Description
               </label>
               <Textarea
                 placeholder="Describe the issue in detail — what happened, when it started, any relevant observations..."
                 value={formData.description}
-                onChange={e => field('description', e.target.value)}
+                onChange={(e) => field("description", e.target.value)}
                 rows={4}
                 className="resize-none rounded-lg text-sm mt-2"
-                style={{ borderColor: '#d3d1c7' }}
+                style={{ borderColor: "#d3d1c7" }}
               />
-              <p className="text-xs mt-2" style={{ color: '#888780' }}>
+              <p className="text-xs mt-2" style={{ color: "#888780" }}>
                 Optional but helps our team respond faster
               </p>
             </div>
           )}
-          {(isFieldEnabled('proactive_reactive_enabled') ||
-            isFieldEnabled('severity_enabled') ||
-            isFieldEnabled('admin_priority_enabled')) && (
-              <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
-                <p
-                  className="text-base font-semibold mb-3"
-                  style={{ color: '#2c2c2c' }}
-                >
-                  Additional Details
-                </p>
+          {(isFieldEnabled("proactive_reactive_enabled") ||
+            isFieldEnabled("severity_enabled") ||
+            isFieldEnabled("admin_priority_enabled")) && (
+            <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
+              <p
+                className="text-base font-semibold mb-3"
+                style={{ color: "#2c2c2c" }}
+              >
+                Additional Details
+              </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {isFieldEnabled('proactive_reactive_enabled') && (
-                    <div>
-                      <label
-                        className="text-xs font-medium mb-1 block"
-                        style={{ color: '#888780' }}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {isFieldEnabled("proactive_reactive_enabled") && (
+                  <div>
+                    <label
+                      className="text-xs font-medium mb-1 block"
+                      style={{ color: "#888780" }}
+                    >
+                      Proactive / Reactive
+                    </label>
+
+                    <Select
+                      value={formData.proactiveReactive}
+                      onValueChange={(val) => field("proactiveReactive", val)}
+                    >
+                      <SelectTrigger
+                        className="h-11 rounded-lg text-sm"
+                        style={{ borderColor: "#d3d1c7" }}
                       >
-                        Proactive / Reactive
-                      </label>
+                        <SelectValue placeholder="Select Proactive/Reactive" />
+                      </SelectTrigger>
 
-                      <Select
-                        value={formData.proactiveReactive}
-                        onValueChange={(val) => field('proactiveReactive', val)}
+                      <SelectContent>
+                        {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {isFieldEnabled("severity_enabled") && (
+                  <div>
+                    <label
+                      className="text-xs font-medium mb-1 block"
+                      style={{ color: "#888780" }}
+                    >
+                      Severity
+                    </label>
+
+                    <Select
+                      value={formData.severity}
+                      onValueChange={(val) => field("severity", val)}
+                    >
+                      <SelectTrigger
+                        className="h-11 rounded-lg text-sm"
+                        style={{ borderColor: "#d3d1c7" }}
                       >
-                        <SelectTrigger
-                          className="h-11 rounded-lg text-sm"
-                          style={{ borderColor: '#d3d1c7' }}
-                        >
-                          <SelectValue placeholder="Select Proactive/Reactive" />
-                        </SelectTrigger>
+                        <SelectValue placeholder="Select Severity" />
+                      </SelectTrigger>
 
-                        <SelectContent>
-                          {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                      <SelectContent>
+                        {SEVERITY_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-                  {isFieldEnabled('severity_enabled') && (
-                    <div>
-                      <label
-                        className="text-xs font-medium mb-1 block"
-                        style={{ color: '#888780' }}
+                {isFieldEnabled("admin_priority_enabled") && (
+                  <div>
+                    <label
+                      className="text-xs font-medium mb-1 block"
+                      style={{ color: "#888780" }}
+                    >
+                      Admin Priority
+                    </label>
+
+                    <Select
+                      value={formData.adminPriority}
+                      onValueChange={(val) => field("adminPriority", val)}
+                    >
+                      <SelectTrigger
+                        className="h-11 rounded-lg text-sm"
+                        style={{ borderColor: "#d3d1c7" }}
                       >
-                        Severity
-                      </label>
+                        <SelectValue placeholder="Select Admin Priority" />
+                      </SelectTrigger>
 
-                      <Select
-                        value={formData.severity}
-                        onValueChange={(val) => field('severity', val)}
-                      >
-                        <SelectTrigger
-                          className="h-11 rounded-lg text-sm"
-                          style={{ borderColor: '#d3d1c7' }}
-                        >
-                          <SelectValue placeholder="Select Severity" />
-                        </SelectTrigger>
-
-                        <SelectContent>
-                          {SEVERITY_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {isFieldEnabled('admin_priority_enabled') && (
-                    <div>
-                      <label
-                        className="text-xs font-medium mb-1 block"
-                        style={{ color: '#888780' }}
-                      >
-                        Admin Priority
-                      </label>
-
-                      <Select
-                        value={formData.adminPriority}
-                        onValueChange={(val) => field('adminPriority', val)}
-                      >
-                        <SelectTrigger
-                          className="h-11 rounded-lg text-sm"
-                          style={{ borderColor: '#d3d1c7' }}
-                        >
-                          <SelectValue placeholder="Select Admin Priority" />
-                        </SelectTrigger>
-
-                        <SelectContent>
-                          {PRIORITY_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
+                      <SelectContent>
+                        {PRIORITY_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+          )}
           {/* Attachments */}
           <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-base font-semibold" style={{ color: '#2c2c2c' }}>Attachments</span>
-              <span className="text-sm" style={{ color: '#888780' }}>Optional</span>
+              <span
+                className="text-base font-semibold"
+                style={{ color: "#2c2c2c" }}
+              >
+                Attachments
+              </span>
+              <span className="text-sm" style={{ color: "#888780" }}>
+                Optional
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               {attachments.map((file, i) => (
                 <div
                   key={i}
                   className="relative w-20 h-20 rounded-lg border flex items-center justify-center overflow-hidden group"
-                  style={{ borderColor: '#c4b89d', backgroundColor: '#f6f4ee' }}
+                  style={{ borderColor: "#c4b89d", backgroundColor: "#f6f4ee" }}
                 >
                   {attachmentPreviews[i] ? (
                     <img
@@ -1719,18 +1964,34 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center w-full h-full">
-                      <svg className="w-6 h-6 mb-1" style={{ color: '#888780' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <svg
+                        className="w-6 h-6 mb-1"
+                        style={{ color: "#888780" }}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                       </svg>
-                      <span className="text-xs text-center px-1" style={{ color: '#2c2c2c' }}>
-                        {file.name.length > 10 ? file.name.slice(0, 9) + '…' : file.name}
+                      <span
+                        className="text-xs text-center px-1"
+                        style={{ color: "#2c2c2c" }}
+                      >
+                        {file.name.length > 10
+                          ? file.name.slice(0, 9) + "…"
+                          : file.name}
                       </span>
                     </div>
                   )}
                   <button
                     onClick={() => handleRemoveAttachment(i)}
                     className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: '#da7756' }}
+                    style={{ backgroundColor: "#da7756" }}
                   >
                     <X className="h-3 w-3 text-white" />
                   </button>
@@ -1740,10 +2001,12 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 active:bg-gray-50 hover:bg-gray-50 transition-colors"
-                  style={{ borderColor: '#c4b89d' }}
+                  style={{ borderColor: "#c4b89d" }}
                 >
-                  <Plus className="h-5 w-5" style={{ color: '#888780' }} />
-                  <span className="text-xs" style={{ color: '#888780' }}>Add</span>
+                  <Plus className="h-5 w-5" style={{ color: "#888780" }} />
+                  <span className="text-xs" style={{ color: "#888780" }}>
+                    Add
+                  </span>
                 </button>
               )}
             </div>
@@ -1756,48 +2019,47 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               className="hidden"
               capture="environment"
             />
-            <p className="text-xs mt-2" style={{ color: '#888780' }}>
+            <p className="text-xs mt-2" style={{ color: "#888780" }}>
               JPEG, PNG, PDF up to 10MB each · Max 5 files
             </p>
           </div>
 
-
-
-          <p className="mx-4 mt-3 md:mx-0 text-xs" style={{ color: '#888780' }}>* Required fields</p>
+          <p className="mx-4 mt-3 md:mx-0 text-xs" style={{ color: "#888780" }}>
+            * Required fields
+          </p>
 
           {/* ── Submit button – desktop: inline block at bottom of content ── */}
-          <div
-            className="hidden md:block mt-6 mb-2"
-          >
+          <div className="hidden md:block mt-6 mb-2">
             <button
               onClick={handleSubmit}
               disabled={loading}
               className="w-full py-4 rounded-xl font-semibold text-base text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ backgroundColor: '#da7756' }}
+              style={{ backgroundColor: "#da7756" }}
             >
-              <span>{loading ? 'Submitting…' : 'Submit Request'}</span>
+              <span>{loading ? "Submitting…" : "Submit Request"}</span>
               {!loading && <span className="text-lg">›</span>}
             </button>
           </div>
-
-        </div>{/* /centred column */}
-      </div>{/* /scrollable body */}
+        </div>
+        {/* /centred column */}
+      </div>
+      {/* /scrollable body */}
 
       {/* ── Submit button – mobile only: sticky to bottom of scroll container ── */}
       <div
         className="md:hidden sticky bottom-0 left-0 right-0 px-4 py-4 bg-white border-t flex-shrink-0"
-        style={{ borderColor: '#e8e4dc' }}
+        style={{ borderColor: "#e8e4dc" }}
       >
         <button
           onClick={handleSubmit}
           disabled={loading}
           className="w-full py-4 rounded-xl font-semibold text-base text-white flex items-center justify-center gap-2 transition-opacity active:opacity-80 disabled:opacity-60"
-          style={{ backgroundColor: '#da7756' }}
+          style={{ backgroundColor: "#da7756" }}
         >
-          <span>{loading ? 'Submitting…' : 'Submit Request'}</span>
+          <span>{loading ? "Submitting…" : "Submit Request"}</span>
           {!loading && <span className="text-lg">›</span>}
         </button>
       </div>
-    </div >
+    </div>
   );
 };
