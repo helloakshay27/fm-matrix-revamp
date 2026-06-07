@@ -1015,7 +1015,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   };
   const orgId = new URLSearchParams(window.location.search).get("org_id");
   const hostname = window.location.hostname;
-  if (hostname === "oig.gophygital.work" || hostname === "localhost" ) {
+  if (hostname.includes("oig.gophygital.work") || hostname === "localhost" ) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6"
         style={{ background: 'linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)' }}>
