@@ -463,6 +463,9 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
   const roomIdParam = searchParams.get("room");
   const customFieldIdParam = searchParams.get("custom_field_id");
   const isLocationFromUrl = !!buildingIdParam;
+  const hostname = window.location.hostname;
+  const isOigComingSoonDomain =
+    hostname.includes("oig.gophygital.work") || hostname === "localhost";
 
   const [siteDomain, setSiteDomain] = useState<string>("");
   const [siteError, setSiteError] = useState<string>("");
@@ -520,6 +523,13 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
   } | null>(null);
   // Initialize: fetch site base URL, then categories and complaint fields
   useEffect(() => {
+    if (isOigComingSoonDomain) {
+      setLoadingCategories(false);
+      setLoadingComplaintFields(false);
+      setSiteError("");
+      return;
+    }
+
     const initializeSiteData = async () => {
       try {
         setLoadingCategories(true);
@@ -647,11 +657,12 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
     };
 
     initializeSiteData();
-  }, [siteId, toast]);
+  }, [isOigComingSoonDomain, siteId, toast]);
 
   // Once siteDomain is ready, load location lists for URL-pre-filled fields
   // (same siteDomain state the dropdown handlers use, so same APIs fire at the same time)
   useEffect(() => {
+    if (isOigComingSoonDomain) return;
     if (!isLocationFromUrl || !siteDomain || !buildingIdParam) return;
 
     const loadUrlLocationData = async () => {
@@ -690,7 +701,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
     };
 
     loadUrlLocationData();
-  }, [siteDomain]);
+  }, [buildingIdParam, isLocationFromUrl, isOigComingSoonDomain, siteDomain]);
 
   const isFieldEnabled = (fieldName: string) =>
     customFieldConfig[fieldName] !== false;
@@ -1169,8 +1180,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
       description: "Ticket ID copied to clipboard",
     });
   };
-  const hostname = window.location.hostname;
-  if (hostname.includes("oig.gophygital.work") || hostname === "localhost") {
+  if (isOigComingSoonDomain) {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-6"
@@ -1179,12 +1189,48 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
         }}
       >
         {/* OIG Logo */}
-        <div className="mb-8 flex justify-center">
-          <img
-            src="/Without bkg.svg"
-            alt="OIG Logo"
-            className="h-14 sm:h-16 object-contain"
-          />
+        <div className="flex justify-end">
+          <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
+            {surveyData?.company_logo_url ? (
+              <img
+                src={surveyData.company_logo_url}
+                alt="Company Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://oig.gophygital.work" ? (
+              <img
+                src="/Without bkg.svg"
+                alt="OIG Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://web.gophygital.work" &&
+              new URLSearchParams(window.location.search).get("org_id") ===
+                "3" ? (
+              <img
+                src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
+                alt="PSIPL Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://web.gophygital.work" ? (
+              <img
+                src="/PSIPL-logo (1).png"
+                alt="PSIPL Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="gophygital Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="gophygital Logo"
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
         </div>
 
         {/* Coming soon illustration */}

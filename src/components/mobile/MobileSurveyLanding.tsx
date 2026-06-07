@@ -78,6 +78,9 @@ interface SurveyAttach {
 export const MobileSurveyLanding: React.FC = () => {
   const navigate = useNavigate();
   const { mappingId: rawMappingId } = useParams<{ mappingId: string }>();
+  const hostname = window.location.hostname;
+  const isOigComingSoonDomain =
+    hostname.includes("oig.gophygital.work") || hostname === "localhost";
 
   // Clean up mappingId in case it contains URL segments
   const mappingId = rawMappingId?.split("/")[0];
@@ -159,6 +162,11 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Fetch survey data
   useEffect(() => {
+    if (isOigComingSoonDomain) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchSurveyData = async () => {
       if (!mappingId) return;
 
@@ -191,7 +199,7 @@ export const MobileSurveyLanding: React.FC = () => {
     };
 
     fetchSurveyData();
-  }, [mappingId]);
+  }, [isOigComingSoonDomain, mappingId]);
 
   // Get current question
   const getCurrentQuestion = (): SurveyQuestion | null => {
@@ -1620,8 +1628,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Render loading state
   // Show Coming Soon page for specific domains
-  const hostname = window.location.hostname;
-  if (hostname.includes("oig.gophygital.work")) {
+  if (isOigComingSoonDomain) {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-6"
@@ -1630,12 +1637,48 @@ export const MobileSurveyLanding: React.FC = () => {
         }}
       >
         {/* OIG Logo */}
-        <div className="mb-8 flex justify-center">
-          <img
-            src="/Without bkg.svg"
-            alt="OIG Logo"
-            className="h-14 sm:h-16 object-contain"
-          />
+        <div className="flex justify-end">
+          <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
+            {surveyData?.company_logo_url ? (
+              <img
+                src={surveyData.company_logo_url}
+                alt="Company Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://oig.gophygital.work" ? (
+              <img
+                src="/Without bkg.svg"
+                alt="OIG Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://web.gophygital.work" &&
+              new URLSearchParams(window.location.search).get("org_id") ===
+                "3" ? (
+              <img
+                src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
+                alt="PSIPL Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://web.gophygital.work" ? (
+              <img
+                src="/PSIPL-logo (1).png"
+                alt="PSIPL Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="gophygital Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="gophygital Logo"
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
         </div>
 
         {/* Coming soon illustration */}
