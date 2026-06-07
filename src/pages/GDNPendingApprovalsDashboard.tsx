@@ -88,9 +88,14 @@ const getPaginationFromResponse = (
   page: number
 ): GDNPagination => ({
   current_page: Number(
-    result.pagination?.current_page || result.current_page || result.page || page
+    result.pagination?.current_page ||
+      result.current_page ||
+      result.page ||
+      page
   ),
-  total_pages: Number(result.pagination?.total_pages || result.total_pages || 0),
+  total_pages: Number(
+    result.pagination?.total_pages || result.total_pages || 0
+  ),
   total_entries: Number(
     result.pagination?.total_entries ||
       result.pagination?.total_count ||
@@ -122,11 +127,19 @@ export const GDNPendingApprovalsDashboard = () => {
       const url = new URL(GDN_PENDING_APPROVALS_ENDPOINT, baseUrl);
       url.searchParams.set("page", String(page));
       const response = await fetch(url.toString(), {
-        headers: { Authorization: getAuthHeader(), "Content-Type": "application/json" },
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      if (!response.ok) throw new Error(`Failed to fetch pending approvals (${response.status})`);
+      if (!response.ok)
+        throw new Error(
+          `Failed to fetch pending approvals (${response.status})`
+        );
       const result = (await response.json()) as GDNPendingApprovalsResponse;
-      const source: GDNPendingApprovalApiItem[] = Array.isArray(result.pending_data)
+      const source: GDNPendingApprovalApiItem[] = Array.isArray(
+        result.pending_data
+      )
         ? result.pending_data
         : Array.isArray(result.pending_approvals)
           ? result.pending_approvals
@@ -161,7 +174,7 @@ export const GDNPendingApprovalsDashboard = () => {
     }
 
     if (item.userId) {
-      queryParams.set("user_id", item.userId);
+      queryParams.set("user_id", String(item.userId));
     }
 
     queryParams.set("type", "approval");
