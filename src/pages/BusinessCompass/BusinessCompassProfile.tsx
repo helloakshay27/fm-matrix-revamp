@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   User,
   Mail,
@@ -36,7 +35,6 @@ import {
   TrendingUp,
   TrendingDown,
   CreditCard,
-  Download,
 } from "lucide-react";
 const ChevronDownIcon = ChevronDown;
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +67,11 @@ import {
   ProfileUpdateResponse,
 } from "@/services/userService";
 import { toast } from "sonner";
+import FaceEnrollmentPanel from "@/components/FaceEnrollmentPanel";
+import ProfileAssets from "@/components/ProfileAssets";
+import ProfileWallet from "@/components/ProfileWallet";
+import ProfileRoster from "../ProfileRoster";
+import BusinessCompassAttendanceView from "./BusinessCompassAttendanceView";
 import "./BusinessCompass.css";
 
 const AdvancedDatePicker = ({
@@ -575,8 +578,6 @@ const OrganizationCheckbox = ({
 );
 
 const BusinessCompassProfile = () => {
-  const navigate = useNavigate();
-
   type ProfileFormData = {
     displayName: string;
     email: string;
@@ -641,9 +642,16 @@ const BusinessCompassProfile = () => {
     apiData: ProfileUpdateResponse
   ): ProfileFormData => {
     const userData = apiData.user || {};
+    
+    // Extract names from both top level and user object
     const firstname = userData.firstname ?? apiData.firstname ?? "";
     const lastname = userData.lastname ?? apiData.lastname ?? "";
     const displayName = [firstname, lastname].filter(Boolean).join(" ").trim();
+    
+    // Extract extra fields - could be in user object or extra_fields
+    const extra = apiData.extra_fields || userData;
+
+    console.warn("[mergeApiProfileIntoForm] Extracting data from API response:", { userData, extra });
 
     return {
       ...currentData,
@@ -652,9 +660,14 @@ const BusinessCompassProfile = () => {
       phone: userData.mobile ?? apiData.mobile ?? currentData.phone,
       jobTitle: userData.user_title ?? currentData.jobTitle,
       address: userData.alternate_address ?? currentData.address,
+      city: extra.city ?? currentData.city,
+      state: extra.state ?? currentData.state,
+      pinCode: extra.pin_code ?? extra.pincode ?? extra.zip_code ?? currentData.pinCode,
       dob: formatApiDateToUi(userData.birth_date) || currentData.dob,
-      emergencyContactNumber:
-        userData.alternate_mobile ?? currentData.emergencyContactNumber,
+      doj: formatApiDateToUi(extra.date_of_joining) || currentData.doj,
+      anniversaryDate: formatApiDateToUi(extra.anniversary_date) || currentData.anniversaryDate,
+      emergencyContactName: extra.emergency_contact_name ?? currentData.emergencyContactName,
+      emergencyContactNumber: userData.alternate_mobile ?? extra.emergency_contact_number ?? currentData.emergencyContactNumber,
     };
   };
 
@@ -665,7 +678,9 @@ const BusinessCompassProfile = () => {
     const firstname = accountData.firstname || "";
     const lastname = accountData.lastname || "";
     const displayName = [firstname, lastname].filter(Boolean).join(" ").trim();
-    const extra = accountData.extra_fields || {};
+    const extra = accountData.extra_fields || accountData; // Try both extra_fields and root level
+
+    console.warn("[mapAccountProfileToForm] Mapping account data:", { accountData, extra });
 
     return {
       ...currentData,
@@ -697,7 +712,9 @@ const BusinessCompassProfile = () => {
   };
 
   const persistProfileDataLocally = (data: ProfileFormData) => {
+    console.warn("[LocalStorage] Saving profile data to localStorage:", data);
     localStorage.setItem("bc-profile-data", JSON.stringify(data));
+    
     const essentialFields = [
       "address",
       "city",
@@ -711,14 +728,31 @@ const BusinessCompassProfile = () => {
     const isComplete = essentialFields.every(
       (field) => data[field as keyof ProfileFormData]?.trim() !== ""
     );
+    const completionCount = essentialFields.filter(
+      (field) => data[field as keyof ProfileFormData]?.trim() !== ""
+    ).length;
+    console.warn(`[LocalStorage] Profile completion: ${completionCount}/${essentialFields.length}`);
+    
     if (isComplete) {
+      console.warn("[LocalStorage] Profile marked as complete (100%)");
       localStorage.setItem("bc-profile-completed", "true");
     } else {
+      console.warn("[LocalStorage] Profile NOT complete, removing completion flag");
       localStorage.removeItem("bc-profile-completed");
     }
   };
 
-  const [activeTab, setActiveTab] = useState<"basic" | "assets" | "attendance" | "wallet">("basic");
+  type ProfileTab =
+    | "basic"
+    | "face_enroll"
+    | "assets"
+    | "attendance"
+    | "my_roster"
+    | "my_wallet"
+    | "wallet";
+
+  const [activeTab, setActiveTab] = useState<ProfileTab>("basic");
+  const [profileDetails, setProfileDetails] = useState<any>({});
 
   // ── Wallet state ──────────────────────────────────────────────────────────
   interface WalletTx {
@@ -729,13 +763,14 @@ const BusinessCompassProfile = () => {
     transactionType: "credit" | "debit" | string;
     payment_mode: string;
   }
-  const [walletBalance, setWalletBalance]           = useState<number | null>(null);
-  const [walletUpdatedAt, setWalletUpdatedAt]       = useState<string>("");
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletUpdatedAt, setWalletUpdatedAt] = useState<string>("");
   const [walletTransactions, setWalletTransactions] = useState<WalletTx[]>([]);
-  const [walletFilter, setWalletFilter]             = useState<"all" | "credit" | "debit">("all");
-  const [walletLoading, setWalletLoading]           = useState(false);
-  const [walletRefreshing, setWalletRefreshing]     = useState(false);
-  const [walletExists, setWalletExists]             = useState(true);
+  const [walletFilter, setWalletFilter] =
+    useState<"all" | "credit" | "debit">("all");
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletRefreshing, setWalletRefreshing] = useState(false);
+  const [walletExists, setWalletExists] = useState(true);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -805,6 +840,40 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       : null;
 
   useEffect(() => {
+    const fetchProfileUserDetails = async () => {
+      const base = localStorage.getItem("baseUrl") || "";
+      const token = localStorage.getItem("token") || "";
+
+      if (!base || !token || !currentUserId) {
+        setProfileDetails({});
+        return;
+      }
+
+      try {
+        const baseUrl = base.replace(/\/$/, "").replace(/^https?:\/\//, "");
+        const response = await fetch(
+          `https://${baseUrl}/user_details/${encodeURIComponent(currentUserId)}.json`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        setProfileDetails(await response.json());
+      } catch (error) {
+        console.error("Failed to load profile user details", error);
+        setProfileDetails({});
+      }
+    };
+
+    fetchProfileUserDetails();
+  }, [currentUserId]);
+
+  useEffect(() => {
     if (!storedOrganizationId && includeOrganizationInAiConfig) {
       setIncludeOrganizationInAiConfig(false);
     }
@@ -814,9 +883,12 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     const fetchProfileDetails = async () => {
       try {
         setIsProfileLoading(true);
+        console.warn("[Profile Load] Starting profile fetch...");
         const profileData = await userService.getAccountDetails();
+        console.warn("[Profile Load] Raw API response:", JSON.stringify(profileData, null, 2));
 
         const mappedData = mapAccountProfileToForm(formData, profileData);
+        console.warn("[Profile Load] After mapping to form:", JSON.stringify(mappedData, null, 2));
         setFormData(mappedData);
         persistProfileDataLocally(mappedData);
 
@@ -828,10 +900,12 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
           "";
 
         if (accountImage) {
+          console.warn("[Profile Load] Setting profile image from API:", accountImage);
           setProfileImage(accountImage);
           localStorage.setItem("bc-profile-avatar", accountImage);
         }
       } catch (error) {
+        console.error("[Profile Load] Error fetching profile:", error);
         if (!localStorage.getItem("bc-profile-data")) {
           const message =
             error instanceof Error
@@ -1429,6 +1503,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
       const firstName = formData.displayName.trim();
       const birthDate = formatUiDateToApi(formData.dob) || "";
+      const dojFormatted = formatUiDateToApi(formData.doj) || "";
+      const anniversaryDateFormatted = formatUiDateToApi(formData.anniversaryDate) || "";
       const useFormData = !!profileImageFile || removeProfileImage;
       let updatedProfile: ProfileUpdateResponse;
 
@@ -1442,25 +1518,28 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         multipartPayload.append("user[lastname]", "");
         multipartPayload.append("user[email]", formData.email.trim());
         multipartPayload.append("user[mobile]", formData.phone.trim());
-        multipartPayload.append(
-          "user[alternate_address]",
-          formData.address.trim()
-        );
+        multipartPayload.append("user[alternate_address]", formData.address.trim());
         multipartPayload.append("user[user_title]", formData.jobTitle.trim());
         multipartPayload.append("user[birth_date]", birthDate);
-        multipartPayload.append(
-          "user[alternate_mobile]",
-          formData.emergencyContactNumber.trim()
-        );
+        multipartPayload.append("user[alternate_mobile]", formData.emergencyContactNumber.trim());
+
+        // Additional profile fields (may be stored in extra_fields or user object)
+        multipartPayload.append("user[city]", formData.city.trim());
+        multipartPayload.append("user[state]", formData.state.trim());
+        multipartPayload.append("user[pin_code]", formData.pinCode.trim());
+        multipartPayload.append("user[date_of_joining]", dojFormatted);
+        multipartPayload.append("user[anniversary_date]", anniversaryDateFormatted);
+        multipartPayload.append("user[emergency_contact_name]", formData.emergencyContactName.trim());
 
         if (profileImageFile) {
           multipartPayload.append("user[avatar]", profileImageFile);
         } else if (removeProfileImage) {
-          // Signal to API to remove avatar — adjust key/value per your backend contract
           multipartPayload.append("user[remove_avatar]", "true");
         }
 
+        console.warn("[Profile Save] Sending FormData to /users/profile_update.json");
         updatedProfile = await userService.updateProfile(multipartPayload);
+        console.warn("[Profile Save] API Response received:", updatedProfile);
       } else {
         const payload = {
           firstname: firstName,
@@ -1476,10 +1555,19 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
             user_title: formData.jobTitle.trim(),
             birth_date: birthDate || null,
             alternate_mobile: formData.emergencyContactNumber.trim(),
+            // Additional fields - API may store these in user object or return them separately
+            city: formData.city.trim(),
+            state: formData.state.trim(),
+            pin_code: formData.pinCode.trim(),
+            date_of_joining: dojFormatted,
+            anniversary_date: anniversaryDateFormatted,
+            emergency_contact_name: formData.emergencyContactName.trim(),
           },
         };
 
+        console.warn("[Profile Save] Sending JSON payload to /users/profile_update.json:", JSON.stringify(payload, null, 2));
         updatedProfile = await userService.updateProfile(payload);
+        console.warn("[Profile Save] API Response received:", updatedProfile);
       }
 
       const mergedData = mergeApiProfileIntoForm(formData, updatedProfile);
@@ -1501,6 +1589,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to update profile";
+      console.error("[Profile Save] Error:", message, error);
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -1766,12 +1855,21 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
             {/* Tab bar */}
             <div className="bg-white rounded-xl border border-gray-100 p-1.5 flex items-center gap-1 w-fit shadow-sm flex-wrap">
-              {(["basic", "assets", "attendance", "wallet"] as const).map((id) => {
+              {([
+                "basic",
+                "face_enroll",
+                "assets",
+                "attendance",
+                "my_roster",
+                "my_wallet",
+              ] as ProfileTab[]).map((id) => {
                 const labels: Record<string, string> = {
                   basic: "Basic Info",
+                  face_enroll: "Face Enroll",
                   assets: "Assets",
                   attendance: "Attendance",
-                  wallet: "My Wallet",
+                  my_roster: "My Roster",
+                  my_wallet: "My Wallet",
                 };
                 return (
                   <button
@@ -1932,12 +2030,42 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
               </>
             )}
 
-            {/* ─ Assets / Attendance placeholders ─ */}
-            {(activeTab === "assets" || activeTab === "attendance") && (
-              <div className="bg-[#F6F4EE] rounded-2xl p-10 flex items-center justify-center">
-                <p className="text-gray-400 font-medium text-[13px]">
-                  {activeTab === "assets" ? "Assets section coming soon." : "Attendance section coming soon."}
-                </p>
+            {/* Shared profile sections */}
+            {activeTab === "face_enroll" && (
+              <div className="rounded-2xl border border-gray-100 bg-[#F6F4EE] p-4 sm:p-5">
+                <div className="mb-5">
+                  <h2 className="text-xl font-semibold text-[#1A1A1A]">
+                    Face Enrollment
+                  </h2>
+                  <p className="mt-1 text-sm text-[#2C2C2C]/65">
+                    Add or update your face profile for secure product access.
+                  </p>
+                </div>
+                <FaceEnrollmentPanel />
+              </div>
+            )}
+
+            {activeTab === "assets" && (
+              <div className="rounded-2xl bg-[#F6F4EE] p-4 sm:p-5">
+                <ProfileAssets />
+              </div>
+            )}
+
+            {activeTab === "attendance" && (
+              <BusinessCompassAttendanceView />
+            )}
+
+            {activeTab === "my_roster" && (
+              <div className="rounded-2xl bg-[#F6F4EE] p-4 sm:p-5">
+                <ProfileRoster
+                  rosterId={profileDetails?.lock_user_permission?.user_roaster_id}
+                />
+              </div>
+            )}
+
+            {activeTab === "my_wallet" && (
+              <div className="rounded-2xl bg-[#F6F4EE] p-4 sm:p-5">
+                <ProfileWallet />
               </div>
             )}
 

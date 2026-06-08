@@ -32,7 +32,6 @@ export interface User {
     role_for: string;
   };
   user_type?: string;
-  user_roster_id?: number;
 }
 
 export interface LoginResponse {
@@ -163,21 +162,27 @@ export const saveBaseUrl = (baseUrl: string): void => {
   localStorage.setItem(AUTH_KEYS.BASE_URL, domainOnly);
 };
 
-// Get base URL from localStorage WITH https:// prefix
-// Use this for new code that expects full URL
+// Get base URL — respects VITE_LOCAL_BACKEND_URL for local development.
+// When that env var is set (e.g. http://localhost:3000) it takes priority over
+// whatever backend URL was stored during login, so all API calls stay on localhost.
 export const getBaseUrl = (): string | null => {
+  const localOverride = (import.meta as any).env?.VITE_LOCAL_BACKEND_URL as string | undefined;
+  if (localOverride) return localOverride.replace(/\/$/, "");
+
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
 
-  // Add https:// prefix if not present
   return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
 };
 
 /**
- * Get base URL from localStorage WITHOUT protocol
- * For compatibility with code that adds https:// manually
+ * Get base URL WITHOUT protocol — same local-override logic as getBaseUrl.
+ * For compatibility with code that adds https:// manually.
  */
 export const getBaseUrlDomain = (): string | null => {
+  const localOverride = (import.meta as any).env?.VITE_LOCAL_BACKEND_URL as string | undefined;
+  if (localOverride) return stripProtocol(localOverride);
+
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
   return stripProtocol(savedUrl);
@@ -257,130 +262,72 @@ const isPanchshilClubSite =
   hostname === "recess-club.panchshil.com";
 
 export const getOrganizationsByEmail = async (
-  email: string
+  email: string,
+  captchaToken?: string
 ): Promise<Organization[]> => {
-  if (isOmanSite || isFmSite) {
-    const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
+  // VITE_LOCAL_BACKEND_URL lets developers point at localhost:3000 during dev
+  const localOverride = (import.meta as any).env?.VITE_LOCAL_BACKEND_URL;
 
-    const data = await response.json();
-    return data.organizations || [];
+  let apiBase: string;
+  if (localOverride) {
+    apiBase = localOverride.replace(/\/$/, "");
+  } else {
+    const baseUrls: Record<string, string> = {
+      fm:            "https://uat.lockated.com",
+      vi:            "https://live-api.gophygital.work",
+      dev:           "https://dev-api.lockated.com",
+      pulse:         "https://pulse-api.lockated.com",
+      club:          "https://club-uat-api.lockated.com",
+      panchshilUat:  "https://pulse-uat-api.panchshil.com",
+      panchshilClub: "https://recess-club-api.panchshil.com",
+      panchshilProd: "https://pulse-api.panchshil.com",
+      default:       "https://uat.lockated.com",
+    };
+
+    const h = window.location.hostname;
+    if (h.includes("oig.gophygital.work") || h.includes("fm.") || h === "fm-matrix.lockated.com")
+      apiBase = baseUrls.fm;
+    else if (h.includes("vi-web.gophygital.work") || h.includes("web.gophygital.work"))
+      apiBase = baseUrls.vi;
+    else if (h.includes("dev-fm-matrix") || h.includes("dev-api"))
+      apiBase = baseUrls.dev;
+    else if (h === "pulse.lockated.com")
+      apiBase = baseUrls.pulse;
+    else if (h.includes("club.lockated.com"))
+      apiBase = baseUrls.club;
+    else if (h.includes("pulse-uat.panchshil.com"))
+      apiBase = baseUrls.panchshilUat;
+    else if (h.includes("recess-club.panchshil.com"))
+      apiBase = baseUrls.panchshilClub;
+    else if (h === "pulse.panchshil.com")
+      apiBase = baseUrls.panchshilProd;
+    else
+      apiBase = baseUrls.default;
   }
 
-  if (isViSite) {
-    const response = await fetch(
-      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
-    );
+  const url = `${apiBase}/api/users/get_organizations_by_email`;
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
+  // Use POST when a captcha token is present (keeps token out of URL / server logs).
+  // Key name must match params[:recaptcha_token] on the backend.
+  const fetchOptions: RequestInit = captchaToken
+    ? {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, recaptcha_token: captchaToken }),
+      }
+    : {
+        method: "GET",
+      };
 
-    const data = await response.json();
-    return data.organizations || [];
-  }
+  const finalUrl = captchaToken
+    ? url
+    : `${url}?email=${encodeURIComponent(email)}`;
 
-  if (isDevSite) {
-    const response = await fetch(
-      `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-
-  if (isPulseSite) {
-    const response = await fetch(
-      `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-
-  if (isClubSite) {
-    const response = await fetch(
-      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-
-  if (isPanchshilUatSite) {
-    const response = await fetch(
-      `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-
-  if (isClubSite) {
-    const response = await fetch(
-      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-  if (isPanchshilClubSite) {
-    const response = await fetch(
-      `https://recess-club-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-
-  if (isPanchshilPulseProd) {
-    const response = await fetch(
-      `https://pulse-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-
-  // Default fallback for other sitess
-  const response = await fetch(
-    `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
-  );
+  const response = await fetch(finalUrl, fetchOptions);
 
   if (!response.ok) {
-    throw new Error("Failed to fetch organizations");
+    const err = await response.json().catch(() => ({}));
+    throw new Error((err as any).error || "Failed to fetch organizations");
   }
 
   const data = await response.json();
