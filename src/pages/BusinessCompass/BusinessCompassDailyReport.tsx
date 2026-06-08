@@ -172,6 +172,16 @@ interface ApplyDraftOptions {
   allowEmptyLists?: boolean;
 }
 
+const taskIssueGroupKeys = [
+  "overdue",
+  "in_progress",
+  "pending",
+  "on_hold",
+  "reopened",
+] as const;
+type TaskIssueGroupKey = (typeof taskIssueGroupKeys)[number];
+const taskIssueGroupKeySet = new Set<string>(taskIssueGroupKeys);
+
 const cleanReportText = (value: unknown) =>
   String(value ?? "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -894,6 +904,26 @@ const BusinessCompassDailyReport: React.FC = () => {
       total: mergedTasksIssues.length,
     };
   }, [mergedTasksIssues]);
+
+  const openOnlyTaskIssueGroup = (activeKey: TaskIssueGroupKey) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(
+        [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+      );
+      taskIssueGroupKeys.forEach((key) => {
+        if (key !== activeKey) next.add(key);
+      });
+      return next;
+    });
+  };
+
+  const openAllTaskIssueGroups = () => {
+    setCollapsedGroups((prev) => {
+      return new Set(
+        [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+      );
+    });
+  };
 
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
@@ -1628,6 +1658,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const tasksSectionRef = useRef<HTMLDivElement>(null);
   const accomplishmentsSectionRef = useRef<HTMLDivElement>(null);
   const planningSectionRef = useRef<HTMLDivElement>(null);
+  const calendarTodayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isAiPopupOpen) return;
@@ -1662,6 +1693,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     d.setDate(d.getDate() - 6);
     return d;
   });
+  const todayDateKey = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
 
   const days = React.useMemo(() => {
     const result = [];
@@ -1714,6 +1746,15 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
     return result;
   }, [viewStartDate, reportsList, isLocallyDeletedReport, rosterWorkingDays]);
+
+  useEffect(() => {
+    if (activeTab !== "submit") return;
+    calendarTodayRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [activeTab, days]);
 
   const handlePrevWeek = () => {
     const newDate = new Date(viewStartDate);
@@ -1865,15 +1906,9 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const nextDayLabel = React.useMemo(() => {
     try {
-      const dateObj = new Date(
-        `${selectedDate} ${selectedMonth} ${selectedYear}`
-      );
-      if (isNaN(dateObj.getTime())) return "";
-      const nextDay = new Date(dateObj);
-      nextDay.setDate(nextDay.getDate() + 1);
-      while (isRosterHoliday(nextDay)) {
-        nextDay.setDate(nextDay.getDate() + 1);
-      }
+      const nextWorkingDate = getNextWorkingDay(startDate);
+      const nextDay = new Date(`${nextWorkingDate}T00:00:00`);
+      if (isNaN(nextDay.getTime())) return "";
       return nextDay.toLocaleDateString("en-GB", {
         weekday: "short",
         day: "numeric",
@@ -1882,7 +1917,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     } catch (e) {
       return "";
     }
-  }, [selectedDate, selectedMonth, selectedYear, rosterWorkingDays]);
+  }, [startDate, rosterWorkingDays]);
 
   // Get next working day's date in YYYY-MM-DD format for APIs
   const getNextDayDate = () => {
@@ -2473,20 +2508,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   }, [startDate, selectedDate, selectedMonth, selectedYear]);
 
   const livePreviewMetrics = useMemo(() => {
-    const kpiPct = dailyScore.details.kpi.hasKPIs
-      ? Math.round(dailyScore.details.kpi.averageAchievement)
-      : 0;
     const accPct = Math.round(
       dailyScore.details.accomplishments.completionPercentage || 0
     );
-    const planTotal = Math.max(
-      6,
-      planningItems.filter((p) => cleanReportText(p.text) !== "").length +
-      dedupedTomorrowItems.length
-    );
-    const planFilled = planningItems.filter(
-      (p) => cleanReportText(p.text) !== ""
-    ).length;
     const timingTotal = 4;
     const timingSet = mergedTasksIssues.filter((item) => {
       const allocations =
@@ -2499,20 +2523,10 @@ const BusinessCompassDailyReport: React.FC = () => {
       );
     }).length;
     return {
-      kpiPct,
       accPct,
-      tasksCount: taskIssueCounts.total,
-      planning: `${planFilled}/${planTotal}`,
       timing: `${Math.min(timingSet, timingTotal)}/${timingTotal}`,
     };
-  }, [
-    dailyScore,
-    planningItems,
-    dedupedTomorrowItems,
-    mergedTasksIssues,
-    startDate,
-    taskIssueCounts.total,
-  ]);
+  }, [dailyScore, mergedTasksIssues, startDate]);
 
   const aiInsights = useMemo(() => {
     const insights: Array<{
@@ -2831,7 +2845,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     >
                       <Checkbox
                         checked={isAbsent}
-                        className="h-4 w-4 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                        className="h-3.5 w-3.5 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
                         onCheckedChange={() => { }}
                       />
                       Mark as Absent
@@ -2858,22 +2872,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   ? "#D1D5DB"
                                   : "transparent";
                           const isSelected = startDate === item.fullDate;
-                          const nextWorkDay = getNextWorkingDay(startDate);
-                          const hasScheduledForDay =
-                            item.fullDate === nextWorkDay &&
-                            tomorrowScheduledItems.length > 0;
-                          const showUpcomingDot =
-                            item.isFuture &&
-                            item.type !== "holiday" &&
-                            (hasScheduledForDay || item.type === "upcoming");
+                          const isToday = item.fullDate === todayDateKey;
                           return (
                             <div
                               key={index}
+                              ref={item.fullDate === todayDateKey ? calendarTodayRef : undefined}
                               className={cn(
                                 "bc-calendar-day",
                                 item.type === "holiday" && "bc-calendar-day-holiday",
                                 item.isFuture && item.type !== "holiday" && "bc-calendar-day-future",
-                                hasScheduledForDay && "bc-calendar-day-scheduled",
                                 isSelected && "bc-calendar-day-selected"
                               )}
                               onClick={() =>
@@ -2882,8 +2889,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 handleSelectDate(item)
                               }
                             >
-                              {showUpcomingDot && (
-                                <div className="bc-calendar-day-upcoming-dot" />
+                              {isToday && (
+                                <div className="bc-calendar-day-current-dot" />
                               )}
                               {barColor !== "transparent" && (
                                 <div
@@ -2912,23 +2919,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                         { color: "#4DB6AC", label: "Filled" },
                         { color: "#E57373", label: "Missed" },
                         { color: "#D1D5DB", label: "Holiday" },
-                        { color: "#DA7756", label: "Upcoming tasks", dot: true },
-                      ].map(({ color, label, dot }) => (
+                      ].map(({ color, label }) => (
                         <div
                           key={label}
                           className="flex items-center gap-2 text-xs text-gray-500 font-medium"
                         >
-                          {dot ? (
-                            <div
-                              className="bc-calendar-legend-dot"
-                              style={{ backgroundColor: color }}
-                            />
-                          ) : (
-                            <div
-                              className="bc-calendar-legend-bar"
-                              style={{ backgroundColor: color }}
-                            />
-                          )}
+                          <div
+                            className="bc-calendar-legend-bar"
+                            style={{ backgroundColor: color }}
+                          />
                           <span>{label}</span>
                         </div>
                       ))}
@@ -3096,6 +3095,22 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                       <div className="bc-daily-card-body space-y-6">
                         <div className="space-y-3">
+                          {visibleAccomplishments.length === 0 &&
+                            autoAddedAccomplishments.length === 0 && (
+                              <div className="flex flex-col items-center justify-center border-t border-dashed border-gray-200 px-4 pb-3 pt-10 text-center">
+                                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border-2 border-emerald-200 bg-emerald-50">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-300 bg-emerald-100">
+                                    <Check size={16} className="text-emerald-400" />
+                                  </div>
+                                </div>
+                                <h4 className="text-base font-black text-emerald-800">
+                                  What did you get done today?
+                                </h4>
+                                <p className="mt-2 text-sm font-medium text-gray-500">
+                                  Complete tasks to auto-populate this section, or add entries manually.
+                                </p>
+                              </div>
+                            )}
 
                           {/* ── Manual accomplishment items ── */}
                           {visibleAccomplishments.map((item) => (
@@ -3331,21 +3346,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                             );
                           })}
 
-                          {/* Empty placeholder rows to match Figma design */}
-                          {Array.from({ length: Math.max(1, 4 - visibleAccomplishments.length - autoAddedAccomplishments.length) }).map((_, i) => (
-                            <button
-                              key={`placeholder-${i}`}
-                              type="button"
-                              className="bc-accomplishment-input-row w-full text-left"
-                              onClick={addAccomplishment}
-                            >
-                              <div className="h-5 w-5 rounded border-2 border-gray-300 shrink-0" />
-                              <span className="text-sm text-gray-400">
-                                Describe your accomplishments...
-                              </span>
-                            </button>
-                          ))}
-
                         </div>
 
                         <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
@@ -3536,12 +3536,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
                                     >
                                       <div className={cn(
-                                        "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
+                                        "flex flex-col overflow-hidden bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
                                         item.fromWeeklyPlan
                                           ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
                                           : "border-[#f3f4f6] hover:border-[#DA7756]/30"
                                       )}>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex min-w-0 items-center gap-2">
                                           <Star
                                             size={18}
                                             className={cn(
@@ -3571,7 +3571,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               updatePlanningText(item.id, e.target.value)
                                             }
                                             placeholder="What's your strategic priority?"
-                                            className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                            className="min-w-0 w-0 flex-1 truncate bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
                                           />
                                           {livePriority && (
                                             <span
@@ -3584,7 +3584,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               {livePriority}
                                             </span>
                                           )}
-                                          <div className="flex items-center gap-1.5">
+                                          <div className="flex shrink-0 items-center gap-1">
                                             {item.source_id && item.source_type && (
                                               <>
                                                 <button
@@ -3618,7 +3618,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             )}
                                             <X
                                               size={18}
-                                              className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                              className="shrink-0 text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
                                               onClick={() => removePlanningItem(item.id)}
                                             />
                                           </div>
@@ -3827,39 +3827,21 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         )}
 
-                        <button
-                          type="button"
-                          className="bc-plan-input-row w-full text-left"
-                          onClick={addPlanningItem}
-                        >
-                          <Star size={18} className="text-gray-300 shrink-0" />
-                          <span className="text-sm text-gray-400">
-                            What&apos;s your strategic priority?
-                          </span>
-                        </button>
+                        {planningItems.length === 0 &&
+                          tomorrowFetchDone &&
+                          !tomorrowScheduledLoading &&
+                          dedupedTomorrowItems.length === 0 && (
+                            <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+                              <Calendar className="mb-3 h-8 w-8 text-[#DA7756]/10" />
+                              <h4 className="text-base font-black text-gray-400">
+                                Plan your next working day!
+                              </h4>
+                              <p className="mt-2 text-sm font-medium text-[#334155]">
+                                List 3-5 key tasks for {nextDayLabel || "tomorrow"} to stay focused.
+                              </p>
+                            </div>
+                          )}
                       </div>
-                    </div>
-
-                    <div
-                      className="bc-score-info-bar"
-                      onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <HelpCircle size={16} className="text-[#DA7756]" />
-                        <span className="text-sm font-medium text-gray-600">
-                          How is the Automated Daily score calculated?{" "}
-                          <span className="text-[#DA7756] font-semibold">
-                            Expand to know more
-                          </span>
-                        </span>
-                      </div>
-                      <ChevronDown
-                        size={16}
-                        className={cn(
-                          "text-gray-400 transition-transform",
-                          isScoreInfoExpanded && "rotate-180"
-                        )}
-                      />
                     </div>
 
                   </div>
@@ -3882,17 +3864,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {Math.round(dailyScore.totalScore)}/100 Pts
                       </Badge>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="bc-live-score-metrics">
                       {[
-                        { label: "KPI", value: `${livePreviewMetrics.kpiPct}%`, warn: livePreviewMetrics.kpiPct < 50 },
-                        { label: "Accomplishments", value: `${livePreviewMetrics.accPct}%`, warn: livePreviewMetrics.accPct < 50 },
-                        { label: "Tasks", value: String(livePreviewMetrics.tasksCount), warn: false },
-                        { label: "Planning", value: livePreviewMetrics.planning, warn: livePreviewMetrics.planning.startsWith("0/") },
-                        { label: "Timing", value: livePreviewMetrics.timing, warn: livePreviewMetrics.timing.startsWith("0/") },
+                        { label: "KPIs", value: `${dailyScore.kpiScore}/20` },
+                        { label: "Accomplishments", value: `${dailyScore.accomplishmentsScore}/20` },
+                        { label: "Tasks", value: `${dailyScore.tasksIssuesScore}/20` },
+                        { label: "Planning", value: `${dailyScore.planningScore}/20` },
+                        { label: "Timing", value: `${dailyScore.timingScore}/20` },
                       ].map((metric) => (
                         <div key={metric.label} className="bc-live-metric">
                           <div className="bc-live-metric-label">{metric.label}</div>
-                          <div className={cn("bc-live-metric-value", metric.warn && "bc-live-metric-value-warn")}>
+                          <div className="bc-live-metric-value">
                             {metric.value}
                           </div>
                         </div>
@@ -3930,25 +3912,76 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <div className="flex flex-wrap gap-2 pt-1">
                       <Badge
                         variant="outline"
-                        className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
+                        role="button"
+                        tabIndex={0}
+                        onClick={openAllTaskIssueGroups}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openAllTaskIssueGroups();
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
+                      >
+                        All: {taskIssueCounts.total}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("pending")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("pending");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
                       >
                         Open: {taskIssueCounts.open}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("overdue")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("overdue");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
                       >
                         Overdue: {taskIssueCounts.overdue}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("in_progress");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
                       >
                         In Progress: {taskIssueCounts.inProgress}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="border-0 bg-gray-200 px-3 py-1 text-[10px] font-bold text-gray-800"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("on_hold");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-gray-200 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-300"
                       >
                         On Hold: {taskIssueCounts.onHold}
                       </Badge>
@@ -4198,14 +4231,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
                                   group.headerBg
                                 )}
-                                onClick={() =>
-                                  setCollapsedGroups((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(group.key)) next.delete(group.key);
-                                    else next.add(group.key);
-                                    return next;
-                                  })
-                                }
+                                onClick={() => openOnlyTaskIssueGroup(group.key)}
                               >
                                 <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
                                   {group.label}
@@ -4787,8 +4813,32 @@ const BusinessCompassDailyReport: React.FC = () => {
               )}
             </button>
 
-            {/* Detailed Score Calculation - collapsible */}
             {!isAbsent && (
+              <div
+                className="bc-score-info-bar"
+                onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
+              >
+                <div className="flex items-center gap-2">
+                  <HelpCircle size={16} className="text-[#DA7756]" />
+                  <span className="text-sm font-medium text-gray-600">
+                    How is the Automated Daily score calculated?{" "}
+                    <span className="text-[#DA7756] font-semibold">
+                      Expand to know more
+                    </span>
+                  </span>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={cn(
+                    "text-gray-400 transition-transform",
+                    isScoreInfoExpanded && "rotate-180"
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Detailed Score Calculation - collapsible */}
+            {!isAbsent && !isScoreInfoExpanded && (
               <div className="mt-4 space-y-4">
                 <div className="bc-daily-card">
                   <div className="bc-daily-card-body">
@@ -5412,7 +5462,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
           <TabsContent value="history" className="mt-0 pt-0">
             {isHistoryLoading ? (
-              <Card className="p-20 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-[16px]">
+              <Card className="bc-history-empty-card">
                 <Loader2
                   size={40}
                   className="text-[#DA7756]/40 animate-spin mb-4"
@@ -5423,16 +5473,16 @@ const BusinessCompassDailyReport: React.FC = () => {
               </Card>
             ) : reportsList.length > 0 ? (
               <div className="space-y-4">
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-5">
                   {reportsList.map((report) => (
                     <Card
                       key={report.id}
-                      className="bg-white border border-[#DA7756]/20 rounded-[16px] shadow-sm overflow-hidden transition-all"
+                      className="bc-history-card"
                     >
-                      <div className="p-6">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
-                          <div>
-                            <h2 className="text-xl font-medium text-[#1a1a1a]">
+                      <div className="bc-history-card-body">
+                        <div className="bc-history-card-header">
+                          <div className="min-w-0">
+                            <h2 className="bc-history-title">
                               {new Date(report.start_date).toLocaleDateString(
                                 "en-US",
                                 {
@@ -5443,13 +5493,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 }
                               )}
                             </h2>
-                            <p className="text-sm text-gray-500 mt-2">
+                            <p className="text-sm text-gray-500 mt-1.5">
                               By: {user?.firstname} {user?.lastname}
                             </p>
                           </div>
-                          <div className="flex items-start gap-4">
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge className="bg-[#f59e0b] hover:bg-[#f59e0b] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                          <div className="bc-history-actions-wrap">
+                            <div className="bc-history-badges">
+                              <Badge className="bc-history-rating-badge">
                                 <Star size={12} className="fill-white" />
                                 {report.report_data?.details?.self_rating ??
                                   report.report_data?.self_rating ??
@@ -5457,13 +5507,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   0}
                                 /10
                               </Badge>
-                              <Badge className="bg-[#dc2626] hover:bg-[#dc2626] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                              <Badge className="bc-history-score-badge">
                                 <Target size={12} className="fill-white" />
                                 {report.report_data?.total_score || 0}/100
                               </Badge>
                               <Badge
                                 variant="outline"
-                                className="text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-[4px] text-[11px] font-medium w-fit mt-1"
+                                className="bc-history-time-badge"
                               >
                                 {new Date(report.created_at).toLocaleTimeString(
                                   "en-US",
@@ -5471,7 +5521,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 )}
                               </Badge>
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="bc-history-action-buttons">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -5631,8 +5681,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
-                          <div className="flex items-center justify-between mb-3">
+                        <div className="bc-history-score-panel">
+                          <div className="bc-history-section-header">
                             <div className="flex items-center gap-2">
                               <BarChart3 size={14} className="text-[#DA7756]" />
                               <span className="text-xs font-bold text-[#1a1a1a]">
@@ -5643,50 +5693,37 @@ const BusinessCompassDailyReport: React.FC = () => {
                               Total: {report.report_data?.total_score ?? 0}/100
                             </span>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                          <div className="bc-live-score-metrics">
                             {[
                               {
                                 label: "KPIs",
                                 value: report.report_data?.sections?.kpi_achievement ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Accomplishments",
                                 value: report.report_data?.sections?.accomplishments ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
-                                label: "Tasks & Issues",
+                                label: "Tasks",
                                 value: report.report_data?.sections?.tasks_issues_todos ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Planning",
                                 value: report.report_data?.sections?.planning ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Timing",
                                 value: report.report_data?.sections?.timing ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
-                            ].map(({ label, value, color, bg }) => (
+                            ].map(({ label, value }) => (
                               <div
                                 key={label}
-                                className={cn(
-                                  "border rounded-[8px] py-3 px-2 flex flex-col items-center justify-center shadow-sm gap-0.5",
-                                  bg
-                                )}
+                                className="bc-live-metric"
                               >
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider text-center">
+                                <p className="bc-live-metric-label">
                                   {label}
                                 </p>
-                                <p className={cn("text-lg font-black", color)}>
+                                <p className="bc-live-metric-value">
                                   {value}/20
                                 </p>
                               </div>
@@ -5696,8 +5733,9 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                         {report.report_data?.past_kpis &&
                           report.report_data.past_kpis.length > 0 && (
-                            <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
-                              <div className="flex items-center gap-2 mb-3">
+                            <div className="bc-history-section-card mb-6">
+                              <div className="bc-history-section-header">
+                                <div className="flex items-center gap-2">
                                 <TrendingUp
                                   size={14}
                                   className="text-[#DA7756]"
@@ -5705,6 +5743,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <span className="text-xs font-bold text-[#1a1a1a]">
                                   Daily KPIs
                                 </span>
+                                </div>
                               </div>
                               <div className="space-y-3">
                                 {report.report_data.past_kpis.map(
@@ -5722,10 +5761,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     return (
                                       <div
                                         key={idx}
-                                        className="bg-white border border-amber-100 rounded-[6px] p-3 shadow-sm"
+                                        className="bc-history-list-item"
                                       >
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-sm font-semibold text-gray-800">
+                                        <div className="flex min-w-0 items-center justify-between gap-3 mb-2">
+                                          <span className="min-w-0 truncate text-sm font-semibold text-gray-800">
                                             {kpi.notes}
                                           </span>
                                           <Badge className="bg-[#DA7756]/10 text-[#DA7756] text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
@@ -5791,7 +5830,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           )} */}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                          <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <CheckCircle2
                                 size={16}
@@ -5812,12 +5851,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     .map((ach: any, idx: number) => (
                                       <li
                                         key={idx}
-                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="bc-history-list-item"
                                       >
-                                        <span className="text-gray-400 font-medium">
+                                        <span className="text-[#DA7756] font-medium shrink-0">
                                           ✓
                                         </span>
-                                        {getReportItemText(ach)}
+                                        <span className="min-w-0 break-words">
+                                          {getReportItemText(ach)}
+                                        </span>
                                       </li>
                                     ))}
                                 </ul>
@@ -5830,7 +5871,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                          <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <Calendar size={16} className="text-[#DA7756]" />
                               <span className="text-sm font-semibold text-[#1a1a1a]">
@@ -5848,12 +5889,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     .map((task: any, idx: number) => (
                                       <li
                                         key={idx}
-                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="bc-history-list-item"
                                       >
-                                        <span className="text-gray-400 font-bold mt-0.5">
+                                        <span className="text-[#DA7756] font-bold mt-0.5 shrink-0">
                                           •
                                         </span>
-                                        {getReportItemText(task)}
+                                        <span className="min-w-0 break-words">
+                                          {getReportItemText(task)}
+                                        </span>
                                       </li>
                                     ))}
                                 </ul>
@@ -5927,7 +5970,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             </span>
                                           </div>
                                         </div>
-                                        <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                        <Badge className="bg-[#DA7756]/10 text-[#DA7756] border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
                                           {attachment.active
                                             ? "Active"
                                             : "Inactive"}
@@ -5945,9 +5988,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <Card className="p-20 text-center text-gray-400 bg-white border border-gray-100 rounded-[16px] shadow-sm flex flex-col items-center gap-2">
-                <CalendarIcon size={48} className="opacity-10 mb-2" />
-                <p className="text-lg font-bold text-gray-300 tracking-tight">
+              <Card className="bc-history-empty-card">
+                <CalendarIcon size={48} className="text-[#DA7756]/15 mb-2" />
+                <p className="text-lg font-bold text-gray-400 tracking-tight">
                   No report history found for this period
                 </p>
                 <p className="text-sm font-medium text-gray-400/80">

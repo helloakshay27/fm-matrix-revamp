@@ -147,8 +147,8 @@ const btnOutline =
 const badgePoints =
     "shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[11px] font-bold text-[#343066] hover:bg-[#ddd8ff]";
 
-const weeklyReportAnimationStyles = `
-@keyframes weeklyScoreColorSweep {
+const weeklyAiSuggestionStyles = `
+@keyframes weeklyAiSuggestionColorSweep {
   0%, 100% {
     background-position: 100% 50%;
     border-color: transparent;
@@ -161,7 +161,7 @@ const weeklyReportAnimationStyles = `
   }
 }
 
-@keyframes weeklyScoreTextPulse {
+@keyframes weeklyAiSuggestionTextPulse {
   0%, 100% {
     color: #DA7756;
   }
@@ -170,19 +170,26 @@ const weeklyReportAnimationStyles = `
   }
 }
 
-.weekly-score-tile {
+.weekly-ai-suggestions-card {
   background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--score-accent) / 0.16) 100%);
   background-size: 220% 220%;
-  animation: weeklyScoreColorSweep 2.6s ease-in-out infinite;
+  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
 }
 
-.weekly-score-value {
-  animation: weeklyScoreTextPulse 2.6s ease-in-out infinite;
+.weekly-ai-suggestions-text {
+  animation: weeklyAiSuggestionTextPulse 2.6s ease-in-out infinite;
+}
+
+.weekly-ai-suggestion-item {
+  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--suggestion-accent) / 0.16) 100%);
+  background-size: 220% 220%;
+  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weekly-score-tile,
-  .weekly-score-value {
+  .weekly-ai-suggestions-card,
+  .weekly-ai-suggestions-text,
+  .weekly-ai-suggestion-item {
     animation: none;
   }
 }
@@ -324,6 +331,16 @@ const formatSopDate = (value: any) => {
     if (Number.isNaN(date.getTime())) return "Not available";
     return format(date, "dd MMM yyyy, hh:mm a");
 };
+
+const taskIssueGroupKeys = [
+    "overdue",
+    "in_progress",
+    "pending",
+    "on_hold",
+    "reopened",
+] as const;
+type TaskIssueGroupKey = (typeof taskIssueGroupKeys)[number];
+const taskIssueGroupKeySet = new Set<string>(taskIssueGroupKeys);
 
 const roundScore = (score: number) => Number(score.toFixed(2));
 
@@ -2833,6 +2850,26 @@ const WeeklyReports = () => {
         });
     };
 
+    const openOnlyTaskIssueGroup = (activeKey: TaskIssueGroupKey) => {
+        setCollapsedGroups((prev) => {
+            const next = new Set(
+                [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+            );
+            taskIssueGroupKeys.forEach((key) => {
+                if (key !== activeKey) next.add(key);
+            });
+            return next;
+        });
+    };
+
+    const openAllTaskIssueGroups = () => {
+        setCollapsedGroups((prev) => {
+            return new Set(
+                [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+            );
+        });
+    };
+
     const scrollToAccomplishmentsSection = () => {
         accomplishmentsSectionRef.current?.scrollIntoView({
             behavior: "smooth",
@@ -2848,8 +2885,8 @@ const WeeklyReports = () => {
     };
 
     return (
-        <div className="bg-white px-4 pt-6 pb-0 sm:px-6">
-            <style>{weeklyReportAnimationStyles}</style>
+        <div className="mb-5 bg-white px-4 pt-6 pb-0 sm:px-6">
+            <style>{weeklyAiSuggestionStyles}</style>
             {addTaskOpen && (
                 <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
             )}
@@ -2948,7 +2985,7 @@ const WeeklyReports = () => {
 
                     <TabsContent value="submit" className="mb-0 mt-0 space-y-5 pb-0 [&>*:last-child]:mb-0">
                         <Card
-                            className="weekly-score-tile overflow-hidden rounded-[22px] border border-[#f0e7e1] bg-white p-5 shadow-[0_12px_40px_rgba(218,119,86,0.18)]"
+                            className="weekly-ai-suggestions-card overflow-hidden rounded-[22px] border border-[#f0e7e1] bg-white p-5 shadow-[0_12px_40px_rgba(218,119,86,0.18)]"
                             style={{ "--score-accent": "218 119 86" } as React.CSSProperties}
                         >
                             <div className="mb-4 flex items-center justify-between gap-4">
@@ -2957,7 +2994,7 @@ const WeeklyReports = () => {
                                         <Zap className="h-4 w-4" />
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="weekly-score-value text-sm font-bold text-[#111111]">
+                                        <h3 className="weekly-ai-suggestions-text text-sm font-bold text-[#111111]">
                                             AI Suggestions
                                         </h3>
                                         <span className="text-xs text-[#55515a]">
@@ -2965,7 +3002,7 @@ const WeeklyReports = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <Badge className={cn(badgePoints, "weekly-score-value")}>3 insights</Badge>
+                                <Badge className={cn(badgePoints, "weekly-ai-suggestions-text")}>3 insights</Badge>
                             </div>
                             <div className="grid gap-3 md:grid-cols-3">
                                 {[
@@ -2999,10 +3036,15 @@ const WeeklyReports = () => {
                                         accent: "139 92 246",
                                         onAction: scrollToPlanSection,
                                     },
-                                ].map((item: any) => (
+                                ].map((item: any, index) => (
                                     <div
                                         key={item.title}
-                                        className="rounded-[10px] border border-[#e9e4df] bg-white p-4"
+                                        className="weekly-ai-suggestion-item rounded-[10px] border border-transparent bg-white p-4"
+                                        style={{
+                                            "--score-accent": item.accent,
+                                            "--suggestion-accent": item.accent,
+                                            animationDelay: `${index * 120}ms`,
+                                        } as React.CSSProperties}
                                     >
                                         <div className="mb-2 flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-2">
@@ -3307,7 +3349,7 @@ const WeeklyReports = () => {
 
                         <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr]">
                         {/* Achievements */}
-                        <Card ref={accomplishmentsSectionRef} className={cn("scroll-mt-24 overflow-hidden pb-4", cardChrome)}>
+                        <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
                             <div
                                 className={cn(
                                     "flex items-center justify-between",
@@ -3687,7 +3729,33 @@ const WeeklyReports = () => {
                                     );
                                 })()}
 
-                                <div className="space-y-4 pt-4 border-t border-neutral-100">
+                            </div>
+
+                            <div className="mt-auto space-y-4 border-t border-neutral-100 px-5 py-4">
+                                    {selectedFileNames.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedFileNames.map((name, i) => (
+                                                <Badge
+                                                    key={i}
+                                                    variant="secondary"
+                                                    className="bg-neutral-100 text-[10px] text-neutral-600 px-2 py-0.5 rounded-lg flex items-center gap-1"
+                                                >
+                                                    <span className="truncate max-w-[150px]">{name}</span>
+                                                    <X
+                                                        className="h-3 w-3 cursor-pointer hover:text-red-500"
+                                                        onClick={() => {
+                                                            const next = selectedFileNames.filter(
+                                                                (_, idx) => idx !== i
+                                                            );
+                                                            setSelectedFileNames(next);
+                                                            setUploadedFilesCount(next.length);
+                                                        }}
+                                                    />
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
                                             <Info className="h-3.5 w-3.5 text-emerald-600" />
@@ -3716,31 +3784,6 @@ const WeeklyReports = () => {
                                             </Button>
                                         </div>
                                     </div>
-
-                                    {selectedFileNames.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedFileNames.map((name, i) => (
-                                                <Badge
-                                                    key={i}
-                                                    variant="secondary"
-                                                    className="bg-neutral-100 text-[10px] text-neutral-600 px-2 py-0.5 rounded-lg flex items-center gap-1"
-                                                >
-                                                    <span className="truncate max-w-[150px]">{name}</span>
-                                                    <X
-                                                        className="h-3 w-3 cursor-pointer hover:text-red-500"
-                                                        onClick={() => {
-                                                            const next = selectedFileNames.filter(
-                                                                (_, idx) => idx !== i
-                                                            );
-                                                            setSelectedFileNames(next);
-                                                            setUploadedFilesCount(next.length);
-                                                        }}
-                                                    />
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
                             </div>
                         </Card>
 
@@ -3764,25 +3807,76 @@ const WeeklyReports = () => {
                                             </Badge> */}
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={openAllTaskIssueGroups}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openAllTaskIssueGroups();
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
+                                            >
+                                                All: {taskIssueCounts.total}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("pending")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("pending");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
                                             >
                                                 Open: {taskIssueCounts.open}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("overdue")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("overdue");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
                                             >
                                                 Overdue: {taskIssueCounts.overdue}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("in_progress");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
                                             >
                                                 In Progress: {taskIssueCounts.inProgress}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("on_hold");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-200"
                                             >
                                                 On Hold: {taskIssueCounts.onHold}
                                             </Badge>
@@ -3907,14 +4001,7 @@ const WeeklyReports = () => {
                                                             "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
                                                             group.headerBg
                                                         )}
-                                                        onClick={() =>
-                                                            setCollapsedGroups((prev) => {
-                                                                const next = new Set(prev);
-                                                                if (next.has(group.key)) next.delete(group.key);
-                                                                else next.add(group.key);
-                                                                return next;
-                                                            })
-                                                        }
+                                                        onClick={() => openOnlyTaskIssueGroup(group.key)}
                                                     >
                                                         <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
                                                             {group.label}
@@ -4227,10 +4314,10 @@ const WeeklyReports = () => {
                                     </Badge>
                                 </div>
                             </div>
-                            <div className="px-5 pb-5">
+                            <div className="max-h-[360px] overflow-y-auto px-5 pb-5 pr-4">
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                                     {upcomingDays.map((day) => (
-                                        <div key={day.key} className="min-h-[230px] min-w-0 space-y-3 rounded-[10px] bg-white p-4">
+                                        <div key={day.key} className="flex min-h-[230px] min-w-0 flex-col rounded-[10px] bg-white p-4">
                                             <div
                                                 className={cn(
                                                     "flex items-center justify-between",
@@ -4261,7 +4348,7 @@ const WeeklyReports = () => {
                                                 )}
                                             </div>
                                             <div
-                                                className="space-y-2"
+                                                className="mt-3 space-y-2"
                                                 onDragOver={(event) => event.preventDefault()}
                                                 onDrop={(event) =>
                                                     handlePlanDrop(
@@ -4827,13 +4914,9 @@ const WeeklyReports = () => {
                                     <div
                                         key={stat.label}
                                         className={cn(
-                                            "weekly-score-tile flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none",
+                                            "flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none",
                                             index < 4 ? "md:col-span-3" : "md:col-span-4"
                                         )}
-                                        style={{
-                                            "--score-accent": "218 119 86",
-                                            animationDelay: `${index * 120}ms`,
-                                        } as React.CSSProperties}
                                     >
                                         <div className="sr-only">
                                             {stat.icon}
@@ -4842,11 +4925,7 @@ const WeeklyReports = () => {
                                             {stat.label}
                                         </p>
                                         <p
-                                            className="weekly-score-value text-[22px] font-bold leading-none text-[#DA7756]"
-                                            style={{
-                                                "--score-accent": "218 119 86",
-                                                animationDelay: `${index * 120}ms`,
-                                            } as React.CSSProperties}
+                                            className="text-[22px] font-bold leading-none text-[#DA7756]"
                                         >
                                             {formatLiveScore(stat.score)}/{stat.max}
                                         </p>
@@ -5169,23 +5248,15 @@ const WeeklyReports = () => {
                                                     <div
                                                         key={s.label}
                                                         className={cn(
-                                                            "weekly-score-tile flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none",
+                                                            "flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none",
                                                             index < 4 ? "md:col-span-3" : "md:col-span-4"
                                                         )}
-                                                        style={{
-                                                            "--score-accent": "218 119 86",
-                                                            animationDelay: `${index * 120}ms`,
-                                                        } as React.CSSProperties}
                                                     >
                                                         <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
                                                             {s.label}
                                                         </p>
                                                         <p
-                                                            className="weekly-score-value text-[22px] font-bold leading-none text-[#DA7756]"
-                                                            style={{
-                                                                "--score-accent": "218 119 86",
-                                                                animationDelay: `${index * 120}ms`,
-                                                            } as React.CSSProperties}
+                                                            className="text-[22px] font-bold leading-none text-[#DA7756]"
                                                         >
                                                             {s.value}
                                                         </p>
