@@ -2932,7 +2932,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                   <span className="text-base font-bold text-[#1a1a1a]">
                     Daily Report for {formattedSelectedDate}
                   </span>
-                  <ChevronDown size={16} className="text-gray-400" />
                 </div>
                 <button
                   type="button"

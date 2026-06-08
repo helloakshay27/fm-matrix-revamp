@@ -121,9 +121,11 @@ const BusinessCompassDashboard: React.FC = () => {
   // ── Dashboard data ────────────────────────────────────────────────────
   const [dashboardData, setDashboardData]   = useState<DashboardData | null>(null);
   const [loading, setLoading]               = useState(true);
-  const [weekOffset, setWeekOffset]         = useState(0);
-  const [focusMode, setFocusMode]           = useState<"Daily" | "Weekly">("Daily");
-  const [kpiPage, setKpiPage]               = useState(0);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [focusMode, setFocusMode] = useState<"Daily" | "Weekly">("Daily");
+  const [kpiPage, setKpiPage] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dayDataLoading, setDayDataLoading] = useState(false);
 
   // ── AI chat ───────────────────────────────────────────────────────────
   const [aiChatOpen, setAiChatOpen]         = useState(false);
@@ -154,7 +156,115 @@ const BusinessCompassDashboard: React.FC = () => {
   const displayAccomplishments = focusMode === "Weekly" ? weeklyAccomplishments : accomplishments;
   const displayTodosOverdue    = focusMode === "Weekly" ? weeklyTodosOverdue    : todosOverdue;
   const displayTodosHigh       = focusMode === "Weekly" ? weeklyTodosHigh       : todosHigh;
-  const displayLoading         = focusMode === "Weekly" ? weeklyLoading         : todosLoading;
+  const displayLoading         = focusMode === "Weekly" ? weeklyLoading         : (todosLoading || dayDataLoading);
+
+  // ── Fetch data for a specific day ─────────────────────────────────────
+  const fetchDayData = async (date: Date) => {
+    const baseUrl = (getBaseUrl() ?? "https://fm-uat-api.lockated.com").replace(/\/$/, "");
+    const token = getToken();
+    if (!token) return;
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+    setDayDataLoading(true);
+    try {
+      // Fetch journal for the selected date
+      const jRes = await fetch(
+        `${baseUrl}/user_journals.json?q[journal_type_eq]=daily&q[start_date_eq]=${dateStr}`,
+        { headers }
+      );
+      if (jRes.ok) {
+        const jData = await jRes.json();
+        const journals: any[] = Array.isArray(jData)
+          ? jData
+          : (jData.user_journals ?? []);
+        const report = journals[0];
+        const rawAcc = report?.report_data?.accomplishments;
+        const accItems: any[] = Array.isArray(rawAcc)
+          ? rawAcc
+          : Array.isArray(rawAcc?.items)
+            ? rawAcc.items
+            : [];
+        const items: string[] = accItems
+          .map((item: any) =>
+            typeof item === "string" ? item : (item?.title ?? item?.text ?? "")
+          )
+          .filter(Boolean);
+        setAccomplishments(items);
+      } else {
+        setAccomplishments([]);
+      }
+
+      // Fetch todos for the selected date
+      const userId = (JSON.parse(localStorage.getItem("user") ?? "{}") as { id?: number }).id;
+      if (userId) {
+        setTodosLoading(true);
+        try {
+          const todoParams = new URLSearchParams();
+          todoParams.append("q[user_id_eq]", String(userId));
+          todoParams.append("for_date", dateStr);
+          const todoRes = await fetch(`${baseUrl}/todos.json?${todoParams}`, { headers });
+          if (todoRes.ok) {
+            const todoData = await todoRes.json();
+            const todos: any[] = todoData?.todos ?? [];
+            const refDate = new Date(date);
+            refDate.setHours(0, 0, 0, 0);
+            setTodosOverdue(
+              todos
+                .filter((t: any) => {
+                  const ds = t.target_date || t.due_date;
+                  if (!ds) return false;
+                  const due = new Date(ds);
+                  due.setHours(0, 0, 0, 0);
+                  return due < refDate;
+                })
+                .slice(0, 5)
+                .map((t: any) => ({ title: t.title, id: t.id }))
+            );
+            setTodosHigh(
+              todos
+                .filter((t: any) => t.priority === "P1")
+                .slice(0, 5)
+                .map((t: any) => ({ title: t.title, id: t.id }))
+            );
+          }
+        } catch (e) {
+          console.error("Todos error:", e);
+        } finally {
+          setTodosLoading(false);
+        }
+      }
+    } catch (e) {
+      console.error("Day data fetch error:", e);
+    } finally {
+      setDayDataLoading(false);
+    }
+  };
+
+  // ── Refetch day data when selectedDate changes ──────────────────────────
+  useEffect(() => {
+    fetchDayData(selectedDate);
+  }, [selectedDate]);
+
+  // ── Handle day click ────────────────────────────────────────────────────
+  const handleDayClick = (date: Date) => {
+    const isToday = date.toDateString() === today.toDateString();
+    const isFuture = date > today && !isToday;
+    const isSunday = date.getDay() === 0;
+    if (isFuture || isSunday) return;
+    setSelectedDate(new Date(date));
+  };
+
+  // ── Selected date label ─────────────────────────────────────────────────
+  const selectedDateLabel = selectedDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   // ── Main API fetch ────────────────────────────────────────────────────
   useEffect(() => {
@@ -613,7 +723,7 @@ const BusinessCompassDashboard: React.FC = () => {
                 {/* Calendar */}
                 <div className="lg:col-span-2 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
                   <p className="text-[11px] text-gray-500 font-medium mb-3">
-                    {focusMode} Report for {formatWeekLabel(weekDates)}
+                    {focusMode} Report for {selectedDateLabel}
                   </p>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setWeekOffset((o) => o - 1)}
@@ -667,12 +777,25 @@ const BusinessCompassDashboard: React.FC = () => {
                           dateTextColor = "#b45309";
                         }
 
+                        const isSelectedDay = selectedDate.toDateString() === date.toDateString();
+                        const isClickable = !isSunday && !(date > today && !isToday);
+
+                        // Override border for selected day
+                        const finalBorder = isSelectedDay
+                          ? "2.5px solid #DA7756"
+                          : cardBorder;
+                        const finalBodyBg = isSelectedDay ? "#FDF5F2" : bodyBg;
+
                         return (
-                          <div key={i} className="flex-1 flex flex-col items-center cursor-pointer relative"
+                          <div key={i}
+                            className="flex-1 flex flex-col items-center relative transition-all"
+                            onClick={() => handleDayClick(date)}
                             style={{
-                              border: cardBorder,
+                              border: finalBorder,
                               borderRadius: "12px",
-                              backgroundColor: bodyBg,
+                              backgroundColor: finalBodyBg,
+                              cursor: isClickable ? "pointer" : "default",
+                              opacity: (!isClickable && !isSelectedDay) ? 0.6 : 1,
                             }}>
                             {status === "upcoming" && !isSunday && (
                               <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: "#e29393" }} />
@@ -877,12 +1000,11 @@ const BusinessCompassDashboard: React.FC = () => {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-[13px] sm:text-[14px] font-bold text-[#1a1a1a]">KPI's</h3>
                   <span className="text-[10px] font-semibold text-[#DA7756] bg-white px-2 py-0.5 rounded-full border border-[#DA7756]/20">
-                    {focusMode}
+                    {kpis.length} KPI{kpis.length !== 1 ? "'s" : ""}
                   </span>
                 </div>
                 {(() => {
-                  const filtered = kpis.filter((k) => k.frequency_label?.toLowerCase() === focusMode.toLowerCase());
-                  const pool = filtered.length > 0 ? filtered : kpis;
+                  const pool = kpis;
                   const perPage = 2;
                   const totalPages = Math.max(1, Math.ceil(pool.length / perPage));
                   const safePage = kpiPage % totalPages;
