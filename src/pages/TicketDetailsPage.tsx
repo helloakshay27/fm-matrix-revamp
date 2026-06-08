@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +21,7 @@ import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { TicketJobSheetModal } from '@/components/TicketJobSheetModal';
 import Select, { components } from "react-select";
 import { min } from 'lodash';
+import { getReturnToFromState } from "@/utils/listBackNavigation";
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -545,6 +548,7 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+   const location = useLocation();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1471,15 +1475,18 @@ export const TicketDetailsPage = () => {
 
 
   const handleBackToList = () => {
+    const returnTo = getReturnToFromState(location.state);
+    if (returnTo) {
+      navigate(returnTo);
+      return;
+    }
+
     const currentPath = window.location.pathname;
-    navigate(-1)
-    // if (currentPath.includes("/club-management/helpdesk")) {
-    //   navigate(`/club-management/helpdesk`);
-    // } else if (currentPath.includes("tickets")) {
-    //   navigate(`/tickets`);
-    // } else {
-    //   navigate(`/maintenance/tickets`);
-    // }
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets`);
+    } else {
+      navigate(`/maintenance/ticket`);
+    }
   };
 
   const handleFeeds = () => {

@@ -18,22 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import {
-  Plus,
-  Eye,
-  Filter,
-  Ticket,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  BarChart3,
-  TrendingUp,
-  Download,
-  Edit,
   Trash2,
-  Settings,
-  Upload,
-  Flag,
-  Star,
   ArrowLeft,
 } from "lucide-react";
 import {
@@ -126,17 +111,6 @@ const muiTheme = createTheme({
 interface Customer {
   id: string;
   name: string;
-  // email: string;
-  // currency: string;
-  // billingAddress: string;
-  // shippingAddress: string;
-  // customerType: string;
-  // paymentTerms: string;
-  // portalStatus: string;
-  // language: string;
-  // outstandingReceivables: number;
-  // unusedCredits: number;
-  // contactPersons: ContactPerson[];
 }
 
 const ItemsAdd = () => {
@@ -897,58 +871,7 @@ const ItemsAdd = () => {
             </div>
 
             <div className="grid gap-6">
-              {/* <TextField
-                                disabled={!form.sellable}
-                                label="Selling Price"
-                                name="selling_price"
-                                placeholder="Enter selling price"
-                                type="number"
-                                value={form.selling_price}
-                                onChange={handleChange}
-                            /> */}
-
-              {/* <TextField
-                                placeholder="Enter selling price"
-                                fullWidth
-                                label={
-                                    <>
-                                        Selling Price <span style={{ color: "red" }}>*</span>
-                                    </>
-                                }
-                                name="selling_price"
-                                value={form.selling_price}
-                                onChange={handleChange}
-                                disabled={!form.sellable}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment
-                                            position="start"
-                                            sx={{
-                                                backgroundColor: "#f3f3f3",
-                                                borderRight: "1px solid #dcdcdc",
-                                                height: "44px",
-                                                maxHeight: "44px",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                px: 1.5,
-                                                color: "#555",
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            INR
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        paddingLeft: 0, // removes gap between INR and input
-                                    },
-                                    "& input": {
-                                        paddingLeft: "12px",
-                                    },
-                                }}
-                            /> */}
-
+            
               <TextField
                 placeholder="Enter selling price"
                 fullWidth
@@ -1024,16 +947,6 @@ const ItemsAdd = () => {
                   },
                 }}
               />
-
-              {/* <TextField
-                                disabled={!form.sellable}
-                                label="MRP"
-                                name="mrp"
-                                type="number"
-                                placeholder="Enter MRP"
-                                value={form.mrp}
-                                onChange={handleChange}
-                            /> */}
 
               <TextField
                 disabled={!form.sellable}
@@ -1127,17 +1040,6 @@ const ItemsAdd = () => {
                 </Select>
               </FormControl>
 
-              {/* <TextField
-                                disabled={!form.sellable}
-                                label="Description"
-                                name="sales_description"
-                                placeholder="Enter sales description"
-                                value={form.sales_description}
-                                onChange={handleChange}
-                                multiline
-                                rows={3}
-                            /> */}
-
               <TextField
                 disabled={!form.sellable}
                 label={<span>Description</span>}
@@ -1204,57 +1106,6 @@ const ItemsAdd = () => {
             </div>
 
             <div className="grid gap-6">
-              {/* <TextField
-                                disabled={!form.purchasable}
-                                label="Cost Price"
-                                name="cost_price"
-                                type="number"
-                                placeholder="Enter cost price"
-                                value={form.cost_price}
-                                onChange={handleChange}
-                            /> */}
-
-              {/* <TextField
-                                placeholder="Enter cost price"
-                                fullWidth
-                                label={
-                                    <>
-                                        Cost Price <span style={{ color: "red" }}>*</span>
-                                    </>
-                                }
-                                name="cost_price"
-                                value={form.cost_price}
-                                onChange={handleChange}
-                                disabled={!form.purchasable}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment
-                                            position="start"
-                                            sx={{
-                                                backgroundColor: "#f3f3f3",
-                                                borderRight: "1px solid #dcdcdc",
-                                                height: "44px",
-                                                maxHeight: "44px",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                px: 1.5,
-                                                color: "#555",
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            INR
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        paddingLeft: 0,
-                                    },
-                                    "& input": {
-                                        paddingLeft: "12px",
-                                    },
-                                }}
-                            /> */}
               <TextField
                 placeholder="Enter cost price"
                 fullWidth
@@ -1380,18 +1231,6 @@ const ItemsAdd = () => {
                   )}
                 </Select>
               </FormControl>
-
-              {/* <TextField
-                                disabled={!form.purchasable}
-                                label="Description"
-                                name="purchase_description"
-                                value={form.purchase_description}
-                                placeholder="Enter purchase description"
-                                onChange={handleChange}
-                                multiline
-                                rows={3}
-                            /> */}
-
               <TextField
                 disabled={!form.purchasable}
                 label={<span>Description</span>}

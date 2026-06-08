@@ -6,7 +6,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getCustomerList } from "@/store/slices/cusomerSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,useLocation} from "react-router-dom";
 import { format } from "date-fns";
 import axios from "axios";
 import { Switch } from "@/components/ui/switch";
@@ -142,12 +142,21 @@ const columns: ColumnConfig[] = [
 
 const CRMCustomersDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState([]);
+  const [currentPage,setCurrentPage] = useState(()=>{
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  })
+
+  useEffect(()=>{
+    navigate(`${location.pathname}?page=${currentPage}`,{replace:true});
+  },[currentPage]);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -340,6 +349,11 @@ case "enable_sites":
     </>
   );
 
+const handlePageChange = (page:number)=>{
+  setCurrentPage(page);
+  navigate(`${location.pathname}?page=${page}`);
+}
+
   return (
     <div className="p-6 space-y-6">
       <EnhancedTable
@@ -358,6 +372,8 @@ case "enable_sites":
         handleExport={handleExport}
         pagination={true}
         pageSize={10}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
       />
     </div>
   );

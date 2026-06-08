@@ -2,7 +2,7 @@
 
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, Calendar } from 'lucide-react';
@@ -38,6 +38,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
 import { AIAssistantWidget } from '@/components/AIAssistantWidget';
 import { DashboardAIAssistant } from '@/components/DashboardAIAssistant';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -131,8 +132,30 @@ export const TicketDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [initialTotalTickets, setInitialTotalTickets] = useState(0); // Store unfiltered total
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+
+  const goToPage = useCallback((page: number) => {
+    if (page !== currentPage) {
+      setCurrentPage(page);
+      setSearchParams((prevParams) => {
+        const params = new URLSearchParams(prevParams.toString());
+        params.set('page', String(page));
+        return params;
+      });
+    }
+  }, [currentPage, setSearchParams]);
+
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const pageNumber = pageParam ? Number(pageParam) : 1;
+    const safePage = Number.isInteger(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+    if (safePage !== currentPage) {
+      setCurrentPage(safePage);
+    }
+  }, [searchParams, currentPage]);
 
   // Analytics data states with default dates (last year to today)
   const getDefaultDateRange = () => {
@@ -463,11 +486,10 @@ export const TicketDashboard = () => {
 
     // Reset to first page when searching, but only if it's a new search
     if (isSearchingRef.current || (newSearch && !currentSearch)) {
-      setCurrentPage(1);
+      goToPage(1);
       isSearchingRef.current = false;
     }
-  }, [debouncedSearchQuery, filters.search_all_fields_cont]);
-
+  }, [debouncedSearchQuery, filters.search_all_fields_cont, goToPage]);
   useEffect(() => {
     // Always fetch tickets when currentPage or filters change
     fetchTickets(currentPage);
@@ -654,11 +676,16 @@ export const TicketDashboard = () => {
   };
   const handleViewDetails = (ticketId: string) => {
     const currentPath = window.location.pathname;
+    const returnTo = buildReturnToPath(location.pathname, location.search, location.hash);
 
     if (currentPath.includes("tickets")) {
-      navigate(`/tickets/details/${ticketId}`);
+      navigate(`/tickets/details/${ticketId}`, {
+        state: { returnTo },
+      });
     } else {
-      navigate(`/maintenance/ticket/details/${ticketId}`);
+      navigate(`/maintenance/ticket/details/${ticketId}`, {
+        state: { returnTo },
+      });
     }
   };
 
@@ -905,7 +932,7 @@ export const TicketDashboard = () => {
   };
   const handleFilterApply = (newFilters: TicketFilters) => {
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page when applying filters
+    goToPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
 
     // Update ticket summary cards with the applied filters
@@ -943,7 +970,7 @@ export const TicketDashboard = () => {
         console.log('Total card - Clearing status filters, keeping:', otherFilters);
         return otherFilters;
       });
-      setCurrentPage(1);
+      goToPage(1);
       return;
     }
 
@@ -986,7 +1013,7 @@ export const TicketDashboard = () => {
       return newFilters;
     });
 
-    setCurrentPage(1);
+    goToPage(1);
 
     // DO NOT call fetchTicketSummary here - status card clicks should only filter the ticket list,
     // not affect the summary counts which should remain unfiltered
@@ -1794,7 +1821,7 @@ export const TicketDashboard = () => {
                 <div className="flex items-center space-x-1">
                   {/* Previous Button */}
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() => goToPage(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1 || loading || searchLoading}
                     className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -1809,7 +1836,7 @@ export const TicketDashboard = () => {
                     {currentPage > 3 && (
                       <>
                         <button
-                          onClick={() => setCurrentPage(1)}
+                          onClick={() => goToPage(1)}
                           disabled={loading || searchLoading}
                           className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
                         >
@@ -1837,7 +1864,7 @@ export const TicketDashboard = () => {
                       return (
                         <button
                           key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
+                          onClick={() => goToPage(pageNum)}
                           disabled={loading || searchLoading}
                           className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${currentPage === pageNum
                             ? 'bg-[#C72030] text-white'
@@ -1856,7 +1883,7 @@ export const TicketDashboard = () => {
                           <span className="px-2 text-gray-500">...</span>
                         )}
                         <button
-                          onClick={() => setCurrentPage(totalPages)}
+                          onClick={() => goToPage(totalPages)}
                           disabled={loading || searchLoading}
                           className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
                         >
@@ -1868,7 +1895,7 @@ export const TicketDashboard = () => {
 
                   {/* Next Button */}
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() => goToPage(Math.min(currentPage + 1, totalPages))}
                     disabled={currentPage === totalPages || loading || searchLoading}
                     className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

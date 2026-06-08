@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -91,15 +91,24 @@ export const BroadcastDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
 
   const { loading } = useAppSelector((state) => state.fetchBroadcasts);
+  const location = useLocation();
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [broadcasts, setBroadcasts] = useState([]);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
+  // const [pagination, setPagination] = useState({
+  //   current_page: 1,
+  //   total_count: 0,
+  //   total_pages: 0,
+  // });
+  const [pagination, setPagination] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    current_page: Number(params.get('page')) || 1,
     total_count: 0,
     total_pages: 0,
-  });
+  };
+});
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [cardData, setCardData] = useState({
     total_notices: "",
@@ -109,6 +118,15 @@ export const BroadcastDashboard = () => {
     inactive_notices: "",
     expired_notices: ""
   })
+
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const urlPage = Number(params.get('page')) || 1;
+  if (urlPage !== pagination.current_page) {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+  }
+}, [pagination.current_page]);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,11 +148,11 @@ export const BroadcastDashboard = () => {
           inactive_notices: response.inactive_notices,
           expired_notices: response.expired_notices
         })
-        setPagination({
-          current_page: response.pagination.current_page,
+      setPagination((prev) => ({
+          ...prev,
           total_count: response.pagination.total_count,
           total_pages: response.pagination.total_pages,
-        });
+        }));
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch Notices");
@@ -142,7 +160,7 @@ export const BroadcastDashboard = () => {
     };
 
     fetchData();
-  }, []);
+  }, [pagination.current_page]);
 
   const handleStatusChange = async (item: any, checked: boolean) => {
     // 1: Published, 2: Disabled
@@ -336,31 +354,56 @@ export const BroadcastDashboard = () => {
     }
   };
 
+  // const handlePageChange = async (page: number) => {
+  //   setPagination((prev) => ({
+  //     ...prev,
+  //     current_page: page,
+  //   }));
+  //   try {
+  //     const response = await dispatch(
+  //       fetchBroadcasts({
+  //         baseUrl,
+  //         token,
+  //         per_page: 10,
+  //         page: page,
+  //       })
+  //     ).unwrap();
+  //     setBroadcasts(response.noticeboards || []);
+  //     setPagination({
+  //       current_page: response.pagination.current_page,
+  //       total_count: response.pagination.total_count,
+  //       total_pages: response.pagination.total_pages,
+  //     });
+  //   } catch (error) {
+  //     toast.error("Failed to fetch bookings");
+  //   }
+  // };
+
   const handlePageChange = async (page: number) => {
+  navigate(`${location.pathname}?page=${page}`, { replace: true });
+  setPagination((prev) => ({
+    ...prev,
+    current_page: page,
+  }));
+  try {
+    const response = await dispatch(
+      fetchBroadcasts({
+        baseUrl,
+        token,
+        per_page: 10,
+        page: page,
+      })
+    ).unwrap();
+    setBroadcasts(response.noticeboards || []);
     setPagination((prev) => ({
       ...prev,
-      current_page: page,
+      total_count: response.pagination.total_count,
+      total_pages: response.pagination.total_pages,
     }));
-    try {
-      const response = await dispatch(
-        fetchBroadcasts({
-          baseUrl,
-          token,
-          per_page: 10,
-          page: page,
-        })
-      ).unwrap();
-      setBroadcasts(response.noticeboards || []);
-      setPagination({
-        current_page: response.pagination.current_page,
-        total_count: response.pagination.total_count,
-        total_pages: response.pagination.total_pages,
-      });
-    } catch (error) {
-      toast.error("Failed to fetch bookings");
-    }
-  };
-
+  } catch (error) {
+    toast.error("Failed to fetch bookings");
+  }
+};
   const handleAdd = () => {
     navigate("/pulse/notices/add");
   };
@@ -403,12 +446,12 @@ export const BroadcastDashboard = () => {
         })
       ).unwrap();
 
-      setBroadcasts(response.noticeboards || []);
-      setPagination({
-        current_page: response.pagination.current_page,
+     setBroadcasts(response.noticeboards || []);
+      setPagination((prev) => ({
+        ...prev,
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages,
-      });
+      }));
     } catch (error) {
       toast.error("Failed to fetch notices");
     }

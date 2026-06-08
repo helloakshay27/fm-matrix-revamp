@@ -542,7 +542,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (max-width: 1100px) {
@@ -593,7 +593,11 @@
   font-weight: 600;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-height: 34px;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -604,20 +608,21 @@
 
 .bc-calendar-day {
   min-width: 88px;
-  height: 96px;
-  border-radius: 14px;
+  height: 108px;
+  border-radius: 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 1.5px solid #ede8e3;
   background: white;
   flex-shrink: 0;
   position: relative;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  overflow: hidden;
 }
 
 .bc-calendar-day:hover:not(.bc-calendar-day-future):not(.bc-calendar-day-holiday) {
@@ -629,8 +634,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  border-radius: 14px 14px 0 0;
+  height: 12px;
+  border-radius: 18px 18px 0 0;
 }
 
 .bc-calendar-day-selected {
@@ -660,15 +665,15 @@
   pointer-events: none;
 }
 
-.bc-calendar-day-upcoming-dot {
+.bc-calendar-day-current-dot {
   position: absolute;
-  top: -8px;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
   width: 8px;
   height: 8px;
   border-radius: 9999px;
-  background: #DA7756;
+  background: #E57373;
   box-shadow: 0 0 0 2px #ffffff;
 }
 
@@ -676,13 +681,6 @@
   width: 14px;
   height: 14px;
   border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.bc-calendar-legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
   flex-shrink: 0;
 }
 
@@ -699,6 +697,7 @@
   flex: 1;
   padding: 12px 4px 8px;
   scrollbar-width: none;
+  scroll-behavior: smooth;
 }
 
 .bc-calendar-strip-track::-webkit-scrollbar {
@@ -734,22 +733,18 @@
 }
 
 .bc-calendar-day-day {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: #6b7280;
   text-transform: capitalize;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .bc-calendar-day-date {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: #111827;
   line-height: 1;
-}
-
-.bc-calendar-day-scheduled {
-  opacity: 1;
 }
 
 .bc-live-score-card {
@@ -760,30 +755,44 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
+.bc-live-score-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .bc-live-metric {
   background: #fdf8f5;
   border: 1px solid #f0ece8;
   border-radius: 10px;
-  padding: 14px 8px;
+  padding: 12px 6px;
   text-align: center;
-  flex: 1;
   min-width: 0;
+  min-height: 76px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .bc-live-metric-label {
-  font-size: 10px;
-  font-weight: 600;
+  width: 100%;
+  font-size: 9px;
+  font-weight: 700;
   color: #9ca3af;
-  text-transform: capitalize;
-  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 1.15;
   margin-bottom: 4px;
+  overflow-wrap: anywhere;
 }
 
 .bc-live-metric-value {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   color: #DA7756;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .bc-task-filter-tab {
@@ -901,12 +910,12 @@
 .bc-absent-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 6px;
+  padding: 5px 10px;
   border: 1.5px solid #DA7756;
-  border-radius: 10px;
+  border-radius: 8px;
   background: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #DA7756;
   cursor: pointer;
@@ -963,6 +972,159 @@
   background: rgba(218, 119, 86, 0.04);
 }
 
+.bc-history-card {
+  background: #ffffff;
+  border: 1px solid rgba(218, 119, 86, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.bc-history-card:hover {
+  border-color: rgba(218, 119, 86, 0.28);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+}
+
+.bc-history-card-body {
+  padding: 20px;
+}
+
+.bc-history-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.bc-history-title {
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.bc-history-actions-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.bc-history-badges,
+.bc-history-action-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.bc-history-rating-badge,
+.bc-history-score-badge {
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.bc-history-rating-badge {
+  background: #f59e0b;
+}
+
+.bc-history-score-badge {
+  background: #DA7756;
+}
+
+.bc-history-time-badge {
+  color: #6b7280;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.bc-history-score-panel,
+.bc-history-section-card {
+  background: rgba(218, 119, 86, 0.05);
+  border: 1px solid rgba(218, 119, 86, 0.18);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bc-history-score-panel {
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.bc-history-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.bc-history-list-item {
+  background: #ffffff;
+  border: 1px solid rgba(218, 119, 86, 0.14);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bc-history-empty-card {
+  min-height: 260px;
+  padding: 48px 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid rgba(218, 119, 86, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@media (max-width: 700px) {
+  .bc-history-card-header,
+  .bc-history-actions-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bc-history-badges,
+  .bc-history-action-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .bc-history-action-buttons > button {
+    flex: 1 1 120px;
+  }
+}
+
 .bc-tasks-legend {
   display: flex;
   align-items: center;
@@ -1002,18 +1164,50 @@
   font-weight: 600;
 }
 
-.bc-plan-input-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid #f0f0f0;
-  border-radius: 10px;
-  background: #fafafa;
+@keyframes bcAiColorSweep {
+  0%, 100% {
+    background-position: 100% 50%;
+    border-color: rgba(218, 119, 86, 0.2);
+    box-shadow: 0 2px 12px rgba(218, 119, 86, 0.08);
+  }
+  45% {
+    background-position: 0% 50%;
+    border-color: rgba(218, 119, 86, 0.34);
+    box-shadow: 0 8px 18px rgba(218, 119, 86, 0.14);
+  }
+}
+
+@keyframes bcAiTextPulse {
+  0%, 100% {
+    color: #DA7756;
+  }
+  45% {
+    color: rgb(218 119 86 / 1);
+  }
 }
 
 .bc-ai-banner-glow {
-  box-shadow: 0 2px 12px rgba(218, 119, 86, 0.08);
+  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgba(218, 119, 86, 0.16) 100%);
+  background-size: 220% 220%;
+  animation: bcAiColorSweep 2.6s ease-in-out infinite;
+}
+
+.bc-ai-banner-glow-text {
+  animation: bcAiTextPulse 2.6s ease-in-out infinite;
+}
+
+.bc-ai-insight-card-glow {
+  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, var(--insight-accent, rgba(218, 119, 86, 0.16)) 100%);
+  background-size: 220% 220%;
+  animation: bcAiColorSweep 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-ai-banner-glow,
+  .bc-ai-banner-glow-text,
+  .bc-ai-insight-card-glow {
+    animation: none;
+  }
 }
 
 /* ── AI Inline Popup (inside tasks card body) ────────── */
