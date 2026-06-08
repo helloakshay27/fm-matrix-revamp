@@ -586,10 +586,6 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                 <MenuItem value="isd">Input Service Distributor (ISD)</MenuItem>
             </TextField>
 
-
-
-
-
             {/* <div className="col-span-2">
                 <FormControlLabel
                     control={
@@ -950,48 +946,6 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
     );
 };
 
-// const OpeningBalanceTab = ({ form, handleChange }) => {
-//     return (
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//             <TextField
-//                 label="Bill No"
-//                 name="opening_balance_bill_no"
-//                 value={form.opening_balance_bill_no || ""}
-//                 onChange={handleChange}
-//                 fullWidth
-//                 placeholder="Enter bill no"
-//             />
-//             <TextField
-//                 label="Bill Date"
-//                 name="opening_balance_bill_date"
-//                 type="date"
-//                 value={form.opening_balance_bill_date || ""}
-//                 onChange={handleChange}
-//                 fullWidth
-//                 InputLabelProps={{ shrink: true }}
-//             />
-//             <TextField
-//                 label="Due Date"
-//                 name="opening_balance_due_date"
-//                 type="date"
-//                 value={form.opening_balance_due_date || ""}
-//                 onChange={handleChange}
-//                 fullWidth
-//                 InputLabelProps={{ shrink: true }}
-//             />
-//             <TextField
-//                 label="Amount"
-//                 name="opening_balance"
-//                 value={form.opening_balance}
-//                 onChange={handleChange}
-//                 fullWidth
-//                 placeholder="Enter amount"
-//             />
-//         </div>
-//     );
-// };
-
-
 const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
 
     const handleChange = (index, field, value) => {
@@ -1075,9 +1029,6 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     );
 };
 
-//
-
-//
 // TAB 3 → CONTACT PERSONS
 //
 const ContactPersonsTab = ({ rows, setRows }) => {
