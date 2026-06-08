@@ -250,9 +250,9 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
 
         const handleDateClick = (dayObj) => {
             // Prevent selecting dates before today
-            // if (isDateBeforeToday(dayObj.day, dayObj.month, dayObj.year)) {
-            //     return;
-            // }
+            if (isDateBeforeToday(dayObj.day, dayObj.month, dayObj.year)) {
+                return;
+            }
 
             const clickedDate = {
                 date: dayObj.day,
@@ -333,8 +333,7 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
                         const selectedObj = selectedDate;
                         const isSelected = isSameDay(dateObj, selectedObj);
                         const isToday = isSameDay(dateObj, today);
-                        // const isDisabled = isDateBeforeToday(dayObj.day, dayObj.month, dayObj.year);
-                        const isDisabled = false
+                        const isDisabled = isDateBeforeToday(dayObj.day, dayObj.month, dayObj.year);
 
                         // Check roster-based disabled state
                         const isRosterDisabled = isDateDisabled
@@ -357,7 +356,7 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
                                 type="button"
                                 key={index}
                                 onClick={() => handleDateClick(dayObj)}
-                                // disabled={isDisabled || isWeekoff || isAfterMaxDate || isRosterDisabled}
+                                disabled={isDisabled || isWeekoff || isAfterMaxDate || isRosterDisabled}
                                 className={`
                                 relative flex flex-col items-center justify-center rounded-md text-xs font-medium transition-all py-1 mx-2 min-h-[56px]
                                 ${!dayObj.isCurrentMonth ? 'text-gray-300' : 'text-gray-900'}
