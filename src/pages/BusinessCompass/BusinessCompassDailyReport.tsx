@@ -2370,6 +2370,16 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       finalPlanningItemsForScore
     );
+    const scoreForPayload = isAbsent
+      ? {
+        totalScore: finalDailyScore.timingScore,
+        kpiScore: 0,
+        accomplishmentsScore: 0,
+        tasksIssuesScore: 0,
+        planningScore: 0,
+        timingScore: finalDailyScore.timingScore,
+      }
+      : finalDailyScore;
 
     if (!isAbsent && accomplishmentItemsPayload.length === 0) {
       setSubmitError(
@@ -2433,13 +2443,13 @@ const BusinessCompassDailyReport: React.FC = () => {
             })),
             // Score snapshot — same pattern as WeeklyReports
             score_override: true,
-            total_score: Math.round(finalDailyScore.totalScore),
+            total_score: Math.round(scoreForPayload.totalScore),
             sections: {
-              kpi_achievement: finalDailyScore.kpiScore,
-              accomplishments: finalDailyScore.accomplishmentsScore,
-              tasks_issues_todos: finalDailyScore.tasksIssuesScore,
-              planning: finalDailyScore.planningScore,
-              timing: finalDailyScore.timingScore,
+              kpi_achievement: scoreForPayload.kpiScore,
+              accomplishments: scoreForPayload.accomplishmentsScore,
+              tasks_issues_todos: scoreForPayload.tasksIssuesScore,
+              planning: scoreForPayload.planningScore,
+              timing: scoreForPayload.timingScore,
             },
           },
         },
