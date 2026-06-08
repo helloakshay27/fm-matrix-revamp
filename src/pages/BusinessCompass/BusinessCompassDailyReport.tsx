@@ -172,6 +172,16 @@ interface ApplyDraftOptions {
   allowEmptyLists?: boolean;
 }
 
+const taskIssueGroupKeys = [
+  "overdue",
+  "in_progress",
+  "pending",
+  "on_hold",
+  "reopened",
+] as const;
+type TaskIssueGroupKey = (typeof taskIssueGroupKeys)[number];
+const taskIssueGroupKeySet = new Set<string>(taskIssueGroupKeys);
+
 const cleanReportText = (value: unknown) =>
   String(value ?? "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -371,6 +381,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     [key: string]: boolean;
   }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const calendarStripRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hiddenAutoIds, setHiddenAutoIds] = useState<Set<string>>(new Set());
   const [autoStarredIds, setAutoStarredIds] = useState<Set<string>>(new Set());
@@ -894,6 +905,26 @@ const BusinessCompassDailyReport: React.FC = () => {
       total: mergedTasksIssues.length,
     };
   }, [mergedTasksIssues]);
+
+  const openOnlyTaskIssueGroup = (activeKey: TaskIssueGroupKey) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(
+        [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+      );
+      taskIssueGroupKeys.forEach((key) => {
+        if (key !== activeKey) next.add(key);
+      });
+      return next;
+    });
+  };
+
+  const openAllTaskIssueGroups = () => {
+    setCollapsedGroups((prev) => {
+      return new Set(
+        [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+      );
+    });
+  };
 
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
@@ -1628,6 +1659,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const tasksSectionRef = useRef<HTMLDivElement>(null);
   const accomplishmentsSectionRef = useRef<HTMLDivElement>(null);
   const planningSectionRef = useRef<HTMLDivElement>(null);
+  const calendarTodayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isAiPopupOpen) return;
@@ -1662,6 +1694,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     d.setDate(d.getDate() - 6);
     return d;
   });
+  const todayDateKey = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
 
   const days = React.useMemo(() => {
     const result = [];
@@ -1715,9 +1748,27 @@ const BusinessCompassDailyReport: React.FC = () => {
     return result;
   }, [viewStartDate, reportsList, isLocallyDeletedReport, rosterWorkingDays]);
 
+  // Scroll calendar to show today
+  useEffect(() => {
+    if (!calendarStripRef.current) return;
+    const timer = setTimeout(() => {
+      const track = calendarStripRef.current;
+      if (!track) return;
+      // Find today's day element and scroll to it
+      const todayElement = track.querySelector('[data-is-today="true"]');
+      if (todayElement) {
+        const trackRect = track.getBoundingClientRect();
+        const elementRect = todayElement.getBoundingClientRect();
+        const scrollAmount = elementRect.left - trackRect.left + track.scrollLeft - (trackRect.width - elementRect.width - 40);
+        track.scrollLeft = Math.max(0, scrollAmount);
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [days]);
+
   const handlePrevWeek = () => {
     const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() - 7);
+    newDate.setDate(newDate.getDate() - 1);
     setViewStartDate(newDate);
     const midWeek = new Date(newDate);
     midWeek.setDate(midWeek.getDate() + 3);
@@ -1727,7 +1778,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const handleNextWeek = () => {
     const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() + 7);
+    newDate.setDate(newDate.getDate() + 1);
     const maxStartDate = new Date();
     maxStartDate.setHours(0, 0, 0, 0);
     maxStartDate.setDate(maxStartDate.getDate() - 6);
@@ -1865,15 +1916,9 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const nextDayLabel = React.useMemo(() => {
     try {
-      const dateObj = new Date(
-        `${selectedDate} ${selectedMonth} ${selectedYear}`
-      );
-      if (isNaN(dateObj.getTime())) return "";
-      const nextDay = new Date(dateObj);
-      nextDay.setDate(nextDay.getDate() + 1);
-      while (isRosterHoliday(nextDay)) {
-        nextDay.setDate(nextDay.getDate() + 1);
-      }
+      const nextWorkingDate = getNextWorkingDay(startDate);
+      const nextDay = new Date(`${nextWorkingDate}T00:00:00`);
+      if (isNaN(nextDay.getTime())) return "";
       return nextDay.toLocaleDateString("en-GB", {
         weekday: "short",
         day: "numeric",
@@ -1882,7 +1927,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     } catch (e) {
       return "";
     }
-  }, [selectedDate, selectedMonth, selectedYear, rosterWorkingDays]);
+  }, [startDate, rosterWorkingDays]);
 
   // Get next working day's date in YYYY-MM-DD format for APIs
   const getNextDayDate = () => {
@@ -2335,6 +2380,16 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       finalPlanningItemsForScore
     );
+    const scoreForPayload = isAbsent
+      ? {
+        totalScore: finalDailyScore.timingScore,
+        kpiScore: 0,
+        accomplishmentsScore: 0,
+        tasksIssuesScore: 0,
+        planningScore: 0,
+        timingScore: finalDailyScore.timingScore,
+      }
+      : finalDailyScore;
 
     if (!isAbsent && accomplishmentItemsPayload.length === 0) {
       setSubmitError(
@@ -2365,6 +2420,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           is_absent: isAbsent,
           description: isAbsent ? absenceReason : null,
           report_data: {
+            ...(isAbsent && absenceReason.trim() ? { absent_reason: absenceReason.trim() } : {}),
             accomplishments: {
               // Ensure we only save items that were actually completed!
               items: accomplishmentItemsPayload,
@@ -2397,13 +2453,13 @@ const BusinessCompassDailyReport: React.FC = () => {
             })),
             // Score snapshot — same pattern as WeeklyReports
             score_override: true,
-            total_score: Math.round(finalDailyScore.totalScore),
+            total_score: Math.round(scoreForPayload.totalScore),
             sections: {
-              kpi_achievement: finalDailyScore.kpiScore,
-              accomplishments: finalDailyScore.accomplishmentsScore,
-              tasks_issues_todos: finalDailyScore.tasksIssuesScore,
-              planning: finalDailyScore.planningScore,
-              timing: finalDailyScore.timingScore,
+              kpi_achievement: scoreForPayload.kpiScore,
+              accomplishments: scoreForPayload.accomplishmentsScore,
+              tasks_issues_todos: scoreForPayload.tasksIssuesScore,
+              planning: scoreForPayload.planningScore,
+              timing: scoreForPayload.timingScore,
             },
           },
         },
@@ -2473,20 +2529,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   }, [startDate, selectedDate, selectedMonth, selectedYear]);
 
   const livePreviewMetrics = useMemo(() => {
-    const kpiPct = dailyScore.details.kpi.hasKPIs
-      ? Math.round(dailyScore.details.kpi.averageAchievement)
-      : 0;
     const accPct = Math.round(
       dailyScore.details.accomplishments.completionPercentage || 0
     );
-    const planTotal = Math.max(
-      6,
-      planningItems.filter((p) => cleanReportText(p.text) !== "").length +
-        dedupedTomorrowItems.length
-    );
-    const planFilled = planningItems.filter(
-      (p) => cleanReportText(p.text) !== ""
-    ).length;
     const timingTotal = 4;
     const timingSet = mergedTasksIssues.filter((item) => {
       const allocations =
@@ -2499,20 +2544,10 @@ const BusinessCompassDailyReport: React.FC = () => {
       );
     }).length;
     return {
-      kpiPct,
       accPct,
-      tasksCount: taskIssueCounts.total,
-      planning: `${planFilled}/${planTotal}`,
       timing: `${Math.min(timingSet, timingTotal)}/${timingTotal}`,
     };
-  }, [
-    dailyScore,
-    planningItems,
-    dedupedTomorrowItems,
-    mergedTasksIssues,
-    startDate,
-    taskIssueCounts.total,
-  ]);
+  }, [dailyScore, mergedTasksIssues, startDate]);
 
   const aiInsights = useMemo(() => {
     const insights: Array<{
@@ -2768,16 +2803,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                 <div className="bg-[#DA7756] rounded-[8px] p-1.5 flex items-center justify-center shrink-0">
                   <AiSparkleIcon className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-sm font-bold text-[#1a1a1a]">
+                <span className="bc-ai-banner-glow-text text-sm font-bold text-[#1a1a1a]">
                   AI Suggestions{" "}
                   <span className="font-normal text-gray-500">— Focus areas to improve your daily report</span>
                 </span>
               </div>
-              <span className="bc-points-badge">{aiInsights.length} Insights</span>
+              <span className="bc-points-badge bc-ai-banner-glow-text">{aiInsights.length} Insights</span>
             </div>
             <div className="flex flex-col lg:flex-row gap-3">
               {aiInsights.map((insight) => (
-                <div key={insight.id} className="bc-ai-insight-card">
+                <div
+                  key={insight.id}
+                  className="bc-ai-insight-card bc-ai-insight-card-glow"
+                  style={{ "--insight-accent": `rgba(${insight.color === "#dc2626" ? "220,38,38" : insight.color === "#16a34a" ? "22,163,74" : insight.color === "#ea580c" ? "234,88,12" : "124,58,237"}, 0.16)`, animationDelay: `${aiInsights.indexOf(insight) * 120}ms` } as React.CSSProperties}
+                >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <div className="flex items-center gap-2">
                       {insight.icon}
@@ -2812,899 +2851,1025 @@ const BusinessCompassDailyReport: React.FC = () => {
           <TabsContent value="submit" className="space-y-6 mt-0">
             <div className="bc-daily-grid">
               <div className="space-y-6">
-            {/* Calendar Card */}
-            <div className="bc-daily-card">
-              <div className="bc-daily-card-header">
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-[#1a1a1a]">
-                    Daily Report for {formattedSelectedDate}
-                  </span>
-                  <ChevronDown size={16} className="text-gray-400" />
-                </div>
-                <button
-                  type="button"
-                  className="bc-absent-btn"
-                  onClick={() => {
-                    markDraftDirty();
-                    setIsAbsent(!isAbsent);
-                  }}
-                >
-                  <Checkbox
-                    checked={isAbsent}
-                    className="h-4 w-4 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
-                    onCheckedChange={() => {}}
-                  />
-                  Mark as Absent
-                </button>
-              </div>
-              <div className="bc-daily-card-body">
-                <div className="bc-calendar-strip mb-2">
-                  <button
-                    type="button"
-                    onClick={handlePrevWeek}
-                    className="bc-calendar-nav-btn"
-                    aria-label="Previous dates"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <div className="bc-calendar-strip-track">
-                  {days.map((item, index) => {
-                    const barColor =
-                      item.type === "filled"
-                        ? "#4DB6AC"
-                        : item.type === "missed"
-                          ? "#E57373"
-                          : item.type === "holiday"
-                            ? "#D1D5DB"
-                            : "transparent";
-                    const isSelected = startDate === item.fullDate;
-                    const nextWorkDay = getNextWorkingDay(startDate);
-                    const hasScheduledForDay =
-                      item.fullDate === nextWorkDay &&
-                      tomorrowScheduledItems.length > 0;
-                    const showUpcomingDot =
-                      item.isFuture &&
-                      item.type !== "holiday" &&
-                      (hasScheduledForDay || item.type === "upcoming");
-                    return (
-                    <div
-                      key={index}
-                      className={cn(
-                        "bc-calendar-day",
-                        item.type === "holiday" && "bc-calendar-day-holiday",
-                        item.isFuture && item.type !== "holiday" && "bc-calendar-day-future",
-                        hasScheduledForDay && "bc-calendar-day-scheduled",
-                        isSelected && "bc-calendar-day-selected"
-                      )}
-                      onClick={() =>
-                        !item.isFuture &&
-                        item.type !== "holiday" &&
-                        handleSelectDate(item)
-                      }
-                    >
-                      {showUpcomingDot && (
-                        <div className="bc-calendar-day-upcoming-dot" />
-                      )}
-                      {barColor !== "transparent" && (
-                        <div
-                          className="bc-calendar-day-bar"
-                          style={{ backgroundColor: barColor }}
-                        />
-                      )}
-                      <span className="bc-calendar-day-day">{item.day}</span>
-                      <span className="bc-calendar-day-date">{item.date}</span>
-                    </div>
-                    );
-                  })}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleNextWeek}
-                    className="bc-calendar-nav-btn"
-                    aria-label="Next dates"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-
-                <div className="bc-calendar-legend-row">
-                  {[
-                    { color: "#4DB6AC", label: "Filled" },
-                    { color: "#E57373", label: "Missed" },
-                    { color: "#D1D5DB", label: "Holiday" },
-                    { color: "#DA7756", label: "Upcoming tasks", dot: true },
-                  ].map(({ color, label, dot }) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-2 text-xs text-gray-500 font-medium"
-                    >
-                      {dot ? (
-                        <div
-                          className="bc-calendar-legend-dot"
-                          style={{ backgroundColor: color }}
-                        />
-                      ) : (
-                        <div
-                          className="bc-calendar-legend-bar"
-                          style={{ backgroundColor: color }}
-                        />
-                      )}
-                      <span>{label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-5 mt-4 border-t border-gray-100 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-bold text-[#1a1a1a]">
-                      Self Rating (1-10)
-                    </Label>
-                    <span className="text-sm font-bold text-[#DA7756]">
-                      {selfRating[0]}/10
-                    </span>
-                  </div>
-                  <Slider
-                    value={selfRating}
-                    onValueChange={(value) => {
-                      markDraftDirty();
-                      setSelfRating(value);
-                    }}
-                    max={10}
-                    step={1}
-                    className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {!isAbsent && (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                {/* Daily KPIs Card */}
-                {kpis.length > 0 && (
-                  <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
-                    <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
-                      <div className="flex items-center gap-3">
-                        {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
-                        <TrendingUp className="h-5 w-5 text-[#DA7756]" />
-                        {/* </div> */}
-                        <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                          Daily KPIs
-                        </h3>
-                      </div>
-                      {/* Total KPI score badge */}
-                      <Badge variant="outline" className={badgePoints}>
-                        {dailyScore.kpiScore}/20 pts
-                      </Badge>
-                    </div>
-                    <CardContent className="p-6 space-y-4">
-                      {kpis.map((kpi) => {
-                        const target = parseFloat(kpi.target_value) || 0;
-                        const actual = parseFloat(kpiEntries[kpi.kpi_id] || "0") || 0;
-                        const hasEntry = !!kpiEntries[kpi.kpi_id] && kpiEntries[kpi.kpi_id] !== "";
-
-                        let achievementPct = 0;
-                        if (target === 0 && actual > 0) {
-                          achievementPct = 100;
-                        } else if (target > 0) {
-                          achievementPct = Math.min((actual / target) * 100, 100);
-                        }
-
-                        // Points this KPI contributes out of 20 (equal share per KPI × achievement)
-                        const kpiPts = (20 / kpis.length) * (achievementPct / 100);
-
-                        const pctColor =
-                          achievementPct >= 100
-                            ? "bg-[#22c55e] text-white"
-                            : achievementPct >= 75
-                              ? "bg-[#84cc16] text-white"
-                              : achievementPct >= 50
-                                ? "bg-[#f59e0b] text-white"
-                                : "bg-[#ef4444] text-white";
-
-                        return (
-                          <div
-                            key={kpi.kpi_id}
-                            className="flex items-center gap-3 p-4 rounded-[10px] bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
-                          >
-                            {/* KPI name + meta */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
-                                  {kpi.kpi_name}
-                                </h4>
-                                {!kpi.submitted && (
-                                  <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
-                                    new
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-600">
-                                <span className="text-gray-400">•</span>
-                                <span className="text-gray-500">
-                                  {kpi.frequency_label}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Target label */}
-                            <div className="flex flex-col items-center shrink-0">
-                              <span className="text-sm font-black text-[#6366f1]">
-                                {kpi.target_value}
-                              </span>
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                Target
-                              </span>
-                            </div>
-
-                            {/* Actual input */}
-                            <div className="w-24 shrink-0">
-                              <input
-                                type="number"
-                                value={kpiEntries[kpi.kpi_id] || ""}
-                                onChange={(e) => {
-                                  markDraftDirty();
-                                  setKpiEntries((prev) => ({
-                                    ...prev,
-                                    [kpi.kpi_id]: e.target.value,
-                                  }));
-                                }}
-                                placeholder="0"
-                                className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
-                              />
-                            </div>
-
-                            {/* Achievement % badge */}
-                            {hasEntry && (
-                              <div className="shrink-0 flex items-center gap-2">
-                                <span
-                                  className={`inline-flex items-center justify-center px-3 py-1.5 rounded-[8px] text-sm font-black tracking-tight ${pctColor}`}
-                                >
-                                  {achievementPct.toFixed(0)}%
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
-                <div className="bc-daily-card" ref={accomplishmentsSectionRef}>
+                {/* Calendar Card */}
+                <div className="bc-daily-card">
                   <div className="bc-daily-card-header">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">
-                        Today&apos;s Accomplishments
-                      </h3>
+                      <span className="text-base font-bold text-[#1a1a1a]">
+                        Daily Report for {formattedSelectedDate}
+                      </span>
+                      <ChevronDown size={16} className="text-gray-400" />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className={badgePoints}>
-                        {dailyScore.accomplishmentsScore}/20 Pts
-                      </Badge>
-                      <button
-                        type="button"
-                        className="bc-add-outline-btn"
-                        onClick={addAccomplishment}
-                      >
-                        <Plus size={14} />
-                        Add Item
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="bc-absent-btn"
+                      onClick={() => {
+                        markDraftDirty();
+                        setIsAbsent(!isAbsent);
+                      }}
+                    >
+                      <Checkbox
+                        checked={isAbsent}
+                        className="h-3.5 w-3.5 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                        onCheckedChange={() => { }}
+                      />
+                      Mark as Absent
+                    </button>
                   </div>
-
-                  <div className="bc-daily-card-body space-y-6">
-                    <div className="space-y-3">
-
-                      {/* ── Manual accomplishment items ── */}
-                      {visibleAccomplishments.map((item) => (
-                        <div
-                          key={item.id}
-                          className="relative group animate-in fade-in duration-300"
-                        >
-                          <div
-                            className={cn(
-                              "flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all",
-                              item.completed
-                                ? "border-[#DA7756]/10 bg-[#DA7756]/10"
-                                : "border-gray-200",
-                              item.fromYesterday &&
-                              !item.completed &&
-                              "border-amber-300 bg-amber-50/30"
-                            )}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div
-                                className={cn(
-                                  "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
-                                  item.completed
-                                    ? "bg-[#DA7756] border-[#DA7756]"
-                                    : "bg-white border-gray-300"
-                                )}
-                                onClick={() => toggleAccomplishment(item.id)}
-                              >
-                                {item.completed && (
-                                  <Check size={14} className="text-white" />
-                                )}
-                              </div>
-
-                              <Star
-                                size={18}
-                                className={cn(
-                                  "cursor-pointer transition-all shrink-0",
-                                  item.starred
-                                    ? "text-[#eab308] fill-[#eab308]"
-                                    : "text-[#DA7756]/70 hover:text-[#DA7756]"
-                                )}
-                                onClick={() => toggleStar(item.id)}
-                              />
-
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
-                                Note
-                              </span>
-
-                              <input
-                                type="text"
-                                value={item.text}
-                                onChange={(e) =>
-                                  updateAccomplishmentText(item.id, e.target.value)
-                                }
-                                placeholder="Describe your accomplishment..."
-                                className={cn(
-                                  "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
-                                  item.completed
-                                    ? "text-gray-400 line-through"
-                                    : "text-gray-700"
-                                )}
-                              />
-
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                onClick={() => removeAccomplishment(item.id)}
-                              >
-                                <X size={16} className="text-red-500" />
-                              </Button>
-                            </div>
-
-                            {item.fromYesterday && (
-                              <div className="pl-10 pt-0.5">
-                                <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                  <CalendarIcon size={10} />
-                                  From Yesterday
-                                </span>
-                              </div>
-                            )}
-
-                            {item.completed && (
-                              <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                  <CalendarIcon size={9} className="shrink-0" />
-                                  {fmtDate(startDate)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
-                      {autoAddedAccomplishments.map((item) => {
-                        const autoStarKey = String(item.id);
-                        const isAutoStarred = autoStarredIds.has(autoStarKey);
-
-                        return (
-                          <div key={item.id} className="relative animate-in fade-in duration-300">
-                            <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
-                              <div className="flex items-center gap-4">
-                                <div
-                                  className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
-                                  onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
-                                  title="Mark as open"
-                                >
-                                  <Check size={14} className="text-white" />
-                                </div>
-                                <Star
-                                  size={18}
-                                  className={cn(
-                                    "cursor-pointer transition-all shrink-0",
-                                    isAutoStarred
-                                      ? "text-[#eab308] fill-[#eab308]"
-                                      : "text-[#DA7756]/70 hover:text-[#DA7756]"
-                                  )}
-                                  onClick={() => {
-                                    markDraftDirty();
-                                    setAutoStarredIds((prev) => {
-                                      const next = new Set(prev);
-                                      if (next.has(autoStarKey)) next.delete(autoStarKey);
-                                      else next.add(autoStarKey);
-                                      return next;
-                                    });
-                                  }}
-                                />
-                                <span className={cn(
-                                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                  item.type === "task"
-                                    ? "bg-[#DA7756] text-white"
-                                    : item.type === "issue"
-                                      ? "bg-violet-600 text-white"
-                                      : "bg-amber-500 text-white"
-                                )}>
-                                  {item.type}
-                                </span>
-                                <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
-                                  {item.title}
-                                </span>
-                                {item.priority && (
-                                  <span
-                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                    style={{
-                                      backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                      color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                    }}
-                                  >
-                                    {item.priority}
-                                  </span>
-                                )}
-                                <button
-                                  onClick={() => {
-                                    if (item.type === "todo") {
-                                      setSelectedTodo(item.originalData);
-                                      setIsDetailsModalOpen(true);
-                                    } else {
-                                      navigate(
-                                        item.type === "task"
-                                          ? `/vas/tasks/${item.originalData?.id}`
-                                          : `/vas/issues/${item.originalData?.id}`
-                                      );
-                                    }
-                                  }}
-                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                  title={`View ${item.type} details`}
-                                >
-                                  <Eye size={14} className="text-[#DA7756]" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (item.type === "task") {
-                                      setEditTaskData(item.originalData);
-                                      setIsEditTaskModalOpen(true);
-                                    } else if (item.type === "issue") {
-                                      setEditIssueData(item.originalData);
-                                      setIsEditIssueModalOpen(true);
-                                    } else if (item.type === "todo") {
-                                      setEditTodoData(item.originalData);
-                                      setIsEditTodoModalOpen(true);
-                                    }
-                                  }}
-                                  className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                  title={`Edit ${item.type}`}
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                              </div>
-                              {(() => {
-                                const d = item.originalData;
-                                const endDate = fmtDate(startDate);
-                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                let issueEffort: string | null = null;
-                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                  const totalMin = d.issue_allocation_times.reduce(
-                                    (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                  );
-                                  if (totalMin > 0) {
-                                    const h = Math.floor(totalMin / 60);
-                                    const m = totalMin % 60;
-                                    issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                  }
-                                }
-                                const hasInfo = endDate || effortEst || issueEffort;
-                                if (!hasInfo) return null;
-                                return (
-                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                    {endDate && (
-                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                        <CalendarIcon size={9} className="shrink-0" />
-                                        {endDate}
-                                      </span>
-                                    )}
-                                    {effortEst && (
-                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                        <Clock size={9} className="shrink-0" />
-                                        Est: {effortEst}
-                                      </span>
-                                    )}
-                                    {issueEffort && (
-                                      <span className="flex items-center gap-1 text-[10px] text-purple-500">
-                                        <Zap size={9} className="shrink-0" />
-                                        Effort: {issueEffort}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* Empty placeholder rows to match Figma design */}
-                      {Array.from({ length: Math.max(1, 4 - visibleAccomplishments.length - autoAddedAccomplishments.length) }).map((_, i) => (
-                        <button
-                          key={`placeholder-${i}`}
-                          type="button"
-                          className="bc-accomplishment-input-row w-full text-left"
-                          onClick={addAccomplishment}
-                        >
-                          <div className="h-5 w-5 rounded border-2 border-gray-300 shrink-0" />
-                          <span className="text-sm text-gray-400">
-                            Describe your accomplishments...
-                          </span>
-                        </button>
-                      ))}
-
-                    </div>
-
-                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                        <Info size={14} className="text-gray-400" />
-                        <span>Limits: Images 2MB, Others 5 MB</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          multiple
-                          className="hidden"
-                        />
-                        <button
-                          type="button"
-                          disabled={uploadedFiles.length + reportAttachments.length >= 5}
-                          onClick={triggerFileUpload}
-                          className="bc-add-outline-btn disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Upload size={14} />
-                          Upload File
-                        </button>
-                      </div>
-                    </div>
-
-                    {uploadedFiles.length > 0 && (
-                      <div className="space-y-2">
-                        {uploadedFiles.map((file) => (
-                          <div
-                            key={file.id}
-                            className="flex items-center justify-between bg-[#fef6f4] p-3 rounded-[10px] border border-[#DA7756]/20 animate-in fade-in duration-300"
-                          >
-                            <div className="flex items-center gap-3">
-                              <ImageIcon size={16} className="text-[#DA7756]" />
-                              <span className="text-sm font-medium text-[#DA7756]/80 hover:underline cursor-pointer">
-                                {file.name}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                {file.size}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none"
-                                onClick={() =>
-                                  setUploadedFiles(
-                                    uploadedFiles.filter(
-                                      (f) => f.id !== file.id
-                                    )
-                                  )
-                                }
-                              >
-                                <X size={14} className="text-red-500" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {reportAttachments && reportAttachments.length > 0 && (
-                      <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <Upload size={16} className="text-purple-600" />
-                          <span className="text-sm font-bold text-[#1a1a1a]">
-                            Linked Files ({reportAttachments.length})
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {reportAttachments.map(
-                            (attachment: AttachmentFile, idx: number) => {
-                              const isImage = isImageFile(
-                                attachment.document_file_name,
-                                attachment.document_content_type
-                              );
-                              return (
-                                <div
-                                  key={attachment.id || idx}
-                                  className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
-                                >
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    {isImage ? (
-                                      <ImageIcon
-                                        size={20}
-                                        className="text-purple-600 shrink-0"
-                                      />
-                                    ) : (
-                                      <FileText
-                                        size={20}
-                                        className="text-blue-600 shrink-0"
-                                      />
-                                    )}
-                                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                      <a
-                                        href={attachment.document_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2"
-                                      >
-                                        {attachment.document_file_name}
-                                      </a>
-                                      <span className="text-[11px] text-gray-600 font-medium">
-                                        {attachment.relation} •{" "}
-                                        {(
-                                          attachment.document_file_size / 1024
-                                        ).toFixed(2)}{" "}
-                                        KB •{" "}
-                                        {new Date(
-                                          attachment.document_updated_at
-                                        ).toLocaleDateString("en-US", {
-                                          month: "numeric",
-                                          day: "numeric",
-                                          year: "numeric",
-                                        })}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
-                                    {attachment.active ? "Active" : "Inactive"}
-                                  </Badge>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Plan Card */}
-                <div className="bc-daily-card" ref={planningSectionRef}>
-                  <div className="bc-daily-card-header">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-[#DA7756]" />
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">
-                        Plan for {nextDayLabel || "Tomorrow"}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className={badgePoints}>
-                        {dailyScore.planningScore}/20 Pts
-                      </Badge>
-                      <button
-                        type="button"
-                        className="bc-add-outline-btn"
-                        onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
-                        title="Add Task, Issue, or Todo for next day"
-                      >
-                        <Plus size={14} /> Add Item
-                      </button>
-                    </div>
-                  </div>
-
                   <div className="bc-daily-card-body">
-                    {/* Manual planning items */}
-                    {planningItems.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                          Your plan
-                        </h4>
-                        <div className="space-y-4">
-                          {planningItems
-                            .map((item, index) => ({ item, index }))
-                            .filter(
-                              ({ item }) =>
-                                !dedupedTomorrowItems.some((scheduledItem) =>
-                                  planningItemMatchesSourceItem(item, scheduledItem)
-                                )
-                            )
-                            .map(({ item }) => {
-                            const matchedTask = item.source_id && item.source_type
-                              ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
-                              : null;
-                            const cachedData = item.source_id && item.source_type
-                              ? planSourceCache[`${item.source_type}:${item.source_id}`]
-                              : null;
-                            const liveData = matchedTask?.originalData || cachedData || item.originalData;
-                            const livePriority = matchedTask?.priority || cachedData?.priority || item.originalData?.priority;
+                    <div className="bc-calendar-strip mb-2">
+                      <button
+                        type="button"
+                        onClick={handlePrevWeek}
+                        className="bc-calendar-nav-btn"
+                        aria-label="Previous dates"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <div className="bc-calendar-strip-track" ref={calendarStripRef}>
+                        {days.map((item, index) => {
+                          const barColor =
+                            item.type === "filled"
+                              ? "#4DB6AC"
+                              : item.type === "missed"
+                                ? "#E57373"
+                                : item.type === "holiday"
+                                  ? "#D1D5DB"
+                                  : "#e5e7eb";
+                          const isSelected = startDate === item.fullDate;
+                          const isToday = item.fullDate === todayDateKey;
+                          return (
+                            <div
+                              key={index}
+                              ref={item.fullDate === todayDateKey ? calendarTodayRef : undefined}
+                              data-is-today={item.type === "missed" && item.status === "Today"}
+                              className={cn(
+                                "bc-calendar-day",
+                                item.type === "holiday" && "bc-calendar-day-holiday",
+                                item.isFuture && item.type !== "holiday" && "bc-calendar-day-future",
+                                isSelected && "bc-calendar-day-selected"
+                              )}
+                              onClick={() =>
+                                !item.isFuture &&
+                                item.type !== "holiday" &&
+                                handleSelectDate(item)
+                              }
+                            >
+                              {isToday && (
+                                <div className="bc-calendar-day-current-dot" />
+                              )}
+                              <div
+                                  className="bc-calendar-day-bar"
+                                  style={{ backgroundColor: barColor }}
+                                />
+                              <span className="bc-calendar-day-day">{item.day}</span>
+                              <span className="bc-calendar-day-date">{item.date}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleNextWeek}
+                        className="bc-calendar-nav-btn"
+                        aria-label="Next dates"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+
+                    <div className="bc-calendar-legend-row">
+                      {[
+                        { color: "#4DB6AC", label: "Filled" },
+                        { color: "#E57373", label: "Missed" },
+                        { color: "#D1D5DB", label: "Holiday" },
+                      ].map(({ color, label }) => (
+                        <div
+                          key={label}
+                          className="flex items-center gap-2 text-xs text-gray-500 font-medium"
+                        >
+                          <div
+                            className="bc-calendar-legend-bar"
+                            style={{ backgroundColor: color }}
+                          />
+                          <span>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-5 mt-4 border-t border-gray-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-bold text-[#1a1a1a]">
+                          Self Rating (1-10)
+                        </Label>
+                        <span className="text-sm font-bold text-[#DA7756]">
+                          {selfRating[0]}/10
+                        </span>
+                      </div>
+                      <Slider
+                        value={selfRating}
+                        onValueChange={(value) => {
+                          markDraftDirty();
+                          setSelfRating(value);
+                        }}
+                        max={10}
+                        step={1}
+                        className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {!isAbsent && (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                    {/* Daily KPIs Card */}
+                    {kpis.length > 0 && (
+                      <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
+                        <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
+                          <div className="flex items-center gap-3">
+                            {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
+                            <TrendingUp className="h-5 w-5 text-[#DA7756]" />
+                            {/* </div> */}
+                            <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                              Daily KPIs
+                            </h3>
+                          </div>
+                          {/* Total KPI score badge */}
+                          <Badge variant="outline" className={badgePoints}>
+                            {dailyScore.kpiScore}/20 pts
+                          </Badge>
+                        </div>
+                        <CardContent className="p-6 space-y-4">
+                          {kpis.map((kpi) => {
+                            const target = parseFloat(kpi.target_value) || 0;
+                            const actual = parseFloat(kpiEntries[kpi.kpi_id] || "0") || 0;
+                            const hasEntry = !!kpiEntries[kpi.kpi_id] && kpiEntries[kpi.kpi_id] !== "";
+
+                            let achievementPct = 0;
+                            if (target === 0 && actual > 0) {
+                              achievementPct = 100;
+                            } else if (target > 0) {
+                              achievementPct = Math.min((actual / target) * 100, 100);
+                            }
+
+                            // Points this KPI contributes out of 20 (equal share per KPI × achievement)
+                            const kpiPts = (20 / kpis.length) * (achievementPct / 100);
+
+                            const pctColor =
+                              achievementPct >= 100
+                                ? "bg-[#22c55e] text-white"
+                                : achievementPct >= 75
+                                  ? "bg-[#84cc16] text-white"
+                                  : achievementPct >= 50
+                                    ? "bg-[#f59e0b] text-white"
+                                    : "bg-[#ef4444] text-white";
 
                             return (
                               <div
-                                key={item.id}
-                                className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
+                                key={kpi.kpi_id}
+                                className="flex items-center gap-3 p-4 rounded-[10px] bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
                               >
-                                <div className={cn(
-                                  "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
-                                  item.fromWeeklyPlan
-                                    ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
-                                    : "border-[#f3f4f6] hover:border-[#DA7756]/30"
-                                )}>
+                                {/* KPI name + meta */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
+                                      {kpi.kpi_name}
+                                    </h4>
+                                    {!kpi.submitted && (
+                                      <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
+                                        new
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                                    <span className="text-gray-400">•</span>
+                                    <span className="text-gray-500">
+                                      {kpi.frequency_label}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Target label */}
+                                <div className="flex flex-col items-center shrink-0">
+                                  <span className="text-sm font-black text-[#6366f1]">
+                                    {kpi.target_value}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                    Target
+                                  </span>
+                                </div>
+
+                                {/* Actual input */}
+                                <div className="w-24 shrink-0">
+                                  <input
+                                    type="number"
+                                    value={kpiEntries[kpi.kpi_id] || ""}
+                                    onChange={(e) => {
+                                      markDraftDirty();
+                                      setKpiEntries((prev) => ({
+                                        ...prev,
+                                        [kpi.kpi_id]: e.target.value,
+                                      }));
+                                    }}
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
+                                  />
+                                </div>
+
+                                {/* Achievement % badge */}
+                                {hasEntry && (
+                                  <div className="shrink-0 flex items-center gap-2">
+                                    <span
+                                      className={`inline-flex items-center justify-center px-3 py-1.5 rounded-[8px] text-sm font-black tracking-tight ${pctColor}`}
+                                    >
+                                      {achievementPct.toFixed(0)}%
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
+                    <div className="bc-daily-card" ref={accomplishmentsSectionRef}>
+                      <div className="bc-daily-card-header">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-5 w-5 shrink-0 text-[#DA7756]" />
+                          <h3 className="text-sm font-bold text-[#1a1a1a]">
+                            Today&apos;s Accomplishments
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className={badgePoints}>
+                            {dailyScore.accomplishmentsScore}/20 Pts
+                          </Badge>
+                          <button
+                            type="button"
+                            className="bc-add-outline-btn"
+                            onClick={addAccomplishment}
+                          >
+                            <Plus size={14} />
+                            Add Item
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bc-daily-card-body space-y-6">
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                          {visibleAccomplishments.length === 0 &&
+                            autoAddedAccomplishments.length === 0 && (
+                              <div className="flex flex-col items-center justify-center border-t border-dashed border-gray-200 px-4 pb-3 pt-10 text-center">
+                                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border-2 border-emerald-200 bg-emerald-50">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-300 bg-emerald-100">
+                                    <Check size={16} className="text-emerald-400" />
+                                  </div>
+                                </div>
+                                <h4 className="text-base font-black text-emerald-800">
+                                  What did you get done today?
+                                </h4>
+                                <p className="mt-2 text-sm font-medium text-gray-500">
+                                  Complete tasks to auto-populate this section, or add entries manually.
+                                </p>
+                              </div>
+                            )}
+
+                          {/* ── Manual accomplishment items ── */}
+                          {visibleAccomplishments.map((item) => (
+                            <div
+                              key={item.id}
+                              className="relative group animate-in fade-in duration-300"
+                            >
+                              <div
+                                className={cn(
+                                  "flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all",
+                                  item.completed
+                                    ? "border-[#DA7756]/10 bg-[#DA7756]/10"
+                                    : "border-gray-200",
+                                  item.fromYesterday &&
+                                  !item.completed &&
+                                  "border-amber-300 bg-amber-50/30"
+                                )}
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div
+                                    className={cn(
+                                      "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
+                                      item.completed
+                                        ? "bg-[#DA7756] border-[#DA7756]"
+                                        : "bg-white border-gray-300"
+                                    )}
+                                    onClick={() => toggleAccomplishment(item.id)}
+                                  >
+                                    {item.completed && (
+                                      <Check size={14} className="text-white" />
+                                    )}
+                                  </div>
+
+                                  <Star
+                                    size={18}
+                                    className={cn(
+                                      "cursor-pointer transition-all shrink-0",
+                                      item.starred
+                                        ? "text-[#eab308] fill-[#eab308]"
+                                        : "text-[#DA7756]/70 hover:text-[#DA7756]"
+                                    )}
+                                    onClick={() => toggleStar(item.id)}
+                                  />
+
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                    Note
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    value={item.text}
+                                    onChange={(e) =>
+                                      updateAccomplishmentText(item.id, e.target.value)
+                                    }
+                                    placeholder="Describe your accomplishment..."
+                                    className={cn(
+                                      "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
+                                      item.completed
+                                        ? "text-gray-400 line-through"
+                                        : "text-gray-700"
+                                    )}
+                                  />
+
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                    onClick={() => removeAccomplishment(item.id)}
+                                  >
+                                    <X size={16} className="text-red-500" />
+                                  </Button>
+                                </div>
+
+                                {item.fromYesterday && (
+                                  <div className="pl-10 pt-0.5">
+                                    <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                      <CalendarIcon size={10} />
+                                      From Yesterday
+                                    </span>
+                                  </div>
+                                )}
+
+                                {item.completed && (
+                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                      <CalendarIcon size={9} className="shrink-0" />
+                                      {fmtDate(startDate)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
+                          {autoAddedAccomplishments.map((item) => {
+                            const autoStarKey = String(item.id);
+                            const isAutoStarred = autoStarredIds.has(autoStarKey);
+
+                            return (
+                              <div key={item.id} className="relative animate-in fade-in duration-300">
+                                <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
                                   <div className="flex items-center gap-4">
+                                    <div
+                                      className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
+                                      onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
+                                      title="Mark as open"
+                                    >
+                                      <Check size={14} className="text-white" />
+                                    </div>
                                     <Star
                                       size={18}
                                       className={cn(
                                         "cursor-pointer transition-all shrink-0",
-                                        item.starred
+                                        isAutoStarred
                                           ? "text-[#eab308] fill-[#eab308]"
-                                          : "text-gray-300 hover:text-gray-400"
+                                          : "text-[#DA7756]/70 hover:text-[#DA7756]"
                                       )}
-                                      onClick={() => togglePlanningStar(item.id)}
+                                      onClick={() => {
+                                        markDraftDirty();
+                                        setAutoStarredIds((prev) => {
+                                          const next = new Set(prev);
+                                          if (next.has(autoStarKey)) next.delete(autoStarKey);
+                                          else next.add(autoStarKey);
+                                          return next;
+                                        });
+                                      }}
                                     />
                                     <span className={cn(
-                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.source_type === "task"
-                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                        : item.source_type === "issue"
-                                          ? "bg-violet-100 text-violet-700"
-                                          : "bg-amber-100 text-amber-700"
+                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.type === "task"
+                                        ? "bg-[#DA7756] text-white"
+                                        : item.type === "issue"
+                                          ? "bg-violet-600 text-white"
+                                          : "bg-amber-500 text-white"
                                     )}>
-                                      {item.source_type || "note"}
+                                      {item.type}
                                     </span>
-                                    <input
-                                      type="text"
-                                      value={item.text}
-                                      onChange={(e) =>
-                                        updatePlanningText(item.id, e.target.value)
-                                      }
-                                      placeholder="What's your strategic priority?"
-                                      className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                      onClick={() => removePlanningItem(item.id)}
+                                    <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
+                                      {item.title}
+                                    </span>
+                                    {item.priority && (
+                                      <span
+                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                        style={{
+                                          backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                          color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                        }}
+                                      >
+                                        {item.priority}
+                                      </span>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        if (item.type === "todo") {
+                                          setSelectedTodo(item.originalData);
+                                          setIsDetailsModalOpen(true);
+                                        } else {
+                                          navigate(
+                                            item.type === "task"
+                                              ? `/vas/tasks/${item.originalData?.id}`
+                                              : `/vas/issues/${item.originalData?.id}`
+                                          );
+                                        }
+                                      }}
+                                      className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                      title={`View ${item.type} details`}
                                     >
-                                      <X size={16} className="text-red-500" />
-                                    </Button>
+                                      <Eye size={14} className="text-[#DA7756]" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (item.type === "task") {
+                                          setEditTaskData(item.originalData);
+                                          setIsEditTaskModalOpen(true);
+                                        } else if (item.type === "issue") {
+                                          setEditIssueData(item.originalData);
+                                          setIsEditIssueModalOpen(true);
+                                        } else if (item.type === "todo") {
+                                          setEditTodoData(item.originalData);
+                                          setIsEditTodoModalOpen(true);
+                                        }
+                                      }}
+                                      className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                      title={`Edit ${item.type}`}
+                                    >
+                                      <Pencil size={13} />
+                                    </button>
                                   </div>
-                                  {livePriority && (
-                                    <div className="pl-7 pt-1">
-                                      <span className="text-[10px] font-bold text-gray-500">
-                                        Priority: {livePriority}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {item.fromWeeklyPlan && (
-                                    <div className="pl-7 pt-1">
-                                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                        <CalendarIcon size={10} />
-                                        From Weekly Report
-                                      </span>
-                                    </div>
-                                  )}
+                                  {(() => {
+                                    const d = item.originalData;
+                                    const endDate = fmtDate(startDate);
+                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                    let issueEffort: string | null = null;
+                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                      const totalMin = d.issue_allocation_times.reduce(
+                                        (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                      );
+                                      if (totalMin > 0) {
+                                        const h = Math.floor(totalMin / 60);
+                                        const m = totalMin % 60;
+                                        issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                      }
+                                    }
+                                    const hasInfo = endDate || effortEst || issueEffort;
+                                    if (!hasInfo) return null;
+                                    return (
+                                      <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                        {endDate && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                            <CalendarIcon size={9} className="shrink-0" />
+                                            {endDate}
+                                          </span>
+                                        )}
+                                        {effortEst && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                            <Clock size={9} className="shrink-0" />
+                                            Est: {effortEst}
+                                          </span>
+                                        )}
+                                        {issueEffort && (
+                                          <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                            <Zap size={9} className="shrink-0" />
+                                            Effort: {issueEffort}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             );
                           })}
+
                         </div>
-                      </div>
-                    )}
 
-                    {(tomorrowScheduledLoading || (tomorrowFetchDone && dedupedTomorrowItems.length > 0)) && (
-                      <div className="mb-4">
-                        {tomorrowScheduledLoading ? (
-                          <div className="flex items-center gap-2 py-3 text-gray-300">
-                            <Loader2 size={13} className="animate-spin shrink-0" />
-                            <span className="text-xs font-medium">Fetching upcoming assignments…</span>
+                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                            <Info size={14} className="text-gray-400" />
+                            <span>Limits: Images 2MB, Others 5 MB</span>
                           </div>
-                        ) : (
-                          <div className="space-y-4">
-                            {dedupedTomorrowItems.map((item) => {
-                              const plannedItem = planningItems.find((plan) =>
-                                planningItemMatchesSourceItem(plan, item)
-                              );
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
+                              multiple
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              disabled={uploadedFiles.length + reportAttachments.length >= 5}
+                              onClick={triggerFileUpload}
+                              className="bc-add-outline-btn disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Upload size={14} />
+                              Upload File
+                            </button>
+                          </div>
+                        </div>
 
-                              return (
+                        {uploadedFiles.length > 0 && (
+                          <div className="space-y-2">
+                            {uploadedFiles.map((file) => (
                               <div
-                                key={item.id}
-                                className="relative animate-in fade-in slide-in-from-top-1 duration-200"
+                                key={file.id}
+                                className="flex items-center justify-between bg-[#fef6f4] p-3 rounded-[10px] border border-[#DA7756]/20 animate-in fade-in duration-300"
                               >
-                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
-                                  <div className="flex items-center gap-3">
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleScheduledTomorrowStar(item)}
-                                      className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                      title={plannedItem?.starred ? "Unstar" : "Star this priority"}
-                                    >
-                                      <Star
-                                        size={18}
-                                        className={cn(
-                                          "transition-colors duration-200",
-                                          plannedItem?.starred
-                                            ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                            : "text-gray-300 hover:text-gray-400"
-                                        )}
-                                      />
-                                    </button>
-                                    <span className={cn(
-                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.type === "task" ? "bg-[#DA7756] text-white" :
-                                        item.type === "issue" ? "bg-violet-600 text-white" :
-                                          "bg-amber-500 text-white"
-                                    )}>
-                                      {item.type}
-                                    </span>
-                                    <span className="flex-1 text-sm font-medium text-gray-700 truncate">
-                                      {item.title}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => hideTomorrowScheduledItem(item)}
-                                      className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
-                                    >
-                                      <X size={16} />
-                                    </button>
-                                  </div>
+                                <div className="flex items-center gap-3">
+                                  <ImageIcon size={16} className="text-[#DA7756]" />
+                                  <span className="text-sm font-medium text-[#DA7756]/80 hover:underline cursor-pointer">
+                                    {file.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    {file.size}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none"
+                                    onClick={() =>
+                                      setUploadedFiles(
+                                        uploadedFiles.filter(
+                                          (f) => f.id !== file.id
+                                        )
+                                      )
+                                    }
+                                  >
+                                    <X size={14} className="text-red-500" />
+                                  </Button>
                                 </div>
                               </div>
-                              );
-                            })}
+                            ))}
+                          </div>
+                        )}
+
+                        {reportAttachments && reportAttachments.length > 0 && (
+                          <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <Upload size={16} className="text-purple-600" />
+                              <span className="text-sm font-bold text-[#1a1a1a]">
+                                Linked Files ({reportAttachments.length})
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {reportAttachments.map(
+                                (attachment: AttachmentFile, idx: number) => {
+                                  const isImage = isImageFile(
+                                    attachment.document_file_name,
+                                    attachment.document_content_type
+                                  );
+                                  return (
+                                    <div
+                                      key={attachment.id || idx}
+                                      className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        {isImage ? (
+                                          <ImageIcon
+                                            size={20}
+                                            className="text-purple-600 shrink-0"
+                                          />
+                                        ) : (
+                                          <FileText
+                                            size={20}
+                                            className="text-blue-600 shrink-0"
+                                          />
+                                        )}
+                                        <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                          <a
+                                            href={attachment.document_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2"
+                                          >
+                                            {attachment.document_file_name}
+                                          </a>
+                                          <span className="text-[11px] text-gray-600 font-medium">
+                                            {attachment.relation} •{" "}
+                                            {(
+                                              attachment.document_file_size / 1024
+                                            ).toFixed(2)}{" "}
+                                            KB •{" "}
+                                            {new Date(
+                                              attachment.document_updated_at
+                                            ).toLocaleDateString("en-US", {
+                                              month: "numeric",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                        {attachment.active ? "Active" : "Inactive"}
+                                      </Badge>
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
-                    )}
+                    </div>
 
-                    <button
-                      type="button"
-                      className="bc-plan-input-row w-full text-left"
-                      onClick={addPlanningItem}
-                    >
-                      <Star size={18} className="text-gray-300 shrink-0" />
-                      <span className="text-sm text-gray-400">
-                        What&apos;s your strategic priority?
-                      </span>
-                    </button>
+                    {/* Plan Card */}
+                    <div className="bc-daily-card" ref={planningSectionRef}>
+                      <div className="bc-daily-card-header">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5 text-[#DA7756]" />
+                          <h3 className="text-sm font-bold text-[#1a1a1a]">
+                            Plan for {nextDayLabel || "Tomorrow"}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className={badgePoints}>
+                            {dailyScore.planningScore}/20 Pts
+                          </Badge>
+                          <button
+                            type="button"
+                            className="bc-add-outline-btn"
+                            onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
+                            title="Add Task, Issue, or Todo for next day"
+                          >
+                            <Plus size={14} /> Add Item
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bc-daily-card-body">
+                        {/* Manual planning items */}
+                        {planningItems.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                              Your plan
+                            </h4>
+                            <div className="space-y-4">
+                              {planningItems
+                                .map((item, index) => ({ item, index }))
+                                .filter(
+                                  ({ item }) =>
+                                    !dedupedTomorrowItems.some((scheduledItem) =>
+                                      planningItemMatchesSourceItem(item, scheduledItem)
+                                    )
+                                )
+                                .map(({ item }) => {
+                                  const matchedTask = item.source_id && item.source_type
+                                    ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
+                                    : null;
+                                  const cachedData = item.source_id && item.source_type
+                                    ? planSourceCache[`${item.source_type}:${item.source_id}`]
+                                    : null;
+                                  const liveData = matchedTask?.originalData || cachedData || item.originalData;
+                                  const livePriority = matchedTask?.priority || cachedData?.priority || item.originalData?.priority;
+
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
+                                    >
+                                      <div className={cn(
+                                        "flex flex-col overflow-hidden bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
+                                        item.fromWeeklyPlan
+                                          ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
+                                          : "border-[#f3f4f6] hover:border-[#DA7756]/30"
+                                      )}>
+                                        <div className="flex min-w-0 items-center gap-2">
+                                          <Star
+                                            size={18}
+                                            className={cn(
+                                              "cursor-pointer transition-all shrink-0",
+                                              item.starred
+                                                ? "text-[#eab308] fill-[#eab308]"
+                                                : "text-gray-300 hover:text-gray-400"
+                                            )}
+                                            onClick={() => togglePlanningStar(item.id)}
+                                          />
+                                          <span className={cn(
+                                            "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                            item.source_type === "task"
+                                              ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                              : item.source_type === "issue"
+                                                ? "bg-violet-100 text-violet-700"
+                                                : item.source_type === "todo"
+                                                  ? "bg-yellow-100 text-yellow-700"
+                                                  : "bg-gray-500 text-white"
+                                          )}>
+                                            {item.source_type || "Note"}
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={item.text}
+                                            onChange={(e) =>
+                                              updatePlanningText(item.id, e.target.value)
+                                            }
+                                            placeholder="What's your strategic priority?"
+                                            className="min-w-0 w-0 flex-1 truncate bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                          />
+                                          {livePriority && (
+                                            <span
+                                              className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                              style={{
+                                                backgroundColor: livePriority === "High" ? "#fee2e2" : livePriority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                color: livePriority === "High" ? "#991b1b" : livePriority === "Medium" ? "#92400e" : "#166534",
+                                              }}
+                                            >
+                                              {livePriority}
+                                            </span>
+                                          )}
+                                          <div className="flex shrink-0 items-center gap-1">
+                                            {item.source_id && item.source_type && (
+                                              <>
+                                                <button
+                                                  onClick={() => {
+                                                    if (item.source_type === "todo") {
+                                                      const td = matchedTask?.originalData || cachedData;
+                                                      if (td) { setSelectedTodo(td); setIsDetailsModalOpen(true); }
+                                                    } else {
+                                                      navigate(item.source_type === "task" ? `/vas/tasks/${item.source_id}` : `/vas/issues/${item.source_id}`);
+                                                    }
+                                                  }}
+                                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                                  title={`View ${item.source_type} details`}
+                                                >
+                                                  <Eye size={14} className="text-amber-600" />
+                                                </button>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const src = matchedTask?.originalData || cachedData;
+                                                    if (item.source_type === "task") { setEditTaskData(src); setIsEditTaskModalOpen(true); }
+                                                    else if (item.source_type === "issue") { setEditIssueData(src); setIsEditIssueModalOpen(true); }
+                                                    else if (item.source_type === "todo") { setEditTodoData(src); setIsEditTodoModalOpen(true); }
+                                                  }}
+                                                  className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                                  title={`Edit ${item.source_type}`}
+                                                >
+                                                  <Pencil size={13} />
+                                                </button>
+                                              </>
+                                            )}
+                                            <X
+                                              size={18}
+                                              className="shrink-0 text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                              onClick={() => removePlanningItem(item.id)}
+                                            />
+                                          </div>
+                                        </div>
+                                        {liveData && (() => {
+                                          const d = liveData;
+                                          const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                          const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                          const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                          let timeLeftLabel: string | null = null;
+                                          if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                            const now = new Date();
+                                            const end = new Date(d.end_date);
+                                            end.setHours(23, 59, 59, 999);
+                                            const diff = end.getTime() - now.getTime();
+                                            if (diff > 0) {
+                                              const days = Math.floor(diff / 86400000);
+                                              const hrs = Math.floor((diff % 86400000) / 3600000);
+                                              const mins = Math.floor((diff % 3600000) / 60000);
+                                              if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                              else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                              else timeLeftLabel = `${mins}m left`;
+                                            }
+                                          }
+                                          const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                          if (!hasInfo) return null;
+                                          return (
+                                            <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
+                                              {endDate && (
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                  <CalendarIcon size={9} className="shrink-0" />
+                                                  {endDate}
+                                                </span>
+                                              )}
+                                              {overdueLabel && (
+                                                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                  <AlertCircle size={9} className="shrink-0" />
+                                                  {overdueLabel}
+                                                </span>
+                                              )}
+                                              {timeLeftLabel && (
+                                                <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                  <Clock size={9} className="shrink-0" />
+                                                  {timeLeftLabel}
+                                                </span>
+                                              )}
+                                              {effortEst && (
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                  <Clock size={9} className="shrink-0" />
+                                                  Est: {effortEst}
+                                                </span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
+                                        {item.fromWeeklyPlan && (
+                                          <div className="pl-7 pt-1">
+                                            <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                              <CalendarIcon size={10} />
+                                              From Weekly Report
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Next-day scheduled items — disabled, not included in payload ── */}
+                        {(tomorrowScheduledLoading || (tomorrowFetchDone && dedupedTomorrowItems.length > 0)) && (
+                          <div className="mb-4">
+                            {/* {planningItems.length > 0 && (
+                          <div className="flex items-center gap-3 py-2 mb-3">
+                            <div className="flex-1 h-px bg-gray-100" />
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Next Day</span>
+                            <div className="flex-1 h-px bg-gray-100" />
+                          </div>
+                        )} */}
+                            {tomorrowScheduledLoading ? (
+                              <div className="flex items-center gap-2 py-3 text-gray-300">
+                                <Loader2 size={13} className="animate-spin shrink-0" />
+                                <span className="text-xs font-medium">Fetching upcoming assignments…</span>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {dedupedTomorrowItems.map((item) => {
+                                  const plannedItem = planningItems.find((plan) =>
+                                    planningItemMatchesSourceItem(plan, item)
+                                  );
+
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="relative animate-in fade-in slide-in-from-top-1 duration-200"
+                                    >
+                                      <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
+                                        <div className="flex items-center gap-3">
+                                          <button
+                                            type="button"
+                                            onClick={() => toggleScheduledTomorrowStar(item)}
+                                            className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                            title={plannedItem?.starred ? "Unstar" : "Star this priority"}
+                                          >
+                                            <Star
+                                              size={18}
+                                              className={cn(
+                                                "transition-colors duration-200",
+                                                plannedItem?.starred
+                                                  ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                                  : "text-gray-300 hover:text-yellow-400"
+                                              )}
+                                            />
+                                          </button>
+                                          <span className={cn(
+                                            "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                            item.type === "task"
+                                              ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                              : item.type === "issue"
+                                                ? "bg-violet-100 text-violet-700"
+                                                : "bg-yellow-100 text-yellow-700"
+                                          )}>
+                                            {item.type}
+                                          </span>
+                                          <span className="flex-1 text-sm font-medium text-gray-500 truncate">
+                                            {item.title}
+                                          </span>
+                                          {item.priority && (
+                                            <span
+                                              className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                              style={{
+                                                backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                              }}
+                                            >
+                                              {item.priority}
+                                            </span>
+                                          )}
+                                          <button
+                                            type="button"
+                                            onClick={() => hideTomorrowScheduledItem(item)}
+                                            className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                          >
+                                            <X size={16} />
+                                          </button>
+                                        </div>
+                                        {(() => {
+                                          const d = item.originalData;
+                                          const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                          const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                          const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                          let timeLeftLabel: string | null = null;
+                                          if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                            const now = new Date();
+                                            const end = new Date(d.end_date);
+                                            end.setHours(23, 59, 59, 999);
+                                            const diff = end.getTime() - now.getTime();
+                                            if (diff > 0) {
+                                              const days = Math.floor(diff / 86400000);
+                                              const hrs = Math.floor((diff % 86400000) / 3600000);
+                                              const mins = Math.floor((diff % 3600000) / 60000);
+                                              if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                              else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                              else timeLeftLabel = `${mins}m left`;
+                                            }
+                                          }
+                                          const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                          if (!hasInfo) return null;
+                                          return (
+                                            <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
+                                              {endDate && (
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                  <CalendarIcon size={9} className="shrink-0" />
+                                                  {endDate}
+                                                </span>
+                                              )}
+                                              {overdueLabel && (
+                                                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                  <AlertCircle size={9} className="shrink-0" />
+                                                  {overdueLabel}
+                                                </span>
+                                              )}
+                                              {timeLeftLabel && (
+                                                <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                  <Clock size={9} className="shrink-0" />
+                                                  {timeLeftLabel}
+                                                </span>
+                                              )}
+                                              {effortEst && (
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                  <Clock size={9} className="shrink-0" />
+                                                  Est: {effortEst}
+                                                </span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {planningItems.length === 0 &&
+                          tomorrowFetchDone &&
+                          !tomorrowScheduledLoading &&
+                          dedupedTomorrowItems.length === 0 && (
+                            <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+                              <Calendar className="mb-3 h-8 w-8 text-[#DA7756]/10" />
+                              <h4 className="text-base font-black text-gray-400">
+                                Plan your next working day!
+                              </h4>
+                              <p className="mt-2 text-sm font-medium text-[#334155]">
+                                List 3-5 key tasks for {nextDayLabel || "tomorrow"} to stay focused.
+                              </p>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+
                   </div>
-                </div>
-
-                <div
-                  className="bc-score-info-bar"
-                  onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
-                >
-                  <div className="flex items-center gap-2">
-                    <HelpCircle size={16} className="text-[#DA7756]" />
-                    <span className="text-sm font-medium text-gray-600">
-                      How is the Automated Daily score calculated?{" "}
-                      <span className="text-[#DA7756] font-semibold">
-                        Expand to know more
-                      </span>
-                    </span>
-                  </div>
-                  <ChevronDown
-                    size={16}
-                    className={cn(
-                      "text-gray-400 transition-transform",
-                      isScoreInfoExpanded && "rotate-180"
-                    )}
-                  />
-                </div>
-
-              </div>
-            )}
+                )}
 
               </div>
 
@@ -3723,17 +3888,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {Math.round(dailyScore.totalScore)}/100 Pts
                       </Badge>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="bc-live-score-metrics">
                       {[
-                        { label: "KPI", value: `${livePreviewMetrics.kpiPct}%`, warn: livePreviewMetrics.kpiPct < 50 },
-                        { label: "Accomplishments", value: `${livePreviewMetrics.accPct}%`, warn: livePreviewMetrics.accPct < 50 },
-                        { label: "Tasks", value: String(livePreviewMetrics.tasksCount), warn: false },
-                        { label: "Planning", value: livePreviewMetrics.planning, warn: livePreviewMetrics.planning.startsWith("0/") },
-                        { label: "Timing", value: livePreviewMetrics.timing, warn: livePreviewMetrics.timing.startsWith("0/") },
+                        { label: "KPIs", value: `${dailyScore.kpiScore}/20` },
+                        { label: "Accomplishments", value: `${dailyScore.accomplishmentsScore}/20` },
+                        { label: "Tasks", value: `${dailyScore.tasksIssuesScore}/20` },
+                        { label: "Planning", value: `${dailyScore.planningScore}/20` },
+                        { label: "Timing", value: `${dailyScore.timingScore}/20` },
                       ].map((metric) => (
                         <div key={metric.label} className="bc-live-metric">
                           <div className="bc-live-metric-label">{metric.label}</div>
-                          <div className={cn("bc-live-metric-value", metric.warn && "bc-live-metric-value-warn")}>
+                          <div className="bc-live-metric-value">
                             {metric.value}
                           </div>
                         </div>
@@ -3748,7 +3913,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <CheckSquare className="h-5 w-5 text-[#DA7756]" />
                       <h3 className="text-sm font-bold text-[#1a1a1a]">
-                        Tasks, Issues &amp; To Do&apos;s
+                        Tasks, Issues & To Do's
                       </h3>
                     </div>
                     <div className="flex items-center gap-3">
@@ -3767,7 +3932,633 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                  <div className="px-5 py-3 border-b border-gray-100 flex flex-wrap gap-2">
+                  <div className="space-y-4 p-3">
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={openAllTaskIssueGroups}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openAllTaskIssueGroups();
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
+                      >
+                        All: {taskIssueCounts.total}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("pending")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("pending");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
+                      >
+                        Open: {taskIssueCounts.open}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("overdue")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("overdue");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
+                      >
+                        Overdue: {taskIssueCounts.overdue}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("in_progress");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
+                      >
+                        In Progress: {taskIssueCounts.inProgress}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("on_hold");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-gray-200 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-300"
+                      >
+                        On Hold: {taskIssueCounts.onHold}
+                      </Badge>
+                    </div>
+
+                    {tasksLoading || issuesLoading ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
+                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
+                      </div>
+                    ) : mergedTasksIssues.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <div className="flex flex-col items-center gap-3 opacity-30">
+                          <CheckSquare size={40} className="text-[#DA7756]/20" />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">No open tasks or issues</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 pr-1" ref={scrollContainerRef}>
+
+                        {/* ── From Yesterday section ── */}
+                        {yesterdaySourceIds.size > 0 && (() => {
+                          const yItems = mergedTasksIssues.filter((item: any) => yesterdaySourceIds.has(item.id));
+                          if (yItems.length === 0) return null;
+                          const isCollapsed = collapsedGroups.has("from_yesterday");
+                          return (
+                            <div key="from_yesterday">
+                              <button
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-amber-50 hover:bg-amber-100"
+                                onClick={() => setCollapsedGroups((prev) => { const next = new Set(prev); if (next.has("from_yesterday")) next.delete("from_yesterday"); else next.add("from_yesterday"); return next; })}
+                              >
+                                <CalendarIcon size={12} className="text-amber-700 shrink-0" />
+                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-amber-700">Plan for Today</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{yItems.length}</span>
+                                <ChevronRight size={14} className={cn("transition-transform duration-200 ml-1 text-amber-700", !isCollapsed && "rotate-90")} />
+                              </button>
+                              {!isCollapsed && (
+                                <div className="space-y-1.5 pl-1">
+                                  {yItems.map((item: any) => (
+                                    <div key={item.id} className="flex flex-col rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      {/* Controls row */}
+                                      <div className="flex items-center gap-2 p-2.5">
+                                        <Checkbox
+                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                          onCheckedChange={(checked) => {
+                                            if (checked && item.status !== "completed" && item.status !== "closed") {
+                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                            } else {
+                                              markDraftDirty();
+                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                            }
+                                          }}
+                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                        />
+                                        <button
+                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                          title={`View ${item.type} details`}
+                                        >
+                                          <Eye size={14} className="text-amber-600" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                          title={`Edit ${item.type}`}
+                                        >
+                                          <Pencil size={13} />
+                                        </button>
+                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.is_started ? (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Pause task" disabled={playingTaskIds.has(item.originalData.id)}>
+                                              <Pause size={14} className="text-red-500" />
+                                            </button>
+                                          ) : (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Start task" disabled={playingTaskIds.has(item.originalData.id)}>
+                                              {playingTaskIds.has(item.originalData.id) ? <Loader2 size={14} className="text-green-600 animate-spin" /> : <Play size={14} className="text-green-600" />}
+                                            </button>
+                                          )
+                                        )}
+                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.task_management?.is_started ? (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Pause task" disabled={playingTaskIds.has(item.originalData.task_management_id)}>
+                                              <Pause size={14} className="text-red-500" />
+                                            </button>
+                                          ) : (
+                                            <button onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Start task" disabled={playingTaskIds.has(item.originalData.task_management_id)}>
+                                              {playingTaskIds.has(item.originalData.task_management_id) ? <Loader2 size={14} className="text-green-600 animate-spin" /> : <Play size={14} className="text-green-600" />}
+                                            </button>
+                                          )
+                                        )}
+                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                          {item.type}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                        </div>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                          {item.priority}
+                                        </span>
+                                        {/* Tomorrow button */}
+                                        <button
+                                          onClick={() => addedToTomorrowIds.has(item.id) ? removeItemFromTomorrow(item) : addItemToTomorrow(item)}
+                                          className={cn(
+                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                            addedToTomorrowIds.has(item.id)
+                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                              : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                          )}
+                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                        >
+                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                        </button>
+                                      </div>
+                                      {/* Info row */}
+                                      {(() => {
+                                        const d = item.originalData;
+                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                        let issueEffort: string | null = null;
+                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                          const totalMin = d.issue_allocation_times.reduce((sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0);
+                                          if (totalMin > 0) { const h = Math.floor(totalMin / 60); const m = totalMin % 60; issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`; }
+                                        }
+                                        let timeLeftLabel: string | null = null;
+                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                          const now = new Date(); const end = new Date(d.end_date); end.setHours(23, 59, 59, 999); const diff = end.getTime() - now.getTime();
+                                          if (diff > 0) { const days = Math.floor(diff / 86400000); const hrs = Math.floor((diff % 86400000) / 3600000); const mins = Math.floor((diff % 3600000) / 60000); timeLeftLabel = days > 0 ? `${days}d ${hrs}h left` : hrs > 0 ? `${hrs}h ${mins}m left` : `${mins}m left`; }
+                                        }
+                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                        if (!hasInfo) return null;
+                                        return (
+                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                            {endDate && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <CalendarIcon size={9} className="shrink-0" />{endDate}
+                                              </span>
+                                            )}
+                                            {overdueLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                <AlertCircle size={9} className="shrink-0" />{overdueLabel}
+                                              </span>
+                                            )}
+                                            {timeLeftLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                <Clock size={9} className="shrink-0" />{timeLeftLabel}
+                                              </span>
+                                            )}
+                                            {effortEst && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <Clock size={9} className="shrink-0" />Est: {effortEst}
+                                              </span>
+                                            )}
+                                            {issueEffort && (
+                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                <Zap size={9} className="shrink-0" />Effort: {issueEffort}
+                                              </span>
+                                            )}
+                                            {item.type === "task" && d?.active_time_till_now && (
+                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                <Zap size={9} className="shrink-0" />
+                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {(
+                          [
+                            {
+                              key: "overdue",
+                              label: "Overdue",
+                              statuses: ["overdue", "overdued"],
+                              colorClass: "text-red-700",
+                              bgItem: "bg-red-50/60 border-red-200",
+                              headerBg: "bg-red-50 hover:bg-red-100",
+                              pillBg: "bg-red-100 text-red-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: true,
+                            },
+                            {
+                              key: "in_progress",
+                              label: "In Progress",
+                              statuses: ["in_progress", "started"],
+                              colorClass: "text-sky-700",
+                              bgItem: "bg-sky-50/60 border-sky-200",
+                              headerBg: "bg-sky-50 hover:bg-sky-100",
+                              pillBg: "bg-sky-100 text-sky-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                            {
+                              key: "pending",
+                              label: "Open",
+                              statuses: ["open", "pending"],
+                              colorClass: "text-slate-600",
+                              bgItem: "bg-slate-50/60 border-slate-200",
+                              headerBg: "bg-slate-50 hover:bg-slate-100",
+                              pillBg: "bg-slate-100 text-slate-600",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                            {
+                              key: "on_hold",
+                              label: "On Hold",
+                              statuses: ["on_hold"],
+                              colorClass: "text-orange-700",
+                              bgItem: "bg-orange-50/60 border-orange-200",
+                              headerBg: "bg-orange-50 hover:bg-orange-100",
+                              pillBg: "bg-orange-100 text-orange-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                            {
+                              key: "reopened",
+                              label: "Reopened",
+                              statuses: ["reopen", "reopened"],
+                              colorClass: "text-purple-700",
+                              bgItem: "bg-purple-50/60 border-purple-200",
+                              headerBg: "bg-purple-50 hover:bg-purple-100",
+                              pillBg: "bg-purple-100 text-purple-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                          ] as const
+                        ).map((group) => {
+                          const items = mergedTasksIssues.filter((item: any) =>
+                            (group.statuses as readonly string[]).includes(item.status) &&
+                            !yesterdaySourceIds.has(item.id)
+                          );
+                          if (items.length === 0) return null;
+                          const isCollapsed = collapsedGroups.has(group.key);
+
+                          return (
+                            <div key={group.key}>
+                              {/* Group header */}
+                              <button
+                                className={cn(
+                                  "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
+                                  group.headerBg
+                                )}
+                                onClick={() => openOnlyTaskIssueGroup(group.key)}
+                              >
+                                <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
+                                  {group.label}
+                                </span>
+                                <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
+                                  {items.length}
+                                </span>
+                                {group.showBulkAdd && items.length > 0 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addAllOverdueToTomorrow();
+                                    }}
+                                    className="text-[10px] font-bold text-red-700 bg-white hover:bg-red-50 border border-red-200 px-2 py-1 rounded-[6px] transition-all ml-1"
+                                  >
+                                    Add all to tomorrow
+                                  </button>
+                                )}
+                                <ChevronRight
+                                  size={14}
+                                  className={cn(
+                                    "transition-transform duration-200 ml-1",
+                                    group.colorClass,
+                                    !isCollapsed && "rotate-90"
+                                  )}
+                                />
+                              </button>
+
+                              {/* Group items */}
+                              {!isCollapsed && (
+                                <div className="space-y-1.5 pl-1">
+                                  {items.map((item: any) => (
+                                    <div
+                                      key={item.id}
+                                      className={cn(
+                                        "flex flex-col rounded-[10px] border transition-all group",
+                                        group.bgItem
+                                      )}
+                                    >
+                                      <div className="flex items-center gap-2 p-2.5">
+                                        <Checkbox
+                                          checked={
+                                            selectedTasksIssues[item.id] ||
+                                            item.status === "completed" ||
+                                            item.status === "closed"
+                                          }
+                                          onCheckedChange={(checked) => {
+                                            if (checked && item.status !== "completed" && item.status !== "closed") {
+                                              setPendingConfirmAction({
+                                                fn: () => handleCompleteItem(item),
+                                                label: `complete this ${item.type}`,
+                                              });
+                                            } else {
+                                              markDraftDirty();
+                                              setSelectedTasksIssues((prev) => ({
+                                                ...prev,
+                                                [item.id]: checked as boolean,
+                                              }));
+                                            }
+                                          }}
+                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                        />
+
+                                        <button
+                                          onClick={() => {
+                                            if (item.type === "todo") {
+                                              setSelectedTodo(item.originalData);
+                                              setIsDetailsModalOpen(true);
+                                            } else {
+                                              navigate(
+                                                item.type === "task"
+                                                  ? `/vas/tasks/${item.originalData?.id}`
+                                                  : `/vas/issues/${item.originalData?.id}`
+                                              );
+                                            }
+                                          }}
+                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                          title={`View ${item.type} details`}
+                                        >
+                                          <Eye size={14} className="text-[#DA7756]" />
+                                        </button>
+
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (item.type === "task") {
+                                              setEditTaskData(item.originalData);
+                                              setIsEditTaskModalOpen(true);
+                                            } else if (item.type === "issue") {
+                                              setEditIssueData(item.originalData);
+                                              setIsEditIssueModalOpen(true);
+                                            } else if (item.type === "todo") {
+                                              setEditTodoData(item.originalData);
+                                              setIsEditTodoModalOpen(true);
+                                            }
+                                          }}
+                                          className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                          title={`Edit ${item.type}`}
+                                        >
+                                          <Pencil size={13} />
+                                        </button>
+
+                                        {/* Play/Pause for tasks */}
+                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.is_started ? (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Pause task"
+                                              disabled={playingTaskIds.has(item.originalData.id)}
+                                            >
+                                              <Pause size={14} className="text-red-500" />
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Start task"
+                                              disabled={playingTaskIds.has(item.originalData.id)}
+                                            >
+                                              {playingTaskIds.has(item.originalData.id)
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
+                                            </button>
+                                          )
+                                        )}
+
+                                        {/* Play/Pause for todos linked to tasks */}
+                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.task_management?.is_started ? (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Pause task"
+                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                            >
+                                              <Pause size={14} className="text-red-500" />
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Start task"
+                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                            >
+                                              {playingTaskIds.has(item.originalData.task_management_id)
+                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                : <Play size={14} className="text-green-600" />}
+                                            </button>
+                                          )
+                                        )}
+
+                                        {/* Type badge */}
+                                        <span className={cn(
+                                          "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                          item.type === "task" ? "bg-[#DA7756] text-white" :
+                                            item.type === "issue" ? "bg-violet-600 text-white" :
+                                              "bg-amber-500 text-white"
+                                        )}>
+                                          {item.type}
+                                        </span>
+
+                                        {/* Title + status */}
+                                        <div className="flex-1 min-w-0">
+                                          <p className={cn(
+                                            "text-sm font-medium truncate",
+                                            (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
+                                          )}>
+                                            {item.title}
+                                          </p>
+                                        </div>
+
+                                        {/* Priority badge */}
+                                        <span
+                                          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                          style={{
+                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                          }}
+                                        >
+                                          {item.priority}
+                                        </span>
+
+                                        {/* Add to Tomorrow button */}
+                                        {group.showAddToTomorrow && (
+                                          <button
+                                            onClick={() =>
+                                              addedToTomorrowIds.has(item.id)
+                                                ? removeItemFromTomorrow(item)
+                                                : addItemToTomorrow(item)
+                                            }
+                                            className={cn(
+                                              "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                              addedToTomorrowIds.has(item.id)
+                                                ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                            )}
+                                            title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                          >
+                                            {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                          </button>
+                                        )}
+                                      </div>{/* end inner controls row */}
+
+                                      {/* Info row */}
+                                      {(() => {
+                                        const d = item.originalData;
+                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+
+                                        // Issue: effort duration from issue_allocation_times
+                                        let issueEffort: string | null = null;
+                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                          const totalMin = d.issue_allocation_times.reduce(
+                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                          );
+                                          if (totalMin > 0) {
+                                            const h = Math.floor(totalMin / 60);
+                                            const m = totalMin % 60;
+                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                          }
+                                        }
+
+                                        // Issue: time left (when not overdue) from end_date
+                                        let timeLeftLabel: string | null = null;
+                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                          const now = new Date();
+                                          const end = new Date(d.end_date);
+                                          end.setHours(23, 59, 59, 999);
+                                          const diff = end.getTime() - now.getTime();
+                                          if (diff > 0) {
+                                            const days = Math.floor(diff / 86400000);
+                                            const hrs = Math.floor((diff % 86400000) / 3600000);
+                                            const mins = Math.floor((diff % 3600000) / 60000);
+                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                            else timeLeftLabel = `${mins}m left`;
+                                          }
+                                        }
+
+                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                        if (!hasInfo) return null;
+                                        return (
+                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                            {endDate && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <CalendarIcon size={9} className="shrink-0" />
+                                                {endDate}
+                                              </span>
+                                            )}
+                                            {overdueLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                <AlertCircle size={9} className="shrink-0" />
+                                                {overdueLabel}
+                                              </span>
+                                            )}
+                                            {timeLeftLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                <Clock size={9} className="shrink-0" />
+                                                {timeLeftLabel}
+                                              </span>
+                                            )}
+                                            {effortEst && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <Clock size={9} className="shrink-0" />
+                                                Est: {effortEst}
+                                              </span>
+                                            )}
+                                            {issueEffort && (
+                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                <Zap size={9} className="shrink-0" />
+                                                Effort: {issueEffort}
+                                              </span>
+                                            )}
+                                            {item.type === "task" && d?.active_time_till_now && (
+                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                <Zap size={9} className="shrink-0" />
+                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {isLoadingMore && (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
+                            <p className="text-xs text-gray-500 font-medium">Loading more...</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* <div className="px-5 py-3 border-b border-gray-100 flex flex-wrap gap-2">
                     {(
                       [
                         { key: "open" as const, label: "Opened", count: taskIssueCounts.open, cls: "bc-task-filter-open" },
@@ -3968,7 +4759,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <FileText size={12} className="text-[#6B9BCC]" /> To Do
                       </span>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Bottom Tip Banner */}
@@ -4046,8 +4837,32 @@ const BusinessCompassDailyReport: React.FC = () => {
               )}
             </button>
 
-            {/* Detailed Score Calculation - collapsible */}
             {!isAbsent && (
+              <div
+                className="bc-score-info-bar"
+                onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
+              >
+                <div className="flex items-center gap-2">
+                  <HelpCircle size={16} className="text-[#DA7756]" />
+                  <span className="text-sm font-medium text-gray-600">
+                    How is the Automated Daily score calculated?{" "}
+                    <span className="text-[#DA7756] font-semibold">
+                      Expand to know more
+                    </span>
+                  </span>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={cn(
+                    "text-gray-400 transition-transform",
+                    isScoreInfoExpanded && "rotate-180"
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Detailed Score Calculation - collapsible */}
+            {!isAbsent && !isScoreInfoExpanded && (
               <div className="mt-4 space-y-4">
                 <div className="bc-daily-card">
                   <div className="bc-daily-card-body">
@@ -4443,10 +5258,10 @@ const BusinessCompassDailyReport: React.FC = () => {
 
             {isScoreInfoExpanded && (
               <div className="mt-4">
-              <div
-                className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden shadow-sm"
-              >
-                <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div
+                  className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden shadow-sm"
+                >
+                  <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="grid grid-cols-1 gap-6">
                       {[
                         {
@@ -4663,15 +5478,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </li>
                       </ul>
                     </div>
+                  </div>
                 </div>
               </div>
-            </div>
             )}
           </TabsContent>
 
           <TabsContent value="history" className="mt-0 pt-0">
             {isHistoryLoading ? (
-              <Card className="p-20 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-[16px]">
+              <Card className="bc-history-empty-card">
                 <Loader2
                   size={40}
                   className="text-[#DA7756]/40 animate-spin mb-4"
@@ -4682,16 +5497,16 @@ const BusinessCompassDailyReport: React.FC = () => {
               </Card>
             ) : reportsList.length > 0 ? (
               <div className="space-y-4">
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-5">
                   {reportsList.map((report) => (
                     <Card
                       key={report.id}
-                      className="bg-white border border-[#DA7756]/20 rounded-[16px] shadow-sm overflow-hidden transition-all"
+                      className="bc-history-card"
                     >
-                      <div className="p-6">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
-                          <div>
-                            <h2 className="text-xl font-medium text-[#1a1a1a]">
+                      <div className="bc-history-card-body">
+                        <div className="bc-history-card-header">
+                          <div className="min-w-0">
+                            <h2 className="bc-history-title">
                               {new Date(report.start_date).toLocaleDateString(
                                 "en-US",
                                 {
@@ -4702,13 +5517,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 }
                               )}
                             </h2>
-                            <p className="text-sm text-gray-500 mt-2">
+                            <p className="text-sm text-gray-500 mt-1.5">
                               By: {user?.firstname} {user?.lastname}
                             </p>
                           </div>
-                          <div className="flex items-start gap-4">
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge className="bg-[#f59e0b] hover:bg-[#f59e0b] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                          <div className="bc-history-actions-wrap">
+                            <div className="bc-history-badges">
+                              <Badge className="bc-history-rating-badge">
                                 <Star size={12} className="fill-white" />
                                 {report.report_data?.details?.self_rating ??
                                   report.report_data?.self_rating ??
@@ -4716,13 +5531,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   0}
                                 /10
                               </Badge>
-                              <Badge className="bg-[#dc2626] hover:bg-[#dc2626] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                              <Badge className="bc-history-score-badge">
                                 <Target size={12} className="fill-white" />
                                 {report.report_data?.total_score || 0}/100
                               </Badge>
                               <Badge
                                 variant="outline"
-                                className="text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-[4px] text-[11px] font-medium w-fit mt-1"
+                                className="bc-history-time-badge"
                               >
                                 {new Date(report.created_at).toLocaleTimeString(
                                   "en-US",
@@ -4730,7 +5545,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 )}
                               </Badge>
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="bc-history-action-buttons">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -4890,8 +5705,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
-                          <div className="flex items-center justify-between mb-3">
+                        <div className="bc-history-score-panel">
+                          <div className="bc-history-section-header">
                             <div className="flex items-center gap-2">
                               <BarChart3 size={14} className="text-[#DA7756]" />
                               <span className="text-xs font-bold text-[#1a1a1a]">
@@ -4902,50 +5717,37 @@ const BusinessCompassDailyReport: React.FC = () => {
                               Total: {report.report_data?.total_score ?? 0}/100
                             </span>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                          <div className="bc-live-score-metrics">
                             {[
                               {
                                 label: "KPIs",
                                 value: report.report_data?.sections?.kpi_achievement ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Accomplishments",
                                 value: report.report_data?.sections?.accomplishments ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
-                                label: "Tasks & Issues",
+                                label: "Tasks",
                                 value: report.report_data?.sections?.tasks_issues_todos ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Planning",
                                 value: report.report_data?.sections?.planning ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Timing",
                                 value: report.report_data?.sections?.timing ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
-                            ].map(({ label, value, color, bg }) => (
+                            ].map(({ label, value }) => (
                               <div
                                 key={label}
-                                className={cn(
-                                  "border rounded-[8px] py-3 px-2 flex flex-col items-center justify-center shadow-sm gap-0.5",
-                                  bg
-                                )}
+                                className="bc-live-metric"
                               >
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider text-center">
+                                <p className="bc-live-metric-label">
                                   {label}
                                 </p>
-                                <p className={cn("text-lg font-black", color)}>
+                                <p className="bc-live-metric-value">
                                   {value}/20
                                 </p>
                               </div>
@@ -4955,15 +5757,17 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                         {report.report_data?.past_kpis &&
                           report.report_data.past_kpis.length > 0 && (
-                            <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
-                              <div className="flex items-center gap-2 mb-3">
-                                <TrendingUp
-                                  size={14}
-                                  className="text-[#DA7756]"
-                                />
-                                <span className="text-xs font-bold text-[#1a1a1a]">
-                                  Daily KPIs
-                                </span>
+                            <div className="bc-history-section-card mb-6">
+                              <div className="bc-history-section-header">
+                                <div className="flex items-center gap-2">
+                                  <TrendingUp
+                                    size={14}
+                                    className="text-[#DA7756]"
+                                  />
+                                  <span className="text-xs font-bold text-[#1a1a1a]">
+                                    Daily KPIs
+                                  </span>
+                                </div>
                               </div>
                               <div className="space-y-3">
                                 {report.report_data.past_kpis.map(
@@ -4981,10 +5785,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     return (
                                       <div
                                         key={idx}
-                                        className="bg-white border border-amber-100 rounded-[6px] p-3 shadow-sm"
+                                        className="bc-history-list-item"
                                       >
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-sm font-semibold text-gray-800">
+                                        <div className="flex min-w-0 items-center justify-between gap-3 mb-2">
+                                          <span className="min-w-0 truncate text-sm font-semibold text-gray-800">
                                             {kpi.notes}
                                           </span>
                                           <Badge className="bg-[#DA7756]/10 text-[#DA7756] text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
@@ -5050,7 +5854,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           )} */}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                          <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <CheckCircle2
                                 size={16}
@@ -5071,12 +5875,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     .map((ach: any, idx: number) => (
                                       <li
                                         key={idx}
-                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="bc-history-list-item"
                                       >
-                                        <span className="text-gray-400 font-medium">
+                                        <span className="text-[#DA7756] font-medium shrink-0">
                                           ✓
                                         </span>
-                                        {getReportItemText(ach)}
+                                        <span className="min-w-0 break-words">
+                                          {getReportItemText(ach)}
+                                        </span>
                                       </li>
                                     ))}
                                 </ul>
@@ -5089,7 +5895,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                          <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <Calendar size={16} className="text-[#DA7756]" />
                               <span className="text-sm font-semibold text-[#1a1a1a]">
@@ -5107,12 +5913,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     .map((task: any, idx: number) => (
                                       <li
                                         key={idx}
-                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="bc-history-list-item"
                                       >
-                                        <span className="text-gray-400 font-bold mt-0.5">
+                                        <span className="text-[#DA7756] font-bold mt-0.5 shrink-0">
                                           •
                                         </span>
-                                        {getReportItemText(task)}
+                                        <span className="min-w-0 break-words">
+                                          {getReportItemText(task)}
+                                        </span>
                                       </li>
                                     ))}
                                 </ul>
@@ -5186,7 +5994,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             </span>
                                           </div>
                                         </div>
-                                        <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                        <Badge className="bg-[#DA7756]/10 text-[#DA7756] border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
                                           {attachment.active
                                             ? "Active"
                                             : "Inactive"}
@@ -5204,9 +6012,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <Card className="p-20 text-center text-gray-400 bg-white border border-gray-100 rounded-[16px] shadow-sm flex flex-col items-center gap-2">
-                <CalendarIcon size={48} className="opacity-10 mb-2" />
-                <p className="text-lg font-bold text-gray-300 tracking-tight">
+              <Card className="bc-history-empty-card">
+                <CalendarIcon size={48} className="text-[#DA7756]/15 mb-2" />
+                <p className="text-lg font-bold text-gray-400 tracking-tight">
                   No report history found for this period
                 </p>
                 <p className="text-sm font-medium text-gray-400/80">

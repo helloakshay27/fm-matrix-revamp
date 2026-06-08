@@ -271,6 +271,7 @@ const normalizeReportData = (rd: any) => {
       self_rating: null,
       total_score: null,
       is_absent: null,
+      absent_reason: null,
       kpis: {},
     };
   }
@@ -290,6 +291,7 @@ const normalizeReportData = (rd: any) => {
     self_rating: rd.self_rating ?? null,
     total_score: rd.total_score ?? null,
     is_absent: rd.is_absent ?? null,
+    absent_reason: rd.absent_reason ?? null,
     kpis: rd.kpis && typeof rd.kpis === "object" ? rd.kpis : {},
   };
 };
@@ -376,6 +378,31 @@ const getReportTotalScore = (report: any, rawSource: any = null) => {
   return Number.isFinite(numericScore) ? numericScore : null;
 };
 
+const isReportAbsent = (report: any, rawSource: any = null, normalized: any = null) =>
+  [
+    report?.is_absent,
+    report?.daily_report?.is_absent,
+    rawSource?.is_absent,
+    rawSource?.details?.is_absent,
+    rawSource?.sections?.is_absent,
+    normalized?.is_absent,
+  ].some((value) => value === true || value === "true" || value === 1);
+
+const getReportAbsentReason = (
+  report: any,
+  rawSource: any = null,
+  normalized: any = null
+) =>
+  String(
+    report?.absent_reason ??
+      report?.daily_report?.absent_reason ??
+      rawSource?.absent_reason ??
+      rawSource?.details?.absent_reason ??
+      rawSource?.sections?.absent_reason ??
+      normalized?.absent_reason ??
+      "Absent"
+  ).trim() || "Absent";
+
 const formatSelfRating = (rating: any): string => {
   if (rating === null || rating === undefined || rating === "") return "";
   const ratingText = String(rating).trim();
@@ -419,6 +446,12 @@ const resolveRawSource = (report: any) => {
       raw.details?.is_absent ??
       raw.sections?.is_absent ??
       false,
+    absent_reason:
+      raw.absent_reason ??
+      draftReport.absent_reason ??
+      raw.details?.absent_reason ??
+      raw.sections?.absent_reason ??
+      null,
   });
 
   if (!hasReportData && hasDraft) {
@@ -452,6 +485,7 @@ const resolveRawSource = (report: any) => {
       self_rating: normalizedDraft.self_rating,
       total_score: rd.total_score ?? normalizedDraft.total_score,
       is_absent: rd.is_absent ?? normalizedDraft.is_absent,
+      absent_reason: rd.absent_reason ?? normalizedDraft.absent_reason,
     };
   }
 
@@ -704,11 +738,20 @@ const DailyTab = ({
           } else {
             const allReports: any[] =
               json.data?.member_reports || json.data?.reports || [];
+            const absentSubmittedIds = new Set(
+              allReports
+                .filter((r: any) => isReportAbsent(r, resolveRawSource(r)))
+                .map((r: any) => String(r.user_id))
+            );
             const pureMissed = [
               ...allReports
                 .filter((r: any) => r.status === "pending" && !r.daily_report)
                 .map((r: any) => r.name),
-              ...(json.data?.missed_members || []).map(
+              ...(json.data?.missed_members || [])
+                .filter(
+                  (m: any) => !absentSubmittedIds.has(String(m.id || m.user_id))
+                )
+                .map(
                 (m: any) => m.name || m.user
               ),
             ].filter(Boolean);
@@ -922,6 +965,7 @@ const DailyTab = ({
         const rawSource = resolveRawSource(report);
         const source = normalizeReportData(rawSource);
         const draftRaw = report.daily_report?.report_data || {};
+        if (isReportAbsent(report, rawSource, source)) return;
 
         source.accomplishments.forEach((a: any) =>
           pushUnique(allAccomplishments, { ...a, member: report.name }, [
@@ -984,10 +1028,16 @@ const DailyTab = ({
     allMissed: any[],
     meetingNotesText: string
   ) => {
+    const absentSubmittedIds = new Set(
+      allReports
+        .filter((r: any) => isReportAbsent(r, resolveRawSource(r)))
+        .map((r: any) => String(r.user_id))
+    );
     const pureMissedNames = allReports
       .filter((r: any) => r.status === "pending" && !r.daily_report)
       .map((r: any) => r.name);
     allMissed.forEach((m: any) => {
+      if (absentSubmittedIds.has(String(m.id || m.user_id))) return;
       if (!pureMissedNames.includes(m.name)) pureMissedNames.push(m.name);
     });
 
@@ -1348,6 +1398,14 @@ const DailyTab = ({
       })
     );
   let failedMembers = dailyData?.missed_members || [];
+  const absentSubmittedUserIds = new Set(
+    memberReports
+      .filter((report: any) => isReportAbsent(report, resolveRawSource(report)))
+      .map((report: any) => String(report.user_id))
+  );
+  failedMembers = failedMembers.filter(
+    (member: any) => !absentSubmittedUserIds.has(String(member.id || member.user_id))
+  );
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
       (r: any) => String(r.user_id) === selectedMember
@@ -1886,7 +1944,7 @@ const DailyTab = ({
                     .map((report: any) => {
                       const rId = report.journal_id || report.user_id;
                       const isExpanded = expandedReports.includes(rId);
-                      const isPending = report.status === "pending";
+                      const isRawPending = report.status === "pending";
                       const hasDraft = !!report.daily_report;
                       const isPermanentlyChecked =
                         report.checked_in_meeting === true;
@@ -1894,6 +1952,17 @@ const DailyTab = ({
 
                       const rawDisplayRd = resolveRawSource(report);
                       const displayRd = normalizeReportData(rawDisplayRd);
+                      const isAbsentReport = isReportAbsent(
+                        report,
+                        rawDisplayRd,
+                        displayRd
+                      );
+                      const isPending = isRawPending && !isAbsentReport;
+                      const absentReason = getReportAbsentReason(
+                        report,
+                        rawDisplayRd,
+                        displayRd
+                      );
 
                       const normalizedReportName = (report.name || "")
                         .trim()
@@ -1945,22 +2014,22 @@ const DailyTab = ({
                         return 0;
                       };
 
-                      const kpiAchieved = getScore(
-                        sections.kpi_achievement,
-                        kpisFallback.score
-                      );
+                      const kpiAchieved = isAbsentReport
+                        ? 0
+                        : getScore(sections.kpi_achievement, kpisFallback.score);
                       const kpiStr = `${kpiAchieved}/20`;
 
-                      const tasksIssuesAchieved = getScore(
-                        sections.tasks_issues_todos ?? sections.tasks_issues,
-                        kpisFallback.tasks
-                      );
+                      const tasksIssuesAchieved = isAbsentReport
+                        ? 0
+                        : getScore(
+                            sections.tasks_issues_todos ?? sections.tasks_issues,
+                            kpisFallback.tasks
+                          );
                       const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
-                      const planAchieved = getScore(
-                        sections.planning,
-                        kpisFallback.planning
-                      );
+                      const planAchieved = isAbsentReport
+                        ? 0
+                        : getScore(sections.planning, kpisFallback.planning);
                       const planStr = `${planAchieved}/20`;
 
                       const timeAchieved = getScore(
@@ -1970,10 +2039,12 @@ const DailyTab = ({
                       const timeStr = `${timeAchieved}/20`;
 
                       const selfRating =
-                        rawDisplayRd?.self_rating ??
-                        draftRaw?.details?.self_rating ??
-                        draftRaw?.sections?.self_rating ??
-                        null;
+                        isAbsentReport
+                          ? 0
+                          : rawDisplayRd?.self_rating ??
+                            draftRaw?.details?.self_rating ??
+                            draftRaw?.sections?.self_rating ??
+                            null;
                       const selfRatingText = formatSelfRating(selfRating);
 
                       const totalScoreValue = getReportTotalScore(
@@ -2170,12 +2241,13 @@ const DailyTab = ({
                                       </span>
                                     </div>
                                   )}
-                                  {displayRd.is_absent !== null &&
+                                  {(displayRd.is_absent !== null ||
+                                    isAbsentReport) &&
                                     displayRd.is_absent !== undefined && (
                                       <div
                                         className={cn(
                                           "flex items-center gap-2 rounded-xl px-4 py-2.5 border",
-                                          displayRd.is_absent
+                                          isAbsentReport
                                             ? "bg-red-50 border-red-100"
                                             : "bg-green-50 border-green-100"
                                         )}
@@ -2183,20 +2255,20 @@ const DailyTab = ({
                                         <span
                                           className={cn(
                                             "text-sm font-bold",
-                                            displayRd.is_absent
+                                            isAbsentReport
                                               ? "text-red-700"
                                               : "text-green-700"
                                           )}
                                         >
-                                          {displayRd.is_absent
-                                            ? "Absent"
+                                          {isAbsentReport
+                                            ? `Absent: ${absentReason}`
                                             : "Present"}
                                         </span>
                                       </div>
                                     )}
                                 </div>
 
-                                {displayRd.big_win && (
+                                {!isAbsentReport && displayRd.big_win && (
                                   <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
                                     <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                                     <div>

@@ -66,10 +66,6 @@ export const ItemsDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
-  // State management
-  // const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
-  // const [journals, setJournals] = useState([]);
-  // const [journals, setJournals] = useState<ManualJournalTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -250,31 +246,6 @@ export const ItemsDashboard = () => {
 
     fetchItems();
   }, []);
-
-
-  // Fetch journal entries
-  // const fetchJournals = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     const baseUrl = API_CONFIG.BASE_URL;
-  //     const token = API_CONFIG.TOKEN;
-  //     const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-  //     const response = await axios.get(url, {
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  //       },
-  //     });
-  //     setJournals(response.data.lock_account_transactions || []);
-  //     setMembershipType(response.data.lock_account_transactions || [])
-  //   } catch (error) {
-  //     console.error('Error fetching journal entries:', error);
-  //     toast.error('Failed to fetch journal entries');
-  //     setJournals([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, []);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -1146,17 +1117,6 @@ export const ItemsDashboard = () => {
             <AlertDialogCancel disabled={deleteLoading}>
               Cancel
             </AlertDialogCancel>
-
-            {/* <AlertDialogAction
-        onClick={(e) => {
-          e.preventDefault();
-          handleDeleteItem();
-        }}
-        disabled={deleteLoading}
-        className="bg-red-600 hover:bg-red-700 text-white"
-      >
-        {deleteLoading ? "Deleting..." : "OK"}
-      </AlertDialogAction> */}
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();

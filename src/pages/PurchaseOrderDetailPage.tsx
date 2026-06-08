@@ -939,10 +939,18 @@ export const PurchaseOrderDetailPage = () => {
                                 </TableCell>
 
                                 {/* Qty + unit */}
-                                <TableCell className="text-right align-top">
+                                {/* <TableCell className="text-right align-top">
                                   <span className="block">{item.quantity}</span>
                                   {item.unit && (
                                     <span className="text-xs text-muted-foreground">
+                                      {item.unit}
+                                    </span>
+                                  )}
+                                </TableCell> */}
+                                <TableCell className="text-right align-top">
+                                  {item.quantity}
+                                  {item.unit && (
+                                    <span className="block text-xs text-muted-foreground">
                                       {item.unit}
                                     </span>
                                   )}
