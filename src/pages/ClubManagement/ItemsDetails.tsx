@@ -7,53 +7,14 @@ import { toast } from "sonner";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import {
-
     FileText,
-    Package,
-    Calendar,
-    User,
-    Mail,
-    Phone,
-    MapPin,
     Edit,
-    Trash2,
-    Download,
-    Printer,
-    Send,
-    Copy,
-    Share2,
-    ShoppingCart,
-    Receipt,
-    DollarSign,
-    Paperclip,
-    FileSignature,
     CirclePlus,
-    Eye,
-    ClipboardList,
-    X,
 } from "lucide-react";
 import {
     TextField,
-    // Button,
-    FormControlLabel,
-    Checkbox,
-    IconButton,
     MenuItem,
-    Select,
-    FormControl,
-    InputLabel,
-    Drawer,
-    Typography,
-    Box,
-    Divider,
-    Radio,
-    RadioGroup,
     CircularProgress,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    InputAdornment,
     Chip
 } from '@mui/material';
 const muiTheme = createTheme({});
@@ -386,52 +347,6 @@ export const ItemsDetails = () => {
                     </div>
                 )}
 
-                {/* TRANSACTIONS */}
-                {/* {activeTab === "transactions" && (
-                    <div className="space-y-6">
-
-                        <h3 className="font-semibold">Sale Orders</h3>
-                        <EnhancedTaskTable
-                            data={itemData?.sale_orders || []}
-                            columns={[
-                                { key: "sale_order_number", label: "Order #" },
-                                { key: "date", label: "Date" },
-                                { key: "customer_name", label: "Customer" },
-                                { key: "total_amount", label: "Total" },
-                                { key: "status", label: "Status" },
-                            ]}
-                            renderRow={(row) => row}
-                        />
-
-                        <h3 className="font-semibold">Invoices</h3>
-                        <EnhancedTaskTable
-                            data={itemData?.invoices || []}
-                            columns={[
-                                { key: "invoice_number", label: "Invoice #" },
-                                { key: "date", label: "Date" },
-                                { key: "customer_name", label: "Customer" },
-                                { key: "total_amount", label: "Total" },
-                                { key: "status", label: "Status" },
-                            ]}
-                            renderRow={(row) => row}
-                        />
-
-                        <h3 className="font-semibold">Quotes</h3>
-                        <EnhancedTaskTable
-                            data={itemData?.quotes || []}
-                            columns={[
-                                { key: "quote_number", label: "Quote #" },
-                                { key: "date", label: "Date" },
-                                { key: "customer_name", label: "Customer" },
-                                { key: "total_amount", label: "Total" },
-                                { key: "status", label: "Status" },
-                            ]}
-                            renderRow={(row) => row}
-                        />
-
-                    </div>
-                )} */}
-
 
                 {activeTab === "transactions" && (
                     <div className="space-y-6">
@@ -548,27 +463,7 @@ export const ItemsDetails = () => {
                     </div>
                 )}
 
-                {/* HISTORY */}
-                {/* {activeTab === "history" && (
-                    <div className="border p-4 rounded">
-                        <p>
-                            Created At:{" "}
-                            {itemData?.created_at
-                                ? new Date(itemData.created_at).toLocaleString()
-                                : "-"}
-                        </p>
-                        <p>
-                            Updated At:{" "}
-                            {itemData?.updated_at
-                                ? new Date(itemData.updated_at).toLocaleString()
-                                : "-"}
-                        </p>
-                    </div>
-                )} */}
-
-
-
-
+                {/* HISTORY */} 
                 {activeTab === "history" && (
                     <div className="space-y-6">
                         <div className="border rounded bg-white">
@@ -639,9 +534,6 @@ export const ItemsDetails = () => {
                         </div>
                     </div>
                 )}
-
-
-
             </div>
         </ThemeProvider>
     );

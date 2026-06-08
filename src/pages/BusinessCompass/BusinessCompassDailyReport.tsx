@@ -381,6 +381,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     [key: string]: boolean;
   }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const calendarStripRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hiddenAutoIds, setHiddenAutoIds] = useState<Set<string>>(new Set());
   const [autoStarredIds, setAutoStarredIds] = useState<Set<string>>(new Set());
@@ -1747,18 +1748,27 @@ const BusinessCompassDailyReport: React.FC = () => {
     return result;
   }, [viewStartDate, reportsList, isLocallyDeletedReport, rosterWorkingDays]);
 
+  // Scroll calendar to show today
   useEffect(() => {
-    if (activeTab !== "submit") return;
-    calendarTodayRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
-    });
-  }, [activeTab, days]);
+    if (!calendarStripRef.current) return;
+    const timer = setTimeout(() => {
+      const track = calendarStripRef.current;
+      if (!track) return;
+      // Find today's day element and scroll to it
+      const todayElement = track.querySelector('[data-is-today="true"]');
+      if (todayElement) {
+        const trackRect = track.getBoundingClientRect();
+        const elementRect = todayElement.getBoundingClientRect();
+        const scrollAmount = elementRect.left - trackRect.left + track.scrollLeft - (trackRect.width - elementRect.width - 40);
+        track.scrollLeft = Math.max(0, scrollAmount);
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [days]);
 
   const handlePrevWeek = () => {
     const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() - 7);
+    newDate.setDate(newDate.getDate() - 1);
     setViewStartDate(newDate);
     const midWeek = new Date(newDate);
     midWeek.setDate(midWeek.getDate() + 3);
@@ -1768,7 +1778,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const handleNextWeek = () => {
     const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() + 7);
+    newDate.setDate(newDate.getDate() + 1);
     const maxStartDate = new Date();
     maxStartDate.setHours(0, 0, 0, 0);
     maxStartDate.setDate(maxStartDate.getDate() - 6);
@@ -2876,7 +2886,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       >
                         <ChevronLeft size={18} />
                       </button>
-                      <div className="bc-calendar-strip-track">
+                      <div className="bc-calendar-strip-track" ref={calendarStripRef}>
                         {days.map((item, index) => {
                           const barColor =
                             item.type === "filled"
@@ -2892,6 +2902,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <div
                               key={index}
                               ref={item.fullDate === todayDateKey ? calendarTodayRef : undefined}
+                              data-is-today={item.type === "missed" && item.status === "Today"}
                               className={cn(
                                 "bc-calendar-day",
                                 item.type === "holiday" && "bc-calendar-day-holiday",
@@ -5749,13 +5760,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <div className="bc-history-section-card mb-6">
                               <div className="bc-history-section-header">
                                 <div className="flex items-center gap-2">
-                                <TrendingUp
-                                  size={14}
-                                  className="text-[#DA7756]"
-                                />
-                                <span className="text-xs font-bold text-[#1a1a1a]">
-                                  Daily KPIs
-                                </span>
+                                  <TrendingUp
+                                    size={14}
+                                    className="text-[#DA7756]"
+                                  />
+                                  <span className="text-xs font-bold text-[#1a1a1a]">
+                                    Daily KPIs
+                                  </span>
                                 </div>
                               </div>
                               <div className="space-y-3">

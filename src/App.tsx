@@ -1206,6 +1206,7 @@ import { LoginPageWrapper } from "./components/LoginPageWrapper";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
+import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -2234,6 +2235,10 @@ function App() {
                               element={<BusinessCompassDailyReport />}
                             />
                             <Route
+                              path="/business-compass/ceo-dashboard"
+                              element={<PATMCeoDashboard />}
+                            />
+                            <Route
                               path="/business-compass/weekly-report"
                               element={<WeeklyReports />}
                             />
@@ -2481,7 +2486,7 @@ function App() {
                               path="/accounting/payments-made"
                               element={<PaymentsMadePage />}
                             />
-                             {/* <Route
+                            {/* <Route
                               path="/accounting/payments-made/:id"
                               element={<PaymentDetailPage/>}
                             /> */}
