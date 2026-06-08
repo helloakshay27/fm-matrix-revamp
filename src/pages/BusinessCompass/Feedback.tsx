@@ -2590,12 +2590,12 @@ function EditFeedbackModal({
                   >
                     <Star
                       className={cn(
-                        "h-5 w-5",
+                        "h-5 w-5 transition-all duration-200",
                         n <= rating
                           ? "fill-[#ffb000] text-[#ffb000]"
-                          : "fill-[#e8edf5] text-[#e8edf5]"
+                          : "fill-transparent text-[#ffb000]"
                       )}
-                      strokeWidth={n <= rating ? 0 : 1.5}
+                      strokeWidth={1.5}
                     />
                   </button>
                 ))}
@@ -2884,12 +2884,12 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
               >
                 <Star
                   className={cn(
-                    "h-5 w-5",
+                    "h-5 w-5 transition-all duration-200",
                     n <= rating
                       ? "fill-[#ffb000] text-[#ffb000]"
-                      : "fill-[#e8edf5] text-[#e8edf5]"
+                      : "fill-transparent text-[#ffb000]"
                   )}
-                  strokeWidth={n <= rating ? 0 : 1.5}
+                  strokeWidth={1.5}
                 />
               </button>
             ))}

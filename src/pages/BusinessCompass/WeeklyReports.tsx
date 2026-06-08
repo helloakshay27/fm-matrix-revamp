@@ -4762,96 +4762,8 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
                             <div className="space-y-2.5">
-                                <div className="flex flex-wrap gap-2">
-                                    {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
-                                        (id) => {
-                                            const meta = REMARK_CHIP_META[id];
-                                            const isActive = activeRemarkChip === id;
-                                            return (
-                                                <button
-                                                    key={id}
-                                                    type="button"
-                                                    aria-pressed={isActive}
-                                                    onClick={() => handleRemarkChipClick(id)}
-                                                    className={cn(
-                                                        "inline-flex h-7 items-center rounded-[7px] border px-3.5 text-[9px] font-medium transition-colors [&>svg]:hidden",
-                                                        "active:scale-[0.98] active:brightness-95",
-                                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
-                                                        isActive ? meta.chipActive : meta.chipInactive
-                                                    )}
-                                                >
-                                                    {id === "breakthrough" && (
-                                                        <Activity
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "breakdown" && (
-                                                        <TrendingUp
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "employeeFeedback" && (
-                                                        <User
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "clientFeedback" && (
-                                                        <Users
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "remark" && (
-                                                        <Smile
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {meta.label}
-                                                </button>
-                                            );
-                                        }
-                                    )}
-                                </div>
-                                <Textarea
-                                    ref={remarksTextareaRef}
-                                    value={remarksText}
-                                    onChange={(e) => setRemarksText(e.target.value)}
-                                    onFocus={handleRemarksAreaActivate}
-                                    placeholder={
-                                        activeRemarkChip
-                                            ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
-                                            : "Add your remark..."
-                                    }
-                                    className="min-h-[82px] resize-none rounded-[8px] border border-neutral-200 bg-white px-3.5 py-2.5 text-[10px] shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                                />
-                                <Button
-                                    type="button"
-                                    onClick={handleAddRemark}
-                                    className={cn("ml-auto flex h-7 w-fit rounded-[7px] px-3.5 text-[10px] font-medium", btnOutline)}
-                                >
-                                    <Plus className="mr-1 h-3 w-3" />
-                                    Add{" "}
-                                    {activeRemarkChip
-                                        ? REMARK_CHIP_META[activeRemarkChip].label
-                                        : "Remark"}
-                                </Button>
-
                                 {remarksList.length > 0 && (
-                                    <div className="mt-3 space-y-2 border-t border-dashed border-neutral-200 pt-3">
+                                    <div className="mb-3 space-y-2 border-b border-dashed border-neutral-200 pb-3">
                                         {remarksList.map((remark, index) => {
                                             const isBreakdown = remark.type === "breakdown";
                                             const isBreakthrough = remark.type === "breakthrough";
@@ -4903,11 +4815,102 @@ const WeeklyReports = () => {
                                         })}
                                     </div>
                                 )}
+
+                                <div className="flex flex-wrap gap-2">
+                                    {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
+                                        (id) => {
+                                            const meta = REMARK_CHIP_META[id];
+                                            const isActive = activeRemarkChip === id;
+                                            return (
+                                                <button
+                                                    key={id}
+                                                    type="button"
+                                                    aria-pressed={isActive}
+                                                    onClick={() => handleRemarkChipClick(id)}
+                                                    className={cn(
+                                                        "inline-flex h-8 items-center rounded-[8px] border px-4 text-[11px] font-medium transition-colors [&>svg]:hidden",
+                                                        "active:scale-[0.98] active:brightness-95",
+                                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
+                                                        isActive ? meta.chipActive : meta.chipInactive
+                                                    )}
+                                                >
+                                                    {id === "breakthrough" && (
+                                                        <Activity
+                                                            className={cn(
+                                                                "mr-1.5 h-4 w-4 shrink-0",
+                                                                isActive ? "text-white" : "text-neutral-500"
+                                                            )}
+                                                        />
+                                                    )}
+                                                    {id === "breakdown" && (
+                                                        <TrendingUp
+                                                            className={cn(
+                                                                "mr-1.5 h-4 w-4 shrink-0",
+                                                                isActive ? "text-white" : "text-neutral-500"
+                                                            )}
+                                                        />
+                                                    )}
+                                                    {id === "employeeFeedback" && (
+                                                        <User
+                                                            className={cn(
+                                                                "mr-1.5 h-4 w-4 shrink-0",
+                                                                isActive ? "text-white" : "text-neutral-500"
+                                                            )}
+                                                        />
+                                                    )}
+                                                    {id === "clientFeedback" && (
+                                                        <Users
+                                                            className={cn(
+                                                                "mr-1.5 h-4 w-4 shrink-0",
+                                                                isActive ? "text-white" : "text-neutral-500"
+                                                            )}
+                                                        />
+                                                    )}
+                                                    {id === "remark" && (
+                                                        <Smile
+                                                            className={cn(
+                                                                "mr-1.5 h-4 w-4 shrink-0",
+                                                                isActive ? "text-white" : "text-neutral-500"
+                                                            )}
+                                                        />
+                                                    )}
+                                                    {meta.label}
+                                                </button>
+                                            );
+                                        }
+                                    )}
+                                </div>
+                                <Textarea
+                                    ref={remarksTextareaRef}
+                                    value={remarksText}
+                                    onChange={(e) => setRemarksText(e.target.value)}
+                                    onFocus={handleRemarksAreaActivate}
+                                    placeholder={
+                                        activeRemarkChip
+                                            ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
+                                            : "Add your remark..."
+                                    }
+                                    className="min-h-[86px] resize-none rounded-[10px] border border-neutral-200 bg-white px-4 py-3 text-xs shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={handleAddRemark}
+                                    className={cn("ml-auto flex h-7 w-fit rounded-[7px] px-3.5 text-[10px] font-medium", btnOutline)}
+                                >
+                                    <Plus className="mr-1 h-3 w-3" />
+                                    Add{" "}
+                                    {activeRemarkChip
+                                        ? REMARK_CHIP_META[activeRemarkChip].label
+                                        : "Remark"}
+                                </Button>
+
+                                {/* remarks list moved above */}
                             </div>
                         </Card>
 
                         {/* Automated Weekly Score Preview */}
-                        <Card className={cn("flex h-full flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
+                        <div className="flex flex-col gap-4">
+                            <Card className={cn("flex flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
                             <div className="mb-3 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
                                     <Target className="h-4 w-4 shrink-0 text-[#111111]" />
@@ -4944,57 +4947,28 @@ const WeeklyReports = () => {
                                 ))}
                             </div>
 
-                            <div className="w-full leading-none">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsScoreBreakdownOpen((open) => !open)}
-                                    className="flex items-center gap-1 py-0 text-xs font-medium leading-none text-[#DA7756]"
-                                >
-                                    <ChevronRight
-                                        size={14}
-                                        className={cn(
-                                            "transition-transform duration-200",
-                                            isScoreBreakdownOpen && "rotate-90"
-                                        )}
-                                    />
-                                    Detailed Score Calculation Breakdown
-                                </button>
-                                {isScoreBreakdownOpen && (
-                                    <div className="mt-3 overflow-hidden rounded-[10px] border border-[#eadfd7] bg-white text-[11px] shadow-inner">
-                                        <div className="hidden grid-cols-[1fr_0.55fr_0.55fr_2fr] gap-3 bg-[#f8efe9] px-3 py-2 text-[10px] font-black uppercase text-[#8b6f62] sm:grid">
-                                            <span>Section</span>
-                                            <span>Score</span>
-                                            <span>Max</span>
-                                            <span>Calculation</span>
-                                        </div>
-                                        {liveScoreRows.map((row) => (
-                                            <div
-                                                key={row.label}
-                                                className="grid grid-cols-1 gap-1 border-t border-[#f0e7e1] px-3 py-2.5 sm:grid-cols-[1fr_0.55fr_0.55fr_2fr] sm:gap-3"
-                                            >
-                                                <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="font-black text-[#111111]">
-                                                        {row.label}
-                                                    </span>
-                                                    <span className="font-black text-[#DA7756] sm:hidden">
-                                                        {formatLiveScore(row.score)}/{row.max}
-                                                    </span>
-                                                </div>
-                                                <span className="hidden font-black text-[#DA7756] sm:block">
-                                                    {formatLiveScore(row.score)}/{row.max}
-                                                </span>
-                                                <span className="text-[10px] font-bold uppercase text-[#8b6f62] sm:text-[11px] sm:text-[#6f625c]">
-                                                    {row.max} pts
-                                                </span>
-                                                <p className="leading-relaxed text-[#6f625c]">
-                                                    {row.calculation}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+
                         </Card>
+
+                            <div className="mb-0 flex items-start gap-2.5 shrink-0 rounded-[12px] border border-[#efcdbf] bg-[#f6e8df] px-3 py-2.5 shadow-none sm:items-center">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#DA7756] text-white">
+                                    <Star className="h-4 w-4 fill-white text-white" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h4 className="text-sm font-bold leading-tight text-[#2f2f2f]">
+                                            Bonus Opportunity!
+                                        </h4>
+                                        <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-black text-white hover:bg-[#DA7756]">
+                                            + 05 pts
+                                        </Badge>
+                                    </div>
+                                    <p className="mt-0 text-xs leading-tight text-[#6f625c]">
+                                        Submit within the week window to earn bonus points.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                         </div>
 
                         <button
@@ -5021,23 +4995,55 @@ const WeeklyReports = () => {
                             )}
                         </button>
 
-                        <div className="mb-0 flex items-start gap-3 rounded-[16px] border border-[#efcdbf] bg-[#f6e8df] px-4 pb-3 pt-3 shadow-none sm:items-center">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#DA7756] text-white">
-                                <Star className="h-5 w-5 fill-white text-white" />
-                            </div>
-                            <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h4 className="text-base font-bold leading-tight text-[#2f2f2f]">
-                                        Bonus Opportunity!
-                                    </h4>
-                                    <Badge className="border-0 bg-[#DA7756] px-2.5 py-1 text-[11px] font-black text-white hover:bg-[#DA7756]">
-                                        + 05 pts
-                                    </Badge>
+                        <div className="w-full leading-none mt-4">
+                            <button
+                                type="button"
+                                onClick={() => setIsScoreBreakdownOpen((open) => !open)}
+                                className="flex items-center justify-center w-full gap-1 py-0 text-xs font-medium leading-none text-[#DA7756]"
+                            >
+                                <ChevronRight
+                                    size={14}
+                                    className={cn(
+                                        "transition-transform duration-200",
+                                        isScoreBreakdownOpen && "rotate-90"
+                                    )}
+                                />
+                                Detailed Score Calculation Breakdown
+                            </button>
+                            {isScoreBreakdownOpen && (
+                                <div className="mt-3 overflow-hidden rounded-[10px] border border-[#eadfd7] bg-white text-[11px] shadow-inner">
+                                    <div className="hidden grid-cols-[1fr_0.55fr_0.55fr_2fr] gap-3 bg-[#f8efe9] px-3 py-2 text-[10px] font-black uppercase text-[#8b6f62] sm:grid">
+                                        <span>Section</span>
+                                        <span>Score</span>
+                                        <span>Max</span>
+                                        <span>Calculation</span>
+                                    </div>
+                                    {liveScoreRows.map((row) => (
+                                        <div
+                                            key={row.label}
+                                            className="grid grid-cols-1 gap-1 border-t border-[#f0e7e1] px-3 py-2.5 sm:grid-cols-[1fr_0.55fr_0.55fr_2fr] sm:gap-3"
+                                        >
+                                            <div className="flex items-center justify-between gap-3 sm:block">
+                                                <span className="font-black text-[#111111]">
+                                                    {row.label}
+                                                </span>
+                                                <span className="font-black text-[#DA7756] sm:hidden">
+                                                    {formatLiveScore(row.score)}/{row.max}
+                                                </span>
+                                            </div>
+                                            <span className="hidden font-black text-[#DA7756] sm:block">
+                                                {formatLiveScore(row.score)}/{row.max}
+                                            </span>
+                                            <span className="text-[10px] font-bold uppercase text-[#8b6f62] sm:text-[11px] sm:text-[#6f625c]">
+                                                {row.max} pts
+                                            </span>
+                                            <p className="leading-relaxed text-[#6f625c]">
+                                                {row.calculation}
+                                            </p>
+                                        </div>
+                                    ))}
                                 </div>
-                                <p className="mt-0.5 text-sm leading-tight text-[#6f625c]">
-                                    Submit within the week window to earn bonus points.
-                                </p>
-                            </div>
+                            )}
                         </div>
                     </TabsContent>
 
