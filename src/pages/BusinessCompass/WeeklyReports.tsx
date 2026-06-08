@@ -4762,60 +4762,6 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
                             <div className="space-y-2.5">
-                                {remarksList.length > 0 && (
-                                    <div className="mb-3 space-y-2 border-b border-dashed border-neutral-200 pb-3">
-                                        {remarksList.map((remark, index) => {
-                                            const isBreakdown = remark.type === "breakdown";
-                                            const isBreakthrough = remark.type === "breakthrough";
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className={cn(
-                                                        "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
-                                                        isBreakdown
-                                                            ? "bg-red-50 border-red-200 text-red-900"
-                                                            : isBreakthrough
-                                                                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                                                                : "bg-white border-neutral-200 text-neutral-800"
-                                                    )}
-                                                >
-                                                    {remark.type === "breakdown" ? (
-                                                        <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
-                                                    ) : remark.type === "breakthrough" ? (
-                                                        <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
-                                                    ) : remark.type === "employeeFeedback" ? (
-                                                        <User className="h-4 w-4 text-blue-500 mt-0.5" />
-                                                    ) : remark.type === "clientFeedback" ? (
-                                                        <Users className="h-4 w-4 text-purple-500 mt-0.5" />
-                                                    ) : remark.type === "remark" ? (
-                                                        <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
-                                                    ) : (
-                                                        <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
-                                                    )}
-                                                    <div className="flex-1 space-y-1">
-                                                        {remark.type && (
-                                                            <p className="text-xs font-bold">
-                                                                {REMARK_CHIP_META[remark.type as RemarkChipId]
-                                                                    ?.label || remark.type}
-                                                            </p>
-                                                        )}
-                                                        <p className="text-sm whitespace-pre-wrap">
-                                                            {remark.text}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveRemark(index)}
-                                                        className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-
                                 <div className="flex flex-wrap gap-2">
                                     {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
                                         (id) => {
@@ -4904,7 +4850,62 @@ const WeeklyReports = () => {
                                         : "Remark"}
                                 </Button>
 
-                                {/* remarks list moved above */}
+                                {remarksList.length > 0 && (
+                                    <div className={cn(
+                                        "mt-4 pt-4 space-y-2 border-t border-dashed border-neutral-200 pr-2",
+                                        remarksList.length > 1 ? "max-h-[120px] overflow-y-auto" : ""
+                                    )}>
+                                        {remarksList.map((remark, index) => {
+                                            const isBreakdown = remark.type === "breakdown";
+                                            const isBreakthrough = remark.type === "breakthrough";
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className={cn(
+                                                        "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
+                                                        isBreakdown
+                                                            ? "bg-red-50 border-red-200 text-red-900"
+                                                            : isBreakthrough
+                                                                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                                                                : "bg-white border-neutral-200 text-neutral-800"
+                                                    )}
+                                                >
+                                                    {remark.type === "breakdown" ? (
+                                                        <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
+                                                    ) : remark.type === "breakthrough" ? (
+                                                        <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
+                                                    ) : remark.type === "employeeFeedback" ? (
+                                                        <User className="h-4 w-4 text-blue-500 mt-0.5" />
+                                                    ) : remark.type === "clientFeedback" ? (
+                                                        <Users className="h-4 w-4 text-purple-500 mt-0.5" />
+                                                    ) : remark.type === "remark" ? (
+                                                        <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
+                                                    ) : (
+                                                        <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
+                                                    )}
+                                                    <div className="flex-1 space-y-1">
+                                                        {remark.type && (
+                                                            <p className="text-xs font-bold">
+                                                                {REMARK_CHIP_META[remark.type as RemarkChipId]
+                                                                    ?.label || remark.type}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-sm whitespace-pre-wrap">
+                                                            {remark.text}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveRemark(index)}
+                                                        className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </Card>
 

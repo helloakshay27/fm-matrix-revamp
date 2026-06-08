@@ -3118,7 +3118,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
 
                       <div className="bc-daily-card-body space-y-6">
-                        <div className="space-y-3">
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
                           {visibleAccomplishments.length === 0 &&
                             autoAddedAccomplishments.length === 0 && (
                               <div className="flex flex-col items-center justify-center border-t border-dashed border-gray-200 px-4 pb-3 pt-10 text-center">
