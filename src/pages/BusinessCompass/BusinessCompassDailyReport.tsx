@@ -2400,6 +2400,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           is_absent: isAbsent,
           description: isAbsent ? absenceReason : null,
           report_data: {
+            ...(isAbsent && absenceReason.trim() ? { absent_reason: absenceReason.trim() } : {}),
             accomplishments: {
               // Ensure we only save items that were actually completed!
               items: accomplishmentItemsPayload,
@@ -2782,16 +2783,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                 <div className="bg-[#DA7756] rounded-[8px] p-1.5 flex items-center justify-center shrink-0">
                   <AiSparkleIcon className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-sm font-bold text-[#1a1a1a]">
+                <span className="bc-ai-banner-glow-text text-sm font-bold text-[#1a1a1a]">
                   AI Suggestions{" "}
                   <span className="font-normal text-gray-500">— Focus areas to improve your daily report</span>
                 </span>
               </div>
-              <span className="bc-points-badge">{aiInsights.length} Insights</span>
+              <span className="bc-points-badge bc-ai-banner-glow-text">{aiInsights.length} Insights</span>
             </div>
             <div className="flex flex-col lg:flex-row gap-3">
               {aiInsights.map((insight) => (
-                <div key={insight.id} className="bc-ai-insight-card">
+                <div
+                  key={insight.id}
+                  className="bc-ai-insight-card bc-ai-insight-card-glow"
+                  style={{ "--insight-accent": `rgba(${insight.color === "#dc2626" ? "220,38,38" : insight.color === "#16a34a" ? "22,163,74" : insight.color === "#ea580c" ? "234,88,12" : "124,58,237"}, 0.16)`, animationDelay: `${aiInsights.indexOf(insight) * 120}ms` } as React.CSSProperties}
+                >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <div className="flex items-center gap-2">
                       {insight.icon}
@@ -2870,7 +2875,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 ? "#E57373"
                                 : item.type === "holiday"
                                   ? "#D1D5DB"
-                                  : "transparent";
+                                  : "#e5e7eb";
                           const isSelected = startDate === item.fullDate;
                           const isToday = item.fullDate === todayDateKey;
                           return (
@@ -2892,12 +2897,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {isToday && (
                                 <div className="bc-calendar-day-current-dot" />
                               )}
-                              {barColor !== "transparent" && (
-                                <div
+                              <div
                                   className="bc-calendar-day-bar"
                                   style={{ backgroundColor: barColor }}
                                 />
-                              )}
                               <span className="bc-calendar-day-day">{item.day}</span>
                               <span className="bc-calendar-day-date">{item.date}</span>
                             </div>

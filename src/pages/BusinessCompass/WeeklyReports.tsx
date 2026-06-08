@@ -3377,6 +3377,17 @@ const WeeklyReports = () => {
                                 </div>
                             </div>
                             <div className="space-y-3 px-5 pb-5 max-h-[360px] overflow-y-auto">
+                                {wins.length === 0 && !mergedTasksIssues.some((item: any) => ["completed", "closed", "done"].includes(item.status)) && (
+                                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fdf8f5] mb-3">
+                                            <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                        </div>
+                                        <p className="text-sm font-semibold text-neutral-900">No accomplishments yet</p>
+                                        <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
+                                            Add your weekly wins or complete tasks to see them here.
+                                        </p>
+                                    </div>
+                                )}
                                 {wins.map((win, index) => winDates[index] ? null : (
                                     <div
                                         key={index}

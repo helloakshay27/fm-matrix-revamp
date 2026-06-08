@@ -244,7 +244,7 @@ const fetchDynamicMeetings = async () => {
 // 2. Fetch Report Stats
 const fetchDynamicReport = async ({ meetingId, period }) => {
   const url = new URL(
-    `https://${BASE_URL}/user_journals/daily_meeting_report`
+    `https://${BASE_URL}/user_journals/analytics`
   );
   if (meetingId) {
     url.searchParams.append("meeting_id", meetingId);
