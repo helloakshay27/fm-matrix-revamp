@@ -697,6 +697,7 @@
   flex: 1;
   padding: 12px 4px 8px;
   scrollbar-width: none;
+  scroll-behavior: smooth;
 }
 
 .bc-calendar-strip-track::-webkit-scrollbar {
