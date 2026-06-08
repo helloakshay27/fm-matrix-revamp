@@ -9,6 +9,16 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -128,6 +138,13 @@ const columns: ColumnConfig[] = [
         sortable: true,
         hideable: true,
         draggable: true
+    },
+    {
+        key: 'active',
+        label: 'Active/Inactive',
+        sortable: false,
+        hideable: true,
+        draggable: false
     }
 ];
 
@@ -143,6 +160,9 @@ export const SalesOrderListPage: React.FC = () => {
     const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
     const [errorModal, setErrorModal] = useState<{ show: boolean; errors: { id: string; message: string }[] }>({ show: false, errors: [] });
     const [loading, setLoading] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
         per_page: 10,
@@ -300,20 +320,20 @@ export const SalesOrderListPage: React.FC = () => {
                 >
                     <Eye className="w-4 h-4" />
                 </button>
-                {/* <button
+                <button
                     onClick={() => handleEdit(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button> */}
-                {/* <button
-                    onClick={() => handleDelete(order.id)}
-                    className="p-1 text-black hover:bg-gray-100 rounded"
+                </button>
+                <button
+                    onClick={() => openDeleteDialog(order.id)}
+                    className="p-1 text-red-600 hover:text-red-700 hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button> */}
+                </button>
             </div>
         ),
 
@@ -369,7 +389,31 @@ export const SalesOrderListPage: React.FC = () => {
                     </span>
                 )}
             </div>
-        )
+        ),
+        active: (() => {
+            const isActive = !!order.active;
+            return (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(order)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+                      }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+        
+                  <span
+                    className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
+                      }`}
+                  >
+                  </span>
+                </div>
+            );
+        })()
     });
 
     const handleView = (id: number) => {
@@ -380,12 +424,61 @@ export const SalesOrderListPage: React.FC = () => {
         navigate(`/accounting/sales-order/edit/${id}`);
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this sales order?')) {
-            toast.success('Sales order deleted successfully!', {
-                duration: 3000,
-            });
+    const openDeleteDialog = (id: number) => {
+        setSelectedDeleteId(id);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!selectedDeleteId) return;
+        setDeleteLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            await axios.delete(
+                `https://${baseUrl}/lock_account_sales_orders/${selectedDeleteId}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    }
+                }
+            );
+            toast.success('Sales order deleted successfully!', { duration: 3000 });
+            setDeleteDialogOpen(false);
+            setSelectedDeleteId(null);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error("Failed to delete sales order");
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const handleToggleStatus = async (order: SalesOrder) => {
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const url = `https://${baseUrl}/sale_orders/${order.id}/toggle_active.json`;
+
+            const response = await axios.patch(
+                url,
+                {},
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                }
+            );
+
+            toast.success(response?.data?.message || "Status updated successfully");
+            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error) {
+            console.error("Toggle status error:", error);
+            toast.error("Failed to update status");
         }
     };
 
@@ -561,6 +654,31 @@ export const SalesOrderListPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Sales Order</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Once you delete this sales order, you won't be able to retrieve it later.
+                            Are you sure you want to delete?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => { e.preventDefault(); handleDeleteConfirm(); }}
+                            disabled={deleteLoading}
+                            style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#b91c1c'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#dc2626'; }}
+                        >
+                            {deleteLoading ? 'Deleting...' : 'OK'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
