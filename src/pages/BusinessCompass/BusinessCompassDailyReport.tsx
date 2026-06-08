@@ -1691,17 +1691,115 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - 6);
+    const day = d.getDay();
+    d.setDate(d.getDate() - day);
     return d;
   });
   const todayDateKey = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
+
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const hasDraggedRef = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    hasDraggedRef.current = false;
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = Math.abs(e.clientX - dragStartRef.current.x);
+    const diffY = Math.abs(e.clientY - dragStartRef.current.y);
+    if (diffX > 10 || diffY > 10) {
+      hasDraggedRef.current = true;
+    }
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = e.clientX - dragStartRef.current.x;
+    dragStartRef.current = null;
+    setIsDragging(false);
+    if (diffX > 50) {
+      handlePrevWeek();
+    } else if (diffX < -50) {
+      handleNextWeek();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    dragStartRef.current = null;
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    dragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    hasDraggedRef.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = Math.abs(e.touches[0].clientX - dragStartRef.current.x);
+    const diffY = Math.abs(e.touches[0].clientY - dragStartRef.current.y);
+    if (diffX > 10 || diffY > 10) {
+      hasDraggedRef.current = true;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = e.changedTouches[0].clientX - dragStartRef.current.x;
+    dragStartRef.current = null;
+    if (diffX > 50) {
+      handlePrevWeek();
+    } else if (diffX < -50) {
+      handleNextWeek();
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaX) > 20) {
+      if (e.deltaX > 0) {
+        handleNextWeek();
+      } else {
+        handlePrevWeek();
+      }
+    }
+  };
+
+  const handlePrevWeek = () => {
+    const newDate = new Date(viewStartDate);
+    newDate.setDate(newDate.getDate() - 7);
+    setViewStartDate(newDate);
+    const midWeek = new Date(newDate);
+    midWeek.setDate(midWeek.getDate() + 3);
+    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
+    setSelectedYear(midWeek.getFullYear().toString());
+  };
+
+  const handleNextWeek = () => {
+    const newDate = new Date(viewStartDate);
+    newDate.setDate(newDate.getDate() + 7);
+    const maxStartDate = new Date();
+    maxStartDate.setHours(0, 0, 0, 0);
+    const day = maxStartDate.getDay();
+    maxStartDate.setDate(maxStartDate.getDate() - day);
+    const nextStartDate =
+      newDate.getTime() > maxStartDate.getTime() ? maxStartDate : newDate;
+    setViewStartDate(nextStartDate);
+    const midWeek = new Date(nextStartDate);
+    midWeek.setDate(midWeek.getDate() + 3);
+    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
+    setSelectedYear(midWeek.getFullYear().toString());
+  };
 
   const days = React.useMemo(() => {
     const result = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const date = new Date(viewStartDate);
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 7; i++) {
       const dateStr = date.toLocaleDateString("en-CA");
       const isToday = date.getTime() === today.getTime();
       const isPast = date.getTime() < today.getTime();
@@ -1742,12 +1840,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         type,
         actualDate: new Date(date),
         isFuture,
+        isToday,
       });
       date.setDate(date.getDate() + 1);
     }
     return result;
   }, [viewStartDate, reportsList, isLocallyDeletedReport, rosterWorkingDays]);
-
   // Scroll calendar to show today
   useEffect(() => {
     if (!calendarStripRef.current) return;
@@ -1765,31 +1863,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     }, 100);
     return () => clearTimeout(timer);
   }, [days]);
-
-  const handlePrevWeek = () => {
-    const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() - 1);
-    setViewStartDate(newDate);
-    const midWeek = new Date(newDate);
-    midWeek.setDate(midWeek.getDate() + 3);
-    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
-    setSelectedYear(midWeek.getFullYear().toString());
-  };
-
-  const handleNextWeek = () => {
-    const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() + 1);
-    const maxStartDate = new Date();
-    maxStartDate.setHours(0, 0, 0, 0);
-    maxStartDate.setDate(maxStartDate.getDate() - 6);
-    const nextStartDate =
-      newDate.getTime() > maxStartDate.getTime() ? maxStartDate : newDate;
-    setViewStartDate(nextStartDate);
-    const midWeek = new Date(nextStartDate);
-    midWeek.setDate(midWeek.getDate() + 3);
-    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
-    setSelectedYear(midWeek.getFullYear().toString());
-  };
 
   const handleSelectDate = (item: any) => {
     setSelectedDate(item.date);
@@ -2851,247 +2924,251 @@ const BusinessCompassDailyReport: React.FC = () => {
           <TabsContent value="submit" className="space-y-6 mt-0">
             <div className="bc-daily-grid">
               <div className="space-y-6">
-                {/* Calendar Card */}
-                <div className="bc-daily-card">
-                  <div className="bc-daily-card-header">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-bold text-[#1a1a1a]">
-                        Daily Report for {formattedSelectedDate}
-                      </span>
-                      <ChevronDown size={16} className="text-gray-400" />
-                    </div>
-                    <button
-                      type="button"
-                      className="bc-absent-btn"
-                      onClick={() => {
-                        markDraftDirty();
-                        setIsAbsent(!isAbsent);
-                      }}
-                    >
-                      <Checkbox
-                        checked={isAbsent}
-                        className="h-3.5 w-3.5 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
-                        onCheckedChange={() => { }}
-                      />
-                      Mark as Absent
-                    </button>
-                  </div>
-                  <div className="bc-daily-card-body">
-                    <div className="bc-calendar-strip mb-2">
-                      <button
-                        type="button"
-                        onClick={handlePrevWeek}
-                        className="bc-calendar-nav-btn"
-                        aria-label="Previous dates"
-                      >
-                        <ChevronLeft size={18} />
-                      </button>
-                      <div className="bc-calendar-strip-track" ref={calendarStripRef}>
-                        {days.map((item, index) => {
-                          const barColor =
-                            item.type === "filled"
-                              ? "#4DB6AC"
-                              : item.type === "missed"
-                                ? "#E57373"
-                                : item.type === "holiday"
-                                  ? "#D1D5DB"
-                                  : "#e5e7eb";
-                          const isSelected = startDate === item.fullDate;
-                          const isToday = item.fullDate === todayDateKey;
-                          return (
-                            <div
-                              key={index}
-                              ref={item.fullDate === todayDateKey ? calendarTodayRef : undefined}
-                              data-is-today={item.type === "missed" && item.status === "Today"}
-                              className={cn(
-                                "bc-calendar-day",
-                                item.type === "holiday" && "bc-calendar-day-holiday",
-                                item.isFuture && item.type !== "holiday" && "bc-calendar-day-future",
-                                isSelected && "bc-calendar-day-selected"
-                              )}
-                              onClick={() =>
-                                !item.isFuture &&
-                                item.type !== "holiday" &&
-                                handleSelectDate(item)
-                              }
-                            >
-                              {isToday && (
-                                <div className="bc-calendar-day-current-dot" />
-                              )}
-                              <div
-                                  className="bc-calendar-day-bar"
-                                  style={{ backgroundColor: barColor }}
-                                />
-                              <span className="bc-calendar-day-day">{item.day}</span>
-                              <span className="bc-calendar-day-date">{item.date}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleNextWeek}
-                        className="bc-calendar-nav-btn"
-                        aria-label="Next dates"
-                      >
-                        <ChevronRight size={18} />
-                      </button>
-                    </div>
 
-                    <div className="bc-calendar-legend-row">
-                      {[
-                        { color: "#4DB6AC", label: "Filled" },
-                        { color: "#E57373", label: "Missed" },
-                        { color: "#D1D5DB", label: "Holiday" },
-                      ].map(({ color, label }) => (
-                        <div
-                          key={label}
-                          className="flex items-center gap-2 text-xs text-gray-500 font-medium"
-                        >
-                          <div
-                            className="bc-calendar-legend-bar"
-                            style={{ backgroundColor: color }}
-                          />
-                          <span>{label}</span>
+            {/* Calendar Card */}
+            <div className="bc-daily-card">
+              <div className="bc-daily-card-header">
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-bold text-[#1a1a1a]">
+                    Daily Report for {formattedSelectedDate}
+                  </span>
+                  <ChevronDown size={16} className="text-gray-400" />
+                </div>
+                <button
+                  type="button"
+                  className="bc-absent-btn"
+                  onClick={() => {
+                    markDraftDirty();
+                    setIsAbsent(!isAbsent);
+                  }}
+                >
+                  <Checkbox
+                    checked={isAbsent}
+                    className="h-4 w-4 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                    onCheckedChange={() => {}}
+                  />
+                  Mark as Absent
+                </button>
+              </div>
+              <div className="bc-daily-card-body">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+                  <button onClick={handlePrevWeek}
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 flex-shrink-0 transition-colors">
+                    <ChevronLeft size={13} />
+                  </button>
+                  <div 
+                    className="flex-1 flex gap-2 sm:gap-3"
+                    style={{ cursor: isDragging ? "grabbing" : "grab", userSelect: "none" }}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseLeave}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onWheel={handleWheel}
+                  >
+                    {days.map((item, index) => {
+                      let cardBg = "#F5F5F5";
+                      let borderColor = "transparent";
+                      let topBarColor = "transparent";
+                      
+                      if (item.type === "filled") {
+                        topBarColor = "#61CDBB";
+                      } else if (item.type === "missed" && !item.isToday) {
+                        topBarColor = "#E28B8B";
+                      } else if (item.type === "holiday") {
+                        topBarColor = "#D1D5DB";
+                      }
+
+                      const isSelected = startDate === item.fullDate;
+                      const nextWorkDay = getNextWorkingDay(startDate);
+                      const hasScheduledForDay = item.fullDate === nextWorkDay && tomorrowScheduledItems.length > 0;
+                      const showUpcomingDot = item.isFuture && item.type !== "holiday" && (hasScheduledForDay || item.type === "upcoming");
+
+                      if (isSelected) {
+                        cardBg = "#FFFFFF";
+                        borderColor = "#DA7756";
+                      }
+
+                      return (
+                        <div key={index} 
+                          onClick={() => !hasDraggedRef.current && !item.isFuture && item.type !== "holiday" && handleSelectDate(item)}
+                          className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-lg relative"
+                          style={{ 
+                            background: cardBg, 
+                            border: isSelected ? `1.5px solid ${borderColor}` : "1.5px solid transparent", 
+                            padding: "6px 2px", 
+                            minHeight: "60px",
+                            opacity: (item.isFuture && item.type !== "holiday") ? 0.6 : 1,
+                            cursor: (item.isFuture || item.type === "holiday") ? "default" : "pointer"
+                          }}>
+                          {topBarColor !== "transparent" && (
+                            <div className="absolute top-0 left-0 right-0 h-2 rounded-t-lg" style={{ backgroundColor: topBarColor }} />
+                          )}
+                          {showUpcomingDot && (
+                            <div className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border border-white" style={{ backgroundColor: "#E28B8B", transform: "translate(30%, -30%)" }} />
+                          )}
+                          <span className="text-[10px] sm:text-[11px] font-medium text-gray-700 mt-1">{item.day}</span>
+                          <span className="text-[14px] sm:text-[16px] font-bold text-gray-900 leading-tight">{item.date}</span>
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-5 mt-4 border-t border-gray-100 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-bold text-[#1a1a1a]">
-                          Self Rating (1-10)
-                        </Label>
-                        <span className="text-sm font-bold text-[#DA7756]">
-                          {selfRating[0]}/10
-                        </span>
-                      </div>
-                      <Slider
-                        value={selfRating}
-                        onValueChange={(value) => {
-                          markDraftDirty();
-                          setSelfRating(value);
-                        }}
-                        max={10}
-                        step={1}
-                        className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer"
-                      />
-                    </div>
+                      );
+                    })}
                   </div>
+                  <button onClick={handleNextWeek}
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 flex-shrink-0 transition-colors">
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+                <div className="flex items-center justify-center gap-4 mt-6 mb-2 flex-wrap">
+                  {([{ color: "#61CDBB", label: "Filled" }, { color: "#E28B8B", label: "Missed" }, { color: "#D1D5DB", label: "Holiday" }, { color: "#E28B8B", label: "Upcoming tasks", isDot: true }]).map(({ color, label, isDot }) => (
+                    <div key={label} className="flex items-center gap-1.5">
+                      {isDot ? (
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      ) : (
+                        <div className="w-4 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      )}
+                      <span className="text-[11px] text-gray-500 font-medium">{label}</span>
+                    </div>
+                  ))}
                 </div>
 
-                {!isAbsent && (
-                  <div className="space-y-6 animate-in fade-in duration-500">
-                    {/* Daily KPIs Card */}
-                    {kpis.length > 0 && (
-                      <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
-                        <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
-                          <div className="flex items-center gap-3">
-                            {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
-                            <TrendingUp className="h-5 w-5 text-[#DA7756]" />
-                            {/* </div> */}
-                            <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                              Daily KPIs
-                            </h3>
-                          </div>
-                          {/* Total KPI score badge */}
-                          <Badge variant="outline" className={badgePoints}>
-                            {dailyScore.kpiScore}/20 pts
-                          </Badge>
-                        </div>
-                        <CardContent className="p-6 space-y-4">
-                          {kpis.map((kpi) => {
-                            const target = parseFloat(kpi.target_value) || 0;
-                            const actual = parseFloat(kpiEntries[kpi.kpi_id] || "0") || 0;
-                            const hasEntry = !!kpiEntries[kpi.kpi_id] && kpiEntries[kpi.kpi_id] !== "";
+                <div className="pt-5 mt-4 border-t border-gray-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-bold text-[#1a1a1a]">
+                      Self Rating (1-10)
+                    </Label>
+                    <span className="text-sm font-bold text-[#DA7756]">
+                      {selfRating[0]}/10
+                    </span>
+                  </div>
+                  <Slider
+                    value={selfRating}
+                    onValueChange={(value) => {
+                      markDraftDirty();
+                      setSelfRating(value);
+                    }}
+                    max={10}
+                    step={1}
+                    className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
 
-                            let achievementPct = 0;
-                            if (target === 0 && actual > 0) {
-                              achievementPct = 100;
-                            } else if (target > 0) {
-                              achievementPct = Math.min((actual / target) * 100, 100);
-                            }
+            {!isAbsent && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                {/* Daily KPIs Card */}
+                {kpis.length > 0 && (
+                  <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
+                    <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
+                      <div className="flex items-center gap-3">
+                        {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
+                        <TrendingUp className="h-5 w-5 text-[#DA7756]" />
+                        {/* </div> */}
+                        <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                          Daily KPIs
+                        </h3>
+                      </div>
+                      {/* Total KPI score badge */}
+                      <Badge variant="outline" className={badgePoints}>
+                        {dailyScore.kpiScore}/20 pts
+                      </Badge>
+                    </div>
+                    <CardContent className="p-6 space-y-4">
+                      {kpis.map((kpi) => {
+                        const target = parseFloat(kpi.target_value) || 0;
+                        const actual = parseFloat(kpiEntries[kpi.kpi_id] || "0") || 0;
+                        const hasEntry = !!kpiEntries[kpi.kpi_id] && kpiEntries[kpi.kpi_id] !== "";
 
-                            // Points this KPI contributes out of 20 (equal share per KPI × achievement)
-                            const kpiPts = (20 / kpis.length) * (achievementPct / 100);
+                        let achievementPct = 0;
+                        if (target === 0 && actual > 0) {
+                          achievementPct = 100;
+                        } else if (target > 0) {
+                          achievementPct = Math.min((actual / target) * 100, 100);
+                        }
 
-                            const pctColor =
-                              achievementPct >= 100
-                                ? "bg-[#22c55e] text-white"
-                                : achievementPct >= 75
-                                  ? "bg-[#84cc16] text-white"
-                                  : achievementPct >= 50
-                                    ? "bg-[#f59e0b] text-white"
-                                    : "bg-[#ef4444] text-white";
+                        // Points this KPI contributes out of 20 (equal share per KPI × achievement)
+                        const kpiPts = (20 / kpis.length) * (achievementPct / 100);
 
-                            return (
-                              <div
-                                key={kpi.kpi_id}
-                                className="flex items-center gap-3 p-4 rounded-[10px] bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
-                              >
-                                {/* KPI name + meta */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
-                                      {kpi.kpi_name}
-                                    </h4>
-                                    {!kpi.submitted && (
-                                      <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
-                                        new
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-gray-600">
-                                    <span className="text-gray-400">•</span>
-                                    <span className="text-gray-500">
-                                      {kpi.frequency_label}
-                                    </span>
-                                  </div>
-                                </div>
+                        const pctColor =
+                          achievementPct >= 100
+                            ? "bg-[#22c55e] text-white"
+                            : achievementPct >= 75
+                              ? "bg-[#84cc16] text-white"
+                              : achievementPct >= 50
+                                ? "bg-[#f59e0b] text-white"
+                                : "bg-[#ef4444] text-white";
 
-                                {/* Target label */}
-                                <div className="flex flex-col items-center shrink-0">
-                                  <span className="text-sm font-black text-[#6366f1]">
-                                    {kpi.target_value}
-                                  </span>
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                    Target
-                                  </span>
-                                </div>
-
-                                {/* Actual input */}
-                                <div className="w-24 shrink-0">
-                                  <input
-                                    type="number"
-                                    value={kpiEntries[kpi.kpi_id] || ""}
-                                    onChange={(e) => {
-                                      markDraftDirty();
-                                      setKpiEntries((prev) => ({
-                                        ...prev,
-                                        [kpi.kpi_id]: e.target.value,
-                                      }));
-                                    }}
-                                    placeholder="0"
-                                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
-                                  />
-                                </div>
-
-                                {/* Achievement % badge */}
-                                {hasEntry && (
-                                  <div className="shrink-0 flex items-center gap-2">
-                                    <span
-                                      className={`inline-flex items-center justify-center px-3 py-1.5 rounded-[8px] text-sm font-black tracking-tight ${pctColor}`}
-                                    >
-                                      {achievementPct.toFixed(0)}%
-                                    </span>
-                                  </div>
+                        return (
+                          <div
+                            key={kpi.kpi_id}
+                            className="flex items-center gap-3 p-4 rounded-[10px] bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
+                          >
+                            {/* KPI name + meta */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
+                                  {kpi.kpi_name}
+                                </h4>
+                                {!kpi.submitted && (
+                                  <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
+                                    new
+                                  </Badge>
                                 )}
                               </div>
-                            );
-                          })}
-                        </CardContent>
-                      </Card>
-                    )}
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-500">
+                                  {kpi.frequency_label}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Target label */}
+                            <div className="flex flex-col items-center shrink-0">
+                              <span className="text-sm font-black text-[#6366f1]">
+                                {kpi.target_value}
+                              </span>
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Target
+                              </span>
+                            </div>
+
+                            {/* Actual input */}
+                            <div className="w-24 shrink-0">
+                              <input
+                                type="number"
+                                value={kpiEntries[kpi.kpi_id] || ""}
+                                onChange={(e) => {
+                                  markDraftDirty();
+                                  setKpiEntries((prev) => ({
+                                    ...prev,
+                                    [kpi.kpi_id]: e.target.value,
+                                  }));
+                                }}
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
+                              />
+                            </div>
+
+                            {/* Achievement % badge */}
+                            {hasEntry && (
+                              <div className="shrink-0 flex items-center gap-2">
+                                <span
+                                  className={`inline-flex items-center justify-center px-3 py-1.5 rounded-[8px] text-sm font-black tracking-tight ${pctColor}`}
+                                >
+                                  {achievementPct.toFixed(0)}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                )}
+
 
                     {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
                     <div className="bc-daily-card" ref={accomplishmentsSectionRef}>

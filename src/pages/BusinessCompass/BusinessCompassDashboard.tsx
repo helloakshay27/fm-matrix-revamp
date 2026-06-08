@@ -52,14 +52,14 @@ interface DashboardData {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function getWeekDates(offset: number): Date[] {
   const today = new Date();
   const dow = today.getDay();
   const monday = new Date(today);
   monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1) + offset * 7);
-  return Array.from({ length: 6 }, (_, i) => {
+  return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     return d;
@@ -608,10 +608,10 @@ const BusinessCompassDashboard: React.FC = () => {
               </div>
 
               {/* Row 1: Calendar + Tasks Overview */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
 
                 {/* Calendar */}
-                <div className="bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                <div className="lg:col-span-2 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
                   <p className="text-[11px] text-gray-500 font-medium mb-3">
                     {focusMode} Report for {formatWeekLabel(weekDates)}
                   </p>
@@ -622,28 +622,86 @@ const BusinessCompassDashboard: React.FC = () => {
                     </button>
                     <div className="flex-1 flex gap-1">
                       {weekDates.map((date, i) => {
+                        const isSunday = date.getDay() === 0;
                         const isToday = date.toDateString() === today.toDateString();
                         const status = getDayStatus(date, today, filledDates);
-                        let boxStyle: React.CSSProperties = { background: "white", border: "1.5px solid #e5e7eb" };
-                        let dayColor = "#6b7280";
-                        let numColor = "#1a1a1a";
-                        if (isToday) {
-                          boxStyle = { background: "white", border: "2px solid #DA7756" };
-                          dayColor = "#DA7756"; numColor = "#DA7756";
+                        
+                        let cardBorder = "1px solid #e5e7eb";
+                        let headerBg = "#e5e7eb";
+                        let headerTextColor = "#6b7280";
+                        let bodyBg = "#F7F5F0";
+                        let dateTextColor = "#1a1a1a";
+
+                        if (isSunday) {
+                          cardBorder = "1px solid transparent";
+                          headerBg = "transparent";
+                          headerTextColor = "#000000";
+                          bodyBg = "#F5F5F5";
+                          dateTextColor = "#000000";
+                        } else if (isToday) {
+                          cardBorder = "2.5px solid #E49377";
+                          headerBg = "transparent";
+                          headerTextColor = "#1a1a1a";
+                          bodyBg = "#FDF5F2";
+                          dateTextColor = "#1a1a1a";
                         } else if (status === "filled") {
-                          boxStyle = { background: "#dcfce7", border: "1.5px solid #86efac" };
-                          dayColor = "#16a34a"; numColor = "#15803d";
+                          cardBorder = "1px solid transparent";
+                          headerBg = "#82D4C4";
+                          headerTextColor = "#000000";
+                          dateTextColor = "#000000";
                         } else if (status === "missed") {
-                          boxStyle = { background: "#fee2e2", border: "1.5px solid #fca5a5" };
-                          dayColor = "#dc2626"; numColor = "#b91c1c";
+                          cardBorder = "1px solid transparent";
+                          headerBg = "#e29393";
+                          headerTextColor = "#000000";
+                          dateTextColor = "#000000";
                         } else if (status === "upcoming") {
-                          boxStyle = { background: "white", border: "1.5px solid #e5e7eb" };
+                          cardBorder = "1px solid transparent";
+                          headerBg = "transparent";
+                          headerTextColor = "#000000";
+                          bodyBg = "#F5F5F5";
+                          dateTextColor = "#000000";
+                        } else if (status === "holiday") {
+                          cardBorder = "1px solid #fde047";
+                          headerBg = "#fef9c3";
+                          headerTextColor = "#b45309";
+                          dateTextColor = "#b45309";
                         }
+
                         return (
-                          <div key={i} className="flex-1 flex flex-col items-center cursor-pointer"
-                            style={{ ...boxStyle, borderRadius: "10px", padding: "6px 2px" }}>
-                            <span className="text-[9px] sm:text-[10px] font-semibold" style={{ color: dayColor }}>{DAY_LABELS[i]}</span>
-                            <span className="text-[13px] sm:text-[15px] font-bold leading-tight" style={{ color: numColor }}>{date.getDate()}</span>
+                          <div key={i} className="flex-1 flex flex-col items-center cursor-pointer relative"
+                            style={{
+                              border: cardBorder,
+                              borderRadius: "12px",
+                              backgroundColor: bodyBg,
+                            }}>
+                            {status === "upcoming" && !isSunday && (
+                              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: "#e29393" }} />
+                            )}
+                            {/* Decorative Top Strip */}
+                            {headerBg !== "transparent" && (
+                              <div className="w-full flex-shrink-0"
+                                style={{
+                                  height: "6px",
+                                  backgroundColor: headerBg,
+                                  borderTopLeftRadius: "11px",
+                                  borderTopRightRadius: "11px",
+                                }}
+                              />
+                            )}
+                            {/* Card Content */}
+                            <div className="w-full flex flex-col items-center justify-center flex-1 py-1"
+                              style={{
+                                borderBottomLeftRadius: "11px",
+                                borderBottomRightRadius: "11px",
+                                ...(headerBg === "transparent" ? { borderTopLeftRadius: "11px", borderTopRightRadius: "11px" } : {})
+                              }}>
+                              <span className="text-[10px] sm:text-[11px] font-semibold mb-0.5" style={{ color: headerTextColor }}>
+                                {DAY_LABELS[i]}
+                              </span>
+                              <span className="text-[14px] sm:text-[17px] font-bold leading-tight" style={{ color: dateTextColor }}>
+                                {date.getDate()}
+                              </span>
+                            </div>
                           </div>
                         );
                       })}
@@ -653,21 +711,26 @@ const BusinessCompassDashboard: React.FC = () => {
                       <ChevronRight size={13} />
                     </button>
                   </div>
-                  <div className="flex items-center gap-3 mt-3 flex-wrap">
-                    {([["#22c55e","#dcfce7","Filled"],["#f87171","#fee2e2","Missed"],["#fbbf24","#fef9c3","Holiday"],["#fb923c","","Upcoming tasks"]] as [string,string,string][]).map(([color, bg, label]) => (
-                      <div key={label} className="flex items-center gap-1">
-                        {label === "Upcoming tasks"
-                          ? <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                          : <div className="w-3 h-2 rounded flex-shrink-0" style={{ backgroundColor: bg, border: `1px solid ${color}` }} />
-                        }
-                        <span className="text-[9px] sm:text-[10px] text-gray-500">{label}</span>
+                  <div className="flex items-center justify-center gap-4 mt-3 flex-wrap">
+                    {[
+                      { color: "#82D4C4", label: "Filled", isCircle: false },
+                      { color: "#e29393", label: "Missed", isCircle: false },
+                      { color: "#D1D5DB", label: "Holiday", isCircle: false },
+                      { color: "#e29393", label: "Upcoming tasks", isCircle: true }
+                    ].map(({ color, label, isCircle }) => (
+                      <div key={label} className="flex items-center gap-1.5">
+                        <div 
+                          className={`w-2.5 h-2.5 flex-shrink-0 ${isCircle ? "rounded-full" : "rounded-[2px]"}`} 
+                          style={{ backgroundColor: color }} 
+                        />
+                        <span className="text-[10px] sm:text-[11px] text-[#1a1a1a] font-medium">{label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Tasks Overview */}
-                <div className="bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                <div className="lg:col-span-1 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
                   <p className="text-[13px] font-bold text-[#1a1a1a] mb-4">Tasks Overview</p>
                   {(() => {
                     const assigned  = focusMode === "Weekly" ? (counters?.weekly_reports ?? 0) : (counters?.daily_reports ?? 0);
@@ -705,10 +768,10 @@ const BusinessCompassDashboard: React.FC = () => {
               </div>
 
               {/* Row 2: Accomplishments + To Do's */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
                 {/* Accomplishments */}
-                <div className="bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                <div className="lg:col-span-2 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2 min-w-0">
                       <Sparkles size={14} className="text-[#DA7756] flex-shrink-0" />
@@ -740,7 +803,7 @@ const BusinessCompassDashboard: React.FC = () => {
                 </div>
 
                 {/* To Do's */}
-                <div className="bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                <div className="lg:col-span-1 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2">
                       <span className="text-[12px] sm:text-[13px] font-bold text-[#1a1a1a]">To Do's</span>
@@ -828,8 +891,8 @@ const BusinessCompassDashboard: React.FC = () => {
                   return (
                     <div className="flex items-stretch gap-2">
                       <div className="flex-1 grid grid-cols-2 gap-2">
-                        {paged.length > 0
-                          ? paged.map((kpi, i) => (
+                        {paged.length > 0 ? (
+                          paged.map((kpi, i) => (
                             <div key={kpi.id ?? i} className="flex flex-col gap-1 p-2.5 rounded-xl bg-white border border-gray-200">
                               <span className="text-[9px] text-gray-400 font-semibold">{kpi.frequency_label}</span>
                               <span className="text-[11px] font-bold text-[#1a1a1a] leading-tight line-clamp-2">{kpi.name}</span>
@@ -843,15 +906,11 @@ const BusinessCompassDashboard: React.FC = () => {
                               <span className="text-[9px] text-gray-400">{kpi.progress_percentage}%</span>
                             </div>
                           ))
-                          : ["Daily", "Daily"].map((label, i) => (
-                            <div key={i} className="flex flex-col gap-1 p-2.5 rounded-xl bg-white border border-gray-200">
-                              <span className="text-[9px] text-gray-400 font-semibold">{label}</span>
-                              <span className="text-[11px] font-bold text-[#1a1a1a] leading-tight">Courtesy call</span>
-                              <div className="border-t border-gray-100 mt-1 pt-1">
-                                <span className="text-[13px] font-black text-[#1a1a1a]">0/2 calls</span>
-                              </div>
-                            </div>
-                          ))}
+                        ) : (
+                          <div className="col-span-2 text-center py-6 text-[11px] text-gray-400 italic bg-white rounded-xl border border-gray-200">
+                            No KPIs assigned
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={() => hasMore && setKpiPage((p) => (p + 1) % totalPages)}
@@ -878,18 +937,21 @@ const BusinessCompassDashboard: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {(issues.length > 0 ? issues : placeholderIssues.map((t, i) => ({
-                    id: i, title: t, priority: "High", status: "High",
-                    responsible_person: "", due_date: "", updated_at: "",
-                  }))).slice(0, 8).map((issue: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between gap-2 bg-white rounded-xl px-3 py-2.5">
-                      <span className="text-[11px] text-gray-700 flex-1 line-clamp-2 leading-snug">{issue.title}</span>
-                      <span className="flex-shrink-0 text-[10px] px-2.5 py-0.5 rounded-full font-semibold"
-                        style={issueBadgeStyle(issue.priority)}>
-                        {issue.priority || issue.status || "High"}
-                      </span>
+                  {issues.length > 0 ? (
+                    issues.slice(0, 8).map((issue: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between gap-2 bg-white rounded-xl px-3 py-2.5">
+                        <span className="text-[11px] text-gray-700 flex-1 line-clamp-2 leading-snug">{issue.title}</span>
+                        <span className="flex-shrink-0 text-[10px] px-2.5 py-0.5 rounded-full font-semibold"
+                          style={issueBadgeStyle(issue.priority)}>
+                          {issue.priority || issue.status || "High"}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-[11px] text-gray-400 italic bg-white rounded-xl border border-gray-100">
+                      No stuck issues
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -906,6 +968,7 @@ const BusinessCompassDashboard: React.FC = () => {
                   <p className="text-[9px] text-[#e05050] font-semibold leading-tight mb-1">Weekly report/<br />pending</p>
                   <p className="text-[15px] font-black text-[#1a1a1a]">{counters?.weekly_reports ?? 0}/{counters?.weekly_pending ?? 0}</p>
                 </div>
+                {/* 
                 <div className="text-center p-3 rounded-xl bg-white border border-gray-200">
                   <p className="text-[9px] text-gray-400 font-semibold leading-tight mb-1">KPI</p>
                   <p className="text-[15px] font-black text-[#1a1a1a]">{counters?.kpis ?? 0}</p>
@@ -915,6 +978,7 @@ const BusinessCompassDashboard: React.FC = () => {
                   <p className="text-[15px] font-black text-[#1a1a1a]">{counters?.job_descriptions ?? 0}</p>
                   <Sparkles size={14} className="absolute bottom-2 right-2 text-[#DA7756] opacity-60" />
                 </div>
+                */}
               </div>
             </CardContent>
           </Card>
