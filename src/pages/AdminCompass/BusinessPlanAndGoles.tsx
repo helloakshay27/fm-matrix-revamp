@@ -775,10 +775,18 @@ const InlineImageSlider = ({
     () => new Set()
   );
 
+  // Zoom and pan state
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
     if (current >= images.length && images.length > 0)
       setCurrent(images.length - 1);
-  }, [images.length, current]);
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  }, [images.length, current, fullscreen]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -801,6 +809,28 @@ const InlineImageSlider = ({
   const hasImageFailed = failedImageUrls.has(currentImageUrl);
   const driveOpenUrl = getGoogleDriveOpenUrl(currentImageUrl);
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
+    if (scale <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLImageElement>) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLImageElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
   const sliderBox = (
     <div
       style={{
@@ -808,11 +838,28 @@ const InlineImageSlider = ({
         width: "100%",
         borderRadius: fullscreen ? 0 : 16,
         overflow: "hidden",
-        background: "#f3f4f6",
+        background: "#000",
         paddingTop: fullscreen ? undefined : "48%",
         height: fullscreen ? "100%" : undefined,
       }}
     >
+      {/* Blurred Background to fill empty space elegantly */}
+      {!hasImageFailed && (
+        <div
+          style={{
+            position: "absolute",
+            inset: -20,
+            backgroundImage: `url(${currentImageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(20px)",
+            opacity: 0.5,
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+      )}
+
       {hasImageFailed ? (
         <div
           style={{
@@ -830,6 +877,7 @@ const InlineImageSlider = ({
             background: "#f3f4f6",
             color: C.textMain,
             fontFamily: "'Poppins', sans-serif",
+            zIndex: 1,
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 700 }}>
@@ -864,14 +912,23 @@ const InlineImageSlider = ({
           src={currentImageUrl}
           alt={`slide-${current}`}
           referrerPolicy="no-referrer"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           style={{
             width: "100%",
             height: "100%",
-            objectFit: "cover" as const,
+            objectFit: "contain" as const,
             position: fullscreen ? "static" : "absolute",
             top: fullscreen ? undefined : 0,
             left: fullscreen ? undefined : 0,
             display: "block",
+            transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+            cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default",
+            transition: isDragging ? "none" : "transform 0.2s ease-out",
+            zIndex: 2,
+            touchAction: "none"
           }}
           onLoad={() => {
             setFailedImageUrls((prevFailed) => {
@@ -900,6 +957,67 @@ const InlineImageSlider = ({
           zIndex: 10,
         }}
       >
+        <button
+          onClick={() => setScale((s) => Math.min(s + 0.5, 4))}
+          title="Zoom In"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#fff",
+            fontSize: 18,
+            fontWeight: "bold",
+            transition: "background .15s",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+          }
+        >
+          +
+        </button>
+        <button
+          onClick={() => {
+            if (scale > 1.5) {
+              setScale((s) => s - 0.5);
+            } else {
+              setScale(1);
+              setPosition({ x: 0, y: 0 });
+            }
+          }}
+          title="Zoom Out"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#fff",
+            fontSize: 18,
+            fontWeight: "bold",
+            transition: "background .15s",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+          }
+        >
+          -
+        </button>
         <button
           onClick={() => setFullscreen((f) => !f)}
           title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
@@ -1700,42 +1818,55 @@ interface KPI {
 type AiBuilderStage = "discovery" | "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
-  { key: "purpose", label: "Q1: Why does your company exist?" },
+  { 
+    key: "purpose", 
+    label: "Q1: Why does your company exist?",
+    placeholder: "Describe the purpose of your business, the problem you solve, who you serve, and the impact you aim to create"
+  },
   {
     key: "core_values",
     label: "Q2: What 4-5 values or behaviours best represent your team or culture?",
+    placeholder: "List the values and behaviours that guide how your team works, makes decisions, collaborates, and serves customers"
   },
   {
     key: "brand_promises",
     label: "Q3: What are the USPs that make you stand out?",
+    placeholder: "Describe what makes your business unique, including your strengths, expertise, customer experience, innovation, quality, pricing, or competitive advantages."
   },
   {
     key: "bhag",
     label: "Q4: What bold outcome do you want to achieve in the next 10-15 years?",
+    placeholder: "Describe the impact, market position, customer reach, business growth, and long-term outcomes you want to achieve in the next 10–15 years"
   },
   {
     key: "three_year_vision",
     label: "Q5: What do you want to achieve in the next 3-5 years?",
+    placeholder: "Describe the key business outcomes you want to achieve in the next 3–5 years, including growth, profitability, customers, expansion, products, operations, and team development."
   },
   {
     key: "annual_goals",
     label: "Q6: What are your main business goals for this financial year?",
+    placeholder: "Describe your key priorities and measurable goals for this financial year, including revenue, customers, operations, team, products, or strategic initiatives"
   },
   {
     key: "target_markets",
     label: "Q7: Which customer segments or geographies will you focus on this year?",
+    placeholder: "Describe the customers, industries, or regions you will focus on, including their needs, challenges, expectations, and growth potential"
   },
   {
     key: "key_initiatives",
     label: "Q8: What 3 key actions or projects will help you achieve this year's goals?",
+    placeholder: "Describe the key initiatives or projects you will execute this year, their expected outcomes, business impact, and how they support your goals"
   },
   {
     key: "key_metrics",
     label: "Q9: What are the key numbers or metrics you should regularly track to ensure success?",
+    placeholder: "Describe the key financial, customer, operational, employee, and growth metrics you will track to measure success"
   },
   {
     key: "people_process",
     label: "Q10: What improvements do you need in your people or processes to succeed?",
+    placeholder: "Describe the improvements needed in your people, leadership, skills, processes, systems, technology, data, or operations to achieve your goals."
   },
 ] as const;
 
@@ -1815,6 +1946,7 @@ const BusinessPlanAndGoles = () => {
   const [showAddContent, setShowAddContent] = useState(true);
   const [addContentTab, setAddContentTab] = useState("Business Plan");
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
+  const [showGenerateVisionBoardConfirm, setShowGenerateVisionBoardConfirm] = useState(false);
   const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
   const [aiBuilderStage, setAiBuilderStage] =
     useState<AiBuilderStage>("discovery");
@@ -3092,8 +3224,45 @@ const BusinessPlanAndGoles = () => {
           body: JSON.stringify(payload)
         });
 
-        if (!res.ok) {
-          throw new Error("Failed to generate AI image");
+        let json;
+        try {
+          json = await res.json();
+        } catch (e) {
+          json = {};
+        }
+
+        if (!res.ok || json?.success === false) {
+          throw new Error(json?.message || json?.error || "Failed to generate AI image");
+        }
+
+        // Attempt to find the newly generated image URL in the response
+        const newImageUrl = 
+          json?.image_url || 
+          json?.url || 
+          json?.data?.image_url || 
+          json?.data?.url || 
+          (typeof json?.data === 'string' && json.data.startsWith('http') ? json.data : null);
+
+        if (newImageUrl && typeof newImageUrl === 'string') {
+          try {
+            const latestMedia = await fetchOverviewMediaFromApi().catch(() => null);
+            const existingImages = latestMedia?.images || overviewImages || [];
+            const existingUrls = existingImages.map((item: any) => item.url);
+            
+            if (!existingUrls.includes(newImageUrl)) {
+              // Add the new image URL and save
+              const updated = Array.from(new Set([...existingUrls, newImageUrl]));
+              await saveOverviewImagesApi(updated);
+              await refreshOverviewMediaWithFallback({ fallbackImages: updated });
+            }
+          } catch (e) {
+            console.error("Failed to auto-save AI image to board", e);
+            await loadOverviewMedia();
+          }
+        } else {
+          // Fallback if URL wasn't found in a predictable field
+          console.log("AI Image generation response:", json);
+          await loadOverviewMedia();
         }
 
         toast.success("AI Image generated successfully!");
@@ -4421,7 +4590,7 @@ const BusinessPlanAndGoles = () => {
 
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <button
-                          onClick={() => handleCopyAiPrompt("overview")}
+                          onClick={() => setShowGenerateVisionBoardConfirm(true)}
                           disabled={isCopyingAiPrompt === "overview"}
                           className="group relative inline-flex min-h-[46px] items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#efd8cf] bg-gradient-to-br from-white to-[#fff3ed] px-4 py-3 text-[13px] font-extrabold text-[#c9673f] shadow-[0_10px_20px_rgba(218,119,86,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DA7756]/50 hover:shadow-[0_14px_26px_rgba(218,119,86,0.16)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
@@ -4429,7 +4598,7 @@ const BusinessPlanAndGoles = () => {
                           <span className="relative z-10 flex items-center gap-2">
                             {isCopyingAiPrompt === "overview" ? (
                               <>
-                                <LoaderIcon /> Copying...
+                                <LoaderIcon /> Generating...
                               </>
                             ) : (
                               <>
@@ -4705,9 +4874,9 @@ const BusinessPlanAndGoles = () => {
                     <textarea
                       value={aiAnswers[aiQuestionIndex]}
                       onChange={(e) => updateAiAnswer(e.target.value)}
-                      className="bp-input resize-y"
+                      className="bp-input resize-y text-[12px]"
                       style={{ minHeight: 150 }}
-                      placeholder="Type your answer here..."
+                      placeholder={AI_PLAN_FIELDS[aiQuestionIndex].placeholder}
                       autoFocus
                     />
                     {aiAnswers[aiQuestionIndex]?.trim() && (
@@ -5495,6 +5664,76 @@ const BusinessPlanAndGoles = () => {
                 {isSavingAny && <LoaderIcon />}
                 {isSavingAny ? "Saving..." : "Save Changes"}
               </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Generate Vision Board Confirmation */}
+      {showGenerateVisionBoardConfirm && (
+        <Modal onClose={() => setShowGenerateVisionBoardConfirm(false)}>
+          <div className="bp-modal-box" style={{ maxWidth: 480 }}>
+            <div className="p-6 text-center">
+              <div
+                className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+                style={{ background: C.primaryBg, color: C.primary }}
+              >
+                <svg
+                  className="h-8 w-8"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h2
+                className="mb-2 text-xl font-bold"
+                style={{ color: C.textMain }}
+              >
+                Generate AI Image
+              </h2>
+              <p
+                className="mb-6 text-[13px] font-semibold leading-relaxed"
+                style={{ color: C.textMuted }}
+              >
+                An existing Business Plan has been found.<br />
+                The AI image will be generated using the current Business Plan.<br /><br />
+                Would you like to continue with the current plan or update the plan before generating the image?
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowGenerateVisionBoardConfirm(false);
+                    handleCopyAiPrompt("overview");
+                  }}
+                  className="w-full rounded-xl py-3 text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{ background: C.primary }}
+                >
+                  Generate Image Using Current Plan
+                </button>
+                <button
+                  onClick={() => {
+                    setShowGenerateVisionBoardConfirm(false);
+                    openAiBuilder();
+                  }}
+                  className="w-full rounded-xl border py-3 text-[13px] font-bold transition-all hover:bg-gray-50 active:scale-[0.98]"
+                  style={{ borderColor: C.primaryBord, color: C.textMain }}
+                >
+                  Review / Edit Business Plan
+                </button>
+                <button
+                  onClick={() => setShowGenerateVisionBoardConfirm(false)}
+                  className="w-full rounded-xl py-2 text-[13px] font-bold text-gray-500 transition-all hover:text-gray-700 active:scale-[0.98]"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </Modal>
