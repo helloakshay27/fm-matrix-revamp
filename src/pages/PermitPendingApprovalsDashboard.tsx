@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Loader2 } from "lucide-react";
@@ -22,9 +22,18 @@ interface ApiResponse {
 
 export const PermitPendingApprovalsDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const[currentPage,setCurrentPage] = useState(()=>{
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(()=>{
+    navigate(`${location.pathname}?page=${currentPage}`,{replace:true});
+  },[currentPage])
 
   useEffect(() => {
     const fetchPendingApprovals = async () => {
@@ -229,6 +238,11 @@ export const PermitPendingApprovalsDashboard = () => {
           pagination={true}
           pageSize={15}
           storageKey="pending-approvals-table"
+          currentPage={currentPage}
+          onPageChange={(page) =>{
+            setCurrentPage(page);
+            navigate(`${location.pathname}?page=${page}`,{replace:true});
+          }}
         />
       </div>
     </div>
