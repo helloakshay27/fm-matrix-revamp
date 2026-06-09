@@ -99,8 +99,8 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr>
-                {['Site Name', 'Open', 'In Progress', 'Overdue', 'Partially Closed', 'Closed'].map((h, i) => (
-                  <th key={h} className={`py-3 px-4 font-semibold text-xs whitespace-nowrap analytics-header ${i === 0 ? 'text-left' : ''}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>{h}</th>
+                {['Site Name', 'Open', 'In Progress', 'Overdue', 'Partially Closed', 'Closed'].map((h) => (
+                  <th key={h} className={`py-3 px-4 font-semibold text-xs whitespace-nowrap analytics-header text-center`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -146,10 +146,10 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
                   return (
                     <tr key={row.site_name + i} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
                       <td className="py-3 px-4 font-medium text-gray-800 border-b border-gray-100">{row.site_name}</td>
-                      <td className="py-3 px-4 text-center border-b border-gray-100">{fmtPct(curOpen)}</td>
-                      <td className="py-3 px-4 text-center border-b border-gray-100">{fmtPct(curInProgress)}</td>
-                      <td className="py-3 px-4 text-center border-b border-gray-100">
-                        <div className="flex items-center gap-1 justify-center">
+                      <td className="py-3 px-4 text-left border-b border-gray-100">{fmtPct(curOpen)}</td>
+                      <td className="py-3 px-4 text-left border-b border-gray-100">{fmtPct(curInProgress)}</td>
+                      <td className="py-3 px-4 text-left border-b border-gray-100">
+                        <div className="flex items-center gap-1 justify-start">
                           <span>{fmtPct(curOverdue)}</span>
                           {(overdueArrowUp || overdueArrowDown) && (
                             <>
@@ -160,9 +160,9 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-center border-b border-gray-100">{fmtPct(curPartiallyClosed)}</td>
-                      <td className="py-3 px-4 text-center border-b border-gray-100">
-                        <div className="flex items-center gap-1 justify-center">
+                      <td className="py-3 px-4 text-left border-b border-gray-100">{fmtPct(curPartiallyClosed)}</td>
+                      <td className="py-3 px-4 text-left border-b border-gray-100">
+                        <div className="flex items-center gap-1 justify-start">
                           <span>{fmtPct(curClosed)}</span>
                           {(closedArrowUp || closedArrowDown) && (
                             <>

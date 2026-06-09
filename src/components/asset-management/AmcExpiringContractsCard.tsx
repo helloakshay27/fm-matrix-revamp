@@ -356,23 +356,23 @@ const AmcExpiringContractsCard: React.FC<Props> = ({ data, onDownload }) => {
                             <td className="border border-gray-300 px-3 py-2 text-left">
                               {r.amc_name || r.contract_name || r.asset_name || r.service_name || '-'}
                             </td>
-                            <td className="border border-gray-300 px-3 py-2 text-center">
+                            <td className="border border-gray-300 px-3 py-2 text-left">
                               {r.contract_start_date || r.start_date || '-'}
                             </td>
-                            <td className="border border-gray-300 px-3 py-2 text-center">
+                            <td className="border border-gray-300 px-3 py-2 text-left">
                               {r.contract_end_date || r.end_date || '-'}
                             </td>
-                            <td className="border border-gray-300 px-3 py-2 text-center">
+                            <td className="border border-gray-300 px-3 py-2 text-left">
                               <span className={`$${
                                 isExpired ? 'text-red-600 font-semibold' :
-                                isExpiringSoon ? 'text-red-600 font-semibold' : 
+                                isExpiringSoon ? 'text-red-600 font-semibold' :
                                 'text-gray-900'
                               }`}>
-                                {r.renewal_reminder || r.renewal_alert || r.renewal_status || 
+                                {r.renewal_reminder || r.renewal_alert || r.renewal_status ||
                                   (isExpired ? 'Expired' : isExpiringSoon ? `Expires in ${diffDays} ${diffDays === 1 ? 'day' : 'days'}` : `Expires in ${diffDays} days`)}
                               </span>
                             </td>
-                            <td className="border border-gray-300 px-3 py-2 text-right">
+                            <td className="border border-gray-300 px-3 py-2 text-left">
                               ₹{Number(r.projected_renewal_cost ?? r.contract_value ?? r.projected_value ?? 0).toLocaleString()}
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-left">
