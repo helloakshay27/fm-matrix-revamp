@@ -27,10 +27,10 @@ import {
 
 // Module-based navigation structures for Business Compass
 const businessCompassNavigation: Record<string, any> = {
-  "My Profile": {
-    icon: User,
-    href: "/business-compass/profile",
-  },
+  // "My Profile": {
+  //   icon: User,
+  //   href: "/business-compass/profile",
+  // },
   Dashboard: {
     icon: User,
     href: "/business-compass/dashboard",
