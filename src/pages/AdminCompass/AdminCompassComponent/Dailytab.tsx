@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Circle,
   Star,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
@@ -114,7 +115,7 @@ const SearchableSelect = ({
           value={open ? search : displayValue}
           onClick={() => {
             setOpen(true);
-            setSearch("");
+            search("");
           }}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -318,15 +319,9 @@ const getItemType = (item: any): string => {
 };
 
 const groupTasksIssuesByType = (items: any[] = []) => ({
-  tasks: items.filter(
-    (item) => getItemType(item) === "task" && !isCompletedStatus(getItemStatus(item))
-  ),
-  issues: items.filter(
-    (item) => getItemType(item) === "issue" && !isCompletedStatus(getItemStatus(item))
-  ),
-  todos: items.filter(
-    (item) => getItemType(item) === "todo" && !isCompletedStatus(getItemStatus(item))
-  ),
+  tasks: items.filter((item) => getItemType(item) === "task"),
+  issues: items.filter((item) => getItemType(item) === "issue"),
+  todos: items.filter((item) => getItemType(item) === "todo"),
 });
 
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
@@ -373,12 +368,10 @@ const mergeTasksIssuesPreservingType = (
 };
 
 const getReportTotalScore = (report: any, rawSource: any = null) => {
-  // ✅ FIX: daily_report ko PEHLE check karo, woh actual submitted data hai
   const score =
     report?.daily_report?.report_data?.total_score ??
-    report?.daily_report?.total_score ??
-    rawSource?.total_score ??
     report?.report_data?.total_score ??
+    rawSource?.total_score ??
     report?.score;
 
   if (score === null || score === undefined || score === "") return null;
@@ -386,11 +379,14 @@ const getReportTotalScore = (report: any, rawSource: any = null) => {
   return Number.isFinite(numericScore) ? numericScore : null;
 };
 
-const isReportAbsent = (report: any, rawSource: any = null, normalized: any = null) =>
+const isReportAbsent = (
+  report: any,
+  rawSource: any = null,
+  normalized: any = null
+) =>
   [
-    report?.daily_report?.is_absent,
-    report?.daily_report?.report_data?.is_absent,
     report?.is_absent,
+    report?.daily_report?.is_absent,
     rawSource?.is_absent,
     rawSource?.details?.is_absent,
     rawSource?.sections?.is_absent,
@@ -404,12 +400,12 @@ const getReportAbsentReason = (
 ) =>
   String(
     report?.absent_reason ??
-    report?.daily_report?.absent_reason ??
-    rawSource?.absent_reason ??
-    rawSource?.details?.absent_reason ??
-    rawSource?.sections?.absent_reason ??
-    normalized?.absent_reason ??
-    "Absent"
+      report?.daily_report?.absent_reason ??
+      rawSource?.absent_reason ??
+      rawSource?.details?.absent_reason ??
+      rawSource?.sections?.absent_reason ??
+      normalized?.absent_reason ??
+      "Absent"
   ).trim() || "Absent";
 
 const formatSelfRating = (rating: any): string => {
@@ -429,19 +425,14 @@ const stripMissedMembersPrefix = (text: string): string => {
   return text;
 };
 
-// ── ✅ FIXED: Resolve the "true" raw source for a report ──
-// Ab yeh function daily_report.report_data ko PRIORITY deta hai
-// kyunki meeting submit hone ke baad actual user data wahan hota hai
+// ── Resolve the "true" raw source for a report ──
 const resolveRawSource = (report: any) => {
-  // Prefer `daily_report.report_data` when present (API sometimes nests actual data there)
-  const rd = report.daily_report?.report_data || report.report_data || {};
+  const rd = report.report_data || {};
   const draftReport = report.daily_report || {};
   const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
-  const hasTopLevelData = topLevelRd && Object.keys(topLevelRd).length > 0;
-  const hasDraftData = draftRaw && Object.keys(draftRaw).length > 0;
+  const hasReportData = rd && Object.keys(rd).length > 0;
 
-  // Helper: draft raw ko normalize karo
   const normalizeDraftRaw = (raw: any) => ({
     ...raw,
     accomplishments:
@@ -453,10 +444,7 @@ const resolveRawSource = (report: any) => {
       raw.details?.self_rating ??
       raw.sections?.self_rating ??
       null,
-    total_score:
-      raw.total_score ??
-      draftReport.total_score ??
-      null,
+    total_score: raw.total_score ?? null,
     is_absent:
       raw.is_absent ??
       draftReport.is_absent ??
@@ -471,35 +459,31 @@ const resolveRawSource = (report: any) => {
       null,
   });
 
-  // ✅ CASE 1: Sirf draft hai, top-level nahi → draft use karo
-  if (!hasTopLevelData && hasDraft) {
+  if (!hasReportData && hasDraft) {
     return normalizeDraftRaw(draftRaw);
   }
 
-  // ✅ CASE 2: Status pending aur draft hai → draft use karo
   if (report.status === "pending" && hasDraft) {
     return normalizeDraftRaw(draftRaw);
   }
 
-  // ✅ CASE 3: Dono hain (submitted meeting ke baad) →
-  // daily_report.report_data ko PRIORITY do kyunki woh actual user ka data hai
-  // top-level report_data mein meeting-level aggregated data hota hai
-  if (hasDraftData && hasDraft) {
+  if (hasReportData && hasDraft) {
     const normalizedDraft = normalizeDraftRaw(draftRaw);
 
-    // Top-level se sirf woh fields lo jo draft mein nahi hain
     return {
-      ...topLevelRd,        // base fallback
-      ...normalizedDraft,   // ✅ draft OVERRIDE karta hai top-level ko
-      // Arrays: draft data ko primary rakho, top-level se merge karo
-      tasks_issues: Array.isArray(normalizedDraft.tasks_issues) && normalizedDraft.tasks_issues.length > 0
+      ...normalizedDraft,
+      ...rd,
+      tasks_issues: Array.isArray(rd.tasks_issues)
         ? mergeTasksIssuesPreservingType(
-          normalizedDraft.tasks_issues || [],
-          rd.tasks_issues
-        )
+            normalizedDraft.tasks_issues || [],
+            rd.tasks_issues
+          )
         : normalizedDraft.tasks_issues || [],
       tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
+        ? mergeUniqueItems(
+            rd.tomorrow_plan,
+            normalizedDraft.tomorrow_plan || []
+          )
         : normalizedDraft.tomorrow_plan || [],
       accomplishments:
         rd.accomplishments?.items ||
@@ -507,17 +491,13 @@ const resolveRawSource = (report: any) => {
           ? rd.accomplishments
           : normalizedDraft.accomplishments || []),
       self_rating: normalizedDraft.self_rating,
-      total_score: normalizedDraft.total_score ?? topLevelRd.total_score,
-      is_absent: normalizedDraft.is_absent ?? topLevelRd.is_absent,
-      absent_reason: normalizedDraft.absent_reason ?? topLevelRd.absent_reason,
-      // ✅ KPIs/sections: daily_report se lo
-      kpis: (hasDraftData && draftRaw.kpis) ? draftRaw.kpis : topLevelRd.kpis,
-      sections: (hasDraftData && draftRaw.sections) ? draftRaw.sections : topLevelRd.sections,
+      total_score: rd.total_score ?? normalizedDraft.total_score,
+      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
+      absent_reason: rd.absent_reason ?? normalizedDraft.absent_reason,
     };
   }
 
-  // ✅ CASE 4: Sirf top-level data hai
-  return topLevelRd;
+  return rd;
 };
 
 // -────────────────────────────────────────────
@@ -545,9 +525,9 @@ const DailyTab = ({
   );
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
   const [meetingsLoaded, setMeetingsLoaded] = useState(false);
-  const [selectedMeetingId, setSelectedMeetingIdState] = useState<string | null>(
-    () => externalSelectedMeetingId || null
-  );
+  const [selectedMeetingId, setSelectedMeetingIdState] = useState<
+    string | null
+  >(() => externalSelectedMeetingId || null);
   const [membersList, setMembersList] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState("all");
   const [dailyData, setDailyData] = useState<any>(null);
@@ -589,7 +569,9 @@ const DailyTab = ({
   useEffect(() => {
     if (!externalSelectedMeetingId) return;
     setSelectedMeetingIdState((current) =>
-      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+      current === externalSelectedMeetingId
+        ? current
+        : externalSelectedMeetingId
     );
   }, [externalSelectedMeetingId]);
 
@@ -738,8 +720,8 @@ const DailyTab = ({
 
         setMeetingJournalId(
           json.data?.meeting_journal_id ||
-          meetingJournalReport?.journal_id ||
-          null
+            meetingJournalReport?.journal_id ||
+            null
         );
 
         if (!skipNotesRestore) {
@@ -779,9 +761,7 @@ const DailyTab = ({
                 .filter(
                   (m: any) => !absentSubmittedIds.has(String(m.id || m.user_id))
                 )
-                .map(
-                  (m: any) => m.name || m.user
-                ),
+                .map((m: any) => m.name || m.user),
             ].filter(Boolean);
             const uniqueMissed = [...new Set(pureMissed)] as string[];
 
@@ -832,6 +812,7 @@ const DailyTab = ({
         const rawList = Array.isArray(data)
           ? data
           : data.data || data.ratings || [];
+        // ── Sort newest first by created_at ──
         const sorted = [...rawList].sort(
           (a: any, b: any) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -860,10 +841,7 @@ const DailyTab = ({
 
     const rawSource = resolveRawSource(report);
     const baseReportData =
-      report.daily_report?.report_data ||
-      report.report_data ||
-      rawSource ||
-      {};
+      report.report_data || report.daily_report?.report_data || rawSource || {};
 
     if (patch.tomorrow_plan_item) {
       const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
@@ -991,7 +969,6 @@ const DailyTab = ({
       .forEach((report: any) => {
         const rawSource = resolveRawSource(report);
         const source = normalizeReportData(rawSource);
-        // ✅ FIX: sections bhi daily_report se lo
         const draftRaw = report.daily_report?.report_data || {};
         if (isReportAbsent(report, rawSource, source)) return;
 
@@ -1023,8 +1000,7 @@ const DailyTab = ({
           ratingCount++;
         }
 
-        // ✅ FIX: kpis aur sections daily_report se lo
-        const kpis = draftRaw.kpis || rawSource.kpis || report.kpis || {};
+        const kpis = report.kpis || rawSource.kpis || {};
         const sections = draftRaw.sections || rawSource.sections || {};
 
         const t = parseInt(sections.tasks_issues ?? kpis.tasks) || 0;
@@ -1109,7 +1085,7 @@ const DailyTab = ({
           false;
 
         return {
-          user_id: report.user_id,
+          user_id: report.user_id, // <--- YAHAN USER ID ADD KIYA HAI
           name: report.name || "Unknown",
           attendance: isAbsent ? "Absent" : "Present",
           self_rating: `${selfRatingVal}/10`,
@@ -1125,7 +1101,6 @@ const DailyTab = ({
       detailed_reports,
     };
   };
-
   // ── Save Meeting (POST) ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
@@ -1434,7 +1409,8 @@ const DailyTab = ({
       .map((report: any) => String(report.user_id))
   );
   failedMembers = failedMembers.filter(
-    (member: any) => !absentSubmittedUserIds.has(String(member.id || member.user_id))
+    (member: any) =>
+      !absentSubmittedUserIds.has(String(member.id || member.user_id))
   );
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
@@ -1507,214 +1483,336 @@ const DailyTab = ({
 
   return (
     <div
-      className="space-y-5 pb-12"
+      className="pb-12 space-y-6"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* ══ CALENDAR CARD ══ */}
-      <div className="rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm overflow-hidden">
-        <div className="p-8">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-50 p-2 rounded-lg">
-                <Calendar size={20} className="text-blue-600" />
+      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
+        {/* ══ LEFT COLUMN ══ */}
+        <div className="h-full">
+          {/* ══ CALENDAR CARD ══ */}
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden h-full flex flex-col">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-50 p-2 rounded-lg">
+                    <Calendar size={20} className="text-blue-600" />
+                  </div>
+                  <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
+                    Daily Meeting for {topDateStr}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => changeDate(-1)}
+                    className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-neutral-600" />
+                  </button>
+                  <button
+                    onClick={() => changeDate(1)}
+                    disabled={isNextDateDisabled}
+                    className={cn(
+                      "flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm transition-colors",
+                      isNextDateDisabled
+                        ? "opacity-40 cursor-not-allowed"
+                        : "hover:bg-gray-50"
+                    )}
+                  >
+                    <ChevronRight className="w-5 h-5 text-neutral-600" />
+                  </button>
+                </div>
               </div>
-              <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
-                Daily Meeting for {topDateStr}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => changeDate(-1)}
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 text-neutral-600" />
-              </button>
-              <button
-                onClick={() => changeDate(1)}
-                disabled={isNextDateDisabled}
-                className={cn(
-                  "flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm transition-colors",
-                  isNextDateDisabled
-                    ? "opacity-40 cursor-not-allowed"
-                    : "hover:bg-gray-50"
-                )}
-              >
-                <ChevronRight className="w-5 h-5 text-neutral-600" />
-              </button>
-            </div>
-          </div>
 
-          {/* ── Calendar Body ── */}
-          {isLoading && !dailyData ? (
-            <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <div
-                  key={i}
-                  className="min-w-[96px] h-[110px] rounded-[16px] skeleton shrink-0"
-                />
-              ))}
-            </div>
-          ) : noMeetings ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 border border-[#DA7756]/20">
-                <Calendar className="w-7 h-7 text-[#DA7756] opacity-40" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-bold text-neutral-500">
-                  No meetings configured
-                </p>
-                <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
-                  Please configure a meeting first to view the daily calendar.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-              {calendarRow.map((dateItem: any) => {
-                const isSelected = dateItem.full_date === activeDate;
-                let rawStatus = dateItem.status;
-
-                if (isSelected && meetingJournalId) {
-                  rawStatus = "submitted";
-                }
-
-                const isUpcoming = rawStatus === "upcoming";
-
-                if (isUpcoming) {
-                  return (
+              {/* ── Calendar Body ── */}
+              {isLoading && !dailyData ? (
+                <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
+                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                     <div
-                      key={dateItem.full_date}
-                      className="min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-not-allowed border-2 transition-all shrink-0 snap-center shadow-sm relative group bg-[#f8fafc] text-[#94a3b8] border-gray-100"
-                      title="Upcoming – not selectable"
-                    >
-                      <div className="contents">
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
+                      key={i}
+                      className="min-w-[96px] h-[110px] rounded-[16px] skeleton shrink-0"
+                    />
+                  ))}
+                </div>
+              ) : noMeetings ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 border border-[#DA7756]/20">
+                    <Calendar className="w-7 h-7 text-[#DA7756] opacity-40" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-neutral-500">
+                      No meetings configured
+                    </p>
+                    <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
+                      Please configure a meeting first to view the daily
+                      calendar.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
+                  {calendarRow.map((dateItem: any) => {
+                    const isSelected = dateItem.full_date === activeDate;
+                    let rawStatus = dateItem.status;
+
+                    if (isSelected && meetingJournalId) {
+                      rawStatus = "submitted";
+                    }
+
+                    const isUpcoming = rawStatus === "upcoming";
+
+                    if (isUpcoming) {
+                      return (
+                        <div
+                          key={dateItem.full_date}
+                          className="min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-not-allowed transition-all shrink-0 snap-center relative overflow-hidden opacity-60"
+                          style={{
+                            background: "#F5F5F5",
+                            border: "1.5px solid transparent",
+                          }}
+                          title="Upcoming – not selectable"
+                        >
+                          <span className="text-[11px] font-semibold text-gray-400 mt-2">
+                            {dateItem.day}
+                          </span>
+                          <span className="text-[22px] font-black text-gray-400 leading-tight">
+                            {dateItem.date}
+                          </span>
+                          <span className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5 text-gray-400 bg-gray-100">
+                            Upcoming
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    const isHoliday =
+                      rawStatus === "holiday" || rawStatus === "non_meeting";
+                    const isFilled =
+                      rawStatus === "done" || rawStatus === "submitted";
+                    const isMissed = rawStatus === "missed";
+
+                    // top bar color (BusinessCompass style)
+                    let topBarColor = "transparent";
+                    let displayLabel = "Holiday";
+                    if (isFilled) {
+                      topBarColor = "#61CDBB";
+                      displayLabel = "Filled";
+                    } else if (isMissed) {
+                      topBarColor = "#E28B8B";
+                      displayLabel = "Miss";
+                    } else if (isHoliday) {
+                      topBarColor = "#D1D5DB";
+                      displayLabel = "Holiday";
+                    }
+
+                    return (
+                      <div
+                        key={dateItem.full_date}
+                        onClick={
+                          isHoliday
+                            ? undefined
+                            : () => setActiveDate(dateItem.full_date)
+                        }
+                        className={cn(
+                          "min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all shrink-0 snap-center relative overflow-hidden",
+                          isHoliday
+                            ? "cursor-not-allowed opacity-70"
+                            : "cursor-pointer"
+                        )}
+                        style={{
+                          background: isSelected ? "#FFFFFF" : "#F5F5F5",
+                          border: isSelected
+                            ? "1.5px solid #DA7756"
+                            : "1.5px solid transparent",
+                          boxShadow: isSelected
+                            ? "0 2px 8px rgba(218,119,86,0.18)"
+                            : "none",
+                        }}
+                        title={
+                          isHoliday ? "Holiday – not selectable" : undefined
+                        }
+                      >
+                        {topBarColor !== "transparent" && (
+                          <div
+                            className="absolute top-0 left-0 right-0 h-[5px] rounded-t-xl"
+                            style={{ backgroundColor: topBarColor }}
+                          />
+                        )}
+                        {dateItem.is_today && !isSelected && (
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-[#DA7756] rounded-full" />
+                        )}
+                        <span className="text-[11px] font-semibold text-gray-500 mt-2">
                           {dateItem.day}
                         </span>
-                        <span className="text-3xl font-black tracking-tighter">
+                        <span className="text-[22px] font-black text-gray-800 leading-tight">
                           {dateItem.date}
                         </span>
-                        <div className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center bg-black/10 text-[#854d0e]">
-                          Upcoming
-                        </div>
+                        <span
+                          className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5"
+                          style={{
+                            color: isFilled
+                              ? "#0f9e7b"
+                              : isMissed
+                                ? "#c0392b"
+                                : isHoliday
+                                  ? "#6b7280"
+                                  : "#94a3b8",
+                            background: isFilled
+                              ? "#e6faf6"
+                              : isMissed
+                                ? "#fce8e8"
+                                : isHoliday
+                                  ? "#f1f5f9"
+                                  : "#f1f5f9",
+                          }}
+                        >
+                          {displayLabel}
+                        </span>
                       </div>
-                    </div>
-                  );
-                }
+                    );
+                  })}
+                </div>
+              )}
 
-                let bg = "#F0EDEA",
-                  textColor = "#9CA3AF",
-                  labelBg = "rgba(0,0,0,0.07)",
-                  labelColor = "#9CA3AF",
-                  displayLabel = "Holiday";
-
-                if (rawStatus === "missed") {
-                  bg = "#ef4444";
-                  textColor = "#FFFFFF";
-                  labelBg = "rgba(255,255,255,0.22)";
-                  labelColor = "#FFFFFF";
-                  displayLabel = "Miss";
-                } else if (rawStatus === "done" || rawStatus === "submitted") {
-                  bg = "#22c55e";
-                  textColor = "#FFFFFF";
-                  labelBg = "rgba(255,255,255,0.22)";
-                  labelColor = "#FFFFFF";
-                  displayLabel = "Filled";
-                } else if (
-                  rawStatus === "holiday" ||
-                  rawStatus === "non_meeting"
-                ) {
-                  bg = "#facd55";
-                  textColor = "#8A6D3B";
-                  labelBg = "rgba(0,0,0,0.09)";
-                  labelColor = "#8A6D3B";
-                  displayLabel = "Holiday";
-                }
-
-                const isHoliday =
-                  rawStatus === "holiday" || rawStatus === "non_meeting";
-
-                return (
-                  <div
-                    key={dateItem.full_date}
-                    onClick={
-                      isHoliday
-                        ? undefined
-                        : () => setActiveDate(dateItem.full_date)
-                    }
-                    className={cn(
-                      "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 border-2 transition-all shrink-0 snap-center shadow-sm relative group",
-                      isHoliday ? "cursor-not-allowed" : "cursor-pointer"
-                    )}
-                    title={isHoliday ? "Holiday – not selectable" : undefined}
-                  >
-                    <div
-                      className="flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-[16px] transition-all duration-200"
-                      style={{
-                        background: bg,
-                        color: textColor,
-                        boxShadow: isSelected
-                          ? "0 0 0 3px #ffffff, 0 0 0 6px #D7E5FC"
-                          : "0 3px 10px rgba(0,0,0,0.09)",
-                      }}
-                    >
-                      <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
-                        {dateItem.day}
-                      </span>
-                      <span className="text-3xl font-black tracking-tighter">
-                        {dateItem.date}
-                      </span>
-                      <div
-                        className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center"
-                        style={{ background: labelBg, color: labelColor }}
-                      >
-                        {displayLabel}
-                      </div>
-                    </div>
-                    {dateItem.is_today && (
-                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#CE7A5A] rounded-full" />
-                    )}
-                    {isSelected && (
-                      <div
-                        className="absolute top-0 right-0 w-[14px] h-[14px] bg-[#3B82F6] rounded-full border-[2px] border-white shadow-sm"
-                        style={{ transform: "translate(40%, -40%)", zIndex: 10 }}
-                      />
-                    )}
+              {!noMeetings && (
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 pt-4 border-t border-gray-100 mt-3">
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ background: "#61CDBB" }}
+                    />
+                    Filled
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ background: "#E28B8B" }}
+                    />
+                    Missed
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ background: "#D1D5DB" }}
+                    />
+                    Holiday
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span className="w-3 h-3 rounded-sm bg-gray-200" />
+                    Upcoming
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        </div>
+        {/* ══ END LEFT COLUMN ══ (calendar only) */}
 
-          {!noMeetings && (
-            <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
-              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#22c55e]" />{" "}
-                Filled
+        {/* ══ RIGHT COLUMN — Notes Panel ══ */}
+        <div className="h-full">
+          {!isLoading && dailyData && !noMeetings && (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-full flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
+                  <FileText className="w-4 h-4 text-[#CE7A5A]" />
+                  Daily Reports ({configName})
+                </div>
+                <span className="text-xs text-neutral-400">{topDateStr}</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#ef4444]" />{" "}
-                Missed (click to fill)
+
+              {/* Stats row */}
+              <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-gray-100">
+                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-[#CE7A5A] text-white shadow-sm">
+                  Total: {dailyData.total_members || 0}
+                </span>
+                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-green-600 border border-green-400/50 shadow-sm">
+                  Submitted: {dailyData.submitted || 0}
+                </span>
+                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#b91c1c] border border-[#b91c1c]/70 shadow-sm">
+                  Missed: {dailyData.missed || 0}
+                </span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#facd55]" />{" "}
-                Holiday
+
+              {/* Meeting Notes — grows to fill height */}
+              <div className="p-4 flex-1 flex flex-col">
+                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                  Meeting Notes
+                </p>
+                <textarea
+                  value={meetingNotes}
+                  onChange={(e) => setMeetingNotes(e.target.value)}
+                  className="w-full flex-1 border border-gray-200 rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[120px] resize-none placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
+                  placeholder={
+                    meetingJournalId
+                      ? "Edit discussion points..."
+                      : "Team members who missed + discussion points will appear here..."
+                  }
+                />
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                <span
-                  className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#f1f5f9] border border-gray-100"
-                />{" "}
-                Upcoming
+
+              {/* Footer: Select All + Save */}
+              <div className="flex items-center justify-between bg-gray-50 p-3 px-4 border-t border-gray-100 mt-auto">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={areAllVisibleReportsSelected}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-[#1A1A1A]">
+                    Select All
+                  </span>
+                </label>
+                {isActiveDateSubmitted ? (
+                  <div className="flex items-center gap-2">
+                    {!notesChanged && (
+                      <span className="text-[11px] text-neutral-400 font-medium italic">
+                        Edit notes to enable update
+                      </span>
+                    )}
+                    <BtnPrimary
+                      icon={isSavingMeeting ? Loader2 : RefreshCw}
+                      onClick={handleUpdateNotesOnly}
+                      disabled={isSavingMeeting || !notesChanged}
+                      loading={isSavingMeeting}
+                      className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                    >
+                      {isSavingMeeting ? "Updating..." : "Update Notes"}
+                    </BtnPrimary>
+                  </div>
+                ) : meetingJournalId ? (
+                  <BtnPrimary
+                    icon={isSavingMeeting ? Loader2 : RefreshCw}
+                    onClick={handleUpdateMeeting}
+                    disabled={isSavingMeeting}
+                    loading={isSavingMeeting}
+                    className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                  >
+                    {isSavingMeeting ? "Updating..." : "Update Meeting"}
+                  </BtnPrimary>
+                ) : (
+                  <BtnPrimary
+                    icon={isSavingMeeting ? Loader2 : FileText}
+                    onClick={handleSaveMeeting}
+                    disabled={isSavingMeeting}
+                    loading={isSavingMeeting}
+                  >
+                    {isSavingMeeting ? "Saving..." : "Save Meeting"}
+                  </BtnPrimary>
+                )}
               </div>
             </div>
           )}
         </div>
+        {/* ══ END RIGHT COLUMN (notes) ══ */}
       </div>
+      {/* ══ END CALENDAR+NOTES GRID ══ */}
 
+      {/* ══ FULL WIDTH BELOW — Filters ══ */}
       {/* ══ FILTERS ══ */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
+          <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
             Meeting
           </span>
           {noMeetings ? (
@@ -1739,9 +1837,10 @@ const DailyTab = ({
 
         {!noMeetings && (
           <>
+            <div className="w-px h-5 bg-gray-200 shrink-0" />
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
-                Member
+              <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
+                Members
               </span>
               <SearchableSelect
                 value={selectedMember}
@@ -1756,18 +1855,6 @@ const DailyTab = ({
                 ]}
               />
             </div>
-            <button
-              onClick={() => loadDailyData(false)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-neutral-600 shadow-sm hover:border-[#CE7A5A]/60 hover:text-[#CE7A5A] transition-all"
-            >
-              <RefreshCw
-                className={cn(
-                  "w-3.5 h-3.5",
-                  isLoading && "animate-spin text-[#CE8261]"
-                )}
-              />{" "}
-              Refresh
-            </button>
           </>
         )}
       </div>
@@ -1846,335 +1933,217 @@ const DailyTab = ({
         </div>
       )}
 
-      {/* ══ REPORTS SECTION ══ */}
+      {/* ══ REPORTS SECTION — member cards in left col ══ */}
       {!isLoading && dailyData && !noMeetings && (
         <>
-          <div className="border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm overflow-hidden bg-[#FFFDFB]">
-            <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fef6f4]">
-              <div>
-                <h3 className="font-bold text-sm text-neutral-900 flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white border border-[rgba(218,119,86,0.22)]">
-                    <FileText className="w-4 h-4 text-[#CE7A5A]" />
-                  </div>
-                  Daily Reports ({configName})
-                </h3>
-                <p className="text-xs text-neutral-400 mt-0.5">{topDateStr}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap pt-3">
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-[#CE7A5A] text-white shadow-sm">
-                  Total: {dailyData.total_members || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#CE7A5A] border border-[#CE7A5A]/40 shadow-sm">
-                  Submitted: {dailyData.submitted || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#b91c1c] border border-[#b91c1c]/70 shadow-sm">
-                  Missed: {dailyData.missed || 0}
-                </span>
-              </div>
+          {memberReports.length === 0 && failedMembers.length === 0 && (
+            <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white border border-gray-200 rounded-2xl">
+              No reports found for this selection.
             </div>
+          )}
 
-            {memberReports.length === 0 && failedMembers.length === 0 && (
-              <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white">
-                No reports found for this selection.
-              </div>
-            )}
+          {memberReports.length > 0 && (
+            <div>
+              {/* ══ Report Cards ══ */}
+              <div className="space-y-4">
+                {memberReports
+                  .filter(
+                    (report: any) =>
+                      report.status !== "pending" || !!report.daily_report
+                  )
+                  .map((report: any) => {
+                    const rId = report.journal_id || report.user_id;
+                    const isExpanded = expandedReports.includes(rId);
+                    const isRawPending = report.status === "pending";
+                    const hasDraft = !!report.daily_report;
+                    const isPermanentlyChecked =
+                      report.checked_in_meeting === true;
+                    const draftRaw = report.daily_report?.report_data || {};
 
-            {memberReports.length > 0 && (
-              <div className="p-4 bg-[#FFFDFB]">
-                {/* ══ Meeting Notes Box ══ */}
-                <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm mb-6">
-                  <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#FFFAF8]">
-                    <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
-                      <Users className="w-4 h-4 text-[#CE7A5A]" /> Meeting Notes
-                    </div>
-                    <BtnIcon
-                      onClick={() => loadDailyData(false)}
-                      title="Refresh"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                    </BtnIcon>
-                  </div>
+                    const rawDisplayRd = resolveRawSource(report);
+                    const displayRd = normalizeReportData(rawDisplayRd);
+                    const isAbsentReport = isReportAbsent(
+                      report,
+                      rawDisplayRd,
+                      displayRd
+                    );
+                    const isPending = isRawPending && !isAbsentReport;
+                    const absentReason = getReportAbsentReason(
+                      report,
+                      rawDisplayRd,
+                      displayRd
+                    );
 
-                  <div className="p-4">
-                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
-                      {meetingJournalId ? "Discussion Points" : "Meeting Notes"}
-                    </p>
-                    <textarea
-                      value={meetingNotes}
-                      onChange={(e) => setMeetingNotes(e.target.value)}
-                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
-                      placeholder={
-                        meetingJournalId
-                          ? "Edit discussion points..."
-                          : "Team members who missed + discussion points will appear here..."
-                      }
-                    />
-                  </div>
+                    const normalizedReportName = (report.name || "")
+                      .trim()
+                      .toLowerCase();
 
-                  <div className="flex items-center justify-between bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)]">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={areAllVisibleReportsSelected}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
-                      />
-                      <span className="text-sm font-medium text-[#1A1A1A]">
-                        Select All
-                      </span>
-                    </label>
-
-                    {isActiveDateSubmitted ? (
-                      <div className="flex items-center gap-2">
-                        {!notesChanged && (
-                          <span className="text-[11px] text-neutral-400 font-medium italic">
-                            Edit notes to enable update
-                          </span>
-                        )}
-                        <BtnPrimary
-                          icon={isSavingMeeting ? Loader2 : RefreshCw}
-                          onClick={handleUpdateNotesOnly}
-                          disabled={isSavingMeeting || !notesChanged}
-                          loading={isSavingMeeting}
-                          className="bg-blue-600 hover:bg-blue-700 border-blue-700"
-                        >
-                          {isSavingMeeting ? "Updating..." : "Update Notes"}
-                        </BtnPrimary>
-                      </div>
-                    ) : meetingJournalId ? (
-                      <BtnPrimary
-                        icon={isSavingMeeting ? Loader2 : RefreshCw}
-                        onClick={handleUpdateMeeting}
-                        disabled={isSavingMeeting}
-                        loading={isSavingMeeting}
-                        className="bg-blue-600 hover:bg-blue-700 border-blue-700"
-                      >
-                        {isSavingMeeting ? "Updating..." : "Update Meeting"}
-                      </BtnPrimary>
-                    ) : (
-                      <BtnPrimary
-                        icon={isSavingMeeting ? Loader2 : FileText}
-                        onClick={handleSaveMeeting}
-                        disabled={isSavingMeeting}
-                        loading={isSavingMeeting}
-                      >
-                        {isSavingMeeting ? "Saving..." : "Save Meeting"}
-                      </BtnPrimary>
-                    )}
-                  </div>
-                </div>
-
-                {/* ══ Report Cards ══ */}
-                <div className="space-y-4">
-                  {memberReports
-                    .filter(
-                      (report: any) =>
-                        report.status !== "pending" || !!report.daily_report
-                    )
-                    .map((report: any) => {
-                      const rId = report.journal_id || report.user_id;
-                      const isExpanded = expandedReports.includes(rId);
-                      const isRawPending = report.status === "pending";
-                      const hasDraft = !!report.daily_report;
-                      const isPermanentlyChecked =
-                        report.checked_in_meeting === true;
-
-                      const rawDisplayRd = resolveRawSource(report);
-                      const displayRd = normalizeReportData(rawDisplayRd);
-                      const isAbsentReport = isReportAbsent(
-                        report,
-                        rawDisplayRd,
-                        displayRd
-                      );
-                      const isPending = isRawPending && !isAbsentReport;
-                      const absentReason = getReportAbsentReason(
-                        report,
-                        rawDisplayRd,
-                        displayRd
-                      );
-
-                      const normalizedReportName = (report.name || "")
-                        .trim()
-                        .toLowerCase();
-
-                      const userAccomplishments =
-                        displayRd.accomplishments.filter(
-                          (item: any) =>
-                            !item.member ||
-                            String(item.member).trim().toLowerCase() ===
+                    const userAccomplishments =
+                      displayRd.accomplishments.filter(
+                        (item: any) =>
+                          !item.member ||
+                          String(item.member).trim().toLowerCase() ===
                             normalizedReportName
-                        );
-
-                      const userTasksIssues = displayRd.tasks_issues.filter(
-                        (item: any) =>
-                          !item.member ||
-                          String(item.member).trim().toLowerCase() ===
-                          normalizedReportName
-                      );
-                      const groupedTasksIssues =
-                        groupTasksIssuesByType(userTasksIssues);
-
-                      const userTomorrowPlan = displayRd.tomorrow_plan.filter(
-                        (item: any) =>
-                          !item.member ||
-                          String(item.member).trim().toLowerCase() ===
-                          normalizedReportName
                       );
 
-                      // ✅ FIX: sections aur kpis daily_report se lo
-                      const draftRaw = report.daily_report?.report_data || {};
-                      const sections =
-                        draftRaw?.sections ||
-                        rawDisplayRd?.sections ||
-                        report?.report_data?.sections ||
-                        {};
-                      const kpisFallback =
-                        draftRaw?.kpis ||
-                        report.kpis ||
-                        rawDisplayRd?.kpis ||
-                        report.report_data?.kpis ||
-                        {};
+                    const userTasksIssues = displayRd.tasks_issues.filter(
+                      (item: any) =>
+                        !item.member ||
+                        String(item.member).trim().toLowerCase() ===
+                          normalizedReportName
+                    );
+                    const groupedTasksIssues =
+                      groupTasksIssuesByType(userTasksIssues);
 
-                      const getScore = (val1: any, val2: any) => {
-                        if (val1 !== undefined && val1 !== null && val1 !== "")
-                          return Number(val1);
-                        if (val2 !== undefined && val2 !== null && val2 !== "")
-                          return Number(val2);
-                        return 0;
-                      };
+                    const userTomorrowPlan = displayRd.tomorrow_plan.filter(
+                      (item: any) =>
+                        !item.member ||
+                        String(item.member).trim().toLowerCase() ===
+                          normalizedReportName
+                    );
 
-                      const kpiAchieved = isAbsentReport
-                        ? 0
-                        : getScore(sections.kpi_achievement, kpisFallback.score);
-                      const kpiStr = `${kpiAchieved}/20`;
+                    // ── NEW LOGIC FOR SCORING ──
+                    const sections =
+                      draftRaw?.sections ||
+                      rawDisplayRd?.sections ||
+                      displayRd?.sections ||
+                      report?.report_data?.sections ||
+                      {};
+                    const kpisFallback =
+                      report.kpis ||
+                      report.report_data?.kpis ||
+                      rawDisplayRd?.kpis ||
+                      {};
 
-                      const tasksIssuesAchieved = isAbsentReport
-                        ? 0
-                        : getScore(
+                    // Explicit strict checker to prevent `0` from failing over to fallback values
+                    const getScore = (val1: any, val2: any) => {
+                      if (val1 !== undefined && val1 !== null && val1 !== "")
+                        return Number(val1);
+                      if (val2 !== undefined && val2 !== null && val2 !== "")
+                        return Number(val2);
+                      return 0;
+                    };
+
+                    const kpiAchieved = isAbsentReport
+                      ? 0
+                      : getScore(sections.kpi_achievement, kpisFallback.score);
+                    const kpiStr = `${kpiAchieved}/20`;
+
+                    const tasksIssuesAchieved = isAbsentReport
+                      ? 0
+                      : getScore(
                           sections.tasks_issues_todos ?? sections.tasks_issues,
                           kpisFallback.tasks
                         );
-                      const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
+                    const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
-                      const planAchieved = isAbsentReport
-                        ? 0
-                        : getScore(sections.planning, kpisFallback.planning);
-                      const planStr = `${planAchieved}/20`;
+                    const planAchieved = isAbsentReport
+                      ? 0
+                      : getScore(sections.planning, kpisFallback.planning);
+                    const planStr = `${planAchieved}/20`;
 
-                      const timeAchieved = getScore(
-                        sections.timing,
-                        kpisFallback.timing
-                      );
-                      const timeStr = `${timeAchieved}/20`;
+                    const timeAchieved = getScore(
+                      sections.timing,
+                      kpisFallback.timing
+                    );
+                    const timeStr = `${timeAchieved}/20`;
 
-                      const selfRating =
-                        isAbsentReport
-                          ? 0
-                          : rawDisplayRd?.self_rating ??
-                          draftRaw?.details?.self_rating ??
-                          draftRaw?.sections?.self_rating ??
-                          null;
-                      const selfRatingText = formatSelfRating(selfRating);
+                    const selfRating = isAbsentReport
+                      ? 0
+                      : (rawDisplayRd?.self_rating ??
+                        draftRaw?.details?.self_rating ??
+                        draftRaw?.sections?.self_rating ??
+                        null);
+                    const selfRatingText = formatSelfRating(selfRating);
 
-                      const totalScoreValue = getReportTotalScore(
-                        report,
-                        rawDisplayRd
-                      );
-                      const totalScoreStr = Math.round(totalScoreValue ?? 0);
+                    const totalScoreValue = getReportTotalScore(
+                      report,
+                      rawDisplayRd
+                    );
+                    const totalScoreStr = Math.round(totalScoreValue ?? 0);
 
-                      const canExpand = !isPending || hasDraft;
-                      const isSelected = selectedReports.includes(rId);
+                    const canExpand = !isPending || hasDraft;
+                    const isSelected = selectedReports.includes(rId);
 
-                      return (
+                    return (
+                      <div
+                        key={rId}
+                        className={cn(
+                          "bg-white border rounded-xl shadow-sm overflow-hidden transition-all",
+                          isSelected
+                            ? "border-[#4A90E2] border-l-[4px]"
+                            : "border-[#EAE3DF]"
+                        )}
+                      >
                         <div
-                          key={rId}
                           className={cn(
-                            "bg-white border rounded-xl shadow-sm overflow-hidden transition-all",
-                            isSelected
-                              ? "border-[#4A90E2] border-l-[4px]"
-                              : "border-[#EAE3DF]"
+                            "p-4 transition-colors flex items-start gap-4",
+                            canExpand
+                              ? "cursor-pointer hover:bg-gray-50"
+                              : "cursor-default"
                           )}
+                          onClick={() => canExpand && toggleExpand(rId)}
                         >
-                          <div
-                            className={cn(
-                              "p-4 transition-colors flex items-start gap-4",
-                              canExpand
-                                ? "cursor-pointer hover:bg-gray-50"
-                                : "cursor-default"
-                            )}
-                            onClick={() => canExpand && toggleExpand(rId)}
-                          >
-                            <div className="flex items-start gap-3 pt-1">
-                              <input
-                                type="checkbox"
-                                checked={isPermanentlyChecked || isSelected}
-                                disabled={isPermanentlyChecked}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  if (isPermanentlyChecked) return;
-                                  setSelectedReports((prev) =>
-                                    e.target.checked
-                                      ? [...prev, rId]
-                                      : prev.filter((id) => id !== rId)
-                                  );
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className={cn(
-                                  "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
-                                  isPermanentlyChecked
-                                    ? "opacity-60 cursor-not-allowed"
-                                    : "cursor-pointer"
-                                )}
-                              />
-                              <div className="flex flex-col items-center gap-1">
-                                <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
-                                  {totalScoreStr}
+                          <div className="flex items-start gap-3 pt-1">
+                            <input
+                              type="checkbox"
+                              checked={isPermanentlyChecked || isSelected}
+                              disabled={isPermanentlyChecked}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                if (isPermanentlyChecked) return;
+                                setSelectedReports((prev) =>
+                                  e.target.checked
+                                    ? [...prev, rId]
+                                    : prev.filter((id) => id !== rId)
+                                );
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className={cn(
+                                "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
+                                isPermanentlyChecked
+                                  ? "opacity-60 cursor-not-allowed"
+                                  : "cursor-pointer"
+                              )}
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                                    {report.name}
+                                  </h3>
+                                  {(report.name?.includes("HOD") ||
+                                    report.name?.includes("TL")) && (
+                                    <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                      <Crown className="w-3 h-3 fill-orange-400" />{" "}
+                                      HOD
+                                    </span>
+                                  )}
+                                  {report.department && (
+                                    <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                      {report.department}
+                                    </span>
+                                  )}
                                 </div>
-                                {selfRatingText && (
-                                  <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                                    ⭐ {selfRatingText}
+                                <div className="text-[11px] text-gray-400 mb-2 truncate">
+                                  {report.email || "Report submitted"}
+                                  {report.submitted_at && (
+                                    <span className="ml-1">
+                                      • {formatDateTime(report.submitted_at)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                {isPending && !hasDraft && (
+                                  <span className="text-red-500 text-xs font-semibold">
+                                    Not submitted
                                   </span>
                                 )}
-                              </div>
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
-                                      {report.name}
-                                    </h3>
-                                    {(report.name?.includes("HOD") ||
-                                      report.name?.includes("TL")) && (
-                                        <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                                          <Crown className="w-3 h-3 fill-orange-400" />{" "}
-                                          HOD
-                                        </span>
-                                      )}
-                                    {report.department && (
-                                      <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                                        {report.department}
-                                      </span>
-                                    )}
-                                    {isPending && !hasDraft ? (
-                                      <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
-                                        PENDING
-                                      </span>
-                                    ) : (
-                                      ""
-                                    )}
-                                  </div>
-                                  <div className="text-[11px] text-gray-400 mb-2 truncate">
-                                    {report.email}
-                                    {report.submitted_at && (
-                                      <span className="ml-1">
-                                        • {formatDateTime(report.submitted_at)}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
                                 {canExpand && (
                                   <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
                                     <ChevronDown
@@ -2186,1113 +2155,1190 @@ const DailyTab = ({
                                   </button>
                                 )}
                               </div>
-
-                              {(!isPending || hasDraft) && (
-                                <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    KPI: {kpiStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Tasks, Issues & Todos: {tasksIssuesStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Planning: {planStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Timing: {timeStr}
-                                  </span>
-                                </div>
-                              )}
-
-                              {canExpand && (
-                                <p className="text-[10px] text-gray-400 italic mb-2 mt-1">
-                                  Click to view tasks, accomplishments & plan
-                                </p>
-                              )}
-
-                              {(!isPending || hasDraft) &&
-                                dateRow.length > 0 && (
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                                      {configName}
-                                    </span>
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      {dateRow.map((d: any, i: number) => {
-                                        const s =
-                                          d.status === "non_meeting"
-                                            ? "holiday"
-                                            : d.status;
-                                        return (
-                                          <div
-                                            key={i}
-                                            className={cn(
-                                              "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                              s === "done" || s === "submitted"
-                                                ? "bg-[#10B981] text-white border-[#10B981]"
-                                                : s === "missed"
-                                                  ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                                  : s === "holiday"
-                                                    ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
-                                                    : "bg-gray-100 text-gray-400 border-gray-200"
-                                            )}
-                                          >
-                                            <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                              {d.day ? d.day.charAt(0) : ""}
-                                            </span>
-                                            <span className="leading-none">
-                                              {d.date ?? ""}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
                             </div>
-                          </div>
 
-                          {isExpanded && canExpand && (
-                            <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
-                              <div className="p-5 space-y-5">
-                                <div className="flex flex-wrap gap-3">
-                                  {selfRatingText && (
-                                    <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
-                                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                      <span className="text-sm font-bold text-yellow-800">
-                                        Self Rating: {selfRatingText}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {totalScoreValue != null && (
-                                    <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                                      <span className="text-sm font-bold text-purple-800">
-                                        Total Score: {totalScoreStr}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {(displayRd.is_absent !== null ||
-                                    isAbsentReport) &&
-                                    displayRd.is_absent !== undefined && (
-                                      <div
-                                        className={cn(
-                                          "flex items-center gap-2 rounded-xl px-4 py-2.5 border",
-                                          isAbsentReport
-                                            ? "bg-red-50 border-red-100"
-                                            : "bg-green-50 border-green-100"
-                                        )}
-                                      >
-                                        <span
-                                          className={cn(
-                                            "text-sm font-bold",
-                                            isAbsentReport
-                                              ? "text-red-700"
-                                              : "text-green-700"
-                                          )}
-                                        >
-                                          {isAbsentReport
-                                            ? `Absent: ${absentReason}`
-                                            : "Present"}
-                                        </span>
-                                      </div>
-                                    )}
-                                </div>
-
-                                {!isAbsentReport && displayRd.big_win && (
-                                  <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
-                                    <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                                    <div>
-                                      <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">
-                                        Big Win 🏆
-                                      </div>
-                                      <p className="text-sm font-semibold text-amber-900">
-                                        {displayRd.big_win}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  {/* Accomplishments */}
-                                  <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                      <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                      </div>
-                                      <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                        Accomplishments
-                                      </h4>
-                                    </div>
-                                    {userAccomplishments.length === 0 ? (
-                                      <p className="text-xs text-neutral-300 italic">
-                                        None recorded.
-                                      </p>
-                                    ) : (
-                                      <ul className="space-y-2">
-                                        {userAccomplishments.map(
-                                          (item: any, i: number) => (
-                                            <li
-                                              key={i}
-                                              className="flex items-start gap-2 text-xs text-neutral-700"
-                                            >
-                                              <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
-                                              <span className="leading-relaxed">
-                                                {getItemTitle(item)}
-                                              </span>
-                                            </li>
-                                          )
-                                        )}
-                                      </ul>
-                                    )}
-                                  </div>
-
-                                  {/* Tasks & Issues */}
-                                  <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                      <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                                        <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
-                                      </div>
-                                      <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                        Tasks, Issues & Todos
-                                      </h4>
-                                    </div>
-                                    {userTasksIssues.length === 0 ? (
-                                      <p className="text-xs text-neutral-300 italic">
-                                        None recorded.
-                                      </p>
-                                    ) : (
-                                      <div className="space-y-4">
-                                        {[
-                                          {
-                                            label: "Tasks",
-                                            items: groupedTasksIssues.tasks,
-                                            dotClass: "bg-blue-400",
-                                          },
-                                          {
-                                            label: "Issues",
-                                            items: groupedTasksIssues.issues,
-                                            dotClass: "bg-red-400",
-                                          },
-                                          {
-                                            label: "Todos",
-                                            items: groupedTasksIssues.todos,
-                                            dotClass: "bg-violet-400",
-                                          },
-                                        ].map((section) => (
-                                          <div key={section.label}>
-                                            <div className="flex items-center justify-between gap-2 mb-2">
-                                              <p className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider">
-                                                {section.label}
-                                              </p>
-                                              <span className="text-[10px] font-bold text-neutral-400">
-                                                {section.items.length}
-                                              </span>
-                                            </div>
-                                            {section.items.length === 0 ? (
-                                              <p className="text-xs text-neutral-300 italic">
-                                                None recorded.
-                                              </p>
-                                            ) : (
-                                              <ul className="space-y-2.5">
-                                                {section.items.map(
-                                                  (item: any, i: number) => (
-                                                    <li
-                                                      key={`${section.label}-${i}`}
-                                                      className="flex items-start gap-2 text-xs text-neutral-700"
-                                                    >
-                                                      <div
-                                                        className={cn(
-                                                          "w-1.5 h-1.5 rounded-full mt-1.5 shrink-0",
-                                                          section.dotClass
-                                                        )}
-                                                      />
-                                                      <span
-                                                        className={cn(
-                                                          "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                                          getItemStatus(item) ===
-                                                            "open"
-                                                            ? "bg-red-100 text-red-600"
-                                                            : isCompletedStatus(
-                                                              getItemStatus(
-                                                                item
-                                                              )
-                                                            )
-                                                              ? "bg-green-100 text-green-600"
-                                                              : "bg-gray-100 text-gray-500"
-                                                        )}
-                                                      >
-                                                        {getItemStatus(item)}
-                                                      </span>
-                                                      <span className="leading-relaxed">
-                                                        {getItemTitle(item)}
-                                                      </span>
-                                                    </li>
-                                                  )
-                                                )}
-                                              </ul>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Tomorrow's Plan */}
-                                  <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                      <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                        <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                                      </div>
-                                      <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                        Tomorrow's Plan
-                                      </h4>
-                                    </div>
-                                    {userTomorrowPlan.length === 0 ? (
-                                      <p className="text-xs text-neutral-300 italic">
-                                        None recorded.
-                                      </p>
-                                    ) : (
-                                      <ul className="space-y-2">
-                                        {userTomorrowPlan.map(
-                                          (item: any, i: number) => (
-                                            <li
-                                              key={i}
-                                              className="flex items-start gap-2 text-xs text-neutral-700"
-                                            >
-                                              <Circle className="w-3 h-3 text-blue-300 mt-0.5 shrink-0" />
-                                              <span className="leading-relaxed">
-                                                {getItemTitle(item)}
-                                              </span>
-                                            </li>
-                                          )
-                                        )}
-                                      </ul>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-2 pt-1">
-                                  <button
-                                    onClick={() => openTaskModalForMember(report)}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" /> Add Task
-                                  </button>
-                                  <button
-                                    onClick={() => openIssueModalForMember(report)}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" /> Stuck Issue
-                                  </button>
-                                  <button
-                                    onClick={() => openTodoModalForMember(report)}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" /> Add Todo
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setQuickActionOpenId(
-                                        quickActionOpenId === rId ? null : rId
-                                      );
-                                      setQuickActionText("");
-                                    }}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" /> Add to Plan
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (feedbackOpenId === rId) {
-                                        setFeedbackOpenId(null);
-                                      } else {
-                                        setFeedbackOpenId(rId);
-                                        setFeedbackRating(0);
-                                        setFeedbackMessage("");
-                                        loadPastFeedbacks(report.user_id);
-                                      }
-                                    }}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
-                                  >
-                                    <MessageSquare className="w-3.5 h-3.5" />{" "}
-                                    Feedback
-                                  </button>
-                                </div>
-
-                                {/* Quick Add to Plan */}
-                                {quickActionOpenId === rId && (
-                                  <div className="border-t border-[#EAE3DF] pt-4 mt-1">
-                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-3">
-                                      Add to Tomorrow's Plan
-                                    </p>
-                                    <div className="flex items-center gap-3">
-                                      <input
-                                        autoFocus
-                                        type="text"
-                                        value={quickActionText}
-                                        onChange={(e) =>
-                                          setQuickActionText(e.target.value)
-                                        }
-                                        placeholder="Add to tomorrow's plan..."
-                                        className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-neutral-400"
-                                        onKeyDown={async (e) => {
-                                          if (
-                                            e.key === "Enter" &&
-                                            quickActionText.trim()
-                                          ) {
-                                            const ok = await updateJournal(
-                                              report,
-                                              {
-                                                tomorrow_plan_item:
-                                                  quickActionText.trim(),
-                                              }
-                                            );
-                                            if (ok) {
-                                              toast.success(
-                                                "Added to tomorrow's plan!"
-                                              );
-                                              setQuickActionOpenId(null);
-                                              setQuickActionText("");
-                                              await loadDailyData(false);
-                                            }
-                                          }
-                                          if (e.key === "Escape") {
-                                            setQuickActionOpenId(null);
-                                            setQuickActionText("");
-                                          }
-                                        }}
-                                      />
-                                      <button
-                                        onClick={async () => {
-                                          if (quickActionText.trim()) {
-                                            const ok = await updateJournal(
-                                              report,
-                                              {
-                                                tomorrow_plan_item:
-                                                  quickActionText.trim(),
-                                              }
-                                            );
-                                            if (ok) {
-                                              toast.success(
-                                                "Added to tomorrow's plan!"
-                                              );
-                                              setQuickActionOpenId(null);
-                                              setQuickActionText("");
-                                              await loadDailyData(false);
-                                            }
-                                          }
-                                        }}
-                                        className="px-5 py-2 rounded-full text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
-                                      >
-                                        Add
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setQuickActionOpenId(null);
-                                          setQuickActionText("");
-                                        }}
-                                        className="px-5 py-2 rounded-full text-xs font-bold text-neutral-600 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
-                                {feedbackOpenId === rId && (
-                                  <div className="border-t border-[#EAE3DF] pt-5 mt-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                      {/* COLUMN 1: Add New Feedback */}
-                                      <div>
-                                        <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                          Provide Feedback
-                                        </p>
-                                        <p className="text-sm font-bold text-neutral-800 mb-2">
-                                          Rating (1-5 stars)
-                                        </p>
-                                        <div className="flex items-center gap-1 mb-4">
-                                          {[1, 2, 3, 4, 5].map((star) => (
-                                            <button
-                                              key={star}
-                                              type="button"
-                                              onClick={() =>
-                                                setFeedbackRating(star)
-                                              }
-                                              className="transition-transform hover:scale-110"
-                                            >
-                                              <svg
-                                                className="w-8 h-8"
-                                                viewBox="0 0 24 24"
-                                                fill={
-                                                  star <= feedbackRating
-                                                    ? "#F59E0B"
-                                                    : "none"
-                                                }
-                                                stroke={
-                                                  star <= feedbackRating
-                                                    ? "#F59E0B"
-                                                    : "#D1D5DB"
-                                                }
-                                                strokeWidth="1.5"
-                                              >
-                                                <path
-                                                  strokeLinejoin="round"
-                                                  d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                                                />
-                                              </svg>
-                                            </button>
-                                          ))}
-                                        </div>
-                                        <p className="text-sm font-bold text-neutral-800 mb-2">
-                                          Feedback Message
-                                        </p>
-                                        <textarea
-                                          autoFocus
-                                          value={feedbackMessage}
-                                          onChange={(e) =>
-                                            setFeedbackMessage(e.target.value)
-                                          }
-                                          placeholder="Enter constructive feedback..."
-                                          rows={3}
-                                          className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
-                                        />
-                                        <div className="flex items-center gap-3 mt-4">
-                                          <button
-                                            onClick={async () => {
-                                              if (feedbackRating === 0) {
-                                                toast.error(
-                                                  "Please select a star rating!"
-                                                );
-                                                return;
-                                              }
-                                              try {
-                                                const loggedInUserId =
-                                                  localStorage.getItem(
-                                                    "userId"
-                                                  ) || "";
-                                                const payload = {
-                                                  resource_type: "User",
-                                                  resource_id: report.user_id,
-                                                  rating_from_id:
-                                                    loggedInUserId,
-                                                  score: feedbackRating,
-                                                  reviews: feedbackMessage,
-                                                  positive_opening: "",
-                                                  constructive_feedback: "",
-                                                  positive_closing: "",
-                                                };
-                                                const res = await fetch(
-                                                  `${getBaseUrl()}/ratings`,
-                                                  {
-                                                    method: "POST",
-                                                    headers: {
-                                                      ...getAuthHeaders(),
-                                                      "Content-Type":
-                                                        "application/json",
-                                                    },
-                                                    body: JSON.stringify(
-                                                      payload
-                                                    ),
-                                                  }
-                                                );
-                                                if (!res.ok)
-                                                  throw new Error(
-                                                    `HTTP ${res.status}`
-                                                  );
-                                                toast.success(
-                                                  "Feedback added!"
-                                                );
-                                                setFeedbackOpenId(null);
-                                                setFeedbackRating(0);
-                                                setFeedbackMessage("");
-                                                await loadDailyData(false);
-                                              } catch (err: any) {
-                                                toast.error(
-                                                  "Error adding feedback: " +
-                                                  err.message
-                                                );
-                                              }
-                                            }}
-                                            className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
-                                          >
-                                            Submit Feedback
-                                          </button>
-                                          <button
-                                            onClick={() => {
-                                              setFeedbackOpenId(null);
-                                              setFeedbackRating(0);
-                                              setFeedbackMessage("");
-                                            }}
-                                            className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                          >
-                                            Cancel
-                                          </button>
-                                        </div>
-                                      </div>
-
-                                      {/* COLUMN 2: Recent Feedbacks */}
-                                      <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
-                                        <div className="flex items-center justify-between mb-4">
-                                          <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
-                                            Recent Feedbacks
-                                          </p>
-                                          <button
-                                            onClick={handleFeedback}
-                                            className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
-                                          >
-                                            View All{" "}
-                                            <ChevronRight className="w-3 h-3" />
-                                          </button>
-                                        </div>
-
-                                        {isFetchingFeedbacks ? (
-                                          <div className="flex justify-center items-center h-full py-6">
-                                            <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                                          </div>
-                                        ) : fetchedFeedbacks.length === 0 ? (
-                                          <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
-                                            <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
-                                            <span className="text-xs font-medium italic">
-                                              No past feedback found.
-                                            </span>
-                                          </div>
-                                        ) : (
-                                          <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                            {fetchedFeedbacks
-                                              .slice(0, 3)
-                                              .map((fb: any, idx: number) => (
-                                                <div
-                                                  key={fb.id ?? idx}
-                                                  className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
-                                                >
-                                                  <div className="flex items-center gap-1 mb-1.5">
-                                                    {[1, 2, 3, 4, 5].map(
-                                                      (star) => (
-                                                        <Star
-                                                          key={star}
-                                                          className={cn(
-                                                            "w-3 h-3",
-                                                            star <= fb.score
-                                                              ? "text-yellow-400 fill-yellow-400"
-                                                              : "text-gray-200"
-                                                          )}
-                                                        />
-                                                      )
-                                                    )}
-                                                    {fb.created_at && (
-                                                      <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
-                                                        {new Date(
-                                                          fb.created_at
-                                                        ).toLocaleDateString(
-                                                          "en-IN",
-                                                          {
-                                                            day: "numeric",
-                                                            month: "short",
-                                                            year: "2-digit",
-                                                          }
-                                                        )}
-                                                      </span>
-                                                    )}
-                                                  </div>
-                                                  {fb.reviews ? (
-                                                    <p className="text-xs text-neutral-700 leading-relaxed">
-                                                      {fb.reviews}
-                                                    </p>
-                                                  ) : (
-                                                    <p className="text-xs text-neutral-400 italic">
-                                                      No review provided.
-                                                    </p>
-                                                  )}
-                                                  {fb.reviewer && (
-                                                    <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
-                                                      — {fb.reviewer.trim()}
-                                                    </p>
-                                                  )}
-                                                </div>
-                                              ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {failedMembers.length > 0 && (
-            <div className="bg-[#FFFDFB] border border-red-100 rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-red-600 font-bold text-sm mb-4">
-                <AlertTriangle className="w-4 h-4" />
-                Team Members Who Failed to Submit ({failedMembers.length})
-              </div>
-              <div className="space-y-4">
-                {failedMembers.map((member: any, i: number) => {
-                  const missedId = `missed-${member.id || member.user_id || member.name || i}`;
-                  const isMissedExpanded = expandedReports.includes(missedId);
-
-                  return (
-                    <div
-                      key={missedId}
-                      className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all"
-                    >
-                      <div className="p-4 flex items-start gap-4">
-                        <div className="flex items-start gap-3 pt-1">
-                          <input
-                            type="checkbox"
-                            checked
-                            readOnly
-                            disabled
-                            className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
-                          />
-                          <div className="flex flex-col items-center gap-1">
-                            <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
-                              0
-                            </div>
-                            <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                              Missed
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
-                                  {member.name || member}
-                                </h3>
-                                {member.department && (
-                                  <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                                    {member.department}
-                                  </span>
-                                )}
-                                <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
-                                  NOT SUBMITTED
+                            {(!isPending || hasDraft) && (
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  KPI: {kpiStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Task, Issues & To-do's: {tasksIssuesStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Planning: {planStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Timing: {timeStr}
                                 </span>
                               </div>
-                              <div className="text-[11px] text-gray-400 mb-2 truncate">
-                                {member.email || "Report not submitted for this date"}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => toggleExpand(missedId)}
-                              className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
-                            >
-                              <ChevronDown
-                                className={cn(
-                                  "w-4 h-4 transition-transform",
-                                  isMissedExpanded && "rotate-180"
-                                )}
-                              />
-                            </button>
-                          </div>
+                            )}
 
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                              KPI: 0/20
-                            </span>
-                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                              Tasks, Issues & Todos: 0/20
-                            </span>
-                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                              Planning: 0/20
-                            </span>
-                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                              Timing: 0/20
-                            </span>
-                          </div>
-
-                          <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
-                            Click to view missed submission details
-                          </p>
-
-                          {dateRow.length > 0 && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                                {configName}
-                              </span>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                {dateRow.map((d: any, dateIndex: number) => {
-                                  const s =
-                                    d.full_date === activeDate
-                                      ? "missed"
-                                      : d.status === "non_meeting"
+                            {(!isPending || hasDraft) && dateRow.length > 0 && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                                  {configName}
+                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {dateRow.map((d: any, i: number) => {
+                                    const s =
+                                      d.status === "non_meeting"
                                         ? "holiday"
                                         : d.status;
-
-                                  return (
-                                    <div
-                                      key={dateIndex}
-                                      className={cn(
-                                        "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                        s === "done" || s === "submitted"
-                                          ? "bg-[#10B981] text-white border-[#10B981]"
-                                          : s === "missed"
-                                            ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                            : s === "holiday"
-                                              ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
-                                              : "bg-gray-100 text-gray-400 border-gray-200"
-                                      )}
-                                    >
-                                      <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                        {d.day ? d.day.charAt(0) : ""}
-                                      </span>
-                                      <span className="leading-none">
-                                        {d.date ?? ""}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {isMissedExpanded && (
-                        <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
-                          <div className="p-5 space-y-5">
-                            <div className="flex flex-wrap gap-3">
-                              <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
-                                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                <span className="text-sm font-bold text-yellow-800">
-                                  Self Rating: 0/10
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                                <span className="text-sm font-bold text-purple-800">
-                                  Total Score: 0
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
-                                <span className="text-sm font-bold text-red-700">
-                                  Missed
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                  <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                  </div>
-                                  <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                    Accomplishments
-                                  </h4>
-                                </div>
-                                <p className="text-xs text-neutral-300 italic">
-                                  None recorded.
-                                </p>
-                              </div>
-
-                              <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                  <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
-                                  </div>
-                                  <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                    Tasks, Issues & Todos
-                                  </h4>
-                                </div>
-                                <p className="text-xs text-neutral-300 italic">
-                                  None recorded.
-                                </p>
-                              </div>
-
-                              <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                  <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                                  </div>
-                                  <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                    Tomorrow's Plan
-                                  </h4>
-                                </div>
-                                <p className="text-xs text-neutral-300 italic">
-                                  None recorded.
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 pt-1">
-                              <button
-                                onClick={() => openTaskModalForMember(member)}
-                                className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> Add Task
-                              </button>
-                              <button
-                                onClick={() => openIssueModalForMember(member)}
-                                className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> Stuck Issue
-                              </button>
-                              <button
-                                onClick={() => openTodoModalForMember(member)}
-                                className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> Add Todo
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (feedbackOpenId === missedId) {
-                                    setFeedbackOpenId(null);
-                                  } else {
-                                    setFeedbackOpenId(missedId);
-                                    setFeedbackRating(0);
-                                    setFeedbackMessage("");
-                                    if (member.id || member.user_id) {
-                                      loadPastFeedbacks(member.id || member.user_id);
-                                    }
-                                  }
-                                }}
-                                className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
-                              >
-                                <MessageSquare className="w-3.5 h-3.5" /> Feedback
-                              </button>
-                            </div>
-
-                            {feedbackOpenId === missedId && (
-                              <div className="border-t border-[#EAE3DF] pt-5 mt-2">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                  <div>
-                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                      Provide Feedback
-                                    </p>
-                                    <p className="text-sm font-bold text-neutral-800 mb-2">
-                                      Rating (1-5 stars)
-                                    </p>
-                                    <div className="flex items-center gap-1 mb-4">
-                                      {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                          key={star}
-                                          type="button"
-                                          onClick={() => setFeedbackRating(star)}
-                                          className="transition-transform hover:scale-110"
-                                        >
-                                          <Star
-                                            className={cn(
-                                              "w-8 h-8",
-                                              star <= feedbackRating
-                                                ? "text-yellow-400 fill-yellow-400"
-                                                : "text-gray-300"
-                                            )}
-                                          />
-                                        </button>
-                                      ))}
-                                    </div>
-                                    <p className="text-sm font-bold text-neutral-800 mb-2">
-                                      Feedback Message
-                                    </p>
-                                    <textarea
-                                      autoFocus
-                                      value={feedbackMessage}
-                                      onChange={(e) =>
-                                        setFeedbackMessage(e.target.value)
-                                      }
-                                      placeholder="Enter constructive feedback..."
-                                      rows={3}
-                                      className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
-                                    />
-                                    <div className="flex items-center gap-3 mt-4">
-                                      <button
-                                        onClick={async () => {
-                                          if (feedbackRating === 0) {
-                                            toast.error(
-                                              "Please select a star rating!"
-                                            );
-                                            return;
-                                          }
-
-                                          const targetUserId =
-                                            member.id || member.user_id;
-                                          if (!targetUserId) {
-                                            toast.error(
-                                              "User ID not found for this member."
-                                            );
-                                            return;
-                                          }
-
-                                          try {
-                                            const loggedInUserId =
-                                              localStorage.getItem("userId") || "";
-                                            const payload = {
-                                              resource_type: "User",
-                                              resource_id: targetUserId,
-                                              rating_from_id: loggedInUserId,
-                                              score: feedbackRating,
-                                              reviews: feedbackMessage,
-                                              positive_opening: "",
-                                              constructive_feedback: "",
-                                              positive_closing: "",
-                                            };
-                                            const res = await fetch(
-                                              `${getBaseUrl()}/ratings`,
-                                              {
-                                                method: "POST",
-                                                headers: {
-                                                  ...getAuthHeaders(),
-                                                  "Content-Type":
-                                                    "application/json",
-                                                },
-                                                body: JSON.stringify(payload),
-                                              }
-                                            );
-                                            if (!res.ok)
-                                              throw new Error(
-                                                `HTTP ${res.status}`
-                                              );
-                                            toast.success("Feedback added!");
-                                            setFeedbackOpenId(null);
-                                            setFeedbackRating(0);
-                                            setFeedbackMessage("");
-                                            await loadDailyData(false);
-                                          } catch (err: any) {
-                                            toast.error(
-                                              "Error adding feedback: " +
-                                              err.message
-                                            );
-                                          }
-                                        }}
-                                        className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                    return (
+                                      <div
+                                        key={i}
+                                        className={cn(
+                                          "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                          s === "done" || s === "submitted"
+                                            ? "bg-[#10B981] text-white border-[#10B981]"
+                                            : s === "missed"
+                                              ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                              : s === "holiday"
+                                                ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                                : "bg-gray-100 text-gray-400 border-gray-200"
+                                        )}
                                       >
-                                        Submit Feedback
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setFeedbackOpenId(null);
-                                          setFeedbackRating(0);
-                                          setFeedbackMessage("");
-                                        }}
-                                        className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
-                                    <div className="flex items-center justify-between mb-4">
-                                      <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
-                                        Recent Feedbacks
-                                      </p>
-                                      <button
-                                        onClick={handleFeedback}
-                                        className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
-                                      >
-                                        View All <ChevronRight className="w-3 h-3" />
-                                      </button>
-                                    </div>
-
-                                    {isFetchingFeedbacks ? (
-                                      <div className="flex justify-center items-center h-full py-6">
-                                        <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                                      </div>
-                                    ) : fetchedFeedbacks.length === 0 ? (
-                                      <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
-                                        <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
-                                        <span className="text-xs font-medium italic">
-                                          No past feedback found.
+                                        <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                          {d.day ? d.day.charAt(0) : ""}
+                                        </span>
+                                        <span className="leading-none">
+                                          {d.date ?? ""}
                                         </span>
                                       </div>
-                                    ) : (
-                                      <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                        {fetchedFeedbacks
-                                          .slice(0, 3)
-                                          .map((fb: any, idx: number) => (
-                                            <div
-                                              key={fb.id ?? idx}
-                                              className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
-                                            >
-                                              <div className="flex items-center gap-1 mb-1.5">
-                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                  <Star
-                                                    key={star}
-                                                    className={cn(
-                                                      "w-3 h-3",
-                                                      star <= fb.score
-                                                        ? "text-yellow-400 fill-yellow-400"
-                                                        : "text-gray-200"
-                                                    )}
-                                                  />
-                                                ))}
-                                                {fb.created_at && (
-                                                  <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
-                                                    {new Date(
-                                                      fb.created_at
-                                                    ).toLocaleDateString("en-IN", {
-                                                      day: "numeric",
-                                                      month: "short",
-                                                      year: "2-digit",
-                                                    })}
-                                                  </span>
-                                                )}
-                                              </div>
-                                              {fb.reviews ? (
-                                                <p className="text-xs text-neutral-700 leading-relaxed">
-                                                  {fb.reviews}
-                                                </p>
-                                              ) : (
-                                                <p className="text-xs text-neutral-400 italic">
-                                                  No review provided.
-                                                </p>
-                                              )}
-                                              {fb.reviewer && (
-                                                <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
-                                                  - {fb.reviewer.trim()}
-                                                </p>
-                                              )}
-                                            </div>
-                                          ))}
-                                      </div>
-                                    )}
-                                  </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             )}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+
+                        {isExpanded && canExpand && (
+                          <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                            <div className="p-5 space-y-5">
+                              <div className="flex items-center gap-4 text-sm mb-4">
+                                <span>
+                                  ⭐ Self rating {selfRatingText || "0/10"}
+                                </span>
+                                <span className="text-gray-400">
+                                  Total Score: {totalScoreStr}
+                                </span>
+                                <span className="text-gray-400">
+                                  Missed: {isAbsentReport ? 1 : 0}
+                                </span>
+                              </div>
+
+                              {!isAbsentReport && displayRd.big_win && (
+                                <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
+                                  <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">
+                                      Big Win 🏆
+                                    </div>
+                                    <p className="text-sm font-semibold text-amber-900">
+                                      {displayRd.big_win}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Accomplishments */}
+                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                    <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                    </div>
+                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                      Accomplishments
+                                    </h4>
+                                  </div>
+                                  {userAccomplishments.length === 0 ? (
+                                    <p className="text-xs text-neutral-300 italic">
+                                      None recorded.
+                                    </p>
+                                  ) : (
+                                    <ul className="space-y-2">
+                                      {userAccomplishments.map(
+                                        (item: any, i: number) => (
+                                          <li
+                                            key={i}
+                                            className="flex items-start gap-2 text-xs text-neutral-700"
+                                          >
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
+                                            <span className="leading-relaxed">
+                                              {getItemTitle(item)}
+                                            </span>
+                                          </li>
+                                        )
+                                      )}
+                                    </ul>
+                                  )}
+                                </div>
+
+                                {/* Tasks & Issues — status buckets */}
+                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                    <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                                      <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                                    </div>
+                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                      Task, Issues & To Do
+                                    </h4>
+                                    {userTasksIssues.length > 0 && (
+                                      <span className="ml-auto text-[10px] font-bold text-neutral-400">
+                                        {userTasksIssues.length}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {userTasksIssues.length === 0 ? (
+                                    <p className="text-xs text-neutral-300 italic">
+                                      None recorded.
+                                    </p>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {(
+                                        [
+                                          {
+                                            key: "overdue",
+                                            label: "Overdue",
+                                            statuses: ["overdue", "overdued"],
+                                            colorClass: "text-red-700",
+                                            headerBg:
+                                              "bg-red-50 hover:bg-red-100",
+                                            pillBg: "bg-red-100 text-red-700",
+                                            itemBg:
+                                              "bg-red-50/60 border-red-100",
+                                          },
+                                          {
+                                            key: "in_progress",
+                                            label: "In Progress",
+                                            statuses: [
+                                              "in_progress",
+                                              "started",
+                                            ],
+                                            colorClass: "text-sky-700",
+                                            headerBg:
+                                              "bg-sky-50 hover:bg-sky-100",
+                                            pillBg: "bg-sky-100 text-sky-700",
+                                            itemBg:
+                                              "bg-sky-50/60 border-sky-100",
+                                          },
+                                          {
+                                            key: "open",
+                                            label: "Open",
+                                            statuses: [
+                                              "open",
+                                              "pending",
+                                              "reopen",
+                                              "reopened",
+                                            ],
+                                            colorClass: "text-slate-600",
+                                            headerBg:
+                                              "bg-slate-50 hover:bg-slate-100",
+                                            pillBg:
+                                              "bg-slate-100 text-slate-600",
+                                            itemBg:
+                                              "bg-slate-50/60 border-slate-100",
+                                          },
+                                          {
+                                            key: "on_hold",
+                                            label: "On Hold",
+                                            statuses: ["on_hold"],
+                                            colorClass: "text-orange-700",
+                                            headerBg:
+                                              "bg-orange-50 hover:bg-orange-100",
+                                            pillBg:
+                                              "bg-orange-100 text-orange-700",
+                                            itemBg:
+                                              "bg-orange-50/60 border-orange-100",
+                                          },
+                                          {
+                                            key: "completed",
+                                            label: "Completed",
+                                            statuses: [
+                                              "completed",
+                                              "closed",
+                                              "done",
+                                            ],
+                                            colorClass: "text-green-700",
+                                            headerBg:
+                                              "bg-green-50 hover:bg-green-100",
+                                            pillBg:
+                                              "bg-green-100 text-green-700",
+                                            itemBg:
+                                              "bg-green-50/60 border-green-100",
+                                          },
+                                        ] as const
+                                      ).map((bucket) => {
+                                        const bucketItems =
+                                          userTasksIssues.filter((item: any) =>
+                                            (
+                                              bucket.statuses as readonly string[]
+                                            ).includes(
+                                              (
+                                                item.status || "open"
+                                              ).toLowerCase()
+                                            )
+                                          );
+                                        if (bucketItems.length === 0)
+                                          return null;
+                                        return (
+                                          <div key={bucket.key}>
+                                            <div
+                                              className={cn(
+                                                "flex items-center gap-2 px-2 py-1.5 rounded-[6px] mb-1",
+                                                bucket.headerBg
+                                              )}
+                                            >
+                                              <span
+                                                className={cn(
+                                                  "text-[10px] font-black uppercase tracking-wider flex-1",
+                                                  bucket.colorClass
+                                                )}
+                                              >
+                                                {bucket.label}
+                                              </span>
+                                              <span
+                                                className={cn(
+                                                  "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                                                  bucket.pillBg
+                                                )}
+                                              >
+                                                {bucketItems.length}
+                                              </span>
+                                            </div>
+                                            <ul className="space-y-1.5 pl-1 mb-1">
+                                              {bucketItems.map(
+                                                (item: any, i: number) => {
+                                                  const type =
+                                                    getItemType(item);
+                                                  const typePillStyle =
+                                                    type === "issue"
+                                                      ? "bg-red-100 text-red-700 border-red-200"
+                                                      : type === "todo"
+                                                        ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                        : "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30";
+                                                  const priority =
+                                                    item.priority ||
+                                                    item.urgency ||
+                                                    "";
+                                                  const priorityPill =
+                                                    priority?.toLowerCase() ===
+                                                    "high"
+                                                      ? "bg-red-50 text-red-600 border-red-200"
+                                                      : priority?.toLowerCase() ===
+                                                          "medium"
+                                                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                                        : priority?.toLowerCase() ===
+                                                            "low"
+                                                          ? "bg-green-50 text-green-700 border-green-200"
+                                                          : "";
+                                                  const taskId =
+                                                    item.id ||
+                                                    item.task_id ||
+                                                    item.issue_id ||
+                                                    item.source_id;
+                                                  const dueDate =
+                                                    item.target_date ||
+                                                    item.due_date ||
+                                                    item.end_date ||
+                                                    item.deadline;
+                                                  const viewPath = taskId
+                                                    ? type === "task"
+                                                      ? `/vas/tasks/${taskId}`
+                                                      : type === "issue"
+                                                        ? `/vas/issues/${taskId}`
+                                                        : null
+                                                    : type === "task"
+                                                      ? "/vas/tasks"
+                                                      : type === "issue"
+                                                        ? "/vas/issues"
+                                                        : null;
+                                                  return (
+                                                    <li
+                                                      key={i}
+                                                      className={cn(
+                                                        "flex flex-col rounded-[10px] border transition-all",
+                                                        bucket.itemBg
+                                                      )}
+                                                    >
+                                                      <div className="flex items-center gap-2 px-3 py-2.5">
+                                                        {/* Type pill */}
+                                                        <span
+                                                          className={cn(
+                                                            "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                            typePillStyle
+                                                          )}
+                                                        >
+                                                          {type}
+                                                        </span>
+                                                        {/* Title */}
+                                                        <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                                                          {getItemTitle(item)}
+                                                        </span>
+                                                        {/* Priority */}
+                                                        {priorityPill && (
+                                                          <span
+                                                            className={cn(
+                                                              "shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                                                              priorityPill
+                                                            )}
+                                                          >
+                                                            {priority}
+                                                          </span>
+                                                        )}
+                                                        {/* View button — always shown for task/issue */}
+                                                        {viewPath && (
+                                                          <button
+                                                            onClick={() =>
+                                                              navigate(viewPath)
+                                                            }
+                                                            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                            title={`View ${type}`}
+                                                          >
+                                                            <Eye className="w-3 h-3" />
+                                                            {/* <span className="text-[9px] font-bold">View</span> */}
+                                                          </button>
+                                                        )}
+                                                      </div>
+                                                      {/* Date row */}
+                                                      {dueDate && (
+                                                        <div className="flex items-center gap-1 px-3 pb-2 -mt-1">
+                                                          <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+                                                          <span className="text-[10px] text-gray-500">
+                                                            {new Date(
+                                                              dueDate
+                                                            ).toLocaleDateString(
+                                                              "en-GB",
+                                                              {
+                                                                day: "2-digit",
+                                                                month: "short",
+                                                                year: "numeric",
+                                                              }
+                                                            )}
+                                                          </span>
+                                                        </div>
+                                                      )}
+                                                    </li>
+                                                  );
+                                                }
+                                              )}
+                                            </ul>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Tomorrow's Plan */}
+                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                    <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                      <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                                    </div>
+                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                      Tomorrow's Plan
+                                    </h4>
+                                  </div>
+                                  {userTomorrowPlan.length === 0 ? (
+                                    <p className="text-xs text-neutral-300 italic">
+                                      None recorded.
+                                    </p>
+                                  ) : (
+                                    <ul className="space-y-2">
+                                      {userTomorrowPlan.map(
+                                        (item: any, i: number) => (
+                                          <li
+                                            key={i}
+                                            className="flex items-start gap-2 text-xs text-neutral-700"
+                                          >
+                                            <Circle className="w-3 h-3 text-blue-300 mt-0.5 shrink-0" />
+                                            <span className="leading-relaxed">
+                                              {getItemTitle(item)}
+                                            </span>
+                                          </li>
+                                        )
+                                      )}
+                                    </ul>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                <button
+                                  onClick={() => openTaskModalForMember(report)}
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Add Task
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    openIssueModalForMember(report)
+                                  }
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                                </button>
+                                <button
+                                  onClick={() => openTodoModalForMember(report)}
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Add Todo
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (feedbackOpenId === rId) {
+                                      setFeedbackOpenId(null);
+                                    } else {
+                                      setFeedbackOpenId(rId);
+                                      setFeedbackRating(0);
+                                      setFeedbackMessage("");
+                                      loadPastFeedbacks(report.user_id);
+                                    }
+                                  }}
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />{" "}
+                                  Feedback
+                                </button>
+                              </div>
+
+                              {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
+                              {feedbackOpenId === rId && (
+                                <div className="border-t border-[#EAE3DF] pt-5 mt-2">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* COLUMN 1: Add New Feedback */}
+                                    <div>
+                                      <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
+                                        Provide Feedback
+                                      </p>
+                                      <p className="text-sm font-bold text-neutral-800 mb-2">
+                                        Rating (1-5 stars)
+                                      </p>
+                                      <div className="flex items-center gap-1 mb-4">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                          <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() =>
+                                              setFeedbackRating(star)
+                                            }
+                                            className="transition-transform hover:scale-110"
+                                          >
+                                            <svg
+                                              className="w-8 h-8"
+                                              viewBox="0 0 24 24"
+                                              fill={
+                                                star <= feedbackRating
+                                                  ? "#F59E0B"
+                                                  : "none"
+                                              }
+                                              stroke={
+                                                star <= feedbackRating
+                                                  ? "#F59E0B"
+                                                  : "#D1D5DB"
+                                              }
+                                              strokeWidth="1.5"
+                                            >
+                                              <path
+                                                strokeLinejoin="round"
+                                                d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                                              />
+                                            </svg>
+                                          </button>
+                                        ))}
+                                      </div>
+                                      <p className="text-sm font-bold text-neutral-800 mb-2">
+                                        Feedback Message
+                                      </p>
+                                      <textarea
+                                        autoFocus
+                                        value={feedbackMessage}
+                                        onChange={(e) =>
+                                          setFeedbackMessage(e.target.value)
+                                        }
+                                        placeholder="Enter constructive feedback..."
+                                        rows={3}
+                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                                      />
+                                      <div className="flex items-center gap-3 mt-4">
+                                        <button
+                                          onClick={async () => {
+                                            if (feedbackRating === 0) {
+                                              toast.error(
+                                                "Please select a star rating!"
+                                              );
+                                              return;
+                                            }
+                                            try {
+                                              const loggedInUserId =
+                                                localStorage.getItem(
+                                                  "userId"
+                                                ) || "";
+                                              const payload = {
+                                                resource_type: "User",
+                                                resource_id: report.user_id,
+                                                rating_from_id: loggedInUserId,
+                                                score: feedbackRating,
+                                                reviews: feedbackMessage,
+                                                positive_opening: "",
+                                                constructive_feedback: "",
+                                                positive_closing: "",
+                                              };
+                                              const res = await fetch(
+                                                `${getBaseUrl()}/ratings`,
+                                                {
+                                                  method: "POST",
+                                                  headers: {
+                                                    ...getAuthHeaders(),
+                                                    "Content-Type":
+                                                      "application/json",
+                                                  },
+                                                  body: JSON.stringify(payload),
+                                                }
+                                              );
+                                              if (!res.ok)
+                                                throw new Error(
+                                                  `HTTP ${res.status}`
+                                                );
+                                              toast.success("Feedback added!");
+                                              setFeedbackOpenId(null);
+                                              setFeedbackRating(0);
+                                              setFeedbackMessage("");
+                                              await loadDailyData(false);
+                                            } catch (err: any) {
+                                              toast.error(
+                                                "Error adding feedback: " +
+                                                  err.message
+                                              );
+                                            }
+                                          }}
+                                          className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                        >
+                                          Submit Feedback
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            setFeedbackOpenId(null);
+                                            setFeedbackRating(0);
+                                            setFeedbackMessage("");
+                                          }}
+                                          className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {/* COLUMN 2: Recent Feedbacks — sorted newest first */}
+                                    <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
+                                      <div className="flex items-center justify-between mb-4">
+                                        <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
+                                          Recent Feedbacks
+                                        </p>
+                                        <button
+                                          onClick={handleFeedback}
+                                          className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                        >
+                                          View All{" "}
+                                          <ChevronRight className="w-3 h-3" />
+                                        </button>
+                                      </div>
+
+                                      {isFetchingFeedbacks ? (
+                                        <div className="flex justify-center items-center h-full py-6">
+                                          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                        </div>
+                                      ) : fetchedFeedbacks.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                          <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                          <span className="text-xs font-medium italic">
+                                            No past feedback found.
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                          {/* Already sorted newest-first in loadPastFeedbacks */}
+                                          {fetchedFeedbacks
+                                            .slice(0, 3)
+                                            .map((fb: any, idx: number) => (
+                                              <div
+                                                key={fb.id ?? idx}
+                                                className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                                              >
+                                                <div className="flex items-center gap-1 mb-1.5">
+                                                  {[1, 2, 3, 4, 5].map(
+                                                    (star) => (
+                                                      <Star
+                                                        key={star}
+                                                        className={cn(
+                                                          "w-3 h-3",
+                                                          star <= fb.score
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-gray-200"
+                                                        )}
+                                                      />
+                                                    )
+                                                  )}
+                                                  {fb.created_at && (
+                                                    <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
+                                                      {new Date(
+                                                        fb.created_at
+                                                      ).toLocaleDateString(
+                                                        "en-IN",
+                                                        {
+                                                          day: "numeric",
+                                                          month: "short",
+                                                          year: "2-digit",
+                                                        }
+                                                      )}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                {fb.reviews ? (
+                                                  <p className="text-xs text-neutral-700 leading-relaxed">
+                                                    {fb.reviews}
+                                                  </p>
+                                                ) : (
+                                                  <p className="text-xs text-neutral-400 italic">
+                                                    No review provided.
+                                                  </p>
+                                                )}
+                                                {fb.reviewer && (
+                                                  <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                                    — {fb.reviewer.trim()}
+                                                  </p>
+                                                )}
+                                              </div>
+                                            ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
         </>
       )}
 
+      {/* ══ FULL WIDTH — Team members who failed to submit ══ */}
+      {failedMembers.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <AlertTriangle className="w-4 h-4 text-[#DA7756]" />
+              <span>Team members who failed to submit</span>
+            </div>
+            <span className="text-sm font-bold text-neutral-500">
+              {failedMembers.length}
+            </span>
+          </div>
+          <div className="space-y-4">
+            {failedMembers.map((member: any, i: number) => {
+              const missedId = `missed-${member.id || member.user_id || member.name || i}`;
+              const isMissedExpanded = expandedReports.includes(missedId);
+
+              return (
+                <div
+                  key={missedId}
+                  className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all"
+                >
+                  <div className="p-4 flex items-start gap-4">
+                    <div className="flex items-start gap-3 pt-1">
+                      <input
+                        type="checkbox"
+                        checked
+                        readOnly
+                        disabled
+                        className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
+                      />
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
+                          0
+                        </div>
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                          Missed
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                              {member.name || member}
+                            </h3>
+                            {member.department && (
+                              <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                {member.department}
+                              </span>
+                            )}
+                            <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
+                              NOT SUBMITTED
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-gray-400 mb-2 truncate">
+                            {member.email ||
+                              "Report not submitted for this date"}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleExpand(missedId)}
+                          className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
+                        >
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 transition-transform",
+                              isMissedExpanded && "rotate-180"
+                            )}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          KPI: 0/20
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          Tasks, Issues & Todos: 0/20
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          Planning: 0/20
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          Timing: 0/20
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
+                        Click to view missed submission details
+                      </p>
+
+                      {dateRow.length > 0 && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                            {configName}
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {dateRow.map((d: any, dateIndex: number) => {
+                              const s =
+                                d.full_date === activeDate
+                                  ? "missed"
+                                  : d.status === "non_meeting"
+                                    ? "holiday"
+                                    : d.status;
+
+                              return (
+                                <div
+                                  key={dateIndex}
+                                  className={cn(
+                                    "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                    s === "done" || s === "submitted"
+                                      ? "bg-[#10B981] text-white border-[#10B981]"
+                                      : s === "missed"
+                                        ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                        : s === "holiday"
+                                          ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                          : "bg-gray-100 text-gray-400 border-gray-200"
+                                  )}
+                                >
+                                  <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                    {d.day ? d.day.charAt(0) : ""}
+                                  </span>
+                                  <span className="leading-none">
+                                    {d.date ?? ""}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {isMissedExpanded && (
+                    <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                      <div className="p-5 space-y-5">
+                        <div className="flex flex-wrap gap-3">
+                          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
+                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                            <span className="text-sm font-bold text-yellow-800">
+                              Self Rating: 0/10
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
+                            <span className="text-sm font-bold text-purple-800">
+                              Total Score: 0
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
+                            <span className="text-sm font-bold text-red-700">
+                              Missed
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                              <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                              </div>
+                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                Accomplishments
+                              </h4>
+                            </div>
+                            <p className="text-xs text-neutral-300 italic">
+                              None recorded.
+                            </p>
+                          </div>
+
+                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                              <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                                <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                              </div>
+                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                Tasks, Issues & Todos
+                              </h4>
+                            </div>
+                            <p className="text-xs text-neutral-300 italic">
+                              None recorded.
+                            </p>
+                          </div>
+
+                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                              <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                              </div>
+                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                Tomorrow's Plan
+                              </h4>
+                            </div>
+                            <p className="text-xs text-neutral-300 italic">
+                              None recorded.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <button
+                            onClick={() => openTaskModalForMember(member)}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Task
+                          </button>
+                          <button
+                            onClick={() => openIssueModalForMember(member)}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                          </button>
+                          <button
+                            onClick={() => openTodoModalForMember(member)}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Todo
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (feedbackOpenId === missedId) {
+                                setFeedbackOpenId(null);
+                              } else {
+                                setFeedbackOpenId(missedId);
+                                setFeedbackRating(0);
+                                setFeedbackMessage("");
+                                if (member.id || member.user_id) {
+                                  loadPastFeedbacks(
+                                    member.id || member.user_id
+                                  );
+                                }
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                          </button>
+                        </div>
+
+                        {feedbackOpenId === missedId && (
+                          <div className="border-t border-[#EAE3DF] pt-5 mt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div>
+                                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
+                                  Provide Feedback
+                                </p>
+                                <p className="text-sm font-bold text-neutral-800 mb-2">
+                                  Rating (1-5 stars)
+                                </p>
+                                <div className="flex items-center gap-1 mb-4">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      type="button"
+                                      onClick={() => setFeedbackRating(star)}
+                                      className="transition-transform hover:scale-110"
+                                    >
+                                      <Star
+                                        className={cn(
+                                          "w-8 h-8",
+                                          star <= feedbackRating
+                                            ? "text-yellow-400 fill-yellow-400"
+                                            : "text-gray-300"
+                                        )}
+                                      />
+                                    </button>
+                                  ))}
+                                </div>
+                                <p className="text-sm font-bold text-neutral-800 mb-2">
+                                  Feedback Message
+                                </p>
+                                <textarea
+                                  autoFocus
+                                  value={feedbackMessage}
+                                  onChange={(e) =>
+                                    setFeedbackMessage(e.target.value)
+                                  }
+                                  placeholder="Enter constructive feedback..."
+                                  rows={3}
+                                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                                />
+                                <div className="flex items-center gap-3 mt-4">
+                                  <button
+                                    onClick={async () => {
+                                      if (feedbackRating === 0) {
+                                        toast.error(
+                                          "Please select a star rating!"
+                                        );
+                                        return;
+                                      }
+
+                                      const targetUserId =
+                                        member.id || member.user_id;
+                                      if (!targetUserId) {
+                                        toast.error(
+                                          "User ID not found for this member."
+                                        );
+                                        return;
+                                      }
+
+                                      try {
+                                        const loggedInUserId =
+                                          localStorage.getItem("userId") || "";
+                                        const payload = {
+                                          resource_type: "User",
+                                          resource_id: targetUserId,
+                                          rating_from_id: loggedInUserId,
+                                          score: feedbackRating,
+                                          reviews: feedbackMessage,
+                                          positive_opening: "",
+                                          constructive_feedback: "",
+                                          positive_closing: "",
+                                        };
+                                        const res = await fetch(
+                                          `${getBaseUrl()}/ratings`,
+                                          {
+                                            method: "POST",
+                                            headers: {
+                                              ...getAuthHeaders(),
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            body: JSON.stringify(payload),
+                                          }
+                                        );
+                                        if (!res.ok)
+                                          throw new Error(`HTTP ${res.status}`);
+                                        toast.success("Feedback added!");
+                                        setFeedbackOpenId(null);
+                                        setFeedbackRating(0);
+                                        setFeedbackMessage("");
+                                        await loadDailyData(false);
+                                      } catch (err: any) {
+                                        toast.error(
+                                          "Error adding feedback: " +
+                                            err.message
+                                        );
+                                      }
+                                    }}
+                                    className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                  >
+                                    Submit Feedback
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setFeedbackOpenId(null);
+                                      setFeedbackRating(0);
+                                      setFeedbackMessage("");
+                                    }}
+                                    className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
+                                <div className="flex items-center justify-between mb-4">
+                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
+                                    Recent Feedbacks
+                                  </p>
+                                  <button
+                                    onClick={handleFeedback}
+                                    className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                  >
+                                    View All{" "}
+                                    <ChevronRight className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {isFetchingFeedbacks ? (
+                                  <div className="flex justify-center items-center h-full py-6">
+                                    <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                  </div>
+                                ) : fetchedFeedbacks.length === 0 ? (
+                                  <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                    <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                    <span className="text-xs font-medium italic">
+                                      No past feedback found.
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                    {fetchedFeedbacks
+                                      .slice(0, 3)
+                                      .map((fb: any, idx: number) => (
+                                        <div
+                                          key={fb.id ?? idx}
+                                          className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                                        >
+                                          <div className="flex items-center gap-1 mb-1.5">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                              <Star
+                                                key={star}
+                                                className={cn(
+                                                  "w-3 h-3",
+                                                  star <= fb.score
+                                                    ? "text-yellow-400 fill-yellow-400"
+                                                    : "text-gray-200"
+                                                )}
+                                              />
+                                            ))}
+                                            {fb.created_at && (
+                                              <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
+                                                {new Date(
+                                                  fb.created_at
+                                                ).toLocaleDateString("en-IN", {
+                                                  day: "numeric",
+                                                  month: "short",
+                                                  year: "2-digit",
+                                                })}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {fb.reviews ? (
+                                            <p className="text-xs text-neutral-700 leading-relaxed">
+                                              {fb.reviews}
+                                            </p>
+                                          ) : (
+                                            <p className="text-xs text-neutral-400 italic">
+                                              No review provided.
+                                            </p>
+                                          )}
+                                          {fb.reviewer && (
+                                            <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                              - {fb.reviewer.trim()}
+                                            </p>
+                                          )}
+                                        </div>
+                                      ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {isTaskModalOpen &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex">
-            <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={closeTaskModal} />
-            <div className="relative flex flex-col bg-white shadow-2xl" style={{ width: "min(760px, 95vw)" }}>
+            <div
+              className="flex-1 bg-black/40 backdrop-blur-sm"
+              onClick={closeTaskModal}
+            />
+            <div
+              className="relative flex flex-col bg-white shadow-2xl"
+              style={{ width: "min(760px, 95vw)" }}
+            >
               <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 shrink-0">
-                <h2 className="text-base font-bold text-neutral-900">Add Tasks</h2>
-                <button onClick={closeTaskModal} className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500">
+                <h2 className="text-base font-bold text-neutral-900">
+                  Add Tasks
+                </h2>
+                <button
+                  onClick={closeTaskModal}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="h-[3px] bg-[#C72030] w-full shrink-0" />
               <div className="flex-1 overflow-y-auto">
-                <ProjectTaskCreateModal isEdit={false} onCloseModal={closeTaskModal} className="max-w-full mx-0" prefillData={actionMemberPrefill} opportunityId={null} onSuccess={async () => { closeTaskModal(); await loadDailyData(false); }} isConversion={false} />
+                <ProjectTaskCreateModal
+                  isEdit={false}
+                  onCloseModal={closeTaskModal}
+                  className="max-w-full mx-0"
+                  prefillData={actionMemberPrefill}
+                  opportunityId={null}
+                  onSuccess={async () => {
+                    closeTaskModal();
+                    await loadDailyData(false);
+                  }}
+                  isConversion={false}
+                />
               </div>
             </div>
           </div>,
           document.body
         )}
 
-      <AddIssueModal openDialog={isIssueModalOpen} handleCloseDialog={closeIssueModal} preSelectedProjectId={undefined} prefillData={actionMemberPrefill} />
-      <AddToDoModal isModalOpen={isTodoModalOpen} setIsModalOpen={closeTodoModal} getTodos={async () => { closeTodoModal(); await loadDailyData(false); }} prefillData={actionMemberPrefill} />
+      <AddIssueModal
+        openDialog={isIssueModalOpen}
+        handleCloseDialog={closeIssueModal}
+        preSelectedProjectId={undefined}
+        prefillData={actionMemberPrefill}
+      />
+      <AddToDoModal
+        isModalOpen={isTodoModalOpen}
+        setIsModalOpen={closeTodoModal}
+        getTodos={async () => {
+          closeTodoModal();
+          await loadDailyData(false);
+        }}
+        prefillData={actionMemberPrefill}
+      />
     </div>
   );
 };
