@@ -273,7 +273,7 @@ export const getOrganizationsByEmail = async (
     apiBase = localOverride.replace(/\/$/, "");
   } else {
     const baseUrls: Record<string, string> = {
-      fm: "https://uat.lockated.com",
+      fm: "https://fm-uat-api.lockated.com",
       vi: "https://live-api.gophygital.work",
       dev: "https://dev-api.lockated.com",
       pulse: "https://pulse-api.lockated.com",
