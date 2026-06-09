@@ -588,7 +588,7 @@ export const AddVendorClub = () => {
     try {
       await vendorService.createVendor(apiFormData);
       toast.success('Vendor created successfully!');
-      navigate('/maintenance/vendor');
+      navigate('/accounting/vendor');
     } catch (error: any) {
       // Handle 422 Unprocessable Entity (validation errors)
       if (error.status === 422 && error.validationErrors) {
@@ -1221,7 +1221,15 @@ export const AddVendorClub = () => {
                 {/* Shipping Address Block */}
                 <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="mb-4">
-                    <span className="text-sm font-semibold text-gray-700">Shipping Address</span>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Shipping Address
+                      <span
+                        className="text-blue-600 text-xs ml-2 cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={() => setShippingAddress({ ...billingAddress })}
+                      >
+                        (Copy billing address)
+                      </span>
+                    </span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     <TextField

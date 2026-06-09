@@ -27,6 +27,17 @@ interface SalesOrder {
     fulfilled: boolean;
 }
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 interface ApiResponse {
     success: boolean;
     data: SalesOrder[];
@@ -120,6 +131,13 @@ const columns: ColumnConfig[] = [
         sortable: true,
         hideable: true,
         draggable: true
+    },
+    {
+        key: 'active',
+        label: 'Active/Inactive',
+        sortable: false,
+        hideable: true,
+        draggable: false
     }
 ];
 
@@ -143,6 +161,9 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         has_next_page: false,
         has_prev_page: false
     });
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
 
 
@@ -289,20 +310,23 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                 >
                     <Eye className="w-4 h-4" />
                 </button>
-                {/* <button
+                <button
                     onClick={() => handleEdit(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button> */}
-                {/* <button
-                    onClick={() => handleDelete(order.id)}
-                    className="p-1 text-black hover:bg-gray-100 rounded"
+                </button>
+                <button
+                    onClick={() => {
+                        setSelectedDeleteId(order.id);
+                        setDeleteDialogOpen(true);
+                    }}
+                    className="p-1 text-red-600 hover:text-red-700 hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button> */}
+                </button>
             </div>
         ),
         invoice_number: (
@@ -378,35 +402,32 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         status: (
             <div className="flex items-center justify-center gap-2">
                 {getStatusBadge(order.status)}
-                {/* <input
-                    type="checkbox"
-                    checked={order.fulfilled}
-                    onChange={async () => {
-                        try {
-                            const baseUrl = localStorage.getItem('baseUrl');
-                            const token = localStorage.getItem('token');
-                            const payload = {
-                                sale_order_ids: [order.id],
-                                fulfilled: !order.fulfilled
-                            };
-                            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                                method: 'POST',
-                                headers: {
-                                    Authorization: token ? `Bearer ${token}` : undefined,
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(payload)
-                            });
-                            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-                        } catch (err) {
-                            toast.error('Failed to update fulfilled status');
-                        }
-                    }}
-                    style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
-                    title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
-                /> */}
             </div>
-        )
+        ),
+        active: (() => {
+            const isActive = !!order.active;
+            return (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(order)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+                      }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+        
+                  <span
+                    className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
+                      }`}
+                  >
+                  </span>
+                </div>
+            );
+        })()
     });
 
     const handleView = (id: number) => {
@@ -417,12 +438,56 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         navigate(`/accounting/sales-order/edit/${id}`);
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this sales order?')) {
-            toast.success('Sales order deleted successfully!', {
-                duration: 3000,
-            });
+    const handleDelete = async () => {
+        if (!selectedDeleteId) return;
+        setDeleteLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            await axios.delete(
+                `https://${baseUrl}/lock_account_invoices/${selectedDeleteId}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    }
+                }
+            );
+            toast.success('Invoice deleted successfully!', { duration: 3000 });
+            setDeleteDialogOpen(false);
+            setSelectedDeleteId(null);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error("Failed to delete invoice");
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const handleToggleStatus = async (order: SalesOrder) => {
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const url = `https://${baseUrl}/lock_account_invoices/${order.id}/toggle_active.json`;
+
+            const response = await axios.patch(
+                url,
+                {},
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                }
+            );
+
+            toast.success(response?.data?.message || "Status updated successfully");
+            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error) {
+            console.error("Toggle status error:", error);
+            toast.error("Failed to update status");
         }
     };
 
@@ -575,6 +640,47 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <AlertDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Delete Invoice
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete this invoice? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteLoading}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleDelete();
+                            }}
+                            disabled={deleteLoading}
+                            style={{
+                                backgroundColor: "#dc2626",
+                                color: "#ffffff",
+                                border: "none",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "#b91c1c";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "#dc2626";
+                            }}
+                        >
+                            {deleteLoading ? "Deleting..." : "OK"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

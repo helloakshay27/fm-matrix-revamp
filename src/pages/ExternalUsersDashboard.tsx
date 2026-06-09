@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation} from 'react-router-dom';
 import { Users, UserCheck, Clock, Shield, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ interface ExternalUser {
   designation: string;
   employee_id: string;
   created_by_id: number;
-  access_level: number;
+  access_level: number; 
   user_type: string;
   lock_user_permission_status: string;
   face_added: boolean | string;
@@ -71,9 +71,13 @@ export const ExternalUsersDashboard = () => {
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<ExternalUser | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
   const navigate = useNavigate();
+  const location = useLocation();
   const pageSize = 25; // backend default (adjust if needed)
 
   // Permission: show Action button only for these userIds
@@ -135,13 +139,13 @@ export const ExternalUsersDashboard = () => {
         }));
         setExternalUsers(users);
         if (response.data.pagination) {
-          setPagination({
-            current_page: response.data.pagination.current_page,
+          setPagination(prev => ({
+            ...prev,
             total_pages: response.data.pagination.total_pages,
             total_count: response.data.pagination.total_count,
-          });
+          }));
         } else {
-          setPagination({ current_page: page, total_pages: 1, total_count: users.length });
+          setPagination(prev => ({ ...prev, total_pages: 1, total_count: users.length }));
         }
       } catch (err) {
         if (axios.isCancel?.(err) || (err as any)?.name === 'CanceledError' || (err as any)?.code === 'ERR_CANCELED') {
@@ -531,11 +535,14 @@ export const ExternalUsersDashboard = () => {
 
   const handleCancelDelete = () => setConfirmDeleteUser(null);
 
+ useEffect(() => {
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
+  }, [page]);
+
   const handlePageChange = (newPage: number) => {
-    // Relax guard: when server doesn't send total_pages for filtered queries,
-    // allow navigation based on page bounds only; we'll fetch and adjust UI from results.
     if (newPage < 1 || newPage === page) return;
     setPage(newPage);
+    navigate(`${location.pathname}?page=${newPage}`, { replace: true });
   };
 
 

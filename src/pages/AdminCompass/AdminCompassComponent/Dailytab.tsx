@@ -318,9 +318,15 @@ const getItemType = (item: any): string => {
 };
 
 const groupTasksIssuesByType = (items: any[] = []) => ({
-  tasks: items.filter((item) => getItemType(item) === "task"),
-  issues: items.filter((item) => getItemType(item) === "issue"),
-  todos: items.filter((item) => getItemType(item) === "todo"),
+  tasks: items.filter(
+    (item) => getItemType(item) === "task" && !isCompletedStatus(getItemStatus(item))
+  ),
+  issues: items.filter(
+    (item) => getItemType(item) === "issue" && !isCompletedStatus(getItemStatus(item))
+  ),
+  todos: items.filter(
+    (item) => getItemType(item) === "todo" && !isCompletedStatus(getItemStatus(item))
+  ),
 });
 
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
@@ -397,14 +403,13 @@ const getReportAbsentReason = (
   normalized: any = null
 ) =>
   String(
+    report?.absent_reason ??
     report?.daily_report?.absent_reason ??
-      report?.daily_report?.report_data?.absent_reason ??
-      report?.absent_reason ??
-      rawSource?.absent_reason ??
-      rawSource?.details?.absent_reason ??
-      rawSource?.sections?.absent_reason ??
-      normalized?.absent_reason ??
-      "Absent"
+    rawSource?.absent_reason ??
+    rawSource?.details?.absent_reason ??
+    rawSource?.sections?.absent_reason ??
+    normalized?.absent_reason ??
+    "Absent"
   ).trim() || "Absent";
 
 const formatSelfRating = (rating: any): string => {
@@ -428,7 +433,8 @@ const stripMissedMembersPrefix = (text: string): string => {
 // Ab yeh function daily_report.report_data ko PRIORITY deta hai
 // kyunki meeting submit hone ke baad actual user data wahan hota hai
 const resolveRawSource = (report: any) => {
-  const topLevelRd = report.report_data || {};
+  // Prefer `daily_report.report_data` when present (API sometimes nests actual data there)
+  const rd = report.daily_report?.report_data || report.report_data || {};
   const draftReport = report.daily_report || {};
   const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
@@ -488,25 +494,18 @@ const resolveRawSource = (report: any) => {
       // Arrays: draft data ko primary rakho, top-level se merge karo
       tasks_issues: Array.isArray(normalizedDraft.tasks_issues) && normalizedDraft.tasks_issues.length > 0
         ? mergeTasksIssuesPreservingType(
-            normalizedDraft.tasks_issues,
-            Array.isArray(topLevelRd.tasks_issues) ? topLevelRd.tasks_issues : []
-          )
-        : Array.isArray(topLevelRd.tasks_issues)
-          ? topLevelRd.tasks_issues
-          : [],
-      tomorrow_plan: Array.isArray(normalizedDraft.tomorrow_plan) && normalizedDraft.tomorrow_plan.length > 0
-        ? mergeUniqueItems(
-            normalizedDraft.tomorrow_plan,
-            Array.isArray(topLevelRd.tomorrow_plan) ? topLevelRd.tomorrow_plan : []
-          )
-        : Array.isArray(topLevelRd.tomorrow_plan)
-          ? topLevelRd.tomorrow_plan
-          : [],
-      accomplishments: normalizedDraft.accomplishments?.length > 0
-        ? normalizedDraft.accomplishments
-        : (topLevelRd.accomplishments?.items ||
-           (Array.isArray(topLevelRd.accomplishments) ? topLevelRd.accomplishments : [])),
-      // ✅ Scoring fields: daily_report se lo (actual user score)
+          normalizedDraft.tasks_issues || [],
+          rd.tasks_issues
+        )
+        : normalizedDraft.tasks_issues || [],
+      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
+        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
+        : normalizedDraft.tomorrow_plan || [],
+      accomplishments:
+        rd.accomplishments?.items ||
+        (Array.isArray(rd.accomplishments)
+          ? rd.accomplishments
+          : normalizedDraft.accomplishments || []),
       self_rating: normalizedDraft.self_rating,
       total_score: normalizedDraft.total_score ?? topLevelRd.total_score,
       is_absent: normalizedDraft.is_absent ?? topLevelRd.is_absent,
@@ -739,8 +738,8 @@ const DailyTab = ({
 
         setMeetingJournalId(
           json.data?.meeting_journal_id ||
-            meetingJournalReport?.journal_id ||
-            null
+          meetingJournalReport?.journal_id ||
+          null
         );
 
         if (!skipNotesRestore) {
@@ -780,7 +779,9 @@ const DailyTab = ({
                 .filter(
                   (m: any) => !absentSubmittedIds.has(String(m.id || m.user_id))
                 )
-                .map((m: any) => m.name || m.user),
+                .map(
+                  (m: any) => m.name || m.user
+                ),
             ].filter(Boolean);
             const uniqueMissed = [...new Set(pureMissed)] as string[];
 
@@ -1512,201 +1513,201 @@ const DailyTab = ({
       {/* ══ CALENDAR CARD ══ */}
       <div className="rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm overflow-hidden">
         <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 p-2 rounded-lg">
-              <Calendar size={20} className="text-blue-600" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-50 p-2 rounded-lg">
+                <Calendar size={20} className="text-blue-600" />
+              </div>
+              <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
+                Daily Meeting for {topDateStr}
+              </span>
             </div>
-            <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
-              Daily Meeting for {topDateStr}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => changeDate(-1)}
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-neutral-600" />
-            </button>
-            <button
-              onClick={() => changeDate(1)}
-              disabled={isNextDateDisabled}
-              className={cn(
-                "flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm transition-colors",
-                isNextDateDisabled
-                  ? "opacity-40 cursor-not-allowed"
-                  : "hover:bg-gray-50"
-              )}
-            >
-              <ChevronRight className="w-5 h-5 text-neutral-600" />
-            </button>
-          </div>
-        </div>
-
-        {/* ── Calendar Body ── */}
-        {isLoading && !dailyData ? (
-          <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <div
-                key={i}
-                className="min-w-[96px] h-[110px] rounded-[16px] skeleton shrink-0"
-              />
-            ))}
-          </div>
-        ) : noMeetings ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 border border-[#DA7756]/20">
-              <Calendar className="w-7 h-7 text-[#DA7756] opacity-40" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-neutral-500">
-                No meetings configured
-              </p>
-              <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
-                Please configure a meeting first to view the daily calendar.
-              </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => changeDate(-1)}
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-neutral-600" />
+              </button>
+              <button
+                onClick={() => changeDate(1)}
+                disabled={isNextDateDisabled}
+                className={cn(
+                  "flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm transition-colors",
+                  isNextDateDisabled
+                    ? "opacity-40 cursor-not-allowed"
+                    : "hover:bg-gray-50"
+                )}
+              >
+                <ChevronRight className="w-5 h-5 text-neutral-600" />
+              </button>
             </div>
           </div>
-        ) : (
-          <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-            {calendarRow.map((dateItem: any) => {
-              const isSelected = dateItem.full_date === activeDate;
-              let rawStatus = dateItem.status;
 
-              if (isSelected && meetingJournalId) {
-                rawStatus = "submitted";
-              }
+          {/* ── Calendar Body ── */}
+          {isLoading && !dailyData ? (
+            <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <div
+                  key={i}
+                  className="min-w-[96px] h-[110px] rounded-[16px] skeleton shrink-0"
+                />
+              ))}
+            </div>
+          ) : noMeetings ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 border border-[#DA7756]/20">
+                <Calendar className="w-7 h-7 text-[#DA7756] opacity-40" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-neutral-500">
+                  No meetings configured
+                </p>
+                <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
+                  Please configure a meeting first to view the daily calendar.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
+              {calendarRow.map((dateItem: any) => {
+                const isSelected = dateItem.full_date === activeDate;
+                let rawStatus = dateItem.status;
 
-              const isUpcoming = rawStatus === "upcoming";
+                if (isSelected && meetingJournalId) {
+                  rawStatus = "submitted";
+                }
 
-              if (isUpcoming) {
+                const isUpcoming = rawStatus === "upcoming";
+
+                if (isUpcoming) {
+                  return (
+                    <div
+                      key={dateItem.full_date}
+                      className="min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-not-allowed border-2 transition-all shrink-0 snap-center shadow-sm relative group bg-[#f8fafc] text-[#94a3b8] border-gray-100"
+                      title="Upcoming – not selectable"
+                    >
+                      <div className="contents">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
+                          {dateItem.day}
+                        </span>
+                        <span className="text-3xl font-black tracking-tighter">
+                          {dateItem.date}
+                        </span>
+                        <div className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center bg-black/10 text-[#854d0e]">
+                          Upcoming
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                let bg = "#F0EDEA",
+                  textColor = "#9CA3AF",
+                  labelBg = "rgba(0,0,0,0.07)",
+                  labelColor = "#9CA3AF",
+                  displayLabel = "Holiday";
+
+                if (rawStatus === "missed") {
+                  bg = "#ef4444";
+                  textColor = "#FFFFFF";
+                  labelBg = "rgba(255,255,255,0.22)";
+                  labelColor = "#FFFFFF";
+                  displayLabel = "Miss";
+                } else if (rawStatus === "done" || rawStatus === "submitted") {
+                  bg = "#22c55e";
+                  textColor = "#FFFFFF";
+                  labelBg = "rgba(255,255,255,0.22)";
+                  labelColor = "#FFFFFF";
+                  displayLabel = "Filled";
+                } else if (
+                  rawStatus === "holiday" ||
+                  rawStatus === "non_meeting"
+                ) {
+                  bg = "#facd55";
+                  textColor = "#8A6D3B";
+                  labelBg = "rgba(0,0,0,0.09)";
+                  labelColor = "#8A6D3B";
+                  displayLabel = "Holiday";
+                }
+
+                const isHoliday =
+                  rawStatus === "holiday" || rawStatus === "non_meeting";
+
                 return (
                   <div
                     key={dateItem.full_date}
-                    className="min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-not-allowed border-2 transition-all shrink-0 snap-center shadow-sm relative group bg-[#f8fafc] text-[#94a3b8] border-gray-100"
-                    title="Upcoming – not selectable"
+                    onClick={
+                      isHoliday
+                        ? undefined
+                        : () => setActiveDate(dateItem.full_date)
+                    }
+                    className={cn(
+                      "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 border-2 transition-all shrink-0 snap-center shadow-sm relative group",
+                      isHoliday ? "cursor-not-allowed" : "cursor-pointer"
+                    )}
+                    title={isHoliday ? "Holiday – not selectable" : undefined}
                   >
-                    <div className="contents">
+                    <div
+                      className="flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-[16px] transition-all duration-200"
+                      style={{
+                        background: bg,
+                        color: textColor,
+                        boxShadow: isSelected
+                          ? "0 0 0 3px #ffffff, 0 0 0 6px #D7E5FC"
+                          : "0 3px 10px rgba(0,0,0,0.09)",
+                      }}
+                    >
                       <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
                         {dateItem.day}
                       </span>
                       <span className="text-3xl font-black tracking-tighter">
                         {dateItem.date}
                       </span>
-                      <div className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center bg-black/10 text-[#854d0e]">
-                        Upcoming
+                      <div
+                        className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center"
+                        style={{ background: labelBg, color: labelColor }}
+                      >
+                        {displayLabel}
                       </div>
                     </div>
+                    {dateItem.is_today && (
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#CE7A5A] rounded-full" />
+                    )}
+                    {isSelected && (
+                      <div
+                        className="absolute top-0 right-0 w-[14px] h-[14px] bg-[#3B82F6] rounded-full border-[2px] border-white shadow-sm"
+                        style={{ transform: "translate(40%, -40%)", zIndex: 10 }}
+                      />
+                    )}
                   </div>
                 );
-              }
-
-              let bg = "#F0EDEA",
-                textColor = "#9CA3AF",
-                labelBg = "rgba(0,0,0,0.07)",
-                labelColor = "#9CA3AF",
-                displayLabel = "Holiday";
-
-              if (rawStatus === "missed") {
-                bg = "#ef4444";
-                textColor = "#FFFFFF";
-                labelBg = "rgba(255,255,255,0.22)";
-                labelColor = "#FFFFFF";
-                displayLabel = "Miss";
-              } else if (rawStatus === "done" || rawStatus === "submitted") {
-                bg = "#22c55e";
-                textColor = "#FFFFFF";
-                labelBg = "rgba(255,255,255,0.22)";
-                labelColor = "#FFFFFF";
-                displayLabel = "Filled";
-              } else if (
-                rawStatus === "holiday" ||
-                rawStatus === "non_meeting"
-              ) {
-                bg = "#facd55";
-                textColor = "#8A6D3B";
-                labelBg = "rgba(0,0,0,0.09)";
-                labelColor = "#8A6D3B";
-                displayLabel = "Holiday";
-              }
-
-              const isHoliday =
-                rawStatus === "holiday" || rawStatus === "non_meeting";
-
-              return (
-                <div
-                  key={dateItem.full_date}
-                  onClick={
-                    isHoliday
-                      ? undefined
-                      : () => setActiveDate(dateItem.full_date)
-                  }
-                  className={cn(
-                    "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 border-2 transition-all shrink-0 snap-center shadow-sm relative group",
-                    isHoliday ? "cursor-not-allowed" : "cursor-pointer"
-                  )}
-                  title={isHoliday ? "Holiday – not selectable" : undefined}
-                >
-                  <div
-                    className="flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-[16px] transition-all duration-200"
-                    style={{
-                      background: bg,
-                      color: textColor,
-                      boxShadow: isSelected
-                        ? "0 0 0 3px #ffffff, 0 0 0 6px #D7E5FC"
-                        : "0 3px 10px rgba(0,0,0,0.09)",
-                    }}
-                  >
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
-                      {dateItem.day}
-                    </span>
-                    <span className="text-3xl font-black tracking-tighter">
-                      {dateItem.date}
-                    </span>
-                    <div
-                      className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center"
-                      style={{ background: labelBg, color: labelColor }}
-                    >
-                      {displayLabel}
-                    </div>
-                  </div>
-                  {dateItem.is_today && (
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#CE7A5A] rounded-full" />
-                  )}
-                  {isSelected && (
-                    <div
-                      className="absolute top-0 right-0 w-[14px] h-[14px] bg-[#3B82F6] rounded-full border-[2px] border-white shadow-sm"
-                      style={{ transform: "translate(40%, -40%)", zIndex: 10 }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {!noMeetings && (
-          <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#22c55e]" />{" "}
-              Filled
+              })}
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#ef4444]" />{" "}
-              Missed (click to fill)
+          )}
+
+          {!noMeetings && (
+            <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
+              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#22c55e]" />{" "}
+                Filled
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#ef4444]" />{" "}
+                Missed (click to fill)
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#facd55]" />{" "}
+                Holiday
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                <span
+                  className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#f1f5f9] border border-gray-100"
+                />{" "}
+                Upcoming
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#facd55]" />{" "}
-              Holiday
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span
-                className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#f1f5f9] border border-gray-100"
-              />{" "}
-              Upcoming
-            </div>
-          </div>
-        )}
+          )}
         </div>
       </div>
 
@@ -2001,14 +2002,14 @@ const DailyTab = ({
                           (item: any) =>
                             !item.member ||
                             String(item.member).trim().toLowerCase() ===
-                              normalizedReportName
+                            normalizedReportName
                         );
 
                       const userTasksIssues = displayRd.tasks_issues.filter(
                         (item: any) =>
                           !item.member ||
                           String(item.member).trim().toLowerCase() ===
-                            normalizedReportName
+                          normalizedReportName
                       );
                       const groupedTasksIssues =
                         groupTasksIssuesByType(userTasksIssues);
@@ -2017,7 +2018,7 @@ const DailyTab = ({
                         (item: any) =>
                           !item.member ||
                           String(item.member).trim().toLowerCase() ===
-                            normalizedReportName
+                          normalizedReportName
                       );
 
                       // ✅ FIX: sections aur kpis daily_report se lo
@@ -2050,9 +2051,9 @@ const DailyTab = ({
                       const tasksIssuesAchieved = isAbsentReport
                         ? 0
                         : getScore(
-                            sections.tasks_issues_todos ?? sections.tasks_issues,
-                            kpisFallback.tasks
-                          );
+                          sections.tasks_issues_todos ?? sections.tasks_issues,
+                          kpisFallback.tasks
+                        );
                       const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
                       const planAchieved = isAbsentReport
@@ -2066,10 +2067,13 @@ const DailyTab = ({
                       );
                       const timeStr = `${timeAchieved}/20`;
 
-                      // ✅ FIX: self_rating daily_report se lo
-                      const selfRating = isAbsentReport
-                        ? 0
-                        : rawDisplayRd?.self_rating ?? null;
+                      const selfRating =
+                        isAbsentReport
+                          ? 0
+                          : rawDisplayRd?.self_rating ??
+                          draftRaw?.details?.self_rating ??
+                          draftRaw?.sections?.self_rating ??
+                          null;
                       const selfRatingText = formatSelfRating(selfRating);
 
                       const totalScoreValue = getReportTotalScore(
@@ -2143,11 +2147,11 @@ const DailyTab = ({
                                     </h3>
                                     {(report.name?.includes("HOD") ||
                                       report.name?.includes("TL")) && (
-                                      <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                                        <Crown className="w-3 h-3 fill-orange-400" />{" "}
-                                        HOD
-                                      </span>
-                                    )}
+                                        <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                          <Crown className="w-3 h-3 fill-orange-400" />{" "}
+                                          HOD
+                                        </span>
+                                      )}
                                     {report.department && (
                                       <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                         {report.department}
@@ -2408,10 +2412,10 @@ const DailyTab = ({
                                                             "open"
                                                             ? "bg-red-100 text-red-600"
                                                             : isCompletedStatus(
-                                                                  getItemStatus(
-                                                                    item
-                                                                  )
-                                                                )
+                                                              getItemStatus(
+                                                                item
+                                                              )
+                                                            )
                                                               ? "bg-green-100 text-green-600"
                                                               : "bg-gray-100 text-gray-500"
                                                         )}
@@ -2705,7 +2709,7 @@ const DailyTab = ({
                                               } catch (err: any) {
                                                 toast.error(
                                                   "Error adding feedback: " +
-                                                    err.message
+                                                  err.message
                                                 );
                                               }
                                             }}
@@ -2835,285 +2839,430 @@ const DailyTab = ({
                   const isMissedExpanded = expandedReports.includes(missedId);
 
                   return (
-                  <div
-                    key={missedId}
-                    className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all"
-                  >
-                    <div className="p-4 flex items-start gap-4">
-                      <div className="flex items-start gap-3 pt-1">
-                        <input
-                          type="checkbox"
-                          checked
-                          readOnly
-                          disabled
-                          className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
-                        />
-                        <div className="flex flex-col items-center gap-1">
-                          <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
-                            0
-                          </div>
-                          <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                            Missed
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
-                                {member.name || member}
-                              </h3>
-                              {member.department && (
-                                <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                                  {member.department}
-                                </span>
-                              )}
-                              <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
-                                NOT SUBMITTED
-                              </span>
+                    <div
+                      key={missedId}
+                      className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all"
+                    >
+                      <div className="p-4 flex items-start gap-4">
+                        <div className="flex items-start gap-3 pt-1">
+                          <input
+                            type="checkbox"
+                            checked
+                            readOnly
+                            disabled
+                            className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
+                          />
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
+                              0
                             </div>
-                            <div className="text-[11px] text-gray-400 mb-2 truncate">
-                              {member.email || "Report not submitted for this date"}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => toggleExpand(missedId)}
-                            className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "w-4 h-4 transition-transform",
-                                isMissedExpanded && "rotate-180"
-                              )}
-                            />
-                          </button>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                            KPI: 0/20
-                          </span>
-                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                            Tasks, Issues & Todos: 0/20
-                          </span>
-                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                            Planning: 0/20
-                          </span>
-                          <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                            Timing: 0/20
-                          </span>
-                        </div>
-
-                        <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
-                          Click to view missed submission details
-                        </p>
-
-                        {dateRow.length > 0 && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                              {configName}
+                            <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                              Missed
                             </span>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {dateRow.map((d: any, dateIndex: number) => {
-                                const s =
-                                  d.full_date === activeDate
-                                    ? "missed"
-                                    : d.status === "non_meeting"
-                                      ? "holiday"
-                                      : d.status;
-
-                                return (
-                                  <div
-                                    key={dateIndex}
-                                    className={cn(
-                                      "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                      s === "done" || s === "submitted"
-                                        ? "bg-[#10B981] text-white border-[#10B981]"
-                                        : s === "missed"
-                                          ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                          : s === "holiday"
-                                            ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
-                                            : "bg-gray-100 text-gray-400 border-gray-200"
-                                    )}
-                                  >
-                                    <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                      {d.day ? d.day.charAt(0) : ""}
-                                    </span>
-                                    <span className="leading-none">
-                                      {d.date ?? ""}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    {isMissedExpanded && (
-                      <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
-                        <div className="p-5 space-y-5">
-                          <div className="flex flex-wrap gap-3">
-                            <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
-                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                              <span className="text-sm font-bold text-yellow-800">
-                                Self Rating: 0/10
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                              <span className="text-sm font-bold text-purple-800">
-                                Total Score: 0
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
-                              <span className="text-sm font-bold text-red-700">
-                                Missed
-                              </span>
-                            </div>
-                          </div>
+                        </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                </div>
-                                <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                  Accomplishments
-                                </h4>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                                  {member.name || member}
+                                </h3>
+                                {member.department && (
+                                  <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                    {member.department}
+                                  </span>
+                                )}
+                                <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
+                                  NOT SUBMITTED
+                                </span>
                               </div>
-                              <p className="text-xs text-neutral-300 italic">None recorded.</p>
-                            </div>
-                            <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                                  <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
-                                </div>
-                                <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                  Tasks, Issues & Todos
-                                </h4>
+                              <div className="text-[11px] text-gray-400 mb-2 truncate">
+                                {member.email || "Report not submitted for this date"}
                               </div>
-                              <p className="text-xs text-neutral-300 italic">None recorded.</p>
                             </div>
-                            <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                                </div>
-                                <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                  Tomorrow's Plan
-                                </h4>
-                              </div>
-                              <p className="text-xs text-neutral-300 italic">None recorded.</p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            <button onClick={() => openTaskModalForMember(member)} className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors">
-                              <Plus className="w-3.5 h-3.5" /> Add Task
-                            </button>
-                            <button onClick={() => openIssueModalForMember(member)} className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors">
-                              <Plus className="w-3.5 h-3.5" /> Stuck Issue
-                            </button>
-                            <button onClick={() => openTodoModalForMember(member)} className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors">
-                              <Plus className="w-3.5 h-3.5" /> Add Todo
-                            </button>
                             <button
-                              onClick={() => {
-                                if (feedbackOpenId === missedId) {
-                                  setFeedbackOpenId(null);
-                                } else {
-                                  setFeedbackOpenId(missedId);
-                                  setFeedbackRating(0);
-                                  setFeedbackMessage("");
-                                  if (member.id || member.user_id) {
-                                    loadPastFeedbacks(member.id || member.user_id);
-                                  }
-                                }
-                              }}
-                              className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                              type="button"
+                              onClick={() => toggleExpand(missedId)}
+                              className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
                             >
-                              <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                              <ChevronDown
+                                className={cn(
+                                  "w-4 h-4 transition-transform",
+                                  isMissedExpanded && "rotate-180"
+                                )}
+                              />
                             </button>
                           </div>
 
-                          {feedbackOpenId === missedId && (
-                            <div className="border-t border-[#EAE3DF] pt-5 mt-2">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div>
-                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">Provide Feedback</p>
-                                  <p className="text-sm font-bold text-neutral-800 mb-2">Rating (1-5 stars)</p>
-                                  <div className="flex items-center gap-1 mb-4">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <button key={star} type="button" onClick={() => setFeedbackRating(star)} className="transition-transform hover:scale-110">
-                                        <Star className={cn("w-8 h-8", star <= feedbackRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300")} />
-                                      </button>
-                                    ))}
-                                  </div>
-                                  <p className="text-sm font-bold text-neutral-800 mb-2">Feedback Message</p>
-                                  <textarea
-                                    autoFocus
-                                    value={feedbackMessage}
-                                    onChange={(e) => setFeedbackMessage(e.target.value)}
-                                    placeholder="Enter constructive feedback..."
-                                    rows={3}
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
-                                  />
-                                  <div className="flex items-center gap-3 mt-4">
-                                    <button
-                                      onClick={async () => {
-                                        if (feedbackRating === 0) { toast.error("Please select a star rating!"); return; }
-                                        const targetUserId = member.id || member.user_id;
-                                        if (!targetUserId) { toast.error("User ID not found for this member."); return; }
-                                        try {
-                                          const loggedInUserId = localStorage.getItem("userId") || "";
-                                          const payload = { resource_type: "User", resource_id: targetUserId, rating_from_id: loggedInUserId, score: feedbackRating, reviews: feedbackMessage, positive_opening: "", constructive_feedback: "", positive_closing: "" };
-                                          const res = await fetch(`${getBaseUrl()}/ratings`, { method: "POST", headers: { ...getAuthHeaders(), "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-                                          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                                          toast.success("Feedback added!");
-                                          setFeedbackOpenId(null); setFeedbackRating(0); setFeedbackMessage("");
-                                          await loadDailyData(false);
-                                        } catch (err: any) { toast.error("Error adding feedback: " + err.message); }
-                                      }}
-                                      className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
-                                    >Submit Feedback</button>
-                                    <button onClick={() => { setFeedbackOpenId(null); setFeedbackRating(0); setFeedbackMessage(""); }} className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
-                                  </div>
-                                </div>
-                                <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Recent Feedbacks</p>
-                                    <button onClick={handleFeedback} className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1">View All <ChevronRight className="w-3 h-3" /></button>
-                                  </div>
-                                  {isFetchingFeedbacks ? (
-                                    <div className="flex justify-center items-center h-full py-6"><Loader2 className="w-6 h-6 animate-spin text-purple-500" /></div>
-                                  ) : fetchedFeedbacks.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400"><MessageSquare className="w-8 h-8 opacity-20 mb-2" /><span className="text-xs font-medium italic">No past feedback found.</span></div>
-                                  ) : (
-                                    <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                      {fetchedFeedbacks.slice(0, 3).map((fb: any, idx: number) => (
-                                        <div key={fb.id ?? idx} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                          <div className="flex items-center gap-1 mb-1.5">
-                                            {[1, 2, 3, 4, 5].map((star) => (<Star key={star} className={cn("w-3 h-3", star <= fb.score ? "text-yellow-400 fill-yellow-400" : "text-gray-200")} />))}
-                                            {fb.created_at && <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">{new Date(fb.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}</span>}
-                                          </div>
-                                          {fb.reviews ? <p className="text-xs text-neutral-700 leading-relaxed">{fb.reviews}</p> : <p className="text-xs text-neutral-400 italic">No review provided.</p>}
-                                          {fb.reviewer && <p className="text-[9px] text-neutral-400 mt-1 font-semibold">- {fb.reviewer.trim()}</p>}
-                                        </div>
-                                      ))}
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                              KPI: 0/20
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                              Tasks, Issues & Todos: 0/20
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                              Planning: 0/20
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                              Timing: 0/20
+                            </span>
+                          </div>
+
+                          <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
+                            Click to view missed submission details
+                          </p>
+
+                          {dateRow.length > 0 && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                                {configName}
+                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {dateRow.map((d: any, dateIndex: number) => {
+                                  const s =
+                                    d.full_date === activeDate
+                                      ? "missed"
+                                      : d.status === "non_meeting"
+                                        ? "holiday"
+                                        : d.status;
+
+                                  return (
+                                    <div
+                                      key={dateIndex}
+                                      className={cn(
+                                        "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                        s === "done" || s === "submitted"
+                                          ? "bg-[#10B981] text-white border-[#10B981]"
+                                          : s === "missed"
+                                            ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                            : s === "holiday"
+                                              ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                              : "bg-gray-100 text-gray-400 border-gray-200"
+                                      )}
+                                    >
+                                      <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                        {d.day ? d.day.charAt(0) : ""}
+                                      </span>
+                                      <span className="leading-none">
+                                        {d.date ?? ""}
+                                      </span>
                                     </div>
-                                  )}
-                                </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
                         </div>
                       </div>
-                    )}
-                  </div>
+                      {isMissedExpanded && (
+                        <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                          <div className="p-5 space-y-5">
+                            <div className="flex flex-wrap gap-3">
+                              <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
+                                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                                <span className="text-sm font-bold text-yellow-800">
+                                  Self Rating: 0/10
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
+                                <span className="text-sm font-bold text-purple-800">
+                                  Total Score: 0
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
+                                <span className="text-sm font-bold text-red-700">
+                                  Missed
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                  <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                  </div>
+                                  <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                    Accomplishments
+                                  </h4>
+                                </div>
+                                <p className="text-xs text-neutral-300 italic">
+                                  None recorded.
+                                </p>
+                              </div>
+
+                              <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                  <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                                  </div>
+                                  <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                    Tasks, Issues & Todos
+                                  </h4>
+                                </div>
+                                <p className="text-xs text-neutral-300 italic">
+                                  None recorded.
+                                </p>
+                              </div>
+
+                              <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                  <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                                  </div>
+                                  <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                    Tomorrow's Plan
+                                  </h4>
+                                </div>
+                                <p className="text-xs text-neutral-300 italic">
+                                  None recorded.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              <button
+                                onClick={() => openTaskModalForMember(member)}
+                                className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Add Task
+                              </button>
+                              <button
+                                onClick={() => openIssueModalForMember(member)}
+                                className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                              </button>
+                              <button
+                                onClick={() => openTodoModalForMember(member)}
+                                className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Add Todo
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (feedbackOpenId === missedId) {
+                                    setFeedbackOpenId(null);
+                                  } else {
+                                    setFeedbackOpenId(missedId);
+                                    setFeedbackRating(0);
+                                    setFeedbackMessage("");
+                                    if (member.id || member.user_id) {
+                                      loadPastFeedbacks(member.id || member.user_id);
+                                    }
+                                  }
+                                }}
+                                className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                              </button>
+                            </div>
+
+                            {feedbackOpenId === missedId && (
+                              <div className="border-t border-[#EAE3DF] pt-5 mt-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                  <div>
+                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
+                                      Provide Feedback
+                                    </p>
+                                    <p className="text-sm font-bold text-neutral-800 mb-2">
+                                      Rating (1-5 stars)
+                                    </p>
+                                    <div className="flex items-center gap-1 mb-4">
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                          key={star}
+                                          type="button"
+                                          onClick={() => setFeedbackRating(star)}
+                                          className="transition-transform hover:scale-110"
+                                        >
+                                          <Star
+                                            className={cn(
+                                              "w-8 h-8",
+                                              star <= feedbackRating
+                                                ? "text-yellow-400 fill-yellow-400"
+                                                : "text-gray-300"
+                                            )}
+                                          />
+                                        </button>
+                                      ))}
+                                    </div>
+                                    <p className="text-sm font-bold text-neutral-800 mb-2">
+                                      Feedback Message
+                                    </p>
+                                    <textarea
+                                      autoFocus
+                                      value={feedbackMessage}
+                                      onChange={(e) =>
+                                        setFeedbackMessage(e.target.value)
+                                      }
+                                      placeholder="Enter constructive feedback..."
+                                      rows={3}
+                                      className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                                    />
+                                    <div className="flex items-center gap-3 mt-4">
+                                      <button
+                                        onClick={async () => {
+                                          if (feedbackRating === 0) {
+                                            toast.error(
+                                              "Please select a star rating!"
+                                            );
+                                            return;
+                                          }
+
+                                          const targetUserId =
+                                            member.id || member.user_id;
+                                          if (!targetUserId) {
+                                            toast.error(
+                                              "User ID not found for this member."
+                                            );
+                                            return;
+                                          }
+
+                                          try {
+                                            const loggedInUserId =
+                                              localStorage.getItem("userId") || "";
+                                            const payload = {
+                                              resource_type: "User",
+                                              resource_id: targetUserId,
+                                              rating_from_id: loggedInUserId,
+                                              score: feedbackRating,
+                                              reviews: feedbackMessage,
+                                              positive_opening: "",
+                                              constructive_feedback: "",
+                                              positive_closing: "",
+                                            };
+                                            const res = await fetch(
+                                              `${getBaseUrl()}/ratings`,
+                                              {
+                                                method: "POST",
+                                                headers: {
+                                                  ...getAuthHeaders(),
+                                                  "Content-Type":
+                                                    "application/json",
+                                                },
+                                                body: JSON.stringify(payload),
+                                              }
+                                            );
+                                            if (!res.ok)
+                                              throw new Error(
+                                                `HTTP ${res.status}`
+                                              );
+                                            toast.success("Feedback added!");
+                                            setFeedbackOpenId(null);
+                                            setFeedbackRating(0);
+                                            setFeedbackMessage("");
+                                            await loadDailyData(false);
+                                          } catch (err: any) {
+                                            toast.error(
+                                              "Error adding feedback: " +
+                                              err.message
+                                            );
+                                          }
+                                        }}
+                                        className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                      >
+                                        Submit Feedback
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setFeedbackOpenId(null);
+                                          setFeedbackRating(0);
+                                          setFeedbackMessage("");
+                                        }}
+                                        className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
+                                    <div className="flex items-center justify-between mb-4">
+                                      <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
+                                        Recent Feedbacks
+                                      </p>
+                                      <button
+                                        onClick={handleFeedback}
+                                        className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                      >
+                                        View All <ChevronRight className="w-3 h-3" />
+                                      </button>
+                                    </div>
+
+                                    {isFetchingFeedbacks ? (
+                                      <div className="flex justify-center items-center h-full py-6">
+                                        <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                      </div>
+                                    ) : fetchedFeedbacks.length === 0 ? (
+                                      <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                        <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                        <span className="text-xs font-medium italic">
+                                          No past feedback found.
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                        {fetchedFeedbacks
+                                          .slice(0, 3)
+                                          .map((fb: any, idx: number) => (
+                                            <div
+                                              key={fb.id ?? idx}
+                                              className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                                            >
+                                              <div className="flex items-center gap-1 mb-1.5">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                  <Star
+                                                    key={star}
+                                                    className={cn(
+                                                      "w-3 h-3",
+                                                      star <= fb.score
+                                                        ? "text-yellow-400 fill-yellow-400"
+                                                        : "text-gray-200"
+                                                    )}
+                                                  />
+                                                ))}
+                                                {fb.created_at && (
+                                                  <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
+                                                    {new Date(
+                                                      fb.created_at
+                                                    ).toLocaleDateString("en-IN", {
+                                                      day: "numeric",
+                                                      month: "short",
+                                                      year: "2-digit",
+                                                    })}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              {fb.reviews ? (
+                                                <p className="text-xs text-neutral-700 leading-relaxed">
+                                                  {fb.reviews}
+                                                </p>
+                                              ) : (
+                                                <p className="text-xs text-neutral-400 italic">
+                                                  No review provided.
+                                                </p>
+                                              )}
+                                              {fb.reviewer && (
+                                                <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                                  - {fb.reviewer.trim()}
+                                                </p>
+                                              )}
+                                            </div>
+                                          ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>

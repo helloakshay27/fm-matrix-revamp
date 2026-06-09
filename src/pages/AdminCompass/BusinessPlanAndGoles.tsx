@@ -1829,6 +1829,7 @@ const BusinessPlanAndGoles = () => {
   const [aiBuilderError, setAiBuilderError] = useState<string | null>(null);
   const aiPlanAbortRef = useRef<AbortController | null>(null);
   const aiPlanCancelledRef = useRef(false);
+  const [isSuggestingAi, setIsSuggestingAi] = useState(false);
 
   // Info hover state for main header
   const [isInfoHovered, setIsInfoHovered] = useState(false);
@@ -2286,6 +2287,50 @@ const BusinessPlanAndGoles = () => {
   };
 
   // ── AI Prompt Copy Handlers ──
+  const handleAiSuggest = async () => {
+    setIsSuggestingAi(true);
+    try {
+      const rawLabel = AI_PLAN_FIELDS[aiQuestionIndex].label;
+      const cleanPrompt = rawLabel.replace(/^Q\d+:\s*/, "");
+      const currentDraft = aiAnswers[aiQuestionIndex]?.trim();
+      
+      const previous_answers = AI_PLAN_FIELDS.slice(0, aiQuestionIndex)
+        .map((field, idx) => ({
+          question: field.label.replace(/^Q\d+:\s*/, ""),
+          answer: aiAnswers[idx]
+        }))
+        .filter(item => item.answer.trim() !== "");
+
+      const finalPrompt = currentDraft 
+        ? `Question: ${cleanPrompt}\n\nPlease enhance and professionally re-write the following draft answer:\n${currentDraft}`
+        : cleanPrompt;
+
+      const payload = {
+        prompt: finalPrompt,
+        feature: "business_plan_wizard",
+        context: `Company: ${getSelectedOrgName()}`,
+        previous_answers: previous_answers
+      };
+
+      const res = await fetch(`${BASE_URL}/ai_assist/suggest`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.success && json.suggestion) {
+        updateAiAnswer(json.suggestion);
+        toast.success("AI suggestion applied!");
+      } else {
+        throw new Error(json.message || "Failed to get suggestion");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch AI suggestion.");
+    } finally {
+      setIsSuggestingAi(false);
+    }
+  };
+
   const resetAiBuilder = () => {
     setAiBuilderStage("questions");
     setAiQuestionIndex(0);
@@ -4458,6 +4503,30 @@ const BusinessPlanAndGoles = () => {
                       placeholder="Type your answer here..."
                       autoFocus
                     />
+                    {aiAnswers[aiQuestionIndex]?.trim() && (
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          onClick={handleAiSuggest}
+                          disabled={isSuggestingAi}
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-150 active:scale-[0.97] border"
+                          style={{
+                            background: C.primaryTint,
+                            borderColor: C.primaryBord,
+                            color: C.primaryHov,
+                            fontFamily: C.font,
+                            opacity: isSuggestingAi ? 0.6 : 1,
+                          }}
+                        >
+                          {isSuggestingAi ? (
+                            <>
+                              <LoaderIcon /> Re-writing...
+                            </>
+                          ) : (
+                            "✨ Re-write with AI"
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

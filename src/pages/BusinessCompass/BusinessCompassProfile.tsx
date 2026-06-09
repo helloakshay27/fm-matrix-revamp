@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   User,
   Mail,
@@ -20,7 +19,6 @@ import {
   ShieldCheck,
   ChevronDown,
   X,
-
   Save,
   Plus,
   Trash2,
@@ -36,7 +34,6 @@ import {
   TrendingUp,
   TrendingDown,
   CreditCard,
-  Download,
 } from "lucide-react";
 const ChevronDownIcon = ChevronDown;
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +66,11 @@ import {
   ProfileUpdateResponse,
 } from "@/services/userService";
 import { toast } from "sonner";
+import FaceEnrollmentPanel from "@/components/FaceEnrollmentPanel";
+import ProfileAssets from "@/components/ProfileAssets";
+import ProfileWallet from "@/components/ProfileWallet";
+import ProfileRoster from "../ProfileRoster";
+import BusinessCompassAttendanceView from "./BusinessCompassAttendanceView";
 import "./BusinessCompass.css";
 
 const AdvancedDatePicker = ({
@@ -298,10 +300,12 @@ type UserAiConfig = {
   configured?: boolean;
   is_active?: boolean;
   message?: string;
-  provider?: string | {
-    id?: string;
-    display_name?: string;
-  };
+  provider?:
+    | string
+    | {
+        id?: string;
+        display_name?: string;
+      };
   provider_id?: string;
   model?: string | AiModel;
   model_name?: string;
@@ -332,7 +336,6 @@ const normalizeUserKpis = (raw: any): UserKpi[] => {
     status: item.status ?? item.badge ?? "Active",
   }));
 };
-
 
 const getAiConfigProviderId = (config?: UserAiConfig | null) => {
   if (!config) return "";
@@ -478,61 +481,61 @@ const AiProviderLinksDropdown = () => {
   }, [open]);
 
   // return (
-    // <div className="relative" ref={ref}>
-    //   <button
-    //     type="button"
-    //     onClick={() => setOpen((v) => !v)}
-    //     className="flex items-center gap-1.5 text-xs font-semibold text-[#c96442] hover:text-[#a8502e] border border-[#c96442]/30 hover:border-[#c96442]/60 bg-[#c96442]/10 hover:bg-[#c96442]/20 rounded-md px-2.5 py-1 transition-colors"
-    //   >
-    //     <Globe size={12} />
-    //     Link with Claude
-    //     <ChevronDown size={11} className={cn("transition-transform duration-200", open && "rotate-180")} />
-    //   </button>
+  // <div className="relative" ref={ref}>
+  //   <button
+  //     type="button"
+  //     onClick={() => setOpen((v) => !v)}
+  //     className="flex items-center gap-1.5 text-xs font-semibold text-[#c96442] hover:text-[#a8502e] border border-[#c96442]/30 hover:border-[#c96442]/60 bg-[#c96442]/10 hover:bg-[#c96442]/20 rounded-md px-2.5 py-1 transition-colors"
+  //   >
+  //     <Globe size={12} />
+  //     Link with Claude
+  //     <ChevronDown size={11} className={cn("transition-transform duration-200", open && "rotate-180")} />
+  //   </button>
 
-    //   {open && (
-    //     <div className="absolute left-0 top-full mt-2 z-50 w-64 rounded-xl border border-blue-100 bg-white shadow-xl ring-1 ring-black/5 overflow-hidden">
-    //       <p className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100">
-    //         Get API Key from Provider
-    //       </p>
-    //       <div className="p-2 space-y-1">
-    //         {AI_PROVIDER_LINKS.map((provider) => (
-    //           <a
-    //             key={provider.name}
-    //             href={provider.url}
-    //             target="_blank"
-    //             rel="noopener noreferrer"
-    //             onClick={() => setOpen(false)}
-    //             className={cn(
-    //               "flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all hover:scale-[1.01]",
-    //               provider.bg,
-    //               provider.border
-    //             )}
-    //           >
-    //             <img
-    //               src={provider.icon}
-    //               alt={provider.name}
-    //               className="w-5 h-5 rounded object-contain shrink-0"
-    //               onError={(e) => {
-    //                 (e.target as HTMLImageElement).style.display = "none";
-    //               }}
-    //             />
-    //             <div className="min-w-0 flex-1">
-    //               <p className={cn("text-sm font-bold leading-none", provider.text)}>
-    //                 {provider.name}
-    //               </p>
-    //               <p className="text-[10px] text-gray-400 mt-0.5">{provider.label}</p>
-    //             </div>
-    //             <span className="text-[10px] font-semibold text-gray-400 shrink-0">
-    //               Get Key →
-    //             </span>
-    //           </a>
-    //         ))}
-    //       </div>
-    //     </div>
-    //   )}
-    // </div>
-//   );
-// };
+  //   {open && (
+  //     <div className="absolute left-0 top-full mt-2 z-50 w-64 rounded-xl border border-blue-100 bg-white shadow-xl ring-1 ring-black/5 overflow-hidden">
+  //       <p className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100">
+  //         Get API Key from Provider
+  //       </p>
+  //       <div className="p-2 space-y-1">
+  //         {AI_PROVIDER_LINKS.map((provider) => (
+  //           <a
+  //             key={provider.name}
+  //             href={provider.url}
+  //             target="_blank"
+  //             rel="noopener noreferrer"
+  //             onClick={() => setOpen(false)}
+  //             className={cn(
+  //               "flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all hover:scale-[1.01]",
+  //               provider.bg,
+  //               provider.border
+  //             )}
+  //           >
+  //             <img
+  //               src={provider.icon}
+  //               alt={provider.name}
+  //               className="w-5 h-5 rounded object-contain shrink-0"
+  //               onError={(e) => {
+  //                 (e.target as HTMLImageElement).style.display = "none";
+  //               }}
+  //             />
+  //             <div className="min-w-0 flex-1">
+  //               <p className={cn("text-sm font-bold leading-none", provider.text)}>
+  //                 {provider.name}
+  //               </p>
+  //               <p className="text-[10px] text-gray-400 mt-0.5">{provider.label}</p>
+  //             </div>
+  //             <span className="text-[10px] font-semibold text-gray-400 shrink-0">
+  //               Get Key →
+  //             </span>
+  //           </a>
+  //         ))}
+  //       </div>
+  //     </div>
+  //   )}
+  // </div>
+  //   );
+  // };
 
   return null;
 };
@@ -575,8 +578,6 @@ const OrganizationCheckbox = ({
 );
 
 const BusinessCompassProfile = () => {
-  const navigate = useNavigate();
-
   type ProfileFormData = {
     displayName: string;
     email: string;
@@ -641,9 +642,19 @@ const BusinessCompassProfile = () => {
     apiData: ProfileUpdateResponse
   ): ProfileFormData => {
     const userData = apiData.user || {};
+
+    // Extract names from both top level and user object
     const firstname = userData.firstname ?? apiData.firstname ?? "";
     const lastname = userData.lastname ?? apiData.lastname ?? "";
     const displayName = [firstname, lastname].filter(Boolean).join(" ").trim();
+
+    // Extract extra fields - could be in user object or extra_fields
+    const extra = apiData.extra_fields || userData;
+
+    console.warn(
+      "[mergeApiProfileIntoForm] Extracting data from API response:",
+      { userData, extra }
+    );
 
     return {
       ...currentData,
@@ -652,9 +663,24 @@ const BusinessCompassProfile = () => {
       phone: userData.mobile ?? apiData.mobile ?? currentData.phone,
       jobTitle: userData.user_title ?? currentData.jobTitle,
       address: userData.alternate_address ?? currentData.address,
+      city: extra.city ?? currentData.city,
+      state: extra.state ?? currentData.state,
+      pinCode:
+        extra.pin_code ??
+        extra.pincode ??
+        extra.zip_code ??
+        currentData.pinCode,
       dob: formatApiDateToUi(userData.birth_date) || currentData.dob,
+      doj: formatApiDateToUi(extra.date_of_joining) || currentData.doj,
+      anniversaryDate:
+        formatApiDateToUi(extra.anniversary_date) ||
+        currentData.anniversaryDate,
+      emergencyContactName:
+        extra.emergency_contact_name ?? currentData.emergencyContactName,
       emergencyContactNumber:
-        userData.alternate_mobile ?? currentData.emergencyContactNumber,
+        userData.alternate_mobile ??
+        extra.emergency_contact_number ??
+        currentData.emergencyContactNumber,
     };
   };
 
@@ -665,7 +691,12 @@ const BusinessCompassProfile = () => {
     const firstname = accountData.firstname || "";
     const lastname = accountData.lastname || "";
     const displayName = [firstname, lastname].filter(Boolean).join(" ").trim();
-    const extra = accountData.extra_fields || {};
+    const extra = accountData.extra_fields || accountData; // Try both extra_fields and root level
+
+    console.warn("[mapAccountProfileToForm] Mapping account data:", {
+      accountData,
+      extra,
+    });
 
     return {
       ...currentData,
@@ -697,7 +728,9 @@ const BusinessCompassProfile = () => {
   };
 
   const persistProfileDataLocally = (data: ProfileFormData) => {
+    console.warn("[LocalStorage] Saving profile data to localStorage:", data);
     localStorage.setItem("bc-profile-data", JSON.stringify(data));
+
     const essentialFields = [
       "address",
       "city",
@@ -711,14 +744,35 @@ const BusinessCompassProfile = () => {
     const isComplete = essentialFields.every(
       (field) => data[field as keyof ProfileFormData]?.trim() !== ""
     );
+    const completionCount = essentialFields.filter(
+      (field) => data[field as keyof ProfileFormData]?.trim() !== ""
+    ).length;
+    console.warn(
+      `[LocalStorage] Profile completion: ${completionCount}/${essentialFields.length}`
+    );
+
     if (isComplete) {
+      console.warn("[LocalStorage] Profile marked as complete (100%)");
       localStorage.setItem("bc-profile-completed", "true");
     } else {
+      console.warn(
+        "[LocalStorage] Profile NOT complete, removing completion flag"
+      );
       localStorage.removeItem("bc-profile-completed");
     }
   };
 
-  const [activeTab, setActiveTab] = useState<"basic" | "assets" | "attendance" | "wallet">("basic");
+  type ProfileTab =
+    | "basic"
+    | "face_enroll"
+    | "assets"
+    | "attendance"
+    | "my_roster"
+    | "my_wallet"
+    | "wallet";
+
+  const [activeTab, setActiveTab] = useState<ProfileTab>("basic");
+  const [profileDetails, setProfileDetails] = useState<any>({});
 
   // ── Wallet state ──────────────────────────────────────────────────────────
   interface WalletTx {
@@ -729,13 +783,15 @@ const BusinessCompassProfile = () => {
     transactionType: "credit" | "debit" | string;
     payment_mode: string;
   }
-  const [walletBalance, setWalletBalance]           = useState<number | null>(null);
-  const [walletUpdatedAt, setWalletUpdatedAt]       = useState<string>("");
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletUpdatedAt, setWalletUpdatedAt] = useState<string>("");
   const [walletTransactions, setWalletTransactions] = useState<WalletTx[]>([]);
-  const [walletFilter, setWalletFilter]             = useState<"all" | "credit" | "debit">("all");
-  const [walletLoading, setWalletLoading]           = useState(false);
-  const [walletRefreshing, setWalletRefreshing]     = useState(false);
-  const [walletExists, setWalletExists]             = useState(true);
+  const [walletFilter, setWalletFilter] = useState<"all" | "credit" | "debit">(
+    "all"
+  );
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletRefreshing, setWalletRefreshing] = useState(false);
+  const [walletExists, setWalletExists] = useState(true);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -750,13 +806,14 @@ const BusinessCompassProfile = () => {
   const [removeProfileImage, setRemoveProfileImage] = useState(false);
 
   // ─── Document state ─────────────────────────────────────────────────────────
-const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
-  const savedDocs = localStorage.getItem("bc-profile-documents");
-  if (savedDocs) {
-    return JSON.parse(savedDocs);
-  }
-  return [];
-});  const [docTitle, setDocTitle] = useState("");
+  const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
+    const savedDocs = localStorage.getItem("bc-profile-documents");
+    if (savedDocs) {
+      return JSON.parse(savedDocs);
+    }
+    return [];
+  });
+  const [docTitle, setDocTitle] = useState("");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [userKpis, setUserKpis] = useState<UserKpi[]>([]);
@@ -772,7 +829,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const [isAiProvidersLoading, setIsAiProvidersLoading] = useState(false);
   const [isAiModelsLoading, setIsAiModelsLoading] = useState(false);
   const [isAiConfigLoading, setIsAiConfigLoading] = useState(false);
-  const [aiConfigTab, setAiConfigTab] = useState<"api_key" | "auth_connect">("api_key");
+  const [aiConfigTab, setAiConfigTab] = useState<"api_key" | "auth_connect">(
+    "api_key"
+  );
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   const [isOAuthExchanging, setIsOAuthExchanging] = useState(false);
   const [oauthUrl, setOauthUrl] = useState<string | null>(null);
@@ -796,13 +855,46 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-
   const currentUserId =
     localStorage.getItem("userId") || String(getUser()?.id || "");
   const organizationIdForAiPayload =
     includeOrganizationInAiConfig && storedOrganizationId
       ? storedOrganizationId
       : null;
+
+  useEffect(() => {
+    const fetchProfileUserDetails = async () => {
+      const base = localStorage.getItem("baseUrl") || "";
+      const token = localStorage.getItem("token") || "";
+
+      if (!base || !token || !currentUserId) {
+        setProfileDetails({});
+        return;
+      }
+
+      try {
+        const baseUrl = base.replace(/\/$/, "").replace(/^https?:\/\//, "");
+        const response = await fetch(
+          `https://${baseUrl}/user_details/${encodeURIComponent(currentUserId)}.json`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        setProfileDetails(await response.json());
+      } catch (error) {
+        console.error("Failed to load profile user details", error);
+        setProfileDetails({});
+      }
+    };
+
+    fetchProfileUserDetails();
+  }, [currentUserId]);
 
   useEffect(() => {
     if (!storedOrganizationId && includeOrganizationInAiConfig) {
@@ -814,9 +906,18 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     const fetchProfileDetails = async () => {
       try {
         setIsProfileLoading(true);
+        console.warn("[Profile Load] Starting profile fetch...");
         const profileData = await userService.getAccountDetails();
+        console.warn(
+          "[Profile Load] Raw API response:",
+          JSON.stringify(profileData, null, 2)
+        );
 
         const mappedData = mapAccountProfileToForm(formData, profileData);
+        console.warn(
+          "[Profile Load] After mapping to form:",
+          JSON.stringify(mappedData, null, 2)
+        );
         setFormData(mappedData);
         persistProfileDataLocally(mappedData);
 
@@ -828,10 +929,15 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
           "";
 
         if (accountImage) {
+          console.warn(
+            "[Profile Load] Setting profile image from API:",
+            accountImage
+          );
           setProfileImage(accountImage);
           localStorage.setItem("bc-profile-avatar", accountImage);
         }
       } catch (error) {
+        console.error("[Profile Load] Error fetching profile:", error);
         if (!localStorage.getItem("bc-profile-data")) {
           const message =
             error instanceof Error
@@ -851,7 +957,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     const fetchUserKpis = async () => {
       const baseUrl = getBaseUrl();
       const token = getToken();
-      const userId = localStorage.getItem("userId") || String(getUser()?.id || "");
+      const userId =
+        localStorage.getItem("userId") || String(getUser()?.id || "");
 
       if (!baseUrl || !token || !userId) {
         setUserKpis([]);
@@ -893,7 +1000,10 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiProvidersLoading(true);
         setAiConfigError(null);
         const response = await fetch(getFullUrl("/user_ai_config/providers"), {
-          headers: { Authorization: getAuthHeader(), Accept: "application/json" },
+          headers: {
+            Authorization: getAuthHeader(),
+            Accept: "application/json",
+          },
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -919,7 +1029,12 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
           getFullUrl(
             buildUserAiConfigPath(currentUserId, storedOrganizationId)
           ),
-          { headers: { Authorization: getAuthHeader(), Accept: "application/json" } }
+          {
+            headers: {
+              Authorization: getAuthHeader(),
+              Accept: "application/json",
+            },
+          }
         );
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -973,8 +1088,15 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiModelsLoading(true);
         setAiConfigError(null);
         const response = await fetch(
-          getFullUrl(`/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`),
-          { headers: { Authorization: getAuthHeader(), Accept: "application/json" } }
+          getFullUrl(
+            `/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`
+          ),
+          {
+            headers: {
+              Authorization: getAuthHeader(),
+              Accept: "application/json",
+            },
+          }
         );
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -983,7 +1105,8 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         const models = Array.isArray(data?.models) ? data.models : [];
         setAiModels(models);
         setSelectedAiModel((current) =>
-          current && models.some((model: AiModel) => model.model_name === current)
+          current &&
+          models.some((model: AiModel) => model.model_name === current)
             ? current
             : ""
         );
@@ -1071,7 +1194,11 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         },
         model_name: config?.model_name || selectedAiModel,
         api_key: config?.api_key || aiApiKey.trim(),
-        user_id: config?.user_id || prev?.user_id || Number(currentUserId) || undefined,
+        user_id:
+          config?.user_id ||
+          prev?.user_id ||
+          Number(currentUserId) ||
+          undefined,
         user_name: config?.user_name || prev?.user_name || formData.displayName,
       }));
       toast.success(data?.message || "AI configuration saved successfully");
@@ -1103,7 +1230,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
+        throw new Error(
+          data?.message || data?.error || `HTTP ${response.status}`
+        );
       }
 
       setAiApiKey("");
@@ -1131,14 +1260,22 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       if (selectedAiProvider) params.append("provider", selectedAiProvider);
       if (selectedAiModel) params.append("model", selectedAiModel);
 
-      const response = await fetch(getFullUrl(`/user_ai_config/oauth/cli_start?${params.toString()}`), {
-        method: "GET",
-        headers: { Authorization: getAuthHeader(), Accept: "application/json" },
-      });
+      const response = await fetch(
+        getFullUrl(`/user_ai_config/oauth/cli_start?${params.toString()}`),
+        {
+          method: "GET",
+          headers: {
+            Authorization: getAuthHeader(),
+            Accept: "application/json",
+          },
+        }
+      );
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
+        throw new Error(
+          data?.message || data?.error || `HTTP ${response.status}`
+        );
       }
 
       if (data?.url) {
@@ -1155,7 +1292,10 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setOauthState(data?.state || stateFromUrl || null);
 
         window.open(cleanUrl, "_blank", "noopener,noreferrer");
-        toast.info(data?.message || "Open the URL, authorize, then paste the code back here");
+        toast.info(
+          data?.message ||
+            "Open the URL, authorize, then paste the code back here"
+        );
       } else {
         throw new Error("No authorization URL received");
       }
@@ -1186,21 +1326,25 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsOAuthExchanging(true);
       setAiConfigError(null);
 
-      const response = await fetch(getFullUrl("/user_ai_config/oauth/cli_complete"), {
-        method: "POST",
-        headers: {
-          Authorization: getAuthHeader(),
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        getFullUrl("/user_ai_config/oauth/cli_complete"),
+        {
+          method: "POST",
+          headers: {
+            Authorization: getAuthHeader(),
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json().catch(() => ({}));
 
       if (response.status === 422 || response.status === 429) {
         const body = JSON.stringify(data).toLowerCase();
-        const isRateLimit = body.includes("rate_limit") || body.includes("rate limited");
+        const isRateLimit =
+          body.includes("rate_limit") || body.includes("rate limited");
         const isExpired = body.includes("expired") || body.includes("invalid");
 
         const startCooldown = (seconds: number) => {
@@ -1218,18 +1362,26 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
         if (isRateLimit) {
           startCooldown(30);
-          toast.error("Claude rate limit hit. Please wait 30 seconds, get a fresh code and try again.");
+          toast.error(
+            "Claude rate limit hit. Please wait 30 seconds, get a fresh code and try again."
+          );
         } else if (isExpired) {
           toast.error("Auth code expired. Click 'Get New Code' to restart.");
         } else {
-          toast.error(data?.message || data?.error || "Exchange failed. Get a fresh code and try again.");
+          toast.error(
+            data?.message ||
+              data?.error ||
+              "Exchange failed. Get a fresh code and try again."
+          );
         }
         setOauthCode("");
         return;
       }
 
       if (!response.ok) {
-        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
+        throw new Error(
+          data?.message || data?.error || `HTTP ${response.status}`
+        );
       }
 
       const config = data?.config ?? data;
@@ -1266,29 +1418,43 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsAiConfigToggling(true);
       setAiConfigError(null);
 
-      const response = await fetch(getFullUrl(`/user_ai_config/${configId}/toggle`), {
-        method: "PATCH",
-        headers: {
-          Authorization: getAuthHeader(),
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action_type: isAiConfigActive ? "deactivate" : "activate",
-        }),
-      });
+      const response = await fetch(
+        getFullUrl(`/user_ai_config/${configId}/toggle`),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: getAuthHeader(),
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action_type: isAiConfigActive ? "deactivate" : "activate",
+          }),
+        }
+      );
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.message || data?.error || `HTTP ${response.status}`);
+        throw new Error(
+          data?.message || data?.error || `HTTP ${response.status}`
+        );
       }
 
       const newActive = data?.config?.is_active ?? !isAiConfigActive;
       setIsAiConfigActive(newActive);
       setUserAiConfig((prev) =>
-        prev ? { ...prev, ...data.config, is_active: newActive, configured: newActive } : prev
+        prev
+          ? {
+              ...prev,
+              ...data.config,
+              is_active: newActive,
+              configured: newActive,
+            }
+          : prev
       );
-      toast.success(data?.message || (newActive ? "Config activated" : "Config deactivated"));
+      toast.success(
+        data?.message || (newActive ? "Config activated" : "Config deactivated")
+      );
     } catch (error: any) {
       console.error("Failed to toggle AI config", error);
       const message = error?.message || "Failed to toggle AI configuration";
@@ -1301,14 +1467,14 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
   // Sync documents to localStorage whenever they change
   useEffect(() => {
-  const docsToSave = documents.map((doc) => ({
-    id: doc.id,
-    title: doc.title,
-    url: doc.url,
-    file: null, // File object JSON mein save nahi ho sakta, isliye isko null bhejenge
-  }));
-  localStorage.setItem("bc-profile-documents", JSON.stringify(docsToSave));
-}, [documents]);
+    const docsToSave = documents.map((doc) => ({
+      id: doc.id,
+      title: doc.title,
+      url: doc.url,
+      file: null, // File object JSON mein save nahi ho sakta, isliye isko null bhejenge
+    }));
+    localStorage.setItem("bc-profile-documents", JSON.stringify(docsToSave));
+  }, [documents]);
 
   const triggerProfileUpload = () => {
     if (!isEditing || isSaving) return;
@@ -1429,6 +1595,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
       const firstName = formData.displayName.trim();
       const birthDate = formatUiDateToApi(formData.dob) || "";
+      const dojFormatted = formatUiDateToApi(formData.doj) || "";
+      const anniversaryDateFormatted =
+        formatUiDateToApi(formData.anniversaryDate) || "";
       const useFormData = !!profileImageFile || removeProfileImage;
       let updatedProfile: ProfileUpdateResponse;
 
@@ -1453,14 +1622,31 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
           formData.emergencyContactNumber.trim()
         );
 
+        // Additional profile fields (may be stored in extra_fields or user object)
+        multipartPayload.append("user[city]", formData.city.trim());
+        multipartPayload.append("user[state]", formData.state.trim());
+        multipartPayload.append("user[pin_code]", formData.pinCode.trim());
+        multipartPayload.append("user[date_of_joining]", dojFormatted);
+        multipartPayload.append(
+          "user[anniversary_date]",
+          anniversaryDateFormatted
+        );
+        multipartPayload.append(
+          "user[emergency_contact_name]",
+          formData.emergencyContactName.trim()
+        );
+
         if (profileImageFile) {
           multipartPayload.append("user[avatar]", profileImageFile);
         } else if (removeProfileImage) {
-          // Signal to API to remove avatar — adjust key/value per your backend contract
           multipartPayload.append("user[remove_avatar]", "true");
         }
 
+        console.warn(
+          "[Profile Save] Sending FormData to /users/profile_update.json"
+        );
         updatedProfile = await userService.updateProfile(multipartPayload);
+        console.warn("[Profile Save] API Response received:", updatedProfile);
       } else {
         const payload = {
           firstname: firstName,
@@ -1476,10 +1662,22 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
             user_title: formData.jobTitle.trim(),
             birth_date: birthDate || null,
             alternate_mobile: formData.emergencyContactNumber.trim(),
+            // Additional fields - API may store these in user object or return them separately
+            city: formData.city.trim(),
+            state: formData.state.trim(),
+            pin_code: formData.pinCode.trim(),
+            date_of_joining: dojFormatted,
+            anniversary_date: anniversaryDateFormatted,
+            emergency_contact_name: formData.emergencyContactName.trim(),
           },
         };
 
+        console.warn(
+          "[Profile Save] Sending JSON payload to /users/profile_update.json:",
+          JSON.stringify(payload, null, 2)
+        );
         updatedProfile = await userService.updateProfile(payload);
+        console.warn("[Profile Save] API Response received:", updatedProfile);
       }
 
       const mergedData = mergeApiProfileIntoForm(formData, updatedProfile);
@@ -1501,6 +1699,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to update profile";
+      console.error("[Profile Save] Error:", message, error);
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -1521,14 +1720,17 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   // ── Wallet helpers ────────────────────────────────────────────────────────
   const formatBalance = (v: number | null) => {
     if (v === null) return "—";
-    return new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+    return new Intl.NumberFormat("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(v);
   };
 
   const formatTxDate = (s: string) => {
     if (!s) return "—";
     const d = new Date(s);
     if (isNaN(d.getTime())) return s;
-    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getFullYear()).slice(2)}`;
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getFullYear()).slice(2)}`;
   };
 
   const formatLastUpdated = (iso: string) => {
@@ -1536,7 +1738,10 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return "";
     const isToday = d.toDateString() === new Date().toDateString();
-    const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    const time = d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     return `Last updated: ${isToday ? "Today" : formatTxDate(iso)}, ${time}`;
   };
 
@@ -1547,11 +1752,28 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
-    const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const d = new Date(
+      Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+    );
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const wk = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-    const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const wk = Math.ceil(
+      ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7
+    );
+    const mo = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     return `W${wk} ${mo[monday.getMonth()]} ${monday.getDate()} – ${mo[sunday.getMonth()]} ${sunday.getDate()}`;
   };
 
@@ -1559,15 +1781,22 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const fetchWalletData = async (refreshing = false) => {
     const base = getBaseUrl();
     const token = getToken();
-    const userId = localStorage.getItem("userId") || String(getUser()?.id || "");
+    const userId =
+      localStorage.getItem("userId") || String(getUser()?.id || "");
     if (!base || !token || !userId) return;
     const baseUrl = base.replace(/\/$/, "").replace(/^https?:\/\//, "");
     if (refreshing) setWalletRefreshing(true);
     else setWalletLoading(true);
     try {
-      const res = await fetch(`https://${baseUrl}/wallet/balance.json?user_id=${userId}`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
+      const res = await fetch(
+        `https://${baseUrl}/wallet/balance.json?user_id=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
       if (res.ok) {
         const data = await res.json();
         setWalletBalance(data.available_amount ?? null);
@@ -1607,15 +1836,29 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
   const handleExportHistory = () => {
     if (!filteredTxs.length) return;
-    const headers = ["Date","Amount","Point Type","Transaction Type","Payment Mode"];
+    const headers = [
+      "Date",
+      "Amount",
+      "Point Type",
+      "Transaction Type",
+      "Payment Mode",
+    ];
     const rows = filteredTxs.map((t) =>
-      [formatTxDate(t.date), t.transactionPoints, t.point_type, t.transactionType, t.payment_mode].join(",")
+      [
+        formatTxDate(t.date),
+        t.transactionPoints,
+        t.point_type,
+        t.transactionType,
+        t.payment_mode,
+      ].join(",")
     );
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url; a.download = "wallet_history.csv"; a.click();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "wallet_history.csv";
+    a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -1626,20 +1869,29 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase() || "")
       .join("") || "U";
-  const aiConfigProviderDisplayName = getAiConfigProviderDisplayName(userAiConfig);
+  const aiConfigProviderDisplayName =
+    getAiConfigProviderDisplayName(userAiConfig);
   const aiConfigModelName = getAiConfigModelName(userAiConfig);
   const aiConfigModelDisplayName = getAiConfigModelDisplayName(userAiConfig);
   const selectedOrganizationName = getStoredOrganizationName();
 
   // Profile completion %
   const completionFields = [
-    formData.displayName, formData.email, formData.jobTitle,
-    formData.city, formData.state, formData.pinCode,
-    formData.dob, formData.doj,
-    formData.emergencyContactName, formData.emergencyContactNumber,
+    formData.displayName,
+    formData.email,
+    formData.jobTitle,
+    formData.city,
+    formData.state,
+    formData.pinCode,
+    formData.dob,
+    formData.doj,
+    formData.emergencyContactName,
+    formData.emergencyContactNumber,
   ];
   const completionPct = Math.round(
-    (completionFields.filter((f) => f?.trim()).length / completionFields.length) * 100
+    (completionFields.filter((f) => f?.trim()).length /
+      completionFields.length) *
+      100
   );
 
   /* ─────────────────────────────────────────────────────────────────────
@@ -1648,49 +1900,63 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   return (
     <div className="min-h-screen bg-white font-poppins">
       <div className="p-4 sm:p-5 lg:p-6 max-w-7xl mx-auto">
-
         {/* Page title */}
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-5">My Profile</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-5">
+          My Profile
+        </h1>
 
         {/* ══ Main two-column layout ══════════════════════════════════════ */}
         <div className="flex flex-col lg:flex-row gap-5 mb-5">
-
           {/* ── LEFT: main profile content ── */}
           <div className="flex-1 min-w-0 flex flex-col gap-4">
-
             {/* ─ Profile Header Card ─ */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
               <div className="flex items-start gap-4">
-
                 {/* Avatar */}
                 <div className="relative flex-shrink-0 group">
                   {profileImage && !removeProfileImage ? (
                     <>
-                      <img src={profileImage} alt="Profile"
-                        className="w-[68px] h-[68px] sm:w-[80px] sm:h-[80px] rounded-full object-cover border-2 border-white shadow-sm" />
+                      <img
+                        src={profileImage}
+                        alt="Profile"
+                        className="w-[68px] h-[68px] sm:w-[80px] sm:h-[80px] rounded-full object-cover border-2 border-white shadow-sm"
+                      />
                       {isEditing && (
                         <>
-                          <div onClick={triggerProfileUpload}
-                            className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                          <div
+                            onClick={triggerProfileUpload}
+                            className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          >
                             <Upload size={16} className="text-white" />
                           </div>
-                          <button onClick={handleRemoveProfileImage} type="button"
-                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow">
+                          <button
+                            onClick={handleRemoveProfileImage}
+                            type="button"
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow"
+                          >
                             <X size={10} strokeWidth={3} />
                           </button>
                         </>
                       )}
                     </>
                   ) : (
-                    <div onClick={isEditing ? triggerProfileUpload : undefined}
+                    <div
+                      onClick={isEditing ? triggerProfileUpload : undefined}
                       className={cn(
                         "w-[68px] h-[68px] sm:w-[80px] sm:h-[80px] rounded-full bg-[#DA7756] flex items-center justify-center text-white text-[22px] font-black border-2 border-white shadow-sm",
                         isEditing && "cursor-pointer hover:opacity-90"
-                      )}>
+                      )}
+                    >
                       {profileInitials}
                     </div>
                   )}
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProfileImageSelect} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfileImageSelect}
+                  />
                 </div>
 
                 {/* Name + Designation + Edit + Details row */}
@@ -1706,18 +1972,26 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                     </div>
                     {/* Edit / Save / Cancel */}
                     {!isEditing ? (
-                      <button onClick={() => setIsEditing(true)} disabled={isProfileLoading}
-                        className="flex-shrink-0 border border-[#DA7756] text-[#DA7756] text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#fef6f4] transition-colors whitespace-nowrap">
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        disabled={isProfileLoading}
+                        className="flex-shrink-0 border border-[#DA7756] text-[#DA7756] text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#fef6f4] transition-colors whitespace-nowrap"
+                      >
                         Edit Profile
                       </button>
                     ) : (
                       <div className="flex gap-2 flex-shrink-0">
-                        <button onClick={handleSave} disabled={isSaving || isProfileLoading}
-                          className="bg-[#DA7756] text-white text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#c9673f] transition-colors disabled:opacity-60 whitespace-nowrap">
+                        <button
+                          onClick={handleSave}
+                          disabled={isSaving || isProfileLoading}
+                          className="bg-[#DA7756] text-white text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#c9673f] transition-colors disabled:opacity-60 whitespace-nowrap"
+                        >
                           {isSaving ? "Saving…" : "Save"}
                         </button>
-                        <button onClick={handleCancel}
-                          className="border border-gray-300 text-gray-500 text-[12px] font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+                        <button
+                          onClick={handleCancel}
+                          className="border border-gray-300 text-gray-500 text-[12px] font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
                           Cancel
                         </button>
                       </div>
@@ -1727,17 +2001,35 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   {/* Location / Position / Work / Status */}
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3">
                     {[
-                      { label: "Location", value: [formData.city, formData.state].filter(Boolean).join(", ") || "Not provided" },
-                      { label: "Position", value: formData.jobTitle || "Not provided" },
-                      { label: "Work", value: formData.jobTitle || "Not provided" },
+                      {
+                        label: "Location",
+                        value:
+                          [formData.city, formData.state]
+                            .filter(Boolean)
+                            .join(", ") || "Not provided",
+                      },
+                      {
+                        label: "Position",
+                        value: formData.jobTitle || "Not provided",
+                      },
+                      {
+                        label: "Work",
+                        value: formData.jobTitle || "Not provided",
+                      },
                     ].map(({ label, value }) => (
                       <div key={label}>
-                        <p className="text-[9px] sm:text-[10px] text-gray-400 leading-none mb-0.5">{label}</p>
-                        <p className="text-[12px] sm:text-[13px] font-semibold text-[#1a1a1a]">{value}</p>
+                        <p className="text-[9px] sm:text-[10px] text-gray-400 leading-none mb-0.5">
+                          {label}
+                        </p>
+                        <p className="text-[12px] sm:text-[13px] font-semibold text-[#1a1a1a]">
+                          {value}
+                        </p>
                       </div>
                     ))}
                     <div>
-                      <p className="text-[9px] sm:text-[10px] text-gray-400 leading-none mb-0.5">Status</p>
+                      <p className="text-[9px] sm:text-[10px] text-gray-400 leading-none mb-0.5">
+                        Status
+                      </p>
                       <span className="inline-block bg-teal-50 text-teal-600 text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                         Active
                       </span>
@@ -1747,14 +2039,35 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
                 {/* Profile completion ring – hidden on xs */}
                 <div className="hidden sm:flex flex-col items-center gap-1 flex-shrink-0">
-                  <p className="text-[10px] text-gray-400">Profile completion</p>
+                  <p className="text-[10px] text-gray-400">
+                    Profile completion
+                  </p>
                   <div className="relative w-[80px] h-[80px]">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
-                      <circle cx="40" cy="40" r="34" fill="none" stroke="#ede9e3" strokeWidth="7" />
-                      <circle cx="40" cy="40" r="34" fill="none" stroke="#DA7756" strokeWidth="7"
+                    <svg
+                      className="w-full h-full -rotate-90"
+                      viewBox="0 0 80 80"
+                    >
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="#ede9e3"
+                        strokeWidth="7"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="#DA7756"
+                        strokeWidth="7"
                         strokeDasharray={2 * Math.PI * 34}
-                        strokeDashoffset={2 * Math.PI * 34 * (1 - completionPct / 100)}
-                        strokeLinecap="round" />
+                        strokeDashoffset={
+                          2 * Math.PI * 34 * (1 - completionPct / 100)
+                        }
+                        strokeLinecap="round"
+                      />
                     </svg>
                     <span className="absolute inset-0 flex items-center justify-center text-[15px] font-bold text-[#1a1a1a]">
                       {completionPct}%
@@ -1766,12 +2079,23 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
             {/* Tab bar */}
             <div className="bg-white rounded-xl border border-gray-100 p-1.5 flex items-center gap-1 w-fit shadow-sm flex-wrap">
-              {(["basic", "assets", "attendance", "wallet"] as const).map((id) => {
+              {(
+                [
+                  "basic",
+                  // "face_enroll",
+                  // "assets",
+                  "attendance",
+                  // "my_roster",
+                  "my_wallet",
+                ] as ProfileTab[]
+              ).map((id) => {
                 const labels: Record<string, string> = {
                   basic: "Basic Info",
+                  face_enroll: "Face Enroll",
                   assets: "Assets",
                   attendance: "Attendance",
-                  wallet: "My Wallet",
+                  my_roster: "My Roster",
+                  my_wallet: "My Wallet",
                 };
                 return (
                   <button
@@ -1804,30 +2128,48 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                     <div className="bg-white rounded-xl border border-gray-100 p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <Globe size={11} className="text-[#6B9BCC]" />
-                        <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">Name</span>
+                        <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                          Name
+                        </span>
                       </div>
                       {isEditing ? (
-                        <Input className="h-8 text-[12px] border-gray-200" value={formData.displayName}
-                          onChange={(e) => handleInputChange("displayName", e.target.value)} placeholder="Full name" />
+                        <Input
+                          className="h-8 text-[12px] border-gray-200"
+                          value={formData.displayName}
+                          onChange={(e) =>
+                            handleInputChange("displayName", e.target.value)
+                          }
+                          placeholder="Full name"
+                        />
                       ) : (
-                        <p className="text-[13px] font-semibold text-[#1a1a1a]">{formData.displayName || "Not provided"}</p>
+                        <p className="text-[13px] font-semibold text-[#1a1a1a]">
+                          {formData.displayName || "Not provided"}
+                        </p>
                       )}
                     </div>
                     {/* Email */}
                     <div className="bg-white rounded-xl border border-gray-100 p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <Mail size={11} className="text-[#6B9BCC]" />
-                        <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">Email</span>
+                        <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                          Email
+                        </span>
                       </div>
-                      <p className="text-[13px] font-semibold text-[#1a1a1a] break-all">{formData.email || "Not provided"}</p>
+                      <p className="text-[13px] font-semibold text-[#1a1a1a] break-all">
+                        {formData.email || "Not provided"}
+                      </p>
                     </div>
                     {/* Job position */}
                     <div className="bg-white rounded-xl border border-gray-100 p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <Star size={11} className="text-[#6B9BCC]" />
-                        <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">Job position</span>
+                        <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                          Job position
+                        </span>
                       </div>
-                      <p className="text-[13px] font-semibold text-[#1a1a1a]">{formData.jobTitle || "Not provided"}</p>
+                      <p className="text-[13px] font-semibold text-[#1a1a1a]">
+                        {formData.jobTitle || "Not provided"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1839,31 +2181,91 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                     Additional info
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                    {([
-                      { icon: Globe, label: "City", field: "city", type: "text" },
-                      { icon: MapPin, label: "State", field: "state", type: "text" },
-                      { icon: Star, label: "Pin Code", field: "pinCode", type: "text" },
-                      { icon: Cake, label: "Birthday", field: "dob", type: "date" },
-                      { icon: Heart, label: "Anniversary", field: "anniversaryDate", type: "date" },
-                      { icon: Calendar, label: "Joined Date", field: "doj", type: "date" },
-                    ] as { icon: React.ElementType; label: string; field: string; type: string }[]).map(({ icon: Icon, label, field, type }) => (
-                      <div key={field} className="bg-white rounded-xl border border-gray-100 p-3">
+                    {(
+                      [
+                        {
+                          icon: Globe,
+                          label: "City",
+                          field: "city",
+                          type: "text",
+                        },
+                        {
+                          icon: MapPin,
+                          label: "State",
+                          field: "state",
+                          type: "text",
+                        },
+                        {
+                          icon: Star,
+                          label: "Pin Code",
+                          field: "pinCode",
+                          type: "text",
+                        },
+                        {
+                          icon: Cake,
+                          label: "Birthday",
+                          field: "dob",
+                          type: "date",
+                        },
+                        {
+                          icon: Heart,
+                          label: "Anniversary",
+                          field: "anniversaryDate",
+                          type: "date",
+                        },
+                        {
+                          icon: Calendar,
+                          label: "Joined Date",
+                          field: "doj",
+                          type: "date",
+                        },
+                      ] as {
+                        icon: React.ElementType;
+                        label: string;
+                        field: string;
+                        type: string;
+                      }[]
+                    ).map(({ icon: Icon, label, field, type }) => (
+                      <div
+                        key={field}
+                        className="bg-white rounded-xl border border-gray-100 p-3"
+                      >
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <Icon size={11} className="text-[#6B9BCC]" />
-                          <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">{label}</span>
+                          <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                            {label}
+                          </span>
                         </div>
                         {isEditing ? (
                           type === "date" ? (
-                            <AdvancedDatePicker value={formData[field as keyof typeof formData] as string}
-                              onChange={(v) => handleInputChange(field, v)} placeholder="dd/MM/yyyy" />
+                            <AdvancedDatePicker
+                              value={
+                                formData[
+                                  field as keyof typeof formData
+                                ] as string
+                              }
+                              onChange={(v) => handleInputChange(field, v)}
+                              placeholder="dd/MM/yyyy"
+                            />
                           ) : (
-                            <Input className="h-8 text-[12px] border-gray-200"
-                              value={formData[field as keyof typeof formData] as string}
-                              onChange={(e) => handleInputChange(field, e.target.value)} placeholder={label} />
+                            <Input
+                              className="h-8 text-[12px] border-gray-200"
+                              value={
+                                formData[
+                                  field as keyof typeof formData
+                                ] as string
+                              }
+                              onChange={(e) =>
+                                handleInputChange(field, e.target.value)
+                              }
+                              placeholder={label}
+                            />
                           )
                         ) : (
                           <p className="text-[13px] font-semibold text-[#1a1a1a]">
-                            {(formData[field as keyof typeof formData] as string) || "Not provided"}
+                            {(formData[
+                              field as keyof typeof formData
+                            ] as string) || "Not provided"}
                           </p>
                         )}
                       </div>
@@ -1876,7 +2278,11 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   {/* Work Details */}
                   <div className="bg-[#F6F4EE] rounded-2xl p-4 sm:p-5">
                     <h3 className="flex items-center gap-2 text-[13px] sm:text-[14px] font-bold text-[#1a1a1a] mb-3 sm:mb-4">
-                      <Briefcase size={15} className="text-gray-500" strokeWidth={2} />
+                      <Briefcase
+                        size={15}
+                        className="text-gray-500"
+                        strokeWidth={2}
+                      />
                       Work Details
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -1892,19 +2298,31 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   {/* Emergency Recovery */}
                   <div className="bg-[#F6F4EE] rounded-2xl p-4 sm:p-5">
                     <h3 className="flex items-center gap-2 text-[13px] sm:text-[14px] font-bold text-[#1a1a1a] mb-3 sm:mb-4">
-                      <ShieldAlert size={15} className="text-gray-500" strokeWidth={2} />
+                      <ShieldAlert
+                        size={15}
+                        className="text-gray-500"
+                        strokeWidth={2}
+                      />
                       Emergency Recovery
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                          <User size={9} className="text-gray-400" /> Trusted Contact
+                          <User size={9} className="text-gray-400" /> Trusted
+                          Contact
                         </p>
                         {isEditing ? (
-                          <Input className="h-8 text-[12px] border-gray-200"
+                          <Input
+                            className="h-8 text-[12px] border-gray-200"
                             value={formData.emergencyContactName}
-                            onChange={(e) => handleInputChange("emergencyContactName", e.target.value)}
-                            placeholder="Name" />
+                            onChange={(e) =>
+                              handleInputChange(
+                                "emergencyContactName",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Name"
+                          />
                         ) : (
                           <p className="text-[13px] font-semibold text-[#1a1a1a]">
                             {formData.emergencyContactName || "Not provided"}
@@ -1913,13 +2331,21 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                       </div>
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                          <Phone size={9} className="text-gray-400" /> Recovery Phone
+                          <Phone size={9} className="text-gray-400" /> Recovery
+                          Phone
                         </p>
                         {isEditing ? (
-                          <Input className="h-8 text-[12px] border-gray-200"
+                          <Input
+                            className="h-8 text-[12px] border-gray-200"
                             value={formData.emergencyContactNumber}
-                            onChange={(e) => handleInputChange("emergencyContactNumber", e.target.value)}
-                            placeholder="Number" />
+                            onChange={(e) =>
+                              handleInputChange(
+                                "emergencyContactNumber",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Number"
+                          />
                         ) : (
                           <p className="text-[13px] font-semibold text-[#1a1a1a]">
                             {formData.emergencyContactNumber || "Not provided"}
@@ -1932,12 +2358,42 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
               </>
             )}
 
-            {/* ─ Assets / Attendance placeholders ─ */}
-            {(activeTab === "assets" || activeTab === "attendance") && (
-              <div className="bg-[#F6F4EE] rounded-2xl p-10 flex items-center justify-center">
-                <p className="text-gray-400 font-medium text-[13px]">
-                  {activeTab === "assets" ? "Assets section coming soon." : "Attendance section coming soon."}
-                </p>
+            {/* Shared profile sections */}
+            {activeTab === "face_enroll" && (
+              <div className="rounded-2xl border border-gray-100 bg-[#F6F4EE] p-4 sm:p-5">
+                <div className="mb-5">
+                  <h2 className="text-xl font-semibold text-[#1A1A1A]">
+                    Face Enrollment
+                  </h2>
+                  <p className="mt-1 text-sm text-[#2C2C2C]/65">
+                    Add or update your face profile for secure product access.
+                  </p>
+                </div>
+                <FaceEnrollmentPanel />
+              </div>
+            )}
+
+            {activeTab === "assets" && (
+              <div className="rounded-2xl bg-[#F6F4EE] p-4 sm:p-5">
+                <ProfileAssets />
+              </div>
+            )}
+
+            {activeTab === "attendance" && <BusinessCompassAttendanceView />}
+
+            {activeTab === "my_roster" && (
+              <div className="rounded-2xl bg-[#F6F4EE] p-4 sm:p-5">
+                <ProfileRoster
+                  rosterId={
+                    profileDetails?.lock_user_permission?.user_roaster_id
+                  }
+                />
+              </div>
+            )}
+
+            {activeTab === "my_wallet" && (
+              <div className="rounded-2xl bg-[#F6F4EE] p-4 sm:p-5">
+                <ProfileWallet />
               </div>
             )}
 
@@ -1945,35 +2401,58 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
             {activeTab === "wallet" && (
               <div className="flex flex-col gap-4">
                 {/* Available Balance Card */}
-                <div className="rounded-2xl p-5 sm:p-6 relative overflow-hidden"
-                  style={{ background: "linear-gradient(135deg, #b0aca4 0%, #c8c4bc 40%, #d8d4cc 70%, #e2dfd9 100%)" }}>
+                <div
+                  className="rounded-2xl p-5 sm:p-6 relative overflow-hidden"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #b0aca4 0%, #c8c4bc 40%, #d8d4cc 70%, #e2dfd9 100%)",
+                  }}
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-6 h-6 bg-white/25 rounded-md flex items-center justify-center">
                           <CreditCard size={13} className="text-white" />
                         </div>
-                        <span className="text-white/80 text-[12px] font-medium">Available Balance</span>
+                        <span className="text-white/80 text-[12px] font-medium">
+                          Available Balance
+                        </span>
                       </div>
                       {walletLoading ? (
                         <div className="flex items-center gap-2 py-2">
-                          <RefreshCw size={18} className="animate-spin text-white/60" />
-                          <span className="text-white/60 text-[14px]">Loading…</span>
+                          <RefreshCw
+                            size={18}
+                            className="animate-spin text-white/60"
+                          />
+                          <span className="text-white/60 text-[14px]">
+                            Loading…
+                          </span>
                         </div>
                       ) : !walletExists ? (
-                        <p className="text-white/70 text-[15px] font-semibold">Wallet not found</p>
+                        <p className="text-white/70 text-[15px] font-semibold">
+                          Wallet not found
+                        </p>
                       ) : (
                         <p className="text-[32px] sm:text-[38px] font-black text-[#DA7756] leading-none">
                           ₹{formatBalance(walletBalance)}
                         </p>
                       )}
-                      <p className="text-white/55 text-[11px] mt-2">{formatLastUpdated(walletUpdatedAt)}</p>
+                      <p className="text-white/55 text-[11px] mt-2">
+                        {formatLastUpdated(walletUpdatedAt)}
+                      </p>
                     </div>
                     <button
                       onClick={() => fetchWalletData(true)}
                       disabled={walletRefreshing}
-                      className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm hover:scale-105 transition-transform disabled:opacity-60 flex-shrink-0">
-                      <RefreshCw size={14} className={cn("text-gray-500", walletRefreshing && "animate-spin")} />
+                      className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm hover:scale-105 transition-transform disabled:opacity-60 flex-shrink-0"
+                    >
+                      <RefreshCw
+                        size={14}
+                        className={cn(
+                          "text-gray-500",
+                          walletRefreshing && "animate-spin"
+                        )}
+                      />
                     </button>
                   </div>
                 </div>
@@ -1986,7 +2465,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                       <div className="w-5 h-5 rounded bg-[#DA7756]/20 flex items-center justify-center flex-shrink-0">
                         <div className="w-2.5 h-2.5 rounded-sm bg-[#DA7756]" />
                       </div>
-                      <h3 className="text-[13px] sm:text-[14px] font-bold text-[#1a1a1a]">Transaction History</h3>
+                      <h3 className="text-[13px] sm:text-[14px] font-bold text-[#1a1a1a]">
+                        Transaction History
+                      </h3>
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
@@ -1995,13 +2476,20 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                         {walletTransactions.length} transactions
                       </span>
                       {/* Filter tabs */}
-                      {(["all","credit","debit"] as const).map((f) => (
-                        <button key={f} onClick={() => setWalletFilter(f)}
+                      {(["all", "credit", "debit"] as const).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => setWalletFilter(f)}
                           className={cn(
                             "text-[11px] sm:text-[12px] font-semibold px-3 py-1 rounded-lg transition-colors capitalize",
-                            walletFilter === f ? "bg-[#DA7756] text-white" : "text-gray-500 hover:text-gray-700"
-                          )}>
-                          {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+                            walletFilter === f
+                              ? "bg-[#DA7756] text-white"
+                              : "text-gray-500 hover:text-gray-700"
+                          )}
+                        >
+                          {f === "all"
+                            ? "All"
+                            : f.charAt(0).toUpperCase() + f.slice(1)}
                         </button>
                       ))}
                       {/* Filter button */}
@@ -2015,7 +2503,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   {walletLoading ? (
                     <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
                       <RefreshCw size={16} className="animate-spin" />
-                      <span className="text-[13px] font-medium">Loading transactions…</span>
+                      <span className="text-[13px] font-medium">
+                        Loading transactions…
+                      </span>
                     </div>
                   ) : filteredTxs.length === 0 ? (
                     <div className="py-12 text-center text-gray-400 text-[13px] font-medium">
@@ -2026,11 +2516,20 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                       <table className="w-full text-left">
                         <thead>
                           <tr className="border-b border-gray-200">
-                            {["Date","Amount","Point Type","Transaction Type","Payment Mode"].map((col) => (
+                            {[
+                              "Date",
+                              "Amount",
+                              "Point Type",
+                              "Transaction Type",
+                              "Payment Mode",
+                            ].map((col) => (
                               <th key={col} className="pb-3 pr-4 last:pr-0">
                                 <div className="flex items-center gap-1 text-[11px] sm:text-[12px] font-semibold text-gray-500 whitespace-nowrap">
                                   {col}
-                                  <ChevronDownIcon size={11} className="text-gray-400" />
+                                  <ChevronDownIcon
+                                    size={11}
+                                    className="text-gray-400"
+                                  />
                                 </div>
                               </th>
                             ))}
@@ -2038,9 +2537,14 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                         </thead>
                         <tbody>
                           {filteredTxs.map((tx, i) => {
-                            const isCredit = (tx.transactionType || "").toLowerCase() === "credit";
+                            const isCredit =
+                              (tx.transactionType || "").toLowerCase() ===
+                              "credit";
                             return (
-                              <tr key={tx.id ?? i} className="border-b border-gray-100 last:border-0 hover:bg-white/50 transition-colors">
+                              <tr
+                                key={tx.id ?? i}
+                                className="border-b border-gray-100 last:border-0 hover:bg-white/50 transition-colors"
+                              >
                                 {/* Date */}
                                 <td className="py-3 pr-4 text-[12px] sm:text-[13px] text-gray-700 whitespace-nowrap">
                                   {formatTxDate(tx.date)}
@@ -2048,26 +2552,49 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                                 {/* Amount */}
                                 <td className="py-3 pr-4 whitespace-nowrap">
                                   <div className="flex items-center gap-1">
-                                    {isCredit
-                                      ? <TrendingUp size={13} className="text-green-500 flex-shrink-0" />
-                                      : <TrendingDown size={13} className="text-red-500 flex-shrink-0" />}
-                                    <span className={cn(
-                                      "text-[12px] sm:text-[13px] font-semibold",
-                                      isCredit ? "text-green-600" : "text-red-500"
-                                    )}>
-                                      {isCredit ? "+" : "-"}{Math.abs(tx.transactionPoints)}
+                                    {isCredit ? (
+                                      <TrendingUp
+                                        size={13}
+                                        className="text-green-500 flex-shrink-0"
+                                      />
+                                    ) : (
+                                      <TrendingDown
+                                        size={13}
+                                        className="text-red-500 flex-shrink-0"
+                                      />
+                                    )}
+                                    <span
+                                      className={cn(
+                                        "text-[12px] sm:text-[13px] font-semibold",
+                                        isCredit
+                                          ? "text-green-600"
+                                          : "text-red-500"
+                                      )}
+                                    >
+                                      {isCredit ? "+" : "-"}
+                                      {Math.abs(tx.transactionPoints)}
                                     </span>
                                   </div>
                                 </td>
                                 {/* Point Type */}
                                 <td className="py-3 pr-4">
-                                  <span className={cn("text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap", pointTypeBadge(tx.point_type))}>
+                                  <span
+                                    className={cn(
+                                      "text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap",
+                                      pointTypeBadge(tx.point_type)
+                                    )}
+                                  >
                                     {tx.point_type || "—"}
                                   </span>
                                 </td>
                                 {/* Transaction Type */}
                                 <td className="py-3 pr-4">
-                                  <span className={cn("text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap", txTypeBadge(tx.transactionType))}>
+                                  <span
+                                    className={cn(
+                                      "text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap",
+                                      txTypeBadge(tx.transactionType)
+                                    )}
+                                  >
                                     {tx.transactionType || "—"}
                                   </span>
                                 </td>
@@ -2089,11 +2616,14 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
           {/* ── RIGHT: Sidebar ── */}
           <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-4">
-
             {/* My Objectives (KPI) — Swiper carousel, no arrows */}
             <div className="bg-[#F6F4EE] rounded-2xl p-4 sm:p-5">
               <h3 className="flex items-center gap-2 text-[13px] sm:text-[14px] font-bold text-[#1a1a1a] mb-3 sm:mb-4">
-                <BarChart2 size={15} className="text-gray-500" strokeWidth={2} />
+                <BarChart2
+                  size={15}
+                  className="text-gray-500"
+                  strokeWidth={2}
+                />
                 My Objectives (KPI)
               </h3>
 
@@ -2101,57 +2631,81 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                 <div className="flex items-center justify-center py-6">
                   <Loader2 size={18} className="animate-spin text-[#DA7756]" />
                 </div>
-              ) : (() => {
-                /* Build slide pairs: each slide shows 2 KPIs side-by-side */
-                const pool = userKpis.length > 0
-                  ? userKpis
-                  : [
-                    { id: "p1", frequency: "Daily", name: "Courtesy call", currentValue: 0, target: 2, unit: "calls" },
-                    { id: "p2", frequency: "Daily", name: "Courtesy call", currentValue: 0, target: 2, unit: "calls" },
-                  ] as typeof userKpis;
+              ) : (
+                (() => {
+                  /* Build slide pairs: each slide shows 2 KPIs side-by-side */
+                  const pool =
+                    userKpis.length > 0
+                      ? userKpis
+                      : ([
+                          {
+                            id: "p1",
+                            frequency: "Daily",
+                            name: "Courtesy call",
+                            currentValue: 0,
+                            target: 2,
+                            unit: "calls",
+                          },
+                          {
+                            id: "p2",
+                            frequency: "Daily",
+                            name: "Courtesy call",
+                            currentValue: 0,
+                            target: 2,
+                            unit: "calls",
+                          },
+                        ] as typeof userKpis);
 
-                const pairs: (typeof userKpis)[] = [];
-                for (let i = 0; i < pool.length; i += 2) {
-                  pairs.push(pool.slice(i, i + 2) as typeof userKpis);
-                }
+                  const pairs: (typeof userKpis)[] = [];
+                  for (let i = 0; i < pool.length; i += 2) {
+                    pairs.push(pool.slice(i, i + 2) as typeof userKpis);
+                  }
 
-                return (
-                  <Swiper
-                    modules={[Autoplay]}
-                    spaceBetween={8}
-                    slidesPerView={1}
-                    loop={pairs.length > 1}
-                    autoplay={pairs.length > 1 ? { delay: 3000, disableOnInteraction: false } : false}
-                    allowTouchMove
-                    className="w-full"
-                  >
-                    {pairs.map((pair, slideIdx) => (
-                      <SwiperSlide key={slideIdx}>
-                        <div className="grid grid-cols-2 gap-2">
-                          {pair.map((kpi) => (
-                            <div key={kpi.id} className="bg-white rounded-xl border border-gray-100 p-3">
-                              <p className="text-[9px] sm:text-[10px] text-gray-400 font-medium mb-0.5">
-                                {kpi.frequency || "Daily"}
-                              </p>
-                              <p className="text-[11px] sm:text-[12px] font-semibold text-[#1a1a1a] leading-tight line-clamp-2 mb-2">
-                                {kpi.name}
-                              </p>
-                              <div className="border-t border-gray-100 pt-2">
-                                <span className="text-[17px] sm:text-[18px] font-black text-[#DA7756]">
-                                  {kpi.currentValue ?? 0}
-                                </span>
-                                <span className="text-[10px] text-gray-400 ml-0.5">
-                                  /{kpi.target ?? 0} {kpi.unit}
-                                </span>
+                  return (
+                    <Swiper
+                      modules={[Autoplay]}
+                      spaceBetween={8}
+                      slidesPerView={1}
+                      loop={pairs.length > 1}
+                      autoplay={
+                        pairs.length > 1
+                          ? { delay: 3000, disableOnInteraction: false }
+                          : false
+                      }
+                      allowTouchMove
+                      className="w-full"
+                    >
+                      {pairs.map((pair, slideIdx) => (
+                        <SwiperSlide key={slideIdx}>
+                          <div className="grid grid-cols-2 gap-2">
+                            {pair.map((kpi) => (
+                              <div
+                                key={kpi.id}
+                                className="bg-white rounded-xl border border-gray-100 p-3"
+                              >
+                                <p className="text-[9px] sm:text-[10px] text-gray-400 font-medium mb-0.5">
+                                  {kpi.frequency || "Daily"}
+                                </p>
+                                <p className="text-[11px] sm:text-[12px] font-semibold text-[#1a1a1a] leading-tight line-clamp-2 mb-2">
+                                  {kpi.name}
+                                </p>
+                                <div className="border-t border-gray-100 pt-2">
+                                  <span className="text-[17px] sm:text-[18px] font-black text-[#DA7756]">
+                                    {kpi.currentValue ?? 0}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 ml-0.5">
+                                    /{kpi.target ?? 0} {kpi.unit}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
-                );
-              })()}
+                            ))}
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  );
+                })()
+              )}
             </div>
 
             {/* Professional Vault */}
@@ -2168,34 +2722,64 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                   onChange={(e) => setDocTitle(e.target.value)}
                   disabled={isUploadingDoc}
                 />
-                <input ref={docFileInputRef} type="file" className="hidden" onChange={handleDocFileSelect} />
+                <input
+                  ref={docFileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={handleDocFileSelect}
+                />
                 <button
-                  onClick={() => docFileInputRef.current?.click()} disabled={isUploadingDoc}
-                  className="w-full h-10 bg-white border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                  onClick={() => docFileInputRef.current?.click()}
+                  disabled={isUploadingDoc}
+                  className="w-full h-10 bg-white border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                >
                   <Plus size={14} />
-                  {docFile ? <span className="truncate max-w-[160px] text-[12px]">{docFile.name}</span> : "Choose File"}
+                  {docFile ? (
+                    <span className="truncate max-w-[160px] text-[12px]">
+                      {docFile.name}
+                    </span>
+                  ) : (
+                    "Choose File"
+                  )}
                 </button>
                 <button
-                  onClick={handleAddDocument} disabled={isUploadingDoc}
-                  className="w-full h-10 bg-white border border-[#DA7756] rounded-xl text-[13px] font-semibold text-[#DA7756] hover:bg-[#fef6f4] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                  onClick={handleAddDocument}
+                  disabled={isUploadingDoc}
+                  className="w-full h-10 bg-white border border-[#DA7756] rounded-xl text-[13px] font-semibold text-[#DA7756] hover:bg-[#fef6f4] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
                   <Upload size={14} />
                   {isUploadingDoc ? "Uploading…" : "Add Document"}
                 </button>
                 {documents.length > 0 ? (
                   <div className="space-y-1.5 mt-1">
                     {documents.map((doc) => (
-                      <div key={doc.id}
-                        className="flex items-center justify-between gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2 group">
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2 group"
+                      >
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText size={13} className="text-gray-400 flex-shrink-0" />
-                          <span className="text-[12px] font-medium text-gray-700 truncate">{doc.title}</span>
+                          <FileText
+                            size={13}
+                            className="text-gray-400 flex-shrink-0"
+                          />
+                          <span className="text-[12px] font-medium text-gray-700 truncate">
+                            {doc.title}
+                          </span>
                           {doc.url && (
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer"
-                              className="text-[11px] text-[#DA7756] hover:underline flex-shrink-0">View</a>
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] text-[#DA7756] hover:underline flex-shrink-0"
+                            >
+                              View
+                            </a>
                           )}
                         </div>
-                        <button onClick={() => handleRemoveDocument(doc.id)}
-                          className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+                        <button
+                          onClick={() => handleRemoveDocument(doc.id)}
+                          className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                        >
                           <Trash2 size={13} />
                         </button>
                       </div>
@@ -2212,261 +2796,498 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         </div>
 
         {/* ══ AI Configuration (kept exactly as-is) ══════════════════════ */}
-        <div className="space-y-5">
-          <Card className="rounded-[16px] border border-blue-100 bg-white shadow-sm ring-1 ring-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="flex items-center gap-3 text-lg font-bold text-blue-700">
-                <Bot size={20} className="text-blue-500" />
-                AI Configuration
-                <AiProviderLinksDropdown />
-              </CardTitle>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className={cn("px-3 h-6 rounded-full font-bold",
-                  userAiConfig?.configured ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200")}>
-                  {isAiConfigLoading ? "Checking" : userAiConfig?.configured ? "Configured" : "Not Configured"}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="py-4 space-y-5">
-              {/* ── Tab Buttons ── */}
-              <div className="flex gap-2 border-b border-gray-100 pb-1">
-                <button type="button" onClick={() => setAiConfigTab("api_key")}
-                  className={cn("flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
-                    aiConfigTab === "api_key" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50")}>
-                  <KeyRound size={14} />
-                  API Key Setup
-                </button>
-                <button type="button"
-                  onClick={() => {
-                    setAiConfigTab("auth_connect");
-                    const anthropicProvider = aiProviders.find(
-                      (p) => p.provider_id?.toLowerCase().includes("anthropic") ||
-                        p.display_name?.toLowerCase().includes("anthropic") ||
-                        p.provider_id?.toLowerCase().includes("claude")
-                    );
-                    if (anthropicProvider && selectedAiProvider !== anthropicProvider.provider_id) {
-                      setSelectedAiProvider(anthropicProvider.provider_id);
-                      setSelectedAiModel("");
-                    }
-                  }}
-                  className={cn("flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
-                    aiConfigTab === "auth_connect" ? "border-[#c96442] text-[#c96442] bg-[#c96442]/5" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50")}>
-                  <Globe size={14} />
-                  Auth Connect
-                </button>
-              </div>
-
-              {aiConfigError && (
-                <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-                  {aiConfigError}
+        {activeTab === "basic" && (
+          <div className="space-y-5">
+            <Card className="rounded-[16px] border border-blue-100 bg-white shadow-sm ring-1 ring-blue-50">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-blue-700">
+                  <Bot size={20} className="text-blue-500" />
+                  AI Configuration
+                  <AiProviderLinksDropdown />
+                </CardTitle>
+                <div className="flex items-center gap-3">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "px-3 h-6 rounded-full font-bold",
+                      userAiConfig?.configured
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
+                    )}
+                  >
+                    {isAiConfigLoading
+                      ? "Checking"
+                      : userAiConfig?.configured
+                        ? "Configured"
+                        : "Not Configured"}
+                  </Badge>
                 </div>
-              )}
-
-              {/* ── Tab 1: API Key ── */}
-              {aiConfigTab === "api_key" && (
-                <div className="space-y-5">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Bot size={14} className="text-blue-500" />
-                        <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">Provider</span>
-                      </div>
-                      <Select value={selectedAiProvider} onValueChange={(v) => { setSelectedAiProvider(v); setSelectedAiModel(""); }} disabled={isAiProvidersLoading}>
-                        <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
-                          <SelectValue placeholder={isAiProvidersLoading ? "Loading providers..." : "Select Provider"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {aiProviders.map((p) => (
-                            <SelectItem key={p.provider_id} value={p.provider_id}>{p.display_name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Cpu size={14} className="text-indigo-500" />
-                        <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">Models</span>
-                      </div>
-                      <Select value={selectedAiModel} onValueChange={setSelectedAiModel} disabled={!selectedAiProvider || isAiModelsLoading}>
-                        <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
-                          <SelectValue placeholder={!selectedAiProvider ? "Select provider first" : isAiModelsLoading ? "Loading models..." : "Select Model"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {aiModels.map((m) => (
-                            <SelectItem key={m.model_name} value={m.model_name}>{m.display_name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">User AI Config</p>
-                      <p className="mt-2 text-sm font-bold text-gray-800">{userAiConfig?.user_name || formData.displayName}</p>
-                      {aiConfigProviderDisplayName && (
-                        <p className="mt-2 text-xs font-semibold text-gray-500">Provider: <span className="text-gray-800">{aiConfigProviderDisplayName}</span></p>
-                      )}
-                      {(aiConfigModelDisplayName || aiConfigModelName) && (
-                        <p className="mt-1 text-xs font-semibold text-gray-500">Model: <span className="text-gray-800">{aiConfigModelDisplayName || aiConfigModelName}</span></p>
-                      )}
-                      {!userAiConfig?.configured && userAiConfig?.message && (
-                        <p className="mt-2 text-xs font-semibold text-amber-700">{userAiConfig.message}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <KeyRound size={14} className="text-slate-500" />
-                      <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">API Key</span>
-                    </div>
-                    <Textarea
-                      value={isAiApiKeyFocused || !aiApiKey ? aiApiKey : maskApiKey(aiApiKey)}
-                      onChange={(e) => setAiApiKey(e.target.value)}
-                      onFocus={() => setIsAiApiKeyFocused(true)}
-                      onBlur={() => setIsAiApiKeyFocused(false)}
-                      placeholder="Enter API key" disabled={isAiConfigSaving}
-                      className="min-h-[96px] bg-[#FAFAFA] text-sm" />
-                  </div>
-                  <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                    <OrganizationCheckbox name={selectedOrganizationName} organizationId={storedOrganizationId}
-                      checked={includeOrganizationInAiConfig && Boolean(storedOrganizationId)}
-                      onCheckedChange={setIncludeOrganizationInAiConfig} />
-                    <div className="flex flex-col justify-end gap-3 sm:flex-row">
-                      <Button variant="outline" onClick={handleDeleteAiApiKey}
-                        disabled={isAiConfigDeleting || isAiConfigSaving || !selectedAiProvider || !aiApiKey.trim()}
-                        className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm">
-                        {isAiConfigDeleting ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Trash2 size={16} className="mr-2" strokeWidth={2.5} />}
-                        {isAiConfigDeleting ? "Deleting..." : "Delete"}
-                      </Button>
-                      <Button onClick={handleSaveAiConfig}
-                        disabled={isAiConfigSaving || isAiConfigDeleting || isAiProvidersLoading || isAiModelsLoading || !selectedAiProvider || !selectedAiModel || !aiApiKey.trim()}
-                        className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm">
-                        {isAiConfigSaving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Save size={16} className="mr-2" strokeWidth={2.5} />}
-                        {isAiConfigSaving ? "Saving..." : "Save"}
-                      </Button>
-                    </div>
-                  </div>
+              </CardHeader>
+              <CardContent className="py-4 space-y-5">
+                {/* ── Tab Buttons ── */}
+                <div className="flex gap-2 border-b border-gray-100 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setAiConfigTab("api_key")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
+                      aiConfigTab === "api_key"
+                        ? "border-blue-600 text-blue-700 bg-blue-50"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    )}
+                  >
+                    <KeyRound size={14} />
+                    API Key Setup
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiConfigTab("auth_connect");
+                      const anthropicProvider = aiProviders.find(
+                        (p) =>
+                          p.provider_id?.toLowerCase().includes("anthropic") ||
+                          p.display_name?.toLowerCase().includes("anthropic") ||
+                          p.provider_id?.toLowerCase().includes("claude")
+                      );
+                      if (
+                        anthropicProvider &&
+                        selectedAiProvider !== anthropicProvider.provider_id
+                      ) {
+                        setSelectedAiProvider(anthropicProvider.provider_id);
+                        setSelectedAiModel("");
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
+                      aiConfigTab === "auth_connect"
+                        ? "border-[#c96442] text-[#c96442] bg-[#c96442]/5"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    )}
+                  >
+                    <Globe size={14} />
+                    Auth Connect
+                  </button>
                 </div>
-              )}
 
-              {/* ── Tab 2: Auth Connect ── */}
-              {aiConfigTab === "auth_connect" && (
-                <div className="space-y-5">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Bot size={14} className="text-blue-500" />
-                        <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">Provider</span>
+                {aiConfigError && (
+                  <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                    {aiConfigError}
+                  </div>
+                )}
+
+                {/* ── Tab 1: API Key ── */}
+                {aiConfigTab === "api_key" && (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Bot size={14} className="text-blue-500" />
+                          <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                            Provider
+                          </span>
+                        </div>
+                        <Select
+                          value={selectedAiProvider}
+                          onValueChange={(v) => {
+                            setSelectedAiProvider(v);
+                            setSelectedAiModel("");
+                          }}
+                          disabled={isAiProvidersLoading}
+                        >
+                          <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                            <SelectValue
+                              placeholder={
+                                isAiProvidersLoading
+                                  ? "Loading providers..."
+                                  : "Select Provider"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {aiProviders.map((p) => (
+                              <SelectItem
+                                key={p.provider_id}
+                                value={p.provider_id}
+                              >
+                                {p.display_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="h-10 flex items-center gap-2.5 rounded-md border border-gray-300 bg-[#FAFAFA] px-3">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg" alt="Claude"
-                          className="w-5 h-5 rounded object-contain shrink-0"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                        <span className="text-sm font-semibold text-gray-800">Anthropic</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Cpu size={14} className="text-indigo-500" />
+                          <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                            Models
+                          </span>
+                        </div>
+                        <Select
+                          value={selectedAiModel}
+                          onValueChange={setSelectedAiModel}
+                          disabled={!selectedAiProvider || isAiModelsLoading}
+                        >
+                          <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                            <SelectValue
+                              placeholder={
+                                !selectedAiProvider
+                                  ? "Select provider first"
+                                  : isAiModelsLoading
+                                    ? "Loading models..."
+                                    : "Select Model"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {aiModels.map((m) => (
+                              <SelectItem
+                                key={m.model_name}
+                                value={m.model_name}
+                              >
+                                {m.display_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
+                          User AI Config
+                        </p>
+                        <p className="mt-2 text-sm font-bold text-gray-800">
+                          {userAiConfig?.user_name || formData.displayName}
+                        </p>
+                        {aiConfigProviderDisplayName && (
+                          <p className="mt-2 text-xs font-semibold text-gray-500">
+                            Provider:{" "}
+                            <span className="text-gray-800">
+                              {aiConfigProviderDisplayName}
+                            </span>
+                          </p>
+                        )}
+                        {(aiConfigModelDisplayName || aiConfigModelName) && (
+                          <p className="mt-1 text-xs font-semibold text-gray-500">
+                            Model:{" "}
+                            <span className="text-gray-800">
+                              {aiConfigModelDisplayName || aiConfigModelName}
+                            </span>
+                          </p>
+                        )}
+                        {!userAiConfig?.configured && userAiConfig?.message && (
+                          <p className="mt-2 text-xs font-semibold text-amber-700">
+                            {userAiConfig.message}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Cpu size={14} className="text-indigo-500" />
-                        <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">Models</span>
+                        <KeyRound size={14} className="text-slate-500" />
+                        <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                          API Key
+                        </span>
                       </div>
-                      <Select value={selectedAiModel} onValueChange={setSelectedAiModel} disabled={!selectedAiProvider || isAiModelsLoading}>
-                        <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
-                          <SelectValue placeholder={!selectedAiProvider ? "Select provider first" : isAiModelsLoading ? "Loading models..." : "Select Model"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {aiModels.map((m) => (
-                            <SelectItem key={m.model_name} value={m.model_name}>{m.display_name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Textarea
+                        value={
+                          isAiApiKeyFocused || !aiApiKey
+                            ? aiApiKey
+                            : maskApiKey(aiApiKey)
+                        }
+                        onChange={(e) => setAiApiKey(e.target.value)}
+                        onFocus={() => setIsAiApiKeyFocused(true)}
+                        onBlur={() => setIsAiApiKeyFocused(false)}
+                        placeholder="Enter API key"
+                        disabled={isAiConfigSaving}
+                        className="min-h-[96px] bg-[#FAFAFA] text-sm"
+                      />
                     </div>
-                    <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">User AI Config</p>
-                      <p className="mt-2 text-sm font-bold text-gray-800">{userAiConfig?.user_name || formData.displayName}</p>
-                      {aiConfigProviderDisplayName && (
-                        <p className="mt-2 text-xs font-semibold text-gray-500">Provider: <span className="text-gray-800">{aiConfigProviderDisplayName}</span></p>
-                      )}
-                      {(aiConfigModelDisplayName || aiConfigModelName) && (
-                        <p className="mt-1 text-xs font-semibold text-gray-500">Model: <span className="text-gray-800">{aiConfigModelDisplayName || aiConfigModelName}</span></p>
-                      )}
-                      {!userAiConfig?.configured && userAiConfig?.message && (
-                        <p className="mt-2 text-xs font-semibold text-amber-700">{userAiConfig.message}</p>
-                      )}
+                    <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                      <OrganizationCheckbox
+                        name={selectedOrganizationName}
+                        organizationId={storedOrganizationId}
+                        checked={
+                          includeOrganizationInAiConfig &&
+                          Boolean(storedOrganizationId)
+                        }
+                        onCheckedChange={setIncludeOrganizationInAiConfig}
+                      />
+                      <div className="flex flex-col justify-end gap-3 sm:flex-row">
+                        <Button
+                          variant="outline"
+                          onClick={handleDeleteAiApiKey}
+                          disabled={
+                            isAiConfigDeleting ||
+                            isAiConfigSaving ||
+                            !selectedAiProvider ||
+                            !aiApiKey.trim()
+                          }
+                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+                        >
+                          {isAiConfigDeleting ? (
+                            <Loader2 size={16} className="mr-2 animate-spin" />
+                          ) : (
+                            <Trash2
+                              size={16}
+                              className="mr-2"
+                              strokeWidth={2.5}
+                            />
+                          )}
+                          {isAiConfigDeleting ? "Deleting..." : "Delete"}
+                        </Button>
+                        <Button
+                          onClick={handleSaveAiConfig}
+                          disabled={
+                            isAiConfigSaving ||
+                            isAiConfigDeleting ||
+                            isAiProvidersLoading ||
+                            isAiModelsLoading ||
+                            !selectedAiProvider ||
+                            !selectedAiModel ||
+                            !aiApiKey.trim()
+                          }
+                          className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm"
+                        >
+                          {isAiConfigSaving ? (
+                            <Loader2 size={16} className="mr-2 animate-spin" />
+                          ) : (
+                            <Save
+                              size={16}
+                              className="mr-2"
+                              strokeWidth={2.5}
+                            />
+                          )}
+                          {isAiConfigSaving ? "Saving..." : "Save"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  <div className="border-t border-gray-100 pt-4" />
-
-                  <div className="rounded-xl border border-[#c96442]/20 bg-[#c96442]/5 p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-5 h-5 rounded-full bg-[#c96442] text-white flex items-center justify-center text-[10px] font-black shrink-0">1</div>
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg" alt="Claude"
-                        className="w-7 h-7 rounded-lg object-contain"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      <div>
-                        <p className="text-sm font-bold text-[#c96442]">Claude by Anthropic</p>
-                        <p className="text-xs text-gray-500">Connect your account via OAuth</p>
+                {/* ── Tab 2: Auth Connect ── */}
+                {aiConfigTab === "auth_connect" && (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Bot size={14} className="text-blue-500" />
+                          <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                            Provider
+                          </span>
+                        </div>
+                        <div className="h-10 flex items-center gap-2.5 rounded-md border border-gray-300 bg-[#FAFAFA] px-3">
+                          <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg"
+                            alt="Claude"
+                            className="w-5 h-5 rounded object-contain shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
+                            }}
+                          />
+                          <span className="text-sm font-semibold text-gray-800">
+                            Anthropic
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Cpu size={14} className="text-indigo-500" />
+                          <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                            Models
+                          </span>
+                        </div>
+                        <Select
+                          value={selectedAiModel}
+                          onValueChange={setSelectedAiModel}
+                          disabled={!selectedAiProvider || isAiModelsLoading}
+                        >
+                          <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                            <SelectValue
+                              placeholder={
+                                !selectedAiProvider
+                                  ? "Select provider first"
+                                  : isAiModelsLoading
+                                    ? "Loading models..."
+                                    : "Select Model"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {aiModels.map((m) => (
+                              <SelectItem
+                                key={m.model_name}
+                                value={m.model_name}
+                              >
+                                {m.display_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
+                          User AI Config
+                        </p>
+                        <p className="mt-2 text-sm font-bold text-gray-800">
+                          {userAiConfig?.user_name || formData.displayName}
+                        </p>
+                        {aiConfigProviderDisplayName && (
+                          <p className="mt-2 text-xs font-semibold text-gray-500">
+                            Provider:{" "}
+                            <span className="text-gray-800">
+                              {aiConfigProviderDisplayName}
+                            </span>
+                          </p>
+                        )}
+                        {(aiConfigModelDisplayName || aiConfigModelName) && (
+                          <p className="mt-1 text-xs font-semibold text-gray-500">
+                            Model:{" "}
+                            <span className="text-gray-800">
+                              {aiConfigModelDisplayName || aiConfigModelName}
+                            </span>
+                          </p>
+                        )}
+                        {!userAiConfig?.configured && userAiConfig?.message && (
+                          <p className="mt-2 text-xs font-semibold text-amber-700">
+                            {userAiConfig.message}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-                      Connect directly with your Anthropic account without needing to manage API keys manually.
-                    </p>
-                    <Button className="w-full bg-[#c96442] hover:bg-[#a8502e] text-white font-bold h-10 shadow-sm"
-                      onClick={handleOAuthConnect} disabled={isOAuthLoading || !selectedAiModel}>
-                      {isOAuthLoading ? <Loader2 size={15} className="mr-2 animate-spin" /> : <Globe size={15} className="mr-2" />}
-                      {isOAuthLoading ? "Redirecting..." : "Connect with Claude"}
-                    </Button>
-                    {!selectedAiModel && (
-                      <p className="text-[11px] text-amber-600 font-semibold mt-2 text-center">
-                        Please select a model before connecting.
+
+                    <div className="border-t border-gray-100 pt-4" />
+
+                    <div className="rounded-xl border border-[#c96442]/20 bg-[#c96442]/5 p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-5 h-5 rounded-full bg-[#c96442] text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                          1
+                        </div>
+                        <img
+                          src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg"
+                          alt="Claude"
+                          className="w-7 h-7 rounded-lg object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display =
+                              "none";
+                          }}
+                        />
+                        <div>
+                          <p className="text-sm font-bold text-[#c96442]">
+                            Claude by Anthropic
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Connect your account via OAuth
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                        Connect directly with your Anthropic account without
+                        needing to manage API keys manually.
                       </p>
+                      <Button
+                        className="w-full bg-[#c96442] hover:bg-[#a8502e] text-white font-bold h-10 shadow-sm"
+                        onClick={handleOAuthConnect}
+                        disabled={isOAuthLoading || !selectedAiModel}
+                      >
+                        {isOAuthLoading ? (
+                          <Loader2 size={15} className="mr-2 animate-spin" />
+                        ) : (
+                          <Globe size={15} className="mr-2" />
+                        )}
+                        {isOAuthLoading
+                          ? "Redirecting..."
+                          : "Connect with Claude"}
+                      </Button>
+                      {!selectedAiModel && (
+                        <p className="text-[11px] text-amber-600 font-semibold mt-2 text-center">
+                          Please select a model before connecting.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-green-100 bg-green-50/50 p-5 space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-500 font-medium">
+                          Copy the full code from Claude Platform and paste it
+                          below:
+                        </p>
+                        <Textarea
+                          value={oauthCode}
+                          onChange={(e) => setOauthCode(e.target.value)}
+                          placeholder="e.g. nsRdj0lCU38CQ9BH...#FRhkNKp68rilbIW..."
+                          className="min-h-[80px] bg-white text-sm font-mono border-green-200 focus-visible:border-green-400"
+                          disabled={isOAuthExchanging}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <OrganizationCheckbox
+                          name={selectedOrganizationName}
+                          organizationId={storedOrganizationId}
+                          checked={
+                            includeOrganizationInAiConfig &&
+                            Boolean(storedOrganizationId)
+                          }
+                          onCheckedChange={setIncludeOrganizationInAiConfig}
+                        />
+                        <Button
+                          onClick={handleOAuthExchange}
+                          disabled={
+                            isOAuthExchanging ||
+                            !!oauthCooldown ||
+                            !oauthCode.trim() ||
+                            !selectedAiModel
+                          }
+                          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-10 shadow-sm disabled:opacity-60 sm:flex-1"
+                        >
+                          {isOAuthExchanging ? (
+                            <Loader2 size={15} className="mr-2 animate-spin" />
+                          ) : (
+                            <ShieldCheck size={15} className="mr-2" />
+                          )}
+                          {isOAuthExchanging
+                            ? "Connecting..."
+                            : oauthCooldown > 0
+                              ? `Rate limited — wait ${oauthCooldown}s`
+                              : "Submit Code & Connect"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                      <p className="text-xs text-gray-400 font-medium">
+                        OAuth authentication will redirect you to Anthropic's
+                        authorization page. You'll be brought back automatically
+                        after granting access.
+                      </p>
+                    </div>
+
+                    {userAiConfig?.id && (
+                      <div className="flex justify-end border-t border-gray-100 pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={handleDeleteAiApiKey}
+                          disabled={isAiConfigDeleting}
+                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+                        >
+                          {isAiConfigDeleting ? (
+                            <Loader2 size={16} className="mr-2 animate-spin" />
+                          ) : (
+                            <Trash2
+                              size={16}
+                              className="mr-2"
+                              strokeWidth={2.5}
+                            />
+                          )}
+                          {isAiConfigDeleting ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
                     )}
                   </div>
-
-                  <div className="rounded-xl border border-green-100 bg-green-50/50 p-5 space-y-4">
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-500 font-medium">
-                        Copy the full code from Claude Platform and paste it below:
-                      </p>
-                      <Textarea value={oauthCode} onChange={(e) => setOauthCode(e.target.value)}
-                        placeholder="e.g. nsRdj0lCU38CQ9BH...#FRhkNKp68rilbIW..."
-                        className="min-h-[80px] bg-white text-sm font-mono border-green-200 focus-visible:border-green-400"
-                        disabled={isOAuthExchanging} />
-                    </div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <OrganizationCheckbox name={selectedOrganizationName} organizationId={storedOrganizationId}
-                        checked={includeOrganizationInAiConfig && Boolean(storedOrganizationId)}
-                        onCheckedChange={setIncludeOrganizationInAiConfig} />
-                      <Button onClick={handleOAuthExchange}
-                        disabled={isOAuthExchanging || !!oauthCooldown || !oauthCode.trim() || !selectedAiModel}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-10 shadow-sm disabled:opacity-60 sm:flex-1">
-                        {isOAuthExchanging ? <Loader2 size={15} className="mr-2 animate-spin" /> : <ShieldCheck size={15} className="mr-2" />}
-                        {isOAuthExchanging ? "Connecting..." : oauthCooldown > 0 ? `Rate limited — wait ${oauthCooldown}s` : "Submit Code & Connect"}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-                    <p className="text-xs text-gray-400 font-medium">
-                      OAuth authentication will redirect you to Anthropic's authorization page. You'll be brought back automatically after granting access.
-                    </p>
-                  </div>
-
-                  {userAiConfig?.id && (
-                    <div className="flex justify-end border-t border-gray-100 pt-4">
-                      <Button variant="outline" onClick={handleDeleteAiApiKey} disabled={isAiConfigDeleting}
-                        className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm">
-                        {isAiConfigDeleting ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Trash2 size={16} className="mr-2" strokeWidth={2.5} />}
-                        {isAiConfigDeleting ? "Deleting..." : "Delete"}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-        </div>
-
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
