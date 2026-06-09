@@ -1481,6 +1481,10 @@ const DailyTab = ({
 
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
 
+  const visibleReports = memberReports.filter(
+    (report: any) => report.status !== "pending" || !!report.daily_report
+  );
+
   return (
     <div
       className="pb-12 space-y-6"
@@ -1709,6 +1713,27 @@ const DailyTab = ({
 
         {/* ══ RIGHT COLUMN — Notes Panel ══ */}
         <div className="h-full">
+          {isLoading && !dailyData && (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-full flex flex-col animate-pulse">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <div className="h-4 w-36 rounded-full skeleton" />
+                <div className="h-3 w-20 rounded-full skeleton" />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-gray-100">
+                <div className="h-7 w-20 rounded-2xl skeleton" />
+                <div className="h-7 w-24 rounded-2xl skeleton" />
+                <div className="h-7 w-20 rounded-2xl skeleton" />
+              </div>
+              <div className="p-4 flex-1 flex flex-col gap-2">
+                <div className="h-3 w-24 rounded-full skeleton" />
+                <div className="flex-1 rounded-2xl skeleton min-h-[120px]" />
+              </div>
+              <div className="flex items-center justify-between bg-gray-50 p-3 px-4 border-t border-gray-100">
+                <div className="h-5 w-24 rounded-full skeleton" />
+                <div className="h-9 w-32 rounded-2xl skeleton" />
+              </div>
+            </div>
+          )}
           {!isLoading && dailyData && !noMeetings && (
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-full flex flex-col">
               {/* Header */}
@@ -1936,21 +1961,17 @@ const DailyTab = ({
       {/* ══ REPORTS SECTION — member cards in left col ══ */}
       {!isLoading && dailyData && !noMeetings && (
         <>
-          {memberReports.length === 0 && failedMembers.length === 0 && (
+          {visibleReports.length === 0 && failedMembers.length === 0 && (
             <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white border border-gray-200 rounded-2xl">
               No reports found for this selection.
             </div>
           )}
 
-          {memberReports.length > 0 && (
+          {visibleReports.length > 0 && (
             <div>
               {/* ══ Report Cards ══ */}
               <div className="space-y-4">
-                {memberReports
-                  .filter(
-                    (report: any) =>
-                      report.status !== "pending" || !!report.daily_report
-                  )
+                {visibleReports
                   .map((report: any) => {
                     const rId = report.journal_id || report.user_id;
                     const isExpanded = expandedReports.includes(rId);

@@ -62,12 +62,17 @@ const DailyMeeting = () => {
       {/* ── Tab bar ── */}
       <div
         style={{
-          display: "flex",
-          gap: "6px",
+          display: "inline-flex",
+          gap: "4px",
           overflowX: "auto",
           marginTop: "16px",
           marginBottom: "24px",
-          padding: "4px 2px",
+          padding: "5px",
+          backgroundColor: "#ffffff",
+          borderRadius: "9999px",
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          alignSelf: "flex-start",
         }}
       >
         {tabs.map((name) => {
@@ -77,12 +82,12 @@ const DailyMeeting = () => {
               key={name}
               onClick={() => setActiveTab(name)}
               style={{
-                padding: "7px 20px",
+                padding: "7px 22px",
                 borderRadius: "9999px",
-                fontSize: "14px",
+                fontSize: "13.5px",
                 fontWeight: isActive ? 700 : 500,
                 whiteSpace: "nowrap",
-                transition: "all 0.15s ease",
+                transition: "all 0.18s ease",
                 cursor: "pointer",
                 border: "none",
                 fontFamily: "'Poppins', sans-serif",
@@ -97,6 +102,18 @@ const DailyMeeting = () => {
                       backgroundColor: "transparent",
                       color: "#6b7280",
                     }),
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#f3f4f6";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#6b7280";
+                }
               }}
             >
               {name}

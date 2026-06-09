@@ -10,6 +10,7 @@ import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { toast as sonnerToast } from "sonner";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import GoalsPage from "./AdminCompassComponent/goalsPage";
 
 // ── Design Tokens ──
@@ -1868,6 +1869,7 @@ const BusinessPlanAndGoles = () => {
   const aiPlanAbortRef = useRef<AbortController | null>(null);
   const aiPlanCancelledRef = useRef(false);
   const [isSuggestingAi, setIsSuggestingAi] = useState(false);
+  const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
 
   // Info hover state for main header
   const [isInfoHovered, setIsInfoHovered] = useState(false);
@@ -5082,7 +5084,8 @@ const BusinessPlanAndGoles = () => {
                 <>
                   <BtnOutline onClick={closeAiBuilder}>Cancel</BtnOutline>
                   <button
-                    onClick={() => {
+                    disabled={isSubmittingProfile}
+                    onClick={async () => {
                       if (!aiCompanyName || !aiIndustryCategory || !aiBusinessStage || !aiYearsInOperation || !aiTeamSize || !aiAnnualRevenue || aiGeographicReach.length === 0 || !aiMarketPosition) {
                         toast.error("Please fill all required fields before proceeding.");
                         return;
@@ -5099,12 +5102,43 @@ const BusinessPlanAndGoles = () => {
                           return;
                         }
                       }
+                      setIsSubmittingProfile(true);
+                      try {
+                        const baseUrl = (API_CONFIG.BASE_URL || "").replace(/\/$/, "");
+                        const res = await fetch(`${baseUrl}/ai_assist/business_profile`, {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: getAuthHeader(),
+                          },
+                          body: JSON.stringify({
+                            company_name: aiCompanyName,
+                            company_website: aiCompanyWebsite,
+                            industry_category: aiIndustryCategory === "Other" ? aiIndustryOther : aiIndustryCategory,
+                            business_stage: aiBusinessStage,
+                            years_in_operation: aiYearsInOperation,
+                            team_size: aiTeamSize,
+                            annual_revenue_range: aiAnnualRevenue,
+                            geographic_reach: aiGeographicReach.join(", "),
+                            market_position: aiMarketPosition,
+                          }),
+                        });
+                        if (!res.ok) {
+                          const errText = await res.text().catch(() => "");
+                          throw new Error(errText || `Request failed (${res.status})`);
+                        }
+                      } catch (err: any) {
+                        toast.error(err?.message || "Failed to submit business profile.");
+                        setIsSubmittingProfile(false);
+                        return;
+                      }
+                      setIsSubmittingProfile(false);
                       setAiBuilderStage("questions");
                     }}
-                    className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                    className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ background: "#1a1a1a", fontFamily: C.font }}
                   >
-                    Next
+                    {isSubmittingProfile ? "Saving..." : "Next"}
                   </button>
                 </>
               ) : aiBuilderStage === "questions" ? (
