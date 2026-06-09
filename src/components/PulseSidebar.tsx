@@ -72,7 +72,12 @@ const modulesByPackage = {
     {
       name: "Carpool",
       icon: Car,
-      href: "/pulse/carpool",
+      // href: "/pulse/carpool/rides",
+      subItems: [
+        { name: "Rides", href: "/pulse/carpool/rides" },
+        { name: "Active Reports", href: "/pulse/carpool/active-reports" },
+        { name: "Active SOS", href: "/pulse/carpool/active-sos" },
+      ],
     },
     {
       name: "Visitors",
