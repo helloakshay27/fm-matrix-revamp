@@ -108,6 +108,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
     const baseUrl = localStorage.getItem('baseUrl');
     const { id } = useParams();
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [boqs, setBoqs] = useState([]);
     const [boqDetails, setBOQDetails] = useState<BOQDetail[]>([
         {
@@ -301,6 +302,8 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
     const handleSaveInvoice = async () => {
         if (!validate()) return;
+        if (isSubmitting) return;
+        setIsSubmitting(true);
 
         try {
             const payload = {
@@ -330,6 +333,8 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         } catch (error) {
             console.error('Error saving invoice:', error);
             toast.error('Failed to save invoice');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -753,9 +758,10 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         </Button>
                         <Button
                             onClick={handleSaveInvoice}
-                            className="bg-red-600 hover:bg-red-700 text-white px-8"
+                            disabled={isSubmitting}
+                            className="bg-red-600 hover:bg-red-700 text-white px-8 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            Save
+                            {isSubmitting ? "Saving..." : "Save"}
                         </Button>
                     </Box>
                 </Box>

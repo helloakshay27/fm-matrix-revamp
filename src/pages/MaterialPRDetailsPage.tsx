@@ -131,6 +131,7 @@ interface MaterialPR {
   show_send_sap_yes?: boolean;
   can_edit_wbs_codes?: boolean;
   pr_type?: string;
+ 
 }
 
 interface TableRow {
@@ -1058,6 +1059,24 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
           ))}
         </div>
       </TooltipProvider>
+
+      {pr.invoice_approval_histories?.filter((h) => h.approve === false).map((h) => (
+        <div key={h.id} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-2">
+          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-700">
+              Rejected by {h.invoice_approval_level?.name ?? "Approval Level"}
+              {h.updated_by?.fullname ? ` — ${h.updated_by.fullname}` : ""}
+              {h.status_updated_at
+                ? ` (${format(new Date(h.status_updated_at), "dd MMM yyyy")})`
+                : ""}
+            </p>
+            <p className="text-sm text-red-600 mt-0.5">
+              Reason: {h.rejection_reason ?? "No reason provided"}
+            </p>
+          </div>
+        </div>
+      ))}
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">

@@ -39,6 +39,7 @@ interface GRNDetails {
 
 interface InventoryItem {
   inventoryType: string;
+  itemNo: string;
   expectedQuantity: string;
   receivedQuantity: string;
   approvedQuantity: string;
@@ -107,6 +108,7 @@ export const AddGRNDashboard = () => {
   const [inventoryDetails, setInventoryDetails] = useState<InventoryItem[]>([
     {
       inventoryType: "",
+      itemNo: "",
       expectedQuantity: "",
       receivedQuantity: "",
       approvedQuantity: "",
@@ -194,6 +196,7 @@ export const AddGRNDashboard = () => {
         const inventoryItem = {
           ...item,
           inventoryType: item.inventory.id,
+          itemNo: item.item_no || "",
           rate: item.rate || "",
           cgstRate: item.cgst_rate || "",
           cgstAmount: item.cgst_amount || "",
@@ -457,6 +460,7 @@ export const AddGRNDashboard = () => {
         notes: grnDetails.notes,
         pms_grn_inventories_attributes: inventoryDetails.map((item) => ({
           pms_inventory_id: item.inventoryType,
+          item_no: item.itemNo,
           quantity: item.expectedQuantity,
           unit: item.receivedQuantity,
           approved_qty: item.approvedQuantity,
@@ -774,6 +778,20 @@ export const AddGRNDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {item.itemNo && (
+                <TextField
+                  label="Item No."
+                  value={item.itemNo}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+              )}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Inventory Type</InputLabel>
                 <MuiSelect
