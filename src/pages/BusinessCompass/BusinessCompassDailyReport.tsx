@@ -3102,60 +3102,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </button>
         </div>
 
-        {activeTab === "submit" && aiInsights.length > 0 && (
-          <div className="bc-ai-banner bc-ai-banner-glow">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="bg-[#DA7756] rounded-[8px] p-1.5 flex items-center justify-center shrink-0">
-                  <AiSparkleIcon className="w-4 h-4 text-white" />
-                </div>
-                <span className="bc-ai-banner-glow-text text-sm font-bold text-[#1a1a1a]">
-                  AI Suggestions{" "}
-                  <span className="font-normal text-gray-500">
-                    — Focus areas to improve your daily report
-                  </span>
-                </span>
-              </div>
-              <span className="bc-points-badge bc-ai-banner-glow-text">
-                {aiInsights.length} Insights
-              </span>
-            </div>
-            <div className="flex flex-col lg:flex-row gap-3">
-              {aiInsights.map((insight) => (
-                <div
-                  key={insight.id}
-                  className="bc-ai-insight-card bc-ai-insight-card-glow"
-                  style={
-                    {
-                      "--insight-accent": `rgba(${insight.color === "#dc2626" ? "220,38,38" : insight.color === "#16a34a" ? "22,163,74" : insight.color === "#ea580c" ? "234,88,12" : "124,58,237"}, 0.16)`,
-                      animationDelay: `${aiInsights.indexOf(insight) * 120}ms`,
-                    } as React.CSSProperties
-                  }
-                >
-                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <div className="flex items-center gap-2">
-                      {insight.icon}
-                      <span className="text-xs font-bold text-[#1a1a1a] leading-tight">
-                        {insight.title}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={insight.onAction}
-                      className="text-[11px] font-semibold flex items-center gap-0.5 hover:underline shrink-0"
-                      style={{ color: insight.color }}
-                    >
-                      {insight.action} <ChevronRight size={11} />
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-gray-500 leading-relaxed pl-6">
-                    {insight.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="hidden">

@@ -1813,7 +1813,7 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
 const BusinessPlanAndGoles = () => {
   const [activeMainTab, setActiveMainTab] = useState("strategic");
   const [showAddContent, setShowAddContent] = useState(true);
-  const [addContentTab, setAddContentTab] = useState("images");
+  const [addContentTab, setAddContentTab] = useState("Business Plan");
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
   const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
   const [aiBuilderStage, setAiBuilderStage] =
@@ -2333,7 +2333,7 @@ const BusinessPlanAndGoles = () => {
       const rawLabel = AI_PLAN_FIELDS[aiQuestionIndex].label;
       const cleanPrompt = rawLabel.replace(/^Q\d+:\s*/, "");
       const currentDraft = aiAnswers[aiQuestionIndex]?.trim();
-      
+
       const previous_answers = AI_PLAN_FIELDS.slice(0, aiQuestionIndex)
         .map((field, idx) => ({
           question: field.label.replace(/^Q\d+:\s*/, ""),
@@ -2341,7 +2341,7 @@ const BusinessPlanAndGoles = () => {
         }))
         .filter(item => item.answer.trim() !== "");
 
-      const finalPrompt = currentDraft 
+      const finalPrompt = currentDraft
         ? `Question: ${cleanPrompt}\n\nPlease enhance and professionally re-write the following draft answer:\n${currentDraft}`
         : cleanPrompt;
 
@@ -3046,22 +3046,22 @@ const BusinessPlanAndGoles = () => {
           bhag_initiatives: ["Expand to 10M businesses", "Launch Innovation Labs", "Build Global Footprint"],
           three_year_goals: "500 Crore revenue with 5000 enterprise clients",
           three_year_initiatives: [
-            {"initiative": "Launch 5 new geographies", "owner": "CEO"},
-            {"initiative": "Develop 2 new AI product lines", "owner": "CTO"},
-            {"initiative": "Achieve SOC2 compliance", "owner": "COO"}
+            { "initiative": "Launch 5 new geographies", "owner": "CEO" },
+            { "initiative": "Develop 2 new AI product lines", "owner": "CTO" },
+            { "initiative": "Achieve SOC2 compliance", "owner": "COO" }
           ],
           one_year_goals: "100 Crore revenue with 1000 clients",
           one_year_initiatives: [
-            {"initiative": "Close 500 enterprise deals", "owner": "Sales Head"},
-            {"initiative": "Launch mobile app", "owner": "Product Head"},
-            {"initiative": "Build partner ecosystem", "owner": "BD Head"}
+            { "initiative": "Close 500 enterprise deals", "owner": "Sales Head" },
+            { "initiative": "Launch mobile app", "owner": "Product Head" },
+            { "initiative": "Build partner ecosystem", "owner": "BD Head" }
           ],
           quarterly_goals: "35 Crore Revenue — Launch & Expand",
           quarterly_theme: "Growth Sprint Q1",
           quarterly_initiatives: [
-            {"initiative": "SEA expansion — Bangkok office", "owner": "CEO"},
-            {"initiative": "300 new client onboardings", "owner": "Sales Head"},
-            {"initiative": "Celebration Summit", "owner": "HR Head"}
+            { "initiative": "SEA expansion — Bangkok office", "owner": "CEO" },
+            { "initiative": "300 new client onboardings", "owner": "Sales Head" },
+            { "initiative": "Celebration Summit", "owner": "HR Head" }
           ],
           quarterly_rewards: ["Team trip to Bali", "₹1L bonus pool"],
           target_segments: "Mid-market and enterprise B2B companies in APAC",
@@ -3072,10 +3072,10 @@ const BusinessPlanAndGoles = () => {
           },
           process_drivers: ["Agile sprints", "Data-first decisions", "Weekly leadership sync", "Customer feedback loops"],
           critical_numbers: [
-            {"name": "Net Promoter Score", "target": "70", "current": "52"},
-            {"name": "Revenue Target", "target": "35", "current": "0"},
-            {"name": "New Clients", "target": "300", "current": "8"},
-            {"name": "Churn Rate", "target": "2", "current": "8"}
+            { "name": "Net Promoter Score", "target": "70", "current": "52" },
+            { "name": "Revenue Target", "target": "35", "current": "0" },
+            { "name": "New Clients", "target": "300", "current": "8" },
+            { "name": "Churn Rate", "target": "2", "current": "8" }
           ],
           strengths: ["Strong AI core", "Experienced team", "Existing client base", "Scalable platform"],
           weaknesses: ["Low brand awareness", "Limited sales team", "No physical presence in SEA"],
@@ -3095,7 +3095,7 @@ const BusinessPlanAndGoles = () => {
         if (!res.ok) {
           throw new Error("Failed to generate AI image");
         }
-        
+
         toast.success("AI Image generated successfully!");
       } else {
         const plan = await buildFullPlanText();
@@ -3943,7 +3943,7 @@ const BusinessPlanAndGoles = () => {
             {showAddContent && (
               <div className="px-4 pb-4 pt-3">
                 <div className="mb-4 flex rounded-2xl border border-[#eee3dd] bg-[#f7f1ed] p-1">
-                  {["images", "video"].map((t) => {
+                  {["Business Plan", "VisionBoard"].map((t) => {
                     const isActive = addContentTab === t;
 
                     return (
@@ -3951,11 +3951,11 @@ const BusinessPlanAndGoles = () => {
                         key={t}
                         onClick={() => setAddContentTab(t)}
                         className={`flex-1 rounded-xl px-4 py-2 text-[13px] font-extrabold capitalize transition-all duration-200 ${isActive
-                            ? "bg-[#DA7756] text-white shadow-[0_8px_16px_rgba(218,119,86,0.22)]"
-                            : "text-[#6b7280] hover:bg-white hover:text-[#DA7756]"
+                          ? "bg-[#DA7756] text-white shadow-[0_8px_16px_rgba(218,119,86,0.22)]"
+                          : "text-[#6b7280] hover:bg-white hover:text-[#DA7756]"
                           }`}
                       >
-                        {t === "images" ? "Images" : "Explainer Video"}
+                        {t === "Business Plan" ? "Business Plan" : "VisionBoard"}
                       </button>
                     );
                   })}
@@ -3977,7 +3977,369 @@ const BusinessPlanAndGoles = () => {
                   </div>
                 )}
 
-                {addContentTab === "images" && (
+                   {addContentTab === "Business Plan" && (
+                  <div>
+                    {/* ── Strategic Essentials ── */}
+                    <div className="rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ebe6] px-4 py-3 sm:px-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7] text-[#ff6b4a]">
+                            <svg
+                              className="h-[18px] w-[18px]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                              />
+                            </svg>
+                          </div>
+
+                          <div>
+                            <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#070707]">
+                              Strategic Essentials
+                            </p>
+                            <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
+                              Values, purpose and promises that define your strategy.
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="rounded-full border border-[#eee3dd] bg-[#fafafa] px-3 py-1 text-[11px] font-extrabold text-[#6b7280]">
+                          3 essentials
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 sm:p-5">
+                        {/* Core Values */}
+                        <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                          <div className="mb-4 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M4.5 12.75 9 17.25 19.5 6.75"
+                                  />
+                                </svg>
+                              </div>
+
+                              <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
+                                Core Values
+                                <span
+                                  onMouseEnter={(e) => handleCardInfoEnter(e, "core")}
+                                  onMouseLeave={() => setActiveCardInfo(null)}
+                                  className="cursor-help"
+                                >
+                                  <InfoIcon />
+                                </span>
+                              </h3>
+                            </div>
+
+                            <button
+                              onClick={() => openTopModal("core")}
+                              className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                              title="Edit core values"
+                            >
+                              <EditIcon />
+                            </button>
+                          </div>
+
+                          {isFetchingCore ? (
+                            <div className="flex flex-wrap gap-2">
+                              {[1, 2, 3, 4].map((n) => (
+                                <Shimmer key={n} w="80px" h={28} />
+                              ))}
+                            </div>
+                          ) : coreFetchError ? (
+                            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                              ⚠ {coreFetchError}{" "}
+                              <button onClick={loadCoreValues} className="underline">
+                                Retry
+                              </button>
+                            </div>
+                          ) : (coreValues || []).length === 0 && !coreVideoUrl ? (
+                            <div className="flex flex-col gap-3">
+                              {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
+                            </div>
+                          ) : (
+                            <div className="flex h-full flex-col">
+                              {coreVideoUrl && <VideoPreview url={coreVideoUrl} />}
+                              {(coreValues || []).length === 0 ? (
+                                <div>
+                                  {emptyAddBtn(
+                                    () => openTopModal("core"),
+                                    "Add Core Values"
+                                  )}
+                                </div>
+                              ) : (
+                                <div>
+                                  <CoreValuesInlineCard values={coreValues} />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Purpose */}
+                        <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                          <div className="mb-4 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                  />
+                                </svg>
+                              </div>
+
+                              <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
+                                Purpose
+                                <span
+                                  onMouseEnter={(e) => handleCardInfoEnter(e, "purpose")}
+                                  onMouseLeave={() => setActiveCardInfo(null)}
+                                  className="cursor-help"
+                                >
+                                  <InfoIcon />
+                                </span>
+                              </h3>
+                            </div>
+
+                            <button
+                              onClick={() => openTopModal("purpose")}
+                              className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                              title="Edit purpose"
+                            >
+                              <EditIcon />
+                            </button>
+                          </div>
+
+                          {isFetchingPurpose ? (
+                            <div className="space-y-2">
+                              {[1, 2, 3].map((n) => (
+                                <Shimmer key={n} w={n === 3 ? "50%" : "95%"} h={12} />
+                              ))}
+                            </div>
+                          ) : purposeFetchError ? (
+                            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                              ⚠ {purposeFetchError}{" "}
+                              <button onClick={loadPurpose} className="underline">
+                                Retry
+                              </button>
+                            </div>
+                          ) : !purposeText && !purposeVideoUrl ? (
+                            emptyAddBtn(() => openTopModal("purpose"), "Add Purpose")
+                          ) : (
+                            <div className="flex h-full flex-col">
+                              {purposeVideoUrl && <VideoPreview url={purposeVideoUrl} />}
+                              {purposeText ? (
+                                <p className="rounded-2xl bg-white p-3 text-[13px] font-semibold leading-relaxed text-[#DA7756] ring-1 ring-[#f0ebe6]">
+                                  {purposeText}
+                                </p>
+                              ) : (
+                                <div>
+                                  {emptyAddBtn(
+                                    () => openTopModal("purpose"),
+                                    "Add Purpose"
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Brand Promises */}
+                        <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                          <div className="mb-4 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.125 2.04 2.948-.415a.75.75 0 0 1 .816.816l-.415 2.948 2.04 2.125a.75.75 0 0 1 0 1.04l-2.04 2.125.415 2.948a.75.75 0 0 1-.816.816l-2.948-.415-2.125 2.04a.75.75 0 0 1-1.04 0l-2.125-2.04-2.948.415a.75.75 0 0 1-.816-.816l.415-2.948-2.04-2.125a.75.75 0 0 1 0-1.04l2.04-2.125-.415-2.948a.75.75 0 0 1 .816-.816l2.948.415 2.125-2.04Z"
+                                  />
+                                </svg>
+                              </div>
+
+                              <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
+                                Brand Promises
+                                <span
+                                  onMouseEnter={(e) => handleCardInfoEnter(e, "brand")}
+                                  onMouseLeave={() => setActiveCardInfo(null)}
+                                  className="cursor-help"
+                                >
+                                  <InfoIcon />
+                                </span>
+                              </h3>
+                            </div>
+
+                            <button
+                              onClick={() => openTopModal("brand")}
+                              className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                              title="Edit brand promises"
+                            >
+                              <EditIcon />
+                            </button>
+                          </div>
+
+                          {isFetchingBrand ? (
+                            <div className="space-y-2">
+                              {[1, 2, 3].map((n) => (
+                                <Shimmer key={n} w={n === 3 ? "60%" : "90%"} h={14} />
+                              ))}
+                            </div>
+                          ) : brandFetchError ? (
+                            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                              ⚠ {brandFetchError}{" "}
+                              <button onClick={loadBrandPromises} className="underline">
+                                Retry
+                              </button>
+                            </div>
+                          ) : (brandPromises || []).length === 0 && !brandVideoUrl ? (
+                            emptyAddBtn(() => openTopModal("brand"), "Add Promise")
+                          ) : (
+                            <div className="flex h-full flex-col">
+                              {brandVideoUrl && <VideoPreview url={brandVideoUrl} />}
+                              {(brandPromises || []).length === 0 ? (
+                                <div>
+                                  {emptyAddBtn(
+                                    () => openTopModal("brand"),
+                                    "Add Promise"
+                                  )}
+                                </div>
+                              ) : (
+                                <ul className="space-y-2.5 text-[12px] text-[#6b7280]">
+                                  {(brandPromises || []).map((p, idx) => (
+                                    <li
+                                      key={p.id ?? idx}
+                                      className="flex items-start rounded-2xl bg-white p-3 ring-1 ring-[#f0ebe6]"
+                                    >
+                                      <span className="mr-2 mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6b4a]" />
+                                      <div>
+                                        <div
+                                          dangerouslySetInnerHTML={{
+                                            __html: (p.text || "").replace(
+                                              /([^-]+)/,
+                                              `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`
+                                            ),
+                                          }}
+                                        />
+                                        {p.kpis && p.kpis.length > 0 ? (
+                                          <p className="mt-0.5 text-[11px] text-gray-400">
+                                            {p.kpis.join(", ")}
+                                          </p>
+                                        ) : (
+                                          <p className="mt-0.5 text-[11px] italic text-gray-400">
+                                            No KPIs linked
+                                          </p>
+                                        )}
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Render Active Tooltip for 3 Cards */}
+                    {activeCardInfo &&
+                      ReactDOM.createPortal(
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: cardInfoCoords.top,
+                            left: cardInfoCoords.left,
+                            transform: cardInfoCoords.transform,
+                            zIndex: 99999,
+                            background: "#16102b",
+                            color: "#fff",
+                            borderRadius: 12,
+                            boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                            padding: "16px",
+                            width: 300,
+                            textAlign: "center",
+                            fontFamily: "'Poppins', sans-serif",
+                            pointerEvents: "none",
+                          }}
+                        >
+                          <h4
+                            style={{
+                              margin: "0 0 10px 0",
+                              fontSize: 13,
+                              fontWeight: 800,
+                            }}
+                          >
+                            {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
+                              ? TOOLTIP_CONTENT[activeCardInfo].title
+                              : ""}
+                          </h4>
+                          <p
+                            style={{
+                              margin: "0 0 10px 0",
+                              fontSize: 12,
+                              lineHeight: 1.5,
+                              color: "#d1d5db",
+                            }}
+                          >
+                            {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
+                              ? TOOLTIP_CONTENT[activeCardInfo].desc
+                              : ""}
+                          </p>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 11,
+                              fontStyle: "italic",
+                              color: "#d1d5db",
+                            }}
+                          >
+                            {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
+                              ? TOOLTIP_CONTENT[activeCardInfo].example
+                              : ""}
+                          </p>
+                        </div>,
+                        document.body
+                      )}
+
+                    {/* Sub-sections */}
+                    <BhagSection />
+                    <GoalsPage />
+                    <SWOTAnalysis />
+                    <CriticalNumbers />
+                    <KeyProcessesSection />
+                  </div>
+                )}
+
+                {addContentTab === "VisionBoard" && (
                   <div>
                     <div className="mb-3 flex gap-2 max-sm:flex-col">
                       <input
@@ -4072,7 +4434,7 @@ const BusinessPlanAndGoles = () => {
                             ) : (
                               <>
                                 <span>✨</span>
-                                <span>generate image with AI</span>
+                                <span>Generate Vision Board</span>
                               </>
                             )}
                           </span>
@@ -4102,469 +4464,12 @@ const BusinessPlanAndGoles = () => {
                   </div>
                 )}
 
-                {addContentTab === "video" && (
-                  <div>
-                    <div className="mb-2 flex gap-2 max-sm:flex-col">
-                      <input
-                        ref={overviewVideoUploadRef}
-                        type="file"
-                        accept="video/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleUploadOverviewVideos}
-                      />
-
-                      <input
-                        type="text"
-                        value={newVideoUrl}
-                        onChange={(e) => setNewVideoUrl(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
-                        placeholder="Paste YouTube, Drive, or direct video URL..."
-                        className="min-h-[40px] flex-1 rounded-xl border border-[#e5e7eb] bg-[#fffaf8] px-3 py-2 text-[13px] font-semibold text-[#1a1a1a] outline-none transition-all placeholder:text-[#a3a3a3] placeholder:font-medium focus:border-[#DA7756] focus:ring-4 focus:ring-[#DA7756]/15 disabled:opacity-60"
-                        disabled={isSavingVideos}
-                      />
-
-                      <button
-                        onClick={handleAddVideo}
-                        disabled={isSavingVideos || !newVideoUrl.trim()}
-                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-[#fdf9f7] px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fff3ed] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isSavingVideos ? <LoaderIcon /> : "+ Add"}
-                      </button>
-
-                      <button
-                        onClick={() => overviewVideoUploadRef.current?.click()}
-                        disabled={isSavingVideos}
-                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-white px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fdf9f7] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isSavingVideos ? <LoaderIcon /> : "Upload"}
-                      </button>
-                    </div>
-
-                    <p className="mb-4 text-[11px] font-bold text-[#6b7280]">
-                      {(overviewVideos || []).length}/12 videos added
-                    </p>
-
-                    {isFetchingMedia ? (
-                      <div className="mb-5 h-[260px] w-full animate-pulse rounded-2xl bg-[#e5e1d8]" />
-                    ) : (overviewVideos || []).length === 0 ? (
-                      <div className="mb-5 flex flex-col items-center rounded-[18px] border-2 border-dashed border-[#eadfd8] bg-gradient-to-br from-[#fffaf8] to-white px-5 py-8 text-center">
-                        <VideoPlaceholder />
-                        <p className="text-[13px] font-extrabold text-[#1a1a1a]">
-                          No explainer videos added yet
-                        </p>
-                        <p className="mt-1 max-w-[360px] text-[11px] font-semibold leading-5 text-[#6b7280]">
-                          Add a YouTube, Google Drive, or direct video link for
-                          your business plan.
-                        </p>
-                      </div>
-                    ) : (
-                      <InlineVideoPlayer
-                        videos={(overviewVideos || []).map((item) => item.url)}
-                        onDelete={handleDeleteVideo}
-                        isSaving={isSavingVideos}
-                      />
-                    )}
-
-                    <div className="mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DA7756]">
-                            Generate with AI
-                          </p>
-                          <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
-                            Copy a video script prompt from your business plan
-                          </p>
-                        </div>
-
-                        <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#c9673f] shadow-sm">
-                          Script
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => handleCopyAiPrompt("script")}
-                        disabled={isCopyingAiPrompt === "script"}
-                        className="group relative inline-flex min-h-[46px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#efd8cf] bg-gradient-to-br from-white to-[#fff3ed] px-4 py-3 text-[13px] font-extrabold text-[#c9673f] shadow-[0_10px_20px_rgba(218,119,86,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DA7756]/50 hover:shadow-[0_14px_26px_rgba(218,119,86,0.16)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/80 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
-                        <span className="relative z-10 flex items-center gap-2">
-                          {isCopyingAiPrompt === "script" ? (
-                            <>
-                              <LoaderIcon /> Copying...
-                            </>
-                          ) : (
-                            <>
-                              <span>📄</span>
-                              <span>Create Video Script</span>
-                            </>
-                          )}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+             
               </div>
             )}
           </div>
 
-          {/* ── Strategic Essentials ── */}
-          <div className="rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ebe6] px-4 py-3 sm:px-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7] text-[#ff6b4a]">
-                  <svg
-                    className="h-[18px] w-[18px]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                    />
-                  </svg>
-                </div>
 
-                <div>
-                  <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#070707]">
-                    Strategic Essentials
-                  </p>
-                  <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
-                    Values, purpose and promises that define your strategy.
-                  </p>
-                </div>
-              </div>
-
-              <span className="rounded-full border border-[#eee3dd] bg-[#fafafa] px-3 py-1 text-[11px] font-extrabold text-[#6b7280]">
-                3 essentials
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 sm:p-5">
-              {/* Core Values */}
-              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.5 12.75 9 17.25 19.5 6.75"
-                        />
-                      </svg>
-                    </div>
-
-                    <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
-                      Core Values
-                      <span
-                        onMouseEnter={(e) => handleCardInfoEnter(e, "core")}
-                        onMouseLeave={() => setActiveCardInfo(null)}
-                        className="cursor-help"
-                      >
-                        <InfoIcon />
-                      </span>
-                    </h3>
-                  </div>
-
-                  <button
-                    onClick={() => openTopModal("core")}
-                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
-                    title="Edit core values"
-                  >
-                    <EditIcon />
-                  </button>
-                </div>
-
-                {isFetchingCore ? (
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 2, 3, 4].map((n) => (
-                      <Shimmer key={n} w="80px" h={28} />
-                    ))}
-                  </div>
-                ) : coreFetchError ? (
-                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
-                    ⚠ {coreFetchError}{" "}
-                    <button onClick={loadCoreValues} className="underline">
-                      Retry
-                    </button>
-                  </div>
-                ) : (coreValues || []).length === 0 && !coreVideoUrl ? (
-                  <div className="flex flex-col gap-3">
-                    {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
-                  </div>
-                ) : (
-                  <div className="flex h-full flex-col">
-                    {coreVideoUrl && <VideoPreview url={coreVideoUrl} />}
-                    {(coreValues || []).length === 0 ? (
-                      <div>
-                        {emptyAddBtn(
-                          () => openTopModal("core"),
-                          "Add Core Values"
-                        )}
-                      </div>
-                    ) : (
-                      <div>
-                        <CoreValuesInlineCard values={coreValues} />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Purpose */}
-              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                        />
-                      </svg>
-                    </div>
-
-                    <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
-                      Purpose
-                      <span
-                        onMouseEnter={(e) => handleCardInfoEnter(e, "purpose")}
-                        onMouseLeave={() => setActiveCardInfo(null)}
-                        className="cursor-help"
-                      >
-                        <InfoIcon />
-                      </span>
-                    </h3>
-                  </div>
-
-                  <button
-                    onClick={() => openTopModal("purpose")}
-                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
-                    title="Edit purpose"
-                  >
-                    <EditIcon />
-                  </button>
-                </div>
-
-                {isFetchingPurpose ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((n) => (
-                      <Shimmer key={n} w={n === 3 ? "50%" : "95%"} h={12} />
-                    ))}
-                  </div>
-                ) : purposeFetchError ? (
-                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
-                    ⚠ {purposeFetchError}{" "}
-                    <button onClick={loadPurpose} className="underline">
-                      Retry
-                    </button>
-                  </div>
-                ) : !purposeText && !purposeVideoUrl ? (
-                  emptyAddBtn(() => openTopModal("purpose"), "Add Purpose")
-                ) : (
-                  <div className="flex h-full flex-col">
-                    {purposeVideoUrl && <VideoPreview url={purposeVideoUrl} />}
-                    {purposeText ? (
-                      <p className="rounded-2xl bg-white p-3 text-[13px] font-semibold leading-relaxed text-[#DA7756] ring-1 ring-[#f0ebe6]">
-                        {purposeText}
-                      </p>
-                    ) : (
-                      <div>
-                        {emptyAddBtn(
-                          () => openTopModal("purpose"),
-                          "Add Purpose"
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Brand Promises */}
-              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.125 2.04 2.948-.415a.75.75 0 0 1 .816.816l-.415 2.948 2.04 2.125a.75.75 0 0 1 0 1.04l-2.04 2.125.415 2.948a.75.75 0 0 1-.816.816l-2.948-.415-2.125 2.04a.75.75 0 0 1-1.04 0l-2.125-2.04-2.948.415a.75.75 0 0 1-.816-.816l.415-2.948-2.04-2.125a.75.75 0 0 1 0-1.04l2.04-2.125-.415-2.948a.75.75 0 0 1 .816-.816l2.948.415 2.125-2.04Z"
-                        />
-                      </svg>
-                    </div>
-
-                    <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
-                      Brand Promises
-                      <span
-                        onMouseEnter={(e) => handleCardInfoEnter(e, "brand")}
-                        onMouseLeave={() => setActiveCardInfo(null)}
-                        className="cursor-help"
-                      >
-                        <InfoIcon />
-                      </span>
-                    </h3>
-                  </div>
-
-                  <button
-                    onClick={() => openTopModal("brand")}
-                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
-                    title="Edit brand promises"
-                  >
-                    <EditIcon />
-                  </button>
-                </div>
-
-                {isFetchingBrand ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((n) => (
-                      <Shimmer key={n} w={n === 3 ? "60%" : "90%"} h={14} />
-                    ))}
-                  </div>
-                ) : brandFetchError ? (
-                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
-                    ⚠ {brandFetchError}{" "}
-                    <button onClick={loadBrandPromises} className="underline">
-                      Retry
-                    </button>
-                  </div>
-                ) : (brandPromises || []).length === 0 && !brandVideoUrl ? (
-                  emptyAddBtn(() => openTopModal("brand"), "Add Promise")
-                ) : (
-                  <div className="flex h-full flex-col">
-                    {brandVideoUrl && <VideoPreview url={brandVideoUrl} />}
-                    {(brandPromises || []).length === 0 ? (
-                      <div>
-                        {emptyAddBtn(
-                          () => openTopModal("brand"),
-                          "Add Promise"
-                        )}
-                      </div>
-                    ) : (
-                      <ul className="space-y-2.5 text-[12px] text-[#6b7280]">
-                        {(brandPromises || []).map((p, idx) => (
-                          <li
-                            key={p.id ?? idx}
-                            className="flex items-start rounded-2xl bg-white p-3 ring-1 ring-[#f0ebe6]"
-                          >
-                            <span className="mr-2 mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6b4a]" />
-                            <div>
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: (p.text || "").replace(
-                                    /([^-]+)/,
-                                    `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`
-                                  ),
-                                }}
-                              />
-                              {p.kpis && p.kpis.length > 0 ? (
-                                <p className="mt-0.5 text-[11px] text-gray-400">
-                                  {p.kpis.join(", ")}
-                                </p>
-                              ) : (
-                                <p className="mt-0.5 text-[11px] italic text-gray-400">
-                                  No KPIs linked
-                                </p>
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Render Active Tooltip for 3 Cards */}
-          {activeCardInfo &&
-            ReactDOM.createPortal(
-              <div
-                style={{
-                  position: "absolute",
-                  top: cardInfoCoords.top,
-                  left: cardInfoCoords.left,
-                  transform: cardInfoCoords.transform,
-                  zIndex: 99999,
-                  background: "#16102b",
-                  color: "#fff",
-                  borderRadius: 12,
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                  padding: "16px",
-                  width: 300,
-                  textAlign: "center",
-                  fontFamily: "'Poppins', sans-serif",
-                  pointerEvents: "none",
-                }}
-              >
-                <h4
-                  style={{
-                    margin: "0 0 10px 0",
-                    fontSize: 13,
-                    fontWeight: 800,
-                  }}
-                >
-                  {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
-                    ? TOOLTIP_CONTENT[activeCardInfo].title
-                    : ""}
-                </h4>
-                <p
-                  style={{
-                    margin: "0 0 10px 0",
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                    color: "#d1d5db",
-                  }}
-                >
-                  {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
-                    ? TOOLTIP_CONTENT[activeCardInfo].desc
-                    : ""}
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 11,
-                    fontStyle: "italic",
-                    color: "#d1d5db",
-                  }}
-                >
-                  {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
-                    ? TOOLTIP_CONTENT[activeCardInfo].example
-                    : ""}
-                </p>
-              </div>,
-              document.body
-            )}
-
-          {/* Sub-sections */}
-          <BhagSection />
-          <GoalsPage />
-          <CriticalNumbers />
-          <KeyProcessesSection />
-          <SWOTAnalysis />
         </div>
       )}
 
@@ -4619,7 +4524,7 @@ const BusinessPlanAndGoles = () => {
                       Provide your business details. The AI will use this to generate and enhance your business plan.
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
                       <label className="mb-1 block text-[13px] font-bold text-gray-700">Company Name <span className="text-red-500">*</span></label>
@@ -5030,6 +4935,26 @@ const BusinessPlanAndGoles = () => {
                             )}
                           </div>
                         )}
+                          {(["strengths", "weaknesses", "opportunities", "threats"] as const).some(
+                        (key) => Array.isArray(aiPlanDisplay[key]) && aiPlanDisplay[key].length > 0
+                      ) &&
+                        renderAiPlanSection(
+                          "SWOT",
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            {(["strengths", "weaknesses", "opportunities", "threats"] as const).map(
+                              (key) =>
+                                Array.isArray(aiPlanDisplay[key]) &&
+                                aiPlanDisplay[key].length > 0 && (
+                                  <div key={key}>
+                                    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                      {key}
+                                    </p>
+                                    {renderAiPlanStringList(aiPlanDisplay[key])}
+                                  </div>
+                                )
+                            )}
+                          </div>
+                        )}
 
                       {Array.isArray(aiPlanDisplay.critical_numbers) &&
                         aiPlanDisplay.critical_numbers.length > 0 &&
@@ -5056,26 +4981,7 @@ const BusinessPlanAndGoles = () => {
                           </div>
                         )}
 
-                      {(["strengths", "weaknesses", "opportunities", "threats"] as const).some(
-                        (key) => Array.isArray(aiPlanDisplay[key]) && aiPlanDisplay[key].length > 0
-                      ) &&
-                        renderAiPlanSection(
-                          "SWOT",
-                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            {(["strengths", "weaknesses", "opportunities", "threats"] as const).map(
-                              (key) =>
-                                Array.isArray(aiPlanDisplay[key]) &&
-                                aiPlanDisplay[key].length > 0 && (
-                                  <div key={key}>
-                                    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
-                                      {key}
-                                    </p>
-                                    {renderAiPlanStringList(aiPlanDisplay[key])}
-                                  </div>
-                                )
-                            )}
-                          </div>
-                        )}
+                    
                     </div>
                   ) : (
                     <pre
