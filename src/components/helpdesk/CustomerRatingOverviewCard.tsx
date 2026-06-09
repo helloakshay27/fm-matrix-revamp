@@ -66,12 +66,12 @@ export const CustomerRatingOverviewCard: React.FC<Props> = ({ data, onDownload }
 
 				<div className="rounded-xl overflow-hidden border border-gray-200">
 				<div className="overflow-x-auto">
-				<table className="min-w-[600px] w-full text-sm text-center">
+				<table className="min-w-[600px] w-full text-sm">
 					<thead>
 						<tr>
-							<th className="px-3 py-2.5 text-left w-48 whitespace-nowrap text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>Site Name</th>
+							<th className="px-3 py-2.5 text-center w-48 whitespace-nowrap text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>Site Name</th>
 							{table.headers.map((h, i) => (
-								<th key={i} className="px-3 py-2.5 whitespace-nowrap text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>{h}</th>
+								<th key={i} className="px-3 py-2.5 text-center whitespace-nowrap text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>{h}</th>
 							))}
 						</tr>
 					</thead>
@@ -80,9 +80,9 @@ export const CustomerRatingOverviewCard: React.FC<Props> = ({ data, onDownload }
 							const isTotal = r.label === 'Total %';
 							return (
 								<tr key={idx} style={{ backgroundColor: isTotal ? '#EFEFFB' : idx % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-									<td className="px-3 py-2.5 font-medium whitespace-nowrap border-b border-gray-100">{r.label}</td>
+									<td className="px-3 py-2.5 font-medium whitespace-nowrap border-b border-gray-100 text-left">{r.label}</td>
 									{r.values.map((v, j) => (
-										<td key={j} className="px-3 py-2.5 text-center whitespace-nowrap border-b border-gray-100">{v}</td>
+										<td key={j} className="px-3 py-2.5 text-left whitespace-nowrap border-b border-gray-100">{v}</td>
 									))}
 								</tr>
 							);

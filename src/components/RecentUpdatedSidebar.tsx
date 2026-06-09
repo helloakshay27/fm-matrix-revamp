@@ -59,7 +59,13 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
 
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("sidebarCollapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
   const navigate = useNavigate();
 
   // Save to localStorage whenever state changes
@@ -446,7 +452,11 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
               </>
             )} */}
             <button
-              onClick={() => setIsCollapsed((v) => !v)}
+              onClick={() => setIsCollapsed((v) => {
+                const next = !v;
+                try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+                return next;
+              })}
               title={isCollapsed ? "Expand" : "Collapse"}
               className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
             >

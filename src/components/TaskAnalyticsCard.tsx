@@ -88,7 +88,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
     }
   };
 
-  const thCls = 'px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header';
+  const thCls = 'px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center';
   const tdCls = 'px-4 py-3 text-sm border-b border-gray-100';
 
   const renderContent = () => {
@@ -186,12 +186,12 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                 <table className="w-full text-sm min-w-[340px] border-collapse">
                   <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Category</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Category</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -203,11 +203,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                       chartData.map((item, index) => (
                         <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
                           <td className={`${tdCls} text-left font-medium text-gray-800`}>{item.name}</td>
-                          <td className={`${tdCls} text-right`}>{item.open ?? 0}</td>
-                          <td className={`${tdCls} text-right`}>{item.closed ?? 0}</td>
-                          <td className={`${tdCls} text-right`}>{item.work_in_progress ?? 0}</td>
-                          <td className={`${tdCls} text-right`}>{item.overdue ?? 0}</td>
-                          <td className={`${tdCls} text-right font-semibold`}>{item.total ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.open ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.closed ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.work_in_progress ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.overdue ?? 0}</td>
+                          <td className={`${tdCls} text-left font-semibold`}>{item.total ?? 0}</td>
                         </tr>
                       ))
                     )}
@@ -287,9 +287,9 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                 <table className="w-full text-sm min-w-[280px] border-collapse">
                   <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Rank</th>
-                      <th className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Checklist Type</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Count</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Rank</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Checklist Type</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Count</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -297,7 +297,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                       <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
                         <td className={`${tdCls} text-left font-medium text-gray-800`}>#{index + 1}</td>
                         <td className={`${tdCls} text-left`}>{item.type || 'N/A'}</td>
-                        <td className={`${tdCls} text-right font-semibold`}>{item.count || 0}</td>
+                        <td className={`${tdCls} text-left font-semibold`}>{item.count || 0}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -392,12 +392,12 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                 <table className="w-full text-sm min-w-[360px] border-collapse">
                   <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
-                      <th className={`${thCls} text-right`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -409,11 +409,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                       chartData.map((item, index) => (
                         <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
                           <td className={`${tdCls} text-left font-medium text-gray-800`}>{item.site}</td>
-                          <td className={`${tdCls} text-right`}>{item.open ?? 0}</td>
-                          <td className={`${tdCls} text-right`}>{item.closed ?? 0}</td>
-                          <td className={`${tdCls} text-right`}>{item.work_in_progress ?? 0}</td>
-                          <td className={`${tdCls} text-right`}>{item.overdue ?? 0}</td>
-                          <td className={`${tdCls} text-right font-semibold`}>{item.total ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.open ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.closed ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.work_in_progress ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.overdue ?? 0}</td>
+                          <td className={`${tdCls} text-left font-semibold`}>{item.total ?? 0}</td>
                         </tr>
                       ))
                     )}

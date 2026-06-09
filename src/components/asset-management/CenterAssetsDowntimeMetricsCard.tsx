@@ -10,8 +10,8 @@ const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) 
   const root = data?.data ?? data ?? {};
   const rows: any[] = Array.isArray(root.center_metrics) ? root.center_metrics : [];
 
-  const thCls = 'px-3 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header';
-  const tdCls = 'px-3 py-2.5 text-center text-sm border-b border-gray-100';
+  const thCls = 'px-3 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center';
+  const tdCls = 'px-3 py-2.5 text-sm border-b border-gray-100';
   const tdLeft = `${tdCls} text-left font-medium text-gray-800`;
 
   return (
@@ -36,7 +36,7 @@ const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) 
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr>
-              <th rowSpan={2} className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site Name</th>
+              <th rowSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site Name</th>
               <th rowSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total Assets</th>
               <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Critical</th>
               <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Non-Critical</th>
