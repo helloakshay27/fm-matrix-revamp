@@ -219,14 +219,14 @@ const normalizeReportForUi = (report: DailyReport): DailyReport => {
   const accomplishments = report.report_data.accomplishments as any;
   const normalizedAccomplishments = accomplishments
     ? {
-        ...(Array.isArray(accomplishments)
-          ? { attachments: [] }
-          : accomplishments),
-        items: getNonEmptyReportItems(accomplishments).map((item: any) => ({
-          ...(typeof item === "object" && item !== null ? item : {}),
-          title: getReportItemText(item),
-        })),
-      }
+      ...(Array.isArray(accomplishments)
+        ? { attachments: [] }
+        : accomplishments),
+      items: getNonEmptyReportItems(accomplishments).map((item: any) => ({
+        ...(typeof item === "object" && item !== null ? item : {}),
+        title: getReportItemText(item),
+      })),
+    }
     : accomplishments;
 
   return {
@@ -355,6 +355,47 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [editIssueData, setEditIssueData] = useState<any>(null);
   const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
   const [editTodoData, setEditTodoData] = useState<any>(null);
+
+  const handleViewReportItem = (item: any) => {
+    const sourceType =
+      item.source_type ?? item.originalData?.source_type ?? item.type;
+    const sourceId = item.source_id ?? item.originalData?.id;
+    const originalData = item.originalData ?? item;
+
+    if (sourceType === "todo") {
+      setSelectedTodo(originalData);
+      setIsDetailsModalOpen(true);
+      return;
+    }
+
+    if (!sourceId || !sourceType) return;
+
+    if (sourceType === "task") {
+      navigate(`/vas/tasks/${sourceId}`);
+    } else if (sourceType === "issue") {
+      navigate(`/vas/issues/${sourceId}`);
+    }
+  };
+
+  const handleEditReportItem = (item: any) => {
+    const sourceType =
+      item.source_type ?? item.originalData?.source_type ?? item.type;
+    const originalData = item.originalData ?? item;
+
+    if (!sourceType) return;
+
+    if (sourceType === "task") {
+      setEditTaskData(originalData);
+      setIsEditTaskModalOpen(true);
+    } else if (sourceType === "issue") {
+      setEditIssueData(originalData);
+      setIsEditIssueModalOpen(true);
+    } else if (sourceType === "todo") {
+      setEditTodoData(originalData);
+      setIsEditTodoModalOpen(true);
+    }
+  };
+
   const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
     useState<null | HTMLElement>(null);
   const [planningMenuAnchor, setPlanningMenuAnchor] =
@@ -455,7 +496,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           setRosterWorkingDays(noOfDays as Record<string, string[]>);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Fetch todos with same date and completed filter as tasks and issues
@@ -578,8 +619,8 @@ const BusinessCompassDailyReport: React.FC = () => {
       const tasks =
         tasksRes.status === "fulfilled"
           ? tasksRes.value.data?.task_managements ||
-            tasksRes.value.data?.data?.task_managements ||
-            []
+          tasksRes.value.data?.data?.task_managements ||
+          []
           : [];
       const issues =
         issuesRes.status === "fulfilled"
@@ -2265,7 +2306,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           const prevReport = prevJournals.find(
             (j: any) =>
               getReportDateKey(j.start_date) ===
-                getReportDateKey(prevDateStr) && !isLocallyDeletedReport(j)
+              getReportDateKey(prevDateStr) && !isLocallyDeletedReport(j)
           );
 
           const previousPlanItems = getNonEmptyReportItems(
@@ -2308,7 +2349,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 report_data?: Record<string, unknown>;
               }) =>
                 getReportDateKey(j.start_date) ===
-                  getReportDateKey(startDate) && !isLocallyDeletedReport(j)
+                getReportDateKey(startDate) && !isLocallyDeletedReport(j)
             );
 
           if (existingReport?.id) {
@@ -2573,6 +2614,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
         star: autoStarredIds.has(String(item.id)),
+        source_id: item.originalData?.id,
+        source_type: item.type,
+        originalData: item.originalData,
       })),
     ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
@@ -2580,7 +2624,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         title: cleanReportText(p.text),
         is_starred: p.starred,
         ...(p.source_id != null
-          ? { source_id: p.source_id, source_type: p.source_type }
+          ? { source_id: p.source_id, source_type: p.source_type, originalData: p.originalData }
           : {}),
       }))
       .filter((p) => p.title !== "");
@@ -2628,13 +2672,13 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
     const scoreForPayload = isAbsent
       ? {
-          totalScore: finalDailyScore.timingScore,
-          kpiScore: 0,
-          accomplishmentsScore: 0,
-          tasksIssuesScore: 0,
-          planningScore: 0,
-          timingScore: finalDailyScore.timingScore,
-        }
+        totalScore: finalDailyScore.timingScore,
+        kpiScore: 0,
+        accomplishmentsScore: 0,
+        tasksIssuesScore: 0,
+        planningScore: 0,
+        timingScore: finalDailyScore.timingScore,
+      }
       : finalDailyScore;
 
     if (!isAbsent && accomplishmentItemsPayload.length === 0) {
@@ -3141,7 +3185,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <Checkbox
                         checked={isAbsent}
                         className="h-4 w-4 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
-                        onCheckedChange={() => {}}
+                        onCheckedChange={() => { }}
                       />
                       Mark as Absent
                     </button>
@@ -3492,8 +3536,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     ? "border-[#DA7756]/10 bg-[#DA7756]/10"
                                     : "border-gray-200",
                                   item.fromYesterday &&
-                                    !item.completed &&
-                                    "border-amber-300 bg-amber-50/30"
+                                  !item.completed &&
+                                  "border-amber-300 bg-amber-50/30"
                                 )}
                               >
                                 <div className="flex items-center gap-4">
@@ -3706,7 +3750,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     const endDate = fmtDate(startDate);
                                     const effortEst = fmtHours(
                                       d?.total_allocated_hours ||
-                                        d?.estimated_hour
+                                      d?.estimated_hour
                                     );
                                     let issueEffort: string | null = null;
                                     if (
@@ -3791,7 +3835,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               type="button"
                               disabled={
                                 uploadedFiles.length +
-                                  reportAttachments.length >=
+                                reportAttachments.length >=
                                 5
                               }
                               onClick={triggerFileUpload}
@@ -3966,17 +4010,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   const matchedTask =
                                     item.source_id && item.source_type
                                       ? mergedTasksIssues.find(
-                                          (t: any) =>
-                                            t.type === item.source_type &&
-                                            t.originalData?.id ===
-                                              item.source_id
-                                        )
+                                        (t: any) =>
+                                          t.type === item.source_type &&
+                                          t.originalData?.id ===
+                                          item.source_id
+                                      )
                                       : null;
                                   const cachedData =
                                     item.source_id && item.source_type
                                       ? planSourceCache[
-                                          `${item.source_type}:${item.source_id}`
-                                        ]
+                                      `${item.source_type}:${item.source_id}`
+                                      ]
                                       : null;
                                   const liveData =
                                     matchedTask?.originalData ||
@@ -4149,18 +4193,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             const d = liveData;
                                             const endDate = fmtDate(
                                               d?.target_date ||
-                                                d?.due_date ||
-                                                d?.end_date
+                                              d?.due_date ||
+                                              d?.end_date
                                             );
                                             const effortEst = fmtHours(
                                               d?.total_allocated_hours ||
-                                                d?.estimated_hour
+                                              d?.estimated_hour
                                             );
                                             const overdueLabel =
                                               getOverdueLabel(
                                                 d?.target_date ||
-                                                  d?.due_date ||
-                                                  d?.end_date
+                                                d?.due_date ||
+                                                d?.end_date
                                               );
                                             let timeLeftLabel: string | null =
                                               null;
@@ -4259,208 +4303,208 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {(tomorrowScheduledLoading ||
                           (tomorrowFetchDone &&
                             dedupedTomorrowItems.length > 0)) && (
-                          <div className="mb-4">
-                            {/* {planningItems.length > 0 && (
+                            <div className="mb-4">
+                              {/* {planningItems.length > 0 && (
                           <div className="flex items-center gap-3 py-2 mb-3">
                             <div className="flex-1 h-px bg-gray-100" />
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Next Day</span>
                             <div className="flex-1 h-px bg-gray-100" />
                           </div>
                         )} */}
-                            {tomorrowScheduledLoading ? (
-                              <div className="flex items-center gap-2 py-3 text-gray-300">
-                                <Loader2
-                                  size={13}
-                                  className="animate-spin shrink-0"
-                                />
-                                <span className="text-xs font-medium">
-                                  Fetching upcoming assignments…
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                {dedupedTomorrowItems.map((item) => {
-                                  const plannedItem = planningItems.find(
-                                    (plan) =>
-                                      planningItemMatchesSourceItem(plan, item)
-                                  );
+                              {tomorrowScheduledLoading ? (
+                                <div className="flex items-center gap-2 py-3 text-gray-300">
+                                  <Loader2
+                                    size={13}
+                                    className="animate-spin shrink-0"
+                                  />
+                                  <span className="text-xs font-medium">
+                                    Fetching upcoming assignments…
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  {dedupedTomorrowItems.map((item) => {
+                                    const plannedItem = planningItems.find(
+                                      (plan) =>
+                                        planningItemMatchesSourceItem(plan, item)
+                                    );
 
-                                  return (
-                                    <div
-                                      key={item.id}
-                                      className="relative animate-in fade-in slide-in-from-top-1 duration-200"
-                                    >
-                                      <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
-                                        <div className="flex items-center gap-3">
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              toggleScheduledTomorrowStar(item)
-                                            }
-                                            className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                            title={
-                                              plannedItem?.starred
-                                                ? "Unstar"
-                                                : "Star this priority"
-                                            }
-                                          >
-                                            <Star
-                                              size={18}
-                                              className={cn(
-                                                "transition-colors duration-200",
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className="relative animate-in fade-in slide-in-from-top-1 duration-200"
+                                      >
+                                        <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
+                                          <div className="flex items-center gap-3">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                toggleScheduledTomorrowStar(item)
+                                              }
+                                              className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                              title={
                                                 plannedItem?.starred
-                                                  ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                                  : "text-gray-300 hover:text-yellow-400"
-                                              )}
-                                            />
-                                          </button>
-                                          <span
-                                            className={cn(
-                                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                              item.type === "task"
-                                                ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                                : item.type === "issue"
-                                                  ? "bg-violet-100 text-violet-700"
-                                                  : "bg-yellow-100 text-yellow-700"
-                                            )}
-                                          >
-                                            {item.type}
-                                          </span>
-                                          <span className="flex-1 text-sm font-medium text-gray-500 truncate">
-                                            {item.title}
-                                          </span>
-                                          {item.priority && (
-                                            <span
-                                              className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                              style={{
-                                                backgroundColor:
-                                                  item.priority === "High"
-                                                    ? "#fee2e2"
-                                                    : item.priority === "Medium"
-                                                      ? "#fef3c7"
-                                                      : "#dcfce7",
-                                                color:
-                                                  item.priority === "High"
-                                                    ? "#991b1b"
-                                                    : item.priority === "Medium"
-                                                      ? "#92400e"
-                                                      : "#166534",
-                                              }}
+                                                  ? "Unstar"
+                                                  : "Star this priority"
+                                              }
                                             >
-                                              {item.priority}
+                                              <Star
+                                                size={18}
+                                                className={cn(
+                                                  "transition-colors duration-200",
+                                                  plannedItem?.starred
+                                                    ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                                    : "text-gray-300 hover:text-yellow-400"
+                                                )}
+                                              />
+                                            </button>
+                                            <span
+                                              className={cn(
+                                                "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                item.type === "task"
+                                                  ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                                  : item.type === "issue"
+                                                    ? "bg-violet-100 text-violet-700"
+                                                    : "bg-yellow-100 text-yellow-700"
+                                              )}
+                                            >
+                                              {item.type}
                                             </span>
-                                          )}
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              hideTomorrowScheduledItem(item)
-                                            }
-                                            className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
-                                          >
-                                            <X size={16} />
-                                          </button>
-                                        </div>
-                                        {(() => {
-                                          const d = item.originalData;
-                                          const endDate = fmtDate(
-                                            d?.target_date ||
+                                            <span className="flex-1 text-sm font-medium text-gray-500 truncate">
+                                              {item.title}
+                                            </span>
+                                            {item.priority && (
+                                              <span
+                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                style={{
+                                                  backgroundColor:
+                                                    item.priority === "High"
+                                                      ? "#fee2e2"
+                                                      : item.priority === "Medium"
+                                                        ? "#fef3c7"
+                                                        : "#dcfce7",
+                                                  color:
+                                                    item.priority === "High"
+                                                      ? "#991b1b"
+                                                      : item.priority === "Medium"
+                                                        ? "#92400e"
+                                                        : "#166534",
+                                                }}
+                                              >
+                                                {item.priority}
+                                              </span>
+                                            )}
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                hideTomorrowScheduledItem(item)
+                                              }
+                                              className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                            >
+                                              <X size={16} />
+                                            </button>
+                                          </div>
+                                          {(() => {
+                                            const d = item.originalData;
+                                            const endDate = fmtDate(
+                                              d?.target_date ||
                                               d?.due_date ||
                                               d?.end_date
-                                          );
-                                          const effortEst = fmtHours(
-                                            d?.total_allocated_hours ||
+                                            );
+                                            const effortEst = fmtHours(
+                                              d?.total_allocated_hours ||
                                               d?.estimated_hour
-                                          );
-                                          const overdueLabel = getOverdueLabel(
-                                            d?.target_date ||
+                                            );
+                                            const overdueLabel = getOverdueLabel(
+                                              d?.target_date ||
                                               d?.due_date ||
                                               d?.end_date
-                                          );
-                                          let timeLeftLabel: string | null =
-                                            null;
-                                          if (
-                                            item.type === "issue" &&
-                                            d?.end_date &&
-                                            !overdueLabel
-                                          ) {
-                                            const now = new Date();
-                                            const end = new Date(d.end_date);
-                                            end.setHours(23, 59, 59, 999);
-                                            const diff =
-                                              end.getTime() - now.getTime();
-                                            if (diff > 0) {
-                                              const days = Math.floor(
-                                                diff / 86400000
-                                              );
-                                              const hrs = Math.floor(
-                                                (diff % 86400000) / 3600000
-                                              );
-                                              const mins = Math.floor(
-                                                (diff % 3600000) / 60000
-                                              );
-                                              if (days > 0)
-                                                timeLeftLabel = `${days}d ${hrs}h left`;
-                                              else if (hrs > 0)
-                                                timeLeftLabel = `${hrs}h ${mins}m left`;
-                                              else
-                                                timeLeftLabel = `${mins}m left`;
+                                            );
+                                            let timeLeftLabel: string | null =
+                                              null;
+                                            if (
+                                              item.type === "issue" &&
+                                              d?.end_date &&
+                                              !overdueLabel
+                                            ) {
+                                              const now = new Date();
+                                              const end = new Date(d.end_date);
+                                              end.setHours(23, 59, 59, 999);
+                                              const diff =
+                                                end.getTime() - now.getTime();
+                                              if (diff > 0) {
+                                                const days = Math.floor(
+                                                  diff / 86400000
+                                                );
+                                                const hrs = Math.floor(
+                                                  (diff % 86400000) / 3600000
+                                                );
+                                                const mins = Math.floor(
+                                                  (diff % 3600000) / 60000
+                                                );
+                                                if (days > 0)
+                                                  timeLeftLabel = `${days}d ${hrs}h left`;
+                                                else if (hrs > 0)
+                                                  timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                else
+                                                  timeLeftLabel = `${mins}m left`;
+                                              }
                                             }
-                                          }
-                                          const hasInfo =
-                                            endDate ||
-                                            effortEst ||
-                                            overdueLabel ||
-                                            timeLeftLabel;
-                                          if (!hasInfo) return null;
-                                          return (
-                                            <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
-                                              {endDate && (
-                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                  <CalendarIcon
-                                                    size={9}
-                                                    className="shrink-0"
-                                                  />
-                                                  {endDate}
-                                                </span>
-                                              )}
-                                              {overdueLabel && (
-                                                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                  <AlertCircle
-                                                    size={9}
-                                                    className="shrink-0"
-                                                  />
-                                                  {overdueLabel}
-                                                </span>
-                                              )}
-                                              {timeLeftLabel && (
-                                                <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                  <Clock
-                                                    size={9}
-                                                    className="shrink-0"
-                                                  />
-                                                  {timeLeftLabel}
-                                                </span>
-                                              )}
-                                              {effortEst && (
-                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                  <Clock
-                                                    size={9}
-                                                    className="shrink-0"
-                                                  />
-                                                  Est: {effortEst}
-                                                </span>
-                                              )}
-                                            </div>
-                                          );
-                                        })()}
+                                            const hasInfo =
+                                              endDate ||
+                                              effortEst ||
+                                              overdueLabel ||
+                                              timeLeftLabel;
+                                            if (!hasInfo) return null;
+                                            return (
+                                              <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
+                                                {endDate && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <CalendarIcon
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {endDate}
+                                                  </span>
+                                                )}
+                                                {overdueLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                    <AlertCircle
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {overdueLabel}
+                                                  </span>
+                                                )}
+                                                {timeLeftLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                    <Clock
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {timeLeftLabel}
+                                                  </span>
+                                                )}
+                                                {effortEst && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <Clock
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    Est: {effortEst}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
+                                        </div>
                                       </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )}
 
                         {planningItems.length === 0 &&
                           tomorrowFetchDone &&
@@ -4918,7 +4962,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                 "text-sm font-medium truncate",
                                                 (item.status === "completed" ||
                                                   item.status === "closed") &&
-                                                  "line-through opacity-60"
+                                                "line-through opacity-60"
                                               )}
                                             >
                                               {item.title}
@@ -4972,17 +5016,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           const d = item.originalData;
                                           const endDate = fmtDate(
                                             d?.target_date ||
-                                              d?.due_date ||
-                                              d?.end_date
+                                            d?.due_date ||
+                                            d?.end_date
                                           );
                                           const effortEst = fmtHours(
                                             d?.total_allocated_hours ||
-                                              d?.estimated_hour
+                                            d?.estimated_hour
                                           );
                                           const overdueLabel = getOverdueLabel(
                                             d?.target_date ||
-                                              d?.due_date ||
-                                              d?.end_date
+                                            d?.due_date ||
+                                            d?.end_date
                                           );
                                           let issueEffort: string | null = null;
                                           if (
@@ -5468,7 +5512,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               "text-sm font-medium truncate",
                                               (item.status === "completed" ||
                                                 item.status === "closed") &&
-                                                "line-through opacity-60"
+                                              "line-through opacity-60"
                                             )}
                                           >
                                             {item.title}
@@ -5529,17 +5573,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         const d = item.originalData;
                                         const endDate = fmtDate(
                                           d?.target_date ||
-                                            d?.due_date ||
-                                            d?.end_date
+                                          d?.due_date ||
+                                          d?.end_date
                                         );
                                         const effortEst = fmtHours(
                                           d?.total_allocated_hours ||
-                                            d?.estimated_hour
+                                          d?.estimated_hour
                                         );
                                         const overdueLabel = getOverdueLabel(
                                           d?.target_date ||
-                                            d?.due_date ||
-                                            d?.end_date
+                                          d?.due_date ||
+                                          d?.end_date
                                         );
 
                                         // Issue: effort duration from issue_allocation_times
@@ -6808,7 +6852,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         (item) =>
                                           item.id !== report.id &&
                                           getReportDateKey(item.start_date) !==
-                                            deletedDateKey
+                                          deletedDateKey
                                       )
                                     );
                                     const deletedDate = new Date(
@@ -6919,8 +6963,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     const achievement =
                                       parseFloat(kpi.target_value) > 0
                                         ? (parseFloat(kpi.actual_value) /
-                                            parseFloat(kpi.target_value)) *
-                                          100
+                                          parseFloat(kpi.target_value)) *
+                                        100
                                         : 0;
                                     const displayAchievement = Math.min(
                                       achievement,
@@ -7012,23 +7056,72 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {getNonEmptyReportItems(
                                 report.report_data?.accomplishments?.items
                               ).length ? (
-                                <ul className="space-y-2">
+                                <div className="space-y-3">
                                   {getNonEmptyReportItems(
                                     report.report_data?.accomplishments?.items
-                                  ).map((ach: any, idx: number) => (
-                                    <li
-                                      key={idx}
-                                      className="bc-history-list-item"
-                                    >
-                                      <span className="text-[#DA7756] font-medium shrink-0">
-                                        ✓
-                                      </span>
-                                      <span className="min-w-0 break-words">
-                                        {getReportItemText(ach)}
-                                      </span>
-                                    </li>
-                                  ))}
-                                </ul>
+                                  ).map((ach: any, idx: number) => {
+                                    const sourceType =
+                                      ach.source_type ??
+                                      ach.originalData?.source_type ??
+                                      ach.type;
+                                    const sourceId =
+                                      ach.source_id ?? ach.originalData?.id;
+                                    const itemText = getReportItemText(ach);
+                                    const itemDate = fmtDate(
+                                      ach.originalData?.target_date ||
+                                      ach.originalData?.due_date ||
+                                      ach.originalData?.end_date ||
+                                      ach.originalData?.completed_at ||
+                                      ach.originalData?.updated_at
+                                    );
+                                    const estimatedHours = fmtHours(
+                                      ach.originalData?.total_allocated_hours ||
+                                      ach.originalData?.estimated_hour
+                                    );
+
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className="relative group animate-in fade-in duration-200"
+                                      >
+                                        <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all">
+                                          <div className="flex items-start gap-3">
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-sm font-medium text-gray-900 break-words">
+                                                {itemText}
+                                              </p>
+                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                  {sourceType ?? "Note"}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            {(sourceType || sourceId) && (
+                                              <div className="flex items-center gap-1 shrink-0">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleViewReportItem(ach)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`View ${sourceType || "item"} details`}
+                                                >
+                                                  <Eye size={14} className="text-[#DA7756]" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleEditReportItem(ach)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`Edit ${sourceType || "item"}`}
+                                                >
+                                                  <Pencil size={13} className="text-gray-500 hover:text-[#DA7756]" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               ) : (
                                 <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">
@@ -7049,23 +7142,82 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {getNonEmptyReportItems(
                                 report.report_data?.tomorrow_plan
                               ).length ? (
-                                <ul className="space-y-2">
+                                <div className="space-y-3">
                                   {getNonEmptyReportItems(
                                     report.report_data?.tomorrow_plan
-                                  ).map((task: any, idx: number) => (
-                                    <li
-                                      key={idx}
-                                      className="bc-history-list-item"
-                                    >
-                                      <span className="text-[#DA7756] font-bold mt-0.5 shrink-0">
-                                        •
-                                      </span>
-                                      <span className="min-w-0 break-words">
-                                        {getReportItemText(task)}
-                                      </span>
-                                    </li>
-                                  ))}
-                                </ul>
+                                  ).map((task: any, idx: number) => {
+                                    const sourceType =
+                                      task.source_type ??
+                                      task.originalData?.source_type ??
+                                      task.type;
+                                    const sourceId =
+                                      task.source_id ?? task.originalData?.id;
+                                    const itemText = getReportItemText(task);
+                                    const itemDate = fmtDate(
+                                      task.originalData?.target_date ||
+                                      task.originalData?.due_date ||
+                                      task.originalData?.end_date ||
+                                      task.originalData?.completed_at ||
+                                      task.originalData?.updated_at
+                                    );
+                                    const estimatedHours = fmtHours(
+                                      task.originalData?.total_allocated_hours ||
+                                      task.originalData?.estimated_hour
+                                    );
+
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className="relative group animate-in fade-in duration-200"
+                                      >
+                                        <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all">
+                                          <div className="flex items-start gap-3">
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-sm font-medium text-gray-900 break-words">
+                                                {itemText}
+                                              </p>
+                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                  {sourceType ?? "Note"}
+                                                </span>
+                                                {itemDate && (
+                                                  <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                    {itemDate}
+                                                  </span>
+                                                )}
+                                                {estimatedHours && (
+                                                  <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                    {estimatedHours}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            {(sourceType || sourceId) && (
+                                              <div className="flex items-center gap-1 shrink-0">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleViewReportItem(task)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`View ${sourceType || "item"} details`}
+                                                >
+                                                  <Eye size={14} className="text-[#DA7756]" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleEditReportItem(task)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`Edit ${sourceType || "item"}`}
+                                                >
+                                                  <Pencil size={13} className="text-gray-500 hover:text-[#DA7756]" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               ) : (
                                 <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">

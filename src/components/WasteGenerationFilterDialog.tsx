@@ -19,7 +19,8 @@ interface Filters {
   commodity: string;
   category: string;
   operationalName: string;
-  dateRange: string;
+  fromDate: string;
+  toDate: string;
 }
 
 interface WasteGenerationFilterDialogProps {
@@ -35,12 +36,29 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   onApplyFilters, 
   onExport 
 }) => {
+  const selectMenuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: 224,
+        backgroundColor: 'white',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        zIndex: 9999, // High z-index to ensure dropdown appears above other elements
+      },
+    },
+    // Prevent focus conflicts with Dialog
+    disablePortal: false,
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
+  };
   const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     commodity: '',
     category: '',
     operationalName: '',
-    dateRange: ''
+    fromDate: '',
+    toDate: ''
   });
 
   // API data state
@@ -108,12 +126,12 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   const handleSubmit = () => {
     console.log('Applying filters:', filters);
     
-    // Convert internal filter format to API format
     const apiFilters: WasteGenerationFilters = {
       commodity_id_eq: filters.commodity || undefined,
       category_id_eq: filters.category || undefined,
       operational_landlord_id_in: filters.operationalName || undefined,
-      date_range: filters.dateRange || undefined,
+      date_from: filters.fromDate || undefined,
+      date_to: filters.toDate || undefined,
     };
     
     // Remove undefined values
@@ -135,12 +153,12 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   const handleExport = () => {
     console.log('Exporting filtered data');
     
-    // Convert internal filter format to API format
     const apiFilters: WasteGenerationFilters = {
       commodity_id_eq: filters.commodity || undefined,
       category_id_eq: filters.category || undefined,
       operational_landlord_id_in: filters.operationalName || undefined,
-      date_range: filters.dateRange || undefined,
+      date_from: filters.fromDate || undefined,
+      date_to: filters.toDate || undefined,
     };
     
     // Remove undefined values
@@ -163,7 +181,8 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
       commodity: '',
       category: '',
       operationalName: '',
-      dateRange: ''
+      fromDate: '',
+      toDate: ''
     });
   };
 
@@ -183,7 +202,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent className="max-w-2xl p-6 [&>button]:hidden">
         <DialogHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -214,6 +233,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 notched
                 displayEmpty
                 disabled={loadingCommodities}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   {loadingCommodities ? 'Loading commodities...' : 'Select Commodity'}
@@ -239,6 +259,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 notched
                 displayEmpty
                 disabled={loadingCategories}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   {loadingCategories ? 'Loading categories...' : 'Select Category'}
@@ -266,6 +287,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 notched
                 displayEmpty
                 disabled={loadingOperationalLandlords}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   {loadingOperationalLandlords ? 'Loading operational names...' : 'Select Operational Name'}
@@ -278,20 +300,36 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
               </MuiSelect>
             </FormControl>
 
-            <TextField
-              label="Date Range"
-              type="date"
-              value={filters.dateRange}
-              onChange={(e) => handleInputChange('dateRange', e.target.value)}
-              fullWidth
-              variant="outlined"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              sx={fieldStyles}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                label="From Date"
+                type="date"
+                value={filters.fromDate}
+                onChange={(e) => handleInputChange('fromDate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                sx={fieldStyles}
+              />
+              <TextField
+                label="To Date"
+                type="date"
+                value={filters.toDate}
+                onChange={(e) => handleInputChange('toDate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                sx={fieldStyles}
+              />
+            </div>
           </div>
 
           <div className="flex justify-center gap-4 pt-6">
