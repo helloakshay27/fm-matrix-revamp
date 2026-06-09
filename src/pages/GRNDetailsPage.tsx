@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
+  AlertTriangle,
   ArrowLeft,
   ClipboardList,
   Contact,
@@ -491,6 +492,22 @@ export const GRNDetailsPage = () => {
           ))}
         </div>
       </TooltipProvider>
+
+      {approvalStatus?.approval_levels?.filter((a: Approval) => a.status.toLowerCase() === "rejected").map((a: Approval, idx: number) => (
+        <div key={idx} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-700">
+              Rejected by {a.name}
+              {a.approved_by ? ` — ${a.approved_by}` : ""}
+              {a.approved_at ? ` (${a.approved_at})` : ""}
+            </p>
+            <p className="text-sm text-red-600 mt-0.5">
+              Reason: {a.rejection_reason ?? "No reason provided"}
+            </p>
+          </div>
+        </div>
+      ))}
 
       {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
