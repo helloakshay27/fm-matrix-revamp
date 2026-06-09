@@ -10,6 +10,7 @@ import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { toast as sonnerToast } from "sonner";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import GoalsPage from "./AdminCompassComponent/goalsPage";
 
 // ── Design Tokens ──
@@ -1696,7 +1697,7 @@ interface KPI {
   name: string;
 }
 
-type AiBuilderStage = "questions" | "building" | "plan";
+type AiBuilderStage = "discovery" | "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
   { key: "purpose", label: "Q1: Why does your company exist?" },
@@ -1816,7 +1817,45 @@ const BusinessPlanAndGoles = () => {
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
   const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
   const [aiBuilderStage, setAiBuilderStage] =
-    useState<AiBuilderStage>("questions");
+    useState<AiBuilderStage>("discovery");
+
+  const [aiCompanyName, setAiCompanyName] = useState("");
+  const [aiCompanyWebsite, setAiCompanyWebsite] = useState("");
+  const [aiIndustryCategory, setAiIndustryCategory] = useState("");
+  const [aiIndustryOther, setAiIndustryOther] = useState("");
+  const [aiBusinessStage, setAiBusinessStage] = useState("");
+  const [aiYearsInOperation, setAiYearsInOperation] = useState("");
+  const [aiTeamSize, setAiTeamSize] = useState("");
+  const [aiAnnualRevenue, setAiAnnualRevenue] = useState("");
+  const [aiGeographicReach, setAiGeographicReach] = useState<string[]>([]);
+  const [aiMarketPosition, setAiMarketPosition] = useState("");
+
+  const getDiscoveryContext = useCallback(() => {
+    const parts = [];
+    if (aiCompanyName) parts.push(`Company Name: ${aiCompanyName}`);
+    else parts.push(`Company: ${getSelectedOrgName()}`);
+    if (aiCompanyWebsite) parts.push(`Website: ${aiCompanyWebsite}`);
+    const industry = aiIndustryCategory === "Other" ? aiIndustryOther : aiIndustryCategory;
+    if (industry) parts.push(`Industry: ${industry}`);
+    if (aiBusinessStage) parts.push(`Stage: ${aiBusinessStage}`);
+    if (aiYearsInOperation) parts.push(`Years in Operation: ${aiYearsInOperation}`);
+    if (aiTeamSize) parts.push(`Team Size: ${aiTeamSize}`);
+    if (aiAnnualRevenue) parts.push(`Annual Revenue: ${aiAnnualRevenue}`);
+    if (aiGeographicReach.length > 0) parts.push(`Geographic Reach: ${aiGeographicReach.join(", ")}`);
+    if (aiMarketPosition) parts.push(`Market Position: ${aiMarketPosition}`);
+    return parts.join("\n");
+  }, [
+    aiCompanyName,
+    aiCompanyWebsite,
+    aiIndustryCategory,
+    aiIndustryOther,
+    aiBusinessStage,
+    aiYearsInOperation,
+    aiTeamSize,
+    aiAnnualRevenue,
+    aiGeographicReach,
+    aiMarketPosition,
+  ]);
   const [aiQuestionIndex, setAiQuestionIndex] = useState(0);
   const [aiAnswers, setAiAnswers] = useState<string[]>(
     AI_PLAN_FIELDS.map(() => "")
@@ -1830,6 +1869,7 @@ const BusinessPlanAndGoles = () => {
   const aiPlanAbortRef = useRef<AbortController | null>(null);
   const aiPlanCancelledRef = useRef(false);
   const [isSuggestingAi, setIsSuggestingAi] = useState(false);
+  const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
 
   // Info hover state for main header
   const [isInfoHovered, setIsInfoHovered] = useState(false);
@@ -2308,7 +2348,7 @@ const BusinessPlanAndGoles = () => {
       const payload = {
         prompt: finalPrompt,
         feature: "business_plan_wizard",
-        context: `Company: ${getSelectedOrgName()}`,
+        context: getDiscoveryContext(),
         previous_answers: previous_answers
       };
 
@@ -2332,13 +2372,23 @@ const BusinessPlanAndGoles = () => {
   };
 
   const resetAiBuilder = () => {
-    setAiBuilderStage("questions");
+    setAiBuilderStage("discovery");
     setAiQuestionIndex(0);
     setAiAnswers(AI_PLAN_FIELDS.map(() => ""));
     setGeneratedAiPlan("");
     setGeneratedAiPlanPayload(null);
     setAiPlanJobId("");
     setAiBuilderError(null);
+    setAiCompanyName("");
+    setAiCompanyWebsite("");
+    setAiIndustryCategory("");
+    setAiIndustryOther("");
+    setAiBusinessStage("");
+    setAiYearsInOperation("");
+    setAiTeamSize("");
+    setAiAnnualRevenue("");
+    setAiGeographicReach([]);
+    setAiMarketPosition("");
   };
 
   const openAiBuilder = () => {
@@ -2365,6 +2415,7 @@ const BusinessPlanAndGoles = () => {
   };
 
   const createAiPlanPayload = () => ({
+    business_context: getDiscoveryContext(),
     purpose: aiAnswers[0]?.trim() || "",
     core_values: aiAnswers[1]?.trim() || "",
     brand_promises: aiAnswers[2]?.trim() || "",
@@ -2948,24 +2999,105 @@ const BusinessPlanAndGoles = () => {
   ) => {
     setIsCopyingAiPrompt(type);
     try {
-      const plan = await buildFullPlanText();
-      let prompt = "";
       if (type === "overview") {
-        prompt = `Create an interesting and impactful infographic using less text for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
-      } else if (type === "detailed") {
-        prompt = `Create an interesting and impactful DETAILED infographic with all key metrics, goals, SWOT and KPIs for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
-      } else if (type === "script") {
-        prompt = `Create an engaging video script for explaining my business plan to my team in an impactful way\n\n${plan}`;
+        const headers = getAuthHeaders();
+
+        // Fetch KPIs
+        let kpis: any[] = [];
+        try {
+          const res = await fetch(`${BASE_URL}/kpis`, { headers });
+          const json = await res.json();
+          kpis = Array.isArray(json?.data?.kpis)
+            ? json.data.kpis
+            : Array.isArray(json?.data)
+              ? json.data
+              : Array.isArray(json)
+                ? json
+                : [];
+        } catch (e) {
+          console.error("KPI fetch error", e);
+        }
+
+        // Fetch SWOT
+        let swotData = { strengths: [], weaknesses: [], opportunities: [], threats: [] };
+        try {
+          const res = await fetch(
+            `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
+            { headers }
+          );
+          const json = await res.json();
+          swotData = {
+            strengths: json?.grouped_data?.business_plan_strengths?.values || [],
+            weaknesses: json?.grouped_data?.business_plan_weaknesses?.values || [],
+            opportunities: json?.grouped_data?.business_plan_opportunities?.values || [],
+            threats: json?.grouped_data?.business_plan_threats?.values || [],
+          };
+        } catch (e) {
+          console.error("SWOT fetch error", e);
+        }
+
+        const payload = {
+          purpose: purposeText || "",
+          core_values: coreValues.map((v: any) => v.value),
+          core_values_explanation: "",
+          brand_promises: brandPromises.map((p: any) => p.text),
+          brand_promise_kpis: brandPromises.flatMap((p: any) => p.kpis || []),
+          bhag_selected: extractSectionFromDOM(/BHAG|Big Hairy Audacious/i, "BHAG (BIG HAIRY AUDACIOUS GOAL)"),
+          bhag_initiatives: [],
+          three_year_goals: extractSectionFromDOM(/Medium Term|3.*Year|5.*Year/i, "MEDIUM TERM PLAN (3-5 YEARS)"),
+          three_year_initiatives: [],
+          one_year_goals: extractSectionFromDOM(/Short Term|1.*Year|Annual/i, "SHORT TERM GOALS (THIS YEAR)"),
+          one_year_initiatives: [],
+          quarterly_goals: extractSectionFromDOM(/Quarterly|Rocks|90.*Day/i, "IMMEDIATE GOALS (THIS QUARTER)"),
+          quarterly_theme: "",
+          quarterly_initiatives: [],
+          quarterly_rewards: [],
+          target_segments: "",
+          people_drivers: {},
+          process_drivers: [],
+          critical_numbers: kpis.map((k: any) => ({
+            name: k.name || k.title,
+            target: k.target_value?.toString() || "",
+            current: k.current_value?.toString() || ""
+          })),
+          strengths: swotData.strengths,
+          weaknesses: swotData.weaknesses,
+          opportunities: swotData.opportunities,
+          threats: swotData.threats
+        };
+
+        const res = await fetch(`${BASE_URL}/extra_fields/generate_ai_plan_image`, {
+          method: "POST",
+          headers: {
+            ...headers,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to generate AI image");
+        }
+        
+        toast.success("AI Image generated successfully!");
+      } else {
+        const plan = await buildFullPlanText();
+        let prompt = "";
+        if (type === "detailed") {
+          prompt = `Create an interesting and impactful DETAILED infographic with all key metrics, goals, SWOT and KPIs for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
+        } else if (type === "script") {
+          prompt = `Create an engaging video script for explaining my business plan to my team in an impactful way\n\n${plan}`;
+        }
+        await navigator.clipboard.writeText(prompt);
+        toast.success(
+          type === "script"
+            ? "Video script prompt copied! Paste in Gemini or ChatGPT."
+            : "Infographic prompt copied! Paste in Gemini or ChatGPT."
+        );
       }
-      await navigator.clipboard.writeText(prompt);
-      toast.success(
-        type === "script"
-          ? "Video script prompt copied! Paste in Gemini or ChatGPT."
-          : "Infographic prompt copied! Paste in Gemini or ChatGPT."
-      );
     } catch (err) {
       console.error("AI prompt copy failed", err);
-      toast.error("Failed to copy prompt.");
+      toast.error("Failed to process request.");
     } finally {
       setIsCopyingAiPrompt(null);
     }
@@ -3923,7 +4055,7 @@ const BusinessPlanAndGoles = () => {
                             ) : (
                               <>
                                 <span>✨</span>
-                                <span>Create Image Overview</span>
+                                <span>generate image with AI</span>
                               </>
                             )}
                           </span>
@@ -4460,6 +4592,159 @@ const BusinessPlanAndGoles = () => {
             </div>
 
             <div className="p-6 flex-1 overflow-y-auto bp-scroll">
+              {aiBuilderStage === "discovery" && (
+                <div className="space-y-5">
+                  <div className="mb-2">
+                    <h3 className="bp-heading text-lg font-bold" style={{ color: C.textMain }}>
+                      Tell Us About Your Business
+                    </h3>
+                    <p className="text-sm font-semibold" style={{ color: C.textMuted }}>
+                      Provide your business details. The AI will use this to generate and enhance your business plan.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Company Name <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        value={aiCompanyName}
+                        onChange={(e) => setAiCompanyName(e.target.value)}
+                        placeholder="Example: ABC Technologies Pvt. Ltd."
+                        className="bp-input w-full"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Company Website</label>
+                      <input
+                        type="url"
+                        value={aiCompanyWebsite}
+                        onChange={(e) => setAiCompanyWebsite(e.target.value)}
+                        placeholder="https://www.abc.com"
+                        className="bp-input w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Industry Category <span className="text-red-500">*</span></label>
+                      <select
+                        value={aiIndustryCategory}
+                        onChange={(e) => setAiIndustryCategory(e.target.value)}
+                        className="bp-select w-full"
+                      >
+                        <option value="">Select Industry</option>
+                        {["Manufacturing", "SaaS", "Retail", "Healthcare", "Education", "Construction", "Logistics", "Financial Services", "Hospitality", "Consulting", "Other"].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {aiIndustryCategory === "Other" && (
+                      <div>
+                        <label className="mb-1 block text-[13px] font-bold text-gray-700">Please specify your industry <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          value={aiIndustryOther}
+                          onChange={(e) => setAiIndustryOther(e.target.value)}
+                          className="bp-input w-full"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Business Stage <span className="text-red-500">*</span></label>
+                      <select
+                        value={aiBusinessStage}
+                        onChange={(e) => setAiBusinessStage(e.target.value)}
+                        className="bp-select w-full"
+                      >
+                        <option value="">Select Stage</option>
+                        {["Startup", "Early Stage", "Small Business", "Growth Stage", "Mid-Sized Company", "Enterprise"].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Years in Operation <span className="text-red-500">*</span></label>
+                      <select
+                        value={aiYearsInOperation}
+                        onChange={(e) => setAiYearsInOperation(e.target.value)}
+                        className="bp-select w-full"
+                      >
+                        <option value="">Select Years</option>
+                        {["Less than 1 Year", "1–3 Years", "3–5 Years", "5–10 Years", "10+ Years"].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Team Size <span className="text-red-500">*</span></label>
+                      <select
+                        value={aiTeamSize}
+                        onChange={(e) => setAiTeamSize(e.target.value)}
+                        className="bp-select w-full"
+                      >
+                        <option value="">Select Size</option>
+                        {["1–10", "11–50", "51–200", "201–500", "500+"].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Annual Revenue Range <span className="text-red-500">*</span></label>
+                      <select
+                        value={aiAnnualRevenue}
+                        onChange={(e) => setAiAnnualRevenue(e.target.value)}
+                        className="bp-select w-full"
+                      >
+                        <option value="">Select Revenue</option>
+                        {["Pre-Revenue", "Less than ₹50 Lakhs", "₹50 Lakhs – ₹5 Crores", "₹5 Crores – ₹50 Crores", "₹50 Crores – ₹500 Crores", "₹500 Crores+"].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-[13px] font-bold text-gray-700">Current Geographic Reach <span className="text-red-500">*</span></label>
+                      <div className="flex flex-wrap gap-4">
+                        {["Local", "Regional", "National", "International"].map(opt => (
+                          <label key={opt} className="flex items-center gap-2 text-sm text-gray-700 font-semibold cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={aiGeographicReach.includes(opt)}
+                              onChange={(e) => {
+                                if (e.target.checked) setAiGeographicReach([...aiGeographicReach, opt]);
+                                else setAiGeographicReach(aiGeographicReach.filter(v => v !== opt));
+                              }}
+                              className="rounded border-gray-300 text-[#DA7756] focus:ring-[#DA7756]"
+                            />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Market Position <span className="text-red-500">*</span></label>
+                      <select
+                        value={aiMarketPosition}
+                        onChange={(e) => setAiMarketPosition(e.target.value)}
+                        className="bp-select w-full"
+                      >
+                        <option value="">Select Position</option>
+                        {["Just Starting Out", "Small Local Business", "Growing Business", "Established Business", "Industry Leader"].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {aiBuilderStage === "questions" && (
                 <div className="space-y-5">
                   <div>
@@ -4795,16 +5080,77 @@ const BusinessPlanAndGoles = () => {
               className="flex flex-wrap items-center justify-between gap-3 border-t p-5"
               style={{ background: C.cardBg, borderColor: C.primaryBord }}
             >
-              {aiBuilderStage === "questions" ? (
+              {aiBuilderStage === "discovery" ? (
+                <>
+                  <BtnOutline onClick={closeAiBuilder}>Cancel</BtnOutline>
+                  <button
+                    disabled={isSubmittingProfile}
+                    onClick={async () => {
+                      if (!aiCompanyName || !aiIndustryCategory || !aiBusinessStage || !aiYearsInOperation || !aiTeamSize || !aiAnnualRevenue || aiGeographicReach.length === 0 || !aiMarketPosition) {
+                        toast.error("Please fill all required fields before proceeding.");
+                        return;
+                      }
+                      if (aiIndustryCategory === "Other" && !aiIndustryOther) {
+                        toast.error("Please specify your industry.");
+                        return;
+                      }
+                      if (aiCompanyWebsite) {
+                        try {
+                          new URL(aiCompanyWebsite);
+                        } catch (_) {
+                          toast.error("Please enter a valid Company Website URL.");
+                          return;
+                        }
+                      }
+                      setIsSubmittingProfile(true);
+                      try {
+                        const baseUrl = (API_CONFIG.BASE_URL || "").replace(/\/$/, "");
+                        const res = await fetch(`${baseUrl}/ai_assist/business_profile`, {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: getAuthHeader(),
+                          },
+                          body: JSON.stringify({
+                            company_name: aiCompanyName,
+                            company_website: aiCompanyWebsite,
+                            industry_category: aiIndustryCategory === "Other" ? aiIndustryOther : aiIndustryCategory,
+                            business_stage: aiBusinessStage,
+                            years_in_operation: aiYearsInOperation,
+                            team_size: aiTeamSize,
+                            annual_revenue_range: aiAnnualRevenue,
+                            geographic_reach: aiGeographicReach.join(", "),
+                            market_position: aiMarketPosition,
+                          }),
+                        });
+                        if (!res.ok) {
+                          const errText = await res.text().catch(() => "");
+                          throw new Error(errText || `Request failed (${res.status})`);
+                        }
+                      } catch (err: any) {
+                        toast.error(err?.message || "Failed to submit business profile.");
+                        setIsSubmittingProfile(false);
+                        return;
+                      }
+                      setIsSubmittingProfile(false);
+                      setAiBuilderStage("questions");
+                    }}
+                    className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ background: "#1a1a1a", fontFamily: C.font }}
+                  >
+                    {isSubmittingProfile ? "Saving..." : "Next"}
+                  </button>
+                </>
+              ) : aiBuilderStage === "questions" ? (
                 <>
                   <BtnOutline
                     onClick={() =>
                       aiQuestionIndex === 0
-                        ? closeAiBuilder()
+                        ? setAiBuilderStage("discovery")
                         : setAiQuestionIndex((idx) => idx - 1)
                     }
                   >
-                    {aiQuestionIndex === 0 ? "Cancel" : "Back"}
+                    Back
                   </BtnOutline>
                   <button
                     onClick={goToNextAiQuestion}

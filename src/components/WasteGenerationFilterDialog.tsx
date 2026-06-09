@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { X } from "lucide-react";
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { 
   fetchCommodities, 
   fetchCategories, 
@@ -52,7 +52,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     disableAutoFocus: true,
     disableEnforceFocus: true,
   };
-  const { toast } = useToast();
+  // using sonner toast directly
   const [filters, setFilters] = useState<Filters>({
     commodity: '',
     category: '',
@@ -143,10 +143,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     console.log('API filters:', apiFilters);
     onApplyFilters(apiFilters);
     
-    toast({
-      title: 'Success',
-      description: 'Filters applied successfully!',
-    });
+    toast.success('Filters applied successfully!');
     onClose();
   };
 
@@ -169,10 +166,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     
     onExport(apiFilters);
     
-    toast({
-      title: 'Success',
-      description: 'Data exported successfully!',
-    });
+    toast.success('Data exported successfully!');
     onClose();
   };
 

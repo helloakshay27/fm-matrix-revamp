@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-// ReportsTab.jsx — Matches screenshot UI exactly
+// ReportsTab.tsx — Enhanced UI
 // ─────────────────────────────────────────────
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -9,13 +9,16 @@ import {
   CheckCircle2,
   TrendingUp,
   Activity,
-  Settings,
+  Settings2,
   ChevronDown,
   ChevronUp,
   ArrowLeft,
   ArrowRight,
   RefreshCw,
   Users,
+  Star,
+  Target,
+  Zap,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -75,7 +78,7 @@ const normalizeReport = (raw) => {
   };
 };
 
-// ── DROPDOWN (pill style matching screenshot) ──
+// ── PILL SELECT ──
 const PillSelect = ({
   value,
   onChange,
@@ -103,7 +106,7 @@ const PillSelect = ({
         onClick={() => !disabled && setOpen(!open)}
         className={cn(
           "flex items-center gap-1.5 bg-white border rounded-full px-4 py-1.5 text-sm font-medium transition-all",
-          open ? "border-gray-400" : "border-gray-200 hover:border-gray-300",
+          open ? "border-[#DA7756] shadow-sm" : "border-gray-200 hover:border-gray-300",
           disabled && "opacity-60 cursor-not-allowed"
         )}
       >
@@ -116,7 +119,7 @@ const PillSelect = ({
       {open && !disabled && (
         <div
           className="absolute top-full left-0 mt-1.5 z-[999] bg-white border border-gray-100 rounded-2xl overflow-hidden min-w-full"
-          style={{ maxHeight: 220, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+          style={{ maxHeight: 220, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.10)" }}
         >
           <div className="py-1.5">
             {options.map((opt) => {
@@ -128,7 +131,7 @@ const PillSelect = ({
                   onClick={() => { onChange(String(opt.value)); setOpen(false); }}
                   className={cn(
                     "w-full text-left px-4 py-2 text-sm transition-colors",
-                    isSelected ? "bg-gray-50 text-gray-900 font-semibold" : "text-gray-700 hover:bg-gray-50"
+                    isSelected ? "bg-orange-50 text-[#DA7756] font-semibold" : "text-gray-700 hover:bg-gray-50"
                   )}
                 >
                   {opt.label}
@@ -194,6 +197,35 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
     }
     return "missed";
   } catch { return "missed"; }
+};
+
+// ── STAT CARD ──
+const StatCard = ({ icon: Icon, iconBg, iconColor, accentColor, label, value, sub }) => (
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+    <div className="h-1 w-full" style={{ background: accentColor }} />
+    <div className="p-4 flex flex-col justify-between flex-1">
+      <div className="flex items-center gap-2 mb-3">
+        <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
+          <Icon className={cn("w-4 h-4", iconColor)} />
+        </div>
+        <span className="text-xs text-gray-500 font-medium leading-snug">{label}</span>
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-gray-900 leading-none mb-1">{value}</div>
+        <div className="text-[11px] text-gray-400 font-medium">{sub}</div>
+      </div>
+    </div>
+  </div>
+);
+
+// ── CHART TOOLTIP ──
+const ChartTooltipStyle = {
+  borderRadius: "12px",
+  border: "1px solid #F3F4F6",
+  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+  fontSize: 12,
+  fontWeight: 600,
+  fontFamily: "'Inter', sans-serif",
 };
 
 // ── MAIN COMPONENT ──
@@ -308,15 +340,12 @@ const ReportsTab = ({
 
   const r = report;
 
-  // calendar date label for header
   const getCalendarDateLabel = () => {
     const baseDate = new Date();
     baseDate.setDate(baseDate.getDate() - weekOffset * 7);
     const end = new Date(baseDate);
-    const start = new Date(baseDate);
-    start.setDate(start.getDate() - 6);
     const fmt = (d) =>
-      d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
     return `Daily Report for ${fmt(end)}`;
   };
 
@@ -326,10 +355,13 @@ const ReportsTab = ({
       {/* ── TOP HEADER ROW ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-            <BarChart2 className="w-5 h-5 text-gray-600" />
+          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+            <BarChart2 className="w-5 h-5 text-[#DA7756]" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">Meetings Report</h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 leading-none">Meetings Report</h2>
+            <p className="text-xs text-gray-400 mt-0.5 font-medium">Analytics & attendance overview</p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -349,9 +381,9 @@ const ReportsTab = ({
           <button
             onClick={() => { loadReport(); loadCalendarWeek(); }}
             disabled={isLoading || isCalendarLoading}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:border-gray-300 transition-all disabled:opacity-40"
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-[#DA7756] hover:border-orange-200 transition-all disabled:opacity-40 shadow-sm"
           >
-            <RefreshCw className={cn("w-3.5 h-3.5", (isLoading || isCalendarLoading) && "animate-spin text-red-500")} />
+            <RefreshCw className={cn("w-3.5 h-3.5", (isLoading || isCalendarLoading) && "animate-spin text-[#DA7756]")} />
           </button>
         </div>
       </div>
@@ -386,8 +418,11 @@ const ReportsTab = ({
 
       {!isLoading && !apiError && !r && (
         <div className="flex flex-col items-center justify-center py-28 border-2 border-dashed border-gray-100 rounded-2xl bg-white">
-          <BarChart2 size={48} className="mb-4 text-gray-200" />
-          <p className="text-sm font-medium text-gray-400">No report data for this period</p>
+          <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
+            <BarChart2 size={28} className="text-[#DA7756]" />
+          </div>
+          <p className="text-sm font-semibold text-gray-500">No report data for this period</p>
+          <p className="text-xs text-gray-400 mt-1">Select a meeting and period to load analytics</p>
         </div>
       )}
 
@@ -398,196 +433,181 @@ const ReportsTab = ({
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-5">
 
             {/* Calendar Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              {/* Header row: label + arrows */}
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-500 font-medium">{getCalendarDateLabel()}</p>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setWeekOffset((prev) => prev + 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-400 hover:text-gray-700 transition-colors"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
-                    disabled={weekOffset === 0}
-                    className={cn(
-                      "w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 bg-white transition-colors",
-                      weekOffset === 0 ? "opacity-30 cursor-not-allowed text-gray-300" : "hover:bg-gray-50 text-gray-400 hover:text-gray-700"
-                    )}
-                  >
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Day cards row */}
-              <div
-                className={cn(
-                  "flex gap-2.5 overflow-x-auto transition-opacity duration-200",
-                  isCalendarLoading ? "opacity-40" : "opacity-100"
-                )}
-                style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
-              >
-                {weeklyStatusData.map((dateItem, i) => {
-                  const status = dateItem.status;
-                  const isToday = weekOffset === 0 && i === weeklyStatusData.length - 1;
-
-                  // Color scheme per status — matching screenshot exactly
-                  let cardStyle = {};
-                  let dayTextColor = "";
-                  let numTextColor = "";
-                  let hasDot = false;
-
-                  if (isToday) {
-                    // White bg, red/orange border outline, red dot top-right
-                    cardStyle = {
-                      background: "#fff",
-                      border: "2px solid #F97316",
-                    };
-                    dayTextColor = "#6B7280";
-                    numTextColor = "#111827";
-                    hasDot = true;
-                  } else if (status === "submitted" || status === "fill" || status === "done") {
-                    // Teal/green bg
-                    cardStyle = {
-                      background: "#CCFBF1",
-                      border: "1.5px solid #99F6E4",
-                    };
-                    dayTextColor = "#0F766E";
-                    numTextColor = "#0F766E";
-                  } else if (status === "missed") {
-                    // Light red bg
-                    cardStyle = {
-                      background: "#FEE2E2",
-                      border: "1.5px solid #FCA5A5",
-                    };
-                    dayTextColor = "#DC2626";
-                    numTextColor = "#DC2626";
-                  } else if (status === "holiday") {
-                    // Light gray bg
-                    cardStyle = {
-                      background: "#F9FAFB",
-                      border: "1.5px solid #E5E7EB",
-                    };
-                    dayTextColor = "#9CA3AF";
-                    numTextColor = "#9CA3AF";
-                  } else {
-                    // Default / unknown
-                    cardStyle = {
-                      background: "#F9FAFB",
-                      border: "1.5px solid #E5E7EB",
-                    };
-                    dayTextColor = "#9CA3AF";
-                    numTextColor = "#9CA3AF";
-                  }
-
-                  return (
-                    <div
-                      key={dateItem.dateStr || i}
-                      className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl relative select-none"
-                      style={{
-                        width: 64,
-                        height: 88,
-                        ...cardStyle,
-                      }}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-5 pt-5 pb-4">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Weekly View</p>
+                    <p className="text-sm font-semibold text-gray-700">{getCalendarDateLabel()}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setWeekOffset((prev) => prev + 1)}
+                      className="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-400 hover:text-gray-700 transition-colors"
                     >
-                      {hasDot && (
-                        <span
-                          className="absolute rounded-full bg-red-500"
-                          style={{ width: 7, height: 7, top: 8, right: 8 }}
-                        />
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
+                      disabled={weekOffset === 0}
+                      className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white transition-colors",
+                        weekOffset === 0 ? "opacity-30 cursor-not-allowed text-gray-300" : "hover:bg-gray-50 hover:border-gray-300 text-gray-400 hover:text-gray-700"
                       )}
-                      <span
-                        className="text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                        style={{ color: dayTextColor }}
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Day cards row */}
+                <div
+                  className={cn(
+                    "flex gap-2 overflow-x-auto pb-1 transition-opacity duration-200",
+                    isCalendarLoading ? "opacity-40" : "opacity-100"
+                  )}
+                  style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
+                >
+                  {weeklyStatusData.map((dateItem, i) => {
+                    const status = dateItem.status;
+                    const isToday = weekOffset === 0 && i === weeklyStatusData.length - 1;
+
+                    let topBarColor = "#E5E7EB";
+                    let cardBg = "#F9FAFB";
+                    let borderColor = "#E5E7EB";
+                    let dayColor = "#9CA3AF";
+                    let numColor = "#9CA3AF";
+                    let hasDot = false;
+
+                    if (isToday) {
+                      topBarColor = "#DA7756";
+                      cardBg = "#fff";
+                      borderColor = "#DA7756";
+                      dayColor = "#6B7280";
+                      numColor = "#111827";
+                      hasDot = true;
+                    } else if (status === "submitted" || status === "fill" || status === "done") {
+                      topBarColor = "#2DD4BF";
+                      cardBg = "#F0FDFA";
+                      borderColor = "#99F6E4";
+                      dayColor = "#0F766E";
+                      numColor = "#0F766E";
+                    } else if (status === "missed") {
+                      topBarColor = "#F87171";
+                      cardBg = "#FFF5F5";
+                      borderColor = "#FCA5A5";
+                      dayColor = "#DC2626";
+                      numColor = "#DC2626";
+                    } else if (status === "holiday") {
+                      topBarColor = "#D1D5DB";
+                      cardBg = "#F9FAFB";
+                      borderColor = "#E5E7EB";
+                      dayColor = "#9CA3AF";
+                      numColor = "#9CA3AF";
+                    }
+
+                    return (
+                      <div
+                        key={dateItem.dateStr || i}
+                        className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl relative select-none overflow-hidden"
+                        style={{
+                          width: 72,
+                          height: 88,
+                          background: cardBg,
+                          border: `1.5px solid ${borderColor}`,
+                        }}
                       >
-                        {dateItem.day}
-                      </span>
-                      <span
-                        className="text-[26px] font-bold leading-none"
-                        style={{ color: numTextColor }}
-                      >
-                        {dateItem.date}
-                      </span>
-                    </div>
-                  );
-                })}
+                        {/* Colored top bar */}
+                        <div
+                          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+                          style={{ background: topBarColor }}
+                        />
+                        {hasDot && (
+                          <span
+                            className="absolute rounded-full"
+                            style={{ width: 7, height: 7, top: 8, right: 8, background: "#DA7756" }}
+                          />
+                        )}
+                        <span
+                          className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 mt-1"
+                          style={{ color: dayColor }}
+                        >
+                          {dateItem.day}
+                        </span>
+                        <span
+                          className="text-[26px] font-bold leading-none"
+                          style={{ color: numColor }}
+                        >
+                          {dateItem.date}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Legend */}
-              <div className="flex items-center gap-5 mt-4 flex-wrap">
-                <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
-                  <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#2DD4BF" }} /> Filled
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
-                  <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#F87171" }} /> Missed
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
-                  <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#D1D5DB" }} /> Holiday
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
-                  <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#FCA5A5" }} /> Upcoming tasks
-                </div>
+              <div className="flex items-center gap-4 flex-wrap px-5 py-3 border-t border-gray-50 bg-gray-50/50">
+                {[
+                  { color: "#2DD4BF", label: "Filled" },
+                  { color: "#F87171", label: "Missed" },
+                  { color: "#D1D5DB", label: "Holiday" },
+                  { color: "#DA7756", label: "Today" },
+                ].map(({ color, label }) => (
+                  <div key={label} className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
+                    <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
+                    {label}
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* KPI Stats 2×2 */}
             <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  icon: Calendar,
-                  label: "Meetings this month",
-                  val: r.meetingsThisMonth ?? 0,
-                  sub: "Calculated from API",
-                  iconColor: "text-gray-500",
-                },
-                {
-                  icon: CheckCircle2,
-                  label: "Attendance rate",
-                  val: `${Number(r.attendanceRate || 0).toFixed(1)} %`,
-                  sub: "Overall attendance",
-                  iconColor: "text-gray-500",
-                },
-                {
-                  icon: TrendingUp,
-                  label: "Average self rating",
-                  val: `${r.avgSelfRating ? Number(r.avgSelfRating).toFixed(1) : "0.0"}/10`,
-                  sub: "Team average",
-                  iconColor: "text-gray-500",
-                },
-                {
-                  icon: Calendar,
-                  label: "Unresolved",
-                  val: r.unresolvedTasks ?? 0,
-                  sub: "Total stuck issues",
-                  iconColor: "text-gray-500",
-                },
-              ].map((metric, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col justify-between shadow-sm"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <metric.icon className={cn("w-4 h-4", metric.iconColor)} />
-                    <span className="text-xs text-gray-500 font-medium leading-snug">{metric.label}</span>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900 leading-none mb-1">
-                      {metric.val}
-                    </div>
-                    <div className="text-[11px] text-gray-400 font-medium">{metric.sub}</div>
-                  </div>
-                </div>
-              ))}
+              <StatCard
+                icon={Calendar}
+                iconBg="bg-blue-50"
+                iconColor="text-blue-500"
+                accentColor="#3B82F6"
+                label="Meetings this month"
+                value={r.meetingsThisMonth ?? 0}
+                sub="Calculated from API"
+              />
+              <StatCard
+                icon={CheckCircle2}
+                iconBg="bg-green-50"
+                iconColor="text-green-500"
+                accentColor="#22C55E"
+                label="Attendance rate"
+                value={`${Number(r.attendanceRate || 0).toFixed(1)} %`}
+                sub="Overall attendance"
+              />
+              <StatCard
+                icon={Star}
+                iconBg="bg-amber-50"
+                iconColor="text-amber-500"
+                accentColor="#F59E0B"
+                label="Average self rating"
+                value={`${r.avgSelfRating ? Number(r.avgSelfRating).toFixed(1) : "0.0"}/10`}
+                sub="Team average"
+              />
+              <StatCard
+                icon={AlertTriangle}
+                iconBg="bg-red-50"
+                iconColor="text-red-500"
+                accentColor="#EF4444"
+                label="Unresolved"
+                value={r.unresolvedTasks ?? 0}
+                sub="Total stuck issues"
+              />
             </div>
           </div>
 
-          {/* ── ROW 2: Meetings + Members filter row ── */}
+          {/* ── ROW 2: Filter bar ── */}
           <div className="flex items-center gap-6 bg-white rounded-2xl border border-gray-100 px-5 py-3 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-600">Meetings</span>
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Meetings</span>
               <PillSelect
                 value={selectedMeetingId}
                 onChange={(val) => setSelectedMeetingId(String(val))}
@@ -596,11 +616,12 @@ const ReportsTab = ({
                 options={dynamicMeetings.map((m) => ({ value: String(m.id), label: m.label }))}
               />
             </div>
+            <div className="w-px h-5 bg-gray-200" />
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-600">Members</span>
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Members</span>
               <PillSelect
                 value=""
-                onChange={() => { }}
+                onChange={() => {}}
                 placeholder="All members"
                 options={[
                   { value: "", label: "All members" },
@@ -614,150 +635,162 @@ const ReportsTab = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
             {/* Attendance Trend */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #22C55E, #4ADE80)" }} />
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">Attendance Trend</p>
+                      <p className="text-[11px] text-gray-400 font-medium">Daily meeting participation</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg">
+                    {r.activityTrend?.length || 0} days
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Attendance Trend</span>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={r.activityTrend || []}>
+                    <defs>
+                      <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22C55E" stopOpacity={0.18} />
+                        <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      dy={8}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 100]}
+                      dx={-8}
+                    />
+                    <Tooltip contentStyle={ChartTooltipStyle} />
+                    <Area
+                      type="monotone"
+                      dataKey="attendance"
+                      stroke="#22C55E"
+                      strokeWidth={2.5}
+                      fill="url(#attendanceGradient)"
+                      dot={{ fill: "#22C55E", r: 4, strokeWidth: 2, stroke: "#fff" }}
+                      activeDot={{ r: 6, fill: "#22C55E" }}
+                      name="Attendance %"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={r.activityTrend || []}>
-                  <defs>
-                    <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                    axisLine={false}
-                    tickLine={false}
-                    dy={8}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 100]}
-                    dx={-8}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "1px solid #F3F4F6",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="attendance"
-                    stroke="#22C55E"
-                    strokeWidth={2.5}
-                    fill="url(#attendanceGradient)"
-                    dot={{ fill: "#22C55E", r: 4, strokeWidth: 2, stroke: "#fff" }}
-                    activeDot={{ r: 6 }}
-                    name="Attendance %"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
             </div>
 
             {/* KPI Achievement */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center">
-                  <Activity className="w-3.5 h-3.5 text-red-500" />
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #EF4444, #F87171)" }} />
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                      <Activity className="w-4 h-4 text-red-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">KPI Achievement</p>
+                      <p className="text-[11px] text-gray-400 font-medium">Performance score over time</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg">
+                    {r.kpiTrend?.length || 0} days
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">KPI Achievement</span>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={r.kpiTrend || []}>
+                    <defs>
+                      <linearGradient id="kpiGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      dy={8}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 100]}
+                      dx={-8}
+                    />
+                    <Tooltip contentStyle={ChartTooltipStyle} />
+                    <Area
+                      type="monotone"
+                      dataKey="kpi"
+                      stroke="#EF4444"
+                      strokeWidth={2.5}
+                      fill="url(#kpiGradient)"
+                      dot={{ fill: "#EF4444", r: 4, strokeWidth: 2, stroke: "#fff" }}
+                      activeDot={{ r: 6, fill: "#EF4444" }}
+                      name="KPI %"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={r.kpiTrend || []}>
-                  <defs>
-                    <linearGradient id="kpiGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.12} />
-                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                    axisLine={false}
-                    tickLine={false}
-                    dy={8}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 100]}
-                    dx={-8}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "1px solid #F3F4F6",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="kpi"
-                    stroke="#EF4444"
-                    strokeWidth={2.5}
-                    fill="url(#kpiGradient)"
-                    dot={{ fill: "#EF4444", r: 4, strokeWidth: 2, stroke: "#fff" }}
-                    activeDot={{ r: 6 }}
-                    name="KPI %"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* ── ROW 4: Issue & KPI Sub Metrics ── */}
+          {/* ── ROW 4: Sub Metric Cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
                 icon: AlertTriangle,
                 iconColor: "text-red-500",
                 iconBg: "bg-red-50",
+                accentColor: "#EF4444",
                 label: "Issue Resolution",
                 value: "0%",
                 sub: "0 Resolved · 0 Open",
               },
               {
-                icon: Activity,
+                icon: Target,
                 iconColor: "text-green-500",
                 iconBg: "bg-green-50",
+                accentColor: "#22C55E",
                 label: "KPI Achievement",
                 value: "0%",
                 sub: "0 total entries",
               },
               {
-                icon: Settings,
+                icon: Zap,
                 iconColor: "text-amber-500",
                 iconBg: "bg-amber-50",
+                accentColor: "#F59E0B",
                 label: "Issue Metrics",
                 value: "0 days",
                 sub: "0 total stuck issues",
               },
-            ].map(({ icon: Icon, iconColor, iconBg, label, value, sub }) => (
-              <div key={label} className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-3 shadow-sm items-center">
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
-                  <Icon className={cn("w-5 h-5", iconColor)} />
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</div>
-                  <div className="text-lg font-bold text-gray-900 leading-none mb-0.5">{value}</div>
-                  <div className="text-[11px] font-medium text-gray-400">{sub}</div>
+            ].map(({ icon: Icon, iconColor, iconBg, accentColor, label, value, sub }) => (
+              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="h-1" style={{ background: accentColor }} />
+                <div className="p-4 flex gap-3 items-center">
+                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
+                    <Icon className={cn("w-5 h-5", iconColor)} />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</div>
+                    <div className="text-lg font-bold text-gray-900 leading-none mb-0.5">{value}</div>
+                    <div className="text-[11px] font-medium text-gray-400">{sub}</div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -765,64 +798,101 @@ const ReportsTab = ({
 
           {/* ── TEAM MEMBER KPIs Accordion ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div
-              className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+            <button
+              type="button"
+              className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left"
               onClick={() => setIsKpiExpanded(!isKpiExpanded)}
             >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">
-                  <Users className="w-3.5 h-3.5 text-gray-500" />
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-[#DA7756]" />
                 </div>
                 <span className="font-bold text-gray-900 text-sm">Team Member KPIs</span>
-                <span className="px-2 py-0.5 rounded-lg bg-gray-900 text-white text-[10px] font-bold">
-                  {r.memberStats?.length || 0} Members
+                <span
+                  className="min-w-[28px] h-6 flex items-center justify-center rounded-full text-white text-xs font-bold px-2"
+                  style={{ background: "#DA7756" }}
+                >
+                  {r.memberStats?.length || 0}
                 </span>
               </div>
-              <div className="w-7 h-7 flex items-center justify-center bg-gray-50 border border-gray-100 rounded-lg">
+              <div className="w-7 h-7 flex items-center justify-center bg-gray-50 border border-gray-100 rounded-xl transition-colors hover:bg-gray-100">
                 {isKpiExpanded ? (
                   <ChevronUp className="w-4 h-4 text-gray-500" />
                 ) : (
                   <ChevronDown className="w-4 h-4 text-gray-500" />
                 )}
               </div>
-            </div>
+            </button>
 
             {isKpiExpanded && (
-              <div className="divide-y divide-gray-50 max-h-[500px] overflow-y-auto p-4 bg-gray-50/50">
+              <div className="border-t border-gray-100">
                 {!r.memberStats || r.memberStats.length === 0 ? (
-                  <div className="p-10 text-center text-sm font-medium text-gray-400">
-                    No Team Members Found
+                  <div className="py-12 flex flex-col items-center justify-center">
+                    <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+                      <Users className="w-5 h-5 text-gray-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-400">No team members found</p>
                   </div>
                 ) : (
-                  r.memberStats.map((member, i) => (
-                    <div key={i} className="p-4 bg-white rounded-xl mb-3 border border-gray-100">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="font-bold text-sm text-gray-900">{member.name || "Unknown Member"}</div>
-                        <span className="px-2.5 py-0.5 bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-gray-100">
-                          {member.kpis?.length || 0} Assigned KPIs
-                        </span>
-                      </div>
-                      {!member.kpis || member.kpis.length === 0 ? (
-                        <div className="text-xs font-medium text-gray-400 italic">No KPIs assigned.</div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                          {member.kpis.map((kpi, kIdx) => (
-                            <div key={kIdx} className="flex justify-between items-center bg-gray-50 border border-gray-100 p-3 rounded-xl">
-                              <div>
-                                <div className="text-sm font-semibold text-gray-900 mb-0.5">{kpi.name}</div>
-                                <div className="text-[11px] font-medium text-gray-400">
-                                  {kpi.entries || 0} entries · {kpi.value || "0.0/0.0"} {kpi.unit}
-                                </div>
-                              </div>
-                              <span className="px-2.5 py-1 bg-red-500 text-white text-[11px] font-bold rounded-lg min-w-[40px] text-center">
-                                {kpi.score || "0%"}
-                              </span>
+                  <div className="p-4 grid grid-cols-1 gap-3 max-h-[520px] overflow-y-auto">
+                    {r.memberStats.map((member, i) => (
+                      <div key={i} className="bg-gray-50/60 rounded-2xl border border-gray-100 p-4">
+                        {/* Member header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
+                              style={{ background: "#DA7756" }}
+                            >
+                              {(member.name || "?").charAt(0).toUpperCase()}
                             </div>
-                          ))}
+                            <span className="font-bold text-sm text-gray-900">{member.name || "Unknown Member"}</span>
+                          </div>
+                          <span className="px-2.5 py-0.5 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold uppercase tracking-widest rounded-lg">
+                            {member.kpis?.length || 0} KPIs
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))
+
+                        {/* KPI items */}
+                        {!member.kpis || member.kpis.length === 0 ? (
+                          <p className="text-xs font-medium text-gray-400 italic pl-1">No KPIs assigned.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {member.kpis.map((kpi, kIdx) => {
+                              const score = parseInt(kpi.score) || 0;
+                              const scoreColor = score >= 75 ? "#22C55E" : score >= 40 ? "#F59E0B" : "#EF4444";
+                              return (
+                                <div
+                                  key={kIdx}
+                                  className="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl"
+                                >
+                                  <div className="flex-1 min-w-0 pr-2">
+                                    <div className="text-sm font-semibold text-gray-900 truncate mb-0.5">{kpi.name}</div>
+                                    <div className="text-[11px] font-medium text-gray-400">
+                                      {kpi.entries || 0} entries · {kpi.value || "0.0/0.0"} {kpi.unit}
+                                    </div>
+                                    {/* Progress bar */}
+                                    <div className="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full transition-all"
+                                        style={{ width: `${Math.min(score, 100)}%`, background: scoreColor }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <span
+                                    className="px-2.5 py-1 text-white text-[11px] font-bold rounded-lg min-w-[44px] text-center shrink-0"
+                                    style={{ background: scoreColor }}
+                                  >
+                                    {kpi.score || "0%"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
