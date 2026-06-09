@@ -114,7 +114,7 @@ const SearchableSelect = ({
           value={open ? search : displayValue}
           onClick={() => {
             setOpen(true);
-            search("");
+            setSearch("");
           }}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -367,10 +367,12 @@ const mergeTasksIssuesPreservingType = (
 };
 
 const getReportTotalScore = (report: any, rawSource: any = null) => {
+  // ✅ FIX: daily_report ko PEHLE check karo, woh actual submitted data hai
   const score =
     report?.daily_report?.report_data?.total_score ??
-    report?.report_data?.total_score ??
+    report?.daily_report?.total_score ??
     rawSource?.total_score ??
+    report?.report_data?.total_score ??
     report?.score;
 
   if (score === null || score === undefined || score === "") return null;
@@ -380,8 +382,9 @@ const getReportTotalScore = (report: any, rawSource: any = null) => {
 
 const isReportAbsent = (report: any, rawSource: any = null, normalized: any = null) =>
   [
-    report?.is_absent,
     report?.daily_report?.is_absent,
+    report?.daily_report?.report_data?.is_absent,
+    report?.is_absent,
     rawSource?.is_absent,
     rawSource?.details?.is_absent,
     rawSource?.sections?.is_absent,
@@ -394,8 +397,9 @@ const getReportAbsentReason = (
   normalized: any = null
 ) =>
   String(
-    report?.absent_reason ??
-      report?.daily_report?.absent_reason ??
+    report?.daily_report?.absent_reason ??
+      report?.daily_report?.report_data?.absent_reason ??
+      report?.absent_reason ??
       rawSource?.absent_reason ??
       rawSource?.details?.absent_reason ??
       rawSource?.sections?.absent_reason ??
@@ -420,14 +424,18 @@ const stripMissedMembersPrefix = (text: string): string => {
   return text;
 };
 
-// ── Resolve the "true" raw source for a report ──
+// ── ✅ FIXED: Resolve the "true" raw source for a report ──
+// Ab yeh function daily_report.report_data ko PRIORITY deta hai
+// kyunki meeting submit hone ke baad actual user data wahan hota hai
 const resolveRawSource = (report: any) => {
-  const rd = report.report_data || {};
+  const topLevelRd = report.report_data || {};
   const draftReport = report.daily_report || {};
   const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
-  const hasReportData = rd && Object.keys(rd).length > 0;
+  const hasTopLevelData = topLevelRd && Object.keys(topLevelRd).length > 0;
+  const hasDraftData = draftRaw && Object.keys(draftRaw).length > 0;
 
+  // Helper: draft raw ko normalize karo
   const normalizeDraftRaw = (raw: any) => ({
     ...raw,
     accomplishments:
@@ -439,7 +447,10 @@ const resolveRawSource = (report: any) => {
       raw.details?.self_rating ??
       raw.sections?.self_rating ??
       null,
-    total_score: raw.total_score ?? null,
+    total_score:
+      raw.total_score ??
+      draftReport.total_score ??
+      null,
     is_absent:
       raw.is_absent ??
       draftReport.is_absent ??
@@ -454,42 +465,60 @@ const resolveRawSource = (report: any) => {
       null,
   });
 
-  if (!hasReportData && hasDraft) {
+  // ✅ CASE 1: Sirf draft hai, top-level nahi → draft use karo
+  if (!hasTopLevelData && hasDraft) {
     return normalizeDraftRaw(draftRaw);
   }
 
+  // ✅ CASE 2: Status pending aur draft hai → draft use karo
   if (report.status === "pending" && hasDraft) {
     return normalizeDraftRaw(draftRaw);
   }
 
-  if (hasReportData && hasDraft) {
+  // ✅ CASE 3: Dono hain (submitted meeting ke baad) →
+  // daily_report.report_data ko PRIORITY do kyunki woh actual user ka data hai
+  // top-level report_data mein meeting-level aggregated data hota hai
+  if (hasDraftData && hasDraft) {
     const normalizedDraft = normalizeDraftRaw(draftRaw);
 
+    // Top-level se sirf woh fields lo jo draft mein nahi hain
     return {
-      ...normalizedDraft,
-      ...rd,
-      tasks_issues: Array.isArray(rd.tasks_issues)
+      ...topLevelRd,        // base fallback
+      ...normalizedDraft,   // ✅ draft OVERRIDE karta hai top-level ko
+      // Arrays: draft data ko primary rakho, top-level se merge karo
+      tasks_issues: Array.isArray(normalizedDraft.tasks_issues) && normalizedDraft.tasks_issues.length > 0
         ? mergeTasksIssuesPreservingType(
-            normalizedDraft.tasks_issues || [],
-            rd.tasks_issues
+            normalizedDraft.tasks_issues,
+            Array.isArray(topLevelRd.tasks_issues) ? topLevelRd.tasks_issues : []
           )
-        : normalizedDraft.tasks_issues || [],
-      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
-        : normalizedDraft.tomorrow_plan || [],
-      accomplishments:
-        rd.accomplishments?.items ||
-        (Array.isArray(rd.accomplishments)
-          ? rd.accomplishments
-          : normalizedDraft.accomplishments || []),
+        : Array.isArray(topLevelRd.tasks_issues)
+          ? topLevelRd.tasks_issues
+          : [],
+      tomorrow_plan: Array.isArray(normalizedDraft.tomorrow_plan) && normalizedDraft.tomorrow_plan.length > 0
+        ? mergeUniqueItems(
+            normalizedDraft.tomorrow_plan,
+            Array.isArray(topLevelRd.tomorrow_plan) ? topLevelRd.tomorrow_plan : []
+          )
+        : Array.isArray(topLevelRd.tomorrow_plan)
+          ? topLevelRd.tomorrow_plan
+          : [],
+      accomplishments: normalizedDraft.accomplishments?.length > 0
+        ? normalizedDraft.accomplishments
+        : (topLevelRd.accomplishments?.items ||
+           (Array.isArray(topLevelRd.accomplishments) ? topLevelRd.accomplishments : [])),
+      // ✅ Scoring fields: daily_report se lo (actual user score)
       self_rating: normalizedDraft.self_rating,
-      total_score: rd.total_score ?? normalizedDraft.total_score,
-      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
-      absent_reason: rd.absent_reason ?? normalizedDraft.absent_reason,
+      total_score: normalizedDraft.total_score ?? topLevelRd.total_score,
+      is_absent: normalizedDraft.is_absent ?? topLevelRd.is_absent,
+      absent_reason: normalizedDraft.absent_reason ?? topLevelRd.absent_reason,
+      // ✅ KPIs/sections: daily_report se lo
+      kpis: (hasDraftData && draftRaw.kpis) ? draftRaw.kpis : topLevelRd.kpis,
+      sections: (hasDraftData && draftRaw.sections) ? draftRaw.sections : topLevelRd.sections,
     };
   }
 
-  return rd;
+  // ✅ CASE 4: Sirf top-level data hai
+  return topLevelRd;
 };
 
 // -────────────────────────────────────────────
@@ -751,9 +780,7 @@ const DailyTab = ({
                 .filter(
                   (m: any) => !absentSubmittedIds.has(String(m.id || m.user_id))
                 )
-                .map(
-                (m: any) => m.name || m.user
-              ),
+                .map((m: any) => m.name || m.user),
             ].filter(Boolean);
             const uniqueMissed = [...new Set(pureMissed)] as string[];
 
@@ -804,7 +831,6 @@ const DailyTab = ({
         const rawList = Array.isArray(data)
           ? data
           : data.data || data.ratings || [];
-        // ── Sort newest first by created_at ──
         const sorted = [...rawList].sort(
           (a: any, b: any) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -833,8 +859,8 @@ const DailyTab = ({
 
     const rawSource = resolveRawSource(report);
     const baseReportData =
-      report.report_data ||
       report.daily_report?.report_data ||
+      report.report_data ||
       rawSource ||
       {};
 
@@ -964,6 +990,7 @@ const DailyTab = ({
       .forEach((report: any) => {
         const rawSource = resolveRawSource(report);
         const source = normalizeReportData(rawSource);
+        // ✅ FIX: sections bhi daily_report se lo
         const draftRaw = report.daily_report?.report_data || {};
         if (isReportAbsent(report, rawSource, source)) return;
 
@@ -995,7 +1022,8 @@ const DailyTab = ({
           ratingCount++;
         }
 
-        const kpis = report.kpis || rawSource.kpis || {};
+        // ✅ FIX: kpis aur sections daily_report se lo
+        const kpis = draftRaw.kpis || rawSource.kpis || report.kpis || {};
         const sections = draftRaw.sections || rawSource.sections || {};
 
         const t = parseInt(sections.tasks_issues ?? kpis.tasks) || 0;
@@ -1080,7 +1108,7 @@ const DailyTab = ({
           false;
 
         return {
-          user_id: report.user_id, // <--- YAHAN USER ID ADD KIYA HAI
+          user_id: report.user_id,
           name: report.name || "Unknown",
           attendance: isAbsent ? "Absent" : "Present",
           self_rating: `${selfRatingVal}/10`,
@@ -1096,6 +1124,7 @@ const DailyTab = ({
       detailed_reports,
     };
   };
+
   // ── Save Meeting (POST) ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
@@ -1948,7 +1977,6 @@ const DailyTab = ({
                       const hasDraft = !!report.daily_report;
                       const isPermanentlyChecked =
                         report.checked_in_meeting === true;
-                      const draftRaw = report.daily_report?.report_data || {};
 
                       const rawDisplayRd = resolveRawSource(report);
                       const displayRd = normalizeReportData(rawDisplayRd);
@@ -1992,20 +2020,20 @@ const DailyTab = ({
                             normalizedReportName
                       );
 
-                      // ── NEW LOGIC FOR SCORING ──
+                      // ✅ FIX: sections aur kpis daily_report se lo
+                      const draftRaw = report.daily_report?.report_data || {};
                       const sections =
                         draftRaw?.sections ||
                         rawDisplayRd?.sections ||
-                        displayRd?.sections ||
                         report?.report_data?.sections ||
                         {};
                       const kpisFallback =
+                        draftRaw?.kpis ||
                         report.kpis ||
-                        report.report_data?.kpis ||
                         rawDisplayRd?.kpis ||
+                        report.report_data?.kpis ||
                         {};
 
-                      // Explicit strict checker to prevent `0` from failing over to fallback values
                       const getScore = (val1: any, val2: any) => {
                         if (val1 !== undefined && val1 !== null && val1 !== "")
                           return Number(val1);
@@ -2038,13 +2066,10 @@ const DailyTab = ({
                       );
                       const timeStr = `${timeAchieved}/20`;
 
-                      const selfRating =
-                        isAbsentReport
-                          ? 0
-                          : rawDisplayRd?.self_rating ??
-                            draftRaw?.details?.self_rating ??
-                            draftRaw?.sections?.self_rating ??
-                            null;
+                      // ✅ FIX: self_rating daily_report se lo
+                      const selfRating = isAbsentReport
+                        ? 0
+                        : rawDisplayRd?.self_rating ?? null;
                       const selfRatingText = formatSelfRating(selfRating);
 
                       const totalScoreValue = getReportTotalScore(
@@ -2701,7 +2726,7 @@ const DailyTab = ({
                                         </div>
                                       </div>
 
-                                      {/* COLUMN 2: Recent Feedbacks — sorted newest first */}
+                                      {/* COLUMN 2: Recent Feedbacks */}
                                       <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
                                         <div className="flex items-center justify-between mb-4">
                                           <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
@@ -2729,7 +2754,6 @@ const DailyTab = ({
                                           </div>
                                         ) : (
                                           <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                            {/* Already sorted newest-first in loadPastFeedbacks */}
                                             {fetchedFeedbacks
                                               .slice(0, 3)
                                               .map((fb: any, idx: number) => (
@@ -2961,11 +2985,8 @@ const DailyTab = ({
                                   Accomplishments
                                 </h4>
                               </div>
-                              <p className="text-xs text-neutral-300 italic">
-                                None recorded.
-                              </p>
+                              <p className="text-xs text-neutral-300 italic">None recorded.</p>
                             </div>
-
                             <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                 <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
@@ -2975,11 +2996,8 @@ const DailyTab = ({
                                   Tasks, Issues & Todos
                                 </h4>
                               </div>
-                              <p className="text-xs text-neutral-300 italic">
-                                None recorded.
-                              </p>
+                              <p className="text-xs text-neutral-300 italic">None recorded.</p>
                             </div>
-
                             <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                 <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
@@ -2989,29 +3007,18 @@ const DailyTab = ({
                                   Tomorrow's Plan
                                 </h4>
                               </div>
-                              <p className="text-xs text-neutral-300 italic">
-                                None recorded.
-                              </p>
+                              <p className="text-xs text-neutral-300 italic">None recorded.</p>
                             </div>
                           </div>
 
                           <div className="flex flex-wrap gap-2 pt-1">
-                            <button
-                              onClick={() => openTaskModalForMember(member)}
-                              className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                            >
+                            <button onClick={() => openTaskModalForMember(member)} className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors">
                               <Plus className="w-3.5 h-3.5" /> Add Task
                             </button>
-                            <button
-                              onClick={() => openIssueModalForMember(member)}
-                              className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
-                            >
+                            <button onClick={() => openIssueModalForMember(member)} className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors">
                               <Plus className="w-3.5 h-3.5" /> Stuck Issue
                             </button>
-                            <button
-                              onClick={() => openTodoModalForMember(member)}
-                              className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
-                            >
+                            <button onClick={() => openTodoModalForMember(member)} className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors">
                               <Plus className="w-3.5 h-3.5" /> Add Todo
                             </button>
                             <button
@@ -3037,40 +3044,20 @@ const DailyTab = ({
                             <div className="border-t border-[#EAE3DF] pt-5 mt-2">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
-                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                    Provide Feedback
-                                  </p>
-                                  <p className="text-sm font-bold text-neutral-800 mb-2">
-                                    Rating (1-5 stars)
-                                  </p>
+                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">Provide Feedback</p>
+                                  <p className="text-sm font-bold text-neutral-800 mb-2">Rating (1-5 stars)</p>
                                   <div className="flex items-center gap-1 mb-4">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                      <button
-                                        key={star}
-                                        type="button"
-                                        onClick={() => setFeedbackRating(star)}
-                                        className="transition-transform hover:scale-110"
-                                      >
-                                        <Star
-                                          className={cn(
-                                            "w-8 h-8",
-                                            star <= feedbackRating
-                                              ? "text-yellow-400 fill-yellow-400"
-                                              : "text-gray-300"
-                                          )}
-                                        />
+                                      <button key={star} type="button" onClick={() => setFeedbackRating(star)} className="transition-transform hover:scale-110">
+                                        <Star className={cn("w-8 h-8", star <= feedbackRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300")} />
                                       </button>
                                     ))}
                                   </div>
-                                  <p className="text-sm font-bold text-neutral-800 mb-2">
-                                    Feedback Message
-                                  </p>
+                                  <p className="text-sm font-bold text-neutral-800 mb-2">Feedback Message</p>
                                   <textarea
                                     autoFocus
                                     value={feedbackMessage}
-                                    onChange={(e) =>
-                                      setFeedbackMessage(e.target.value)
-                                    }
+                                    onChange={(e) => setFeedbackMessage(e.target.value)}
                                     placeholder="Enter constructive feedback..."
                                     rows={3}
                                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
@@ -3078,153 +3065,45 @@ const DailyTab = ({
                                   <div className="flex items-center gap-3 mt-4">
                                     <button
                                       onClick={async () => {
-                                        if (feedbackRating === 0) {
-                                          toast.error(
-                                            "Please select a star rating!"
-                                          );
-                                          return;
-                                        }
-
-                                        const targetUserId =
-                                          member.id || member.user_id;
-                                        if (!targetUserId) {
-                                          toast.error(
-                                            "User ID not found for this member."
-                                          );
-                                          return;
-                                        }
-
+                                        if (feedbackRating === 0) { toast.error("Please select a star rating!"); return; }
+                                        const targetUserId = member.id || member.user_id;
+                                        if (!targetUserId) { toast.error("User ID not found for this member."); return; }
                                         try {
-                                          const loggedInUserId =
-                                            localStorage.getItem("userId") || "";
-                                          const payload = {
-                                            resource_type: "User",
-                                            resource_id: targetUserId,
-                                            rating_from_id: loggedInUserId,
-                                            score: feedbackRating,
-                                            reviews: feedbackMessage,
-                                            positive_opening: "",
-                                            constructive_feedback: "",
-                                            positive_closing: "",
-                                          };
-                                          const res = await fetch(
-                                            `${getBaseUrl()}/ratings`,
-                                            {
-                                              method: "POST",
-                                              headers: {
-                                                ...getAuthHeaders(),
-                                                "Content-Type":
-                                                  "application/json",
-                                              },
-                                              body: JSON.stringify(payload),
-                                            }
-                                          );
-                                          if (!res.ok)
-                                            throw new Error(
-                                              `HTTP ${res.status}`
-                                            );
+                                          const loggedInUserId = localStorage.getItem("userId") || "";
+                                          const payload = { resource_type: "User", resource_id: targetUserId, rating_from_id: loggedInUserId, score: feedbackRating, reviews: feedbackMessage, positive_opening: "", constructive_feedback: "", positive_closing: "" };
+                                          const res = await fetch(`${getBaseUrl()}/ratings`, { method: "POST", headers: { ...getAuthHeaders(), "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                                          if (!res.ok) throw new Error(`HTTP ${res.status}`);
                                           toast.success("Feedback added!");
-                                          setFeedbackOpenId(null);
-                                          setFeedbackRating(0);
-                                          setFeedbackMessage("");
+                                          setFeedbackOpenId(null); setFeedbackRating(0); setFeedbackMessage("");
                                           await loadDailyData(false);
-                                        } catch (err: any) {
-                                          toast.error(
-                                            "Error adding feedback: " +
-                                              err.message
-                                          );
-                                        }
+                                        } catch (err: any) { toast.error("Error adding feedback: " + err.message); }
                                       }}
                                       className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
-                                    >
-                                      Submit Feedback
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setFeedbackOpenId(null);
-                                        setFeedbackRating(0);
-                                        setFeedbackMessage("");
-                                      }}
-                                      className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                    >
-                                      Cancel
-                                    </button>
+                                    >Submit Feedback</button>
+                                    <button onClick={() => { setFeedbackOpenId(null); setFeedbackRating(0); setFeedbackMessage(""); }} className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
                                   </div>
                                 </div>
-
                                 <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
                                   <div className="flex items-center justify-between mb-4">
-                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
-                                      Recent Feedbacks
-                                    </p>
-                                    <button
-                                      onClick={handleFeedback}
-                                      className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
-                                    >
-                                      View All <ChevronRight className="w-3 h-3" />
-                                    </button>
+                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Recent Feedbacks</p>
+                                    <button onClick={handleFeedback} className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1">View All <ChevronRight className="w-3 h-3" /></button>
                                   </div>
-
                                   {isFetchingFeedbacks ? (
-                                    <div className="flex justify-center items-center h-full py-6">
-                                      <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                                    </div>
+                                    <div className="flex justify-center items-center h-full py-6"><Loader2 className="w-6 h-6 animate-spin text-purple-500" /></div>
                                   ) : fetchedFeedbacks.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
-                                      <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
-                                      <span className="text-xs font-medium italic">
-                                        No past feedback found.
-                                      </span>
-                                    </div>
+                                    <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400"><MessageSquare className="w-8 h-8 opacity-20 mb-2" /><span className="text-xs font-medium italic">No past feedback found.</span></div>
                                   ) : (
                                     <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                      {fetchedFeedbacks
-                                        .slice(0, 3)
-                                        .map((fb: any, idx: number) => (
-                                          <div
-                                            key={fb.id ?? idx}
-                                            className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
-                                          >
-                                            <div className="flex items-center gap-1 mb-1.5">
-                                              {[1, 2, 3, 4, 5].map((star) => (
-                                                <Star
-                                                  key={star}
-                                                  className={cn(
-                                                    "w-3 h-3",
-                                                    star <= fb.score
-                                                      ? "text-yellow-400 fill-yellow-400"
-                                                      : "text-gray-200"
-                                                  )}
-                                                />
-                                              ))}
-                                              {fb.created_at && (
-                                                <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
-                                                  {new Date(
-                                                    fb.created_at
-                                                  ).toLocaleDateString("en-IN", {
-                                                    day: "numeric",
-                                                    month: "short",
-                                                    year: "2-digit",
-                                                  })}
-                                                </span>
-                                              )}
-                                            </div>
-                                            {fb.reviews ? (
-                                              <p className="text-xs text-neutral-700 leading-relaxed">
-                                                {fb.reviews}
-                                              </p>
-                                            ) : (
-                                              <p className="text-xs text-neutral-400 italic">
-                                                No review provided.
-                                              </p>
-                                            )}
-                                            {fb.reviewer && (
-                                              <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
-                                                - {fb.reviewer.trim()}
-                                              </p>
-                                            )}
+                                      {fetchedFeedbacks.slice(0, 3).map((fb: any, idx: number) => (
+                                        <div key={fb.id ?? idx} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                          <div className="flex items-center gap-1 mb-1.5">
+                                            {[1, 2, 3, 4, 5].map((star) => (<Star key={star} className={cn("w-3 h-3", star <= fb.score ? "text-yellow-400 fill-yellow-400" : "text-gray-200")} />))}
+                                            {fb.created_at && <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">{new Date(fb.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}</span>}
                                           </div>
-                                        ))}
+                                          {fb.reviews ? <p className="text-xs text-neutral-700 leading-relaxed">{fb.reviews}</p> : <p className="text-xs text-neutral-400 italic">No review provided.</p>}
+                                          {fb.reviewer && <p className="text-[9px] text-neutral-400 mt-1 font-semibold">- {fb.reviewer.trim()}</p>}
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
                                 </div>
@@ -3246,60 +3125,25 @@ const DailyTab = ({
       {isTaskModalOpen &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex">
-            <div
-              className="flex-1 bg-black/40 backdrop-blur-sm"
-              onClick={closeTaskModal}
-            />
-            <div
-              className="relative flex flex-col bg-white shadow-2xl"
-              style={{ width: "min(760px, 95vw)" }}
-            >
+            <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={closeTaskModal} />
+            <div className="relative flex flex-col bg-white shadow-2xl" style={{ width: "min(760px, 95vw)" }}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 shrink-0">
-                <h2 className="text-base font-bold text-neutral-900">
-                  Add Tasks
-                </h2>
-                <button
-                  onClick={closeTaskModal}
-                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500"
-                >
+                <h2 className="text-base font-bold text-neutral-900">Add Tasks</h2>
+                <button onClick={closeTaskModal} className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="h-[3px] bg-[#C72030] w-full shrink-0" />
               <div className="flex-1 overflow-y-auto">
-                <ProjectTaskCreateModal
-                  isEdit={false}
-                  onCloseModal={closeTaskModal}
-                  className="max-w-full mx-0"
-                  prefillData={actionMemberPrefill}
-                  opportunityId={null}
-                  onSuccess={async () => {
-                    closeTaskModal();
-                    await loadDailyData(false);
-                  }}
-                  isConversion={false}
-                />
+                <ProjectTaskCreateModal isEdit={false} onCloseModal={closeTaskModal} className="max-w-full mx-0" prefillData={actionMemberPrefill} opportunityId={null} onSuccess={async () => { closeTaskModal(); await loadDailyData(false); }} isConversion={false} />
               </div>
             </div>
           </div>,
           document.body
         )}
 
-      <AddIssueModal
-        openDialog={isIssueModalOpen}
-        handleCloseDialog={closeIssueModal}
-        preSelectedProjectId={undefined}
-        prefillData={actionMemberPrefill}
-      />
-      <AddToDoModal
-        isModalOpen={isTodoModalOpen}
-        setIsModalOpen={closeTodoModal}
-        getTodos={async () => {
-          closeTodoModal();
-          await loadDailyData(false);
-        }}
-        prefillData={actionMemberPrefill}
-      />
+      <AddIssueModal openDialog={isIssueModalOpen} handleCloseDialog={closeIssueModal} preSelectedProjectId={undefined} prefillData={actionMemberPrefill} />
+      <AddToDoModal isModalOpen={isTodoModalOpen} setIsModalOpen={closeTodoModal} getTodos={async () => { closeTodoModal(); await loadDailyData(false); }} prefillData={actionMemberPrefill} />
     </div>
   );
 };
