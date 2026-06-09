@@ -33,6 +33,16 @@ export interface ProfileAccountResponse {
   avatar?: string;
   profile_photo?: string;
   profile_icon_url?: string;
+  // Additional fields that may be at root level or in extra_fields
+  city?: string;
+  state?: string;
+  pin_code?: string;
+  pincode?: string;
+  zip_code?: string;
+  date_of_joining?: string;
+  anniversary_date?: string;
+  emergency_contact_name?: string;
+  emergency_contact_number?: string;
   extra_fields?: {
     anniversary_date?: string;
     date_of_joining?: string;
@@ -113,11 +123,16 @@ export interface CommonResponse {
 }
 
 export interface ProfileUpdateResponse {
+  verified?: boolean;
+  id?: number;
   firstname?: string;
   lastname?: string;
   email?: string;
   mobile?: string;
+  profile_icon_url?: string;
+  token_type?: string;
   user?: {
+    id?: number;
     firstname?: string;
     lastname?: string;
     email?: string;
@@ -126,6 +141,22 @@ export interface ProfileUpdateResponse {
     user_title?: string;
     birth_date?: string;
     alternate_mobile?: string;
+    organization_id?: number;
+    company_id?: number;
+    avatar_file_name?: string | null;
+    [key: string]: any; // For any extra fields the API might return
+  };
+  lock_role?: any;
+  extra_fields?: {
+    anniversary_date?: string;
+    date_of_joining?: string;
+    emergency_contact_name?: string;
+    emergency_contact_number?: string;
+    city?: string;
+    state?: string;
+    pin_code?: string;
+    pincode?: string;
+    zip_code?: string;
   };
 }
 
@@ -144,13 +175,15 @@ export const userService = {
 
   async updateProfile(data: FormData | any): Promise<ProfileUpdateResponse> {
     try {
+      console.warn("[userService] Updating profile with endpoint: /users/profile_update.json");
       const response = await apiClient.put<ProfileUpdateResponse>(
         "/users/profile_update.json",
         data
       );
+      console.warn("[userService] Profile update response:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("[userService] Error updating profile:", error);
       throw error;
     }
   },

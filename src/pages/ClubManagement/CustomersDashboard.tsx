@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import Input from '@/components/ui/input';
 import axios from 'axios';
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -32,8 +31,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CustomerData {
   id: number;
@@ -43,6 +50,8 @@ interface CustomerData {
   work_phone: string;
   receivables: number;
   unused_credits: number;
+  active?: boolean;
+  status?: string | boolean;
 }
 
 const dummyCustomers: CustomerData[] = [
@@ -55,7 +64,7 @@ const dummyCustomers: CustomerData[] = [
   //   receivables: 0,
   //   unused_credits: 1370,
   // },
-  
+
 ];
 
 
@@ -87,6 +96,9 @@ export const CustomersDashboard = () => {
     endDate: ''
   });
   const [customers, setCustomers] = useState<CustomerData[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDeleteCustomer, setSelectedDeleteCustomer] = useState<CustomerData | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchCustomers = (search = '') => {
     const baseUrl = localStorage.getItem('baseUrl');
@@ -113,14 +125,14 @@ export const CustomersDashboard = () => {
 
   const perPage = 20;
 
-  
- console.log("customers data:", customers)
+
+  console.log("customers data:", customers)
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
 
-//   console.log("journals data:", journals);
+  //   console.log("journals data:", journals);
   // Effect to handle debounced search
   useEffect(() => {
     const currentSearch = filters.search || '';
@@ -139,7 +151,7 @@ export const CustomersDashboard = () => {
   }, [debouncedSearchQuery]);
 
   // Fetch on mount and when dependencies change
- 
+
 
   // Handle export
   const handleExport = async () => {
@@ -449,57 +461,166 @@ export const CustomersDashboard = () => {
     );
   };
 
+  // Handle delete customer
+  const handleDeleteCustomer = async () => {
+    if (!selectedDeleteCustomer) return;
+
+    setDeleteLoading(true);
+
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
+      const url = `https://${baseUrl}/lock_account_customers/${selectedDeleteCustomer.id}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`;
+
+      await axios.delete(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      // Remove deleted customer from table instantly
+      setCustomers((prev) =>
+        prev.filter((c) => c.id !== selectedDeleteCustomer.id)
+      );
+
+      toast.success("Customer deleted successfully");
+
+      setDeleteDialogOpen(false);
+      setSelectedDeleteCustomer(null);
+      // Reload latest customers list
+      fetchCustomers(debouncedSearchQuery);
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete customer");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (customer: CustomerData) => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const url = `https://${baseUrl}/lock_account_customers/${customer.id}/toggle_active.json`;
+
+      const response = await axios.patch(
+        url,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      toast.success(
+        response?.data?.message || "Status updated successfully"
+      );
+
+      // Reload latest customers
+      fetchCustomers(debouncedSearchQuery);
+
+    } catch (error) {
+      console.error("Toggle status error:", error);
+      toast.error("Failed to update status");
+      // Revert on error
+      fetchCustomers(debouncedSearchQuery);
+    }
+  };
+
   // Define columns for EnhancedTable
 
-const columns = [
-     { key: 'actions', label: 'Actions', sortable: false },
-  { key: "name", label: "Name", sortable: true },
-  { key: "company_name", label: "Company Name", sortable: true },
-  { key: "email", label: "Email", sortable: true },
-  { key: "work_phone", label: "Work Phone", sortable: true },
-  { key: "receivables", label: "Receivables (BCY)", sortable: true },
-  { key: "unused_credits", label: "Unused Credits (BCY)", sortable: true },
-];
+  const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
+    { key: "name", label: "Name", sortable: true },
+    { key: "company_name", label: "Company Name", sortable: true },
+    { key: "email", label: "Email", sortable: true },
+    { key: "work_phone", label: "Work Phone", sortable: true },
+    { key: "receivables", label: "Receivables (BCY)", sortable: true },
+    { key: "unused_credits", label: "Unused Credits (BCY)", sortable: true },
+    { key: "active", label: "Status", sortable: false },
+  ];
 
 
 
   // Render cell content
 
   const renderCell = (item: CustomerData, columnKey: string) => {
-  if (columnKey === "actions") {
-    return (
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/accounting/customers/details/${item.id}`)}
-          title="View"
-          className="p-0"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+    if (columnKey === "actions") {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/accounting/customers/details/${item.id}`)}
+            title="View"
+            className="p-0"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
 
-        {/* <Button
-          variant="ghost"
-        //   onClick={() => navigate(`/settings/items/edit`)}
-          title="Edit"
-          className="p-0"
-        >
-          <Edit className="w-4 h-4" />
-        </Button> */}
-      </div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/accounting/customers/edit/${item.id}`)}
+            title="Edit"
+            className="p-0"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            title="Delete"
+            className="p-0 text-red-600 hover:text-red-700"
+            onClick={() => {
+              setSelectedDeleteCustomer(item);
+              setDeleteDialogOpen(true);
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    }
+
+    if (columnKey === "active") {
+    const isActive = !!item.active;
+    return (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleToggleStatus(item)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+              }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"
+                }`}
+            />
+          </button>
+
+          <span
+            className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
+              }`}
+          >
+          </span>
+        </div>
     );
   }
 
-  if (columnKey === "receivables" || columnKey === "unused_credits") {
-    // return `₹${item[columnKey].toLocaleString()}`;
-  }
+    if (columnKey === "receivables" || columnKey === "unused_credits") {
+      // return `₹${item[columnKey].toLocaleString()}`;
+    }
 
-  return item[columnKey as keyof CustomerData] ?? "--";
+    return item[columnKey as keyof CustomerData] ?? "--";
 
- 
-};
 
-  
+  };
+
+
   // Custom left actions
   const renderCustomActions = () => (
     <div className="flex gap-3">
@@ -528,7 +649,7 @@ const columns = [
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-         <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Customers</h1>
       </div>
       {/* Memberships Table */}
@@ -625,6 +746,51 @@ const columns = [
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Customer
+            </AlertDialogTitle>
+
+            <AlertDialogDescription>
+              Once you delete this customer, you won't be able to retrieve them later.
+              Are you sure you want to delete?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteCustomer();
+              }}
+              disabled={deleteLoading}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                border: "none",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#b91c1c";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc2626";
+              }}
+            >
+              {deleteLoading ? "Deleting..." : "OK"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
