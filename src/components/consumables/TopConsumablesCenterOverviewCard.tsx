@@ -69,9 +69,7 @@ const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data, onDownload })
       {headers.length === 0 ? (
         <div className="text-sm text-gray-500">No data</div>
       ) : (
-        <div className="overflow-x-auto -mx-3 sm:mx-0">
-          <div className="min-w-[700px] px-3 sm:px-0">
-            <div className="rounded-xl overflow-hidden border border-gray-200">
+        <div className="rounded-xl overflow-hidden border border-gray-200">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm whitespace-nowrap">
                   <thead>
@@ -116,8 +114,6 @@ const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data, onDownload })
                 </table>
               </div>
             </div>
-          </div>
-        </div>
       )}
       
       {/* Note section */}

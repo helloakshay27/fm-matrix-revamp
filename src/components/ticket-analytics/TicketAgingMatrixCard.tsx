@@ -66,8 +66,9 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
         />
       </div>
 
-      <div className="overflow-x-auto px-4 pt-4 pb-2">
-        <div className="rounded-xl overflow-hidden border border-gray-200" style={{ minWidth: 500 }}>
+      <div className="px-4 pt-4 pb-2">
+        <div className="rounded-xl overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr>
@@ -99,6 +100,7 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
 

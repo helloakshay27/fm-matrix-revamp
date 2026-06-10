@@ -54,8 +54,9 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto px-1 pb-4">
+        <div className="px-1 pb-4">
           <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr>
@@ -100,6 +101,7 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
               )}
             </tbody>
           </table>
+          </div>
           </div>
         </div>
         <div className="p-3 rounded-md">
