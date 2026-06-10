@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import {
@@ -136,6 +136,9 @@ export const ViewOccupantUserPage = () => {
 
   const [attendanceData, setAttendanceData] = useState([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const currentPage = Number(searchParams.get("page")) || 1;
   const [paginationData, setPaginationData] = useState({
     current_page: 1,
     total_count: 0,
@@ -203,9 +206,15 @@ export const ViewOccupantUserPage = () => {
       return;
     }
     if (id && baseUrl && token) {
-      fetchAttendance(1);
+      fetchAttendance(currentPage);
     }
-  }, [id, baseUrl, token, isRestrictedUser, navigate]);
+  }, [id, baseUrl, token, isRestrictedUser, navigate, currentPage]);
+
+  useEffect(() => {
+    if (id && baseUrl && token) {
+      fetchAttendance(currentPage);
+    }
+  }, [currentPage, id, baseUrl, token]);
 
   useEffect(() => {
     dispatch(fetchEntities());
@@ -332,7 +341,10 @@ export const ViewOccupantUserPage = () => {
     }
 
     try {
-      await fetchAttendance(page);
+      // await fetchAttendance(page);
+      setSearchParams({
+        page: String(page),
+      });
     } catch (error) {
       console.error("Error changing page:", error);
       toast.error("Failed to load page data. Please try again.");

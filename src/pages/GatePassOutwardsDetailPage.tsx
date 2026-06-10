@@ -155,7 +155,7 @@ export const GatePassOutwardsDetailPage = () => {
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Entry Not Found</h1>
         <button
-          onClick={() => navigate('/security/gate-pass/outwards')}
+          onClick={() =>navigate(-1)}
           className="flex items-center gap-1 hover:text-gray-800"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -351,7 +351,7 @@ export const GatePassOutwardsDetailPage = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate('/security/gate-pass/outwards')}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />

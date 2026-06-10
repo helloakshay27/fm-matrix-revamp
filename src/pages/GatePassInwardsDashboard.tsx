@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Filter, Eye, Plus, Flag, Upload, Download, FileText, FileSpreadsheet, File } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
@@ -41,6 +41,7 @@ const API_BASE_URL = API_CONFIG.BASE_URL;
 
 export const GatePassInwardsDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [inwardData, setInwardData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +64,10 @@ export const GatePassInwardsDashboard = () => {
     visitorContact: '',
     buildingId: '',
   });
-  const [currentPage, setCurrentPage] = useState(1);
+ const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
@@ -89,6 +93,10 @@ export const GatePassInwardsDashboard = () => {
   // useEffect(() => {
   //   localStorage.setItem('gatePassHandoverData', JSON.stringify(handoverData));
   // }, [handoverData]);
+
+useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
 
   // Helper to build query params from filters
   const buildQueryParams = () => {
@@ -521,18 +529,25 @@ export const GatePassInwardsDashboard = () => {
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => {
-                    if (currentPage > 1) setCurrentPage(currentPage - 1);
+                    if (currentPage > 1) {
+                      const newPage = currentPage - 1;
+                      setCurrentPage(newPage);
+                      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
+                    }
                   }}
                   className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
-              {Array.from(
+             {Array.from(
                 { length: Math.min(totalPages, 10) },
                 (_, i) => i + 1
               ).map((page) => (
                 <PaginationItem key={page}>
                   <PaginationLink
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => {
+                      setCurrentPage(page);
+                      navigate(`${location.pathname}?page=${page}`, { replace: true });
+                    }}
                     isActive={currentPage === page}
                   >
                     {page}
@@ -545,9 +560,13 @@ export const GatePassInwardsDashboard = () => {
                 </PaginationItem>
               )}
               <PaginationItem>
-                <PaginationNext
+               <PaginationNext
                   onClick={() => {
-                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                    if (currentPage < totalPages) {
+                      const newPage = currentPage + 1;
+                      setCurrentPage(newPage);
+                      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
+                    }
                   }}
                   className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                 />

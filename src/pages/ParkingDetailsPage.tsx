@@ -63,7 +63,7 @@ const ParkingDetailsPage = () => {
   }, [clientId]);
 
   const handleBack = () => {
-    navigate('/vas/parking');
+    navigate(-1);
   };
 
   // Expandable Section Component (similar to TicketDetailsPage)

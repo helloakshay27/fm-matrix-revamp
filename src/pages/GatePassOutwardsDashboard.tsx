@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation} from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Filter, Eye, Plus, Flag } from 'lucide-react';
 import { GatePassOutwardsFilterModal } from '@/components/GatePassOutwardsFilterModal';
@@ -44,13 +44,17 @@ export const GatePassOutwardsDashboard = () => {
     buildingId: '',
     goodsType: '',
   });
-  const [currentPage, setCurrentPage] = useState(1);
+const [currentPage, setCurrentPage] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return Number(params.get('page')) || 1;
+});
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const pageSize = 10;
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Helper to build query params from filters
   const buildQueryParams = () => {
@@ -75,6 +79,12 @@ export const GatePassOutwardsDashboard = () => {
     params['q[gate_pass_category_eq]'] = 'outward';
     return params;
   };
+
+useEffect(() => {
+  navigate(`${location.pathname}?page=${currentPage}`, {
+    replace: true,
+  });
+}, [currentPage]);
 
   // Fetch data with filters and pagination
   useEffect(() => {
@@ -101,8 +111,10 @@ export const GatePassOutwardsDashboard = () => {
   }, [filters, currentPage]);
 
   const handleViewDetails = (id: string) => {
-    navigate(`/security/gate-pass/outwards/${id}`);
-  };
+  navigate(
+    `/security/gate-pass/outwards/${id}?page=${currentPage}`
+  );
+};
 
   const handleAddOutward = () => {
     navigate('/security/gate-pass/outwards/add');

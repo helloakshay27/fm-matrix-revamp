@@ -186,7 +186,7 @@ export const GatePassInwardsDetailPage = () => {
       <div className="p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Entry Not Found</h1>
-          <Button onClick={() => navigate('/security/gate-pass/inwards')}>
+          <Button onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Inward List
           </Button>
@@ -390,7 +390,7 @@ export const GatePassInwardsDetailPage = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate('/security/gate-pass/inwards')}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />

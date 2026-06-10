@@ -178,7 +178,7 @@ export const SpaceManagementBookingDetailsPage = () => {
       } catch (error) {
         console.error('❌ Error fetching booking details:', error);
         toast.error('Failed to load booking details');
-        navigate('/employee/space-management/bookings');
+        navigate(-1);
       } finally {
         setLoading(false);
       }
@@ -217,9 +217,9 @@ export const SpaceManagementBookingDetailsPage = () => {
             style={{ color: '#6B7280' }}
             onMouseEnter={(e) => e.currentTarget.style.color = '#C72030'}
             onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
-            onClick={() => navigate('/employee/space-management/bookings')}
+            onClick={() => navigate(-1)}
           >
-            Seat Booking List
+            Seat Booking List 
           </span>
           <span>&gt;</span>
           <span>Booking Details</span>
@@ -231,7 +231,7 @@ export const SpaceManagementBookingDetailsPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/employee/space-management/bookings')}
+              onClick={() => navigate(-1)}
               className="hover:bg-gray-100"
               style={{ color: '#1A1A1A' }}
             >
@@ -461,7 +461,7 @@ export const SpaceManagementBookingDetailsPage = () => {
               borderColor: '#D1D5DB',
               color: '#1A1A1A'
             }}
-            onClick={() => navigate('/employee/space-management/bookings')}
+            onClick={() => navigate(-1)}
           >
             Back to List
           </Button>

@@ -332,7 +332,7 @@ export const InboundDetailPage = () => {
     }, [isCollectModalOpen, fetchCollectEmployees]);
 
     const handleBackToList = () => {
-        navigate('/vas/mailroom/inbound');
+        navigate(-1);
     };
 
     const handleAddAttachments = () => {
