@@ -64,7 +64,7 @@ const getBaseApiDomain = (): string => {
   }
 
   // Default to live API for all other cases
-  return 'https://live-api.lockated.com';
+  return 'https://live-api.gophygital.work';
 };
 
 /**
