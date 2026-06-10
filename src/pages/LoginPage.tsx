@@ -250,9 +250,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setOrganizations(orgs);
       setOrgsFetched(true);
       setLastFetchedEmail(emailValue);
-      if (orgs.length === 1) {
-        handleOrganizationSelect(orgs[0]);
-      } else if (orgs.length === 0) {
+      if (orgs.length === 0) {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
@@ -628,7 +626,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       )}
 
       {/* Org selection list */}
-      {orgsFetched && !isLoading && organizations.length > 1 && !selectedOrganization && (
+      {orgsFetched && !isLoading && organizations.length >= 1 && !selectedOrganization && (
         <div className="mb-4">
           <p className="text-gray-500 text-sm mb-2">Select your organization to continue:</p>
           <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar">
@@ -669,11 +667,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             type="button"
             onClick={() => {
               setSelectedOrganization(null);
-              if (organizations.length <= 1) {
-                setOrgsFetched(false);
-                setOrganizations([]);
-                setLastFetchedEmail("");
-              }
             }}
             className="text-xs text-[#C72030] hover:underline font-medium ml-2"
           >
