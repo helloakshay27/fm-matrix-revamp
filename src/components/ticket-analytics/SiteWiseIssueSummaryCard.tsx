@@ -63,9 +63,8 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
         {buildings.length === 0 ? (
           <div className="text-center text-gray-500 py-8 text-sm">No data available</div>
         ) : (
-          <div className="overflow-x-auto -mx-3 sm:mx-0">
-            <div className="px-3 sm:px-0" style={{ minWidth: `${600 + allCategories.length * 140}px` }}>
-              <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="rounded-xl overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
               <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                 <thead>
                   {/* Top header row */}
@@ -125,7 +124,6 @@ export const SiteWiseIssueSummaryCard: React.FC<SiteWiseIssueSummaryCardProps> =
                 </tbody>
               </table>
               </div>
-            </div>
           </div>
         )}
       </div>

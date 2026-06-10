@@ -94,8 +94,9 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto px-1 pb-4">
+        <div className="px-1 pb-4">
           <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr>
@@ -179,6 +180,7 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
               )}
             </tbody>
           </table>
+          </div>
           </div>
         </div>
         <div className="p-3 rounded-md">

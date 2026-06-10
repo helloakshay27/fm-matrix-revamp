@@ -85,7 +85,8 @@ const AmcContractSummaryCard: React.FC<Props> = ({ data, onDownload }) => {
 
       {/* Contracts table */}
       {contracts.length > 0 && (
-        <div className="overflow-x-auto">
+        <div className="rounded-xl overflow-hidden border border-gray-200 mx-5 mb-5">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr style={{ backgroundColor: '#4DB6AC' }}>
@@ -120,6 +121,7 @@ const AmcContractSummaryCard: React.FC<Props> = ({ data, onDownload }) => {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

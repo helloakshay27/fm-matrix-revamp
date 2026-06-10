@@ -4367,11 +4367,11 @@ export const Dashboard = () => {
                     Export
                   </button> */}
                 </div>
-                <div className="overflow-x-auto">
-                  {rcaRows.length === 0 ? (
+                {rcaRows.length === 0 ? (
                     <div className="py-12 text-center text-sm text-gray-400">No RCA data found.</div>
                   ) : (
                     <div className="rounded-xl overflow-hidden border border-gray-200 mx-4 mb-4 mt-2">
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr>
@@ -4413,8 +4413,8 @@ export const Dashboard = () => {
                       </tbody>
                     </table>
                     </div>
+                    </div>
                   )}
-                </div>
                 {rcaRows.length > 20 && (
                   <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-400 text-center">
                     Showing first 20 of {rcaRows.length} records — export for full data
