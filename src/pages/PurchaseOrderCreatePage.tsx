@@ -425,7 +425,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             setLoadingItems(true);
             try {
                 const response = await axios.get(
-                    `https://${baseUrl}/lock_account_items.json?lock_account_id=${lockAccountId}&q[can_be_purchase_eq]=1&active=true`,
+                    `https://${baseUrl}/lock_account_items/select_list.json?lock_account_id=${lockAccountId}&q[can_be_purchase_eq]=1&active=true`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
