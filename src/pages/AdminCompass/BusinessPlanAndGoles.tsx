@@ -1818,8 +1818,8 @@ interface KPI {
 type AiBuilderStage = "discovery" | "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
-  { 
-    key: "purpose", 
+  {
+    key: "purpose",
     label: "Q1: Why does your company exist?",
     placeholder: "Describe the purpose of your business, the problem you solve, who you serve, and the impact you aim to create"
   },
@@ -3229,11 +3229,11 @@ const BusinessPlanAndGoles = () => {
         }
 
         // Attempt to find the newly generated image URL in the response
-        const newImageUrl = 
-          json?.image_url || 
-          json?.url || 
-          json?.data?.image_url || 
-          json?.data?.url || 
+        const newImageUrl =
+          json?.image_url ||
+          json?.url ||
+          json?.data?.image_url ||
+          json?.data?.url ||
           (typeof json?.data === 'string' && json.data.startsWith('http') ? json.data : null);
 
         if (newImageUrl && typeof newImageUrl === 'string') {
@@ -3241,7 +3241,7 @@ const BusinessPlanAndGoles = () => {
             const latestMedia = await fetchOverviewMediaFromApi().catch(() => null);
             const existingImages = latestMedia?.images || overviewImages || [];
             const existingUrls = existingImages.map((item: any) => item.url);
-            
+
             if (!existingUrls.includes(newImageUrl)) {
               // Add the new image URL and save
               const updated = Array.from(new Set([...existingUrls, newImageUrl]));
@@ -4139,7 +4139,7 @@ const BusinessPlanAndGoles = () => {
                   </div>
                 )}
 
-                   {addContentTab === "Business Plan" && (
+                {addContentTab === "Business Plan" && (
                   <div>
                     {/* ── Strategic Essentials ── */}
                     <div className="rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
@@ -4626,7 +4626,7 @@ const BusinessPlanAndGoles = () => {
                   </div>
                 )}
 
-             
+
               </div>
             )}
           </div>
@@ -5097,7 +5097,7 @@ const BusinessPlanAndGoles = () => {
                             )}
                           </div>
                         )}
-                          {(["strengths", "weaknesses", "opportunities", "threats"] as const).some(
+                      {(["strengths", "weaknesses", "opportunities", "threats"] as const).some(
                         (key) => Array.isArray(aiPlanDisplay[key]) && aiPlanDisplay[key].length > 0
                       ) &&
                         renderAiPlanSection(
@@ -5143,7 +5143,7 @@ const BusinessPlanAndGoles = () => {
                           </div>
                         )}
 
-                    
+
                     </div>
                   ) : (
                     <pre
@@ -5713,19 +5713,18 @@ const BusinessPlanAndGoles = () => {
                 <button
                   onClick={() => {
                     setShowGenerateVisionBoardConfirm(false);
-                    openAiBuilder();
+                    setAddContentTab("Business Plan");
+                    // openAiBuilder();
                   }}
                   className="w-full rounded-xl border py-3 text-[13px] font-bold transition-all hover:bg-gray-50 active:scale-[0.98]"
                   style={{ borderColor: C.primaryBord, color: C.textMain }}
                 >
                   Review / Edit Business Plan
                 </button>
-                <button
-                  onClick={() => setShowGenerateVisionBoardConfirm(false)}
-                  className="w-full rounded-xl py-2 text-[13px] font-bold text-gray-500 transition-all hover:text-gray-700 active:scale-[0.98]"
+                {/* <button
                 >
                   Cancel
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
