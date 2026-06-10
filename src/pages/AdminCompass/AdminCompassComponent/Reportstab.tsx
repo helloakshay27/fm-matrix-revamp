@@ -66,9 +66,9 @@ const normalizeReport = (raw) => {
     unresolvedTasks: data.unresolved_tasks ?? 0,
     activityTrend: validActivityTrend
       ? data.activity_trend.map((d) => ({
-        date: d.date,
-        attendance: d.count || 0,
-      }))
+          date: d.date,
+          attendance: d.count || 0,
+        }))
       : generateEmptyTrendForReport(endDate, 7),
     kpiTrend: validKpiTrend
       ? data.kpi_trend.map((d) => ({ date: d.date, kpi: d.avg_score || 0 }))
@@ -202,7 +202,6 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
 // ── STAT CARD ──
 const StatCard = ({ icon: Icon, iconBg, iconColor, accentColor, label, value, sub }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-    <div className="h-1 w-full" style={{ background: accentColor }} />
     <div className="p-4 flex flex-col justify-between flex-1">
       <div className="flex items-center gap-2 mb-3">
         <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
@@ -228,11 +227,16 @@ const ChartTooltipStyle = {
   fontFamily: "'Inter', sans-serif",
 };
 
+type ReportsTabProps = {
+  selectedMeetingId?: string;
+  onSelectedMeetingChange?: (meetingId: string) => void;
+};
+
 // ── MAIN COMPONENT ──
 const ReportsTab = ({
   selectedMeetingId: externalSelectedMeetingId,
   onSelectedMeetingChange,
-} = {}) => {
+}: ReportsTabProps = {}) => {
   const [dynamicMeetings, setDynamicMeetings] = useState([]);
   const [selectedMeetingId, setSelectedMeetingIdState] = useState(externalSelectedMeetingId || "");
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
@@ -246,6 +250,7 @@ const ReportsTab = ({
   const [weekOffset, setWeekOffset] = useState(0);
   const [weeklyStatusData, setWeeklyStatusData] = useState([]);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
+  const [activeDate, setActiveDate] = useState("");
 
   useEffect(() => {
     if (!externalSelectedMeetingId) return;
@@ -314,9 +319,11 @@ const ReportsTab = ({
         const month = String(d.getMonth() + 1).padStart(2, "0");
         const day = String(d.getDate()).padStart(2, "0");
         const dateStr = `${year}-${month}-${day}`;
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
         const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
         const dateNum = d.getDate().toString();
-        daysToFetch.push({ day: dayName, date: dateNum, dateStr, isWeekend: dayName === "Sat" || dayName === "Sun" });
+        daysToFetch.push({ day: dayName, date: dateNum, dateStr, full_date: dateStr, isWeekend: dayName === "Sat" || dayName === "Sun", is_today: dateStr === todayStr });
       }
 
       const weekResults = await Promise.all(
@@ -326,7 +333,12 @@ const ReportsTab = ({
           return { ...dayObj, status };
         })
       );
-      setWeeklyStatusData(weekResults);
+      // ensure we always have 7 entries
+      if (!weekResults || weekResults.length !== 7) {
+        setWeeklyStatusData(daysToFetch.map(d => ({ ...d, status: d.isWeekend ? 'holiday' : 'missed' })));
+      } else {
+        setWeeklyStatusData(weekResults);
+      }
     } catch (err) {
       console.error(err);
       setWeeklyStatusData([]);
@@ -337,6 +349,13 @@ const ReportsTab = ({
 
   useEffect(() => { loadReport(); }, [loadReport]);
   useEffect(() => { loadCalendarWeek(); }, [loadCalendarWeek]);
+
+  useEffect(() => {
+    if (weeklyStatusData && weeklyStatusData.length > 0) {
+      const last = weeklyStatusData[weeklyStatusData.length - 1];
+      setActiveDate((cur) => cur || last.full_date || last.dateStr || "");
+    }
+  }, [weeklyStatusData]);
 
   const r = report;
 
@@ -461,7 +480,7 @@ const ReportsTab = ({
                   </div>
                 </div>
 
-                {/* Day cards row */}
+                {/* Day cards row (DailyTab-style) */}
                 <div
                   className={cn(
                     "flex gap-2 overflow-x-auto pb-1 transition-opacity duration-200",
@@ -470,76 +489,77 @@ const ReportsTab = ({
                   style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
                 >
                   {weeklyStatusData.map((dateItem, i) => {
-                    const status = dateItem.status;
-                    const isToday = weekOffset === 0 && i === weeklyStatusData.length - 1;
+                    const rStatus = dateItem.status;
+                    const isSelected = (dateItem.full_date || dateItem.dateStr) === activeDate;
+                    const isUpcoming = rStatus === "upcoming";
 
-                    let topBarColor = "#E5E7EB";
-                    let cardBg = "#F9FAFB";
-                    let borderColor = "#E5E7EB";
-                    let dayColor = "#9CA3AF";
-                    let numColor = "#9CA3AF";
-                    let hasDot = false;
+                    if (isUpcoming) {
+                      return (
+                        <div
+                          key={dateItem.full_date || dateItem.dateStr || i}
+                          className="min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-not-allowed transition-all shrink-0 snap-center relative overflow-hidden opacity-60"
+                          style={{
+                            background: "#F5F5F5",
+                            border: "1.5px solid transparent",
+                          }}
+                          title="Upcoming – not selectable"
+                        >
+                          <span className="text-[11px] font-semibold text-gray-400 mt-2">{dateItem.day}</span>
+                          <span className="text-[22px] font-black text-gray-400 leading-tight">{dateItem.date}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5 text-gray-400 bg-gray-100">Upcoming</span>
+                        </div>
+                      );
+                    }
 
-                    if (isToday) {
-                      topBarColor = "#DA7756";
-                      cardBg = "#fff";
-                      borderColor = "#DA7756";
-                      dayColor = "#6B7280";
-                      numColor = "#111827";
-                      hasDot = true;
-                    } else if (status === "submitted" || status === "fill" || status === "done") {
-                      topBarColor = "#2DD4BF";
-                      cardBg = "#F0FDFA";
-                      borderColor = "#99F6E4";
-                      dayColor = "#0F766E";
-                      numColor = "#0F766E";
-                    } else if (status === "missed") {
-                      topBarColor = "#F87171";
-                      cardBg = "#FFF5F5";
-                      borderColor = "#FCA5A5";
-                      dayColor = "#DC2626";
-                      numColor = "#DC2626";
-                    } else if (status === "holiday") {
+                    const isHoliday = rStatus === "holiday" || rStatus === "non_meeting";
+                    const isFilled = rStatus === "done" || rStatus === "submitted" || rStatus === "fill";
+                    const isMissed = rStatus === "missed";
+
+                    // top bar color (BusinessCompass style)
+                    let topBarColor = "transparent";
+                    let displayLabel = "Holiday";
+                    if (isFilled) {
+                      topBarColor = "#61CDBB";
+                      displayLabel = "Filled";
+                    } else if (isMissed) {
+                      topBarColor = "#E28B8B";
+                      displayLabel = "Miss";
+                    } else if (isHoliday) {
                       topBarColor = "#D1D5DB";
-                      cardBg = "#F9FAFB";
-                      borderColor = "#E5E7EB";
-                      dayColor = "#9CA3AF";
-                      numColor = "#9CA3AF";
+                      displayLabel = "Holiday";
                     }
 
                     return (
                       <div
-                        key={dateItem.dateStr || i}
-                        className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl relative select-none overflow-hidden"
-                        style={{
-                          width: 72,
-                          height: 88,
-                          background: cardBg,
-                          border: `1.5px solid ${borderColor}`,
-                        }}
-                      >
-                        {/* Colored top bar */}
-                        <div
-                          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
-                          style={{ background: topBarColor }}
-                        />
-                        {hasDot && (
-                          <span
-                            className="absolute rounded-full"
-                            style={{ width: 7, height: 7, top: 8, right: 8, background: "#DA7756" }}
-                          />
+                        key={dateItem.full_date || dateItem.dateStr || i}
+                        onClick={isHoliday ? undefined : () => setActiveDate(dateItem.full_date || dateItem.dateStr)}
+                        className={cn(
+                          "min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all shrink-0 snap-center relative overflow-hidden",
+                          isHoliday ? "cursor-not-allowed opacity-70" : "cursor-pointer"
                         )}
+                        style={{
+                          background: isSelected ? "#FFFFFF" : "#F5F5F5",
+                          border: isSelected ? "1.5px solid #DA7756" : "1.5px solid transparent",
+                          boxShadow: isSelected ? "0 2px 8px rgba(218,119,86,0.18)" : "none",
+                        }}
+                        title={isHoliday ? "Holiday – not selectable" : undefined}
+                      >
+                        {topBarColor !== "transparent" && (
+                          <div className="absolute top-0 left-0 right-0 h-[5px] rounded-t-xl" style={{ backgroundColor: topBarColor }} />
+                        )}
+                        {dateItem.is_today && !isSelected && (
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-[#DA7756] rounded-full" />
+                        )}
+                        <span className="text-[11px] font-semibold text-gray-500 mt-2">{dateItem.day}</span>
+                        <span className="text-[22px] font-black text-gray-800 leading-tight">{dateItem.date}</span>
                         <span
-                          className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 mt-1"
-                          style={{ color: dayColor }}
+                          className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5"
+                          style={{
+                            color: isFilled ? "#0f9e7b" : isMissed ? "#c0392b" : isHoliday ? "#6b7280" : "#94a3b8",
+                            background: isFilled ? "#e6faf6" : isMissed ? "#fce8e8" : isHoliday ? "#f1f5f9" : "#f1f5f9",
+                          }}
                         >
-                          {dateItem.day}
-                        </span>
-                        <span
-                          className="text-[26px] font-bold leading-none"
-                          style={{ color: numColor }}
-                        >
-                          {dateItem.date}
+                          {displayLabel}
                         </span>
                       </div>
                     );
@@ -604,39 +624,11 @@ const ReportsTab = ({
             </div>
           </div>
 
-          {/* ── ROW 2: Filter bar ── */}
-          <div className="flex items-center gap-6 bg-white rounded-2xl border border-gray-100 px-5 py-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Meetings</span>
-              <PillSelect
-                value={selectedMeetingId}
-                onChange={(val) => setSelectedMeetingId(String(val))}
-                disabled={isFetchingMeetings}
-                placeholder="Select Meeting"
-                options={dynamicMeetings.map((m) => ({ value: String(m.id), label: m.label }))}
-              />
-            </div>
-            <div className="w-px h-5 bg-gray-200" />
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Members</span>
-              <PillSelect
-                value=""
-                onChange={() => {}}
-                placeholder="All members"
-                options={[
-                  { value: "", label: "All members" },
-                  ...(r.memberStats || []).map((m, i) => ({ value: String(i), label: m.name || `Member ${i + 1}` })),
-                ]}
-              />
-            </div>
-          </div>
-
           {/* ── ROW 3: Charts ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
             {/* Attendance Trend */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #22C55E, #4ADE80)" }} />
               <div className="p-5">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2.5">
@@ -693,7 +685,6 @@ const ReportsTab = ({
 
             {/* KPI Achievement */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #EF4444, #F87171)" }} />
               <div className="p-5">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2.5">
@@ -780,16 +771,22 @@ const ReportsTab = ({
                 sub: "0 total stuck issues",
               },
             ].map(({ icon: Icon, iconColor, iconBg, accentColor, label, value, sub }) => (
-              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="h-1" style={{ background: accentColor }} />
-                <div className="p-4 flex gap-3 items-center">
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
-                    <Icon className={cn("w-5 h-5", iconColor)} />
+              <div
+                key={label}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[118px]"
+              >
+                <div className="h-full p-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center justify-center gap-1.5 mb-3">
+                    <Icon className="w-3.5 h-3.5 text-gray-500" />
+                    <span className="text-[12px] font-medium text-gray-800 leading-none">
+                      {label}
+                    </span>
                   </div>
-                  <div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</div>
-                    <div className="text-lg font-bold text-gray-900 leading-none mb-0.5">{value}</div>
-                    <div className="text-[11px] font-medium text-gray-400">{sub}</div>
+                  <div className="text-[26px] font-semibold text-gray-900 leading-none mb-3">
+                    {value}
+                  </div>
+                  <div className="text-[11px] font-medium text-gray-500 leading-none">
+                    {sub}
                   </div>
                 </div>
               </div>

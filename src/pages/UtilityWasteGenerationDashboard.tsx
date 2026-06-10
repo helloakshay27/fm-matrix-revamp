@@ -60,15 +60,9 @@ const WasteCategoryChart: React.FC<WasteChartProps> = ({ data, isLoading, onDown
     if (!active || !payload?.length) return null;
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[160px]">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <p className="font-semibold text-gray-800 truncate max-w-[120px]">{label}</p>
-          <button
-            className="text-[#C72030] hover:underline text-xs flex items-center gap-1 shrink-0"
-            onClick={() => onEye(label ?? '')}
-          >
-            <Eye className="w-3 h-3" /> View
-          </button>
-        </div>
+          <div className="flex items-center gap-4 mb-2">
+            <p className="font-semibold text-gray-800 truncate max-w-[160px]">{label}</p>
+          </div>
         {payload.map((p) => (
           <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
             <span className="w-2 h-2 rounded-full inline-block shrink-0" style={{ background: p.fill }} />
