@@ -15,8 +15,10 @@ const AmcExpiredContractsCard: React.FC<Props> = ({ data }) => {
   const rows = (arr as any[]).filter(row => String(row?.status ?? row?.contract_status ?? '').toLowerCase().replace(/_/g,' ').trim() === 'expired');
 
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
+    <div className="bg-white border border-gray-200 rounded-md p-4">
       <h3 className="font-semibold text-base mb-4">AMC Contract Summary – Expired</h3>
+      <div className="rounded-xl overflow-hidden border border-gray-200">
+      <div className="overflow-x-auto">
       <table className="min-w-[900px] w-full text-sm border">
         <thead className="bg-[#DAD6C9] text-[#C72030]">
           <tr>
@@ -42,6 +44,8 @@ const AmcExpiredContractsCard: React.FC<Props> = ({ data }) => {
           ))}
         </tbody>
       </table>
+      </div>
+      </div>
     </div>
   );
 };

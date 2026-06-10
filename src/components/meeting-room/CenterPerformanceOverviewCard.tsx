@@ -43,9 +43,8 @@ export const CenterPerformanceOverviewCard: React.FC<CenterPerformanceOverviewCa
       >
         {title}
       </h3>
-      <div className="overflow-x-auto -mx-3 sm:mx-0">
-        <div className="min-w-[600px] px-3 sm:px-0">
-          <div className="rounded-xl overflow-hidden border border-gray-200">
+      <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr>
@@ -98,7 +97,6 @@ export const CenterPerformanceOverviewCard: React.FC<CenterPerformanceOverviewCa
               </tbody>
             </table>
           </div>
-        </div>
       </div>
     </div>
   );

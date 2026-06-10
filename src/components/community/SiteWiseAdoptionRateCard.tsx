@@ -31,9 +31,8 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
       >
         Site Wise Adoption Rate
       </h3>
-      <div className="overflow-x-auto -mx-3 sm:mx-0">
-        <div className="min-w-[700px] px-3 sm:px-0">
-          <div className="rounded-xl overflow-hidden border border-gray-200">
+      <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr>
@@ -96,7 +95,6 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
             </tbody>
           </table>
           </div>
-        </div>
       </div>
     </div>
   );

@@ -34,8 +34,9 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
           />
         )}
       </div>
-      <div className="overflow-x-auto px-4 pb-4">
-        <div className="rounded-xl overflow-hidden border border-gray-200" style={{ minWidth: 760 }}>
+      <div className="px-4 pb-4">
+        <div className="rounded-xl overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr>
@@ -74,6 +75,7 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
             )}
           </tbody>
         </table>
+        </div>
         </div>
       </div>
     </div>
