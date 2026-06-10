@@ -5720,18 +5720,11 @@ const BusinessPlanAndGoles = () => {
                 <button
                   onClick={() => {
                     setShowGenerateVisionBoardConfirm(false);
-                    openAiBuilder();
                   }}
                   className="w-full rounded-xl border py-3 text-[13px] font-bold transition-all hover:bg-gray-50 active:scale-[0.98]"
                   style={{ borderColor: C.primaryBord, color: C.textMain }}
                 >
                   Review / Edit Business Plan
-                </button>
-                <button
-                  onClick={() => setShowGenerateVisionBoardConfirm(false)}
-                  className="w-full rounded-xl py-2 text-[13px] font-bold text-gray-500 transition-all hover:text-gray-700 active:scale-[0.98]"
-                >
-                  Cancel
                 </button>
               </div>
             </div>
