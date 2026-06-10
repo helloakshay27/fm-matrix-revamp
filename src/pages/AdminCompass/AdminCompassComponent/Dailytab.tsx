@@ -322,11 +322,11 @@ const getItemType = (item: any): string => {
 const getViewSourceType = (item: any): string => {
   const rawType = String(
     item?.source_type ||
-    item?.sourceType ||
-    item?.originalData?.source_type ||
-    item?.originalData?.sourceType ||
-    item?.type ||
-    ""
+      item?.sourceType ||
+      item?.originalData?.source_type ||
+      item?.originalData?.sourceType ||
+      item?.type ||
+      ""
   ).toLowerCase();
 
   const rawId = String(item?.id || item?.source_id || "").toLowerCase();
@@ -2654,7 +2654,7 @@ const DailyTab = ({
                                                   ].find(
                                                     (sourceItem: any) =>
                                                       getItemTitle(sourceItem).trim().toLowerCase() ===
-                                                      getItemTitle(item).trim().toLowerCase() &&
+                                                        getItemTitle(item).trim().toLowerCase() &&
                                                       getViewSourceType(sourceItem) === type
                                                   );
                                                   const viewItem = {
@@ -3113,7 +3113,8 @@ const DailyTab = ({
               return (
                 <div
                   key={missedId}
-                  className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all"
+                  onClick={() => toggleExpand(missedId)}
+                  className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all cursor-pointer"
                 >
                   <div className="p-4 flex items-start gap-4">
                     <div className="flex items-start gap-3 pt-1">
@@ -3157,7 +3158,10 @@ const DailyTab = ({
                         </div>
                         <button
                           type="button"
-                          onClick={() => toggleExpand(missedId)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(missedId);
+                          }}
                           className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
                         >
                           <ChevronDown

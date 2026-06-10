@@ -77,7 +77,7 @@ const CustomSelect = ({
           open
             ? "border-[#EB4A4A] shadow-[0_0_0_3px_rgba(235,74,74,0.10)]"
             : "border-[#F0EBE8] hover:border-[#EB4A4A]",
-          disabled && "opacity-60 cursor-not-allowed"
+          disabled && "opacity-60 cursor-not-allowed",
         )}
       >
         <span className="flex-1 text-left text-sm font-semibold truncate">
@@ -92,7 +92,7 @@ const CustomSelect = ({
         <ChevronDown
           className={cn(
             "w-4 h-4 transition-transform duration-200 shrink-0",
-            open ? "rotate-180 text-[#EB4A4A]" : "text-[#8C8580]"
+            open ? "rotate-180 text-[#EB4A4A]" : "text-[#8C8580]",
           )}
         />
       </button>
@@ -122,7 +122,7 @@ const CustomSelect = ({
                     "w-full text-left px-4 py-2.5 text-sm font-lg transition-colors flex items-center gap-2.5 group",
                     isSelected
                       ? "bg-[#FFF5F5] text-[#D37E5F]"
-                      : "text-[#1A1A1A] hover:bg-[#FFF5F5] hover:text-[#D37E5F]"
+                      : "text-[#1A1A1A] hover:bg-[#FFF5F5] hover:text-[#D37E5F]",
                   )}
                 >
                   <span
@@ -130,14 +130,14 @@ const CustomSelect = ({
                       "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
                       isSelected
                         ? "bg-[#D37E5F]"
-                        : "bg-transparent group-hover:bg-[#EB4A4A]/30"
+                        : "bg-transparent group-hover:bg-[#EB4A4A]/30",
                     )}
                   />
                   <span className="truncate flex-1">{opt.label}</span>
                   {isSelected && (
                     <span className="ml-auto shrink-0">
                       <svg
-                        className="w-3.5 h-3.5 text-[#EB4A4A]"
+                        className="w-3 h-3 text-[#EB4A4A]"
                         viewBox="0 0 14 14"
                         fill="none"
                       >
@@ -342,7 +342,8 @@ const resolveRawSource = (report) => {
       raw.details?.self_rating ??
       raw.sections?.self_rating ??
       null,
-    total_score: raw.total_score ?? report.score ?? draftRaw.total_score ?? null,
+    total_score:
+      raw.total_score ?? report.score ?? draftRaw.total_score ?? null,
     is_absent:
       raw.is_absent ??
       draftReport.is_absent ??
@@ -372,11 +373,14 @@ const resolveRawSource = (report) => {
       tasks_issues: Array.isArray(rd.tasks_issues)
         ? mergeTasksIssuesPreservingType(
             normalizedDraft.tasks_issues || [],
-            rd.tasks_issues
+            rd.tasks_issues,
           )
         : normalizedDraft.tasks_issues || [],
       tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
+        ? mergeUniqueItems(
+            rd.tomorrow_plan,
+            normalizedDraft.tomorrow_plan || [],
+          )
         : normalizedDraft.tomorrow_plan || [],
       accomplishments:
         rd.accomplishments?.items ||
@@ -388,7 +392,8 @@ const resolveRawSource = (report) => {
         report.self_rating ??
         draftReport.self_rating ??
         normalizedDraft.self_rating,
-      total_score: rd.total_score ?? report.score ?? normalizedDraft.total_score,
+      total_score:
+        rd.total_score ?? report.score ?? normalizedDraft.total_score,
       is_absent: rd.is_absent ?? normalizedDraft.is_absent,
     };
   }
@@ -405,20 +410,26 @@ const getMeetingNotesData = (data) => {
       (report) =>
         report.user_id === meetingHeadUserId &&
         report.status === "submitted" &&
-        report.report_data?.meeting_notes
+        report.report_data?.meeting_notes,
     ) ||
     allReports.find(
-      (report) => report.status === "submitted" && report.report_data?.meeting_notes
+      (report) =>
+        report.status === "submitted" && report.report_data?.meeting_notes,
     ) ||
     allReports.find((report) => report.report_data?.meeting_notes);
 
-  return data.report_data?.meeting_notes || sourceReport?.report_data?.meeting_notes || {};
+  return (
+    data.report_data?.meeting_notes ||
+    sourceReport?.report_data?.meeting_notes ||
+    {}
+  );
 };
 
 const getItemTitle = (item) => {
   if (!item) return "";
   if (typeof item === "string") return item;
-  if (typeof item === "object") return String(item.title || item.name || item.text || "");
+  if (typeof item === "object")
+    return String(item.title || item.name || item.text || "");
   return String(item);
 };
 
@@ -454,7 +465,7 @@ const mergeTasksIssuesPreservingType = (primary = [], fallback = []) => {
     const titleHasTypedItem = merged.some(
       (existing) =>
         getItemTitle(existing).trim().toLowerCase() === title.toLowerCase() &&
-        !!existing?.type
+        !!existing?.type,
     );
 
     if (!hasExplicitType && titleHasTypedItem) return;
@@ -474,7 +485,10 @@ const groupTasksIssuesByType = (items = []) => ({
 });
 
 const normalizeName = (name) =>
-  String(name || "").trim().replace(/\s+/g, " ").toLowerCase();
+  String(name || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 
 const getItemStatus = (item) => {
   if (!item || typeof item !== "object") return "open";
@@ -545,8 +559,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
 
   // log.id is journal_id (or daily_report.id as fallback) from the meeting report
-  const hasValidId =
-    log.id && /^\d+$/.test(String(log.id));
+  const hasValidId = log.id && /^\d+$/.test(String(log.id));
 
   const refetchDetails = useCallback(
     async (silent = false) => {
@@ -558,7 +571,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       try {
         const res = await fetch(
           `${getBaseUrl()}/user_journals/${log.id}.json`,
-          { method: "GET", headers: getAuthHeaders() }
+          { method: "GET", headers: getAuthHeaders() },
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
@@ -566,7 +579,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
         setDetails((prev) =>
           nextDetails?.report_data || nextDetails?.daily_report
             ? nextDetails
-            : prev || nextDetails
+            : prev || nextDetails,
         );
       } catch (error) {
         toast.error("Failed to load report details: " + error.message);
@@ -574,7 +587,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
         if (!silent) setIsLoading(false);
       }
     },
-    [log.id, hasValidId]
+    [log.id, hasValidId],
   );
 
   useEffect(() => {
@@ -608,19 +621,19 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const filteredAccomplishments = displayRd.accomplishments.filter(
     (item) =>
       !item.member ||
-      String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
+      String(item.member).trim().toLowerCase() === cleanName.toLowerCase(),
   );
 
   const filteredTasksIssues = displayRd.tasks_issues.filter(
     (item) =>
       !item.member ||
-      String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
+      String(item.member).trim().toLowerCase() === cleanName.toLowerCase(),
   );
   const groupedTasksIssues = groupTasksIssuesByType(filteredTasksIssues);
   const filteredTomorrowPlan = displayRd.tomorrow_plan.filter(
     (item) =>
       !item.member ||
-      String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
+      String(item.member).trim().toLowerCase() === cleanName.toLowerCase(),
   );
 
   const sections =
@@ -638,7 +651,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 
   const tasksAchieved = getScore(
     sections.tasks_issues_todos ?? sections.tasks_issues,
-    kpisFallback.tasks
+    kpisFallback.tasks,
   );
   const tasksMax = 20;
 
@@ -649,7 +662,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const timeMax = 20;
 
   const totalScoreStr = Math.round(
-    details?.score ?? rawDisplayRd?.total_score ?? log.score ?? 0
+    details?.score ?? rawDisplayRd?.total_score ?? log.score ?? 0,
   );
 
   const selfRating =
@@ -698,7 +711,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             body: JSON.stringify({
               report_data: updatedReportData,
             }),
-          }
+          },
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         setDetails((prev) => {
@@ -740,7 +753,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
               self_rating: patch.self_rating,
               report_data: { ...rawSource, self_rating: patch.self_rating },
             }),
-          }
+          },
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return true;
@@ -761,7 +774,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       const targetUserId = log._raw?.user_id || log.userId || "";
       const res = await fetch(
         `${getBaseUrl()}/ratings?resource_type=User&resource_id=${targetUserId}&rating_from_id=${loggedInUserId}`,
-        { method: "GET", headers: getAuthHeaders() }
+        { method: "GET", headers: getAuthHeaders() },
       );
       if (res.ok) {
         const data = await res.json();
@@ -769,7 +782,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
           ? data
           : data.data || data.ratings || [];
         const sorted = [...rawList].sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          (a, b) => new Date(b.created_at) - new Date(a.created_at),
         );
         setFetchedFeedbacks(sorted);
       }
@@ -825,7 +838,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             onClick={onClose}
           />
 
-          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1000px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
+          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[920px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
               <h2 className="text-xl font-bold text-[#1A1A1A]">
@@ -851,7 +864,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
               ) : (
                 <div className="flex flex-col">
                   {/* Profile section */}
-                  <div className="p-6 bg-white border-b border-[#F0EBE8]">
+                  <div className="p-4 bg-white border-b border-[#F0EBE8]">
                     <div className="flex items-start gap-4">
                       <div className="flex flex-col items-center gap-1 shrink-0">
                         <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl bg-white">
@@ -881,7 +894,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             </span>
                           )}
                           <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Submitted
+                            <CheckCircle2 className="w-3 h-3" /> Submitted
                           </span>
                         </div>
 
@@ -913,7 +926,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-6 bg-[#FFFAF8] flex-1">
+                  <div className="p-4 space-y-4 bg-[#FFFAF8] flex-1">
                     {/* Status highlights */}
                     <div className="flex flex-wrap gap-3">
                       {selfRating != null && (
@@ -938,7 +951,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                               "flex items-center gap-2 rounded-xl px-4 py-2.5 border shadow-sm",
                               displayRd.is_absent
                                 ? "bg-red-50 border-red-100"
-                                : "bg-green-50 border-green-100"
+                                : "bg-green-50 border-green-100",
                             )}
                           >
                             <span
@@ -946,7 +959,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                 "text-sm font-bold",
                                 displayRd.is_absent
                                   ? "text-red-700"
-                                  : "text-green-700"
+                                  : "text-green-700",
                               )}
                             >
                               {displayRd.is_absent ? "Absent" : "Present"}
@@ -971,14 +984,14 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     )}
 
                     {/* 3-Column: Accomplishments | Tasks, Issues & Todos | Tomorrow's Plan */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                       {/* Accomplishments */}
-                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                          <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                          <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-3 h-3 text-green-600" />
                           </div>
-                          <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
+                          <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
                             Accomplishments
                           </h4>
                         </div>
@@ -987,115 +1000,133 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             None recorded.
                           </p>
                         ) : (
-                          <ul className="space-y-3">
+                          <div className="space-y-1.5">
                             {filteredAccomplishments.map((item, i) => (
-                              <li
+                              <div
                                 key={i}
-                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
+                                className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
                               >
-                                <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 shrink-0" />
-                                <span className="leading-relaxed">
+                                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-700 uppercase">
+                                  Note
+                                </span>
+                                <span className="text-xs font-bold text-neutral-900 leading-snug">
                                   {getItemTitle(item)}
                                 </span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-
-                      {/* Tasks, Issues & Todos */}
-                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                          <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                            <AlertTriangle className="w-4 h-4 text-orange-600" />
-                          </div>
-                          <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
-                            Tasks, Issues & Todos
-                          </h4>
-                        </div>
-                        {filteredTasksIssues.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">
-                            None recorded.
-                          </p>
-                        ) : (
-                          <div className="space-y-4">
-                            {[
-                              {
-                                label: "Tasks",
-                                items: groupedTasksIssues.tasks,
-                                dotClass: "bg-blue-400",
-                              },
-                              {
-                                label: "Issues",
-                                items: groupedTasksIssues.issues,
-                                dotClass: "bg-red-400",
-                              },
-                              {
-                                label: "Todos",
-                                items: groupedTasksIssues.todos,
-                                dotClass: "bg-violet-400",
-                              },
-                            ].map((section) => (
-                              <div key={section.label}>
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                  <p className="text-[11px] font-extrabold text-neutral-500 uppercase tracking-wider">
-                                    {section.label}
-                                  </p>
-                                  <span className="text-[11px] font-bold text-neutral-400">
-                                    {section.items.length}
-                                  </span>
-                                </div>
-                                {section.items.length === 0 ? (
-                                  <p className="text-sm text-neutral-400 italic font-medium">
-                                    None recorded.
-                                  </p>
-                                ) : (
-                                  <ul className="space-y-3">
-                                    {section.items.map((item, i) => (
-                                      <li
-                                        key={`${section.label}-${i}`}
-                                        className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
-                                      >
-                                        <div
-                                          className={cn(
-                                            "w-2 h-2 rounded-full mt-1.5 shrink-0",
-                                            section.dotClass
-                                          )}
-                                        />
-                                        <span
-                                          className={cn(
-                                            "shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5",
-                                            getItemStatus(item) === "open"
-                                              ? "bg-red-100 text-red-600"
-                                              : isCompletedStatus(
-                                                  getItemStatus(item)
-                                                )
-                                                ? "bg-green-100 text-green-600"
-                                                : "bg-gray-100 text-gray-500"
-                                          )}
-                                        >
-                                          {getItemStatus(item)}
-                                        </span>
-                                        <span className="leading-relaxed">
-                                          {getItemTitle(item)}
-                                        </span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
 
-                      {/* Tomorrow's Plan */}
-                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                            <Calendar className="w-4 h-4 text-blue-600" />
+                      {/* Tasks, Issues & Todos */}
+                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
+                        <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                              <AlertTriangle className="w-3 h-3 text-orange-600" />
+                            </div>
+                            <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider truncate">
+                              Task, Issues & To Do
+                            </h4>
                           </div>
-                          <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
+                          <span className="text-xs font-bold text-neutral-500 shrink-0">
+                            {filteredTasksIssues.length}
+                          </span>
+                        </div>
+                        {filteredTasksIssues.length === 0 ? (
+                          <p className="text-sm text-neutral-400 italic font-medium">
+                            None recorded.
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            {[
+                              {
+                                label: "In Progress",
+                                items: filteredTasksIssues.filter(
+                                  (item) =>
+                                    !isCompletedStatus(getItemStatus(item)),
+                                ),
+                                wrapClass: "bg-blue-50 border-blue-100",
+                                countClass: "bg-blue-100 text-blue-700",
+                              },
+                              {
+                                label: "Completed",
+                                items: filteredTasksIssues.filter((item) =>
+                                  isCompletedStatus(getItemStatus(item)),
+                                ),
+                                wrapClass: "bg-green-50 border-green-100",
+                                countClass: "bg-green-100 text-green-700",
+                              },
+                            ].map((section) =>
+                              section.items.length > 0 ? (
+                                <div
+                                  key={section.label}
+                                  className={cn(
+                                    "rounded-lg border p-1.5 space-y-1.5",
+                                    section.wrapClass,
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between gap-2 px-1">
+                                    <p className="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">
+                                      {section.label}
+                                    </p>
+                                    <span
+                                      className={cn(
+                                        "min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-extrabold",
+                                        section.countClass,
+                                      )}
+                                    >
+                                      {section.items.length}
+                                    </span>
+                                  </div>
+                                  {section.items.map((item, i) => {
+                                    const type = getItemType(item);
+                                    return (
+                                      <div
+                                        key={`${section.label}-${i}`}
+                                        className={cn(
+                                          "flex items-center gap-2 rounded-lg border px-2.5 py-2 min-h-[36px] bg-white",
+                                          isCompletedStatus(getItemStatus(item))
+                                            ? "border-green-200 bg-green-50"
+                                            : "border-orange-200 bg-orange-50",
+                                        )}
+                                      >
+                                        <span
+                                          className={cn(
+                                            "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                            type === "todo"
+                                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                                              : type === "issue"
+                                                ? "bg-red-50 text-red-600 border-red-200"
+                                                : "bg-orange-50 text-orange-600 border-orange-200",
+                                          )}
+                                        >
+                                          {type === "todo"
+                                            ? "Todo"
+                                            : type === "issue"
+                                              ? "Issue"
+                                              : "Task"}
+                                        </span>
+                                        <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
+                                          {getItemTitle(item)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : null,
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Tomorrow's Plan */}
+                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                          <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                            <Calendar className="w-3 h-3 text-blue-600" />
+                          </div>
+                          <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
                             Tomorrow's Plan
                           </h4>
                         </div>
@@ -1104,45 +1135,63 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             None recorded.
                           </p>
                         ) : (
-                          <ul className="space-y-3">
-                            {filteredTomorrowPlan.map((item, i) => (
-                              <li
-                                key={i}
-                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
-                              >
-                                <Circle className="w-3 h-3 text-blue-400 mt-1 shrink-0" />
-                                <span className="leading-relaxed">
-                                  {getItemTitle(item)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="space-y-1.5">
+                            {filteredTomorrowPlan.map((item, i) => {
+                              const type = getItemType(item);
+                              return (
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
+                                >
+                                  <span
+                                    className={cn(
+                                      "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                      type === "todo"
+                                        ? "bg-purple-50 text-purple-700 border-purple-200"
+                                        : type === "issue"
+                                          ? "bg-red-50 text-red-600 border-red-200"
+                                          : "bg-orange-50 text-orange-600 border-orange-200",
+                                    )}
+                                  >
+                                    {type === "todo"
+                                      ? "Todo"
+                                      : type === "issue"
+                                        ? "Issue"
+                                        : "Task"}
+                                  </span>
+                                  <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
+                                    {getItemTitle(item)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-3 pt-2">
+                    <div className="flex flex-wrap gap-2 pt-1">
                       <button
                         onClick={() => setIsTaskModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-2 text-blue-600 bg-white border border-blue-200 rounded-full text-sm font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
                       >
-                        <Plus className="w-4 h-4" /> Add Task
+                        <Plus className="w-3.5 h-3.5" /> Add Task
                       </button>
                       <button
                         onClick={() => setIsIssueModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-2 text-red-600 bg-white border border-red-200 rounded-full text-sm font-bold shadow-sm hover:bg-red-50 transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
                       >
-                        <Plus className="w-4 h-4" /> Stuck Issue
+                        <Plus className="w-3.5 h-3.5" /> Stuck Issue
                       </button>
                       <button
                         onClick={() => {
                           setQuickActionOpen(!quickActionOpen);
                           setQuickActionText("");
                         }}
-                        className="flex items-center gap-2 px-5 py-2 text-orange-600 bg-white border border-orange-200 rounded-full text-sm font-bold shadow-sm hover:bg-orange-50 transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
                       >
-                        <Plus className="w-4 h-4" /> Add to Plan
+                        <Plus className="w-3.5 h-3.5" /> Add to Plan
                       </button>
                       <button
                         onClick={() => {
@@ -1155,9 +1204,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             loadPastFeedbacks();
                           }
                         }}
-                        className="flex items-center gap-2 px-5 py-2 text-white bg-purple-600 border border-purple-700 rounded-full text-sm font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
                       >
-                        <MessageSquare className="w-4 h-4" /> Feedback
+                        <MessageSquare className="w-3.5 h-3.5" /> Feedback
                       </button>
                     </div>
 
@@ -1165,7 +1214,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     {quickActionOpen && (
                       <div className="bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
                         <p className="text-xs font-black text-orange-800 uppercase tracking-widest mb-3 flex items-center gap-2">
-                          <Plus className="w-4 h-4" /> Add to Tomorrow's Plan
+                          <Plus className="w-3.5 h-3.5" /> Add to Tomorrow's Plan
                         </p>
                         <div className="flex items-center gap-3">
                           <input
@@ -1231,7 +1280,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           {/* Left: Add new feedback */}
                           <div>
                             <p className="text-xs font-black text-purple-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                              <MessageSquare className="w-4 h-4" /> Provide
+                              <MessageSquare className="w-3.5 h-3.5" /> Provide
                               Feedback
                             </p>
                             <p className="text-sm font-bold text-neutral-800 mb-2">
@@ -1344,14 +1393,14 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                             "w-3.5 h-3.5",
                                             star <= fb.score
                                               ? "text-yellow-400 fill-yellow-400"
-                                              : "text-gray-200"
+                                              : "text-gray-200",
                                           )}
                                         />
                                       ))}
                                       {fb.created_at && (
                                         <span className="text-[10px] text-gray-400 ml-auto font-bold">
                                           {new Date(
-                                            fb.created_at
+                                            fb.created_at,
                                           ).toLocaleDateString("en-IN", {
                                             day: "numeric",
                                             month: "short",
@@ -1440,7 +1489,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             </MuiZIndexFix>
           )}
         </div>,
-        document.body
+        document.body,
       )}
     </>
   );
@@ -1456,7 +1505,7 @@ const DailyLogTab = ({
   onSelectedMeetingChange,
 } = {}) => {
   const [selectedDate, setSelectedDate] = useState(
-    () => initialDate || new Date().toISOString().split("T")[0]
+    () => initialDate || new Date().toISOString().split("T")[0],
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -1486,7 +1535,7 @@ const DailyLogTab = ({
   useEffect(() => {
     if (!initialDate) return;
     setSelectedDate((currentDate) =>
-      currentDate === initialDate ? currentDate : initialDate
+      currentDate === initialDate ? currentDate : initialDate,
     );
   }, [initialDate]);
 
@@ -1497,7 +1546,9 @@ const DailyLogTab = ({
   useEffect(() => {
     if (!externalSelectedMeetingId) return;
     setSelectedMeetingFilter((current) =>
-      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+      current === externalSelectedMeetingId
+        ? current
+        : externalSelectedMeetingId,
     );
   }, [externalSelectedMeetingId]);
 
@@ -1532,9 +1583,11 @@ const DailyLogTab = ({
       if (data.length > 0) {
         const defaultMeeting = data.find((m) => m.is_default);
         const nextMeetingId =
-          externalSelectedMeetingId || (defaultMeeting ? defaultMeeting.id : data[0].id);
+          externalSelectedMeetingId ||
+          (defaultMeeting ? defaultMeeting.id : data[0].id);
         setSelectedMeetingFilter(nextMeetingId);
-        if (!externalSelectedMeetingId) onSelectedMeetingChange?.(String(nextMeetingId));
+        if (!externalSelectedMeetingId)
+          onSelectedMeetingChange?.(String(nextMeetingId));
       }
     } catch (err) {
       console.error(err);
@@ -1573,7 +1626,7 @@ const DailyLogTab = ({
         ? meetingNotesData.detailed_reports
         : [];
       const meetingNotesMissedMembers = Array.isArray(
-        meetingNotesData?.missed_report_members
+        meetingNotesData?.missed_report_members,
       )
         ? meetingNotesData.missed_report_members
         : [];
@@ -1584,7 +1637,7 @@ const DailyLogTab = ({
         meetingNotesMissedMembers.length ||
         rootMissedMembers.length ||
         allReports.filter(
-          (report) => report.status === "pending" || report.status === "missed"
+          (report) => report.status === "pending" || report.status === "missed",
         ).length;
       const hasSavedMeetingData =
         !!data?.report_data?.meeting_notes || detailedReports.length > 0;
@@ -1600,12 +1653,12 @@ const DailyLogTab = ({
       const detailedReportUserIds = new Set(
         detailedReports
           .map((report) => Number(report.user_id))
-          .filter((id) => Number.isFinite(id) && id > 0)
+          .filter((id) => Number.isFinite(id) && id > 0),
       );
       const detailedReportNames = new Set(
         detailedReports
           .map((report) => normalizeName(report.name))
-          .filter(Boolean)
+          .filter(Boolean),
       );
 
       const submittedReports =
@@ -1613,10 +1666,10 @@ const DailyLogTab = ({
           ? allReports.filter(
               (report) =>
                 detailedReportUserIds.has(Number(report.user_id)) ||
-                detailedReportNames.has(normalizeName(report.name))
+                detailedReportNames.has(normalizeName(report.name)),
             )
           : allReports.filter(
-              (r) => r.status !== "pending" || !!r.daily_report
+              (r) => r.status !== "pending" || !!r.daily_report,
             );
 
       // Map to table row format
@@ -1653,11 +1706,11 @@ const DailyLogTab = ({
           const matchingMemberReport =
             allReports.find(
               (memberReport) =>
-                Number(memberReport.user_id) === Number(report.user_id)
+                Number(memberReport.user_id) === Number(report.user_id),
             ) ||
             allReports.find(
               (memberReport) =>
-                normalizeName(memberReport.name) === normalizeName(report.name)
+                normalizeName(memberReport.name) === normalizeName(report.name),
             );
           const hydratedReport = matchingMemberReport || {
             report_data: report,
@@ -1683,9 +1736,7 @@ const DailyLogTab = ({
             user: hydratedReport.name || report.name || "",
             email: hydratedReport.email || "",
             score: Math.round(
-              hydratedReport.score ??
-                rawRd?.total_score ??
-                reportSelfRating
+              hydratedReport.score ?? rawRd?.total_score ?? reportSelfRating,
             ),
             dept: hydratedReport.department || "",
             highlights:
@@ -1706,7 +1757,7 @@ const DailyLogTab = ({
         logsArray = logsArray.filter(
           (log) =>
             String(log._raw?.department_id) === String(selectedDeptId) ||
-            log.dept === selectedDeptId
+            log.dept === selectedDeptId,
         );
       }
 
@@ -1717,7 +1768,7 @@ const DailyLogTab = ({
           (log) =>
             (log.user && log.user.toLowerCase().includes(q)) ||
             (log.email && log.email.toLowerCase().includes(q)) ||
-            (log.dept && log.dept.toLowerCase().includes(q))
+            (log.dept && log.dept.toLowerCase().includes(q)),
         );
       }
 
@@ -1779,7 +1830,7 @@ const DailyLogTab = ({
     <th
       className={cn(
         "px-3 py-4 sm:px-4 text-[11px] font-black uppercase tracking-widest text-[#8C8580] whitespace-nowrap border-b border-[#F0EBE8]",
-        center ? "text-center" : "text-left"
+        center ? "text-center" : "text-left",
       )}
     >
       {children}
@@ -1810,8 +1861,8 @@ const DailyLogTab = ({
         Object.entries(prev).map(([dept, logs]) => [
           dept,
           Array.isArray(logs) ? logs.map(updateLog) : logs,
-        ])
-      )
+        ]),
+      ),
     );
   };
 
@@ -1838,7 +1889,7 @@ const DailyLogTab = ({
           <span
             className={cn(
               "flex flex-col justify-center items-center font-semibold p-2 rounded-xl",
-              scoreColor(log.score, log.status)
+              scoreColor(log.score, log.status),
             )}
           >
             {log.score}
@@ -1861,7 +1912,7 @@ const DailyLogTab = ({
             className="inline-flex items-center justify-center w-9 h-9 rounded-[12px] border border-[#F0EBE8] text-[#8C8580] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all"
             title="View details"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5" />
           </button>
         </td>
       </tr>
@@ -1953,7 +2004,7 @@ const DailyLogTab = ({
                 onClick={() => setSearchQuery("")}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#EB4A4A]"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -1986,10 +2037,10 @@ const DailyLogTab = ({
               "flex items-center justify-center gap-2 px-5 py-3.5 rounded-[16px] text-sm font-bold border transition-all shrink-0",
               isGrouped
                 ? "bg-[#1A1A1A] border-[#1A1A1A] text-white"
-                : "bg-white border-[#F0EBE8] text-[#8C8580] hover:bg-gray-50 hover:text-[#1A1A1A]"
+                : "bg-white border-[#F0EBE8] text-[#8C8580] hover:bg-gray-50 hover:text-[#1A1A1A]",
             )}
           >
-            <Layers className="w-4 h-4" /> Group by Dept
+            <Layers className="w-3.5 h-3.5" /> Group by Dept
           </button>
 
           <button
@@ -1999,7 +2050,7 @@ const DailyLogTab = ({
             <RefreshCw
               className={cn(
                 "w-5 h-5",
-                isLoading && "animate-spin text-[#EB4A4A]"
+                isLoading && "animate-spin text-[#EB4A4A]",
               )}
             />
           </button>
