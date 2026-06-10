@@ -3161,51 +3161,42 @@ const BusinessPlanAndGoles = () => {
           console.error("SWOT fetch error", e);
         }
 
+        const savedPlan = generatedAiPlanPayload || {};
+        const kpiCriticalNumbers = kpis.map((k: any) => ({
+          name: k.name || k.title || "",
+          target: String(k.target ?? k.target_value ?? ""),
+          current: String(k.current ?? k.current_value ?? ""),
+        }));
+
         const payload = {
-          purpose: "Empowering businesses to make smarter decisions with AI",
-          core_values: ["Customer-First", "Data-Driven", "Ownership", "Innovation", "Transparency"],
-          core_values_explanation: "We live these values in every decision we make",
-          brand_promises: ["Actionable insights in 30 days", "Seamless implementation"],
-          brand_promise_kpis: ["30-day ROI report", "< 2hr onboarding time"],
-          bhag_selected: "Global Leader in AI-Driven Business Intelligence by 2035",
-          bhag_initiatives: ["Expand to 10M businesses", "Launch Innovation Labs", "Build Global Footprint"],
-          three_year_goals: "500 Crore revenue with 5000 enterprise clients",
-          three_year_initiatives: [
-            { "initiative": "Launch 5 new geographies", "owner": "CEO" },
-            { "initiative": "Develop 2 new AI product lines", "owner": "CTO" },
-            { "initiative": "Achieve SOC2 compliance", "owner": "COO" }
-          ],
-          one_year_goals: "100 Crore revenue with 1000 clients",
-          one_year_initiatives: [
-            { "initiative": "Close 500 enterprise deals", "owner": "Sales Head" },
-            { "initiative": "Launch mobile app", "owner": "Product Head" },
-            { "initiative": "Build partner ecosystem", "owner": "BD Head" }
-          ],
-          quarterly_goals: "35 Crore Revenue — Launch & Expand",
-          quarterly_theme: "Growth Sprint Q1",
-          quarterly_initiatives: [
-            { "initiative": "SEA expansion — Bangkok office", "owner": "CEO" },
-            { "initiative": "300 new client onboardings", "owner": "Sales Head" },
-            { "initiative": "Celebration Summit", "owner": "HR Head" }
-          ],
-          quarterly_rewards: ["Team trip to Bali", "₹1L bonus pool"],
-          target_segments: "Mid-market and enterprise B2B companies in APAC",
-          people_drivers: {
-            "employees": "High-ownership culture with quarterly OKRs",
-            "customers": "NPS > 70 with dedicated CSM",
-            "suppliers": "Strategic SaaS partnerships only"
-          },
-          process_drivers: ["Agile sprints", "Data-first decisions", "Weekly leadership sync", "Customer feedback loops"],
-          critical_numbers: [
-            { "name": "Net Promoter Score", "target": "70", "current": "52" },
-            { "name": "Revenue Target", "target": "35", "current": "0" },
-            { "name": "New Clients", "target": "300", "current": "8" },
-            { "name": "Churn Rate", "target": "2", "current": "8" }
-          ],
-          strengths: ["Strong AI core", "Experienced team", "Existing client base", "Scalable platform"],
-          weaknesses: ["Low brand awareness", "Limited sales team", "No physical presence in SEA"],
-          opportunities: ["APAC market growth", "AI adoption surge", "Competitor consolidation", "Govt digital push"],
-          threats: ["Big tech entering market", "Economic slowdown", "Talent attrition", "Data privacy regulations"]
+          purpose: purposeText || "",
+          core_values: coreValues.map((v) => v.value),
+          core_values_explanation: savedPlan.core_values_explanation || "",
+          brand_promises: brandPromises.map((p) => p.text),
+          brand_promise_kpis: brandPromises.flatMap((p) => p.kpis || []),
+          bhag_selected: savedPlan.bhag_selected || "",
+          bhag_initiatives: Array.isArray(savedPlan.bhag_initiatives) ? savedPlan.bhag_initiatives : [],
+          three_year_goals: savedPlan.three_year_goals || "",
+          three_year_initiatives: Array.isArray(savedPlan.three_year_initiatives) ? savedPlan.three_year_initiatives : [],
+          one_year_goals: savedPlan.one_year_goals || "",
+          one_year_initiatives: Array.isArray(savedPlan.one_year_initiatives) ? savedPlan.one_year_initiatives : [],
+          quarterly_goals: savedPlan.quarterly_goals || "",
+          quarterly_theme: savedPlan.quarterly_theme || "",
+          quarterly_initiatives: Array.isArray(savedPlan.quarterly_initiatives) ? savedPlan.quarterly_initiatives : [],
+          quarterly_rewards: Array.isArray(savedPlan.quarterly_rewards) ? savedPlan.quarterly_rewards : [],
+          target_segments: savedPlan.target_segments || "",
+          people_drivers:
+            savedPlan.people_drivers && typeof savedPlan.people_drivers === "object" && !Array.isArray(savedPlan.people_drivers)
+              ? savedPlan.people_drivers
+              : {},
+          process_drivers: Array.isArray(savedPlan.process_drivers) ? savedPlan.process_drivers : [],
+          critical_numbers: Array.isArray(savedPlan.critical_numbers) && savedPlan.critical_numbers.length > 0
+            ? savedPlan.critical_numbers
+            : kpiCriticalNumbers,
+          strengths: swotData.strengths,
+          weaknesses: swotData.weaknesses,
+          opportunities: swotData.opportunities,
+          threats: swotData.threats,
         };
 
         const res = await fetch(`${BASE_URL}/extra_fields/generate_ai_plan_image`, {

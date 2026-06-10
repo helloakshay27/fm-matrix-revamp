@@ -141,6 +141,13 @@ export const GRNDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const formatIndian = (val: string | number | null | undefined): string => {
+  if (val === "" || val === null || val === undefined) return "-";
+  const n = parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+};
+
   const [openDebitModal, setOpenDebitModal] = useState(false);
   const [grnDetails, setGrnDetails] = useState<any>({});
   const [rejectComment, setRejectComment] = useState("");
@@ -611,7 +618,7 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Retention Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.retention_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.retention_amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -623,13 +630,13 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.tds_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.tds_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">QC Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.qh_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.qh_amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -641,19 +648,19 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.total_taxes}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.total_taxes)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.grn_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.grn_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">PO Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{purchaseOrder.amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(purchaseOrder.amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -665,19 +672,19 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.invoice_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.invoice_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.payable_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.payable_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.grn_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.grn_amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -695,7 +702,7 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Gross Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -723,10 +730,9 @@ export const GRNDetailsPage = () => {
         <EnhancedTable
           data={itemsData}
           renderCell={(item: any, columnKey: string) => {
-            switch (columnKey) {
-              default:
-                return item[columnKey];
-            }
+            const amountKeys = ['rate', 'cgst_amount', 'sgst_amount', 'igst_amount', 'tcs_amount', 'taxable_value', 'total_value'];
+            if (amountKeys.includes(columnKey)) return formatIndian(item[columnKey]);
+            return item[columnKey];
           }}
           columns={itemsColumns}
           storageKey="grn-items-table"
@@ -741,19 +747,19 @@ export const GRNDetailsPage = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">Other Expense:</span>
-              <span className="font-medium">{grnDetails.other_expenses}</span>
+              <span className="font-medium">{formatIndian(grnDetails.other_expenses)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Loading Expense:
               </span>
-              <span className="font-medium">{grnDetails.loading_expense}</span>
+              <span className="font-medium">{formatIndian(grnDetails.loading_expense)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Adjustment Amount:
               </span>
-              <span className="font-medium">{grnDetails.adj_amount}</span>
+              <span className="font-medium">{formatIndian(grnDetails.adj_amount)}</span>
             </div>
           </div>
         </div>

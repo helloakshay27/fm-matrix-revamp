@@ -25,6 +25,7 @@ import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
 import AddToDoModal from "../../../components/AddToDoModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -318,6 +319,52 @@ const getItemType = (item: any): string => {
   return String(item.type || "task").toLowerCase();
 };
 
+const getViewSourceType = (item: any): string => {
+  const rawType = String(
+    item?.source_type ||
+    item?.sourceType ||
+    item?.originalData?.source_type ||
+    item?.originalData?.sourceType ||
+    item?.type ||
+    ""
+  ).toLowerCase();
+
+  const rawId = String(item?.id || item?.source_id || "").toLowerCase();
+
+  if (rawType.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-")) return "todo";
+  if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return getItemType(item);
+};
+
+const getViewSourceId = (item: any): any => {
+  const rawId =
+    item?.source_id ??
+    item?.sourceId ??
+    item?.task_id ??
+    item?.taskId ??
+    item?.issue_id ??
+    item?.issueId ??
+    item?.todo_id ??
+    item?.todoId ??
+    item?.originalData?.source_id ??
+    item?.originalData?.sourceId ??
+    item?.originalData?.id ??
+    item?.originalData?.task_id ??
+    item?.originalData?.taskId ??
+    item?.originalData?.issue_id ??
+    item?.originalData?.issueId ??
+    item?.originalData?.todo_id ??
+    item?.originalData?.todoId ??
+    item?.id;
+
+  if (rawId === null || rawId === undefined || rawId === "") return null;
+
+  const cleaned = String(rawId).replace(/^(task|issue|todo)-/i, "");
+  return cleaned || rawId;
+};
+
 const groupTasksIssuesByType = (items: any[] = []) => ({
   tasks: items.filter((item) => getItemType(item) === "task"),
   issues: items.filter((item) => getItemType(item) === "issue"),
@@ -400,12 +447,12 @@ const getReportAbsentReason = (
 ) =>
   String(
     report?.absent_reason ??
-      report?.daily_report?.absent_reason ??
-      rawSource?.absent_reason ??
-      rawSource?.details?.absent_reason ??
-      rawSource?.sections?.absent_reason ??
-      normalized?.absent_reason ??
-      "Absent"
+    report?.daily_report?.absent_reason ??
+    rawSource?.absent_reason ??
+    rawSource?.details?.absent_reason ??
+    rawSource?.sections?.absent_reason ??
+    normalized?.absent_reason ??
+    "Absent"
   ).trim() || "Absent";
 
 const formatSelfRating = (rating: any): string => {
@@ -475,15 +522,15 @@ const resolveRawSource = (report: any) => {
       ...rd,
       tasks_issues: Array.isArray(rd.tasks_issues)
         ? mergeTasksIssuesPreservingType(
-            normalizedDraft.tasks_issues || [],
-            rd.tasks_issues
-          )
+          normalizedDraft.tasks_issues || [],
+          rd.tasks_issues
+        )
         : normalizedDraft.tasks_issues || [],
       tomorrow_plan: Array.isArray(rd.tomorrow_plan)
         ? mergeUniqueItems(
-            rd.tomorrow_plan,
-            normalizedDraft.tomorrow_plan || []
-          )
+          rd.tomorrow_plan,
+          normalizedDraft.tomorrow_plan || []
+        )
         : normalizedDraft.tomorrow_plan || [],
       accomplishments:
         rd.accomplishments?.items ||
@@ -554,6 +601,83 @@ const DailyTab = ({
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [fetchedFeedbacks, setFetchedFeedbacks] = useState<any[]>([]);
   const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
+
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
+
+  const handleViewReportItem = (item: any) => {
+    console.log("handleViewReportItem CLICKED, item:", item);
+    const computedType = getItemType(item);
+    const sourceType = (item.source_type || item.originalData?.source_type || computedType).toLowerCase();
+    const sourceId = item.id || item.task_id || item.issue_id || item.source_id || item.originalData?.id || item.originalData?.task_id || item.originalData?.issue_id;
+    const originalData = item.originalData || item;
+
+    console.log("handleViewReportItem - computedType:", computedType, "sourceType:", sourceType, "sourceId:", sourceId);
+
+    if (sourceType === "todo") {
+      console.log("Opening Todo Details Modal for:", originalData);
+      setSelectedTodo(originalData);
+      setIsDetailsModalOpen(true);
+      return;
+    }
+
+    if (!sourceType) return;
+
+    if (sourceType === "task") {
+      const navPath = sourceId ? `/vas/tasks/${sourceId}` : '/vas/tasks';
+      console.log("Navigating to task path:", navPath);
+      navigate(navPath);
+    } else if (sourceType === "issue") {
+      const navPath = sourceId ? `/vas/issues/${sourceId}` : '/vas/issues';
+      console.log("Navigating to issue path:", navPath);
+      navigate(navPath);
+    }
+  };
+
+  const handleViewTaskIssueTodoItem = async (item: any) => {
+    const sourceType = getViewSourceType(item);
+    const sourceId = getViewSourceId(item);
+    const originalData = item?.originalData || item;
+
+    if (sourceType === "todo") {
+      const todoId = sourceId;
+      setSelectedTodo({ ...originalData, id: todoId ?? originalData?.id });
+      setIsDetailsModalOpen(true);
+
+      if (todoId) {
+        try {
+          const res = await fetch(`${getBaseUrl()}/todos/${todoId}.json`, {
+            headers: getAuthHeaders(),
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const todoDetails = json?.todo || json?.data?.todo || json?.data || json;
+            if (todoDetails) setSelectedTodo(todoDetails);
+          }
+        } catch (error) {
+          console.error("Failed to fetch todo details:", error);
+        }
+      }
+      return;
+    }
+
+    if (sourceType === "task") {
+      if (!sourceId) {
+        toast.error("Task details not found for this item.");
+        return;
+      }
+      navigate(`/vas/tasks/${sourceId}`);
+      return;
+    }
+
+    if (sourceType === "issue") {
+      if (!sourceId) {
+        toast.error("Issue details not found for this item.");
+        return;
+      }
+      navigate(`/vas/issues/${sourceId}`);
+    }
+  };
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -720,8 +844,8 @@ const DailyTab = ({
 
         setMeetingJournalId(
           json.data?.meeting_journal_id ||
-            meetingJournalReport?.journal_id ||
-            null
+          meetingJournalReport?.journal_id ||
+          null
         );
 
         if (!skipNotesRestore) {
@@ -1140,14 +1264,27 @@ const DailyTab = ({
           title: a.title || a.text || "",
         })),
         tasks_issues: allTasksIssues.map((t) => ({
-          type: getItemType(t),
+          type: getViewSourceType(t),
           title: t.title || t.text || "",
           status: t.status || "open",
+          source_id: getViewSourceId(t),
+          source_type: getViewSourceType(t),
         })),
         big_win: combinedBigWin || null,
-        tomorrow_plan: allTomorrowPlan.map((p) => ({
-          title: p.title || p.text || "",
-        })),
+        tomorrow_plan: allTomorrowPlan.map((p) => {
+          const sourceType =
+            p.source_type ||
+            p.sourceType ||
+            p.originalData?.source_type ||
+            p.originalData?.sourceType ||
+            p.type ||
+            null;
+          return {
+            title: p.title || p.text || "",
+            source_id: sourceType ? getViewSourceId(p) : null,
+            source_type: sourceType,
+          };
+        }),
         kpis: {
           score: `${combinedKpis.score}`,
           tasks: `${combinedKpis.tasks}`,
@@ -1324,14 +1461,27 @@ const DailyTab = ({
           title: a.title || a.text || "",
         })),
         tasks_issues: allTasksIssues.map((t) => ({
-          type: getItemType(t),
+          type: getViewSourceType(t),
           title: t.title || t.text || "",
           status: t.status || "open",
+          source_id: getViewSourceId(t),
+          source_type: getViewSourceType(t),
         })),
         big_win: combinedBigWin || null,
-        tomorrow_plan: allTomorrowPlan.map((p) => ({
-          title: p.title || p.text || "",
-        })),
+        tomorrow_plan: allTomorrowPlan.map((p) => {
+          const sourceType =
+            p.source_type ||
+            p.sourceType ||
+            p.originalData?.source_type ||
+            p.originalData?.sourceType ||
+            p.type ||
+            null;
+          return {
+            title: p.title || p.text || "",
+            source_id: sourceType ? getViewSourceId(p) : null,
+            source_type: sourceType,
+          };
+        }),
         kpis: {
           score: `${combinedKpis.score}`,
           tasks: `${combinedKpis.tasks}`,
@@ -2004,14 +2154,14 @@ const DailyTab = ({
                         (item: any) =>
                           !item.member ||
                           String(item.member).trim().toLowerCase() ===
-                            normalizedReportName
+                          normalizedReportName
                       );
 
                     const userTasksIssues = displayRd.tasks_issues.filter(
                       (item: any) =>
                         !item.member ||
                         String(item.member).trim().toLowerCase() ===
-                          normalizedReportName
+                        normalizedReportName
                     );
                     const groupedTasksIssues =
                       groupTasksIssuesByType(userTasksIssues);
@@ -2020,7 +2170,7 @@ const DailyTab = ({
                       (item: any) =>
                         !item.member ||
                         String(item.member).trim().toLowerCase() ===
-                          normalizedReportName
+                        normalizedReportName
                     );
 
                     // ── NEW LOGIC FOR SCORING ──
@@ -2053,9 +2203,9 @@ const DailyTab = ({
                     const tasksIssuesAchieved = isAbsentReport
                       ? 0
                       : getScore(
-                          sections.tasks_issues_todos ?? sections.tasks_issues,
-                          kpisFallback.tasks
-                        );
+                        sections.tasks_issues_todos ?? sections.tasks_issues,
+                        kpisFallback.tasks
+                      );
                     const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
                     const planAchieved = isAbsentReport
@@ -2138,11 +2288,11 @@ const DailyTab = ({
                                   </h3>
                                   {(report.name?.includes("HOD") ||
                                     report.name?.includes("TL")) && (
-                                    <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                                      <Crown className="w-3 h-3 fill-orange-400" />{" "}
-                                      HOD
-                                    </span>
-                                  )}
+                                      <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                        <Crown className="w-3 h-3 fill-orange-400" />{" "}
+                                        HOD
+                                      </span>
+                                    )}
                                   {report.department && (
                                     <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                       {report.department}
@@ -2282,17 +2432,48 @@ const DailyTab = ({
                                   ) : (
                                     <ul className="space-y-2">
                                       {userAccomplishments.map(
-                                        (item: any, i: number) => (
-                                          <li
-                                            key={i}
-                                            className="flex items-start gap-2 text-xs text-neutral-700"
-                                          >
-                                            <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
-                                            <span className="leading-relaxed">
-                                              {getItemTitle(item)}
-                                            </span>
-                                          </li>
-                                        )
+                                        (item: any, i: number) => {
+                                          const type = (item.source_type || "note").toLowerCase();
+                                          const typePillStyle =
+                                            type === "issue"
+                                              ? "bg-red-100 text-red-700 border-red-200"
+                                              : type === "todo"
+                                                ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                : type === "task"
+                                                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
+                                                  : "bg-gray-100 text-gray-600 border-gray-200";
+                                          const hasDetails = ["task", "issue", "todo"].includes(type);
+
+                                          return (
+                                            <li
+                                              key={i}
+                                              className="flex flex-col rounded-[10px] border transition-all bg-green-50/60 border-green-100"
+                                            >
+                                              <div className="flex items-center gap-2 px-3 py-2.5">
+                                                <span
+                                                  className={cn(
+                                                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                    typePillStyle
+                                                  )}
+                                                >
+                                                  {type}
+                                                </span>
+                                                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                                                  {getItemTitle(item)}
+                                                </span>
+                                                {hasDetails && (
+                                                  <button
+                                                    onClick={() => handleViewReportItem(item)}
+                                                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                    title={`View ${type}`}
+                                                  >
+                                                    <Eye className="w-3 h-3" />
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </li>
+                                          );
+                                        }
                                       )}
                                     </ul>
                                   )}
@@ -2447,13 +2628,13 @@ const DailyTab = ({
                                                     "";
                                                   const priorityPill =
                                                     priority?.toLowerCase() ===
-                                                    "high"
+                                                      "high"
                                                       ? "bg-red-50 text-red-600 border-red-200"
                                                       : priority?.toLowerCase() ===
-                                                          "medium"
+                                                        "medium"
                                                         ? "bg-yellow-50 text-yellow-700 border-yellow-200"
                                                         : priority?.toLowerCase() ===
-                                                            "low"
+                                                          "low"
                                                           ? "bg-green-50 text-green-700 border-green-200"
                                                           : "";
                                                   const taskId =
@@ -2466,23 +2647,43 @@ const DailyTab = ({
                                                     item.due_date ||
                                                     item.end_date ||
                                                     item.deadline;
-                                                  const viewPath = taskId
-                                                    ? type === "task"
-                                                      ? `/vas/tasks/${taskId}`
-                                                      : type === "issue"
-                                                        ? `/vas/issues/${taskId}`
-                                                        : null
-                                                    : type === "task"
-                                                      ? "/vas/tasks"
-                                                      : type === "issue"
-                                                        ? "/vas/issues"
-                                                        : null;
+                                                  const hasDetails = ["task", "issue", "todo"].includes(type);
+                                                  const matchingSourceItem = [
+                                                    ...displayRd.accomplishments,
+                                                    ...displayRd.tomorrow_plan,
+                                                  ].find(
+                                                    (sourceItem: any) =>
+                                                      getItemTitle(sourceItem).trim().toLowerCase() ===
+                                                      getItemTitle(item).trim().toLowerCase() &&
+                                                      getViewSourceType(sourceItem) === type
+                                                  );
+                                                  const viewItem = {
+                                                    ...matchingSourceItem,
+                                                    ...item,
+                                                    source_id:
+                                                      item.source_id ??
+                                                      item.sourceId ??
+                                                      matchingSourceItem?.source_id ??
+                                                      matchingSourceItem?.sourceId ??
+                                                      getViewSourceId(item),
+                                                    source_type:
+                                                      item.source_type ??
+                                                      item.sourceType ??
+                                                      matchingSourceItem?.source_type ??
+                                                      matchingSourceItem?.sourceType ??
+                                                      type,
+                                                    originalData:
+                                                      item.originalData ?? matchingSourceItem?.originalData,
+                                                  };
+
                                                   return (
                                                     <li
                                                       key={i}
+                                                      onClick={hasDetails ? () => handleViewTaskIssueTodoItem(viewItem) : undefined}
                                                       className={cn(
                                                         "flex flex-col rounded-[10px] border transition-all",
-                                                        bucket.itemBg
+                                                        bucket.itemBg,
+                                                        hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
                                                       )}
                                                     >
                                                       <div className="flex items-center gap-2 px-3 py-2.5">
@@ -2511,11 +2712,12 @@ const DailyTab = ({
                                                           </span>
                                                         )}
                                                         {/* View button — always shown for task/issue */}
-                                                        {viewPath && (
+                                                        {hasDetails && (
                                                           <button
-                                                            onClick={() =>
-                                                              navigate(viewPath)
-                                                            }
+                                                            onClick={(event) => {
+                                                              event.stopPropagation();
+                                                              handleViewTaskIssueTodoItem(viewItem);
+                                                            }}
                                                             className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
                                                             title={`View ${type}`}
                                                           >
@@ -2571,17 +2773,55 @@ const DailyTab = ({
                                   ) : (
                                     <ul className="space-y-2">
                                       {userTomorrowPlan.map(
-                                        (item: any, i: number) => (
-                                          <li
-                                            key={i}
-                                            className="flex items-start gap-2 text-xs text-neutral-700"
-                                          >
-                                            <Circle className="w-3 h-3 text-blue-300 mt-0.5 shrink-0" />
-                                            <span className="leading-relaxed">
-                                              {getItemTitle(item)}
-                                            </span>
-                                          </li>
-                                        )
+                                        (item: any, i: number) => {
+                                          const type = (item.source_type || "note").toLowerCase();
+                                          const typePillStyle =
+                                            type === "issue"
+                                              ? "bg-red-100 text-red-700 border-red-200"
+                                              : type === "todo"
+                                                ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                : type === "task"
+                                                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
+                                                  : "bg-gray-100 text-gray-600 border-gray-200";
+                                          const hasDetails = ["task", "issue", "todo"].includes(type);
+
+                                          return (
+                                            <li
+                                              key={i}
+                                              onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
+                                              className={cn(
+                                                "flex flex-col rounded-[10px] border transition-all bg-blue-50/60 border-blue-100",
+                                                hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+                                              )}
+                                            >
+                                              <div className="flex items-center gap-2 px-3 py-2.5">
+                                                <span
+                                                  className={cn(
+                                                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                    typePillStyle
+                                                  )}
+                                                >
+                                                  {type}
+                                                </span>
+                                                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                                                  {getItemTitle(item)}
+                                                </span>
+                                                {hasDetails && (
+                                                  <button
+                                                    onClick={(event) => {
+                                                      event.stopPropagation();
+                                                      handleViewTaskIssueTodoItem(item);
+                                                    }}
+                                                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                    title={`View ${type}`}
+                                                  >
+                                                    <Eye className="w-3 h-3" />
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </li>
+                                          );
+                                        }
                                       )}
                                     </ul>
                                   )}
@@ -2733,7 +2973,7 @@ const DailyTab = ({
                                             } catch (err: any) {
                                               toast.error(
                                                 "Error adding feedback: " +
-                                                  err.message
+                                                err.message
                                               );
                                             }
                                           }}
@@ -3192,7 +3432,7 @@ const DailyTab = ({
                                       } catch (err: any) {
                                         toast.error(
                                           "Error adding feedback: " +
-                                            err.message
+                                          err.message
                                         );
                                       }
                                     }}
@@ -3359,6 +3599,11 @@ const DailyTab = ({
           await loadDailyData(false);
         }}
         prefillData={actionMemberPrefill}
+      />
+      <TodoDetailsModal
+        isModalOpen={isDetailsModalOpen}
+        setIsModalOpen={setIsDetailsModalOpen}
+        todo={selectedTodo}
       />
     </div>
   );

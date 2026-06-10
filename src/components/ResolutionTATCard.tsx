@@ -142,8 +142,9 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
             </div>
             
             {/* Summary Table */}
-            <div className="mt-4 overflow-x-auto">
+            <div className="mt-4">
               <div className="rounded-xl overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr>
@@ -169,6 +170,7 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
                   </tbody>
                 </table>
               </div>
+            </div>
             </div>
           </>
         ) : (
