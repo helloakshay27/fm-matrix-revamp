@@ -64,7 +64,7 @@ const getBaseApiDomain = (): string => {
   }
 
   // Default to live API for all other cases
-  return 'https://live-api.lockated.com';
+  return 'https://live-api.gophygital.work';
 };
 
 /**
@@ -721,35 +721,35 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
     });
 
     if (showRequesterDetails) {
-    if (missingRequiredFields.length > 0) {
-      const missingField = missingRequiredFields[0];
+      if (missingRequiredFields.length > 0) {
+        const missingField = missingRequiredFields[0];
 
-      toast({
-        title: 'Validation Error',
-        description: `Please fill required field: ${missingField.descr}`,
-        className: 'bg-red-50 border border-red-300 text-red-700',
-      });
-
-      const fieldElement = dynamicFieldRefs.current[missingField.id];
-
-      if (fieldElement) {
-        fieldElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
+        toast({
+          title: 'Validation Error',
+          description: `Please fill required field: ${missingField.descr}`,
+          className: 'bg-red-50 border border-red-300 text-red-700',
         });
 
-        const input = fieldElement.querySelector(
-          'input, textarea, select'
-        ) as HTMLElement | null;
+        const fieldElement = dynamicFieldRefs.current[missingField.id];
 
-        setTimeout(() => {
-          input?.focus();
-        }, 250);
+        if (fieldElement) {
+          fieldElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+
+          const input = fieldElement.querySelector(
+            'input, textarea, select'
+          ) as HTMLElement | null;
+
+          setTimeout(() => {
+            input?.focus();
+          }, 250);
+        }
+
+        return;
       }
-
-      return;
     }
-  }
 
     setLoading(true);
     try {
@@ -785,7 +785,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         fm_user_id: user?.id || null,
         checklist_id: checklistId || null,
         custom_field_id: customFieldIdParam ? parseInt(customFieldIdParam) : null,
-        
+
         complaint: {
           heading: formData.description || formData.categoryName,
           text: formData.description,
@@ -839,7 +839,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
       if (ticketData.sel_id_user !== null) {
         payload.append('sel_id_user', String(ticketData.sel_id_user));
       }
-      
+
 
       if (ticketData.fm_user_id !== null) {
         payload.append('fm_user_id', String(ticketData.fm_user_id));
@@ -1015,7 +1015,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   };
   const orgId = new URLSearchParams(window.location.search).get("org_id");
   const hostname = window.location.hostname;
-  if (hostname.includes("oig.gophygital.work") || hostname === "localhost" ) {
+  if (hostname.includes("oig.gophygital.work") || hostname === "localhost") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6"
         style={{ background: 'linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)' }}>
@@ -1050,7 +1050,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
             style={{ fontFamily: 'Work Sans, sans-serif' }}>
             Coming Soon
           </h1>
-         
+
           {/* Decorative dots */}
           <div className="flex items-center justify-center gap-2 mt-2">
             <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -1060,11 +1060,11 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         </div>
 
         {/* Footer */}
-       
+
       </div>
     );
   }
-  
+
   if (successData) {
     return (
       <div
