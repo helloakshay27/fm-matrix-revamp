@@ -60,15 +60,9 @@ const WasteCategoryChart: React.FC<WasteChartProps> = ({ data, isLoading, onDown
     if (!active || !payload?.length) return null;
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[160px]">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <p className="font-semibold text-gray-800 truncate max-w-[120px]">{label}</p>
-          <button
-            className="text-[#C72030] hover:underline text-xs flex items-center gap-1 shrink-0"
-            onClick={() => onEye(label ?? '')}
-          >
-            <Eye className="w-3 h-3" /> View
-          </button>
-        </div>
+          <div className="flex items-center gap-4 mb-2">
+            <p className="font-semibold text-gray-800 truncate max-w-[160px]">{label}</p>
+          </div>
         {payload.map((p) => (
           <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
             <span className="w-2 h-2 rounded-full inline-block shrink-0" style={{ background: p.fill }} />
@@ -233,18 +227,24 @@ const UtilityWasteGenerationDashboard = () => {
   const handleDownloadChart = async () => {
     try {
       const siteId = getSiteId();
-      const from = toApiDate(analyticsDateRange.startDate);
-      const to   = toApiDate(analyticsDateRange.endDate);
-      const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_segregation_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
+      const from = format(analyticsDateRange.startDate, "yyyy-MM-dd");
+      const to = format(analyticsDateRange.endDate, "yyyy-MM-dd");
+      const token = localStorage.getItem('token') || '';
+      const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_segregation_download?site_id=${siteId}&from_date=${from}&to_date=${to}&token=${token}`;
       const res = await fetch(url, { headers: { Authorization: getAuthHeader() } });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const contentDisposition = res.headers.get('content-disposition') || '';
-      const match = contentDisposition.match(/filename="?(.+)"?/);
-      const filename = match ? match[1] : 'waste_segregation.csv';
+      const match = contentDisposition.match(/filename="?([^";]+)"?/);
+      let filename = match ? match[1] : 'waste_segregation.xlsx';
+      if (!filename.toLowerCase().endsWith('.xlsx') && !filename.toLowerCase().endsWith('.xls')) {
+        filename = `${filename}.xlsx`;
+      }
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = objUrl; a.download = filename; a.click();
+      a.href = objUrl;
+      a.download = filename;
+      a.click();
       URL.revokeObjectURL(objUrl);
     } catch (e) {
       console.error(e);
