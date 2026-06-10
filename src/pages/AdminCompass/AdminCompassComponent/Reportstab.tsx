@@ -201,17 +201,19 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
 
 // ── STAT CARD ──
 const StatCard = ({ icon: Icon, iconBg, iconColor, accentColor, label, value, sub }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-    <div className="p-4 flex flex-col justify-between flex-1">
-      <div className="flex items-center gap-2 mb-3">
-        <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
-          <Icon className={cn("w-4 h-4", iconColor)} />
-        </div>
-        <span className="text-xs text-gray-500 font-medium leading-snug">{label}</span>
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[118px]">
+    <div className="h-full p-4 flex flex-col items-center justify-center text-center">
+      <div className="flex items-center justify-center gap-1.5 mb-3">
+        <Icon className="w-3.5 h-3.5 text-gray-500" />
+        <span className="text-[12px] font-medium text-gray-800 leading-none">
+          {label}
+        </span>
       </div>
-      <div>
-        <div className="text-2xl font-bold text-gray-900 leading-none mb-1">{value}</div>
-        <div className="text-[11px] text-gray-400 font-medium">{sub}</div>
+      <div className="text-[26px] font-semibold text-gray-900 leading-none mb-3">
+        {value}
+      </div>
+      <div className="text-[11px] font-medium text-gray-500 leading-none">
+        {sub}
       </div>
     </div>
   </div>
