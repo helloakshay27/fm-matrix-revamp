@@ -298,7 +298,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const organizationId = selectedOrganization.id;
 
       let recaptchaToken: string | undefined;
-      const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+      const siteKey = import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY;
 
       if (siteKey) {
         const maxWaitMs = 10000;
@@ -708,7 +708,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div className="flex justify-center mb-4">
             <ReCAPTCHA
               ref={recaptchaRef}
-              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || ""}
+              sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || ""}
               onChange={(token) => setCaptchaToken(token)}
               onExpired={() => setCaptchaToken(null)}
             />

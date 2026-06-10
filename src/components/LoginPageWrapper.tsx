@@ -38,7 +38,7 @@ export const LoginPageWrapper: React.FC<LoginPageWrapperProps> = ({
 
   // Apply mobile styling for PWA routes or mobile devices
   const isPWA = isPWARoute(location.pathname, location.search);
-  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "";
+  const siteKey = import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || "";
 
   if (isMobile || isPWA) {
     return (
