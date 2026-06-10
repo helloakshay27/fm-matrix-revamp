@@ -204,6 +204,17 @@ const AddWasteGenerationPage = () => {
   }, [formData.wing]);
 
   const handleInputChange = (field: string, value: string) => {
+
+ if (
+    (field === "generatedUnit" || field === "recycledUnit") &&
+    Number(value) < 0
+  ) {
+    return;
+  }
+
+
+
+
     setFormData(prev => ({
       ...prev,
       [field]: value
