@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye, Plus, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import { WOFilterDialog } from "@/components/WOFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -231,6 +231,7 @@ export const WODashboard = () => {
   const [orgId, setOrgId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
   const bgRefreshingRef = useRef(false);
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
@@ -242,22 +243,24 @@ export const WODashboard = () => {
     poNumber: '',
     supplierName: ''
   });
-  const [pagination, setPagination] = useState({
-    current_page: 1,
+ const [pagination, setPagination] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    current_page: Number(params.get('page')) || 1,
     total_count: 0,
     total_pages: 0,
-  });
+  };
+});
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const applyResponse = (response: any) => {
     setWorkOrders(response.work_orders);
-    setPagination({
-      current_page: response.current_page,
+    setPagination((prev) => ({
+      ...prev,
       total_count: response.total_count,
       total_pages: response.total_pages,
-    });
+    }));
   };
-
   const fetchData = async (filterData: Record<string, any> = {}) => {
     const page: number = filterData.page ?? pagination.current_page;
     const siteId = localStorage.getItem("selectedSiteId") || "";
@@ -326,9 +329,18 @@ useEffect(() => {
         console.error('Failed to load org_id:', error);
       }
     }, []);
-  useEffect(() => {
-    fetchData();
-  }, []);
+
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const urlPage = Number(params.get('page')) || 1;
+  if (urlPage !== pagination.current_page) {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+  }
+}, [pagination.current_page]);
+
+useEffect(() => {
+    fetchData({ page: pagination.current_page });
+  }, [pagination.current_page]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -521,10 +533,12 @@ useEffect(() => {
     </Button>
   );
 
-  const handlePageChange = async (page: number) => {
+ const handlePageChange = async (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
+
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));

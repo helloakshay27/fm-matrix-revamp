@@ -1,39 +1,36 @@
 // ─────────────────────────────────────────────
-// ReportsTab.jsx — Unified Modern Theme
+// ReportsTab.tsx — Enhanced UI
 // ─────────────────────────────────────────────
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  FileSpreadsheet,
   BarChart2,
   Calendar,
   AlertTriangle,
   CheckCircle2,
   TrendingUp,
   Activity,
-  Settings,
+  Settings2,
   ChevronDown,
   ChevronUp,
   ArrowLeft,
   ArrowRight,
   RefreshCw,
-  X,
   Users,
+  Star,
+  Target,
+  Zap,
 } from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  LineChart as ReLineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { periodOptions, getAuthHeaders } from "./Shared";
-
-const BASE_URL = localStorage.getItem("baseUrl") || "";
+import { periodOptions, getAuthHeaders, getBaseUrl } from "./Shared";
 
 // ── DATA NORMALIZATION & FALLBACKS ──
 const generateEmptyTrendForReport = (endDateStr, days = 7) => {
@@ -67,31 +64,26 @@ const normalizeReport = (raw) => {
     attendanceRate: data.attendance_rate ?? 0,
     avgSelfRating: data.avg_self_rating ?? 0,
     unresolvedTasks: data.unresolved_tasks ?? 0,
-
-    // Yahan API ke "count" ko "attendance" par map kiya hai chart ke liye
     activityTrend: validActivityTrend
       ? data.activity_trend.map((d) => ({
-          date: d.date,
-          attendance: d.count || 0,
-        }))
+        date: d.date,
+        attendance: d.count || 0,
+      }))
       : generateEmptyTrendForReport(endDate, 7),
-
-    // Yahan API ke "avg_score" ko "kpi" par map kiya hai chart ke liye
     kpiTrend: validKpiTrend
       ? data.kpi_trend.map((d) => ({ date: d.date, kpi: d.avg_score || 0 }))
       : generateEmptyTrendForReport(endDate, 7),
-
     memberStats: Array.isArray(data.member_stats) ? data.member_stats : [],
     _raw: raw,
   };
 };
 
-// ── CUSTOM SELECT (same styling as DailyLogTab) ──
-const CustomSelect = ({
+// ── PILL SELECT ──
+const PillSelect = ({
   value,
   onChange,
   options,
-  placeholder = "All",
+  placeholder = "Select",
   disabled = false,
 }) => {
   const [open, setOpen] = React.useState(false);
@@ -107,49 +99,27 @@ const CustomSelect = ({
   }, []);
 
   return (
-    <div
-      ref={ref}
-      className="relative shrink-0"
-      style={{ fontFamily: "'Poppins', sans-serif" }}
-    >
+    <div ref={ref} className="relative shrink-0" style={{ fontFamily: "'Inter', sans-serif" }}>
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
         className={cn(
-          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-3 transition-all min-w-[160px]",
-          open
-            ? "border-[#EB4A4A] shadow-[0_0_0_3px_rgba(235,74,74,0.10)]"
-            : "border-[#F0EBE8] hover:border-[#EB4A4A]",
+          "flex items-center gap-1.5 bg-white border rounded-full px-4 py-1.5 text-sm font-medium transition-all",
+          open ? "border-[#DA7756] shadow-sm" : "border-gray-200 hover:border-gray-300",
           disabled && "opacity-60 cursor-not-allowed"
         )}
       >
-        <span className="flex-1 text-left text-sm font-semibold truncate">
-          {disabled ? (
-            <span className="text-[#8C8580]">Loading…</span>
-          ) : selected ? (
-            <span className="text-[#1A1A1A] font-bold">{selected.label}</span>
-          ) : (
-            <span className="text-[#8C8580]">{placeholder}</span>
-          )}
+        <span className="text-gray-800 text-sm">
+          {disabled ? "Loading…" : selected ? selected.label : placeholder}
         </span>
-        <ChevronDown
-          className={cn(
-            "w-4 h-4 transition-transform duration-200 shrink-0",
-            open ? "rotate-180 text-[#EB4A4A]" : "text-[#8C8580]"
-          )}
-        />
+        <ChevronDown className={cn("w-3.5 h-3.5 text-gray-500 transition-transform", open && "rotate-180")} />
       </button>
 
       {open && !disabled && (
         <div
-          className="absolute top-full left-0 mt-1.5 z-[999] bg-white border border-[#F0EBE8] rounded-[20px] overflow-hidden min-w-full"
-          style={{
-            maxHeight: 240,
-            overflowY: "auto",
-            boxShadow:
-              "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
-          }}
+          className="absolute top-full left-0 mt-1.5 z-[999] bg-white border border-gray-100 rounded-2xl overflow-hidden min-w-full"
+          style={{ maxHeight: 220, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.10)" }}
         >
           <div className="py-1.5">
             {options.map((opt) => {
@@ -158,45 +128,13 @@ const CustomSelect = ({
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => {
-                    onChange(String(opt.value));
-                    setOpen(false);
-                  }}
+                  onClick={() => { onChange(String(opt.value)); setOpen(false); }}
                   className={cn(
-                    "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 group",
-                    isSelected
-                      ? "bg-[#FFF5F5] text-[#D37E5F]"
-                      : "text-[#1A1A1A] hover:bg-[#FFF5F5] hover:text-[#D37E5F]"
+                    "w-full text-left px-4 py-2 text-sm transition-colors",
+                    isSelected ? "bg-orange-50 text-[#DA7756] font-semibold" : "text-gray-700 hover:bg-gray-50"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
-                      isSelected
-                        ? "bg-[#D37E5F]"
-                        : "bg-transparent group-hover:bg-[#EB4A4A]/30"
-                    )}
-                  />
-                  <span className="truncate flex-1 font-semibold">
-                    {opt.label}
-                  </span>
-                  {isSelected && (
-                    <span className="ml-auto shrink-0">
-                      <svg
-                        className="w-3.5 h-3.5 text-[#EB4A4A]"
-                        viewBox="0 0 14 14"
-                        fill="none"
-                      >
-                        <path
-                          d="M2.5 7L5.5 10L11.5 4"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  )}
+                  {opt.label}
                 </button>
               );
             })}
@@ -207,95 +145,87 @@ const CustomSelect = ({
   );
 };
 
-// ── APIs FOR DYNAMIC DATA ──
-
-// 1. Fetch Dynamic Meetings Dropdown
+// ── APIS ──
 const fetchDynamicMeetings = async () => {
-  const res = await fetch(`https://${BASE_URL}/daily_meeting_configs`, {
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
   const raw = await res.text();
   let json;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    json = [];
-  }
+  try { json = JSON.parse(raw); } catch { json = []; }
 
   let list = [];
   if (Array.isArray(json)) list = json;
-  else if (Array.isArray(json.data?.daily_meeting_configs))
-    list = json.data.daily_meeting_configs;
-  else if (Array.isArray(json.data?.meeting_configs))
-    list = json.data.meeting_configs;
+  else if (Array.isArray(json.data?.daily_meeting_configs)) list = json.data.daily_meeting_configs;
+  else if (Array.isArray(json.data?.meeting_configs)) list = json.data.meeting_configs;
   else if (Array.isArray(json.data)) list = json.data;
-  else if (Array.isArray(json.daily_meeting_configs))
-    list = json.daily_meeting_configs;
+  else if (Array.isArray(json.daily_meeting_configs)) list = json.daily_meeting_configs;
 
   return list.map((m) => ({
     id: String(m.id),
     label: m.name ?? m.title ?? m.label ?? `Meeting ${m.id}`,
-    is_default: m.is_default || m.isDefault || false, // 🛠 FIX: Extra flag
+    is_default: m.is_default || m.isDefault || false,
   }));
 };
 
-// 2. Fetch Report Stats
 const fetchDynamicReport = async ({ meetingId, period }) => {
-  const url = new URL(
-    `https://${BASE_URL}/user_journals/analytics`
-  );
-  if (meetingId) {
-    url.searchParams.append("meeting_id", meetingId);
-  }
-  if (period) {
-    url.searchParams.append("period", period);
-  }
+  const url = new URL(`${getBaseUrl()}/user_journals/daily_meeting_report`);
+  if (meetingId) url.searchParams.append("meeting_id", meetingId);
+  if (period) url.searchParams.append("period", period);
 
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
+  const res = await fetch(url.toString(), { method: "GET", headers: getAuthHeaders() });
   if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
   const raw = await res.text();
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(raw); } catch { return null; }
 };
 
-// 3. Fetch Single Date Status from Daily API
 const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
-  const url = new URL(`https://${BASE_URL}/user_journals/daily_meeting`);
+  const url = new URL(`${getBaseUrl()}/user_journals/daily_meeting`);
   url.searchParams.append("date", dateStr);
-
-  if (meetingId) {
-    url.searchParams.append("meeting_id", meetingId);
-  }
+  if (meetingId) url.searchParams.append("meeting_id", meetingId);
 
   try {
-    const res = await fetch(url.toString(), {
-      method: "GET",
-      headers: getAuthHeaders(),
-    });
+    const res = await fetch(url.toString(), { method: "GET", headers: getAuthHeaders() });
     if (!res.ok) return "missed";
     const json = await res.json();
-
     const dateRow = json.data?.date_row || [];
     const targetDateObj = dateRow.find((d) => d.full_date === dateStr);
-
     if (targetDateObj) {
-      return targetDateObj.status === "non_meeting"
-        ? "holiday"
-        : targetDateObj.status;
+      return targetDateObj.status === "non_meeting" ? "holiday" : targetDateObj.status;
     }
     return "missed";
-  } catch (err) {
-    return "missed";
-  }
+  } catch { return "missed"; }
+};
+
+// ── STAT CARD ──
+const StatCard = ({ icon: Icon, iconBg, iconColor, accentColor, label, value, sub }) => (
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+    <div className="h-1 w-full" style={{ background: accentColor }} />
+    <div className="p-4 flex flex-col justify-between flex-1">
+      <div className="flex items-center gap-2 mb-3">
+        <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
+          <Icon className={cn("w-4 h-4", iconColor)} />
+        </div>
+        <span className="text-xs text-gray-500 font-medium leading-snug">{label}</span>
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-gray-900 leading-none mb-1">{value}</div>
+        <div className="text-[11px] text-gray-400 font-medium">{sub}</div>
+      </div>
+    </div>
+  </div>
+);
+
+// ── CHART TOOLTIP ──
+const ChartTooltipStyle = {
+  borderRadius: "12px",
+  border: "1px solid #F3F4F6",
+  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+  fontSize: 12,
+  fontWeight: 600,
+  fontFamily: "'Inter', sans-serif",
 };
 
 // ── MAIN COMPONENT ──
@@ -303,19 +233,16 @@ const ReportsTab = ({
   selectedMeetingId: externalSelectedMeetingId,
   onSelectedMeetingChange,
 } = {}) => {
-  // Main States
   const [dynamicMeetings, setDynamicMeetings] = useState([]);
   const [selectedMeetingId, setSelectedMeetingIdState] = useState(externalSelectedMeetingId || "");
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("last_7_days");
 
-  // Report States
   const [report, setReport] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [isKpiExpanded, setIsKpiExpanded] = useState(false);
 
-  // Calendar States
   const [weekOffset, setWeekOffset] = useState(0);
   const [weeklyStatusData, setWeeklyStatusData] = useState([]);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
@@ -332,7 +259,6 @@ const ReportsTab = ({
     if (meetingId) onSelectedMeetingChange?.(String(meetingId));
   };
 
-  // 1. Fetch Meetings List on Mount
   useEffect(() => {
     const loadMeetingsDropdown = async () => {
       setIsFetchingMeetings(true);
@@ -340,7 +266,6 @@ const ReportsTab = ({
         const fetchedList = await fetchDynamicMeetings();
         setDynamicMeetings(fetchedList);
         if (fetchedList.length > 0) {
-          // 🛠 FIX: Look for default meeting, else select the first one
           const defaultMeeting = fetchedList.find((m) => m.is_default);
           if (externalSelectedMeetingId) {
             setSelectedMeetingId(String(externalSelectedMeetingId));
@@ -359,16 +284,12 @@ const ReportsTab = ({
     loadMeetingsDropdown();
   }, [externalSelectedMeetingId]);
 
-  // 2. Fetch Main Report
   const loadReport = useCallback(async () => {
     if (!selectedMeetingId) return;
     setIsLoading(true);
     setApiError(null);
     try {
-      const raw = await fetchDynamicReport({
-        meetingId: selectedMeetingId,
-        period: selectedPeriod,
-      });
+      const raw = await fetchDynamicReport({ meetingId: selectedMeetingId, period: selectedPeriod });
       setReport(normalizeReport(raw));
     } catch (err) {
       setApiError(err.message);
@@ -378,7 +299,6 @@ const ReportsTab = ({
     }
   }, [selectedMeetingId, selectedPeriod]);
 
-  // 3. Fetch Exactly Last 7 Days Calendar Status
   const loadCalendarWeek = useCallback(async () => {
     if (!selectedMeetingId) return;
     setIsCalendarLoading(true);
@@ -387,40 +307,25 @@ const ReportsTab = ({
       baseDate.setDate(baseDate.getDate() - weekOffset * 7);
 
       const daysToFetch = [];
-
       for (let i = 6; i >= 0; i--) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() - i);
-
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, "0");
         const day = String(d.getDate()).padStart(2, "0");
         const dateStr = `${year}-${month}-${day}`;
-
         const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
         const dateNum = d.getDate().toString();
-
-        daysToFetch.push({
-          day: dayName,
-          date: dateNum,
-          dateStr: dateStr,
-          isWeekend: dayName === "Sat" || dayName === "Sun",
-        });
+        daysToFetch.push({ day: dayName, date: dateNum, dateStr, isWeekend: dayName === "Sat" || dayName === "Sun" });
       }
 
       const weekResults = await Promise.all(
         daysToFetch.map(async (dayObj) => {
-          if (dayObj.isWeekend) {
-            return { ...dayObj, status: "holiday" };
-          }
-          const status = await fetchDailyMeetingStatusForCalendar(
-            dayObj.dateStr,
-            selectedMeetingId
-          );
+          if (dayObj.isWeekend) return { ...dayObj, status: "holiday" };
+          const status = await fetchDailyMeetingStatusForCalendar(dayObj.dateStr, selectedMeetingId);
           return { ...dayObj, status };
         })
       );
-
       setWeeklyStatusData(weekResults);
     } catch (err) {
       console.error(err);
@@ -430,616 +335,569 @@ const ReportsTab = ({
     }
   }, [weekOffset, selectedMeetingId]);
 
-  // Re-fetch report when dropdowns change
-  useEffect(() => {
-    loadReport();
-  }, [loadReport]);
-
-  // Re-fetch calendar when offset or meeting changes
-  useEffect(() => {
-    loadCalendarWeek();
-  }, [loadCalendarWeek]);
+  useEffect(() => { loadReport(); }, [loadReport]);
+  useEffect(() => { loadCalendarWeek(); }, [loadCalendarWeek]);
 
   const r = report;
-  const weekLabel =
-    weekOffset === 0 ? "Last 7 Days" : `${weekOffset} weeks ago`;
+
+  const getCalendarDateLabel = () => {
+    const baseDate = new Date();
+    baseDate.setDate(baseDate.getDate() - weekOffset * 7);
+    const end = new Date(baseDate);
+    const fmt = (d) =>
+      d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    return `Daily Report for ${fmt(end)}`;
+  };
 
   return (
-    <div
-      className="space-y-6 pb-12 min-h-screen"
-      style={{ fontFamily: "'Poppins', sans-serif" }}
-    >
-      {/* Header and Controls */}
-      <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-[48px] h-[48px] rounded-[14px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center shrink-0">
-              <BarChart2 className="w-6 h-6 text-[#D37E5F]" />
-            </div>
-            <div>
-              <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight">
-                Meeting Reports
-              </h2>
-              <p className="text-[12px] font-bold text-[#8C8580] uppercase tracking-widest mt-1">
-                {r?.config?.name || "Loading..."}
-              </p>
-            </div>
+    <div className="space-y-5 pb-12" style={{ fontFamily: "'Inter', sans-serif" }}>
+
+      {/* ── TOP HEADER ROW ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+            <BarChart2 className="w-5 h-5 text-[#DA7756]" />
           </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-            {/* ── Meeting dropdown — uses CustomSelect ── */}
-            <CustomSelect
-              value={selectedMeetingId}
-              onChange={(val) => setSelectedMeetingId(String(val))}
-              disabled={isFetchingMeetings}
-              placeholder="Select Meeting"
-              options={dynamicMeetings.map((m) => ({
-                value: String(m.id),
-                label: m.label,
-              }))}
-            />
-
-            {/* Period dropdown — kept as native select */}
-            <div className="relative">
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[160px] w-full"
-              >
-                {periodOptions.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
-            </div>
-
-            <button
-              onClick={() => {
-                loadReport();
-                loadCalendarWeek();
-              }}
-              disabled={isLoading || isCalendarLoading}
-              className="w-[46px] h-[46px] flex items-center justify-center border border-[#F0EBE8] rounded-[16px] bg-white text-[#8C8580] hover:text-[#1A1A1A] hover:bg-gray-50 transition-all shrink-0 disabled:opacity-50"
-            >
-              <RefreshCw
-                className={cn(
-                  "w-5 h-5",
-                  (isLoading || isCalendarLoading) &&
-                    "animate-spin text-[#EB4A4A]"
-                )}
-              />
-            </button>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 leading-none">Meetings Report</h2>
+            <p className="text-xs text-gray-400 mt-0.5 font-medium">Analytics & attendance overview</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <PillSelect
+            value={selectedMeetingId}
+            onChange={(val) => setSelectedMeetingId(String(val))}
+            disabled={isFetchingMeetings}
+            placeholder="Select Meeting"
+            options={dynamicMeetings.map((m) => ({ value: String(m.id), label: m.label }))}
+          />
+          <PillSelect
+            value={selectedPeriod}
+            onChange={setSelectedPeriod}
+            placeholder="Period"
+            options={periodOptions}
+          />
+          <button
+            onClick={() => { loadReport(); loadCalendarWeek(); }}
+            disabled={isLoading || isCalendarLoading}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-[#DA7756] hover:border-orange-200 transition-all disabled:opacity-40 shadow-sm"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", (isLoading || isCalendarLoading) && "animate-spin text-[#DA7756]")} />
+          </button>
         </div>
       </div>
 
       {apiError && (
-        <div className="bg-[#EB4A4A]/10 text-[#EB4A4A] text-sm font-bold p-5 rounded-[20px] flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 shrink-0" />
+        <div className="bg-red-50 text-red-600 text-sm font-medium p-4 rounded-2xl flex items-center gap-3 border border-red-100">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
           {apiError.includes("No Auth Token")
             ? "No auth token — save it in Settings tab first."
             : `API error: ${apiError}`}
         </div>
       )}
 
-      {/* ── NORMAL SKELETON LOADING UI ── */}
+      {/* ── SKELETON ── */}
       {isLoading && (
-        <div className="space-y-6">
-          {/* Calendar Block Skeleton */}
-          <div className="bg-white rounded-[32px] border border-[#F0EBE8] p-6 sm:p-8 animate-pulse">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-[12px] bg-[#F0EBE8]"></div>
-                <div className="w-32 h-6 rounded-md bg-[#F0EBE8]"></div>
-              </div>
-              <div className="flex gap-2">
-                <div className="w-10 h-10 rounded-[12px] bg-[#F0EBE8]"></div>
-                <div className="w-10 h-10 rounded-[12px] bg-[#F0EBE8]"></div>
-              </div>
-            </div>
-            <div className="flex gap-[18px] overflow-hidden pb-4">
-              {[...Array(7)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-[90px] h-[110px] rounded-[16px] bg-[#F0EBE8] shrink-0"
-                ></div>
+        <div className="space-y-5 animate-pulse">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-5">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 h-[220px]" />
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 h-[100px]" />
               ))}
             </div>
           </div>
-
-          {/* KPI Metrics Skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="rounded-[24px] p-6 border border-[#F0EBE8] bg-[#FCFAFA] h-[140px] flex flex-col justify-between"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="w-24 h-4 bg-[#E5DFDB] rounded"></div>
-                  <div className="w-10 h-10 rounded-[12px] bg-[#E5DFDB]"></div>
-                </div>
-                <div>
-                  <div className="w-16 h-8 bg-[#E5DFDB] rounded mb-2"></div>
-                  <div className="w-20 h-3 bg-[#E5DFDB] rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Charts Skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 h-[320px]"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-[8px] bg-[#F0EBE8]"></div>
-                  <div className="w-32 h-4 bg-[#F0EBE8] rounded"></div>
-                </div>
-                <div className="w-full h-[220px] bg-[#F9F7F6] rounded-[12px]"></div>
-              </div>
-            ))}
-          </div>
-
-          {/* Issue & KPI Sub Metrics Row Skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-pulse">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-[20px] p-5 border border-[#F0EBE8] flex gap-4 items-center"
-              >
-                <div className="w-12 h-12 rounded-[14px] bg-[#F0EBE8] shrink-0"></div>
-                <div className="flex-1">
-                  <div className="w-20 h-3 bg-[#F0EBE8] rounded mb-2"></div>
-                  <div className="w-16 h-5 bg-[#F0EBE8] rounded mb-2"></div>
-                  <div className="w-24 h-3 bg-[#F0EBE8] rounded"></div>
-                </div>
-              </div>
-            ))}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 h-12" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 h-[300px]" />
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 h-[300px]" />
           </div>
         </div>
       )}
 
       {!isLoading && !apiError && !r && (
-        <div className="flex flex-col items-center justify-center py-28 border-2 border-dashed border-[#F0EBE8] rounded-[32px] bg-white">
-          <BarChart2 size={56} className="mb-4 text-[#F0EBE8]" />
-          <p className="text-sm font-bold text-[#8C8580]">
-            No report data for this period
-          </p>
+        <div className="flex flex-col items-center justify-center py-28 border-2 border-dashed border-gray-100 rounded-2xl bg-white">
+          <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
+            <BarChart2 size={28} className="text-[#DA7756]" />
+          </div>
+          <p className="text-sm font-semibold text-gray-500">No report data for this period</p>
+          <p className="text-xs text-gray-400 mt-1">Select a meeting and period to load analytics</p>
         </div>
       )}
 
       {!isLoading && r && (
-        <div className="space-y-6">
-          {/* Calendar Section */}
-          <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-              <div className="flex items-center gap-3 text-[#1A1A1A] font-black text-lg">
-                <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-[#D37E5F]" />
+        <div className="space-y-5">
+
+          {/* ── ROW 1: Calendar (left) + KPI Stats (right) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-5">
+
+            {/* Calendar Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-5 pt-5 pb-4">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Weekly View</p>
+                    <p className="text-sm font-semibold text-gray-700">{getCalendarDateLabel()}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setWeekOffset((prev) => prev + 1)}
+                      className="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-400 hover:text-gray-700 transition-colors"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
+                      disabled={weekOffset === 0}
+                      className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white transition-colors",
+                        weekOffset === 0 ? "opacity-30 cursor-not-allowed text-gray-300" : "hover:bg-gray-50 hover:border-gray-300 text-gray-400 hover:text-gray-700"
+                      )}
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                Meeting Status
-                <span className="text-[#8C8580] text-sm ml-1 font-bold bg-[#FCFAFA] px-3 py-1 rounded-[8px] border border-[#F0EBE8]">
-                  {weekLabel}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setWeekOffset((prev) => prev + 1)}
-                  className="w-10 h-10 flex items-center justify-center border border-[#F0EBE8] rounded-[12px] hover:bg-gray-50 text-[#8C8580] hover:text-[#1A1A1A] transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
-                  disabled={weekOffset === 0}
+
+                {/* Day cards row */}
+                <div
                   className={cn(
-                    "w-10 h-10 flex items-center justify-center border border-[#F0EBE8] rounded-[12px] transition-colors",
-                    weekOffset === 0
-                      ? "opacity-30 cursor-not-allowed bg-gray-50"
-                      : "hover:bg-gray-50 text-[#8C8580] hover:text-[#1A1A1A]"
+                    "flex gap-2 overflow-x-auto pb-1 transition-opacity duration-200",
+                    isCalendarLoading ? "opacity-40" : "opacity-100"
                   )}
+                  style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
                 >
-                  <ArrowRight className="w-5 h-5" />
-                </button>
+                  {weeklyStatusData.map((dateItem, i) => {
+                    const status = dateItem.status;
+                    const isToday = weekOffset === 0 && i === weeklyStatusData.length - 1;
+
+                    let topBarColor = "#E5E7EB";
+                    let cardBg = "#F9FAFB";
+                    let borderColor = "#E5E7EB";
+                    let dayColor = "#9CA3AF";
+                    let numColor = "#9CA3AF";
+                    let hasDot = false;
+
+                    if (isToday) {
+                      topBarColor = "#DA7756";
+                      cardBg = "#fff";
+                      borderColor = "#DA7756";
+                      dayColor = "#6B7280";
+                      numColor = "#111827";
+                      hasDot = true;
+                    } else if (status === "submitted" || status === "fill" || status === "done") {
+                      topBarColor = "#2DD4BF";
+                      cardBg = "#F0FDFA";
+                      borderColor = "#99F6E4";
+                      dayColor = "#0F766E";
+                      numColor = "#0F766E";
+                    } else if (status === "missed") {
+                      topBarColor = "#F87171";
+                      cardBg = "#FFF5F5";
+                      borderColor = "#FCA5A5";
+                      dayColor = "#DC2626";
+                      numColor = "#DC2626";
+                    } else if (status === "holiday") {
+                      topBarColor = "#D1D5DB";
+                      cardBg = "#F9FAFB";
+                      borderColor = "#E5E7EB";
+                      dayColor = "#9CA3AF";
+                      numColor = "#9CA3AF";
+                    }
+
+                    return (
+                      <div
+                        key={dateItem.dateStr || i}
+                        className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl relative select-none overflow-hidden"
+                        style={{
+                          width: 72,
+                          height: 88,
+                          background: cardBg,
+                          border: `1.5px solid ${borderColor}`,
+                        }}
+                      >
+                        {/* Colored top bar */}
+                        <div
+                          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+                          style={{ background: topBarColor }}
+                        />
+                        {hasDot && (
+                          <span
+                            className="absolute rounded-full"
+                            style={{ width: 7, height: 7, top: 8, right: 8, background: "#DA7756" }}
+                          />
+                        )}
+                        <span
+                          className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 mt-1"
+                          style={{ color: dayColor }}
+                        >
+                          {dateItem.day}
+                        </span>
+                        <span
+                          className="text-[26px] font-bold leading-none"
+                          style={{ color: numColor }}
+                        >
+                          {dateItem.date}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center gap-4 flex-wrap px-5 py-3 border-t border-gray-50 bg-gray-50/50">
+                {[
+                  { color: "#2DD4BF", label: "Filled" },
+                  { color: "#F87171", label: "Missed" },
+                  { color: "#D1D5DB", label: "Holiday" },
+                  { color: "#DA7756", label: "Today" },
+                ].map(({ color, label }) => (
+                  <div key={label} className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
+                    <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
+                    {label}
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div
-              className={cn(
-                "flex gap-[18px] overflow-x-auto pb-4 pt-1 transition-opacity duration-300",
-                isCalendarLoading ? "opacity-40" : "opacity-100"
-              )}
-              style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
-            >
-              {weeklyStatusData.map((dateItem, i) => {
-                let bg, textColor, labelBg, labelColor, displayLabel;
-                const status = dateItem.status;
+            {/* KPI Stats 2×2 */}
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard
+                icon={Calendar}
+                iconBg="bg-blue-50"
+                iconColor="text-blue-500"
+                accentColor="#3B82F6"
+                label="Meetings this month"
+                value={r.meetingsThisMonth ?? 0}
+                sub="Calculated from API"
+              />
+              <StatCard
+                icon={CheckCircle2}
+                iconBg="bg-green-50"
+                iconColor="text-green-500"
+                accentColor="#22C55E"
+                label="Attendance rate"
+                value={`${Number(r.attendanceRate || 0).toFixed(1)} %`}
+                sub="Overall attendance"
+              />
+              <StatCard
+                icon={Star}
+                iconBg="bg-amber-50"
+                iconColor="text-amber-500"
+                accentColor="#F59E0B"
+                label="Average self rating"
+                value={`${r.avgSelfRating ? Number(r.avgSelfRating).toFixed(1) : "0.0"}/10`}
+                sub="Team average"
+              />
+              <StatCard
+                icon={AlertTriangle}
+                iconBg="bg-red-50"
+                iconColor="text-red-500"
+                accentColor="#EF4444"
+                label="Unresolved"
+                value={r.unresolvedTasks ?? 0}
+                sub="Total stuck issues"
+              />
+            </div>
+          </div>
 
-                if (status === "missed") {
-                  bg = "#F34A4A";
-                  textColor = "#FFFFFF";
-                  labelBg = "rgba(255,255,255,0.25)";
-                  labelColor = "#FFFFFF";
-                  displayLabel = "Miss";
-                } else if (status === "holiday") {
-                  bg = "#F5D142";
-                  textColor = "#8A6D3B";
-                  labelBg = "rgba(0,0,0,0.08)";
-                  labelColor = "#8A6D3B";
-                  displayLabel = "Holiday";
-                } else if (
-                  status === "submitted" ||
-                  status === "fill" ||
-                  status === "done"
-                ) {
-                  bg = "#2ECC71";
-                  textColor = "#FFFFFF";
-                  labelBg = "rgba(255,255,255,0.25)";
-                  labelColor = "#FFFFFF";
-                  displayLabel = "Filled";
-                } else {
-                  bg = "#F3F4F6";
-                  textColor = "#6B7280";
-                  labelBg = "#E5E7EB";
-                  labelColor = "#9CA3AF";
-                  displayLabel = "N/A";
-                }
+          {/* ── ROW 2: Filter bar ── */}
+          <div className="flex items-center gap-6 bg-white rounded-2xl border border-gray-100 px-5 py-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Meetings</span>
+              <PillSelect
+                value={selectedMeetingId}
+                onChange={(val) => setSelectedMeetingId(String(val))}
+                disabled={isFetchingMeetings}
+                placeholder="Select Meeting"
+                options={dynamicMeetings.map((m) => ({ value: String(m.id), label: m.label }))}
+              />
+            </div>
+            <div className="w-px h-5 bg-gray-200" />
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Members</span>
+              <PillSelect
+                value=""
+                onChange={() => {}}
+                placeholder="All members"
+                options={[
+                  { value: "", label: "All members" },
+                  ...(r.memberStats || []).map((m, i) => ({ value: String(i), label: m.name || `Member ${i + 1}` })),
+                ]}
+              />
+            </div>
+          </div>
 
-                return (
-                  <div
-                    key={dateItem.dateStr || i}
-                    className="relative flex-shrink-0 mt-1 ml-1 select-none"
-                  >
-                    <div
-                      className="flex flex-col items-center justify-center rounded-[16px] cursor-default"
-                      style={{
-                        width: 90,
-                        height: 110,
-                        background: bg,
-                        color: textColor,
-                        boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
-                      }}
-                    >
-                      <span
-                        className="text-[11px] font-extrabold uppercase tracking-widest mb-1 opacity-90"
-                        style={{ color: textColor }}
-                      >
-                        {dateItem.day}
-                      </span>
-                      <span
-                        className="text-[30px] font-bold leading-none"
-                        style={{ color: textColor }}
-                      >
-                        {dateItem.date}
-                      </span>
-                      <div
-                        className="mt-2.5 h-[18px] px-3 rounded-full flex items-center justify-center text-[9px] font-extrabold uppercase tracking-widest"
-                        style={{ background: labelBg, color: labelColor }}
-                      >
-                        {displayLabel}
-                      </div>
+          {/* ── ROW 3: Charts ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            {/* Attendance Trend */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #22C55E, #4ADE80)" }} />
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">Attendance Trend</p>
+                      <p className="text-[11px] text-gray-400 font-medium">Daily meeting participation</p>
                     </div>
                   </div>
-                );
-              })}
+                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg">
+                    {r.activityTrend?.length || 0} days
+                  </span>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={r.activityTrend || []}>
+                    <defs>
+                      <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22C55E" stopOpacity={0.18} />
+                        <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      dy={8}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 100]}
+                      dx={-8}
+                    />
+                    <Tooltip contentStyle={ChartTooltipStyle} />
+                    <Area
+                      type="monotone"
+                      dataKey="attendance"
+                      stroke="#22C55E"
+                      strokeWidth={2.5}
+                      fill="url(#attendanceGradient)"
+                      dot={{ fill: "#22C55E", r: 4, strokeWidth: 2, stroke: "#fff" }}
+                      activeDot={{ r: 6, fill: "#22C55E" }}
+                      name="Attendance %"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
-            <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-4">
-              <div className="flex items-center gap-2.5">
-                <span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" />{" "}
-                Filled
-              </div>
-              <div className="flex items-center gap-2.5">
-                <span className="w-[15px] h-[15px] rounded-full bg-[#F34A4A]" />{" "}
-                Missed
-              </div>
-              <div className="flex items-center gap-2.5">
-                <span className="w-[15px] h-[15px] rounded-full bg-[#F5D142]" />{" "}
-                Holiday
-              </div>
-            </div>
-          </div>
-
-          {/* KPI Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                label: "Meetings This Month",
-                val: r.meetingsThisMonth ?? 0,
-                sub: "Calculated from API",
-                icon: Calendar,
-                color: "text-[#DAB835]",
-                bg: "bg-[#FCFAFA]",
-              },
-              {
-                label: "Attendance Rate",
-                val: `${Number(r.attendanceRate || 0).toFixed(1)}%`,
-                sub: "Overall Attendance",
-                icon: CheckCircle2,
-                color: "text-[#2ECC71]",
-                bg: "bg-[#FCFAFA]",
-              },
-              {
-                label: "Avg Self-Rating",
-                val: `${r.avgSelfRating ? Number(r.avgSelfRating).toFixed(1) : "0.0"}/10`,
-                sub: "Team average",
-                icon: TrendingUp,
-                color: "text-[#EB4A4A]",
-                bg: "bg-[#FCFAFA]",
-              },
-              {
-                label: "Unresolved",
-                val: r.unresolvedTasks ?? 0,
-                sub: "Total stuck issues",
-                icon: AlertTriangle,
-                color: "text-[#DAB835]",
-                bg: "bg-[#FCFAFA]",
-              },
-            ].map((metric, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "rounded-[24px] p-6 border border-[#F0EBE8] flex flex-col justify-between shadow-sm",
-                  metric.bg
-                )}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="text-[11px] font-black text-[#8C8580] tracking-widest uppercase mb-3 leading-snug">
-                    {metric.label}
+            {/* KPI Achievement */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #EF4444, #F87171)" }} />
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                      <Activity className="w-4 h-4 text-red-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">KPI Achievement</p>
+                      <p className="text-[11px] text-gray-400 font-medium">Performance score over time</p>
+                    </div>
                   </div>
-                  <div className="w-10 h-10 rounded-[12px] bg-white border border-[#F0EBE8] flex items-center justify-center shrink-0">
-                    <metric.icon className={cn("w-5 h-5", metric.color)} />
-                  </div>
+                  <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg">
+                    {r.kpiTrend?.length || 0} days
+                  </span>
                 </div>
-                <div>
-                  <div className="text-[32px] font-black text-[#1A1A1A] leading-none mb-2">
-                    {metric.val}
-                  </div>
-                  <div className="text-[11px] font-bold text-[#8C8580] uppercase tracking-wider">
-                    {metric.sub}
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={r.kpiTrend || []}>
+                    <defs>
+                      <linearGradient id="kpiGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      dy={8}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 100]}
+                      dx={-8}
+                    />
+                    <Tooltip contentStyle={ChartTooltipStyle} />
+                    <Area
+                      type="monotone"
+                      dataKey="kpi"
+                      stroke="#EF4444"
+                      strokeWidth={2.5}
+                      fill="url(#kpiGradient)"
+                      dot={{ fill: "#EF4444", r: 4, strokeWidth: 2, stroke: "#fff" }}
+                      activeDot={{ r: 6, fill: "#EF4444" }}
+                      name="KPI %"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
-
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6 text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
-                <div className="w-8 h-8 rounded-[8px] bg-[#2ECC71]/10 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-[#2ECC71]" />
-                </div>
-                Attendance Trend
-              </div>
-              <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={r.activityTrend || []}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#F0EBE8"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }}
-                    axisLine={false}
-                    tickLine={false}
-                    dy={10}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 100]}
-                    dx={-10}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                      fontWeight: "bold",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="attendance"
-                    stroke="#2ECC71"
-                    strokeWidth={3}
-                    fill="#2ECC71"
-                    fillOpacity={0.15}
-                    name="Attendance %"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6 text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
-                <div className="w-8 h-8 rounded-[8px] bg-[#EB4A4A]/10 flex items-center justify-center">
-                  <Activity className="w-4 h-4 text-[#EB4A4A]" />
-                </div>
-                KPI Achievement
-              </div>
-              <ResponsiveContainer width="100%" height={240}>
-                <ReLineChart data={r.kpiTrend || []}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#F0EBE8"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }}
-                    axisLine={false}
-                    tickLine={false}
-                    dy={10}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 100]}
-                    dx={-10}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                      fontWeight: "bold",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="kpi"
-                    stroke="#EB4A4A"
-                    strokeWidth={3}
-                    dot={{
-                      fill: "#EB4A4A",
-                      r: 4,
-                      strokeWidth: 2,
-                      stroke: "#fff",
-                    }}
-                    activeDot={{ r: 6 }}
-                    name="KPI %"
-                  />
-                </ReLineChart>
-              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Issue & KPI Sub Metrics Row */}
+          {/* ── ROW 4: Sub Metric Cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
                 icon: AlertTriangle,
-                iconColor: "text-[#EB4A4A]",
+                iconColor: "text-red-500",
+                iconBg: "bg-red-50",
+                accentColor: "#EF4444",
                 label: "Issue Resolution",
                 value: "0%",
                 sub: "0 Resolved · 0 Open",
               },
               {
-                icon: Activity,
-                iconColor: "text-[#2ECC71]",
+                icon: Target,
+                iconColor: "text-green-500",
+                iconBg: "bg-green-50",
+                accentColor: "#22C55E",
                 label: "KPI Achievement",
                 value: "0%",
                 sub: "0 total entries",
               },
               {
-                icon: Settings,
-                iconColor: "text-[#DAB835]",
+                icon: Zap,
+                iconColor: "text-amber-500",
+                iconBg: "bg-amber-50",
+                accentColor: "#F59E0B",
                 label: "Issue Metrics",
                 value: "0 days",
                 sub: "0 total stuck issues",
               },
-            ].map(({ icon: Icon, iconColor, label, value, sub }) => (
-              <div
-                key={label}
-                className="bg-white rounded-[20px] p-5 border border-[#F0EBE8] flex gap-4 shadow-sm items-center"
-              >
-                <div className="w-12 h-12 rounded-[14px] bg-[#FCFAFA] flex items-center justify-center shrink-0 border border-[#F0EBE8]">
-                  <Icon className={cn("w-6 h-6", iconColor)} />
-                </div>
-                <div>
-                  <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-1">
-                    {label}
+            ].map(({ icon: Icon, iconColor, iconBg, accentColor, label, value, sub }) => (
+              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="h-1" style={{ background: accentColor }} />
+                <div className="p-4 flex gap-3 items-center">
+                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
+                    <Icon className={cn("w-5 h-5", iconColor)} />
                   </div>
-                  <div className="text-[20px] font-black text-[#1A1A1A] mb-0.5 leading-none">
-                    {value}
-                  </div>
-                  <div className="text-[11px] font-bold text-[#8C8580]">
-                    {sub}
+                  <div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</div>
+                    <div className="text-lg font-bold text-gray-900 leading-none mb-0.5">{value}</div>
+                    <div className="text-[11px] font-medium text-gray-400">{sub}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Team KPIs Accordion */}
-          <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm overflow-hidden">
-            <div
-              className="p-6 flex items-center justify-between cursor-pointer bg-[#FCFAFA] hover:bg-gray-50 transition-colors"
+          {/* ── TEAM MEMBER KPIs Accordion ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <button
+              type="button"
+              className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left"
               onClick={() => setIsKpiExpanded(!isKpiExpanded)}
             >
-              <div>
-                <div className="flex items-center gap-3 font-black text-[#1A1A1A] text-base uppercase tracking-wider">
-                  <div className="w-8 h-8 rounded-[8px] bg-white border border-[#F0EBE8] flex items-center justify-center">
-                    <Users className="w-4 h-4 text-[#8C8580]" />
-                  </div>
-                  Team Member KPIs
-                  <span className="px-3 py-1 rounded-[8px] bg-[#1A1A1A] text-white text-[10px] font-bold tracking-widest ml-2">
-                    {r.memberStats?.length || 0} Members
-                  </span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-[#DA7756]" />
                 </div>
+                <span className="font-bold text-gray-900 text-sm">Team Member KPIs</span>
+                <span
+                  className="min-w-[28px] h-6 flex items-center justify-center rounded-full text-white text-xs font-bold px-2"
+                  style={{ background: "#DA7756" }}
+                >
+                  {r.memberStats?.length || 0}
+                </span>
               </div>
-              <div className="w-10 h-10 flex items-center justify-center bg-white border border-[#F0EBE8] rounded-[12px]">
+              <div className="w-7 h-7 flex items-center justify-center bg-gray-50 border border-gray-100 rounded-xl transition-colors hover:bg-gray-100">
                 {isKpiExpanded ? (
-                  <ChevronUp className="w-5 h-5 text-[#8C8580]" />
+                  <ChevronUp className="w-4 h-4 text-gray-500" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-[#8C8580]" />
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
                 )}
               </div>
-            </div>
+            </button>
 
             {isKpiExpanded && (
-              <div className="divide-y divide-[#F0EBE8] max-h-[500px] overflow-y-auto p-4 bg-white">
+              <div className="border-t border-gray-100">
                 {!r.memberStats || r.memberStats.length === 0 ? (
-                  <div className="p-10 text-center text-sm font-bold text-[#8C8580]">
-                    No Team Members Found
+                  <div className="py-12 flex flex-col items-center justify-center">
+                    <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+                      <Users className="w-5 h-5 text-gray-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-400">No team members found</p>
                   </div>
                 ) : (
-                  r.memberStats.map((member, i) => (
-                    <div
-                      key={i}
-                      className="p-4 bg-[#FCFAFA] rounded-[16px] mb-3 border border-[#F0EBE8] transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="font-black text-sm text-[#1A1A1A] uppercase tracking-wider">
-                          {member.name || "Unknown Member"}
-                        </div>
-                        <span className="px-3 py-1 bg-white text-[#8C8580] text-[10px] font-bold uppercase tracking-widest rounded-[8px] border border-[#F0EBE8]">
-                          {member.kpis?.length || 0} Assigned KPIs
-                        </span>
-                      </div>
-
-                      {!member.kpis || member.kpis.length === 0 ? (
-                        <div className="text-xs font-bold text-[#8C8580] italic">
-                          No KPIs assigned to this user.
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {member.kpis.map((kpi, kIdx) => (
+                  <div className="p-4 grid grid-cols-1 gap-3 max-h-[520px] overflow-y-auto">
+                    {r.memberStats.map((member, i) => (
+                      <div key={i} className="bg-gray-50/60 rounded-2xl border border-gray-100 p-4">
+                        {/* Member header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2.5">
                             <div
-                              key={kIdx}
-                              className="flex justify-between items-center bg-white border border-[#F0EBE8] p-4 rounded-[14px]"
+                              className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
+                              style={{ background: "#DA7756" }}
                             >
-                              <div>
-                                <div className="text-sm font-black text-[#1A1A1A] mb-1">
-                                  {kpi.name}
-                                </div>
-                                <div className="text-[11px] font-bold text-[#8C8580] uppercase tracking-wider">
-                                  {kpi.entries || 0} entries •{" "}
-                                  {kpi.value || "0.0/0.0"} {kpi.unit}
-                                </div>
-                              </div>
-                              <span className="px-3 py-1.5 bg-[#EB4A4A] text-white text-[11px] font-black rounded-[8px] min-w-[45px] text-center">
-                                {kpi.score || "0%"}
-                              </span>
+                              {(member.name || "?").charAt(0).toUpperCase()}
                             </div>
-                          ))}
+                            <span className="font-bold text-sm text-gray-900">{member.name || "Unknown Member"}</span>
+                          </div>
+                          <span className="px-2.5 py-0.5 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold uppercase tracking-widest rounded-lg">
+                            {member.kpis?.length || 0} KPIs
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))
+
+                        {/* KPI items */}
+                        {!member.kpis || member.kpis.length === 0 ? (
+                          <p className="text-xs font-medium text-gray-400 italic pl-1">No KPIs assigned.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {member.kpis.map((kpi, kIdx) => {
+                              const score = parseInt(kpi.score) || 0;
+                              const scoreColor = score >= 75 ? "#22C55E" : score >= 40 ? "#F59E0B" : "#EF4444";
+                              return (
+                                <div
+                                  key={kIdx}
+                                  className="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl"
+                                >
+                                  <div className="flex-1 min-w-0 pr-2">
+                                    <div className="text-sm font-semibold text-gray-900 truncate mb-0.5">{kpi.name}</div>
+                                    <div className="text-[11px] font-medium text-gray-400">
+                                      {kpi.entries || 0} entries · {kpi.value || "0.0/0.0"} {kpi.unit}
+                                    </div>
+                                    {/* Progress bar */}
+                                    <div className="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full transition-all"
+                                        style={{ width: `${Math.min(score, 100)}%`, background: scoreColor }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <span
+                                    className="px-2.5 py-1 text-white text-[11px] font-bold rounded-lg min-w-[44px] text-center shrink-0"
+                                    style={{ background: scoreColor }}
+                                  >
+                                    {kpi.score || "0%"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
           </div>
+
         </div>
       )}
     </div>

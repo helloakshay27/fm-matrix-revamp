@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -142,6 +142,7 @@ export const GRNSRNDashboard = () => {
   const { loading } = useAppSelector(state => state.getGRN)
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [grn, setGrn] = useState([]);
@@ -156,30 +157,54 @@ export const GRNSRNDashboard = () => {
     supplierName: '',
     status: ''
   });
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
+ const [pagination, setPagination] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      current_page: Number(params.get('page')) || 1,
+      total_count: 0,
+      total_pages: 0,
+    };
   });
+
+  // const fetchData = async (page = 1, filterData = {}) => {
+  //   try {
+  //     const response = await dispatch(getGRN({ baseUrl, token, page: page, ...filterData })).unwrap();
+  //     setGrn(response.grns);
+  //     setPagination({
+  //       current_page: Number(response.page),
+  //       total_count: response.total_count,
+  //       total_pages: response.total_pages
+  //     })
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.error(error);
+  //   }
+  // };
 
   const fetchData = async (page = 1, filterData = {}) => {
     try {
       const response = await dispatch(getGRN({ baseUrl, token, page: page, ...filterData })).unwrap();
       setGrn(response.grns);
-      setPagination({
-        current_page: Number(response.page),
+      setPagination((prev) => ({
+        ...prev,
         total_count: response.total_count,
         total_pages: response.total_pages
-      })
+      }));
     } catch (error) {
       console.log(error);
       toast.error(error);
     }
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+ useEffect(() => {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+    fetchData(pagination.current_page, {
+      grn_number: filters.grnNumber,
+      po_number: filters.poNumber,
+      supplier_name: filters.supplierName,
+      approval_status: filters.status,
+      search: searchQuery,
+    });
+  }, [pagination.current_page]);
 
   const handleApplyFilters = (newFilters: {
     grnNumber?: string;
@@ -312,27 +337,33 @@ export const GRNSRNDashboard = () => {
     </div>
   );
 
-  const handlePageChange = async (page: number) => {
-    console.log(page)
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
-      return;
-    }
+  // const handlePageChange = async (page: number) => {
+  //   console.log(page)
+  //   if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+  //     return;
+  //   }
 
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData(page, {
-        grn_number: filters.grnNumber,
-        po_number: filters.poNumber,
-        supplier_name: filters.supplierName,
-        approval_status: filters.status,
-        search: searchQuery,
-      });
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
-  };
+  //   try {
+  //     setPagination((prev) => ({ ...prev, current_page: page }));
+  //     await fetchData(page, {
+  //       grn_number: filters.grnNumber,
+  //       po_number: filters.poNumber,
+  //       supplier_name: filters.supplierName,
+  //       approval_status: filters.status,
+  //       search: searchQuery,
+  //     });
+  //   } catch (error) {
+  //     console.error("Error changing page:", error);
+  //     toast.error("Failed to load page data. Please try again.");
+  //   }
+  // };
 
+  const handlePageChange = (page: number) => {
+  if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+    return;
+  }
+  setPagination((prev) => ({ ...prev, current_page: page }));
+};
   const renderPaginationItems = () => {
     if (!pagination.total_pages || pagination.total_pages <= 0) {
       return null;

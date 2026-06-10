@@ -193,36 +193,42 @@ const Styles = () => (
     .bh-skel { background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%); background-size:200% 100%; animation:bh-shimmer 1.4s infinite; border-radius:8px; }
     @keyframes bh-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    .bh-card { background:#fff; border-radius:16px; padding:16px; border:1px solid rgba(218,119,86,0.15); box-shadow:0 1px 4px rgba(0,0,0,0.07); transition:box-shadow .15s; }
-    .bh-card:hover { box-shadow:0 4px 14px rgba(218,119,86,0.12); }
-    .bh-card:hover .bh-card-actions { opacity:1; }
-    .bh-card-actions { display:flex; gap:4px; opacity:0; transition:opacity .15s; background:#f9f9f7; border:1px solid ${C.borderLgt}; border-radius:10px; padding:3px; }
-    .bh-card-actions button { background:none; border:none; padding:5px; border-radius:7px; cursor:pointer; color:#9ca3af; display:flex; align-items:center; transition:background .1s,color .1s; }
-    .bh-card-actions .edit:hover { color:${C.primary}; background:#fef6f4; }
+    .bh-card { position:relative; background:#ffffff; border-radius:15px; padding:14px; border:1px solid #e9edf3; box-shadow:0 6px 16px rgba(17,24,39,0.035); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease; overflow:hidden; }
+    .bh-card:hover { transform:translateY(-1px); border-color:rgba(218,119,86,0.20); background:#fffdfb; box-shadow:0 10px 22px rgba(17,24,39,0.055); }
+    .bh-card:hover .bh-card-actions { opacity:1; transform:translateY(0); }
+    .bh-card-actions { display:flex; gap:4px; opacity:0; transform:translateY(-2px); transition:opacity .15s, transform .15s; background:rgba(255,255,255,.94); border:1px solid #eef0f4; border-radius:12px; padding:4px; box-shadow:0 8px 18px rgba(17,24,39,.06); }
+    .bh-card-actions button { background:none; border:none; padding:6px; border-radius:9px; cursor:pointer; color:#9ca3af; display:flex; align-items:center; transition:background .12s,color .12s, transform .12s; }
+    .bh-card-actions button:hover { transform:scale(1.04); }
+    .bh-card-actions .edit:hover { color:${C.primary}; background:#fff3ed; }
     .bh-card-actions .del:hover { color:#ef4444; background:#fee2e2; }
+
+    .bh-initiative-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    @media (max-width: 768px) { .bh-initiative-grid { grid-template-columns:1fr; } }
 
     .bh-modal-portal { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.42); backdrop-filter:blur(4px); }
 
-    .bh-modal-box { background:#ffffff; border-radius:20px; border:1px solid rgba(218,119,86,0.2); box-shadow:0 30px 80px rgba(0,0,0,0.20); width:100%; max-width:520px; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
-    .bh-modal-hd { background:#fff; border-bottom:1px solid rgba(218,119,86,0.15); padding:18px 22px; display:flex; align-items:center; justify-content:space-between; }
-    .bh-modal-hd-inner { display:flex; align-items:center; gap:10px; }
-    .bh-modal-dot { width:10px; height:10px; border-radius:50%; background:${C.primary}; flex-shrink:0; }
-    .bh-modal-title { font-size:16px; font-weight:800; color:${C.textMain}; margin:0; }
+    .bh-modal-box { background:linear-gradient(180deg,#ffffff 0%,#fffaf8 100%); border-radius:22px; border:1px solid rgba(218,119,86,0.18); box-shadow:0 30px 90px rgba(0,0,0,0.22); width:100%; max-width:520px; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
+    .bh-modal-hd { background:rgba(255,255,255,.78); border-bottom:1px solid rgba(218,119,86,0.12); padding:18px 22px; display:flex; align-items:center; justify-content:space-between; }
+    .bh-modal-hd-inner { display:flex; align-items:center; gap:12px; }
+    .bh-modal-dot { width:34px; height:34px; border-radius:12px; background:#fff0ea; border:1px solid rgba(218,119,86,.18); flex-shrink:0; position:relative; }
+    .bh-modal-dot::after { content:""; position:absolute; width:10px; height:10px; border-radius:50%; background:${C.primary}; left:50%; top:50%; transform:translate(-50%,-50%); }
+    .bh-modal-title { font-size:18px; font-weight:600; color:${C.textMain}; margin:0; }
+    .ac-heading { font-size: 18px; font-weight: 600; color: ${C.textMain}; margin: 0; font-family: inherit; }
     .bh-modal-body { padding:22px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:18px; }
     .bh-modal-ft { background:#fff; border-top:1px solid rgba(218,119,86,0.15); padding:14px 22px; display:flex; justify-content:flex-end; gap:10px; align-items:center; }
 
-    .bh-goal-modal-box { background:#fff; border-radius:18px; border:1px solid rgba(218,119,86,0.2); box-shadow:0 24px 64px rgba(0,0,0,0.18); width:100%; max-width:620px; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
+    .bh-goal-modal-box { background:linear-gradient(180deg,#ffffff 0%,#fffaf8 100%); border-radius:22px; border:1px solid rgba(218,119,86,0.18); box-shadow:0 26px 76px rgba(0,0,0,0.20); width:100%; max-width:640px; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
     .bh-goal-modal-hd { padding:24px 26px 0; display:flex; justify-content:space-between; align-items:flex-start; }
     .bh-goal-modal-body { padding:20px 26px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:18px; }
     .bh-goal-modal-ft { padding:0 26px 26px; }
 
     .bh-btn-cancel { padding:9px 18px; font-size:13px; font-weight:700; border-radius:10px; border:1px solid ${C.borderLgt}; background:#fff; color:${C.textMain}; cursor:pointer; font-family:'Poppins',sans-serif; transition:background .15s; }
     .bh-btn-cancel:hover { background:#f5f5f5; }
-    .bh-btn-save { padding:9px 22px; font-size:13px; font-weight:700; border-radius:10px; border:none; background:${C.primary}; color:#fff; cursor:pointer; font-family:'Poppins',sans-serif; display:flex; align-items:center; gap:7px; transition:background .15s; }
-    .bh-btn-save:hover { background:${C.primaryHov}; }
+    .bh-btn-save { padding:10px 22px; font-size:13px; font-weight:800; border-radius:12px; border:none; background:linear-gradient(135deg,${C.primary},#c9673f); color:#fff; cursor:pointer; font-family:'Poppins',sans-serif; display:flex; align-items:center; gap:7px; transition:transform .15s, box-shadow .15s; box-shadow:0 10px 20px rgba(218,119,86,.22); }
+    .bh-btn-save:hover { transform:translateY(-1px); box-shadow:0 14px 24px rgba(218,119,86,.28); }
     .bh-btn-save:disabled { opacity:0.65; cursor:not-allowed; }
-    .bh-btn-full { width:100%; background:${C.primary}; color:#fff; border:none; border-radius:11px; padding:14px; font-size:15px; font-weight:800; cursor:pointer; font-family:'Poppins',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; transition:background .15s; }
-    .bh-btn-full:hover { background:${C.primaryHov}; }
+    .bh-btn-full { width:100%; background:linear-gradient(135deg,${C.primary},#c9673f); color:#fff; border:none; border-radius:14px; padding:14px; font-size:15px; font-weight:900; cursor:pointer; font-family:'Poppins',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform .15s, box-shadow .15s; box-shadow:0 12px 26px rgba(218,119,86,.24); }
+    .bh-btn-full:hover { transform:translateY(-1px); box-shadow:0 16px 30px rgba(218,119,86,.30); }
     .bh-btn-full:disabled { opacity:0.65; cursor:not-allowed; }
     .bh-close-btn { background:none; border:none; cursor:pointer; color:#9ca3af; padding:5px; border-radius:8px; display:flex; align-items:center; transition:background .1s,color .1s; }
     .bh-close-btn:hover { background:#f3f4f6; color:${C.textMain}; }
@@ -231,7 +237,7 @@ const Styles = () => (
     .bh-label-sub { font-size:11px; font-weight:500; text-transform:none; color:${C.textMuted}; }
     .bh-error { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; border-radius:12px; padding:10px 14px; font-size:13px; font-weight:600; }
 
-    .bh-prog-box { background:#ffffff; border:1px solid rgba(218,119,86,0.2); border-radius:12px; padding:14px 16px; }
+    .bh-prog-box { background:#ffffff; border:1px solid rgba(218,119,86,0.16); border-radius:16px; padding:16px; box-shadow:0 8px 18px rgba(26,26,26,.04); }
     .bh-prog-num { width:52px; border:1px solid ${C.borderLgt}; border-radius:8px; text-align:center; padding:4px 6px; font-size:13px; font-weight:800; color:${C.textMain}; font-family:'Poppins',sans-serif; background:#fff; outline:none; }
     .bh-prog-num:focus { border-color:${C.primary}; }
   `}</style>
@@ -261,7 +267,7 @@ const UserSelect = ({
   const selectedUser = users.find((u) => u.id === value);
   const displayValue = selectedUser
     ? selectedUser.full_name ||
-      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
     : "";
 
   const filteredUsers = users.filter((u) => {
@@ -427,7 +433,13 @@ const Modal = ({ children, onClose }) => {
 
 // ── Skeleton ──
 const SkeletonCards = () => (
-  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+      gap: 14,
+    }}
+  >
     {[1, 2, 3, 4].map((n) => (
       <div
         key={n}
@@ -639,15 +651,15 @@ export const BhagSection = () => {
     try {
       const res = editingGoalId
         ? await fetch(apiUrl(`/goals/${editingGoalId}`), {
-            method: "PUT",
-            headers: authHeaders(),
-            body: JSON.stringify(payload),
-          })
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        })
         : await fetch(apiUrl("/goals"), {
-            method: "POST",
-            headers: authHeaders(),
-            body: JSON.stringify(payload),
-          });
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
       clearCachedGoals();
@@ -790,42 +802,58 @@ export const BhagSection = () => {
   const ytId = extractYouTubeId(bhagVideoUrl);
 
   return (
-    <div className="bh-wrap" style={{ padding: "24px 0", fontFamily: C.font }}>
+    <div className="bh-wrap" style={{ padding: "18px 0", fontFamily: C.font }}>
       <Styles />
 
       <div
         style={{
-          borderRadius: 16,
+          borderRadius: 24,
           overflow: "hidden",
           background: "#ffffff",
-          border: "1px solid rgba(218,119,86,0.2)",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+          border: "1px solid #e9edf3",
+          boxShadow: "0 12px 30px rgba(17,24,39,0.06)",
         }}
       >
         {/* ── Top Header bar (Heading & Edit Button) ── */}
         <div
           style={{
-            borderBottom: ytId ? "none" : "1px solid rgba(229,231,235,0.4)",
-            background: "rgba(255,255,255,0.6)",
+            borderBottom: ytId ? "none" : "1px solid #eef0f4",
+            background: "#ffffff",
             color: C.textMain,
-            padding: "16px 20px",
+            padding: "12px 16px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: 16,
           }}
         >
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
-                fontSize: 10,
-                fontWeight: 800,
+                width: 38,
+                height: 38,
+                borderRadius: 13,
+                background: "#f7f7f7",
+                color: "#ff6b4a",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Goal size={18} strokeWidth={2.2} />
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
                 textTransform: "uppercase",
-                letterSpacing: "0.15em",
-                color: C.textMuted,
+                letterSpacing: "0.14em",
+                color: "#111827",
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
+                minWidth: 0,
               }}
             >
               Long Term — BHAG
@@ -935,17 +963,24 @@ export const BhagSection = () => {
             style={{
               flexShrink: 0,
               background: "#ffffff",
-              border: "1px solid rgba(218,119,86,0.2)",
-              borderRadius: 10,
+              border: "1px solid #e9edf3",
+              borderRadius: 12,
               padding: "8px 9px",
               cursor: "pointer",
               color: C.primary,
               display: "flex",
               alignItems: "center",
-              transition: "background .15s",
+              boxShadow: "0 6px 14px rgba(17,24,39,.04)",
+              transition: "transform .15s, box-shadow .15s, background .15s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#fef6f4")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 10px 20px rgba(17,24,39,.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 6px 14px rgba(17,24,39,.04)";
+            }}
           >
             <EditIcon />
           </button>
@@ -979,41 +1014,55 @@ export const BhagSection = () => {
         )}
 
         {/* ── BHAG Statement & Target Date ── */}
-        <div style={{ padding: "20px 20px 0", background: "#ffffff" }}>
-          <h2
+        <div style={{ padding: "18px 20px 0", background: "#ffffff" }}>
+          <div
             style={{
-              fontSize: 17,
-              fontWeight: 700,
-              lineHeight: 1.45,
-              color: C.primary,
-              margin: 0,
+              borderRadius: 16,
+              border: "1px solid #eef0f4",
+              background: "#fbfcfd",
+              padding: "15px 16px",
+              boxShadow: "0 8px 18px rgba(17,24,39,.035)",
             }}
           >
-            {isFetching
-              ? "Loading…"
-              : bhagStatement || "No BHAG statement yet — click ✏️ to add one."}
-          </h2>
-          {!isFetching && bhagTargetDate && (
-            <span
+            <h2
               style={{
-                display: "inline-block",
-                marginTop: 10,
-                fontSize: 11,
-                fontWeight: 600,
-                padding: "4px 12px",
-                borderRadius: 20,
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                color: C.textMuted,
+                fontSize: 16,
+                fontWeight: 650,
+                lineHeight: 1.5,
+                color: C.textMain,
+                margin: 0,
               }}
             >
-              Target: {toDisplayDate(bhagTargetDate)}
-            </span>
-          )}
+              {isFetching
+                ? "Loading…"
+                : bhagStatement || "No BHAG statement yet — click ✏️ to add one."}
+            </h2>
+            {!isFetching && bhagTargetDate && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 12,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  background: "#ffffff",
+                  border: "1px solid rgba(218,119,86,0.16)",
+                  color: C.textMuted,
+                  boxShadow: "0 6px 14px rgba(26,26,26,.04)",
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.primary }} />
+                Target: {toDisplayDate(bhagTargetDate)}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ── Initiatives body ── */}
-        <div style={{ padding: "20px 22px 24px", background: "#ffffff" }}>
+        <div style={{ padding: "18px 20px 22px", background: "#ffffff" }}>
           {fetchError && (
             <div
               style={{
@@ -1053,43 +1102,105 @@ export const BhagSection = () => {
 
           <div
             style={{
-              fontSize: 10,
-              fontWeight: 800,
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
-              color: C.textMuted,
-              marginBottom: 14,
+              marginBottom: 12,
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              justifyContent: "space-between",
+              gap: 12,
             }}
           >
-            Key Initiatives (BHAG)
-            {isFetching && <LoaderIcon size={13} />}
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
+                color: "#111827",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#ff6b4a",
+                  boxShadow: "0 0 0 4px rgba(255,107,74,.10)",
+                }}
+              />
+              Key Initiatives
+              {isFetching && <LoaderIcon size={13} />}
+            </div>
+            {!isFetching && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: C.textMuted,
+                  background: "#f8fafc",
+                  border: "1px solid #eef0f4",
+                  borderRadius: 999,
+                  padding: "5px 10px",
+                }}
+              >
+                {initiatives.length} item{initiatives.length === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
 
           {isFetching ? (
             <SkeletonCards />
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
-              }}
-            >
+            <div className="bh-initiative-grid">
               {initiatives.length === 0 && !fetchError && (
-                <p
+                <div
                   style={{
                     gridColumn: "1/-1",
-                    fontSize: 13,
-                    color: C.textMuted,
-                    fontStyle: "italic",
-                    margin: "4px 0",
+                    border: "1.5px dashed rgba(218,119,86,.24)",
+                    background: "linear-gradient(135deg,#fffaf8,#ffffff)",
+                    borderRadius: 18,
+                    padding: "26px 18px",
+                    textAlign: "center",
                   }}
                 >
-                  No initiatives found. Add one below.
-                </p>
+                  <div
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 16,
+                      margin: "0 auto 10px",
+                      background: "#fff0ea",
+                      color: C.primary,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Goal size={18} strokeWidth={2.2} />
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: C.textMain,
+                      fontWeight: 800,
+                      margin: "0 0 4px",
+                    }}
+                  >
+                    No initiatives found
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 12,
+                      color: C.textMuted,
+                      fontWeight: 600,
+                      margin: 0,
+                    }}
+                  >
+                    Add your first BHAG initiative below.
+                  </p>
+                </div>
               )}
               {initiatives.map((ini) => {
                 const ownerObj = usersList.find(
@@ -1099,9 +1210,9 @@ export const BhagSection = () => {
                   ini.ownerName ||
                   (ownerObj
                     ? (
-                        ownerObj.full_name ||
-                        `${ownerObj.firstname || ""} ${ownerObj.lastname || ""}`
-                      ).trim()
+                      ownerObj.full_name ||
+                      `${ownerObj.firstname || ""} ${ownerObj.lastname || ""}`
+                    ).trim()
                     : "");
 
                 return (
@@ -1112,29 +1223,35 @@ export const BhagSection = () => {
                         alignItems: "flex-start",
                         justifyContent: "space-between",
                         gap: 8,
-                        marginBottom: 14,
+                        marginBottom: 12,
                       }}
                     >
                       <div
                         style={{
                           display: "flex",
                           alignItems: "flex-start",
-                          gap: 10,
+                          gap: 9,
                           flex: 1,
                           minWidth: 0,
                         }}
                       >
                         <div
                           style={{
-                            width: 13,
-                            height: 13,
-                            borderRadius: "50%",
-                            border: `3px solid ${C.primary}`,
-                            background: "#fff",
+                            width: 18,
+                            height: 18,
+                            borderRadius: 999,
+                            background: "#ffffff",
+                            border: "1px solid #d8dee8",
+                            color: "#cbd5e1",
                             flexShrink: 0,
                             marginTop: 3,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
-                        />
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "transparent" }} />
+                        </div>
                         <div
                           style={{
                             display: "flex",
@@ -1144,9 +1261,9 @@ export const BhagSection = () => {
                         >
                           <span
                             style={{
-                              fontSize: 14,
-                              fontWeight: 700,
-                              color: C.textMain,
+                              fontSize: 12,
+                              fontWeight: 500,
+                              color: "#111827",
                               lineHeight: 1.45,
                             }}
                           >
@@ -1154,13 +1271,15 @@ export const BhagSection = () => {
                           </span>
                           <div
                             style={{
-                              display: "inline-block",
-                              background: "rgba(218,119,86,0.1)",
-                              color: C.primary,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              background: "#fff3f0",
+                              border: "1px solid #ffe0d6",
+                              color: "#ff6b4a",
                               fontSize: 9,
-                              fontWeight: 800,
-                              padding: "3px 8px",
-                              borderRadius: 12,
+                              fontWeight: 500,
+                              padding: "4px 8px",
+                              borderRadius: 999,
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
                               alignSelf: "flex-start",
@@ -1174,8 +1293,8 @@ export const BhagSection = () => {
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 6,
-                                fontSize: 11,
-                                fontWeight: 600,
+                                fontSize: 10.5,
+                                fontWeight: 400,
                                 color: C.textMuted,
                                 marginTop: 2,
                               }}
@@ -1260,8 +1379,8 @@ export const BhagSection = () => {
                       <span
                         style={{
                           fontSize: 12,
-                          fontWeight: 700,
-                          color: C.textMuted,
+                          fontWeight: 500,
+                          color: "#111827",
                           minWidth: 34,
                           textAlign: "right",
                         }}
@@ -1285,24 +1404,31 @@ export const BhagSection = () => {
             <button
               onClick={addInitiative}
               style={{
-                fontSize: 13,
-                fontWeight: 700,
-                padding: "9px 20px",
+                fontSize: 12,
+                fontWeight: 500,
+                padding: "8px 15px",
                 borderRadius: 12,
-                border: "1px solid rgba(218,119,86,0.25)",
+                border: "1px dashed #cbd5e1",
                 background: "#ffffff",
-                color: C.primary,
+                color: "#111827",
                 cursor: "pointer",
-                transition: "background .15s",
+                boxShadow: "0 6px 14px rgba(17,24,39,.035)",
+                transition: "transform .15s, box-shadow .15s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#fef6f4")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "#ffffff")
-              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 10px 20px rgba(17,24,39,.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 6px 14px rgba(17,24,39,.035)";
+              }}
             >
-              + Add New Initiative
+              <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+              Add New Initiative
             </button>
           </div>
         </div>
@@ -1389,11 +1515,10 @@ export const BhagSection = () => {
             <div className="bh-goal-modal-box">
               <div className="bh-goal-modal-hd">
                 <div>
-                  <h2
+                  <h2 className="ac-heading"
                     style={{
                       margin: 0,
-                      fontSize: 19,
-                      fontWeight: 800,
+                      fontSize: 18,
                       color: C.textMain,
                     }}
                   >

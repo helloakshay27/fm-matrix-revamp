@@ -44,9 +44,8 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
         </h3>
       </div>
       <div className="p-5">
-        <div className="overflow-x-auto -mx-3 sm:mx-0">
-          <div className="min-w-[600px] px-3 sm:px-0">
-            <div className="rounded-xl overflow-hidden border border-gray-200">
+        <div className="rounded-xl overflow-hidden border border-gray-200">
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr>
@@ -84,7 +83,6 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
             </table>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );

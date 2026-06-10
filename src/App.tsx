@@ -6326,7 +6326,7 @@ function App() {
 
                             {/* Carpool Routes */}
                             <Route
-                              path="/pulse/carpool"
+                              path="/pulse/carpool/rides"
                               element={<CarpoolDashboard />}
                             />
 

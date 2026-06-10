@@ -31,16 +31,15 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
       >
         Site Wise Adoption Rate
       </h3>
-      <div className="overflow-x-auto -mx-3 sm:mx-0">
-        <div className="min-w-[700px] px-3 sm:px-0">
-          <div className="rounded-xl overflow-hidden border border-gray-200">
+      <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr>
                 {headers.map((h, i) => (
                   <th
                     key={h}
-                    className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header ${i === 0 ? 'text-left' : ''}`}
+                    className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
                     style={{ backgroundColor: '#D97655' }}
                   >
                     {h}
@@ -68,8 +67,8 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
                       const pct = parsePct(val);
                       const color = getPctColor(pct);
                       return (
-                        <td key={idx} className="px-4 py-3 text-center border-b border-gray-100">
-                          <div className="flex items-center gap-2 justify-center">
+                        <td key={idx} className="px-4 py-3 text-left border-b border-gray-100">
+                          <div className="flex items-center gap-2 justify-start">
                             <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden min-w-[50px]">
                               <div
                                 className="h-full rounded-full"
@@ -96,7 +95,6 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
             </tbody>
           </table>
           </div>
-        </div>
       </div>
     </div>
   );

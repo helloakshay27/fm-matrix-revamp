@@ -45,6 +45,7 @@ import {
 
 interface ItemData {
   id: number;
+  sr_no?: number;
   name: string;
   purchase_description: string;
   purchase_rate: number;
@@ -86,7 +87,7 @@ export const ItemsDashboard = () => {
     endDate: ''
   });
   const [items, setItems] = useState<ItemData[]>([]);
-  const perPage = 20;
+  const perPage = 10;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteItem, setSelectedDeleteItem] = useState<ItemData | null>(null);
@@ -230,10 +231,30 @@ export const ItemsDashboard = () => {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+         params: {
+        // lock_account_id,
+      
+         page: currentPage,
+  per_page: perPage,
+  search: filters.search || "",
+      },
       });
       // The API is expected to return an array of items
-      setItems(response.data || []);
-      console.log('Fetched items:', response.data);
+      const fetchedItems: ItemData[] = (response.data?.data || []).map((item: ItemData, index: number) => ({
+        ...item,
+        // sr_no: index + 1,
+        sr_no: (currentPage - 1) * perPage + index + 1,
+      }));
+
+
+       // PAGINATION STATES
+    setCurrentPage(response.data?.meta?.current_page || 1);
+    setTotalPages(response.data?.meta?.total_pages || 1);
+    setTotalMembers(response.data?.meta?.total_count || 0);
+
+      console.log('API response:', response.data)
+      setItems(fetchedItems);
+      console.log('Fetched items:', fetchedItems);
     } catch (error) {
       console.error('Error fetching items:', error);
       toast.error('Failed to fetch items');
@@ -245,7 +266,7 @@ export const ItemsDashboard = () => {
   useEffect(() => {
 
     fetchItems();
-  }, []);
+  }, [currentPage, filters.search]);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -426,12 +447,25 @@ export const ItemsDashboard = () => {
   };
 
   // Handle page change
+  // const handlePageChange = (page: number) => {
+  //   if (page < 1 || page > totalPages || page === currentPage || loading) {
+  //     return;
+  //   }
+  //   setCurrentPage(page);
+  // };
+
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages || page === currentPage || loading) {
-      return;
-    }
-    setCurrentPage(page);
-  };
+  if (
+    page < 1 ||
+    page > totalPages ||
+    page === currentPage ||
+    loading
+  ) {
+    return;
+  }
+
+  setCurrentPage(page);
+};
 
   // Render pagination items
   const renderPaginationItems = () => {
@@ -574,8 +608,8 @@ export const ItemsDashboard = () => {
   // Handle select all
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      const allMemberIds = memberships.map(m => m.id);
-      setSelectedMembers(allMemberIds);
+      const allItemIds = items.map(item => item.id);
+      setSelectedMembers(allItemIds);
     } else {
       setSelectedMembers([]);
     }
@@ -694,6 +728,7 @@ export const ItemsDashboard = () => {
   // Define columns for EnhancedTable
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
+    { key: 'sr_no', label: 'Sr. No', sortable: false },
     { key: 'name', label: 'Name', sortable: true },
     { key: 'sku', label: 'SKU', sortable: true },
     { key: 'purchase_description', label: 'Purchase Description', sortable: true },
@@ -708,7 +743,7 @@ export const ItemsDashboard = () => {
 
   // Render cell content
 
-  const renderCell = (item: ItemData, columnKey: string) => {
+  const renderCell = (item: ItemData, columnKey: string): React.ReactNode => {
     if (columnKey === "actions") {
       return (
         <div className="flex gap-2">
@@ -744,6 +779,10 @@ export const ItemsDashboard = () => {
       );
     }
 
+    if (columnKey === "sr_no") {
+      return item.sr_no ?? "--";
+    }
+
     if (columnKey === "name") {
       const hasIcon = item.icon?.document_file_name;
       return (
@@ -760,6 +799,15 @@ export const ItemsDashboard = () => {
           <span>{item.name}</span>
         </div>
       );
+    }
+    if (columnKey === "sale_description") {
+      return item.sale_description ?? "--";
+    }
+    if (columnKey === "sale_rate") {
+      return item.sale_rate ?? "--";
+    }
+    if (columnKey === "unit") {
+      return item.usage_unit || item.unit || "--";
     }
     if (columnKey === "current_stock") {
       return item.current_stock ?? "--";
@@ -790,7 +838,11 @@ export const ItemsDashboard = () => {
       );
     }
 
-    return item[columnKey as keyof ItemData] ?? "--";
+    const cellValue = item[columnKey as keyof ItemData];
+    if (typeof cellValue === 'object') {
+      return cellValue ? JSON.stringify(cellValue) : "--";
+    }
+    return cellValue ?? "--";
   };
 
 
@@ -920,7 +972,8 @@ export const ItemsDashboard = () => {
 
             {/* Page Info */}
             <div className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages} | Showing {memberships.length} of {totalMembers} members
+              {/* Page {currentPage} of {totalPages} | Showing {items.length} items */}
+              {/* Page {currentPage} of {totalPages} | Showing {items.length} of {totalMembers} items */}
             </div>
           </div>
         )}

@@ -99,7 +99,7 @@ export const ExternalUserDetail = () => {
     return (
       <div className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-6">
-          <button onClick={() => navigate('/safety/m-safe/external')} className="flex items-center gap-1 hover:text-gray-800 text-base">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 hover:text-gray-800 text-base">
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
@@ -137,13 +137,13 @@ export const ExternalUserDetail = () => {
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-          <button
-            onClick={() => navigate('/safety/m-safe/external')}
+         <button
+            onClick={() => navigate(-1)}
             className="flex items-center gap-1 hover:text-gray-800 mb-4 text-base"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Users
-          </button>
+          </button> 
           <div className="mb-3">
             <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">{`${user.firstname || ''} ${user.lastname || ''}`.trim() || 'User Details'}</h1>
           </div>

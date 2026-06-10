@@ -22,6 +22,8 @@ import {
 // Analytics Components
 import { TicketAnalyticsFilterDialog } from "@/components/TicketAnalyticsFilterDialog";
 
+import { AssetAnalyticsFilterDialog } from '@/components/AssetAnalyticsFilterDialog';
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 const toApiDate = (ddmmyyyy: string) => {
   // "DD/MM/YYYY" → "YYYY-MM-DD"
@@ -175,10 +177,10 @@ const UtilityWasteGenerationDashboard = () => {
   // default: today & 1 year ago
   const today = new Date();
   const oneYearAgo = subYears(today, 1);
-  const [analyticsDateRange, setAnalyticsDateRange] = useState({
-    startDate: format(oneYearAgo, 'dd/MM/yyyy'),
-    endDate: format(today, 'dd/MM/yyyy'),
-  });
+ const [analyticsDateRange, setAnalyticsDateRange] = useState({
+  startDate: oneYearAgo,
+  endDate: today,
+});
 
   // KPI card data
   const [kpiData, setKpiData] = useState<{
@@ -277,14 +279,15 @@ const UtilityWasteGenerationDashboard = () => {
     : [];
 
   // Load analytics when date range changes
-  const { startDate: analyticsStart, endDate: analyticsEnd } = analyticsDateRange;
-  useEffect(() => {
-    const from = toApiDate(analyticsStart);
-    const to   = toApiDate(analyticsEnd);
-    fetchKpis(from, to);
-    fetchChartData(from, to);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analyticsStart, analyticsEnd]);
+ const { startDate: analyticsStart, endDate: analyticsEnd } = analyticsDateRange;
+
+useEffect(() => {
+  const from = format(analyticsStart, "yyyy-MM-dd");
+  const to = format(analyticsEnd, "yyyy-MM-dd");
+
+  fetchKpis(from, to);
+  fetchChartData(from, to);
+}, [analyticsStart, analyticsEnd]);
 
   const loadWasteGenerations = async (page: number = 1, filters?: WasteGenerationFilters) => {
     try {
@@ -369,9 +372,9 @@ const UtilityWasteGenerationDashboard = () => {
               >
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
-                  </span>
+                <span className="text-sm font-medium text-gray-700">
+  {format(analyticsDateRange.startDate, "dd/MM/yyyy")} - {format(analyticsDateRange.endDate, "dd/MM/yyyy")}
+</span>
                 </div>
                 <Filter className="w-4 h-4 text-gray-600" />
               </Button>
@@ -437,14 +440,18 @@ const UtilityWasteGenerationDashboard = () => {
 
       <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} onExport={() => {}} />
       <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
-      <TicketAnalyticsFilterDialog
-        title='Waste Generation'
-        isOpen={isAnalyticsFilterOpen}
-        onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={(f) => setAnalyticsDateRange(f)}
-        currentStartDate={analyticsDateRange.startDate}
-        currentEndDate={analyticsDateRange.endDate}
-      />
+  <AssetAnalyticsFilterDialog
+  isOpen={isAnalyticsFilterOpen}
+  onClose={() => setIsAnalyticsFilterOpen(false)}
+  currentStartDate={analyticsDateRange.startDate}
+  currentEndDate={analyticsDateRange.endDate}
+  onApplyFilters={(startDate, endDate) =>
+    setAnalyticsDateRange({
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+    })
+  }
+/>
       <SiteDetailModal
         siteName={detailSite}
         siteData={detailEntries}

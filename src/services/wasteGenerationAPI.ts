@@ -128,12 +128,12 @@ export interface UpdateWasteGenerationResponse {
   status: string;
 }
 
-// Filter interface for waste generation API
 export interface WasteGenerationFilters {
   commodity_id_eq?: string;
   category_id_eq?: string;
   operational_landlord_id_in?: string;
-  date_range?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
 // API function to fetch waste generations with filters
@@ -153,8 +153,11 @@ export const fetchWasteGenerations = async (page: number = 1, filters?: WasteGen
       if (filters.operational_landlord_id_in) {
         queryParts.push(`q[operational_landlord_id_in]=${encodeURIComponent(filters.operational_landlord_id_in)}`);
       }
-      if (filters.date_range) {
-        queryParts.push(`q[date_range]=${encodeURIComponent(filters.date_range)}`);
+      if (filters.date_from) {
+        queryParts.push(`q[wg_date_gteq]=${encodeURIComponent(filters.date_from)}`);
+      }
+      if (filters.date_to) {
+        queryParts.push(`q[wg_date_lteq]=${encodeURIComponent(filters.date_to)}`);
       }
     }
     

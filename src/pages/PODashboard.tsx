@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { POFilterDialog } from "@/components/POFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -213,6 +213,7 @@ export const PODashboard = () => {
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [poList, setPoList] = useState([]);
@@ -222,11 +223,14 @@ export const PODashboard = () => {
     supplierName: '',
     approvalStatus: ''
   });
-  const [pagination, setPagination] = useState({
-    current_page: 1,
+ const [pagination, setPagination] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    current_page: Number(params.get('page')) || 1,
     total_count: 0,
     total_pages: 0,
-  });
+  };
+});
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const applyResponse = (response: any) => {
@@ -263,12 +267,12 @@ export const PODashboard = () => {
       outstanding: item.outstanding,
       debitCreditNoteRaised: item.debit_credit_note_raised,
     }));
-    setPoList(formattedData);
-    setPagination({
-      current_page: response.current_page,
+   setPoList(formattedData);
+    setPagination((prev) => ({
+      ...prev,
       total_count: response.total_count,
       total_pages: response.total_pages,
-    });
+    }));
   };
 
   const fetchData = async (filterData: Record<string, any> = {}) => {
@@ -341,9 +345,17 @@ export const PODashboard = () => {
     }, []);
   
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+    useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const urlPage = Number(params.get('page')) || 1;
+  if (urlPage !== pagination.current_page) {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+  }
+}, [pagination.current_page]);
+
+useEffect(() => {
+    fetchData({ page: pagination.current_page });
+  }, [pagination.current_page]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -513,6 +525,8 @@ export const PODashboard = () => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
+
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));

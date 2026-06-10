@@ -25,7 +25,7 @@ const InventoryOverviewSummaryCard: React.FC<Props> = ({ data }) => {
       const s = n.trim();
       if (s.startsWith('₹')) return `₹ ${s.replace(/^₹\s*/, '').trim()}`;
       const parsed = parseFloat(s.replace(/[^0-9.\-]/g, ''));
-      if (!Number.isFinite(parsed)) return `₹ ${parsed.toLocaleString('en-IN')}`;
+      if (Number.isFinite(parsed)) return `₹ ${parsed.toLocaleString('en-IN')}`;
       return '₹ 0';
     }
     const num = Number(n);
@@ -58,19 +58,22 @@ const InventoryOverviewSummaryCard: React.FC<Props> = ({ data }) => {
       >
         Inventory Management – Overview Summary
       </h3>
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
         {cards.map((card, index) => {
           const cardStyle = CARD_STYLES[index % CARD_STYLES.length];
           return (
             <div
               key={card.label}
-              className="flex-1 min-w-[140px] rounded-2xl p-6 text-center"
+              className="rounded-2xl p-4 text-center"
               style={{ backgroundColor: cardStyle.bg }}
             >
               <div className="text-sm text-gray-600 font-medium mb-3 leading-tight">
                 {card.label}
               </div>
-              <div className="text-3xl font-extrabold" style={{ color: cardStyle.numColor }}>
+              <div
+                className="text-2xl font-extrabold break-all leading-snug"
+                style={{ color: cardStyle.numColor }}
+              >
                 {card.value}
               </div>
             </div>
