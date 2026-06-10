@@ -170,6 +170,13 @@ interface ServicePR {
 const serviceColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
+  { key: "rate", label: "Rate", sortable: true, draggable: true },
+  {
+    key: "total_amount",
+    label: "Total Amount",
+    sortable: true,
+    draggable: true,
+  },
   { key: "gl_account", label: "GL Account", sortable: true, draggable: true },
   { key: "tax_code", label: "Tax Code", sortable: true, draggable: true },
   { key: "general_storage", label: "General Storage", sortable: true, draggable: true },
@@ -188,7 +195,6 @@ const serviceColumns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
   },
-  { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "wbs_code", label: "Wbs Code", sortable: true, draggable: true },
   { key: "cgst_rate", label: "CGST Rate(%)", sortable: true, draggable: true },
   { key: "cgst_amount", label: "CGST Amount", sortable: true, draggable: true },
@@ -198,12 +204,6 @@ const serviceColumns: ColumnConfig[] = [
   { key: "igst_amount", label: "IGST Amount", sortable: true, draggable: true },
   { key: "tcs_amount", label: "TCS Amount", sortable: true, draggable: true },
   { key: "tax_amount", label: "Tax Amount", sortable: true, draggable: true },
-  {
-    key: "total_amount",
-    label: "Total Amount",
-    sortable: true,
-    draggable: true,
-  },
 ];
 
 const formatIndian = (val: string | number | null | undefined): string => {
@@ -700,9 +700,9 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-       const response = await dispatch(
-  approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-).unwrap();
+        const response = await dispatch(
+          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
         // toast.success("Service PR rejected successfully");
         toast.success(response?.message || "Service PR rejected successfully");
         refreshPendingApprovalsCount();
@@ -869,7 +869,7 @@ export const ServicePRDetailsPage = () => {
                 </Button>
               )}
 
-              { buttonCondition.canEditAll && (
+              {buttonCondition.canEditAll && (
                 <Button
                   size="sm"
                   variant="outline"
