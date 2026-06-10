@@ -83,8 +83,12 @@ const statusBadgeMap: Record<string, string> = {
 };
 
 const VendorCreditsDetailsReport: React.FC = () => {
-  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
-  const [filters, setFilters] = useState(defaultRange);
+  // const defaultRange = useMemo(() => getCurrentMonthRange(), []);
+  // const [filters, setFilters] = useState(defaultRange);
+  const [filters, setFilters] = useState({
+  fromDate: "",
+  toDate: "",
+});
   const [rows, setRows] = useState<VendorCreditRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -99,11 +103,21 @@ const VendorCreditsDetailsReport: React.FC = () => {
       const response = await axios.get(
         `https://${baseUrl}/lock_account_supplier_credits.json`,
         {
+          // params: {
+          //   lock_account_id: lockAccountId,
+          //   "q[date_gteq]": fromDate.includes("-") ? fromDate.split("-").reverse().join("/") : fromDate,
+          //   "q[date_lteq]": toDate.includes("-") ? toDate.split("-").reverse().join("/") : toDate,
+          // },
+
           params: {
-            lock_account_id: lockAccountId,
-            "q[date_gteq]": fromDate.includes("-") ? fromDate.split("-").reverse().join("/") : fromDate,
-            "q[date_lteq]": toDate.includes("-") ? toDate.split("-").reverse().join("/") : toDate,
-          },
+  lock_account_id: lockAccountId,
+  ...(fromDate && {
+    "q[date_gteq]": fromDate.split("-").reverse().join("/"),
+  }),
+  ...(toDate && {
+    "q[date_lteq]": toDate.split("-").reverse().join("/"),
+  }),
+},
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -136,9 +150,13 @@ const VendorCreditsDetailsReport: React.FC = () => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   fetchVendorCreditDetails(defaultRange.fromDate, defaultRange.toDate);
+  // }, [defaultRange.fromDate, defaultRange.toDate, fetchVendorCreditDetails]);
+
   useEffect(() => {
-    fetchVendorCreditDetails(defaultRange.fromDate, defaultRange.toDate);
-  }, [defaultRange.fromDate, defaultRange.toDate, fetchVendorCreditDetails]);
+  fetchVendorCreditDetails("", "");
+}, [fetchVendorCreditDetails]);
 
   const totals = useMemo(
     () =>
