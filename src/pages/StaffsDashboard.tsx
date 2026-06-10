@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -147,6 +147,7 @@ const getStatusBadgeColor = (status: string) => {
 
 export const StaffsDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
@@ -163,7 +164,16 @@ export const StaffsDashboard = () => {
     total_count: 0,
     total_pages: 1
   });
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return Number(params.get('page')) || 1;
+});
+
+useEffect(() => {
+  navigate(`${location.pathname}?page=${currentPage}`, {
+    replace: true,
+  });
+}, [currentPage]);
 
   // Fetch staff data from API
   useEffect(() => {
@@ -372,8 +382,10 @@ export const StaffsDashboard = () => {
   };
 
   const handleViewStaff = (staffId: string) => {
-    navigate(`/security/staff/details/${staffId}`);
-  };
+  navigate(
+    `/security/staff/details/${staffId}?page=${currentPage}`
+  );
+};
 
   const handleEditStaff = (staffId: string) => {
     navigate(`/security/staff/edit/${staffId}`);

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
@@ -216,6 +216,7 @@ export const VisitorsDashboard = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // API State
   const [unexpectedVisitors, setUnexpectedVisitors] = useState<any[]>([]);
@@ -248,11 +249,14 @@ export const VisitorsDashboard = () => {
     totalEntries: 0,
     perPage: 20
   });
-  const [historyPagination, setHistoryPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalEntries: 0,
-    perPage: 20
+ const [historyPagination, setHistoryPagination] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      currentPage: Number(params.get('page')) || 1,
+      totalPages: 1,
+      totalEntries: 0,
+      perPage: 20
+    };
   });
 
   // Column visibility state for visitor history table
@@ -414,13 +418,13 @@ export const VisitorsDashboard = () => {
       console.log('🔍 Using site ID for visitor history:', siteId);
       console.log('🔍 SearchTerm being passed to visitor history:', searchTerm);
       const data = await getVisitorHistory(siteId, page, 20, searchTerm);
-      setVisitorHistoryData(data.visitors || []);
-      setHistoryPagination({
-        currentPage: data.pagination?.current_page || 1,
+     setVisitorHistoryData(data.visitors || []);
+      setHistoryPagination(prev => ({
+        ...prev,
         totalPages: data.pagination?.total_pages || 1,
         totalEntries: data.pagination?.total_entries || data.visitors?.length || 0,
         perPage: data.pagination?.per_page || 20
-      });
+      }));
     } catch (error) {
       console.error('Error fetching visitor history:', error);
     } finally {
@@ -1632,8 +1636,13 @@ export const VisitorsDashboard = () => {
 
     return items;
   };
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${historyPagination.currentPage}`, { replace: true });
+  }, [historyPagination.currentPage]);
 
-  const handlePageChange = (page: number) => {
+const handlePageChange = (page: number) => {
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
+    setHistoryPagination(prev => ({ ...prev, currentPage: page }));
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
         fetchVisitorHistory(page, searchTerm);

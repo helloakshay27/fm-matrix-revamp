@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import { TextField } from "@mui/material";
+import { FormSearchSelect } from '@/components/FormSearchSelect';
 import { X } from "lucide-react";
 import { toast } from 'sonner';
 import { 
@@ -36,22 +37,6 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   onApplyFilters, 
   onExport 
 }) => {
-  const selectMenuProps = {
-    PaperProps: {
-      style: {
-        maxHeight: 224,
-        backgroundColor: 'white',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        zIndex: 9999, // High z-index to ensure dropdown appears above other elements
-      },
-    },
-    // Prevent focus conflicts with Dialog
-    disablePortal: false,
-    disableAutoFocus: true,
-    disableEnforceFocus: true,
-  };
   // using sonner toast directly
   const [filters, setFilters] = useState<Filters>({
     commodity: '',
@@ -158,6 +143,10 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   };
 
   const handleExport = () => {
+
+
+
+    
     console.log('Exporting filtered data');
     
     const apiFilters: WasteGenerationFilters = {
@@ -190,6 +179,33 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     });
   };
 
+  const commodityOptions = useMemo(
+    () =>
+      commodities.map((c) => ({
+        value: c.id.toString(),
+        label: c.category_name,
+      })),
+    [commodities]
+  );
+
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((c) => ({
+        value: c.id.toString(),
+        label: c.category_name,
+      })),
+    [categories]
+  );
+
+  const operationalLandlordOptions = useMemo(
+    () =>
+      operationalLandlords.map((l) => ({
+        value: l.id.toString(),
+        label: l.category_name,
+      })),
+    [operationalLandlords]
+  );
+
   const fieldStyles = {
     height: "45px",
     backgroundColor: "#fff",
@@ -207,102 +223,56 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
-      <DialogContent className="max-w-2xl p-6 [&>button]:hidden">
-        <DialogHeader className="pb-4">
+      <DialogContent className="flex max-h-[65vh] w-[75vw] max-w-3xl flex-col overflow-visible p-0 sm:w-[900px] [&>button]:hidden">
+        <DialogHeader className="border-b border-gray-200 px-8 py-5">
           <div className="flex items-center justify-between">
             <DialogTitle>FILTER BY</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 p-1  text-white  rounded-none shadow-none"
+              className="h-8 w-8 rounded-none p-1 text-white shadow-none"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
-        
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormControl
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-            >
-              <InputLabel shrink>Commodity/Source</InputLabel>
-              <MuiSelect
-                value={filters.commodity}
-                onChange={(e) => handleInputChange('commodity', e.target.value)}
-                label="Commodity/Source"
-                notched
-                displayEmpty
-                disabled={loadingCommodities}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  {loadingCommodities ? 'Loading commodities...' : 'Select Commodity'}
-                </MenuItem>
-                {Array.isArray(commodities) && commodities.map((commodity) => (
-                  <MenuItem key={commodity.id} value={commodity.id.toString()}>
-                    {commodity.category_name}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
 
-            <FormControl
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-            >
-              <InputLabel shrink>Category</InputLabel>
-              <MuiSelect
-                value={filters.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
-                label="Category"
-                notched
-                displayEmpty
-                disabled={loadingCategories}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  {loadingCategories ? 'Loading categories...' : 'Select Category'}
-                </MenuItem>
-                {Array.isArray(categories) && categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id.toString()}>
-                    {category.category_name}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
+        <div className="min-h-[420px] flex-1 space-y-8 overflow-visible px-8 py-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <FormSearchSelect
+              label="Commodity/Source"
+              value={filters.commodity}
+              onChange={(v) => handleInputChange('commodity', v)}
+              options={commodityOptions}
+              placeholder="Select Commodity"
+              isLoading={loadingCommodities}
+              disabled={loadingCommodities}
+            />
+
+            <FormSearchSelect
+              label="Category"
+              value={filters.category}
+              onChange={(v) => handleInputChange('category', v)}
+              options={categoryOptions}
+              placeholder="Select Category"
+              isLoading={loadingCategories}
+              disabled={loadingCategories}
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormControl
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-            >
-              <InputLabel shrink>Operational Name</InputLabel>
-              <MuiSelect
-                value={filters.operationalName}
-                onChange={(e) => handleInputChange('operationalName', e.target.value)}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="relative z-20">
+              <FormSearchSelect
                 label="Operational Name"
-                notched
-                displayEmpty
+                value={filters.operationalName}
+                onChange={(v) => handleInputChange('operationalName', v)}
+                options={operationalLandlordOptions}
+                placeholder="Select Operational Name"
+                isLoading={loadingOperationalLandlords}
                 disabled={loadingOperationalLandlords}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  {loadingOperationalLandlords ? 'Loading operational names...' : 'Select Operational Name'}
-                </MenuItem>
-                {Array.isArray(operationalLandlords) && operationalLandlords.map((landlord) => (
-                  <MenuItem key={landlord.id} value={landlord.id.toString()}>
-                    {landlord.category_name}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <TextField
@@ -336,30 +306,35 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
             </div>
           </div>
 
-          <div className="flex justify-center gap-4 pt-6">
-            <Button
-              onClick={handleSubmit}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#A01B26] px-8 rounded-none shadow-none"
-            >
-              Submit
-            </Button>
-            <Button
-              onClick={handleExport}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#A01B26] px-8 rounded-none shadow-none"
-            >
-              Export
-            </Button>
-            <Button
-              onClick={handleReset}
-              variant="outline"
-              className="px-8 rounded-none shadow-none"
-            >
-              Reset
-            </Button>
-          </div>
+          <div className="flex justify-center gap-4 border-t border-gray-200 px-8 py-6">
+          <Button
+            onClick={handleSubmit}
+            style={{ backgroundColor: '#C72030' }}
+            className="rounded-none px-8 text-white shadow-none hover:bg-[#A01B26]"
+          >
+            Submit
+          </Button>
+          <Button
+            onClick={handleExport}
+            style={{ backgroundColor: '#C72030' }}
+            className="rounded-none px-8 text-white shadow-none hover:bg-[#A01B26]"
+          >
+            Export
+          </Button>
+          <Button
+            onClick={handleReset}
+            variant="outline"
+            className="rounded-none px-8 shadow-none"
+          >
+            Reset
+          </Button>
         </div>
+
+          {/* Reserve space so open dropdowns do not overlap action buttons */}
+          <div className="min-h-[200px]" aria-hidden />
+        </div>
+
+        
       </DialogContent>
     </Dialog>
   );
