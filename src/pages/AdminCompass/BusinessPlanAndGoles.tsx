@@ -5722,8 +5722,6 @@ const BusinessPlanAndGoles = () => {
                   Review / Edit Business Plan
                 </button>
                 {/* <button
-                  onClick={() => setShowGenerateVisionBoardConfirm(false)}
-                  className="w-full rounded-xl py-2 text-[13px] font-bold text-gray-500 transition-all hover:text-gray-700 active:scale-[0.98]"
                 >
                   Cancel
                 </button> */}

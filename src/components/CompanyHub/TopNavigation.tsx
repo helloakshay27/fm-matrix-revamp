@@ -791,7 +791,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                   <span className="font-medium">ID Card</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => navigate("/profile")}
+                  onClick={() => navigate("/business-compass/profile")}
                   className="mx-2 my-1 rounded-md"
                 >
                   <User className="w-4 h-4 mr-2 text-gray-500" />
