@@ -4,11 +4,12 @@
 import React, { useState } from "react";
 import DailyLogTab from "./AdminCompassComponent/Dailylogtab";
 import ReportsTab from "./AdminCompassComponent/Reportstab";
+import HistoryTab from "./AdminCompassComponent/Historytab";
 import AnalyticsTab from "./AdminCompassComponent/Analyticstab";
 import SettingsTab from "./AdminCompassComponent/Settingstab";
 import DailyTab from "./AdminCompassComponent/Dailytab";
 
-const tabs = ["Daily Meeting", "Log", "Reports", "Analytics", "Settings"];
+const tabs = ["Daily", "Daily Log", "History", "Reports", "Analytics", "Settings"];
 
 const getLocalDateKey = (date = new Date()) => {
   const year = date.getFullYear();
@@ -18,7 +19,7 @@ const getLocalDateKey = (date = new Date()) => {
 };
 
 const DailyMeeting = () => {
-  const [activeTab, setActiveTab] = useState("Daily Meeting");
+  const [activeTab, setActiveTab] = useState("Daily");
   const [selectedMeetingDate, setSelectedMeetingDate] = useState(() =>
     getLocalDateKey()
   );
@@ -124,7 +125,7 @@ const DailyMeeting = () => {
 
       {/* ── Tab content ── */}
       <div>
-        {activeTab === "Daily Meeting" && (
+        {activeTab === "Daily" && (
           <DailyTab
             selectedDate={selectedMeetingDate}
             onSelectedDateChange={setSelectedMeetingDate}
@@ -133,8 +134,16 @@ const DailyMeeting = () => {
             onMeetingSaved={handleMeetingSaved}
           />
         )}
-        {activeTab === "Log" && (
+        {activeTab === "Daily Log" && (
           <DailyLogTab
+            initialDate={selectedMeetingDate}
+            onSelectedDateChange={setSelectedMeetingDate}
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+          />
+        )}
+        {activeTab === "History" && (
+          <HistoryTab
             initialDate={selectedMeetingDate}
             onSelectedDateChange={setSelectedMeetingDate}
             selectedMeetingId={selectedMeetingId}

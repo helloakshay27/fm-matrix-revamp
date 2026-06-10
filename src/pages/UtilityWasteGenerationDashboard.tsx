@@ -227,18 +227,24 @@ const UtilityWasteGenerationDashboard = () => {
   const handleDownloadChart = async () => {
     try {
       const siteId = getSiteId();
-      const from = toApiDate(analyticsDateRange.startDate);
-      const to   = toApiDate(analyticsDateRange.endDate);
-      const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_segregation_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
+      const from = format(analyticsDateRange.startDate, "yyyy-MM-dd");
+      const to = format(analyticsDateRange.endDate, "yyyy-MM-dd");
+      const token = localStorage.getItem('token') || '';
+      const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_segregation_download?site_id=${siteId}&from_date=${from}&to_date=${to}&token=${token}`;
       const res = await fetch(url, { headers: { Authorization: getAuthHeader() } });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const contentDisposition = res.headers.get('content-disposition') || '';
-      const match = contentDisposition.match(/filename="?(.+)"?/);
-      const filename = match ? match[1] : 'waste_segregation.csv';
+      const match = contentDisposition.match(/filename="?([^";]+)"?/);
+      let filename = match ? match[1] : 'waste_segregation.xlsx';
+      if (!filename.toLowerCase().endsWith('.xlsx') && !filename.toLowerCase().endsWith('.xls')) {
+        filename = `${filename}.xlsx`;
+      }
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = objUrl; a.download = filename; a.click();
+      a.href = objUrl;
+      a.download = filename;
+      a.click();
       URL.revokeObjectURL(objUrl);
     } catch (e) {
       console.error(e);
