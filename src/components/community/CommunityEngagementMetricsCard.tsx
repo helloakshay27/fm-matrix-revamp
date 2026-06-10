@@ -16,7 +16,7 @@ export const CommunityEngagementMetricsCard: React.FC<Props> = ({ data }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="bg-[#E3909026] rounded p-3 flex flex-col justify-between">
           <div className="flex items-start gap-2 mb-3">
-            <p className="text-2xl font-bold text-[#C72030] flex-shrink-0">{totalActive}</p>
+            <p className="text-2xl font-bold text-[#da7756] flex-shrink-0">{totalActive}</p>
             <div className="min-w-0">
               <p className="text-black font-semibold text-xs leading-tight">Total Active Users</p>
               <p className="text-[10px] text-black">(App Downloaded)</p>
@@ -36,7 +36,7 @@ export const CommunityEngagementMetricsCard: React.FC<Props> = ({ data }) => {
         <div className="bg-[#EFEFFB] rounded p-3 flex items-center justify-center">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
-              <p className="text-2xl font-bold text-[#C72030]">{newUsers}</p>
+              <p className="text-2xl font-bold text-[#da7756]">{newUsers}</p>
               <span className="text-green-600 text-xl">↑</span>
             </div>
             <p className="text-black font-semibold text-xs mt-1">New Users</p>
@@ -45,7 +45,7 @@ export const CommunityEngagementMetricsCard: React.FC<Props> = ({ data }) => {
         <div className="bg-[#B7DCD44D] rounded p-3 flex items-center justify-center">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
-              <p className="text-2xl font-bold text-[#C72030]">{totalActive}</p>
+              <p className="text-2xl font-bold text-[#da7756]">{totalActive}</p>
               <span className="text-green-600 text-xl">↑</span>
             </div>
             <p className="text-black font-semibold text-xs mt-1 leading-tight">Last 30 Days Active Users</p>

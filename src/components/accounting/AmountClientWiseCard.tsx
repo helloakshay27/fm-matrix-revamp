@@ -29,9 +29,8 @@ const formatINR = (n: number | null | undefined): string => {
 };
 
 const getPctColor = (pct: number): string => {
-  if (pct <= 20) return "#2E7D6B";
-  if (pct <= 60) return "#D97655";
-  return "#C72030";
+  if (pct > 50) return "#76CDC1";
+  return "#DA7756";
 };
 
 const HEADERS = [
@@ -107,9 +106,8 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
         </div>
       )}
 
-      <div className="overflow-x-auto -mx-3 sm:mx-0">
-        <div className="min-w-[700px] px-3 sm:px-0">
-          <div className="rounded-xl overflow-hidden border border-gray-200">
+      <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr>
@@ -179,7 +177,6 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
               </tbody>
             </table>
           </div>
-        </div>
       </div>
     </div>
   );
