@@ -1897,41 +1897,34 @@ const TOOLTIP_CONTENT: Record<
 // ─────────────────────────────────
 //  CoreValuesInlineCard
 // ─────────────────────────────────
+const getInitials = (text: string): string => {
+  const words = text.trim().split(/\s+/);
+  if (words.length === 1) {
+    return words[0].slice(0, 3).toUpperCase();
+  }
+  return words
+    .slice(0, 3)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+};
+
 const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
   values,
 }) => {
   const safeValues = values || [];
 
   return (
-    <div className="grid grid-cols-1 gap-2.5">
+    <div className="flex flex-wrap gap-3">
       {safeValues.map((v, idx) => (
-        <div
-          key={v.id ?? idx}
-          className="group/value flex items-center gap-3 rounded-[15px] border border-[#efe5df] bg-gradient-to-r from-white to-[#fff8f4] px-3.5 py-3 shadow-[0_8px_18px_rgba(218,119,86,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#f0cfc2] hover:shadow-[0_12px_24px_rgba(218,119,86,0.12)]"
-        >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#fff0ea] text-[12px] font-extrabold text-[#DA7756] ring-1 ring-[#f3d8ce] transition-all duration-200 group-hover/value:bg-[#DA7756] group-hover/value:text-white">
-            {idx + 1}
-          </span>
-
-          <span className="min-w-0 flex-1 text-[13px] font-extrabold leading-5 text-[#1a1a1a]">
+        <div key={v.id ?? idx} className="group/avatar relative">
+          <div className="flex h-12 w-12 cursor-default items-center justify-center rounded-full bg-[#fff0ea] text-[11px] font-extrabold text-[#DA7756] ring-2 ring-[#f3d8ce] transition-all duration-200 hover:bg-[#DA7756] hover:text-white hover:ring-[#DA7756]">
+            {getInitials(v.value)}
+          </div>
+          <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#1a1a1a] px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/avatar:opacity-100">
             {v.value}
-          </span>
-
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
-            <svg
-              className="h-3.5 w-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.4}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.5 12.75 9 17.25 19.5 6.75"
-              />
-            </svg>
-          </span>
+            <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
+          </div>
         </div>
       ))}
     </div>
