@@ -11,6 +11,7 @@ interface InventoryAnalyticsCardProps {
   data: any;
   type?: 'itemsStatus' | 'categoryWise' | 'greenConsumption' | 'consumptionReportGreen' | 'consumptionReportNonGreen' | 'inventoryConsumptionNonGreen' | 'currentMinimumStockNonGreen' | 'currentMinimumStockGreen' | 'inventoryCostOverMonth' | 'inventoryConsumptionOverSite';
   className?: string;
+  titleColor?: string;
   dateRange?: {
     startDate: Date;
     endDate: Date;
@@ -22,6 +23,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   data,
   type = 'itemsStatus',
   className = '',
+  titleColor,
   dateRange
 }) => {
   if (type === 'consumptionReportNonGreen') {
@@ -115,7 +117,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     return (
       <div className={`relative bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
+          <h3 className="text-lg font-bold" style={{ color: titleColor || '#C72030' }}>{title}</h3>
           {showDownload && (
             <div
               className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
@@ -265,29 +267,29 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             <table className="min-w-full table-auto">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Addition</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Date</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Product</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Unit</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Opening</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Addition</th>
+                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Consumption</th>
+                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Current Stock</th>
+                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Cost/Unit</th>
+                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Total Cost</th>
                 </tr>
               </thead>
               <tbody>
                 {data.response.map((row: any, index: number) => (
                   <tr key={index} className="border-t">
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.date}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.date}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.product}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.unit}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.opening}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.addition}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.consumption}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.current_stock}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.cost_per_unit}</td>
+                    <td className="px-4 py-2 text-left text-sm text-gray-600">{row.cost}</td>
                   </tr>
                 ))}
               </tbody>
@@ -359,42 +361,41 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             </div>
 
             {/* Tablet/Desktop: Scrollable table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <div className="rounded border border-gray-200">
-                <table className="min-w-[900px] md:min-w-full table-fixed">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700 whitespace-nowrap">Date</th>
-                      <th className="w-64 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Product</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Unit</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Opening</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Addition</th>
-                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Consumption</th>
-                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Current Stock</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Cost/Unit</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Total Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {localData.response.map((row: any, index: number) => (
-                      <tr key={index} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-100/60 transition-colors">
-                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 whitespace-nowrap">{row.date}</td>
-                        <td className="w-64 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 break-words">{row.product}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.unit}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.opening}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.addition}</td>
-                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.consumption}</td>
-                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.current_stock}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost_per_unit}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost}</td>
+            <div className="overflow-x-auto -mx-3 sm:mx-0">
+              <div className="min-w-[900px] px-3 sm:px-0">
+                <div className="rounded-xl overflow-hidden border border-gray-200">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((h, i) => (
+                          <th
+                            key={h}
+                            className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
+                            style={{ backgroundColor: '#D97655' }}
+                          >
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {localData.response.map((row: any, index: number) => (
+                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 whitespace-nowrap">{row.date}</td>
+                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 break-words">{row.product}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.unit}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.opening}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.addition}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.consumption}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.current_stock}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost_per_unit}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              {/* {data.info?.info && (
-                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
-              )} */}
             </div>
           </div>
         );
@@ -576,42 +577,41 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             </div>
 
             {/* Tablet/Desktop: Scrollable table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <div className="rounded border border-gray-200">
-                <table className="min-w-[900px] md:min-w-full table-fixed">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700 whitespace-nowrap">Date</th>
-                      <th className="w-64 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Product</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Unit</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Opening</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Addition</th>
-                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Consumption</th>
-                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Current Stock</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Cost/Unit</th>
-                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Total Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {localData.response.map((row: any, index: number) => (
-                      <tr key={index} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-100/60 transition-colors">
-                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 whitespace-nowrap">{row.date}</td>
-                        <td className="w-64 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 break-words">{row.product}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.unit}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.opening}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.addition}</td>
-                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.consumption}</td>
-                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.current_stock}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost_per_unit}</td>
-                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost}</td>
+            <div className="overflow-x-auto -mx-3 sm:mx-0">
+              <div className="min-w-[900px] px-3 sm:px-0">
+                <div className="rounded-xl overflow-hidden border border-gray-200">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((h, i) => (
+                          <th
+                            key={h}
+                            className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
+                            style={{ backgroundColor: '#D97655' }}
+                          >
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {localData.response.map((row: any, index: number) => (
+                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 whitespace-nowrap">{row.date}</td>
+                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 break-words">{row.product}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.unit}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.opening}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.addition}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.consumption}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.current_stock}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost_per_unit}</td>
+                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              {/* {localData?.info?.info && (
-                <div className="mt-2 text-xs text-gray-500">{localData.info.info}</div>
-              )} */}
             </div>
           </div>
         );
@@ -628,13 +628,36 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         }));
         return (
           <div className="space-y-4">
+            {/* Legend */}
+            <div className="flex items-center justify-end gap-4 mb-2 text-sm flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#DA7756' }} />
+                <span className="text-xs">Consumption</span>
+              </div>
+            </div>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={consumptionData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} height={80} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#C4B99D" />
+              <BarChart data={consumptionData} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  interval={0}
+                  height={65}
+                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                />
+                <Bar dataKey="value" fill="#DA7756" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
             {/* Info section */}
@@ -751,7 +774,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   return (
   <div className={`relative bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 shrink-0">
-        <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
+        <h3 className="text-lg font-bold" style={{ color: titleColor || '#C72030' }}>{title}</h3>
         <div className="flex items-center gap-2">
           {type === 'greenConsumption' && (
             <>
@@ -1209,7 +1232,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           )}
         </div>
       </div>
-      <div className="flex-1 min-h-0 overflow-hidden relative">
+      <div className="flex-1 min-h-0 overflow-y-hidden relative">
         {refreshLoading ? (
           <div className="absolute inset-0 bg-white flex items-center justify-center z-30 rounded-lg">
             <div className="flex flex-col items-center gap-3">
@@ -1219,7 +1242,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           </div>
         ) : null}
         {!refreshLoading && (
-          <div className="h-full overflow-y-auto pr-1 custom-scrollbar">
+          <div className="h-full overflow-auto pr-1 custom-scrollbar">
             {renderContent()}
           </div>
         )}

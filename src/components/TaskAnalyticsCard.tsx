@@ -88,6 +88,9 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
     }
   };
 
+  const thCls = 'px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center';
+  const tdCls = 'px-4 py-3 text-sm border-b border-gray-100';
+
   const renderContent = () => {
     if (!data) {
       return (
@@ -178,58 +181,39 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             </div>
 
             {/* Scrollable table */}
-            <div className="flex-1 overflow-auto mt-3 border rounded-md">
-              <table className="w-full text-sm min-w-[340px]">
-                <thead className="sticky top-0 z-10">
-                  <tr style={{ backgroundColor: "#D97655" }}>
-                    <th className="text-left px-3 py-2 text-white font-semibold text-xs">
-                      Category
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Open
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Closed
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      WIP
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Overdue
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chartData.length === 0 ? (
+            <div className="flex-1 overflow-auto mt-3">
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm min-w-[340px] border-collapse">
+                  <thead className="sticky top-0 z-10">
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center p-4 text-muted-foreground text-sm"
-                      >
-                        No data available
-                      </td>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Category</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
                     </tr>
-                  ) : (
-                    chartData.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-medium">{item.name}</td>
-                        <td className="text-right p-2">{item.open ?? 0}</td>
-                        <td className="text-right p-2">{item.closed ?? 0}</td>
-                        <td className="text-right p-2">
-                          {item.work_in_progress ?? 0}
-                        </td>
-                        <td className="text-right p-2">{item.overdue ?? 0}</td>
-                        <td className="text-right p-2 font-semibold">
-                          {item.total ?? 0}
-                        </td>
+                  </thead>
+                  <tbody>
+                    {chartData.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center p-4 text-muted-foreground text-sm">No data available</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      chartData.map((item, index) => (
+                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                          <td className={`${tdCls} text-left font-medium text-gray-800`}>{item.name}</td>
+                          <td className={`${tdCls} text-left`}>{item.open ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.closed ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.work_in_progress ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.overdue ?? 0}</td>
+                          <td className={`${tdCls} text-left font-semibold`}>{item.total ?? 0}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         );
@@ -298,35 +282,27 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             </div>
 
             {/* Scrollable table */}
-            <div className="flex-1 overflow-auto mt-3 border rounded-md">
-              <table className="w-full text-sm min-w-[280px]">
-                <thead className="sticky top-0 z-10">
-                  <tr style={{ backgroundColor: "#D97655" }}>
-                    <th className="text-left px-3 py-2 text-white font-semibold text-xs">
-                      Rank
-                    </th>
-                    <th className="text-left px-3 py-2 text-white font-semibold text-xs">
-                      Checklist Type
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Count
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(responseData as TopTenItem[])
-                    .slice(0, 10)
-                    .map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-medium">#{index + 1}</td>
-                        <td className="p-2">{item.type || "N/A"}</td>
-                        <td className="text-right p-2 font-semibold">
-                          {item.count || 0}
-                        </td>
+            <div className="flex-1 overflow-auto mt-3">
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm min-w-[280px] border-collapse">
+                  <thead className="sticky top-0 z-10">
+                    <tr>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Rank</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Checklist Type</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(responseData as TopTenItem[]).slice(0, 10).map((item, index) => (
+                      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                        <td className={`${tdCls} text-left font-medium text-gray-800`}>#{index + 1}</td>
+                        <td className={`${tdCls} text-left`}>{item.type || 'N/A'}</td>
+                        <td className={`${tdCls} text-left font-semibold`}>{item.count || 0}</td>
                       </tr>
                     ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         );
@@ -411,58 +387,39 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             </div>
 
             {/* Scrollable table */}
-            <div className="flex-1 overflow-auto mt-3 border rounded-md">
-              <table className="w-full text-sm min-w-[360px]">
-                <thead className="sticky top-0 z-10">
-                  <tr style={{ backgroundColor: "#D97655" }}>
-                    <th className="text-left px-3 py-2 text-white font-semibold text-xs">
-                      Site
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Open
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Closed
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      WIP
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Overdue
-                    </th>
-                    <th className="text-right px-3 py-2 text-white font-semibold text-xs">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chartData.length === 0 ? (
+            <div className="flex-1 overflow-auto mt-3">
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm min-w-[360px] border-collapse">
+                  <thead className="sticky top-0 z-10">
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center p-4 text-muted-foreground text-sm"
-                      >
-                        No data available
-                      </td>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
+                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
                     </tr>
-                  ) : (
-                    chartData.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-medium">{item.site}</td>
-                        <td className="text-right p-2">{item.open ?? 0}</td>
-                        <td className="text-right p-2">{item.closed ?? 0}</td>
-                        <td className="text-right p-2">
-                          {item.work_in_progress ?? 0}
-                        </td>
-                        <td className="text-right p-2">{item.overdue ?? 0}</td>
-                        <td className="text-right p-2 font-semibold">
-                          {item.total ?? 0}
-                        </td>
+                  </thead>
+                  <tbody>
+                    {chartData.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center p-4 text-muted-foreground text-sm">No data available</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      chartData.map((item, index) => (
+                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                          <td className={`${tdCls} text-left font-medium text-gray-800`}>{item.site}</td>
+                          <td className={`${tdCls} text-left`}>{item.open ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.closed ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.work_in_progress ?? 0}</td>
+                          <td className={`${tdCls} text-left`}>{item.overdue ?? 0}</td>
+                          <td className={`${tdCls} text-left font-semibold`}>{item.total ?? 0}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         );

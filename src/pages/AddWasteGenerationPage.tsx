@@ -3,12 +3,11 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { Recycle, Building, Trash2, MapPin } from 'lucide-react';
+import { Recycle, Building, Trash2, MapPin, ArrowLeft } from 'lucide-react';
 import {
   fetchBuildings,
   fetchWings,
   fetchAreas,
-  fetchVendors,
   fetchCommodities,
   fetchCategories,
   fetchOperationalLandlords,
@@ -16,11 +15,11 @@ import {
   Building as BuildingType,
   Wing,
   Area,
-  Vendor,
   Commodity,
   Category,
   OperationalLandlord
 } from '@/services/wasteGenerationAPI';
+import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { toast } from 'sonner';
 
 // Field styles for Material-UI components
@@ -79,7 +78,6 @@ const AddWasteGenerationPage = () => {
   const [buildings, setBuildings] = useState<BuildingType[]>([]);
   const [wings, setWings] = useState<Wing[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [operationalLandlords, setOperationalLandlords] = useState<OperationalLandlord[]>([]);
@@ -88,7 +86,6 @@ const AddWasteGenerationPage = () => {
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
-  const [loadingVendors, setLoadingVendors] = useState(false);
   const [loadingCommodities, setLoadingCommodities] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingOperationalLandlords, setLoadingOperationalLandlords] = useState(false);
@@ -108,19 +105,6 @@ const AddWasteGenerationPage = () => {
         toast.error('Failed to load buildings');
       } finally {
         setLoadingBuildings(false);
-      }
-
-      // Fetch vendors
-      setLoadingVendors(true);
-      try {
-        const vendorsData = await fetchVendors();
-        setVendors(Array.isArray(vendorsData) ? vendorsData : []);
-      } catch (error) {
-        console.error('Error fetching vendors:', error);
-        setVendors([]);
-        // Don't show error for vendors as they are optional
-      } finally {
-        setLoadingVendors(false);
       }
 
       // Fetch commodities
@@ -220,6 +204,17 @@ const AddWasteGenerationPage = () => {
   }, [formData.wing]);
 
   const handleInputChange = (field: string, value: string) => {
+
+ if (
+    (field === "generatedUnit" || field === "recycledUnit") &&
+    Number(value) < 0
+  ) {
+    return;
+  }
+
+
+
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -276,6 +271,11 @@ const AddWasteGenerationPage = () => {
       return;
     }
 
+    if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
+      toast.error("Validation Error: Recycled Unit cannot be negative.");
+      return;
+    }
+
     if (
       parseFloat(formData.recycledUnit || "0") >
       parseFloat(formData.generatedUnit)
@@ -328,8 +328,15 @@ const AddWasteGenerationPage = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">ADD WASTE GENERATION</h1>
+      <div className="flex items-center gap-4 mb-8">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900 text-amber-900">ADD WASTE GENERATION</h1>
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
@@ -450,32 +457,17 @@ const AddWasteGenerationPage = () => {
 
             {/* Waste Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // required
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Vendor <span className="text-red-500">*</span></InputLabel>
-                <MuiSelect
+              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
+              <div style={{ marginTop: '-8px' }}>
+                <SupplierSearchSelect
                   value={formData.vendor}
-                  onChange={(e) => handleInputChange('vendor', e.target.value)}
-                  label="Vendor*"
-                  notched
-                  displayEmpty
-                  disabled={loadingVendors}
-                >
-                  <MenuItem value="">
-                    {loadingVendors ? 'Loading vendors...' : 'Select Vendor'}
-                  </MenuItem>
-                  {Array.isArray(vendors) && vendors.map((vendor) => (
-                    <MenuItem key={vendor.id} value={vendor.id.toString()}>
-                      {vendor.company_name || vendor.full_name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+                  onChange={(vendorId) => handleInputChange('vendor', vendorId)}
+                  label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
+                  size="schedule"
+                  error={false}
+                  disablePortal={true}
+                />
+              </div>
 
               <FormControl
                 fullWidth
@@ -532,7 +524,7 @@ const AddWasteGenerationPage = () => {
               </FormControl>
               <TextField
                 fullWidth
-                label="UoM"
+                label="UOM"
                 variant="outlined"
                 value={formData.uom}
                 onChange={(e) => handleInputChange('uom', e.target.value)}
@@ -576,6 +568,9 @@ const AddWasteGenerationPage = () => {
                   notched
                   displayEmpty
                   disabled={loadingOperationalLandlords}
+                  MenuProps={{
+                    className: 'searchable-select-menu'
+                  }}
                 >
                   <MenuItem value="">
                     {loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}
@@ -615,6 +610,7 @@ const AddWasteGenerationPage = () => {
                 onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
                 fullWidth
                 variant="outlined"
+                inputProps={{ min: "0" }}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
@@ -634,6 +630,7 @@ const AddWasteGenerationPage = () => {
                 onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
                 fullWidth
                 variant="outlined"
+                inputProps={{ min: "0" }}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
@@ -653,7 +650,8 @@ const AddWasteGenerationPage = () => {
           <Button
             type="submit"
             disabled={submitting}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: '#C72030', color: '#ffffff' }}
+            className="hover:bg-[#A01B26] px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
           >
             {submitting ? 'Saving...' : 'Save'}
           </Button>
@@ -662,7 +660,8 @@ const AddWasteGenerationPage = () => {
             variant="outline"
             onClick={handleBack}
             disabled={submitting}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 disabled:opacity-50"
+            style={{ borderColor: '#d1d5db', color: '#374151' }}
+            className="hover:bg-gray-50 px-8 py-2 disabled:opacity-50 rounded-md"
           >
             Back
           </Button>

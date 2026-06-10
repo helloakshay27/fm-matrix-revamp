@@ -2173,7 +2173,7 @@ circle[fill="#e5e9e9"] {
   --analytics-color-3: #f4c37e; /* Amber/Yellow       */
   --analytics-color-4: #e9704d; /* Orange-Red         */
   --analytics-color-5: #f28c8f; /* Salmon Pink        */
-  --analytics-color-6: #E39090 ; /* Cool Grey          */
+  --analytics-color-6: #e39090; /* Cool Grey          */
 
   /* Light variants for backgrounds */
   --analytics-color-1-light: rgba(107, 155, 204, 0.15);
@@ -3510,14 +3510,14 @@ circle[fill="#C6B692"],
   fill: var(--analytics-color-2) !important;
 }
 /* Exact direct-class overrides only — hover:bg variants must NOT be matched */
-.bg-\[\#C4B89D\],
+/* .bg-\[\#C4B89D\],
 .bg-\[\#c4b89d\],
 .bg-\[\#C6B692\],
 .bg-\[\#c6b692\],
 .bg-\[\#DBC2A9\],
 .bg-\[\#dbc2a9\] {
   background-color: var(--analytics-color-2) !important;
-}
+} */
 
 /* #DCD6C9, #DAD6C9, #E5E0D3 → Color 3 (#F4C37E) */
 [fill="#DCD6C9"],

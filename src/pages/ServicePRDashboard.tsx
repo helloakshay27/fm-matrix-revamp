@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import { ServicePRFilterDialog } from "@/components/ServicePRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -125,7 +125,7 @@ export const ServicePRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
-
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const bgRefreshingRef = useRef(false);
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
@@ -139,23 +139,32 @@ export const ServicePRDashboard = () => {
     supplierName: "",
     approvalStatus: "Select",
   });
-  const [pagination, setPagination] = useState({
-    current_page: 1,
+  // const [pagination, setPagination] = useState({
+  //   current_page: 1,
+  //   total_count: 0,
+  //   total_pages: 0,
+  // });
+
+  const [pagination, setPagination] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    current_page: Number(params.get('page')) || 1,
     total_count: 0,
     total_pages: 0,
-  });
+  };
+});
   const [updatingStatus, setUpdatingStatus] = useState<{
     [key: string]: boolean;
   }>({});
 
-  const applyResponse = (response: any) => {
-    setServicePR(response.work_orders);
-    setPagination({
-      current_page: response.current_page,
-      total_count: response.total_count,
-      total_pages: response.total_pages,
-    });
-  };
+ const applyResponse = (response: any) => {
+  setServicePR(response.work_orders);
+  setPagination((prev) => ({
+    ...prev,
+    total_count: response.total_count,
+    total_pages: response.total_pages,
+  }));
+};
 
   const fetchData = async (filterParams: Record<string, any> = {}) => {
     const page: number = filterParams.page ?? pagination.current_page;
@@ -203,8 +212,20 @@ export const ServicePRDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+  const params = new URLSearchParams(location.search);
+  const urlPage = Number(params.get('page')) || 1;
+  if (urlPage !== pagination.current_page) {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+  }
+}, [pagination.current_page]);
+
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
+
+  useEffect(() => {
+  fetchData({ page: pagination.current_page });
+}, [pagination.current_page]);
 
   // Invalidate cache and re-fetch when site changes while page is open
   useEffect(() => {
@@ -401,19 +422,21 @@ export const ServicePRDashboard = () => {
     </Button>
   );
 
-  const handlePageChange = async (page: number) => {
-    if (
-      page < 1 ||
-      page > pagination.total_pages ||
-      page === pagination.current_page ||
-      loading
-    ) {
-      return;
-    }
+ const handlePageChange = async (page: number) => {
+  if (
+    page < 1 ||
+    page > pagination.total_pages ||
+    page === pagination.current_page ||
+    loading
+  ) {
+    return;
+  }
 
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData({
+  navigate(`${location.pathname}?page=${page}`, { replace: true });
+
+  try {
+    setPagination((prev) => ({ ...prev, current_page: page }));
+    await fetchData({
         page,
         reference_number: filters.referenceNumber,
         external_id: filters.prNumber,

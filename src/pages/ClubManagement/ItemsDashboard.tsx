@@ -66,10 +66,6 @@ export const ItemsDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
-  // State management
-  // const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
-  // const [journals, setJournals] = useState([]);
-  // const [journals, setJournals] = useState<ManualJournalTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -99,8 +95,9 @@ export const ItemsDashboard = () => {
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
   const [bulkUploadDragActive, setBulkUploadDragActive] = useState(false);
-  const [bulkUploadStatus, setBulkUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [bulkUploadStatus, setBulkUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'warning' | 'error'>('idle');
   const [bulkUploadMessage, setBulkUploadMessage] = useState('');
+  const [bulkUploadResults, setBulkUploadResults] = useState<Array<{ row: number; status: string; message: string }>>([]);
   const bulkUploadInputRef = useRef<HTMLInputElement>(null);
   const validateBulkFile = (file: File) => {
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -154,6 +151,24 @@ export const ItemsDashboard = () => {
 
       const contentType = response.headers.get('content-type') || '';
 
+      if (response.status === 422) {
+        const errData = contentType.includes('application/json')
+          ? await response.json().catch(() => ({}))
+          : {};
+        const results: Array<{ row: number; status: string; message: string }> = errData.results || [];
+        setBulkUploadStatus('warning');
+        setBulkUploadMessage(errData.message || errData.error || 'Upload completed with issues.');
+        setBulkUploadResults(results);
+        const toastMessage = errData.message || errData.error || 'Upload completed with issues.';
+        const detail = results.map(r => `Row ${r.row}: ${r.message}`).join('\n');
+        toast.warning(toastMessage, {
+          description: detail || undefined,
+          duration: 6000,
+        });
+        closeBulkUploadDialog();
+        return;
+      }
+
       if (!response.ok) {
         const errData = contentType.includes('application/json')
           ? await response.json().catch(() => ({}))
@@ -199,6 +214,7 @@ export const ItemsDashboard = () => {
     setBulkUploadFile(null);
     setBulkUploadStatus('idle');
     setBulkUploadMessage('');
+    setBulkUploadResults([]);
     if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = '';
   };
 
@@ -230,31 +246,6 @@ export const ItemsDashboard = () => {
 
     fetchItems();
   }, []);
-
-
-  // Fetch journal entries
-  // const fetchJournals = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     const baseUrl = API_CONFIG.BASE_URL;
-  //     const token = API_CONFIG.TOKEN;
-  //     const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-  //     const response = await axios.get(url, {
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  //       },
-  //     });
-  //     setJournals(response.data.lock_account_transactions || []);
-  //     setMembershipType(response.data.lock_account_transactions || [])
-  //   } catch (error) {
-  //     console.error('Error fetching journal entries:', error);
-  //     toast.error('Failed to fetch journal entries');
-  //     setJournals([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, []);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -1036,19 +1027,54 @@ export const ItemsDashboard = () => {
 
           {/* Status */}
           {bulkUploadStatus !== 'idle' && (
-            <div
-              className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
-                bulkUploadStatus === 'uploading'
-                  ? 'bg-blue-50 text-blue-700'
-                  : bulkUploadStatus === 'success'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
-              }`}
-            >
-              {bulkUploadStatus === 'uploading' && <Loader2 className="w-4 h-4 animate-spin" />}
-              {bulkUploadStatus === 'success' && <CheckCircle className="w-4 h-4" />}
-              {bulkUploadStatus === 'error' && <AlertCircle className="w-4 h-4" />}
-              <span>{bulkUploadStatus === 'uploading' ? 'Uploading...' : bulkUploadMessage}</span>
+            <div className="space-y-2">
+              <div
+                className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+                  bulkUploadStatus === 'uploading'
+                    ? 'bg-blue-50 text-blue-700'
+                    : bulkUploadStatus === 'success'
+                      ? 'bg-green-50 text-green-700'
+                      : bulkUploadStatus === 'warning'
+                        ? 'bg-yellow-50 text-yellow-800'
+                        : 'bg-red-50 text-red-700'
+                }`}
+              >
+                {bulkUploadStatus === 'uploading' && <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />}
+                {bulkUploadStatus === 'success' && <CheckCircle className="w-4 h-4 flex-shrink-0" />}
+                {bulkUploadStatus === 'warning' && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                {bulkUploadStatus === 'error' && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                <span>{bulkUploadStatus === 'uploading' ? 'Uploading...' : bulkUploadMessage}</span>
+              </div>
+              {bulkUploadResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Row</th>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Status</th>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Message</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {bulkUploadResults.map((result, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 py-2 text-gray-700">{result.row}</td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${
+                              result.status === 'success' ? 'bg-green-100 text-green-700' :
+                              result.status === 'skipped' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {result.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-700">{result.message}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -1091,17 +1117,6 @@ export const ItemsDashboard = () => {
             <AlertDialogCancel disabled={deleteLoading}>
               Cancel
             </AlertDialogCancel>
-
-            {/* <AlertDialogAction
-        onClick={(e) => {
-          e.preventDefault();
-          handleDeleteItem();
-        }}
-        disabled={deleteLoading}
-        className="bg-red-600 hover:bg-red-700 text-white"
-      >
-        {deleteLoading ? "Deleting..." : "OK"}
-      </AlertDialogAction> */}
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();

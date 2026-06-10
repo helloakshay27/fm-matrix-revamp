@@ -40,7 +40,7 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
                 {headers.map((h, i) => (
                   <th
                     key={h}
-                    className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header ${i === 0 ? 'text-left' : ''}`}
+                    className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
                     style={{ backgroundColor: '#D97655' }}
                   >
                     {h}
@@ -68,8 +68,8 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
                       const pct = parsePct(val);
                       const color = getPctColor(pct);
                       return (
-                        <td key={idx} className="px-4 py-3 text-center border-b border-gray-100">
-                          <div className="flex items-center gap-2 justify-center">
+                        <td key={idx} className="px-4 py-3 text-left border-b border-gray-100">
+                          <div className="flex items-center gap-2 justify-start">
                             <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden min-w-[50px]">
                               <div
                                 className="h-full rounded-full"

@@ -59,9 +59,9 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr>
-                <th className="py-3 px-4 font-semibold text-xs whitespace-nowrap text-left analytics-header" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site Name</th>
+                <th className="py-3 px-4 font-semibold text-xs whitespace-nowrap text-center analytics-header" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site Name</th>
                 {categories.map((cat, idx) => (
-                  <th key={idx} className="py-3 px-2 font-semibold text-xs whitespace-nowrap analytics-header" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>{cat}</th>
+                  <th key={idx} className="py-3 px-2 font-semibold text-xs whitespace-nowrap text-center analytics-header" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>{cat}</th>
                 ))}
               </tr>
             </thead>
@@ -90,9 +90,9 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
                   }
                   return (
                     <tr key={site.site_name + i} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-                      <td className="py-3 px-4 font-medium text-gray-800 text-sm border-b border-gray-100">{site.site_name ?? '-'}</td>
+                      <td className="py-3 px-4 font-medium text-gray-800 text-sm border-b border-gray-100 text-left">{site.site_name ?? '-'}</td>
                       {categories.map((cat, j) => (
-                        <td key={j} className="py-3 px-2 text-center text-sm border-b border-gray-100">{fmtPct(byCat.get(cat) ?? 0)}</td>
+                        <td key={j} className="py-3 px-2 text-left text-sm border-b border-gray-100">{fmtPct(byCat.get(cat) ?? 0)}</td>
                       ))}
                     </tr>
                   );

@@ -200,7 +200,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
   };
 
   const handleProfileClick = () => {
-    navigate("/profile");
+    navigate("/business-compass/profile");
   };
 
   const handleSettingsClick = () => {

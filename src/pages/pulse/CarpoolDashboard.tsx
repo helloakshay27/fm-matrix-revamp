@@ -176,6 +176,39 @@ const generateCalendarDays = (
   return days;
 };
 
+// Helper function to format time from API
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+// Helper function to format date from API
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+// Helper function to get car image based on color
+const getCarImageByColor = (colour: string) => {
+  const colorLower = colour.toLowerCase();
+  if (colorLower.includes("white") || colorLower.includes("beige")) {
+    return carBeigeImage;
+  } else if (colorLower.includes("black")) {
+    return carBlackImage;
+  } else if (colorLower.includes("red")) {
+    return carRedImage;
+  }
+  return carGrayImage; // Default
+};
+
 export const CarpoolDashboard = () => {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<string>("");
@@ -639,39 +672,6 @@ export const CarpoolDashboard = () => {
     setCalendarYear(newYear);
   };
 
-  // Helper function to format time from API
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
-  // Helper function to format date from API
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  // Helper function to get car image based on color
-  const getCarImageByColor = (colour: string) => {
-    const colorLower = colour.toLowerCase();
-    if (colorLower.includes("white") || colorLower.includes("beige")) {
-      return carBeigeImage;
-    } else if (colorLower.includes("black")) {
-      return carBlackImage;
-    } else if (colorLower.includes("red")) {
-      return carRedImage;
-    }
-    return carGrayImage; // Default
-  };
-
   // Map API rides data to RideRecord format
   const mapApiRides = useMemo(() => {
     if (!apiData?.rides || !Array.isArray(apiData.rides)) {
@@ -696,7 +696,7 @@ export const CarpoolDashboard = () => {
       rideDate: formatDate(ride.start_time),
       price: `₹${ride.price?.toFixed(0) || "0"}`,
     }));
-  }, [apiData, formatTime, formatDate, getCarImageByColor]);
+  }, [apiData]);
 
   // Map today's rides API data to RideRecord format
   const mapTodaysRides = useMemo(() => {
@@ -722,7 +722,7 @@ export const CarpoolDashboard = () => {
       rideDate: formatDate(ride.start_time),
       price: `₹${ride.price?.toFixed(0) || "0"}`,
     }));
-  }, [todaysRidesData, formatTime, formatDate, getCarImageByColor]);
+  }, [todaysRidesData]);
 
   // Map upcoming rides API data to RideRecord format
   const mapUpcomingRides = useMemo(() => {
@@ -748,7 +748,7 @@ export const CarpoolDashboard = () => {
       rideDate: formatDate(ride.start_time),
       price: `₹${ride.price?.toFixed(0) || "0"}`,
     }));
-  }, [upcomingRidesData, formatTime, formatDate, getCarImageByColor]);
+  }, [upcomingRidesData]);
 
   // Map active now rides API data to RideRecord format
   const mapActiveNowRides = useMemo(() => {
@@ -777,7 +777,7 @@ export const CarpoolDashboard = () => {
       rideDate: formatDate(ride.start_time),
       price: `₹${ride.price?.toFixed(0) || "0"}`,
     }));
-  }, [activeNowRidesData, formatTime, formatDate, getCarImageByColor]);
+  }, [activeNowRidesData]);
 
   useEffect(() => {
     // Update rides data based on active view
@@ -2159,49 +2159,6 @@ export const CarpoolDashboard = () => {
         </div>
       )}
 
-      {/* Pagination */}
-      {activeView !== "sos" && totalPages > 1 && (
-        <>
-          <div className="flex justify-center mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() =>
-                      handlePageChange(Math.max(1, currentPage - 1))
-                    }
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-                {renderPaginationItems()}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      handlePageChange(Math.min(totalPages, currentPage + 1))
-                    }
-                    className={
-                      currentPage === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-
-          {/* Pagination Info */}
-          <div className="text-center mt-2 text-sm text-gray-600">
-            Showing page {currentPage} of {totalPages} ({filteredRides.length}{" "}
-            total rides)
-          </div>
-        </>
-      )}
-
       {/* Total Users View */}
       {activeView === "users" && (
         <>
@@ -2374,6 +2331,47 @@ export const CarpoolDashboard = () => {
         </>
       )}
 
+      {/* Pagination - only for ride table views */}
+      {activeView !== "sos" && activeView !== "users" && activeView !== "kyc" && totalPages > 1 && (
+        <>
+          <div className="flex justify-center mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      handlePageChange(Math.max(1, currentPage - 1))
+                    }
+                    className={
+                      currentPage === 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+                {renderPaginationItems()}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      handlePageChange(Math.min(totalPages, currentPage + 1))
+                    }
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+
+          <div className="text-center mt-2 text-sm text-gray-600">
+            Showing page {currentPage} of {totalPages} ({filteredRides.length}{" "}
+            total rides)
+          </div>
+        </>
+      )}
 
     </div>
   );

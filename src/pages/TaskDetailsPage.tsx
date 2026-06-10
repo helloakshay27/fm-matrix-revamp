@@ -24,6 +24,8 @@ import {
   Trash2,
   Flag,
 } from "lucide-react";
+import { useLocation} from "react-router-dom";
+
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
@@ -46,6 +48,7 @@ import { taskService, TaskOccurrence } from "@/services/taskService";
 import { ticketManagementAPI } from "@/services/ticketManagementAPI";
 import { bulkTaskService, EscalateUser } from "@/services/bulkTaskService";
 import { JobSheetModal } from "@/components/JobSheetModal";
+import { getReturnToFromState } from "@/utils/listBackNavigation";
 
 // If User type is not imported, define minimally here:
 type User = {
@@ -56,7 +59,7 @@ type User = {
 export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const location = useLocation();
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -1249,15 +1252,19 @@ export const TaskDetailsPage = () => {
     );
   }
 
+   const handleBackToList = () => {
+    const returnTo = getReturnToFromState(location.state);
+    navigate(returnTo ?? "/maintenance/task");
+  };
   return (
     <>
       <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
         {/* Header */}
         <div className="mb-6">
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-1 hover:text-gray-800 mb-4"
-          >
+         <button
+          onClick={handleBackToList}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
             <ArrowLeft className="w-4 h-4" />
             Back to Task List
           </button>

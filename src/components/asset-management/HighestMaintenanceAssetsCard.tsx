@@ -14,8 +14,8 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
   const total_percent = Number(root?.total_maintenance_percent ?? 0);
 
   const headers = ['Rank', 'Asset Name / ID', 'Category', 'Site Name', 'Maintenance Cost ₹', 'Total %', 'Remark'];
-  const thCls = 'px-3 py-3 font-semibold text-xs whitespace-nowrap analytics-header';
-  const tdCls = 'px-3 py-2.5 text-sm text-center border-b border-gray-100';
+  const thCls = 'px-3 py-3 font-semibold text-xs whitespace-nowrap analytics-header text-center';
+  const tdCls = 'px-3 py-2.5 text-sm border-b border-gray-100';
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -63,11 +63,11 @@ const HighestMaintenanceAssetsCard: React.FC<Props> = ({ data, onDownload }) => 
                   </tr>
                 ))}
                 <tr style={{ backgroundColor: '#EFEFFB' }}>
-                  <td colSpan={4} className="px-3 py-2.5 text-right text-sm font-semibold text-gray-700">Total</td>
-                  <td className="px-3 py-2.5 text-center text-sm font-semibold" style={{ color: '#D97655' }}>
+                  <td colSpan={4} className="px-3 py-2.5 text-left text-sm font-semibold text-gray-700">Total</td>
+                  <td className="px-3 py-2.5 text-left text-sm font-semibold" style={{ color: '#D97655' }}>
                     ₹{total_cost.toLocaleString()}
                   </td>
-                  <td className="px-3 py-2.5 text-center text-sm font-semibold">{total_percent.toFixed(2)}%</td>
+                  <td className="px-3 py-2.5 text-left text-sm font-semibold">{total_percent.toFixed(2)}%</td>
                   <td />
                 </tr>
               </>

@@ -7,7 +7,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { getInvoinces } from '@/store/slices/invoicesSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const columns: ColumnConfig[] = [
@@ -183,6 +183,7 @@ const columns: ColumnConfig[] = [
 
 export const InvoicesDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
 
   const baseUrl = localStorage.getItem('baseUrl');
@@ -197,31 +198,41 @@ export const InvoicesDashboard = () => {
     invoiceDate: '',
     supplierName: '',
   });
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
+ const [pagination, setPagination] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      current_page: Number(params.get('page')) || 1,
+      total_count: 0,
+      total_pages: 0,
+    };
   });
   const [invoicesData, setInvoicesData] = useState([]);
 
   const fetchData = async (page: number = 1) => {
     try {
       const response = await dispatch(getInvoinces({ baseUrl, token, page })).unwrap();
-      setInvoicesData(response.work_order_invoices);
-      setPagination({
-        current_page: response.pagination.current_page,
+      // setInvoicesData(response.work_order_invoices);
+      // setPagination({
+      //   current_page: response.pagination.current_page,
+      //   total_count: response.pagination.total_count,
+      //   total_pages: response.pagination.total_pages
+      // })
+       setInvoicesData(response.work_order_invoices);
+      setPagination((prev) => ({
+        ...prev,
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages
-      })
+      }));
     } catch (error) {
       console.log(error)
       toast.error(error)
     }
   }
 
-  useEffect(() => {
-    fetchData();
-  }, [])
+useEffect(() => {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+    fetchData(pagination.current_page);
+  }, [pagination.current_page]);
 
   const handleFilterApply = (filters: typeof appliedFilters) => {
     setAppliedFilters(filters);
@@ -274,18 +285,11 @@ export const InvoicesDashboard = () => {
     }
   };
 
-  const handlePageChange = async (page: number) => {
+ const handlePageChange = (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
-
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData(page);
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
+    setPagination((prev) => ({ ...prev, current_page: page }));
   };
 
   const renderPaginationItems = () => {

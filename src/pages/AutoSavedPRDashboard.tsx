@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 
 interface PRData {
   id: string;
@@ -48,9 +48,17 @@ export const AutoSavedPRDashboard = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [savedPR, setSavedPR] = useState<PRData[]>([]);
+
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,6 +112,12 @@ export const AutoSavedPRDashboard = () => {
     );
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
+  };
+
+ 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-3">Temp Requests</h1>
@@ -124,6 +138,8 @@ export const AutoSavedPRDashboard = () => {
         hideColumnsButton={true}
         hideTableExport={true}
         hideTableSearch={true}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
       />
     </div>
   );

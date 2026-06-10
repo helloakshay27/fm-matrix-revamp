@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, forwardRef, useEffect, useMemo } from "react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
@@ -34,6 +33,11 @@ import {
   Play,
   Pause,
   Check,
+  Sparkles,
+  ChevronDown,
+  AlertTriangle,
+  Send,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -154,7 +158,13 @@ interface AccomplishmentItem {
 interface DailyReportDraft {
   reportId?: number | null;
   accomplishments?: AccomplishmentItem[];
-  planningItems?: { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null }[];
+  planningItems?: {
+    id: string;
+    text: string;
+    starred: boolean;
+    source_id?: number | null;
+    source_type?: string | null;
+  }[];
   selfRating?: number[];
   isAbsent?: boolean;
   absenceReason?: string;
@@ -167,6 +177,16 @@ interface ApplyDraftOptions {
   allowEmptyLists?: boolean;
 }
 
+const taskIssueGroupKeys = [
+  "overdue",
+  "in_progress",
+  "pending",
+  "on_hold",
+  "reopened",
+] as const;
+type TaskIssueGroupKey = (typeof taskIssueGroupKeys)[number];
+const taskIssueGroupKeySet = new Set<string>(taskIssueGroupKeys);
+
 const cleanReportText = (value: unknown) =>
   String(value ?? "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -176,7 +196,9 @@ const cleanReportText = (value: unknown) =>
     .trim();
 
 const getReportItemText = (item: any) =>
-  cleanReportText(typeof item === "string" ? item : item?.title ?? item?.text);
+  cleanReportText(
+    typeof item === "string" ? item : (item?.title ?? item?.text)
+  );
 
 const getReportDateKey = (date: unknown) => cleanReportText(date).slice(0, 10);
 
@@ -230,21 +252,23 @@ const isReportBackedDraft = (draft: DailyReportDraft | null) =>
     )
   ) ||
   Boolean(
-    draft?.planningItems?.some((item) =>
-      String(item.id).startsWith("fetched-")
-    )
+    draft?.planningItems?.some((item) => String(item.id).startsWith("fetched-"))
   );
 
 const hasMeaningfulDraftData = (draft: DailyReportDraft | null) => {
   if (!draft) return false;
-  const hasAccomplishments = getNonEmptyReportItems(draft.accomplishments).length > 0;
+  const hasAccomplishments =
+    getNonEmptyReportItems(draft.accomplishments).length > 0;
   const hasPlanning = getNonEmptyReportItems(draft.planningItems).length > 0;
   const hasKpis = Object.values(draft.kpiEntries ?? {}).some(
     (value) => cleanReportText(value) !== ""
   );
-  const hasSelectedTasks = Object.values(draft.selectedTasksIssues ?? {}).some(Boolean);
+  const hasSelectedTasks = Object.values(draft.selectedTasksIssues ?? {}).some(
+    Boolean
+  );
   const hasCustomRating =
-    Array.isArray(draft.selfRating) && draft.selfRating.some((value) => value !== 2);
+    Array.isArray(draft.selfRating) &&
+    draft.selfRating.some((value) => value !== 2);
 
   return (
     hasAccomplishments ||
@@ -256,6 +280,23 @@ const hasMeaningfulDraftData = (draft: DailyReportDraft | null) => {
     cleanReportText(draft.absenceReason) !== ""
   );
 };
+
+const AiSparkleIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path
+      d="M5.5 2.5L6.55 6.85L10.9 7.9L6.55 8.95L5.5 13.3L4.45 8.95L0.1 7.9L4.45 6.85L5.5 2.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M17.2 5.5L17.75 7.65L19.9 8.2L17.75 8.75L17.2 10.9L16.65 8.75L14.5 8.2L16.65 7.65L17.2 5.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M9.8 13.8L10.55 16.75L13.5 17.5L10.55 18.25L9.8 21.2L9.05 18.25L6.1 17.5L9.05 16.75L9.8 13.8Z"
+      fill="currentColor"
+    />
+  </svg>
+);
 
 const BusinessCompassDailyReport: React.FC = () => {
   const navigate = useNavigate();
@@ -279,7 +320,15 @@ const BusinessCompassDailyReport: React.FC = () => {
     []
   );
   const [planningItems, setPlanningItems] = useState<
-    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null; fromWeeklyPlan?: boolean; originalData?: any }[]
+    {
+      id: string;
+      text: string;
+      starred: boolean;
+      source_id?: number | null;
+      source_type?: string | null;
+      fromWeeklyPlan?: boolean;
+      originalData?: any;
+    }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
     {
@@ -306,6 +355,47 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [editIssueData, setEditIssueData] = useState<any>(null);
   const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
   const [editTodoData, setEditTodoData] = useState<any>(null);
+
+  const handleViewReportItem = (item: any) => {
+    const sourceType =
+      item.source_type ?? item.originalData?.source_type ?? item.type;
+    const sourceId = item.source_id ?? item.originalData?.id;
+    const originalData = item.originalData ?? item;
+
+    if (sourceType === "todo") {
+      setSelectedTodo(originalData);
+      setIsDetailsModalOpen(true);
+      return;
+    }
+
+    if (!sourceId || !sourceType) return;
+
+    if (sourceType === "task") {
+      navigate(`/vas/tasks/${sourceId}`);
+    } else if (sourceType === "issue") {
+      navigate(`/vas/issues/${sourceId}`);
+    }
+  };
+
+  const handleEditReportItem = (item: any) => {
+    const sourceType =
+      item.source_type ?? item.originalData?.source_type ?? item.type;
+    const originalData = item.originalData ?? item;
+
+    if (!sourceType) return;
+
+    if (sourceType === "task") {
+      setEditTaskData(originalData);
+      setIsEditTaskModalOpen(true);
+    } else if (sourceType === "issue") {
+      setEditIssueData(originalData);
+      setIsEditIssueModalOpen(true);
+    } else if (sourceType === "todo") {
+      setEditTodoData(originalData);
+      setIsEditTodoModalOpen(true);
+    }
+  };
+
   const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
     useState<null | HTMLElement>(null);
   const [planningMenuAnchor, setPlanningMenuAnchor] =
@@ -325,12 +415,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
   const [isPauseLoading, setIsPauseLoading] = useState(false);
-  const [pendingPlayTaskId, setPendingPlayTaskId] = useState<number | null>(null);
-  const [pendingPauseTaskId, setPendingPauseTaskId] = useState<number | null>(null);
+  const [pendingPlayTaskId, setPendingPlayTaskId] = useState<number | null>(
+    null
+  );
+  const [pendingPauseTaskId, setPendingPauseTaskId] = useState<number | null>(
+    null
+  );
   const [playingTaskIds, setPlayingTaskIds] = useState<Set<number>>(new Set());
   const [pendingReopenItem, setPendingReopenItem] = useState<any>(null);
   const [reopenReason, setReopenReason] = useState("");
   const [isReopenLoading, setIsReopenLoading] = useState(false);
+  const [isAiPopupOpen, setIsAiPopupOpen] = useState(false);
+  const [aiPopupTab, setAiPopupTab] = useState<"accomplishments" | "plan">(
+    "accomplishments"
+  );
+  const [aiPromptText, setAiPromptText] = useState("");
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -339,11 +438,17 @@ const BusinessCompassDailyReport: React.FC = () => {
     [key: string]: boolean;
   }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const calendarStripRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hiddenAutoIds, setHiddenAutoIds] = useState<Set<string>>(new Set());
   const [autoStarredIds, setAutoStarredIds] = useState<Set<string>>(new Set());
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [pendingConfirmAction, setPendingConfirmAction] = useState<{ fn: () => void; label: string } | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set()
+  );
+  const [pendingConfirmAction, setPendingConfirmAction] = useState<{
+    fn: () => void;
+    label: string;
+  } | null>(null);
 
   const [currentTasksPage, setCurrentTasksPage] = useState(1);
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
@@ -351,12 +456,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
   const [todosData, setTodosData] = useState<any>(null);
   const [todosLoading, setTodosLoading] = useState(false);
-  const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>([]);
-  const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
+  const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>(
+    []
+  );
+  const [tomorrowScheduledLoading, setTomorrowScheduledLoading] =
+    useState(false);
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
-  const [hiddenTomorrowScheduledIds, setHiddenTomorrowScheduledIds] = useState<Set<string>>(new Set());
-  const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
-  const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>({});
+  const [hiddenTomorrowScheduledIds, setHiddenTomorrowScheduledIds] = useState<
+    Set<string>
+  >(new Set());
+  const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>(
+    {}
+  );
 
   const user =
     typeof localStorage !== "undefined"
@@ -364,7 +478,10 @@ const BusinessCompassDailyReport: React.FC = () => {
       : {};
   const userId = user?.id;
 
-  const [rosterWorkingDays, setRosterWorkingDays] = useState<Record<string, string[]> | null>(null);
+  const [rosterWorkingDays, setRosterWorkingDays] = useState<Record<
+    string,
+    string[]
+  > | null>(null);
 
   useEffect(() => {
     const rosterId = user?.user_roster_id;
@@ -490,25 +607,27 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const headers = { Authorization: `Bearer ${token}` };
       const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
-        axios.get(`https://${baseUrl}/task_managements.json?${tasksParams}`, { headers }),
-        axios.get(`https://${baseUrl}/issues.json?${issuesParams}`, { headers }),
+        axios.get(`https://${baseUrl}/task_managements.json?${tasksParams}`, {
+          headers,
+        }),
+        axios.get(`https://${baseUrl}/issues.json?${issuesParams}`, {
+          headers,
+        }),
         axios.get(`https://${baseUrl}/todos.json?${todosParams}`, { headers }),
       ]);
 
       const tasks =
         tasksRes.status === "fulfilled"
-          ? (tasksRes.value.data?.task_managements ||
-            tasksRes.value.data?.data?.task_managements ||
-            [])
+          ? tasksRes.value.data?.task_managements ||
+          tasksRes.value.data?.data?.task_managements ||
+          []
           : [];
       const issues =
         issuesRes.status === "fulfilled"
-          ? (issuesRes.value.data?.issues || [])
+          ? issuesRes.value.data?.issues || []
           : [];
       const todos =
-        todosRes.status === "fulfilled"
-          ? (todosRes.value.data?.todos || [])
-          : [];
+        todosRes.status === "fulfilled" ? todosRes.value.data?.todos || [] : [];
 
       const isCompleted = (status: string) =>
         status === "completed" || status === "closed" || status === "done";
@@ -588,9 +707,12 @@ const BusinessCompassDailyReport: React.FC = () => {
     [draftStorageKey]
   );
 
-  const clearStoredDraft = React.useCallback((key = draftStorageKey) => {
-    localStorage.removeItem(key);
-  }, [draftStorageKey]);
+  const clearStoredDraft = React.useCallback(
+    (key = draftStorageKey) => {
+      localStorage.removeItem(key);
+    },
+    [draftStorageKey]
+  );
 
   const clearStoredDraftsForDate = React.useCallback(
     (date: string) => {
@@ -620,50 +742,51 @@ const BusinessCompassDailyReport: React.FC = () => {
     const reportId = Number(report?.id);
     const reportDate = getReportDateKey(report?.start_date);
     return (
-      (Number.isFinite(reportId) && deletedReportIdsRef.current.has(reportId)) ||
+      (Number.isFinite(reportId) &&
+        deletedReportIdsRef.current.has(reportId)) ||
       (!!reportDate && deletedReportDatesRef.current.has(reportDate))
     );
   }, []);
 
-  const applyStoredDraft = React.useCallback((
-    draft: DailyReportDraft | null,
-    options: ApplyDraftOptions = {}
-  ) => {
-    if (!draft) return;
-    if (!hasMeaningfulDraftData(draft)) return;
-    const allowEmptyLists = options.allowEmptyLists ?? false;
-    if (Array.isArray(draft.accomplishments)) {
-      const cleanAccomplishments = draft.accomplishments
-        .filter((a) => cleanReportText(a.text) !== "")
-        .map((a) => ({ ...a, text: cleanReportText(a.text) }));
-      if (cleanAccomplishments.length || allowEmptyLists) {
-        setAccomplishments(cleanAccomplishments);
+  const applyStoredDraft = React.useCallback(
+    (draft: DailyReportDraft | null, options: ApplyDraftOptions = {}) => {
+      if (!draft) return;
+      if (!hasMeaningfulDraftData(draft)) return;
+      const allowEmptyLists = options.allowEmptyLists ?? false;
+      if (Array.isArray(draft.accomplishments)) {
+        const cleanAccomplishments = draft.accomplishments
+          .filter((a) => cleanReportText(a.text) !== "")
+          .map((a) => ({ ...a, text: cleanReportText(a.text) }));
+        if (cleanAccomplishments.length || allowEmptyLists) {
+          setAccomplishments(cleanAccomplishments);
+        }
       }
-    }
-    if (Array.isArray(draft.planningItems)) {
-      const cleanPlanningItems = draft.planningItems
-        .filter((p) => cleanReportText(p.text) !== "")
-        .map((p) => ({ ...p, text: cleanReportText(p.text) }));
-      if (cleanPlanningItems.length || allowEmptyLists) {
-        setPlanningItems(cleanPlanningItems);
+      if (Array.isArray(draft.planningItems)) {
+        const cleanPlanningItems = draft.planningItems
+          .filter((p) => cleanReportText(p.text) !== "")
+          .map((p) => ({ ...p, text: cleanReportText(p.text) }));
+        if (cleanPlanningItems.length || allowEmptyLists) {
+          setPlanningItems(cleanPlanningItems);
+        }
       }
-    }
-    if (Array.isArray(draft.selfRating)) setSelfRating(draft.selfRating);
-    if (typeof draft.isAbsent === "boolean") setIsAbsent(draft.isAbsent);
-    if (typeof draft.absenceReason === "string")
-      setAbsenceReason(draft.absenceReason);
-    if (draft.kpiEntries && typeof draft.kpiEntries === "object")
-      setKpiEntries(draft.kpiEntries);
-    if (
-      draft.selectedTasksIssues &&
-      typeof draft.selectedTasksIssues === "object"
-    ) {
-      setSelectedTasksIssues(draft.selectedTasksIssues);
-    }
-    if (Array.isArray(draft.hiddenAutoIds)) {
-      setHiddenAutoIds(new Set(draft.hiddenAutoIds));
-    }
-  }, []);
+      if (Array.isArray(draft.selfRating)) setSelfRating(draft.selfRating);
+      if (typeof draft.isAbsent === "boolean") setIsAbsent(draft.isAbsent);
+      if (typeof draft.absenceReason === "string")
+        setAbsenceReason(draft.absenceReason);
+      if (draft.kpiEntries && typeof draft.kpiEntries === "object")
+        setKpiEntries(draft.kpiEntries);
+      if (
+        draft.selectedTasksIssues &&
+        typeof draft.selectedTasksIssues === "object"
+      ) {
+        setSelectedTasksIssues(draft.selectedTasksIssues);
+      }
+      if (Array.isArray(draft.hiddenAutoIds)) {
+        setHiddenAutoIds(new Set(draft.hiddenAutoIds));
+      }
+    },
+    []
+  );
 
   const applyDraftForMissingReport = React.useCallback(() => {
     const draft = getStoredDraft();
@@ -680,11 +803,15 @@ const BusinessCompassDailyReport: React.FC = () => {
   ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
 `.replace(/\s+/g, "");
 
-  const { data: tasksData, isLoading: tasksLoading, refetch: refetchTasks } = useTasks({
+  const {
+    data: tasksData,
+    isLoading: tasksLoading,
+    refetch: refetchTasks,
+  } = useTasks({
     taskType: "my",
     page: currentTasksPage,
     filters: {
-      "for_date": startDate,
+      for_date: startDate,
     },
   });
 
@@ -776,7 +903,11 @@ const BusinessCompassDailyReport: React.FC = () => {
         );
       });
 
-    const newData = sortItems([...dedupedTasks, ...transformedIssues, ...transformedTodos]);
+    const newData = sortItems([
+      ...dedupedTasks,
+      ...transformedIssues,
+      ...transformedTodos,
+    ]);
 
     if (currentTasksPage === 1 && currentIssuesPage === 1) {
       setMergedTasksIssues(newData);
@@ -818,7 +949,13 @@ const BusinessCompassDailyReport: React.FC = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
 
-      if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading && !todosLoading) {
+      if (
+        isNearBottom &&
+        !isLoadingMore &&
+        !tasksLoading &&
+        !issuesLoading &&
+        !todosLoading
+      ) {
         setIsLoadingMore(true);
         if (hasMoreTasks) setCurrentTasksPage((prev) => prev + 1);
         if (hasMoreIssues) setCurrentIssuesPage((prev) => prev + 1);
@@ -828,7 +965,14 @@ const BusinessCompassDailyReport: React.FC = () => {
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [isLoadingMore, tasksLoading, issuesLoading, todosLoading, hasMoreTasks, hasMoreIssues]);
+  }, [
+    isLoadingMore,
+    tasksLoading,
+    issuesLoading,
+    todosLoading,
+    hasMoreTasks,
+    hasMoreIssues,
+  ]);
 
   const taskIssueCounts = useMemo(() => {
     const completed = mergedTasksIssues.filter(
@@ -846,9 +990,15 @@ const BusinessCompassDailyReport: React.FC = () => {
     const inProgress = mergedTasksIssues.filter(
       (item) => item.status === "in_progress"
     ).length;
-    const tasks = mergedTasksIssues.filter((item) => item.type === "task").length;
-    const issues = mergedTasksIssues.filter((item) => item.type === "issue").length;
-    const todos = mergedTasksIssues.filter((item) => item.type === "todo").length;
+    const tasks = mergedTasksIssues.filter(
+      (item) => item.type === "task"
+    ).length;
+    const issues = mergedTasksIssues.filter(
+      (item) => item.type === "issue"
+    ).length;
+    const todos = mergedTasksIssues.filter(
+      (item) => item.type === "todo"
+    ).length;
 
     return {
       completed,
@@ -863,11 +1013,31 @@ const BusinessCompassDailyReport: React.FC = () => {
     };
   }, [mergedTasksIssues]);
 
+  const openOnlyTaskIssueGroup = (activeKey: TaskIssueGroupKey) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(
+        [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+      );
+      taskIssueGroupKeys.forEach((key) => {
+        if (key !== activeKey) next.add(key);
+      });
+      return next;
+    });
+  };
+
+  const openAllTaskIssueGroups = () => {
+    setCollapsedGroups((prev) => {
+      return new Set([...prev].filter((key) => !taskIssueGroupKeySet.has(key)));
+    });
+  };
+
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
     return mergedTasksIssues.filter(
       (item) =>
-        (item.status === "completed" || item.status === "closed" || item.status === "done") &&
+        (item.status === "completed" ||
+          item.status === "closed" ||
+          item.status === "done") &&
         !hiddenAutoIds.has(item.id) &&
         !!(item.title || "").trim()
     );
@@ -892,7 +1062,12 @@ const BusinessCompassDailyReport: React.FC = () => {
     const ids = new Set<string>();
     mergedTasksIssues.forEach((item) => {
       const text = cleanReportText(item.title || "").toLowerCase();
-      if (text && planningItems.some((p) => cleanReportText(p.text).toLowerCase() === text)) {
+      if (
+        text &&
+        planningItems.some(
+          (p) => cleanReportText(p.text).toLowerCase() === text
+        )
+      ) {
         ids.add(item.id);
       }
     });
@@ -943,7 +1118,15 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       nonEmptyPlanningItems
     );
-  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, autoStarredIds, mergedTasksIssues, planningItems]);
+  }, [
+    kpis,
+    kpiEntries,
+    visibleAccomplishments,
+    autoAddedAccomplishments,
+    autoStarredIds,
+    mergedTasksIssues,
+    planningItems,
+  ]);
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -1103,11 +1286,17 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const planningItemMatchesSourceItem = (
-    plan: { text: string; source_id?: number | null; source_type?: string | null },
+    plan: {
+      text: string;
+      source_id?: number | null;
+      source_type?: string | null;
+    },
     item: any
   ) => {
     const sourceId = item.originalData?.id ?? null;
-    const itemText = cleanReportText(item.title || item.text || "").toLowerCase();
+    const itemText = cleanReportText(
+      item.title || item.text || ""
+    ).toLowerCase();
     return (
       (plan.source_id != null &&
         sourceId != null &&
@@ -1128,7 +1317,14 @@ const BusinessCompassDailyReport: React.FC = () => {
       const sourceType = item.type ?? null;
       setPlanningItems((prev) => [
         ...prev,
-        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false, source_id: sourceId, source_type: sourceType, originalData: item.originalData ?? null },
+        {
+          id: `tomorrow-${item.id}-${Date.now()}`,
+          text,
+          starred: false,
+          source_id: sourceId,
+          source_type: sourceType,
+          originalData: item.originalData ?? null,
+        },
       ]);
       markDraftDirty();
     }
@@ -1248,7 +1444,10 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isTask = closureItem.type === "task";
       const isTodo = closureItem.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = closureItem.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+      const realId = closureItem.id
+        .replace("task-", "")
+        .replace("issue-", "")
+        .replace("todo-", "");
 
       setMergedTasksIssues((prev) =>
         prev.map((item) =>
@@ -1274,7 +1473,8 @@ const BusinessCompassDailyReport: React.FC = () => {
         );
       } else if (isTodo) {
         // Handle todo completion
-        await axios.put(`${urlBase}/todos/${realId}.json`,
+        await axios.put(
+          `${urlBase}/todos/${realId}.json`,
           { todo: { status: "completed" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -1295,7 +1495,11 @@ const BusinessCompassDailyReport: React.FC = () => {
             comment: {
               body: `Closure Remarks: ${closureRemarks}`,
               commentable_id: realId,
-              commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+              commentable_type: isTask
+                ? "TaskManagement"
+                : isTodo
+                  ? "Todo"
+                  : "Issue",
               commentor_id: userId,
               active: true,
             },
@@ -1332,16 +1536,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   const fmtHours = (h?: number) => {
     if (!h) return null;
     if (h < 1) return `${Math.round(h * 60)}m`;
-    const wh = Math.floor(h); const m = Math.round((h - wh) * 60);
+    const wh = Math.floor(h);
+    const m = Math.round((h - wh) * 60);
     return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
   };
   const getOverdueLabel = (targetDate?: string) => {
     if (!targetDate) return null;
-    const now = new Date(); const end = new Date(targetDate); end.setHours(23, 59, 59, 999);
+    const now = new Date();
+    const end = new Date(targetDate);
+    end.setHours(23, 59, 59, 999);
     const diff = end.getTime() - now.getTime();
     if (diff > 0) return null;
     const abs = Math.abs(diff);
-    const d = Math.floor(abs / 86400000); const h = Math.floor((abs % 86400000) / 3600000); const m = Math.floor((abs % 3600000) / 60000);
+    const d = Math.floor(abs / 86400000);
+    const h = Math.floor((abs % 86400000) / 3600000);
+    const m = Math.floor((abs % 3600000) / 60000);
     if (d > 0) return `${d}d ${h}h overdue`;
     if (h > 0) return `${h}h ${m}m overdue`;
     return `${m}m overdue`;
@@ -1363,8 +1572,12 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isTask = item.type === "task";
       const isTodo = item.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
-      const targetDate = item.originalData?.target_date || item.originalData?.due_date;
+      const realId = item.id
+        .replace("task-", "")
+        .replace("issue-", "")
+        .replace("todo-", "");
+      const targetDate =
+        item.originalData?.target_date || item.originalData?.due_date;
 
       // Check if item is overdue
       if (isDateOverdue(targetDate)) {
@@ -1375,9 +1588,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       // Item is not overdue, complete it directly
       setMergedTasksIssues((prev) =>
-        prev.map((i) =>
-          i.id === item.id ? { ...i, status: "completed" } : i
-        )
+        prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
 
@@ -1388,77 +1599,103 @@ const BusinessCompassDailyReport: React.FC = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else if (isTodo) {
-        await axios.put(`${urlBase}/todos/${realId}.json`,
+        await axios.put(
+          `${urlBase}/todos/${realId}.json`,
           { todo: { status: "completed" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.put(`${urlBase}/issues/${realId}.json`,
+        await axios.put(
+          `${urlBase}/issues/${realId}.json`,
           { issue: { status: "completed" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
 
-      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed successfully`);
+      toast.success(
+        `${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed successfully`
+      );
     } catch (error) {
       console.error("Error completing item:", error);
       toast.error(`Failed to complete ${item.type}`);
       // Revert the UI change
       setMergedTasksIssues((prev) =>
-        prev.map((i) =>
-          i.id === item.id ? { ...i, status: item.status } : i
-        )
+        prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i))
       );
     }
   };
 
   const handleRevertToOpen = async (item: any, reason: string) => {
-    const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+    const realId = item.id
+      .replace("task-", "")
+      .replace("issue-", "")
+      .replace("todo-", "");
     const urlBase = `https://${baseUrl}`;
     const isTask = item.type === "task";
     const isTodo = item.type === "todo";
     const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
 
     setMergedTasksIssues((prev) =>
-      prev.map((i) => i.id === item.id ? { ...i, status: "open" } : i)
+      prev.map((i) => (i.id === item.id ? { ...i, status: "open" } : i))
     );
     setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: false }));
 
     try {
       if (isTask) {
-        await axios.put(`${urlBase}/task_managements/${realId}.json`,
+        await axios.put(
+          `${urlBase}/task_managements/${realId}.json`,
           { task_management: { status: "open" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (reason.trim()) {
-          await axios.post(`${urlBase}/comments.json`,
-            { comment: { body: `Reopened: ${reason}`, commentable_id: Number(realId), commentable_type: "TaskManagement", commentor_id: userId } },
+          await axios.post(
+            `${urlBase}/comments.json`,
+            {
+              comment: {
+                body: `Reopened: ${reason}`,
+                commentable_id: Number(realId),
+                commentable_type: "TaskManagement",
+                commentor_id: userId,
+              },
+            },
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
       } else if (isTodo) {
-        await axios.put(`${urlBase}/todos/${realId}.json`,
+        await axios.put(
+          `${urlBase}/todos/${realId}.json`,
           { todo: { status: "open" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.put(`${urlBase}/issues/${realId}.json`,
+        await axios.put(
+          `${urlBase}/issues/${realId}.json`,
           { issue: { status: "open" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (reason.trim()) {
-          await axios.post(`${urlBase}/comments.json`,
-            { comment: { body: `Reopened: ${reason}`, commentable_id: Number(realId), commentable_type: "Issue", commentor_id: userId } },
+          await axios.post(
+            `${urlBase}/comments.json`,
+            {
+              comment: {
+                body: `Reopened: ${reason}`,
+                commentable_id: Number(realId),
+                commentable_type: "Issue",
+                commentor_id: userId,
+              },
+            },
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
       }
-      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} marked as open`);
+      toast.success(
+        `${item.type.charAt(0).toUpperCase() + item.type.slice(1)} marked as open`
+      );
     } catch (error) {
       console.error("Error reverting status:", error);
       toast.error(`Failed to revert ${item.type}`);
       setMergedTasksIssues((prev) =>
-        prev.map((i) => i.id === item.id ? { ...i, status: item.status } : i)
+        prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i))
       );
     }
   };
@@ -1469,20 +1706,21 @@ const BusinessCompassDailyReport: React.FC = () => {
 
     setIsOverdueLoading(true);
     try {
-      const item = mergedTasksIssues.find(i => i.id === overdueItemId);
+      const item = mergedTasksIssues.find((i) => i.id === overdueItemId);
       if (!item) return;
 
       const isTask = item.type === "task";
       const isTodo = item.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+      const realId = item.id
+        .replace("task-", "")
+        .replace("issue-", "")
+        .replace("todo-", "");
       const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
 
       // Complete the item
       setMergedTasksIssues((prev) =>
-        prev.map((i) =>
-          i.id === item.id ? { ...i, status: "completed" } : i
-        )
+        prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
 
@@ -1493,12 +1731,14 @@ const BusinessCompassDailyReport: React.FC = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else if (isTodo) {
-        await axios.put(`${urlBase}/todos/${realId}.json`,
+        await axios.put(
+          `${urlBase}/todos/${realId}.json`,
           { todo: { status: "completed" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.put(`${urlBase}/issues/${realId}.json`,
+        await axios.put(
+          `${urlBase}/issues/${realId}.json`,
           { issue: { status: "completed" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -1511,7 +1751,11 @@ const BusinessCompassDailyReport: React.FC = () => {
           comment: {
             body: `Overdue reason: ${reason}`,
             commentable_id: realId,
-            commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+            commentable_type: isTask
+              ? "TaskManagement"
+              : isTodo
+                ? "Todo"
+                : "Issue",
             commentor_id: userId,
             active: true,
           },
@@ -1519,7 +1763,9 @@ const BusinessCompassDailyReport: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed with overdue reason`);
+      toast.success(
+        `${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed with overdue reason`
+      );
       setIsOverdueModalOpen(false);
       setOverdueItemId(null);
       setOverdueReason("");
@@ -1545,7 +1791,11 @@ const BusinessCompassDailyReport: React.FC = () => {
       console.error("Failed to start task:", error);
       toast.error("Failed to start task");
     } finally {
-      setPlayingTaskIds((prev) => { const next = new Set(prev); next.delete(taskId); return next; });
+      setPlayingTaskIds((prev) => {
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
     }
   };
 
@@ -1577,7 +1827,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       refetchTasks();
     } catch (error) {
       console.error("Failed to pause task:", error);
-      toast.error(`Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`);
+      toast.error(
+        `Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`
+      );
     } finally {
       setIsPauseLoading(false);
     }
@@ -1590,6 +1842,22 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [reportsList, setReportsList] = useState<DailyReport[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("submit");
+  const [taskStatusFilter, setTaskStatusFilter] = useState<
+    "open" | "overdue" | "in_progress" | "on_hold"
+  >("open");
+  const tasksSectionRef = useRef<HTMLDivElement>(null);
+  const accomplishmentsSectionRef = useRef<HTMLDivElement>(null);
+  const planningSectionRef = useRef<HTMLDivElement>(null);
+  const calendarTodayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAiPopupOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsAiPopupOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isAiPopupOpen]);
 
   const resetReportFormState = React.useCallback(() => {
     canPersistDraftRef.current = false;
@@ -1612,16 +1880,118 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - 6);
+    const day = d.getDay();
+    d.setDate(d.getDate() - day);
     return d;
   });
+  const todayDateKey = useMemo(
+    () => new Date().toLocaleDateString("en-CA"),
+    []
+  );
+
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const hasDraggedRef = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    hasDraggedRef.current = false;
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = Math.abs(e.clientX - dragStartRef.current.x);
+    const diffY = Math.abs(e.clientY - dragStartRef.current.y);
+    if (diffX > 10 || diffY > 10) {
+      hasDraggedRef.current = true;
+    }
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = e.clientX - dragStartRef.current.x;
+    dragStartRef.current = null;
+    setIsDragging(false);
+    if (diffX > 50) {
+      handlePrevWeek();
+    } else if (diffX < -50) {
+      handleNextWeek();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    dragStartRef.current = null;
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    dragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    hasDraggedRef.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = Math.abs(e.touches[0].clientX - dragStartRef.current.x);
+    const diffY = Math.abs(e.touches[0].clientY - dragStartRef.current.y);
+    if (diffX > 10 || diffY > 10) {
+      hasDraggedRef.current = true;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!dragStartRef.current) return;
+    const diffX = e.changedTouches[0].clientX - dragStartRef.current.x;
+    dragStartRef.current = null;
+    if (diffX > 50) {
+      handlePrevWeek();
+    } else if (diffX < -50) {
+      handleNextWeek();
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaX) > 20) {
+      if (e.deltaX > 0) {
+        handleNextWeek();
+      } else {
+        handlePrevWeek();
+      }
+    }
+  };
+
+  const handlePrevWeek = () => {
+    const newDate = new Date(viewStartDate);
+    newDate.setDate(newDate.getDate() - 7);
+    setViewStartDate(newDate);
+    const midWeek = new Date(newDate);
+    midWeek.setDate(midWeek.getDate() + 3);
+    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
+    setSelectedYear(midWeek.getFullYear().toString());
+  };
+
+  const handleNextWeek = () => {
+    const newDate = new Date(viewStartDate);
+    newDate.setDate(newDate.getDate() + 7);
+    const maxStartDate = new Date();
+    maxStartDate.setHours(0, 0, 0, 0);
+    const day = maxStartDate.getDay();
+    maxStartDate.setDate(maxStartDate.getDate() - day);
+    const nextStartDate =
+      newDate.getTime() > maxStartDate.getTime() ? maxStartDate : newDate;
+    setViewStartDate(nextStartDate);
+    const midWeek = new Date(nextStartDate);
+    midWeek.setDate(midWeek.getDate() + 3);
+    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
+    setSelectedYear(midWeek.getFullYear().toString());
+  };
 
   const days = React.useMemo(() => {
     const result = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const date = new Date(viewStartDate);
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 7; i++) {
       const dateStr = date.toLocaleDateString("en-CA");
       const isToday = date.getTime() === today.getTime();
       const isPast = date.getTime() < today.getTime();
@@ -1662,36 +2032,33 @@ const BusinessCompassDailyReport: React.FC = () => {
         type,
         actualDate: new Date(date),
         isFuture,
+        isToday,
       });
       date.setDate(date.getDate() + 1);
     }
     return result;
   }, [viewStartDate, reportsList, isLocallyDeletedReport, rosterWorkingDays]);
-
-  const handlePrevWeek = () => {
-    const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() - 7);
-    setViewStartDate(newDate);
-    const midWeek = new Date(newDate);
-    midWeek.setDate(midWeek.getDate() + 3);
-    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
-    setSelectedYear(midWeek.getFullYear().toString());
-  };
-
-  const handleNextWeek = () => {
-    const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() + 7);
-    const maxStartDate = new Date();
-    maxStartDate.setHours(0, 0, 0, 0);
-    maxStartDate.setDate(maxStartDate.getDate() - 6);
-    const nextStartDate =
-      newDate.getTime() > maxStartDate.getTime() ? maxStartDate : newDate;
-    setViewStartDate(nextStartDate);
-    const midWeek = new Date(nextStartDate);
-    midWeek.setDate(midWeek.getDate() + 3);
-    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
-    setSelectedYear(midWeek.getFullYear().toString());
-  };
+  // Scroll calendar to show today
+  useEffect(() => {
+    if (!calendarStripRef.current) return;
+    const timer = setTimeout(() => {
+      const track = calendarStripRef.current;
+      if (!track) return;
+      // Find today's day element and scroll to it
+      const todayElement = track.querySelector('[data-is-today="true"]');
+      if (todayElement) {
+        const trackRect = track.getBoundingClientRect();
+        const elementRect = todayElement.getBoundingClientRect();
+        const scrollAmount =
+          elementRect.left -
+          trackRect.left +
+          track.scrollLeft -
+          (trackRect.width - elementRect.width - 40);
+        track.scrollLeft = Math.max(0, scrollAmount);
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [days]);
 
   const handleSelectDate = (item: any) => {
     setSelectedDate(item.date);
@@ -1729,14 +2096,13 @@ const BusinessCompassDailyReport: React.FC = () => {
       prevReport?.report_data?.tomorrow_plan
     );
     if (previousPlanItems.length) {
-      carriedPlanItems = previousPlanItems
-        .map((p: any, idx: number) => ({
-          id: `carried-${idx}-${Date.now()}`,
-          text: getReportItemText(p),
-          completed: false,
-          starred: false,
-          fromYesterday: true,
-        }));
+      carriedPlanItems = previousPlanItems.map((p: any, idx: number) => ({
+        id: `carried-${idx}-${Date.now()}`,
+        text: getReportItemText(p),
+        completed: false,
+        starred: false,
+        fromYesterday: true,
+      }));
     }
 
     if (report && report.id) {
@@ -1746,14 +2112,13 @@ const BusinessCompassDailyReport: React.FC = () => {
       if (report.report_data?.accomplishments?.items) {
         currentAccomplishments = getNonEmptyReportItems(
           report.report_data.accomplishments.items
-        )
-          .map((ach: any, idx: number) => ({
-            id: `fetched-ach-${idx}`,
-            text: getReportItemText(ach),
-            completed: true,
-            starred: false,
-            fromYesterday: false,
-          }));
+        ).map((ach: any, idx: number) => ({
+          id: `fetched-ach-${idx}`,
+          text: getReportItemText(ach),
+          completed: true,
+          starred: false,
+          fromYesterday: false,
+        }));
       }
 
       // Merge existing accomplishments with carried items to prevent overwriting
@@ -1774,13 +2139,16 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       if (report.report_data?.tomorrow_plan) {
         setPlanningItems(
-          getNonEmptyReportItems(report.report_data.tomorrow_plan)
-            .map((p: any, idx: number) => ({
+          getNonEmptyReportItems(report.report_data.tomorrow_plan).map(
+            (p: any, idx: number) => ({
               id: `fetched-plan-${idx}`,
               text: getReportItemText(p),
               starred: p.is_starred ?? false,
-              ...(p.source_id != null ? { source_id: p.source_id, source_type: p.source_type } : {}),
-            }))
+              ...(p.source_id != null
+                ? { source_id: p.source_id, source_type: p.source_type }
+                : {}),
+            })
+          )
         );
       } else {
         setPlanningItems([]);
@@ -1818,15 +2186,9 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const nextDayLabel = React.useMemo(() => {
     try {
-      const dateObj = new Date(
-        `${selectedDate} ${selectedMonth} ${selectedYear}`
-      );
-      if (isNaN(dateObj.getTime())) return "";
-      const nextDay = new Date(dateObj);
-      nextDay.setDate(nextDay.getDate() + 1);
-      while (isRosterHoliday(nextDay)) {
-        nextDay.setDate(nextDay.getDate() + 1);
-      }
+      const nextWorkingDate = getNextWorkingDay(startDate);
+      const nextDay = new Date(`${nextWorkingDate}T00:00:00`);
+      if (isNaN(nextDay.getTime())) return "";
       return nextDay.toLocaleDateString("en-GB", {
         weekday: "short",
         day: "numeric",
@@ -1835,7 +2197,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     } catch (e) {
       return "";
     }
-  }, [selectedDate, selectedMonth, selectedYear, rosterWorkingDays]);
+  }, [startDate, rosterWorkingDays]);
 
   // Get next working day's date in YYYY-MM-DD format for APIs
   const getNextDayDate = () => {
@@ -1943,8 +2305,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             : prevData.user_journals || [];
           const prevReport = prevJournals.find(
             (j: any) =>
-              getReportDateKey(j.start_date) === getReportDateKey(prevDateStr) &&
-              !isLocallyDeletedReport(j)
+              getReportDateKey(j.start_date) ===
+              getReportDateKey(prevDateStr) && !isLocallyDeletedReport(j)
           );
 
           const previousPlanItems = getNonEmptyReportItems(
@@ -1978,15 +2340,17 @@ const BusinessCompassDailyReport: React.FC = () => {
           const journals = Array.isArray(data)
             ? data
             : data.user_journals || [];
-          const existingReport = journals.map(normalizeReportForUi).find(
-            (j: {
-              id: number;
-              start_date: string;
-              report_data?: Record<string, unknown>;
-            }) =>
-              getReportDateKey(j.start_date) === getReportDateKey(startDate) &&
-              !isLocallyDeletedReport(j)
-          );
+          const existingReport = journals
+            .map(normalizeReportForUi)
+            .find(
+              (j: {
+                id: number;
+                start_date: string;
+                report_data?: Record<string, unknown>;
+              }) =>
+                getReportDateKey(j.start_date) ===
+                getReportDateKey(startDate) && !isLocallyDeletedReport(j)
+            );
 
           if (existingReport?.id) {
             setCurrentReportId(existingReport.id);
@@ -1997,14 +2361,13 @@ const BusinessCompassDailyReport: React.FC = () => {
               if (rData.accomplishments?.items) {
                 currentAccomplishments = getNonEmptyReportItems(
                   rData.accomplishments.items
-                )
-                  .map((ach: any, idx: number) => ({
-                    id: `fetched-ach-${idx}`,
-                    text: getReportItemText(ach),
-                    completed: true,
-                    starred: false,
-                    fromYesterday: false,
-                  }));
+                ).map((ach: any, idx: number) => ({
+                  id: `fetched-ach-${idx}`,
+                  text: getReportItemText(ach),
+                  completed: true,
+                  starred: false,
+                  fromYesterday: false,
+                }));
               }
 
               // Merge logic
@@ -2024,13 +2387,16 @@ const BusinessCompassDailyReport: React.FC = () => {
               }
               if (rData.tomorrow_plan) {
                 setPlanningItems(
-                  getNonEmptyReportItems(rData.tomorrow_plan)
-                    .map((p: any, idx: number) => ({
+                  getNonEmptyReportItems(rData.tomorrow_plan).map(
+                    (p: any, idx: number) => ({
                       id: `fetched-plan-${idx}`,
                       text: getReportItemText(p),
                       starred: p.is_starred ?? false,
-                      ...(p.source_id != null ? { source_id: p.source_id, source_type: p.source_type } : {}),
-                    }))
+                      ...(p.source_id != null
+                        ? { source_id: p.source_id, source_type: p.source_type }
+                        : {}),
+                    })
+                  )
                 );
               }
               if (rData.past_kpis) {
@@ -2198,10 +2564,15 @@ const BusinessCompassDailyReport: React.FC = () => {
     const seen = new Set<string>();
     const toFetch: { type: string; id: number }[] = [];
     for (const report of reportsList) {
-      for (const item of getNonEmptyReportItems(report.report_data?.tomorrow_plan) as any[]) {
+      for (const item of getNonEmptyReportItems(
+        report.report_data?.tomorrow_plan
+      ) as any[]) {
         if (item?.source_id && item?.source_type) {
           const key = `${item.source_type}:${item.source_id}`;
-          if (!seen.has(key) && !planSourceCache[key]) { seen.add(key); toFetch.push({ type: item.source_type, id: item.source_id }); }
+          if (!seen.has(key) && !planSourceCache[key]) {
+            seen.add(key);
+            toFetch.push({ type: item.source_type, id: item.source_id });
+          }
         }
       }
     }
@@ -2216,8 +2587,14 @@ const BusinessCompassDailyReport: React.FC = () => {
     for (const item of planningItems) {
       if (item.source_id && item.source_type) {
         const key = `${item.source_type}:${item.source_id}`;
-        const alreadyLive = mergedTasksIssues.some((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id);
-        if (!seen.has(key) && !planSourceCache[key] && !alreadyLive) { seen.add(key); toFetch.push({ type: item.source_type, id: item.source_id }); }
+        const alreadyLive = mergedTasksIssues.some(
+          (t: any) =>
+            t.type === item.source_type && t.originalData?.id === item.source_id
+        );
+        if (!seen.has(key) && !planSourceCache[key] && !alreadyLive) {
+          seen.add(key);
+          toFetch.push({ type: item.source_type, id: item.source_id });
+        }
       }
     }
     fetchAndCachePlanSources(toFetch);
@@ -2237,13 +2614,18 @@ const BusinessCompassDailyReport: React.FC = () => {
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
         star: autoStarredIds.has(String(item.id)),
+        source_id: item.originalData?.id,
+        source_type: item.type,
+        originalData: item.originalData,
       })),
     ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
       .map((p) => ({
         title: cleanReportText(p.text),
         is_starred: p.starred,
-        ...(p.source_id != null ? { source_id: p.source_id, source_type: p.source_type } : {}),
+        ...(p.source_id != null
+          ? { source_id: p.source_id, source_type: p.source_type, originalData: p.originalData }
+          : {}),
       }))
       .filter((p) => p.title !== "");
     const uncheckedAccomplishmentPlan = visibleAccomplishments
@@ -2288,6 +2670,16 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       finalPlanningItemsForScore
     );
+    const scoreForPayload = isAbsent
+      ? {
+        totalScore: finalDailyScore.timingScore,
+        kpiScore: 0,
+        accomplishmentsScore: 0,
+        tasksIssuesScore: 0,
+        planningScore: 0,
+        timingScore: finalDailyScore.timingScore,
+      }
+      : finalDailyScore;
 
     if (!isAbsent && accomplishmentItemsPayload.length === 0) {
       setSubmitError(
@@ -2318,6 +2710,9 @@ const BusinessCompassDailyReport: React.FC = () => {
           is_absent: isAbsent,
           description: isAbsent ? absenceReason : null,
           report_data: {
+            ...(isAbsent && absenceReason.trim()
+              ? { absent_reason: absenceReason.trim() }
+              : {}),
             accomplishments: {
               // Ensure we only save items that were actually completed!
               items: accomplishmentItemsPayload,
@@ -2328,14 +2723,22 @@ const BusinessCompassDailyReport: React.FC = () => {
               })),
             },
             tasks_issues: mergedTasksIssues
-              .filter((item) => selectedTasksIssues[item.id] === true || item.status === 'overdue' || item.status === 'in_progress')
+              .filter(
+                (item) =>
+                  selectedTasksIssues[item.id] === true ||
+                  item.status === "overdue" ||
+                  item.status === "in_progress"
+              )
               .map((item) => ({
                 title:
                   item.originalData?.title ||
                   item.originalData?.name ||
                   item.title ||
                   "",
-                status: selectedTasksIssues[item.id] === true ? "completed" : item.status,
+                status:
+                  selectedTasksIssues[item.id] === true
+                    ? "completed"
+                    : item.status,
                 type: item.type,
               })),
             tomorrow_plan_date: getNextWorkingDay(startDate),
@@ -2350,13 +2753,13 @@ const BusinessCompassDailyReport: React.FC = () => {
             })),
             // Score snapshot — same pattern as WeeklyReports
             score_override: true,
-            total_score: Math.round(finalDailyScore.totalScore),
+            total_score: Math.round(scoreForPayload.totalScore),
             sections: {
-              kpi_achievement: finalDailyScore.kpiScore,
-              accomplishments: finalDailyScore.accomplishmentsScore,
-              tasks_issues_todos: finalDailyScore.tasksIssuesScore,
-              planning: finalDailyScore.planningScore,
-              timing: finalDailyScore.timingScore,
+              kpi_achievement: scoreForPayload.kpiScore,
+              accomplishments: scoreForPayload.accomplishmentsScore,
+              tasks_issues_todos: scoreForPayload.tasksIssuesScore,
+              planning: scoreForPayload.planningScore,
+              timing: scoreForPayload.timingScore,
             },
           },
         },
@@ -2414,10 +2817,162 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const badgePoints =
-    "border-0 bg-[#DA7756] px-3 py-1 text-xs text-white hover:bg-[#DA7756]";
+    "bc-points-badge border-0 shadow-none !bg-[#CECBF6] !text-[#5c5a8a] hover:!bg-[#c4c1f0]";
+
+  const formattedSelectedDate = useMemo(() => {
+    const d = new Date(`${startDate}T00:00:00`);
+    if (isNaN(d.getTime()))
+      return `${selectedDate} ${selectedMonth}, ${selectedYear}`;
+    return d.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }, [startDate, selectedDate, selectedMonth, selectedYear]);
+
+  const livePreviewMetrics = useMemo(() => {
+    const accPct = Math.round(
+      dailyScore.details.accomplishments.completionPercentage || 0
+    );
+    const timingTotal = 4;
+    const timingSet = mergedTasksIssues.filter((item) => {
+      const allocations =
+        item.originalData?.task_allocation_times ||
+        item.originalData?.issue_allocation_times ||
+        [];
+      return allocations.some(
+        (t: { date?: string; hours?: number; minutes?: number }) =>
+          t.date === startDate && ((t.hours ?? 0) > 0 || (t.minutes ?? 0) > 0)
+      );
+    }).length;
+    return {
+      accPct,
+      timing: `${Math.min(timingSet, timingTotal)}/${timingTotal}`,
+    };
+  }, [dailyScore, mergedTasksIssues, startDate]);
+
+  const aiInsights = useMemo(() => {
+    const insights: Array<{
+      id: string;
+      title: string;
+      description: string;
+      action: string;
+      color: string;
+      icon: React.ReactNode;
+      onAction: () => void;
+    }> = [];
+
+    if (taskIssueCounts.overdue > 0) {
+      insights.push({
+        id: "overdue",
+        title: `${taskIssueCounts.overdue} Overdue Task${taskIssueCounts.overdue > 1 ? "s" : ""}`,
+        description:
+          "Overdue items from yesterday need attention. Review and complete or reschedule them.",
+        action: "View Tasks",
+        color: "#dc2626",
+        icon: <Clock size={16} className="text-red-500" />,
+        onAction: () => {
+          setTaskStatusFilter("overdue");
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      });
+    }
+
+    const accRate = livePreviewMetrics.accPct;
+    if (accRate < 80) {
+      const needed = Math.max(0, Math.ceil((80 - accRate) / 20));
+      insights.push({
+        id: "accomplishments",
+        title: "Boost Accomplishments",
+        description: `Your rate is ${accRate}% today — completing ${needed || 1} more item${needed !== 1 ? "s" : ""} will improve your score.`,
+        action: "Add Tasks",
+        color: "#16a34a",
+        icon: <TrendingUp size={16} className="text-green-600" />,
+        onAction: () => {
+          accomplishmentsSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+          });
+          addAccomplishment();
+        },
+      });
+    }
+
+    const planCount = planningItems.filter(
+      (p) => cleanReportText(p.text) !== ""
+    ).length;
+    if (planCount < 6) {
+      insights.push({
+        id: "planning",
+        title: "Fill Your Daily Plan",
+        description: `${planCount}/6 planning items completed. Set strategic priorities for ${nextDayLabel || "tomorrow"}.`,
+        action: "Open Plan",
+        color: "#ea580c",
+        icon: <CalendarCheck size={16} className="text-orange-500" />,
+        onAction: () => {
+          planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      });
+    }
+
+    const timingSet = parseInt(livePreviewMetrics.timing.split("/")[0], 10);
+    if (timingSet < 4) {
+      insights.push({
+        id: "timing",
+        title: "Assign Task Timings",
+        description: `${livePreviewMetrics.timing} timing slots set. Adding time estimates helps track your day.`,
+        action: "Set Timing",
+        color: "#7c3aed",
+        icon: <Target size={16} className="text-purple-600" />,
+        onAction: () => {
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      });
+    }
+
+    return insights;
+  }, [
+    taskIssueCounts.overdue,
+    livePreviewMetrics,
+    planningItems,
+    nextDayLabel,
+    addAccomplishment,
+  ]);
+
+  const filteredTasksForTable = useMemo(() => {
+    const statusMap = {
+      open: ["open", "pending", "reopen", "reopened"],
+      overdue: ["overdue", "overdued"],
+      in_progress: ["in_progress", "started"],
+      on_hold: ["on_hold"],
+    };
+    return mergedTasksIssues.filter((item) =>
+      statusMap[taskStatusFilter].includes(item.status)
+    );
+  }, [mergedTasksIssues, taskStatusFilter]);
+
+  const getTaskTypeIcon = (type: string) => {
+    if (type === "issue")
+      return <AlertTriangle size={14} className="text-[#e7848e] shrink-0" />;
+    if (type === "todo")
+      return <FileText size={14} className="text-[#6B9BCC] shrink-0" />;
+    return <LayoutGrid size={14} className="text-[#DA7756] shrink-0" />;
+  };
+
+  const getPriorityClass = (priority?: string) => {
+    if (priority === "High") return "bc-priority-high";
+    if (priority === "Medium") return "bc-priority-medium";
+    return "bc-priority-low";
+  };
+
+  const submitDateLabel = useMemo(() => {
+    const d = new Date(`${startDate}T00:00:00`);
+    if (isNaN(d.getTime()))
+      return `${selectedDate} ${selectedMonth.slice(0, 3)}`;
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }, [startDate, selectedDate, selectedMonth]);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins pb-20 text-[#1a1a1a]">
+    <div className="bc-daily-page space-y-6">
       {/* Interactive Info Banner Card */}
       {/* {isBannerVisible && (
         <Card
@@ -2528,902 +3083,2040 @@ const BusinessCompassDailyReport: React.FC = () => {
       )} */}
 
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-[#1a1a1a] tracking-tight">
-            Daily Report
-          </h1>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
+            <h1 className="bc-daily-header-title">Daily Report</h1>
+            <p className="bc-daily-header-subtitle">
+              Track your daily performance, tasks and accomplishments
+            </p>
+          </div>
+          <button
+            type="button"
+            className="bc-daily-review-btn shrink-0"
+            onClick={() => {
+              setActiveTab(activeTab === "history" ? "submit" : "history");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            {activeTab === "history" ? "Back to Report" : "Review History"}
+          </button>
         </div>
 
+
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-[#DA7756] p-1.5 rounded-[12px] h-auto inline-flex shadow-inner mb-6">
-            <TabsTrigger
-              value="submit"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-md bg-transparent text-white transition-all font-bold text-sm"
-            >
-              Submit Report
-            </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-md bg-transparent text-white transition-all font-bold text-sm"
-            >
-              Report History
-            </TabsTrigger>
+          <TabsList className="hidden">
+            <TabsTrigger value="submit">Submit</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="submit" className="space-y-6 mt-0">
-            {/* Calendar Card */}
-            <Card className="rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm overflow-hidden">
-              <CardContent className="p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-50 p-2 rounded-lg">
-                      <CalendarIcon size={20} className="text-blue-600" />
+            <div className="bc-daily-grid">
+              <div className="space-y-6">
+                {/* Calendar Card */}
+                <div className="bc-daily-card">
+                  <div className="bc-daily-card-header">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-bold text-[#1a1a1a]">
+                        Daily Report for {formattedSelectedDate}
+                      </span>
                     </div>
-                    <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
-                      Daily Report for {selectedDate}{" "}
-                      {selectedMonth.slice(0, 3)}, {selectedYear}
-                    </span>
+                    <button
+                      type="button"
+                      className="bc-absent-btn"
+                      onClick={() => {
+                        markDraftDirty();
+                        setIsAbsent(!isAbsent);
+                      }}
+                    >
+                      <Checkbox
+                        checked={isAbsent}
+                        className="h-4 w-4 rounded border-[#DA7756]/50 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                        onCheckedChange={() => { }}
+                      />
+                      Mark as Absent
+                    </button>
+                  </div>
+                  <div className="bc-daily-card-body">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+                      <button
+                        onClick={handlePrevWeek}
+                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 flex-shrink-0 transition-colors"
+                      >
+                        <ChevronLeft size={13} />
+                      </button>
+                      <div
+                        className="flex-1 flex gap-2 sm:gap-3"
+                        style={{
+                          cursor: isDragging ? "grabbing" : "grab",
+                          userSelect: "none",
+                        }}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseLeave}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onWheel={handleWheel}
+                      >
+                        {days.map((item, index) => {
+                          let cardBg = "#F5F5F5";
+                          let borderColor = "transparent";
+                          let topBarColor = "transparent";
+
+                          if (item.type === "filled") {
+                            topBarColor = "#61CDBB";
+                          } else if (item.type === "missed" && !item.isToday) {
+                            topBarColor = "#E28B8B";
+                          } else if (item.type === "holiday") {
+                            topBarColor = "#D1D5DB";
+                          }
+
+                          const isSelected = startDate === item.fullDate;
+                          const nextWorkDay = getNextWorkingDay(startDate);
+                          const hasScheduledForDay =
+                            item.fullDate === nextWorkDay &&
+                            tomorrowScheduledItems.length > 0;
+                          const showUpcomingDot =
+                            item.isFuture &&
+                            item.type !== "holiday" &&
+                            (hasScheduledForDay || item.type === "upcoming");
+
+                          if (isSelected) {
+                            cardBg = "#FFFFFF";
+                            borderColor = "#DA7756";
+                          }
+
+                          return (
+                            <div
+                              key={index}
+                              onClick={() =>
+                                !hasDraggedRef.current &&
+                                !item.isFuture &&
+                                item.type !== "holiday" &&
+                                handleSelectDate(item)
+                              }
+                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-lg relative"
+                              style={{
+                                background: cardBg,
+                                border: isSelected
+                                  ? `1.5px solid ${borderColor}`
+                                  : "1.5px solid transparent",
+                                padding: "6px 2px",
+                                minHeight: "60px",
+                                opacity:
+                                  item.isFuture && item.type !== "holiday"
+                                    ? 0.6
+                                    : 1,
+                                cursor:
+                                  item.isFuture || item.type === "holiday"
+                                    ? "default"
+                                    : "pointer",
+                              }}
+                            >
+                              {topBarColor !== "transparent" && (
+                                <div
+                                  className="absolute top-0 left-0 right-0 h-2 rounded-t-lg"
+                                  style={{ backgroundColor: topBarColor }}
+                                />
+                              )}
+                              {showUpcomingDot && (
+                                <div
+                                  className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border border-white"
+                                  style={{
+                                    backgroundColor: "#E28B8B",
+                                    transform: "translate(30%, -30%)",
+                                  }}
+                                />
+                              )}
+                              <span className="text-[10px] sm:text-[11px] font-medium text-gray-700 mt-1">
+                                {item.day}
+                              </span>
+                              <span className="text-[14px] sm:text-[16px] font-bold text-gray-900 leading-tight">
+                                {item.date}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button
+                        onClick={handleNextWeek}
+                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 flex-shrink-0 transition-colors"
+                      >
+                        <ChevronRight size={13} />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-center gap-4 mt-6 mb-2 flex-wrap">
+                      {[
+                        { color: "#61CDBB", label: "Filled" },
+                        { color: "#E28B8B", label: "Missed" },
+                        { color: "#D1D5DB", label: "Holiday" },
+                        /* {
+                          color: "#E28B8B",
+                          label: "Upcoming tasks",
+                          isDot: true,
+                        }, */
+                      ].map(({ color, label, isDot }) => (
+                        <div key={label} className="flex items-center gap-1.5">
+                          {isDot ? (
+                            <div
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: color }}
+                            />
+                          ) : (
+                            <div
+                              className="w-4 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: color }}
+                            />
+                          )}
+                          <span className="text-[11px] text-gray-500 font-medium">
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-5 mt-4 border-t border-gray-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-bold text-[#1a1a1a]">
+                          Self Rating (1-10)
+                        </Label>
+                        <span className="text-sm font-bold text-[#DA7756]">
+                          {selfRating[0]}/10
+                        </span>
+                      </div>
+                      <Slider
+                        value={selfRating}
+                        onValueChange={(value) => {
+                          markDraftDirty();
+                          setSelfRating(value);
+                        }}
+                        max={10}
+                        step={1}
+                        className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-                  {days.map((item, index) => (
-                    <div
-                      key={index}
-                      className={cn(
-                        "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-pointer border-2 transition-all shrink-0 snap-center shadow-sm relative group",
-                        item.isFuture &&
-                        "opacity-40 grayscale cursor-not-allowed pointer-events-none",
-                        item.type === "missed" &&
-                        "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
-                        item.type === "holiday" &&
-                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 cursor-not-allowed pointer-events-none opacity-70",
-                        item.type === "upcoming" &&
-                        "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
-                        item.type === "filled" &&
-                        "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
-                        selectedDate === item.date && !item.isFuture
-                          ? "ring-4 ring-blue-500/20 scale-105 z-10 text-white"
-                          : "border-transparent"
-                      )}
-                      onClick={() => !item.isFuture && item.type !== "holiday" && handleSelectDate(item)}
-                    >
-                      <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
-                        {item.day}
-                      </span>
-                      <span className="text-3xl font-black tracking-tighter">
-                        {item.date}
-                      </span>
-                      {item.status && (
-                        <Badge
-                          className={cn(
-                            "text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter",
-                            item.type === "missed" || item.type === "filled"
-                              ? "bg-white/20 text-white"
-                              : "bg-black/10 text-[#854d0e]",
-                            selectedDate === item.date &&
-                            "bg-white/20 text-white"
-                          )}
-                        >
-                          {item.status}
-                        </Badge>
-                      )}
-                      {selectedDate === item.date && (
-                        <div className="absolute -top-1 -right-1 h-3 w-3 bg-white rounded-full border-2 border-blue-500 shadow-sm" />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {!isAbsent && (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                    {/* Daily KPIs Card */}
+                    {kpis.length > 0 && (
+                      <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
+                        <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
+                          <div className="flex items-center gap-3">
+                            {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
+                            <TrendingUp className="h-5 w-5 text-[#DA7756]" />
+                            {/* </div> */}
+                            <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                              Daily KPIs
+                            </h3>
+                          </div>
+                          {/* Total KPI score badge */}
+                          <Badge variant="outline" className={badgePoints}>
+                            {dailyScore.kpiScore}/20 pts
+                          </Badge>
+                        </div>
+                        <CardContent className="p-6 space-y-4">
+                          {kpis.map((kpi) => {
+                            const target = parseFloat(kpi.target_value) || 0;
+                            const actual =
+                              parseFloat(kpiEntries[kpi.kpi_id] || "0") || 0;
+                            const hasEntry =
+                              !!kpiEntries[kpi.kpi_id] &&
+                              kpiEntries[kpi.kpi_id] !== "";
 
-                {/* Legend */}
-                <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
-                  {[
-                    { color: "bg-[#22c55e]", label: "Filled" },
-                    { color: "bg-[#ef4444]", label: "Missed (click to fill)" },
-                    { color: "bg-[#facd55]", label: "Holiday" },
-                    {
-                      color: "bg-[#f1f5f9] border border-gray-100",
-                      label: "Upcoming",
-                    },
-                  ].map(({ color, label }) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider"
-                    >
-                      <div
-                        className={cn(
-                          "w-3.5 h-3.5 rounded-[5px] shadow-sm",
-                          color
-                        )}
-                      />
-                      <span className="opacity-80">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                            let achievementPct = 0;
+                            if (target === 0 && actual > 0) {
+                              achievementPct = 100;
+                            } else if (target > 0) {
+                              achievementPct = Math.min(
+                                (actual / target) * 100,
+                                100
+                              );
+                            }
 
-            {!isAbsent && (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                {/* Daily KPIs Card */}
-                {kpis.length > 0 && (
-                  <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
-                    <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
-                      <div className="flex items-center gap-3">
-                        {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
-                        <TrendingUp className="h-5 w-5 text-[#DA7756]" />
-                        {/* </div> */}
-                        <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                          Daily KPIs
-                        </h3>
-                      </div>
-                      {/* Total KPI score badge */}
-                      <Badge className={badgePoints}>
-                        {dailyScore.kpiScore}/20 pts
-                      </Badge>
-                    </div>
-                    <CardContent className="p-6 space-y-4">
-                      {kpis.map((kpi) => {
-                        const target = parseFloat(kpi.target_value) || 0;
-                        const actual = parseFloat(kpiEntries[kpi.kpi_id] || "0") || 0;
-                        const hasEntry = !!kpiEntries[kpi.kpi_id] && kpiEntries[kpi.kpi_id] !== "";
+                            // Points this KPI contributes out of 20 (equal share per KPI × achievement)
+                            const kpiPts =
+                              (20 / kpis.length) * (achievementPct / 100);
 
-                        let achievementPct = 0;
-                        if (target === 0 && actual > 0) {
-                          achievementPct = 100;
-                        } else if (target > 0) {
-                          achievementPct = Math.min((actual / target) * 100, 100);
-                        }
+                            const pctColor =
+                              achievementPct >= 100
+                                ? "bg-[#22c55e] text-white"
+                                : achievementPct >= 75
+                                  ? "bg-[#84cc16] text-white"
+                                  : achievementPct >= 50
+                                    ? "bg-[#f59e0b] text-white"
+                                    : "bg-[#ef4444] text-white";
 
-                        // Points this KPI contributes out of 20 (equal share per KPI × achievement)
-                        const kpiPts = (20 / kpis.length) * (achievementPct / 100);
+                            return (
+                              <div
+                                key={kpi.kpi_id}
+                                className="flex items-center gap-3 p-4 rounded-[10px] bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
+                              >
+                                {/* KPI name + meta */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
+                                      {kpi.kpi_name}
+                                    </h4>
+                                    {!kpi.submitted && (
+                                      <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
+                                        new
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                                    <span className="text-gray-400">•</span>
+                                    <span className="text-gray-500">
+                                      {kpi.frequency_label}
+                                    </span>
+                                  </div>
+                                </div>
 
-                        const pctColor =
-                          achievementPct >= 100
-                            ? "bg-[#22c55e] text-white"
-                            : achievementPct >= 75
-                              ? "bg-[#84cc16] text-white"
-                              : achievementPct >= 50
-                                ? "bg-[#f59e0b] text-white"
-                                : "bg-[#ef4444] text-white";
+                                {/* Target label */}
+                                <div className="flex flex-col items-center shrink-0">
+                                  <span className="text-sm font-black text-[#6366f1]">
+                                    {kpi.target_value}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                    Target
+                                  </span>
+                                </div>
 
-                        return (
-                          <div
-                            key={kpi.kpi_id}
-                            className="flex items-center gap-3 p-4 rounded-[10px] bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
-                          >
-                            {/* KPI name + meta */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
-                                  {kpi.kpi_name}
-                                </h4>
-                                {!kpi.submitted && (
-                                  <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
-                                    new
-                                  </Badge>
+                                {/* Actual input */}
+                                <div className="w-24 shrink-0">
+                                  <input
+                                    type="number"
+                                    value={kpiEntries[kpi.kpi_id] || ""}
+                                    onChange={(e) => {
+                                      markDraftDirty();
+                                      setKpiEntries((prev) => ({
+                                        ...prev,
+                                        [kpi.kpi_id]: e.target.value,
+                                      }));
+                                    }}
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
+                                  />
+                                </div>
+
+                                {/* Achievement % badge */}
+                                {hasEntry && (
+                                  <div className="shrink-0 flex items-center gap-2">
+                                    <span
+                                      className={`inline-flex items-center justify-center px-3 py-1.5 rounded-[8px] text-sm font-black tracking-tight ${pctColor}`}
+                                    >
+                                      {achievementPct.toFixed(0)}%
+                                    </span>
+                                  </div>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-600">
-                                <span className="text-gray-400">•</span>
-                                <span className="text-gray-500">
-                                  {kpi.frequency_label}
-                                </span>
-                              </div>
-                            </div>
+                            );
+                          })}
+                        </CardContent>
+                      </Card>
+                    )}
 
-                            {/* Target label */}
-                            <div className="flex flex-col items-center shrink-0">
-                              <span className="text-sm font-black text-[#6366f1]">
-                                {kpi.target_value}
-                              </span>
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                Target
-                              </span>
-                            </div>
-
-                            {/* Actual input */}
-                            <div className="w-24 shrink-0">
-                              <input
-                                type="number"
-                                value={kpiEntries[kpi.kpi_id] || ""}
-                                onChange={(e) => {
-                                  markDraftDirty();
-                                  setKpiEntries((prev) => ({
-                                    ...prev,
-                                    [kpi.kpi_id]: e.target.value,
-                                  }));
-                                }}
-                                placeholder="0"
-                                className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
-                              />
-                            </div>
-
-                            {/* Achievement % badge */}
-                            {hasEntry && (
-                              <div className="shrink-0 flex items-center gap-2">
-                                <span
-                                  className={`inline-flex items-center justify-center px-3 py-1.5 rounded-[8px] text-sm font-black tracking-tight ${pctColor}`}
-                                >
-                                  {achievementPct.toFixed(0)}%
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
-                <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
-                  <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-6 w-6 shrink-0 text-[#DA7756]" />
-                      <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                        Today's Accomplishments
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge className={badgePoints}>
-                        {dailyScore.accomplishmentsScore}/20 PTS
-                      </Badge>
-                      <Button
-                        className="rounded-[8px] shadow-lg font-semibold text-sm"
-                        onClick={addAccomplishment}
-                      >
-                        <Plus size={14} />
-                        Add Item
-                      </Button>
-                    </div>
-                  </div>
-
-                  <CardContent className="p-6 space-y-6">
-                    <div className="space-y-3">
-
-                      {/* ── Manual accomplishment items ── */}
-                      {visibleAccomplishments.map((item) => (
-                        <div
-                          key={item.id}
-                          className="relative group animate-in fade-in duration-300"
-                        >
-                          <div
-                            className={cn(
-                              "flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all",
-                              item.completed
-                                ? "border-[#DA7756]/10 bg-[#DA7756]/10"
-                                : "border-gray-200",
-                              item.fromYesterday &&
-                              !item.completed &&
-                              "border-amber-300 bg-amber-50/30"
-                            )}
+                    {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
+                    <div
+                      className="bc-daily-card"
+                      ref={accomplishmentsSectionRef}
+                    >
+                      <div className="bc-daily-card-header">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-5 w-5 shrink-0 text-[#DA7756]" />
+                          <h3 className="text-sm font-bold text-[#1a1a1a]">
+                            Today&apos;s Accomplishments
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className={badgePoints}>
+                            {dailyScore.accomplishmentsScore}/20 Pts
+                          </Badge>
+                          <button
+                            type="button"
+                            className="bc-add-outline-btn"
+                            onClick={addAccomplishment}
                           >
-                            <div className="flex items-center gap-4">
+                            <Plus size={14} />
+                            Add Item
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bc-daily-card-body space-y-6">
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                          {visibleAccomplishments.length === 0 &&
+                            autoAddedAccomplishments.length === 0 && (
+                              <div className="flex flex-col items-center justify-center border-t border-dashed border-gray-200 px-4 pb-3 pt-10 text-center">
+                                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border-2 border-emerald-200 bg-emerald-50">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-300 bg-emerald-100">
+                                    <Check
+                                      size={16}
+                                      className="text-emerald-400"
+                                    />
+                                  </div>
+                                </div>
+                                <h4 className="text-base font-black text-emerald-800">
+                                  What did you get done today?
+                                </h4>
+                                <p className="mt-2 text-sm font-medium text-gray-500">
+                                  Complete tasks to auto-populate this section,
+                                  or add entries manually.
+                                </p>
+                              </div>
+                            )}
+
+                          {/* ── Manual accomplishment items ── */}
+                          {visibleAccomplishments.map((item) => (
+                            <div
+                              key={item.id}
+                              className="relative group animate-in fade-in duration-300"
+                            >
                               <div
                                 className={cn(
-                                  "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
+                                  "flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all",
                                   item.completed
-                                    ? "bg-[#DA7756] border-[#DA7756]"
-                                    : "bg-white border-gray-300"
+                                    ? "border-[#DA7756]/10 bg-[#DA7756]/10"
+                                    : "border-gray-200",
+                                  item.fromYesterday &&
+                                  !item.completed &&
+                                  "border-amber-300 bg-amber-50/30"
                                 )}
-                                onClick={() => toggleAccomplishment(item.id)}
                               >
+                                <div className="flex items-center gap-4">
+                                  <div
+                                    className={cn(
+                                      "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
+                                      item.completed
+                                        ? "bg-[#DA7756] border-[#DA7756]"
+                                        : "bg-white border-gray-300"
+                                    )}
+                                    onClick={() =>
+                                      toggleAccomplishment(item.id)
+                                    }
+                                  >
+                                    {item.completed && (
+                                      <Check size={14} className="text-white" />
+                                    )}
+                                  </div>
+
+                                  <Star
+                                    size={18}
+                                    className={cn(
+                                      "cursor-pointer transition-all shrink-0",
+                                      item.starred
+                                        ? "text-[#eab308] fill-[#eab308]"
+                                        : "text-[#DA7756]/70 hover:text-[#DA7756]"
+                                    )}
+                                    onClick={() => toggleStar(item.id)}
+                                  />
+
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                    Note
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    value={item.text}
+                                    onChange={(e) =>
+                                      updateAccomplishmentText(
+                                        item.id,
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Describe your accomplishment..."
+                                    className={cn(
+                                      "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
+                                      item.completed
+                                        ? "text-gray-400 line-through"
+                                        : "text-gray-700"
+                                    )}
+                                  />
+
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                    onClick={() =>
+                                      removeAccomplishment(item.id)
+                                    }
+                                  >
+                                    <X size={16} className="text-red-500" />
+                                  </Button>
+                                </div>
+
+                                {item.fromYesterday && (
+                                  <div className="pl-10 pt-0.5">
+                                    <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                      <CalendarIcon size={10} />
+                                      From Yesterday
+                                    </span>
+                                  </div>
+                                )}
+
                                 {item.completed && (
-                                  <Check size={14} className="text-white" />
+                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                      <CalendarIcon
+                                        size={9}
+                                        className="shrink-0"
+                                      />
+                                      {fmtDate(startDate)}
+                                    </span>
+                                  </div>
                                 )}
                               </div>
-
-                              <Star
-                                size={18}
-                                className={cn(
-                                  "cursor-pointer transition-all shrink-0",
-                                  item.starred
-                                    ? "text-[#eab308] fill-[#eab308]"
-                                    : "text-[#DA7756]/70 hover:text-[#DA7756]"
-                                )}
-                                onClick={() => toggleStar(item.id)}
-                              />
-
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
-                                Note
-                              </span>
-
-                              <input
-                                type="text"
-                                value={item.text}
-                                onChange={(e) =>
-                                  updateAccomplishmentText(item.id, e.target.value)
-                                }
-                                placeholder="Describe your accomplishment..."
-                                className={cn(
-                                  "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
-                                  item.completed
-                                    ? "text-gray-400 line-through"
-                                    : "text-gray-700"
-                                )}
-                              />
-
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                onClick={() => removeAccomplishment(item.id)}
-                              >
-                                <X size={16} className="text-red-500" />
-                              </Button>
                             </div>
+                          ))}
 
-                            {item.fromYesterday && (
-                              <div className="pl-10 pt-0.5">
-                                <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                  <CalendarIcon size={10} />
-                                  From Yesterday
-                                </span>
-                              </div>
-                            )}
+                          {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
+                          {autoAddedAccomplishments.map((item) => {
+                            const autoStarKey = String(item.id);
+                            const isAutoStarred =
+                              autoStarredIds.has(autoStarKey);
 
-                            {item.completed && (
-                              <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                  <CalendarIcon size={9} className="shrink-0" />
-                                  {fmtDate(startDate)}
-                                </span>
+                            return (
+                              <div
+                                key={item.id}
+                                className="relative animate-in fade-in duration-300"
+                              >
+                                <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
+                                  <div className="flex items-center gap-4">
+                                    <div
+                                      className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
+                                      onClick={() => {
+                                        setPendingReopenItem(item);
+                                        setReopenReason("");
+                                      }}
+                                      title="Mark as open"
+                                    >
+                                      <Check size={14} className="text-white" />
+                                    </div>
+                                    <Star
+                                      size={18}
+                                      className={cn(
+                                        "cursor-pointer transition-all shrink-0",
+                                        isAutoStarred
+                                          ? "text-[#eab308] fill-[#eab308]"
+                                          : "text-[#DA7756]/70 hover:text-[#DA7756]"
+                                      )}
+                                      onClick={() => {
+                                        markDraftDirty();
+                                        setAutoStarredIds((prev) => {
+                                          const next = new Set(prev);
+                                          if (next.has(autoStarKey))
+                                            next.delete(autoStarKey);
+                                          else next.add(autoStarKey);
+                                          return next;
+                                        });
+                                      }}
+                                    />
+                                    <span
+                                      className={cn(
+                                        "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                        item.type === "task"
+                                          ? "bg-[#DA7756] text-white"
+                                          : item.type === "issue"
+                                            ? "bg-violet-600 text-white"
+                                            : "bg-amber-500 text-white"
+                                      )}
+                                    >
+                                      {item.type}
+                                    </span>
+                                    <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
+                                      {item.title}
+                                    </span>
+                                    {item.priority && (
+                                      <span
+                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                        style={{
+                                          backgroundColor:
+                                            item.priority === "High"
+                                              ? "#fee2e2"
+                                              : item.priority === "Medium"
+                                                ? "#fef3c7"
+                                                : "#dcfce7",
+                                          color:
+                                            item.priority === "High"
+                                              ? "#991b1b"
+                                              : item.priority === "Medium"
+                                                ? "#92400e"
+                                                : "#166534",
+                                        }}
+                                      >
+                                        {item.priority}
+                                      </span>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        if (item.type === "todo") {
+                                          setSelectedTodo(item.originalData);
+                                          setIsDetailsModalOpen(true);
+                                        } else {
+                                          navigate(
+                                            item.type === "task"
+                                              ? `/vas/tasks/${item.originalData?.id}`
+                                              : `/vas/issues/${item.originalData?.id}`
+                                          );
+                                        }
+                                      }}
+                                      className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                      title={`View ${item.type} details`}
+                                    >
+                                      <Eye
+                                        size={14}
+                                        className="text-[#DA7756]"
+                                      />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (item.type === "task") {
+                                          setEditTaskData(item.originalData);
+                                          setIsEditTaskModalOpen(true);
+                                        } else if (item.type === "issue") {
+                                          setEditIssueData(item.originalData);
+                                          setIsEditIssueModalOpen(true);
+                                        } else if (item.type === "todo") {
+                                          setEditTodoData(item.originalData);
+                                          setIsEditTodoModalOpen(true);
+                                        }
+                                      }}
+                                      className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                      title={`Edit ${item.type}`}
+                                    >
+                                      <Pencil size={13} />
+                                    </button>
+                                  </div>
+                                  {(() => {
+                                    const d = item.originalData;
+                                    const endDate = fmtDate(startDate);
+                                    const effortEst = fmtHours(
+                                      d?.total_allocated_hours ||
+                                      d?.estimated_hour
+                                    );
+                                    let issueEffort: string | null = null;
+                                    if (
+                                      item.type === "issue" &&
+                                      Array.isArray(
+                                        d?.issue_allocation_times
+                                      ) &&
+                                      d.issue_allocation_times.length > 0
+                                    ) {
+                                      const totalMin =
+                                        d.issue_allocation_times.reduce(
+                                          (sum: number, t: any) =>
+                                            sum + t.hours * 60 + t.minutes,
+                                          0
+                                        );
+                                      if (totalMin > 0) {
+                                        const h = Math.floor(totalMin / 60);
+                                        const m = totalMin % 60;
+                                        issueEffort =
+                                          h > 0 && m > 0
+                                            ? `${h}h ${m}m`
+                                            : h > 0
+                                              ? `${h}h`
+                                              : `${m}m`;
+                                      }
+                                    }
+                                    const hasInfo =
+                                      endDate || effortEst || issueEffort;
+                                    if (!hasInfo) return null;
+                                    return (
+                                      <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                        {endDate && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                            <CalendarIcon
+                                              size={9}
+                                              className="shrink-0"
+                                            />
+                                            {endDate}
+                                          </span>
+                                        )}
+                                        {effortEst && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                            <Clock
+                                              size={9}
+                                              className="shrink-0"
+                                            />
+                                            Est: {effortEst}
+                                          </span>
+                                        )}
+                                        {issueEffort && (
+                                          <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                            <Zap
+                                              size={9}
+                                              className="shrink-0"
+                                            />
+                                            Effort: {issueEffort}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
                               </div>
-                            )}
+                            );
+                          })}
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                            <Info size={14} className="text-gray-400" />
+                            <span>Limits: Images 2MB, Others 5 MB</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
+                              multiple
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              disabled={
+                                uploadedFiles.length +
+                                reportAttachments.length >=
+                                5
+                              }
+                              onClick={triggerFileUpload}
+                              className="bc-add-outline-btn disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Upload size={14} />
+                              Upload File
+                            </button>
+                          </div>
+                        </div>
+
+                        {uploadedFiles.length > 0 && (
+                          <div className="space-y-2">
+                            {uploadedFiles.map((file) => (
+                              <div
+                                key={file.id}
+                                className="flex items-center justify-between bg-[#fef6f4] p-3 rounded-[10px] border border-[#DA7756]/20 animate-in fade-in duration-300"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <ImageIcon
+                                    size={16}
+                                    className="text-[#DA7756]"
+                                  />
+                                  <span className="text-sm font-medium text-[#DA7756]/80 hover:underline cursor-pointer">
+                                    {file.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    {file.size}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none"
+                                    onClick={() =>
+                                      setUploadedFiles(
+                                        uploadedFiles.filter(
+                                          (f) => f.id !== file.id
+                                        )
+                                      )
+                                    }
+                                  >
+                                    <X size={14} className="text-red-500" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {reportAttachments && reportAttachments.length > 0 && (
+                          <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <Upload size={16} className="text-purple-600" />
+                              <span className="text-sm font-bold text-[#1a1a1a]">
+                                Linked Files ({reportAttachments.length})
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {reportAttachments.map(
+                                (attachment: AttachmentFile, idx: number) => {
+                                  const isImage = isImageFile(
+                                    attachment.document_file_name,
+                                    attachment.document_content_type
+                                  );
+                                  return (
+                                    <div
+                                      key={attachment.id || idx}
+                                      className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        {isImage ? (
+                                          <ImageIcon
+                                            size={20}
+                                            className="text-purple-600 shrink-0"
+                                          />
+                                        ) : (
+                                          <FileText
+                                            size={20}
+                                            className="text-blue-600 shrink-0"
+                                          />
+                                        )}
+                                        <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                          <a
+                                            href={attachment.document_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2"
+                                          >
+                                            {attachment.document_file_name}
+                                          </a>
+                                          <span className="text-[11px] text-gray-600 font-medium">
+                                            {attachment.relation} •{" "}
+                                            {(
+                                              attachment.document_file_size /
+                                              1024
+                                            ).toFixed(2)}{" "}
+                                            KB •{" "}
+                                            {new Date(
+                                              attachment.document_updated_at
+                                            ).toLocaleDateString("en-US", {
+                                              month: "numeric",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                        {attachment.active
+                                          ? "Active"
+                                          : "Inactive"}
+                                      </Badge>
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Plan Card */}
+                    <div className="bc-daily-card" ref={planningSectionRef}>
+                      <div className="bc-daily-card-header">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5 text-[#DA7756]" />
+                          <h3 className="text-sm font-bold text-[#1a1a1a]">
+                            Plan for {nextDayLabel || "Tomorrow"}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className={badgePoints}>
+                            {dailyScore.planningScore}/20 Pts
+                          </Badge>
+                          <button
+                            type="button"
+                            className="bc-add-outline-btn"
+                            onClick={(e) =>
+                              setPlanningMenuAnchor(e.currentTarget)
+                            }
+                            title="Add Task, Issue, or Todo for next day"
+                          >
+                            <Plus size={14} /> Add Item
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bc-daily-card-body">
+                        {/* Manual planning items */}
+                        {planningItems.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                              Your plan
+                            </h4>
+                            <div className="space-y-4">
+                              {planningItems
+                                .map((item, index) => ({ item, index }))
+                                .filter(
+                                  ({ item }) =>
+                                    !dedupedTomorrowItems.some(
+                                      (scheduledItem) =>
+                                        planningItemMatchesSourceItem(
+                                          item,
+                                          scheduledItem
+                                        )
+                                    )
+                                )
+                                .map(({ item }) => {
+                                  const matchedTask =
+                                    item.source_id && item.source_type
+                                      ? mergedTasksIssues.find(
+                                        (t: any) =>
+                                          t.type === item.source_type &&
+                                          t.originalData?.id ===
+                                          item.source_id
+                                      )
+                                      : null;
+                                  const cachedData =
+                                    item.source_id && item.source_type
+                                      ? planSourceCache[
+                                      `${item.source_type}:${item.source_id}`
+                                      ]
+                                      : null;
+                                  const liveData =
+                                    matchedTask?.originalData ||
+                                    cachedData ||
+                                    item.originalData;
+                                  const livePriority =
+                                    matchedTask?.priority ||
+                                    cachedData?.priority ||
+                                    item.originalData?.priority;
+
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
+                                    >
+                                      <div
+                                        className={cn(
+                                          "flex flex-col overflow-hidden bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
+                                          item.fromWeeklyPlan
+                                            ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
+                                            : "border-[#f3f4f6] hover:border-[#DA7756]/30"
+                                        )}
+                                      >
+                                        <div className="flex min-w-0 items-center gap-2">
+                                          <Star
+                                            size={18}
+                                            className={cn(
+                                              "cursor-pointer transition-all shrink-0",
+                                              item.starred
+                                                ? "text-[#eab308] fill-[#eab308]"
+                                                : "text-gray-300 hover:text-gray-400"
+                                            )}
+                                            onClick={() =>
+                                              togglePlanningStar(item.id)
+                                            }
+                                          />
+                                          <span
+                                            className={cn(
+                                              "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                              item.source_type === "task"
+                                                ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                                : item.source_type === "issue"
+                                                  ? "bg-violet-100 text-violet-700"
+                                                  : item.source_type === "todo"
+                                                    ? "bg-yellow-100 text-yellow-700"
+                                                    : "bg-gray-500 text-white"
+                                            )}
+                                          >
+                                            {item.source_type || "Note"}
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={item.text}
+                                            onChange={(e) =>
+                                              updatePlanningText(
+                                                item.id,
+                                                e.target.value
+                                              )
+                                            }
+                                            placeholder="What's your strategic priority?"
+                                            className="min-w-0 w-0 flex-1 truncate bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                          />
+                                          {livePriority && (
+                                            <span
+                                              className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                              style={{
+                                                backgroundColor:
+                                                  livePriority === "High"
+                                                    ? "#fee2e2"
+                                                    : livePriority === "Medium"
+                                                      ? "#fef3c7"
+                                                      : "#dcfce7",
+                                                color:
+                                                  livePriority === "High"
+                                                    ? "#991b1b"
+                                                    : livePriority === "Medium"
+                                                      ? "#92400e"
+                                                      : "#166534",
+                                              }}
+                                            >
+                                              {livePriority}
+                                            </span>
+                                          )}
+                                          <div className="flex shrink-0 items-center gap-1">
+                                            {item.source_id &&
+                                              item.source_type && (
+                                                <>
+                                                  <button
+                                                    onClick={() => {
+                                                      if (
+                                                        item.source_type ===
+                                                        "todo"
+                                                      ) {
+                                                        const td =
+                                                          matchedTask?.originalData ||
+                                                          cachedData;
+                                                        if (td) {
+                                                          setSelectedTodo(td);
+                                                          setIsDetailsModalOpen(
+                                                            true
+                                                          );
+                                                        }
+                                                      } else {
+                                                        navigate(
+                                                          item.source_type ===
+                                                            "task"
+                                                            ? `/vas/tasks/${item.source_id}`
+                                                            : `/vas/issues/${item.source_id}`
+                                                        );
+                                                      }
+                                                    }}
+                                                    className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                                    title={`View ${item.source_type} details`}
+                                                  >
+                                                    <Eye
+                                                      size={14}
+                                                      className="text-amber-600"
+                                                    />
+                                                  </button>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      const src =
+                                                        matchedTask?.originalData ||
+                                                        cachedData;
+                                                      if (
+                                                        item.source_type ===
+                                                        "task"
+                                                      ) {
+                                                        setEditTaskData(src);
+                                                        setIsEditTaskModalOpen(
+                                                          true
+                                                        );
+                                                      } else if (
+                                                        item.source_type ===
+                                                        "issue"
+                                                      ) {
+                                                        setEditIssueData(src);
+                                                        setIsEditIssueModalOpen(
+                                                          true
+                                                        );
+                                                      } else if (
+                                                        item.source_type ===
+                                                        "todo"
+                                                      ) {
+                                                        setEditTodoData(src);
+                                                        setIsEditTodoModalOpen(
+                                                          true
+                                                        );
+                                                      }
+                                                    }}
+                                                    className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                                    title={`Edit ${item.source_type}`}
+                                                  >
+                                                    <Pencil size={13} />
+                                                  </button>
+                                                </>
+                                              )}
+                                            <X
+                                              size={18}
+                                              className="shrink-0 text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                              onClick={() =>
+                                                removePlanningItem(item.id)
+                                              }
+                                            />
+                                          </div>
+                                        </div>
+                                        {liveData &&
+                                          (() => {
+                                            const d = liveData;
+                                            const endDate = fmtDate(
+                                              d?.target_date ||
+                                              d?.due_date ||
+                                              d?.end_date
+                                            );
+                                            const effortEst = fmtHours(
+                                              d?.total_allocated_hours ||
+                                              d?.estimated_hour
+                                            );
+                                            const overdueLabel =
+                                              getOverdueLabel(
+                                                d?.target_date ||
+                                                d?.due_date ||
+                                                d?.end_date
+                                              );
+                                            let timeLeftLabel: string | null =
+                                              null;
+                                            if (
+                                              item.source_type === "issue" &&
+                                              d?.end_date &&
+                                              !overdueLabel
+                                            ) {
+                                              const now = new Date();
+                                              const end = new Date(d.end_date);
+                                              end.setHours(23, 59, 59, 999);
+                                              const diff =
+                                                end.getTime() - now.getTime();
+                                              if (diff > 0) {
+                                                const days = Math.floor(
+                                                  diff / 86400000
+                                                );
+                                                const hrs = Math.floor(
+                                                  (diff % 86400000) / 3600000
+                                                );
+                                                const mins = Math.floor(
+                                                  (diff % 3600000) / 60000
+                                                );
+                                                if (days > 0)
+                                                  timeLeftLabel = `${days}d ${hrs}h left`;
+                                                else if (hrs > 0)
+                                                  timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                else
+                                                  timeLeftLabel = `${mins}m left`;
+                                              }
+                                            }
+                                            const hasInfo =
+                                              endDate ||
+                                              effortEst ||
+                                              overdueLabel ||
+                                              timeLeftLabel;
+                                            if (!hasInfo) return null;
+                                            return (
+                                              <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
+                                                {endDate && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <CalendarIcon
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {endDate}
+                                                  </span>
+                                                )}
+                                                {overdueLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                    <AlertCircle
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {overdueLabel}
+                                                  </span>
+                                                )}
+                                                {timeLeftLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                    <Clock
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {timeLeftLabel}
+                                                  </span>
+                                                )}
+                                                {effortEst && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <Clock
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    Est: {effortEst}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
+                                        {item.fromWeeklyPlan && (
+                                          <div className="pl-7 pt-1">
+                                            <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                              <CalendarIcon size={10} />
+                                              From Weekly Report
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Next-day scheduled items — disabled, not included in payload ── */}
+                        {(tomorrowScheduledLoading ||
+                          (tomorrowFetchDone &&
+                            dedupedTomorrowItems.length > 0)) && (
+                            <div className="mb-4">
+                              {/* {planningItems.length > 0 && (
+                          <div className="flex items-center gap-3 py-2 mb-3">
+                            <div className="flex-1 h-px bg-gray-100" />
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Next Day</span>
+                            <div className="flex-1 h-px bg-gray-100" />
+                          </div>
+                        )} */}
+                              {tomorrowScheduledLoading ? (
+                                <div className="flex items-center gap-2 py-3 text-gray-300">
+                                  <Loader2
+                                    size={13}
+                                    className="animate-spin shrink-0"
+                                  />
+                                  <span className="text-xs font-medium">
+                                    Fetching upcoming assignments…
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  {dedupedTomorrowItems.map((item) => {
+                                    const plannedItem = planningItems.find(
+                                      (plan) =>
+                                        planningItemMatchesSourceItem(plan, item)
+                                    );
+
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className="relative animate-in fade-in slide-in-from-top-1 duration-200"
+                                      >
+                                        <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
+                                          <div className="flex items-center gap-3">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                toggleScheduledTomorrowStar(item)
+                                              }
+                                              className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                              title={
+                                                plannedItem?.starred
+                                                  ? "Unstar"
+                                                  : "Star this priority"
+                                              }
+                                            >
+                                              <Star
+                                                size={18}
+                                                className={cn(
+                                                  "transition-colors duration-200",
+                                                  plannedItem?.starred
+                                                    ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
+                                                    : "text-gray-300 hover:text-yellow-400"
+                                                )}
+                                              />
+                                            </button>
+                                            <span
+                                              className={cn(
+                                                "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                item.type === "task"
+                                                  ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                                  : item.type === "issue"
+                                                    ? "bg-violet-100 text-violet-700"
+                                                    : "bg-yellow-100 text-yellow-700"
+                                              )}
+                                            >
+                                              {item.type}
+                                            </span>
+                                            <span className="flex-1 text-sm font-medium text-gray-500 truncate">
+                                              {item.title}
+                                            </span>
+                                            {item.priority && (
+                                              <span
+                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                style={{
+                                                  backgroundColor:
+                                                    item.priority === "High"
+                                                      ? "#fee2e2"
+                                                      : item.priority === "Medium"
+                                                        ? "#fef3c7"
+                                                        : "#dcfce7",
+                                                  color:
+                                                    item.priority === "High"
+                                                      ? "#991b1b"
+                                                      : item.priority === "Medium"
+                                                        ? "#92400e"
+                                                        : "#166534",
+                                                }}
+                                              >
+                                                {item.priority}
+                                              </span>
+                                            )}
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                hideTomorrowScheduledItem(item)
+                                              }
+                                              className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                            >
+                                              <X size={16} />
+                                            </button>
+                                          </div>
+                                          {(() => {
+                                            const d = item.originalData;
+                                            const endDate = fmtDate(
+                                              d?.target_date ||
+                                              d?.due_date ||
+                                              d?.end_date
+                                            );
+                                            const effortEst = fmtHours(
+                                              d?.total_allocated_hours ||
+                                              d?.estimated_hour
+                                            );
+                                            const overdueLabel = getOverdueLabel(
+                                              d?.target_date ||
+                                              d?.due_date ||
+                                              d?.end_date
+                                            );
+                                            let timeLeftLabel: string | null =
+                                              null;
+                                            if (
+                                              item.type === "issue" &&
+                                              d?.end_date &&
+                                              !overdueLabel
+                                            ) {
+                                              const now = new Date();
+                                              const end = new Date(d.end_date);
+                                              end.setHours(23, 59, 59, 999);
+                                              const diff =
+                                                end.getTime() - now.getTime();
+                                              if (diff > 0) {
+                                                const days = Math.floor(
+                                                  diff / 86400000
+                                                );
+                                                const hrs = Math.floor(
+                                                  (diff % 86400000) / 3600000
+                                                );
+                                                const mins = Math.floor(
+                                                  (diff % 3600000) / 60000
+                                                );
+                                                if (days > 0)
+                                                  timeLeftLabel = `${days}d ${hrs}h left`;
+                                                else if (hrs > 0)
+                                                  timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                else
+                                                  timeLeftLabel = `${mins}m left`;
+                                              }
+                                            }
+                                            const hasInfo =
+                                              endDate ||
+                                              effortEst ||
+                                              overdueLabel ||
+                                              timeLeftLabel;
+                                            if (!hasInfo) return null;
+                                            return (
+                                              <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
+                                                {endDate && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <CalendarIcon
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {endDate}
+                                                  </span>
+                                                )}
+                                                {overdueLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                    <AlertCircle
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {overdueLabel}
+                                                  </span>
+                                                )}
+                                                {timeLeftLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                    <Clock
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    {timeLeftLabel}
+                                                  </span>
+                                                )}
+                                                {effortEst && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <Clock
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    Est: {effortEst}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                        {planningItems.length === 0 &&
+                          tomorrowFetchDone &&
+                          !tomorrowScheduledLoading &&
+                          dedupedTomorrowItems.length === 0 && (
+                            <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+                              <Calendar className="mb-3 h-8 w-8 text-[#DA7756]/10" />
+                              <h4 className="text-base font-black text-gray-400">
+                                Plan your next working day!
+                              </h4>
+                              <p className="mt-2 text-sm font-medium text-[#334155]">
+                                List 3-5 key tasks for{" "}
+                                {nextDayLabel || "tomorrow"} to stay focused.
+                              </p>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-6">
+                {/* Live Score Preview */}
+                {!isAbsent && (
+                  <div className="bc-live-score-card">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Target size={18} className="text-[#DA7756]" />
+                        <h3 className="text-sm font-bold text-[#1a1a1a]">
+                          Live Score Preview
+                        </h3>
+                      </div>
+                      <Badge variant="outline" className={badgePoints}>
+                        {Math.round(dailyScore.totalScore)}/100 Pts
+                      </Badge>
+                    </div>
+                    <div className="bc-live-score-metrics">
+                      {[
+                        { label: "KPIs", value: `${dailyScore.kpiScore}/20` },
+                        {
+                          label: "Accomplishments",
+                          value: `${dailyScore.accomplishmentsScore}/20`,
+                        },
+                        {
+                          label: "Tasks",
+                          value: `${dailyScore.tasksIssuesScore}/20`,
+                        },
+                        {
+                          label: "Planning",
+                          value: `${dailyScore.planningScore}/20`,
+                        },
+                        {
+                          label: "Timing",
+                          value: `${dailyScore.timingScore}/20`,
+                        },
+                      ].map((metric) => (
+                        <div key={metric.label} className="bc-live-metric">
+                          <div className="bc-live-metric-label">
+                            {metric.label}
+                          </div>
+                          <div className="bc-live-metric-value">
+                            {metric.value}
                           </div>
                         </div>
                       ))}
-
-                      {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
-                      {autoAddedAccomplishments.map((item) => {
-                        const autoStarKey = String(item.id);
-                        const isAutoStarred = autoStarredIds.has(autoStarKey);
-
-                        return (
-                          <div key={item.id} className="relative animate-in fade-in duration-300">
-                            <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
-                              <div className="flex items-center gap-4">
-                                <div
-                                  className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
-                                  onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
-                                  title="Mark as open"
-                                >
-                                  <Check size={14} className="text-white" />
-                                </div>
-                                <Star
-                                  size={18}
-                                  className={cn(
-                                    "cursor-pointer transition-all shrink-0",
-                                    isAutoStarred
-                                      ? "text-[#eab308] fill-[#eab308]"
-                                      : "text-[#DA7756]/70 hover:text-[#DA7756]"
-                                  )}
-                                  onClick={() => {
-                                    markDraftDirty();
-                                    setAutoStarredIds((prev) => {
-                                      const next = new Set(prev);
-                                      if (next.has(autoStarKey)) next.delete(autoStarKey);
-                                      else next.add(autoStarKey);
-                                      return next;
-                                    });
-                                  }}
-                                />
-                                <span className={cn(
-                                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                  item.type === "task"
-                                    ? "bg-[#DA7756] text-white"
-                                    : item.type === "issue"
-                                      ? "bg-violet-600 text-white"
-                                      : "bg-amber-500 text-white"
-                                )}>
-                                  {item.type}
-                                </span>
-                                <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
-                                  {item.title}
-                                </span>
-                                {item.priority && (
-                                  <span
-                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                    style={{
-                                      backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                      color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                    }}
-                                  >
-                                    {item.priority}
-                                  </span>
-                                )}
-                                <button
-                                  onClick={() => {
-                                    if (item.type === "todo") {
-                                      setSelectedTodo(item.originalData);
-                                      setIsDetailsModalOpen(true);
-                                    } else {
-                                      navigate(
-                                        item.type === "task"
-                                          ? `/vas/tasks/${item.originalData?.id}`
-                                          : `/vas/issues/${item.originalData?.id}`
-                                      );
-                                    }
-                                  }}
-                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                  title={`View ${item.type} details`}
-                                >
-                                  <Eye size={14} className="text-[#DA7756]" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (item.type === "task") {
-                                      setEditTaskData(item.originalData);
-                                      setIsEditTaskModalOpen(true);
-                                    } else if (item.type === "issue") {
-                                      setEditIssueData(item.originalData);
-                                      setIsEditIssueModalOpen(true);
-                                    } else if (item.type === "todo") {
-                                      setEditTodoData(item.originalData);
-                                      setIsEditTodoModalOpen(true);
-                                    }
-                                  }}
-                                  className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                  title={`Edit ${item.type}`}
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                              </div>
-                              {(() => {
-                                const d = item.originalData;
-                                const endDate = fmtDate(startDate);
-                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                let issueEffort: string | null = null;
-                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                  const totalMin = d.issue_allocation_times.reduce(
-                                    (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                  );
-                                  if (totalMin > 0) {
-                                    const h = Math.floor(totalMin / 60);
-                                    const m = totalMin % 60;
-                                    issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                  }
-                                }
-                                const hasInfo = endDate || effortEst || issueEffort;
-                                if (!hasInfo) return null;
-                                return (
-                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                    {endDate && (
-                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                        <CalendarIcon size={9} className="shrink-0" />
-                                        {endDate}
-                                      </span>
-                                    )}
-                                    {effortEst && (
-                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                        <Clock size={9} className="shrink-0" />
-                                        Est: {effortEst}
-                                      </span>
-                                    )}
-                                    {issueEffort && (
-                                      <span className="flex items-center gap-1 text-[10px] text-purple-500">
-                                        <Zap size={9} className="shrink-0" />
-                                        Effort: {issueEffort}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
-                        <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
-                          <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
-                            <CheckCircle2 size={32} className="text-[#10b981]/30" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-base font-bold text-[#065f46]">
-                              What did you get done today?
-                            </p>
-                            <p className="text-xs text-gray-500 font-medium">
-                              Complete tasks to auto-populate this section, or add entries manually.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-
-                    <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[10px] text-[#DA7756] font-black uppercase tracking-widest bg-[#DA7756]/10 px-3 py-1.5 rounded-full border border-[#DA7756]/20">
-                        <Info size={14} />
-                        <span>Limits: Images 2MB, Others 5MB</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs font-bold text-gray-400">
-                          {uploadedFiles.length + reportAttachments.length}/5
-                        </span>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          multiple
-                          className="hidden"
-                        />
-                        <button
-                          disabled={uploadedFiles.length + reportAttachments.length >= 5}
-                          onClick={triggerFileUpload}
-                          style={{
-                            backgroundColor: uploadedFiles.length + reportAttachments.length >= 5 ? '#d1d5db' : '#DA7756',
-                            color: '#ffffff',
-                            cursor: uploadedFiles.length + reportAttachments.length >= 5 ? 'not-allowed' : 'pointer',
-                            opacity: uploadedFiles.length + reportAttachments.length >= 5 ? 0.5 : 1,
-                          }}
-                          className="flex items-center gap-2 px-6 h-10 rounded-[8px] text-xs font-black shadow-md transition-all border-none"
-                        >
-                          <Upload size={16} />
-                          File Upload
-                        </button>
-                      </div>
-                    </div>
-
-                    {uploadedFiles.length > 0 && (
-                      <div className="space-y-2">
-                        {uploadedFiles.map((file) => (
-                          <div
-                            key={file.id}
-                            className="flex items-center justify-between bg-[#fef6f4] p-3 rounded-[10px] border border-[#DA7756]/20 animate-in fade-in duration-300"
-                          >
-                            <div className="flex items-center gap-3">
-                              <ImageIcon size={16} className="text-[#DA7756]" />
-                              <span className="text-sm font-medium text-[#DA7756]/80 hover:underline cursor-pointer">
-                                {file.name}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                {file.size}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none"
-                                onClick={() =>
-                                  setUploadedFiles(
-                                    uploadedFiles.filter(
-                                      (f) => f.id !== file.id
-                                    )
-                                  )
-                                }
-                              >
-                                <X size={14} className="text-red-500" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {reportAttachments && reportAttachments.length > 0 && (
-                      <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <Upload size={16} className="text-purple-600" />
-                          <span className="text-sm font-bold text-[#1a1a1a]">
-                            Linked Files ({reportAttachments.length})
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {reportAttachments.map(
-                            (attachment: AttachmentFile, idx: number) => {
-                              const isImage = isImageFile(
-                                attachment.document_file_name,
-                                attachment.document_content_type
-                              );
-                              return (
-                                <div
-                                  key={attachment.id || idx}
-                                  className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
-                                >
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    {isImage ? (
-                                      <ImageIcon
-                                        size={20}
-                                        className="text-purple-600 shrink-0"
-                                      />
-                                    ) : (
-                                      <FileText
-                                        size={20}
-                                        className="text-blue-600 shrink-0"
-                                      />
-                                    )}
-                                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                      <a
-                                        href={attachment.document_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2"
-                                      >
-                                        {attachment.document_file_name}
-                                      </a>
-                                      <span className="text-[11px] text-gray-600 font-medium">
-                                        {attachment.relation} •{" "}
-                                        {(
-                                          attachment.document_file_size / 1024
-                                        ).toFixed(2)}{" "}
-                                        KB •{" "}
-                                        {new Date(
-                                          attachment.document_updated_at
-                                        ).toLocaleDateString("en-US", {
-                                          month: "numeric",
-                                          day: "numeric",
-                                          year: "numeric",
-                                        })}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
-                                    {attachment.active ? "Active" : "Inactive"}
-                                  </Badge>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Tasks & Issues Card */}
-                <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-[#fff] shadow-sm mt-6">
-                  <div className="bg-white p-4 border-b border-[#b91c1c]/10">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <CheckSquare className="h-6 w-6 text-[#DA7756]" />
-                          <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                            Tasks, Issues & Todos
-                          </h3>
-                        </div>
-                        {/* <p className="text-[11px] text-gray-500 font-medium">
-                          {tasksLoading || issuesLoading
-                            ? "Loading..."
-                            : `Total: ${taskIssueCounts.total} items`}
-                        </p> */}
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {/* <Badge
-                            variant="outline"
-                            className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
-                          >
-                            Completed: {taskIssueCounts.completed}
-                          </Badge> */}
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
-                          >
-                            Open: {taskIssueCounts.open}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
-                          >
-                            Overdue: {taskIssueCounts.overdue}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
-                          >
-                            In Progress: {taskIssueCounts.inProgress}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-gray-200 px-3 py-1 text-[10px] font-bold text-gray-800"
-                          >
-                            On Hold: {taskIssueCounts.onHold}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge className={badgePoints}>
-                          {taskIssueCounts.completed}/20 PTS
-                        </Badge>
-                        <Button
-                          className="rounded-[8px] shadow-lg font-semibold text-sm"
-                          onClick={(e) =>
-                            setTaskIssueMenuAnchor(e.currentTarget)
-                          }
-                        >
-                          <Plus size={14} />
-                          Add
-                        </Button>
-                      </div>
                     </div>
                   </div>
+                )}
 
-                  <CardContent className="p-4">
+                {/* Tasks & Issues Card */}
+                <div
+                  className="bc-daily-card bc-tasks-card-wrap flex flex-1 flex-col"
+                  ref={tasksSectionRef}
+                >
+                  <div className="bc-daily-card-header flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <CheckSquare className="h-5 w-5 text-[#DA7756]" />
+                      <h3 className="text-sm font-bold text-[#1a1a1a]">
+                        Tasks, Issues & To Do's
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className={badgePoints}>
+                        {dailyScore.tasksIssuesScore}/20 Pts
+                      </Badge>
+                      <button
+                        type="button"
+                        className="bc-add-outline-btn"
+                        onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
+                      >
+                        <Plus size={14} />
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-4 p-3">
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={openAllTaskIssueGroups}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openAllTaskIssueGroups();
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
+                      >
+                        All: {taskIssueCounts.total}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("pending")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("pending");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
+                      >
+                        Open: {taskIssueCounts.open}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("overdue")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("overdue");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
+                      >
+                        Overdue: {taskIssueCounts.overdue}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("in_progress");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
+                      >
+                        In Progress: {taskIssueCounts.inProgress}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openOnlyTaskIssueGroup("on_hold");
+                          }
+                        }}
+                        className="cursor-pointer border-0 bg-gray-200 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-300"
+                      >
+                        On Hold: {taskIssueCounts.onHold}
+                      </Badge>
+                    </div>
+
                     {tasksLoading || issuesLoading ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
-                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
-                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
+                        <Loader2
+                          size={40}
+                          className="text-[#b91c1c]/30 animate-spin mb-3"
+                        />
+                        <p className="text-sm font-bold text-gray-500">
+                          Loading tasks and issues...
+                        </p>
                       </div>
                     ) : mergedTasksIssues.length === 0 ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
                         <div className="flex flex-col items-center gap-3 opacity-30">
-                          <CheckSquare size={40} className="text-[#DA7756]/20" />
-                          <p className="text-base font-bold text-gray-400 tracking-tight">No open tasks or issues</p>
+                          <CheckSquare
+                            size={40}
+                            className="text-[#DA7756]/20"
+                          />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">
+                            No open tasks or issues
+                          </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="max-h-[600px] overflow-y-auto space-y-3 pr-1" ref={scrollContainerRef}>
-
+                      <div className="space-y-3 pr-1" ref={scrollContainerRef}>
                         {/* ── From Yesterday section ── */}
-                        {yesterdaySourceIds.size > 0 && (() => {
-                          const yItems = mergedTasksIssues.filter((item: any) => yesterdaySourceIds.has(item.id));
-                          if (yItems.length === 0) return null;
-                          const isCollapsed = collapsedGroups.has("from_yesterday");
-                          return (
-                            <div key="from_yesterday">
-                              <button
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-amber-50 hover:bg-amber-100"
-                                onClick={() => setCollapsedGroups((prev) => { const next = new Set(prev); if (next.has("from_yesterday")) next.delete("from_yesterday"); else next.add("from_yesterday"); return next; })}
-                              >
-                                <CalendarIcon size={12} className="text-amber-700 shrink-0" />
-                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-amber-700">Plan for Today</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{yItems.length}</span>
-                                <ChevronRight size={14} className={cn("transition-transform duration-200 ml-1 text-amber-700", !isCollapsed && "rotate-90")} />
-                              </button>
-                              {!isCollapsed && (
-                                <div className="space-y-1.5 pl-1">
-                                  {yItems.map((item: any) => (
-                                    <div key={item.id} className="flex flex-col rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
-                                      {/* Controls row */}
-                                      <div className="flex items-center gap-2 p-2.5">
-                                        <Checkbox
-                                          checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
-                                          onCheckedChange={(checked) => {
-                                            if (checked && item.status !== "completed" && item.status !== "closed") {
-                                              setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
-                                            } else {
-                                              markDraftDirty();
-                                              setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                        {yesterdaySourceIds.size > 0 &&
+                          (() => {
+                            const yItems = mergedTasksIssues.filter(
+                              (item: any) => yesterdaySourceIds.has(item.id)
+                            );
+                            if (yItems.length === 0) return null;
+                            const isCollapsed =
+                              collapsedGroups.has("from_yesterday");
+                            return (
+                              <div key="from_yesterday">
+                                <button
+                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-amber-50 hover:bg-amber-100"
+                                  onClick={() =>
+                                    setCollapsedGroups((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has("from_yesterday"))
+                                        next.delete("from_yesterday");
+                                      else next.add("from_yesterday");
+                                      return next;
+                                    })
+                                  }
+                                >
+                                  <CalendarIcon
+                                    size={12}
+                                    className="text-amber-700 shrink-0"
+                                  />
+                                  <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-amber-700">
+                                    Plan for Today
+                                  </span>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                    {yItems.length}
+                                  </span>
+                                  <ChevronRight
+                                    size={14}
+                                    className={cn(
+                                      "transition-transform duration-200 ml-1 text-amber-700",
+                                      !isCollapsed && "rotate-90"
+                                    )}
+                                  />
+                                </button>
+                                {!isCollapsed && (
+                                  <div className="space-y-1.5 pl-1">
+                                    {yItems.map((item: any) => (
+                                      <div
+                                        key={item.id}
+                                        className="flex flex-col rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200"
+                                      >
+                                        {/* Controls row */}
+                                        <div className="flex items-center gap-2 p-2.5">
+                                          <Checkbox
+                                            checked={
+                                              selectedTasksIssues[item.id] ||
+                                              item.status === "completed" ||
+                                              item.status === "closed"
                                             }
-                                          }}
-                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                        />
-                                        <button
-                                          onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
-                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                          title={`View ${item.type} details`}
-                                        >
-                                          <Eye size={14} className="text-amber-600" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
-                                          className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                          title={`Edit ${item.type}`}
-                                        >
-                                          <Pencil size={13} />
-                                        </button>
-                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.is_started ? (
-                                            <button onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Pause task" disabled={playingTaskIds.has(item.originalData.id)}>
-                                              <Pause size={14} className="text-red-500" />
-                                            </button>
-                                          ) : (
-                                            <button onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Start task" disabled={playingTaskIds.has(item.originalData.id)}>
-                                              {playingTaskIds.has(item.originalData.id) ? <Loader2 size={14} className="text-green-600 animate-spin" /> : <Play size={14} className="text-green-600" />}
-                                            </button>
-                                          )
-                                        )}
-                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.task_management?.is_started ? (
-                                            <button onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Pause task" disabled={playingTaskIds.has(item.originalData.task_management_id)}>
-                                              <Pause size={14} className="text-red-500" />
-                                            </button>
-                                          ) : (
-                                            <button onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }} className="p-1 hover:bg-white/60 rounded transition shrink-0" title="Start task" disabled={playingTaskIds.has(item.originalData.task_management_id)}>
-                                              {playingTaskIds.has(item.originalData.task_management_id) ? <Loader2 size={14} className="text-green-600 animate-spin" /> : <Play size={14} className="text-green-600" />}
-                                            </button>
-                                          )
-                                        )}
-                                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
-                                          {item.type}
-                                        </span>
-                                        <div className="flex-1 min-w-0">
-                                          <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
-                                        </div>
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
-                                          {item.priority}
-                                        </span>
-                                        {/* Tomorrow button */}
-                                        <button
-                                          onClick={() => addedToTomorrowIds.has(item.id) ? removeItemFromTomorrow(item) : addItemToTomorrow(item)}
-                                          className={cn(
-                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                            addedToTomorrowIds.has(item.id)
-                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                              : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
-                                          )}
-                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
-                                        >
-                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
-                                        </button>
-                                      </div>
-                                      {/* Info row */}
-                                      {(() => {
-                                        const d = item.originalData;
-                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                        let issueEffort: string | null = null;
-                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                          const totalMin = d.issue_allocation_times.reduce((sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0);
-                                          if (totalMin > 0) { const h = Math.floor(totalMin / 60); const m = totalMin % 60; issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`; }
-                                        }
-                                        let timeLeftLabel: string | null = null;
-                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                          const now = new Date(); const end = new Date(d.end_date); end.setHours(23, 59, 59, 999); const diff = end.getTime() - now.getTime();
-                                          if (diff > 0) { const days = Math.floor(diff / 86400000); const hrs = Math.floor((diff % 86400000) / 3600000); const mins = Math.floor((diff % 3600000) / 60000); timeLeftLabel = days > 0 ? `${days}d ${hrs}h left` : hrs > 0 ? `${hrs}h ${mins}m left` : `${mins}m left`; }
-                                        }
-                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
-                                        if (!hasInfo) return null;
-                                        return (
-                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
-                                            {endDate && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <CalendarIcon size={9} className="shrink-0" />{endDate}
-                                              </span>
+                                            onCheckedChange={(checked) => {
+                                              if (
+                                                checked &&
+                                                item.status !== "completed" &&
+                                                item.status !== "closed"
+                                              ) {
+                                                setPendingConfirmAction({
+                                                  fn: () =>
+                                                    handleCompleteItem(item),
+                                                  label: `complete this ${item.type}`,
+                                                });
+                                              } else {
+                                                markDraftDirty();
+                                                setSelectedTasksIssues(
+                                                  (prev) => ({
+                                                    ...prev,
+                                                    [item.id]:
+                                                      checked as boolean,
+                                                  })
+                                                );
+                                              }
+                                            }}
+                                            className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                          />
+                                          <button
+                                            onClick={() => {
+                                              if (item.type === "todo") {
+                                                setSelectedTodo(
+                                                  item.originalData
+                                                );
+                                                setIsDetailsModalOpen(true);
+                                              } else {
+                                                navigate(
+                                                  item.type === "task"
+                                                    ? `/vas/tasks/${item.originalData?.id}`
+                                                    : `/vas/issues/${item.originalData?.id}`
+                                                );
+                                              }
+                                            }}
+                                            className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                            title={`View ${item.type} details`}
+                                          >
+                                            <Eye
+                                              size={14}
+                                              className="text-amber-600"
+                                            />
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (item.type === "task") {
+                                                setEditTaskData(
+                                                  item.originalData
+                                                );
+                                                setIsEditTaskModalOpen(true);
+                                              } else if (
+                                                item.type === "issue"
+                                              ) {
+                                                setEditIssueData(
+                                                  item.originalData
+                                                );
+                                                setIsEditIssueModalOpen(true);
+                                              } else if (item.type === "todo") {
+                                                setEditTodoData(
+                                                  item.originalData
+                                                );
+                                                setIsEditTodoModalOpen(true);
+                                              }
+                                            }}
+                                            className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                            title={`Edit ${item.type}`}
+                                          >
+                                            <Pencil size={13} />
+                                          </button>
+                                          {item.type === "task" &&
+                                            item.status !== "completed" &&
+                                            item.status !== "closed" &&
+                                            (item.originalData?.is_started ? (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPauseTaskId(
+                                                    item.originalData.id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Pause task"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData.id
+                                                )}
+                                              >
+                                                <Pause
+                                                  size={14}
+                                                  className="text-red-500"
+                                                />
+                                              </button>
+                                            ) : (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPlayTaskId(
+                                                    item.originalData.id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Start task"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData.id
+                                                )}
+                                              >
+                                                {playingTaskIds.has(
+                                                  item.originalData.id
+                                                ) ? (
+                                                  <Loader2
+                                                    size={14}
+                                                    className="text-green-600 animate-spin"
+                                                  />
+                                                ) : (
+                                                  <Play
+                                                    size={14}
+                                                    className="text-green-600"
+                                                  />
+                                                )}
+                                              </button>
+                                            ))}
+                                          {item.type === "todo" &&
+                                            item.originalData
+                                              ?.task_management_id &&
+                                            item.status !== "completed" &&
+                                            item.status !== "closed" &&
+                                            (item.originalData?.task_management
+                                              ?.is_started ? (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPauseTaskId(
+                                                    item.originalData
+                                                      .task_management_id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Pause task"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData
+                                                    .task_management_id
+                                                )}
+                                              >
+                                                <Pause
+                                                  size={14}
+                                                  className="text-red-500"
+                                                />
+                                              </button>
+                                            ) : (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPlayTaskId(
+                                                    item.originalData
+                                                      .task_management_id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Start task"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData
+                                                    .task_management_id
+                                                )}
+                                              >
+                                                {playingTaskIds.has(
+                                                  item.originalData
+                                                    .task_management_id
+                                                ) ? (
+                                                  <Loader2
+                                                    size={14}
+                                                    className="text-green-600 animate-spin"
+                                                  />
+                                                ) : (
+                                                  <Play
+                                                    size={14}
+                                                    className="text-green-600"
+                                                  />
+                                                )}
+                                              </button>
+                                            ))}
+                                          <span
+                                            className={cn(
+                                              "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                              item.type === "task"
+                                                ? "bg-[#DA7756] text-white"
+                                                : item.type === "issue"
+                                                  ? "bg-violet-600 text-white"
+                                                  : "bg-amber-500 text-white"
                                             )}
-                                            {overdueLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                <AlertCircle size={9} className="shrink-0" />{overdueLabel}
-                                              </span>
-                                            )}
-                                            {timeLeftLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                <Clock size={9} className="shrink-0" />{timeLeftLabel}
-                                              </span>
-                                            )}
-                                            {effortEst && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <Clock size={9} className="shrink-0" />Est: {effortEst}
-                                              </span>
-                                            )}
-                                            {issueEffort && (
-                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                <Zap size={9} className="shrink-0" />Effort: {issueEffort}
-                                              </span>
-                                            )}
-                                            {item.type === "task" && d?.active_time_till_now && (
-                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
-                                              </span>
-                                            )}
+                                          >
+                                            {item.type}
+                                          </span>
+                                          <div className="flex-1 min-w-0">
+                                            <p
+                                              className={cn(
+                                                "text-sm font-medium truncate",
+                                                (item.status === "completed" ||
+                                                  item.status === "closed") &&
+                                                "line-through opacity-60"
+                                              )}
+                                            >
+                                              {item.title}
+                                            </p>
                                           </div>
-                                        );
-                                      })()}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
+                                          <span
+                                            className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                            style={{
+                                              backgroundColor:
+                                                item.priority === "High"
+                                                  ? "#fee2e2"
+                                                  : item.priority === "Medium"
+                                                    ? "#fef3c7"
+                                                    : "#dcfce7",
+                                              color:
+                                                item.priority === "High"
+                                                  ? "#991b1b"
+                                                  : item.priority === "Medium"
+                                                    ? "#92400e"
+                                                    : "#166534",
+                                            }}
+                                          >
+                                            {item.priority}
+                                          </span>
+                                          {/* Tomorrow button */}
+                                          <button
+                                            onClick={() =>
+                                              addedToTomorrowIds.has(item.id)
+                                                ? removeItemFromTomorrow(item)
+                                                : addItemToTomorrow(item)
+                                            }
+                                            className={cn(
+                                              "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                              addedToTomorrowIds.has(item.id)
+                                                ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                            )}
+                                            title={
+                                              addedToTomorrowIds.has(item.id)
+                                                ? "Remove from tomorrow's plan"
+                                                : "Add to tomorrow's plan"
+                                            }
+                                          >
+                                            {addedToTomorrowIds.has(item.id)
+                                              ? "Added ✓"
+                                              : "+ Tomorrow"}
+                                          </button>
+                                        </div>
+                                        {/* Info row */}
+                                        {(() => {
+                                          const d = item.originalData;
+                                          const endDate = fmtDate(
+                                            d?.target_date ||
+                                            d?.due_date ||
+                                            d?.end_date
+                                          );
+                                          const effortEst = fmtHours(
+                                            d?.total_allocated_hours ||
+                                            d?.estimated_hour
+                                          );
+                                          const overdueLabel = getOverdueLabel(
+                                            d?.target_date ||
+                                            d?.due_date ||
+                                            d?.end_date
+                                          );
+                                          let issueEffort: string | null = null;
+                                          if (
+                                            item.type === "issue" &&
+                                            Array.isArray(
+                                              d?.issue_allocation_times
+                                            ) &&
+                                            d.issue_allocation_times.length > 0
+                                          ) {
+                                            const totalMin =
+                                              d.issue_allocation_times.reduce(
+                                                (sum: number, t: any) =>
+                                                  sum +
+                                                  t.hours * 60 +
+                                                  t.minutes,
+                                                0
+                                              );
+                                            if (totalMin > 0) {
+                                              const h = Math.floor(
+                                                totalMin / 60
+                                              );
+                                              const m = totalMin % 60;
+                                              issueEffort =
+                                                h > 0 && m > 0
+                                                  ? `${h}h ${m}m`
+                                                  : h > 0
+                                                    ? `${h}h`
+                                                    : `${m}m`;
+                                            }
+                                          }
+                                          let timeLeftLabel: string | null =
+                                            null;
+                                          if (
+                                            item.type === "issue" &&
+                                            d?.end_date &&
+                                            !overdueLabel
+                                          ) {
+                                            const now = new Date();
+                                            const end = new Date(d.end_date);
+                                            end.setHours(23, 59, 59, 999);
+                                            const diff =
+                                              end.getTime() - now.getTime();
+                                            if (diff > 0) {
+                                              const days = Math.floor(
+                                                diff / 86400000
+                                              );
+                                              const hrs = Math.floor(
+                                                (diff % 86400000) / 3600000
+                                              );
+                                              const mins = Math.floor(
+                                                (diff % 3600000) / 60000
+                                              );
+                                              timeLeftLabel =
+                                                days > 0
+                                                  ? `${days}d ${hrs}h left`
+                                                  : hrs > 0
+                                                    ? `${hrs}h ${mins}m left`
+                                                    : `${mins}m left`;
+                                            }
+                                          }
+                                          const hasInfo =
+                                            endDate ||
+                                            effortEst ||
+                                            issueEffort ||
+                                            timeLeftLabel ||
+                                            (item.type === "task" &&
+                                              d?.active_time_till_now);
+                                          if (!hasInfo) return null;
+                                          return (
+                                            <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                              {endDate && (
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                  <CalendarIcon
+                                                    size={9}
+                                                    className="shrink-0"
+                                                  />
+                                                  {endDate}
+                                                </span>
+                                              )}
+                                              {overdueLabel && (
+                                                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                  <AlertCircle
+                                                    size={9}
+                                                    className="shrink-0"
+                                                  />
+                                                  {overdueLabel}
+                                                </span>
+                                              )}
+                                              {timeLeftLabel && (
+                                                <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                  <Clock
+                                                    size={9}
+                                                    className="shrink-0"
+                                                  />
+                                                  {timeLeftLabel}
+                                                </span>
+                                              )}
+                                              {effortEst && (
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                  <Clock
+                                                    size={9}
+                                                    className="shrink-0"
+                                                  />
+                                                  Est: {effortEst}
+                                                </span>
+                                              )}
+                                              {issueEffort && (
+                                                <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                  <Zap
+                                                    size={9}
+                                                    className="shrink-0"
+                                                  />
+                                                  Effort: {issueEffort}
+                                                </span>
+                                              )}
+                                              {item.type === "task" &&
+                                                d?.active_time_till_now && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                    <Zap
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    <ActiveTimer
+                                                      activeTimeTillNow={
+                                                        d.active_time_till_now
+                                                      }
+                                                      isStarted={d.is_started}
+                                                    />
+                                                  </span>
+                                                )}
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                         {(
                           [
-                            // {
-                            //   key: "completed_today",
-                            //   label: "Completed Today",
-                            //   statuses: ["completed", "closed", "done"],
-                            //   colorClass: "text-emerald-700",
-                            //   bgItem: "bg-emerald-50/60 border-emerald-200",
-                            //   headerBg: "bg-emerald-50 hover:bg-emerald-100",
-                            //   pillBg: "bg-emerald-100 text-emerald-700",
-                            //   showAddToTomorrow: false,
-                            //   showBulkAdd: false,
-                            // },
                             {
                               key: "overdue",
                               label: "Overdue",
@@ -3481,9 +5174,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                             },
                           ] as const
                         ).map((group) => {
-                          const items = mergedTasksIssues.filter((item: any) =>
-                            (group.statuses as readonly string[]).includes(item.status) &&
-                            !yesterdaySourceIds.has(item.id)
+                          const items = mergedTasksIssues.filter(
+                            (item: any) =>
+                              (group.statuses as readonly string[]).includes(
+                                item.status
+                              ) && !yesterdaySourceIds.has(item.id)
                           );
                           if (items.length === 0) return null;
                           const isCollapsed = collapsedGroups.has(group.key);
@@ -3497,18 +5192,23 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   group.headerBg
                                 )}
                                 onClick={() =>
-                                  setCollapsedGroups((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(group.key)) next.delete(group.key);
-                                    else next.add(group.key);
-                                    return next;
-                                  })
+                                  openOnlyTaskIssueGroup(group.key)
                                 }
                               >
-                                <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
+                                <span
+                                  className={cn(
+                                    "text-xs font-black uppercase tracking-wider flex-1 text-left",
+                                    group.colorClass
+                                  )}
+                                >
                                   {group.label}
                                 </span>
-                                <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
+                                <span
+                                  className={cn(
+                                    "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                                    group.pillBg
+                                  )}
+                                >
                                   {items.length}
                                 </span>
                                 {group.showBulkAdd && items.length > 0 && (
@@ -3551,17 +5251,24 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             item.status === "closed"
                                           }
                                           onCheckedChange={(checked) => {
-                                            if (checked && item.status !== "completed" && item.status !== "closed") {
+                                            if (
+                                              checked &&
+                                              item.status !== "completed" &&
+                                              item.status !== "closed"
+                                            ) {
                                               setPendingConfirmAction({
-                                                fn: () => handleCompleteItem(item),
+                                                fn: () =>
+                                                  handleCompleteItem(item),
                                                 label: `complete this ${item.type}`,
                                               });
                                             } else {
                                               markDraftDirty();
-                                              setSelectedTasksIssues((prev) => ({
-                                                ...prev,
-                                                [item.id]: checked as boolean,
-                                              }));
+                                              setSelectedTasksIssues(
+                                                (prev) => ({
+                                                  ...prev,
+                                                  [item.id]: checked as boolean,
+                                                })
+                                              );
                                             }
                                           }}
                                           className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
@@ -3570,7 +5277,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         <button
                                           onClick={() => {
                                             if (item.type === "todo") {
-                                              setSelectedTodo(item.originalData);
+                                              setSelectedTodo(
+                                                item.originalData
+                                              );
                                               setIsDetailsModalOpen(true);
                                             } else {
                                               navigate(
@@ -3583,20 +5292,29 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
                                           title={`View ${item.type} details`}
                                         >
-                                          <Eye size={14} className="text-[#DA7756]" />
+                                          <Eye
+                                            size={14}
+                                            className="text-[#DA7756]"
+                                          />
                                         </button>
 
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (item.type === "task") {
-                                              setEditTaskData(item.originalData);
+                                              setEditTaskData(
+                                                item.originalData
+                                              );
                                               setIsEditTaskModalOpen(true);
                                             } else if (item.type === "issue") {
-                                              setEditIssueData(item.originalData);
+                                              setEditIssueData(
+                                                item.originalData
+                                              );
                                               setIsEditIssueModalOpen(true);
                                             } else if (item.type === "todo") {
-                                              setEditTodoData(item.originalData);
+                                              setEditTodoData(
+                                                item.originalData
+                                              );
                                               setIsEditTodoModalOpen(true);
                                             }
                                           }}
@@ -3607,71 +5325,143 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         </button>
 
                                         {/* Play/Pause for tasks */}
-                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.is_started ? (
+                                        {item.type === "task" &&
+                                          item.status !== "completed" &&
+                                          item.status !== "closed" &&
+                                          (item.originalData?.is_started ? (
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPendingPauseTaskId(
+                                                  item.originalData.id
+                                                );
+                                              }}
                                               className="p-1 hover:bg-white/60 rounded transition shrink-0"
                                               title="Pause task"
-                                              disabled={playingTaskIds.has(item.originalData.id)}
+                                              disabled={playingTaskIds.has(
+                                                item.originalData.id
+                                              )}
                                             >
-                                              <Pause size={14} className="text-red-500" />
+                                              <Pause
+                                                size={14}
+                                                className="text-red-500"
+                                              />
                                             </button>
                                           ) : (
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPendingPlayTaskId(
+                                                  item.originalData.id
+                                                );
+                                              }}
                                               className="p-1 hover:bg-white/60 rounded transition shrink-0"
                                               title="Start task"
-                                              disabled={playingTaskIds.has(item.originalData.id)}
+                                              disabled={playingTaskIds.has(
+                                                item.originalData.id
+                                              )}
                                             >
-                                              {playingTaskIds.has(item.originalData.id)
-                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                                : <Play size={14} className="text-green-600" />}
+                                              {playingTaskIds.has(
+                                                item.originalData.id
+                                              ) ? (
+                                                <Loader2
+                                                  size={14}
+                                                  className="text-green-600 animate-spin"
+                                                />
+                                              ) : (
+                                                <Play
+                                                  size={14}
+                                                  className="text-green-600"
+                                                />
+                                              )}
                                             </button>
-                                          )
-                                        )}
+                                          ))}
 
                                         {/* Play/Pause for todos linked to tasks */}
-                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                                          item.originalData?.task_management?.is_started ? (
+                                        {item.type === "todo" &&
+                                          item.originalData
+                                            ?.task_management_id &&
+                                          item.status !== "completed" &&
+                                          item.status !== "closed" &&
+                                          (item.originalData?.task_management
+                                            ?.is_started ? (
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPendingPauseTaskId(
+                                                  item.originalData
+                                                    .task_management_id
+                                                );
+                                              }}
                                               className="p-1 hover:bg-white/60 rounded transition shrink-0"
                                               title="Pause task"
-                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                              disabled={playingTaskIds.has(
+                                                item.originalData
+                                                  .task_management_id
+                                              )}
                                             >
-                                              <Pause size={14} className="text-red-500" />
+                                              <Pause
+                                                size={14}
+                                                className="text-red-500"
+                                              />
                                             </button>
                                           ) : (
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPendingPlayTaskId(
+                                                  item.originalData
+                                                    .task_management_id
+                                                );
+                                              }}
                                               className="p-1 hover:bg-white/60 rounded transition shrink-0"
                                               title="Start task"
-                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                              disabled={playingTaskIds.has(
+                                                item.originalData
+                                                  .task_management_id
+                                              )}
                                             >
-                                              {playingTaskIds.has(item.originalData.task_management_id)
-                                                ? <Loader2 size={14} className="text-green-600 animate-spin" />
-                                                : <Play size={14} className="text-green-600" />}
+                                              {playingTaskIds.has(
+                                                item.originalData
+                                                  .task_management_id
+                                              ) ? (
+                                                <Loader2
+                                                  size={14}
+                                                  className="text-green-600 animate-spin"
+                                                />
+                                              ) : (
+                                                <Play
+                                                  size={14}
+                                                  className="text-green-600"
+                                                />
+                                              )}
                                             </button>
-                                          )
-                                        )}
+                                          ))}
 
                                         {/* Type badge */}
-                                        <span className={cn(
-                                          "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                          item.type === "task" ? "bg-[#DA7756] text-white" :
-                                            item.type === "issue" ? "bg-violet-600 text-white" :
-                                              "bg-amber-500 text-white"
-                                        )}>
+                                        <span
+                                          className={cn(
+                                            "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                            item.type === "task"
+                                              ? "bg-[#DA7756] text-white"
+                                              : item.type === "issue"
+                                                ? "bg-violet-600 text-white"
+                                                : "bg-amber-500 text-white"
+                                          )}
+                                        >
                                           {item.type}
                                         </span>
 
                                         {/* Title + status */}
                                         <div className="flex-1 min-w-0">
-                                          <p className={cn(
-                                            "text-sm font-medium truncate",
-                                            (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
-                                          )}>
+                                          <p
+                                            className={cn(
+                                              "text-sm font-medium truncate",
+                                              (item.status === "completed" ||
+                                                item.status === "closed") &&
+                                              "line-through opacity-60"
+                                            )}
+                                          >
                                             {item.title}
                                           </p>
                                         </div>
@@ -3680,8 +5470,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         <span
                                           className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                           style={{
-                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                            backgroundColor:
+                                              item.priority === "High"
+                                                ? "#fee2e2"
+                                                : item.priority === "Medium"
+                                                  ? "#fef3c7"
+                                                  : "#dcfce7",
+                                            color:
+                                              item.priority === "High"
+                                                ? "#991b1b"
+                                                : item.priority === "Medium"
+                                                  ? "#92400e"
+                                                  : "#166534",
                                           }}
                                         >
                                           {item.priority}
@@ -3701,90 +5501,166 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                 ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
                                                 : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
                                             )}
-                                            title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                            title={
+                                              addedToTomorrowIds.has(item.id)
+                                                ? "Remove from tomorrow's plan"
+                                                : "Add to tomorrow's plan"
+                                            }
                                           >
-                                            {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                            {addedToTomorrowIds.has(item.id)
+                                              ? "Added ✓"
+                                              : "+ Tomorrow"}
                                           </button>
                                         )}
-                                      </div>{/* end inner controls row */}
+                                      </div>
+                                      {/* end inner controls row */}
 
                                       {/* Info row */}
                                       {(() => {
                                         const d = item.originalData;
-                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                        const endDate = fmtDate(
+                                          d?.target_date ||
+                                          d?.due_date ||
+                                          d?.end_date
+                                        );
+                                        const effortEst = fmtHours(
+                                          d?.total_allocated_hours ||
+                                          d?.estimated_hour
+                                        );
+                                        const overdueLabel = getOverdueLabel(
+                                          d?.target_date ||
+                                          d?.due_date ||
+                                          d?.end_date
+                                        );
 
                                         // Issue: effort duration from issue_allocation_times
                                         let issueEffort: string | null = null;
-                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                          const totalMin = d.issue_allocation_times.reduce(
-                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                          );
+                                        if (
+                                          item.type === "issue" &&
+                                          Array.isArray(
+                                            d?.issue_allocation_times
+                                          ) &&
+                                          d.issue_allocation_times.length > 0
+                                        ) {
+                                          const totalMin =
+                                            d.issue_allocation_times.reduce(
+                                              (sum: number, t: any) =>
+                                                sum + t.hours * 60 + t.minutes,
+                                              0
+                                            );
                                           if (totalMin > 0) {
                                             const h = Math.floor(totalMin / 60);
                                             const m = totalMin % 60;
-                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                            issueEffort =
+                                              h > 0 && m > 0
+                                                ? `${h}h ${m}m`
+                                                : h > 0
+                                                  ? `${h}h`
+                                                  : `${m}m`;
                                           }
                                         }
 
                                         // Issue: time left (when not overdue) from end_date
                                         let timeLeftLabel: string | null = null;
-                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                        if (
+                                          item.type === "issue" &&
+                                          d?.end_date &&
+                                          !overdueLabel
+                                        ) {
                                           const now = new Date();
                                           const end = new Date(d.end_date);
                                           end.setHours(23, 59, 59, 999);
-                                          const diff = end.getTime() - now.getTime();
+                                          const diff =
+                                            end.getTime() - now.getTime();
                                           if (diff > 0) {
-                                            const days = Math.floor(diff / 86400000);
-                                            const hrs = Math.floor((diff % 86400000) / 3600000);
-                                            const mins = Math.floor((diff % 3600000) / 60000);
-                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                            else timeLeftLabel = `${mins}m left`;
+                                            const days = Math.floor(
+                                              diff / 86400000
+                                            );
+                                            const hrs = Math.floor(
+                                              (diff % 86400000) / 3600000
+                                            );
+                                            const mins = Math.floor(
+                                              (diff % 3600000) / 60000
+                                            );
+                                            if (days > 0)
+                                              timeLeftLabel = `${days}d ${hrs}h left`;
+                                            else if (hrs > 0)
+                                              timeLeftLabel = `${hrs}h ${mins}m left`;
+                                            else
+                                              timeLeftLabel = `${mins}m left`;
                                           }
                                         }
 
-                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                        const hasInfo =
+                                          endDate ||
+                                          effortEst ||
+                                          issueEffort ||
+                                          timeLeftLabel ||
+                                          (item.type === "task" &&
+                                            d?.active_time_till_now);
                                         if (!hasInfo) return null;
                                         return (
                                           <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
                                             {endDate && (
                                               <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <CalendarIcon size={9} className="shrink-0" />
+                                                <CalendarIcon
+                                                  size={9}
+                                                  className="shrink-0"
+                                                />
                                                 {endDate}
                                               </span>
                                             )}
                                             {overdueLabel && (
                                               <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                <AlertCircle size={9} className="shrink-0" />
+                                                <AlertCircle
+                                                  size={9}
+                                                  className="shrink-0"
+                                                />
                                                 {overdueLabel}
                                               </span>
                                             )}
                                             {timeLeftLabel && (
                                               <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                <Clock size={9} className="shrink-0" />
+                                                <Clock
+                                                  size={9}
+                                                  className="shrink-0"
+                                                />
                                                 {timeLeftLabel}
                                               </span>
                                             )}
                                             {effortEst && (
                                               <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <Clock size={9} className="shrink-0" />
+                                                <Clock
+                                                  size={9}
+                                                  className="shrink-0"
+                                                />
                                                 Est: {effortEst}
                                               </span>
                                             )}
                                             {issueEffort && (
                                               <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                <Zap size={9} className="shrink-0" />
+                                                <Zap
+                                                  size={9}
+                                                  className="shrink-0"
+                                                />
                                                 Effort: {issueEffort}
                                               </span>
                                             )}
-                                            {item.type === "task" && d?.active_time_till_now && (
-                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                <Zap size={9} className="shrink-0" />
-                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
-                                              </span>
-                                            )}
+                                            {item.type === "task" &&
+                                              d?.active_time_till_now && (
+                                                <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                  <Zap
+                                                    size={9}
+                                                    className="shrink-0"
+                                                  />
+                                                  <ActiveTimer
+                                                    activeTimeTillNow={
+                                                      d.active_time_till_now
+                                                    }
+                                                    isStarted={d.is_started}
+                                                  />
+                                                </span>
+                                              )}
                                           </div>
                                         );
                                       })()}
@@ -3798,14 +5674,222 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                         {isLoadingMore && (
                           <div className="flex items-center justify-center py-4">
+                            <Loader2
+                              size={20}
+                              className="text-[#b91c1c]/50 animate-spin mr-2"
+                            />
+                            <p className="text-xs text-gray-500 font-medium">
+                              Loading more...
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* <div className="px-5 py-3 border-b border-gray-100 flex flex-wrap gap-2">
+                    {(
+                      [
+                        { key: "open" as const, label: "Opened", count: taskIssueCounts.open, cls: "bc-task-filter-open" },
+                        { key: "overdue" as const, label: "Over Due", count: taskIssueCounts.overdue, cls: "bc-task-filter-overdue" },
+                        { key: "in_progress" as const, label: "In Progress", count: taskIssueCounts.inProgress, cls: "bc-task-filter-progress" },
+                        { key: "on_hold" as const, label: "On Hold", count: taskIssueCounts.onHold, cls: "bc-task-filter-hold" },
+                      ]
+                    ).map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        className={cn(
+                          "bc-task-filter-tab",
+                          taskStatusFilter === tab.key
+                            ? tab.cls
+                            : tab.key === "open"
+                              ? "text-[#2563eb] bg-[#eff6ff]/60 border border-[#bfdbfe]/50"
+                              : tab.key === "overdue"
+                                ? "text-[#e7848e] border border-[#e7848e]/30 bg-white"
+                                : tab.key === "in_progress"
+                                  ? "text-[#DA7756] border border-[#DA7756]/30 bg-white"
+                                  : "text-gray-500 bg-white border border-gray-200"
+                        )}
+                        onClick={() => setTaskStatusFilter(tab.key)}
+                      >
+                        {tab.label}
+                        {tab.count > 0 && (
+                          <span className="ml-1 opacity-70">({tab.count})</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="bc-daily-card-body p-0 flex-1 flex flex-col">
+                    {isAiPopupOpen && (
+                      <div className="bc-ai-inline-popup">
+                        <div className="bc-ai-inline-tabs">
+                          <button
+                            type="button"
+                            className={cn("bc-ai-popup-tab", aiPopupTab === "accomplishments" && "bc-ai-popup-tab-active")}
+                            onClick={() => setAiPopupTab("accomplishments")}
+                          >
+                            Fill my accomplishments
+                          </button>
+                          <button
+                            type="button"
+                            className={cn("bc-ai-popup-tab", aiPopupTab === "plan" && "bc-ai-popup-tab-active")}
+                            onClick={() => setAiPopupTab("plan")}
+                          >
+                            Plan for next day
+                          </button>
+                        </div>
+                        <div className="bc-ai-popup-input-wrap">
+                          <textarea
+                            value={aiPromptText}
+                            onChange={(e) => setAiPromptText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                setIsAiPopupOpen(false);
+                                setAiPromptText("");
+                                if (aiPopupTab === "accomplishments") {
+                                  accomplishmentsSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+                                  addAccomplishment();
+                                } else {
+                                  planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+                                }
+                              }
+                            }}
+                            placeholder="Ask anything..."
+                            className="bc-ai-popup-input"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {tasksLoading || issuesLoading ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
+                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
+                      </div>
+                    ) : mergedTasksIssues.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <div className="flex flex-col items-center gap-3 opacity-30">
+                          <CheckSquare size={40} className="text-[#DA7756]/20" />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">No open tasks or issues</p>
+                        </div>
+                      </div>
+                    ) : filteredTasksForTable.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <p className="text-sm font-medium text-gray-400">
+                          No items in this category
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
+                        <table className="bc-tasks-table">
+                          <thead>
+                            <tr>
+                              <th>
+                                Task / Issue / To Do&apos;s ({filteredTasksForTable.length})
+                              </th>
+                              <th>Priority</th>
+                              <th>Target Date</th>
+                              <th className="text-center w-16">Completed</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredTasksForTable.map((item: any) => {
+                              const d = item.originalData;
+                              const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                              const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                              const isDone = item.status === "completed" || item.status === "closed";
+                              return (
+                                <tr key={item.id} className="group">
+                                  <td>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      {getTaskTypeIcon(item.type)}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (item.type === "todo") {
+                                            setSelectedTodo(item.originalData);
+                                            setIsDetailsModalOpen(true);
+                                          } else {
+                                            navigate(
+                                              item.type === "task"
+                                                ? `/vas/tasks/${item.originalData?.id}`
+                                                : `/vas/issues/${item.originalData?.id}`
+                                            );
+                                          }
+                                        }}
+                                        className={cn(
+                                          "text-left text-sm font-medium truncate hover:text-[#DA7756] transition-colors",
+                                          isDone && "line-through opacity-60"
+                                        )}
+                                      >
+                                        {item.title}
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span className={getPriorityClass(item.priority)}>
+                                      {item.priority || "—"}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <div className="flex flex-col gap-0.5">
+                                      <span className="text-xs text-gray-600">{endDate || "—"}</span>
+                                      {overdueLabel && (
+                                        <span className="text-[10px] font-semibold text-red-600">
+                                          Over Due
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="text-center">
+                                    <Checkbox
+                                      checked={selectedTasksIssues[item.id] || isDone}
+                                      onCheckedChange={(checked) => {
+                                        if (checked && !isDone) {
+                                          setPendingConfirmAction({
+                                            fn: () => handleCompleteItem(item),
+                                            label: `complete this ${item.type}`,
+                                          });
+                                        } else {
+                                          markDraftDirty();
+                                          setSelectedTasksIssues((prev) => ({
+                                            ...prev,
+                                            [item.id]: checked as boolean,
+                                          }));
+                                        }
+                                      }}
+                                      className="h-4 w-4 rounded border-gray-300 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                                    />
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {isLoadingMore && (
+                          <div className="flex items-center justify-center py-4">
                             <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
                             <p className="text-xs text-gray-500 font-medium">Loading more...</p>
                           </div>
                         )}
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                    <div className="bc-tasks-legend">
+                      <span className="bc-tasks-legend-item">
+                        <LayoutGrid size={12} className="text-[#DA7756]" /> Task
+                      </span>
+                      <span className="bc-tasks-legend-item">
+                        <AlertTriangle size={12} className="text-[#e7848e]" /> Issue
+                      </span>
+                      <span className="bc-tasks-legend-item">
+                        <FileText size={12} className="text-[#6B9BCC]" /> To Do
+                      </span>
+                    </div>
+                  </div> */}
+                </div>
 
                 {/* Bottom Tip Banner */}
                 {/* <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
@@ -3819,576 +5903,99 @@ const BusinessCompassDailyReport: React.FC = () => {
                     Look at your list. What doesn't actually need doing?
                   </p>
                 </div> */}
+              </div>
+            </div>
 
-                {/* Plan Card */}
-                <Card className="rounded-[16px] border border-[#DA7756]/20 overflow-hidden bg-white shadow-sm mt-6">
-                  <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-5 w-5 text-[#DA7756]" />
-                      <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                        Plan for {nextDayLabel || "Tomorrow"}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge className={badgePoints}>
-                        {dailyScore.planningScore}/20 PTS
-                      </Badge>
-                      <Button
-                        className="rounded-[8px] shadow-md font-semibold text-sm px-4"
-                        onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
-                        title="Add Task, Issue, or Todo for next day"
-                      >
-                        <Plus size={14} /> Add
-                      </Button>
-                    </div>
-                  </div>
-
-                  <CardContent className="p-6">
-                    {/* Manual planning items */}
-                    {planningItems.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                          Your plan
-                        </h4>
-                        <div className="space-y-4">
-                          {planningItems
-                            .map((item, index) => ({ item, index }))
-                            .filter(
-                              ({ item }) =>
-                                !dedupedTomorrowItems.some((scheduledItem) =>
-                                  planningItemMatchesSourceItem(item, scheduledItem)
-                                )
-                            )
-                            .map(({ item }) => {
-                            const matchedTask = item.source_id && item.source_type
-                              ? mergedTasksIssues.find((t: any) => t.type === item.source_type && t.originalData?.id === item.source_id)
-                              : null;
-                            const cachedData = item.source_id && item.source_type
-                              ? planSourceCache[`${item.source_type}:${item.source_id}`]
-                              : null;
-                            const liveData = matchedTask?.originalData || cachedData || item.originalData;
-                            const livePriority = matchedTask?.priority || cachedData?.priority || item.originalData?.priority;
-
-                            return (
-                              <div
-                                key={item.id}
-                                className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
-                              >
-                                <div className={cn(
-                                  "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
-                                  item.fromWeeklyPlan
-                                    ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
-                                    : "border-[#f3f4f6] hover:border-[#DA7756]/30"
-                                )}>
-                                  <div className="flex items-center gap-4">
-                                    <Star
-                                      size={18}
-                                      className={cn(
-                                        "cursor-pointer transition-all shrink-0",
-                                        item.starred
-                                          ? "text-[#eab308] fill-[#eab308]"
-                                          : "text-gray-300 hover:text-gray-400"
-                                      )}
-                                      onClick={() => togglePlanningStar(item.id)}
-                                    />
-                                    <span className={cn(
-                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.source_type === "task"
-                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                        : item.source_type === "issue"
-                                          ? "bg-violet-100 text-violet-700"
-                                          : item.source_type === "todo"
-                                            ? "bg-yellow-100 text-yellow-700"
-                                            : "bg-gray-500 text-white"
-                                    )}>
-                                      {item.source_type || "Note"}
-                                    </span>
-                                    <input
-                                      type="text"
-                                      value={item.text}
-                                      onChange={(e) =>
-                                        updatePlanningText(item.id, e.target.value)
-                                      }
-                                      placeholder="What's your strategic priority?"
-                                      className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
-                                    />
-                                    {livePriority && (
-                                      <span
-                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                        style={{
-                                          backgroundColor: livePriority === "High" ? "#fee2e2" : livePriority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                          color: livePriority === "High" ? "#991b1b" : livePriority === "Medium" ? "#92400e" : "#166534",
-                                        }}
-                                      >
-                                        {livePriority}
-                                      </span>
-                                    )}
-                                    <div className="flex items-center gap-1.5">
-                                      {item.source_id && item.source_type && (
-                                        <>
-                                          <button
-                                            onClick={() => {
-                                              if (item.source_type === "todo") {
-                                                const td = matchedTask?.originalData || cachedData;
-                                                if (td) { setSelectedTodo(td); setIsDetailsModalOpen(true); }
-                                              } else {
-                                                navigate(item.source_type === "task" ? `/vas/tasks/${item.source_id}` : `/vas/issues/${item.source_id}`);
-                                              }
-                                            }}
-                                            className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                            title={`View ${item.source_type} details`}
-                                          >
-                                            <Eye size={14} className="text-amber-600" />
-                                          </button>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              const src = matchedTask?.originalData || cachedData;
-                                              if (item.source_type === "task") { setEditTaskData(src); setIsEditTaskModalOpen(true); }
-                                              else if (item.source_type === "issue") { setEditIssueData(src); setIsEditIssueModalOpen(true); }
-                                              else if (item.source_type === "todo") { setEditTodoData(src); setIsEditTodoModalOpen(true); }
-                                            }}
-                                            className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
-                                            title={`Edit ${item.source_type}`}
-                                          >
-                                            <Pencil size={13} />
-                                          </button>
-                                        </>
-                                      )}
-                                      <X
-                                        size={18}
-                                        className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                                        onClick={() => removePlanningItem(item.id)}
-                                      />
-                                    </div>
-                                  </div>
-                                  {liveData && (() => {
-                                    const d = liveData;
-                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                    let timeLeftLabel: string | null = null;
-                                    if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
-                                      const now = new Date();
-                                      const end = new Date(d.end_date);
-                                      end.setHours(23, 59, 59, 999);
-                                      const diff = end.getTime() - now.getTime();
-                                      if (diff > 0) {
-                                        const days = Math.floor(diff / 86400000);
-                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                        else timeLeftLabel = `${mins}m left`;
-                                      }
-                                    }
-                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                    if (!hasInfo) return null;
-                                    return (
-                                      <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
-                                        {endDate && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <CalendarIcon size={9} className="shrink-0" />
-                                            {endDate}
-                                          </span>
-                                        )}
-                                        {overdueLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                            <AlertCircle size={9} className="shrink-0" />
-                                            {overdueLabel}
-                                          </span>
-                                        )}
-                                        {timeLeftLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                            <Clock size={9} className="shrink-0" />
-                                            {timeLeftLabel}
-                                          </span>
-                                        )}
-                                        {effortEst && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <Clock size={9} className="shrink-0" />
-                                            Est: {effortEst}
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                  })()}
-                                  {item.fromWeeklyPlan && (
-                                    <div className="pl-7 pt-1">
-                                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                        <CalendarIcon size={10} />
-                                        From Weekly Report
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── Next-day scheduled items — disabled, not included in payload ── */}
-                    {(tomorrowScheduledLoading || (tomorrowFetchDone && dedupedTomorrowItems.length > 0)) && (
-                      <div className="mb-4">
-                        {/* {planningItems.length > 0 && (
-                          <div className="flex items-center gap-3 py-2 mb-3">
-                            <div className="flex-1 h-px bg-gray-100" />
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Next Day</span>
-                            <div className="flex-1 h-px bg-gray-100" />
-                          </div>
-                        )} */}
-                        {tomorrowScheduledLoading ? (
-                          <div className="flex items-center gap-2 py-3 text-gray-300">
-                            <Loader2 size={13} className="animate-spin shrink-0" />
-                            <span className="text-xs font-medium">Fetching upcoming assignments…</span>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            {dedupedTomorrowItems.map((item) => {
-                              const plannedItem = planningItems.find((plan) =>
-                                planningItemMatchesSourceItem(plan, item)
-                              );
-
-                              return (
-                              <div
-                                key={item.id}
-                                className="relative animate-in fade-in slide-in-from-top-1 duration-200"
-                              >
-                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 transition-all hover:border-[#DA7756]/25 hover:bg-[#fafafa]">
-                                  <div className="flex items-center gap-3">
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleScheduledTomorrowStar(item)}
-                                      className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                      title={plannedItem?.starred ? "Unstar" : "Star this priority"}
-                                    >
-                                      <Star
-                                        size={18}
-                                        className={cn(
-                                          "transition-colors duration-200",
-                                          plannedItem?.starred
-                                            ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                            : "text-gray-300 hover:text-yellow-400"
-                                        )}
-                                      />
-                                    </button>
-                                    <span className={cn(
-                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.type === "task"
-                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                        : item.type === "issue"
-                                          ? "bg-violet-100 text-violet-700"
-                                          : "bg-yellow-100 text-yellow-700"
-                                    )}>
-                                      {item.type}
-                                    </span>
-                                    <span className="flex-1 text-sm font-medium text-gray-500 truncate">
-                                      {item.title}
-                                    </span>
-                                    {item.priority && (
-                                      <span
-                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                        style={{
-                                          backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                          color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                        }}
-                                      >
-                                        {item.priority}
-                                      </span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => hideTomorrowScheduledItem(item)}
-                                      className="rounded-md p-1 text-red-500 hover:bg-red-50 hover:text-red-600"
-                                    >
-                                      <X size={16} />
-                                    </button>
-                                  </div>
-                                  {(() => {
-                                    const d = item.originalData;
-                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                    let timeLeftLabel: string | null = null;
-                                    if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                      const now = new Date();
-                                      const end = new Date(d.end_date);
-                                      end.setHours(23, 59, 59, 999);
-                                      const diff = end.getTime() - now.getTime();
-                                      if (diff > 0) {
-                                        const days = Math.floor(diff / 86400000);
-                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                        else timeLeftLabel = `${mins}m left`;
-                                      }
-                                    }
-                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                    if (!hasInfo) return null;
-                                    return (
-                                      <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
-                                        {endDate && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <CalendarIcon size={9} className="shrink-0" />
-                                            {endDate}
-                                          </span>
-                                        )}
-                                        {overdueLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                            <AlertCircle size={9} className="shrink-0" />
-                                            {overdueLabel}
-                                          </span>
-                                        )}
-                                        {timeLeftLabel && (
-                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                            <Clock size={9} className="shrink-0" />
-                                            {timeLeftLabel}
-                                          </span>
-                                        )}
-                                        {effortEst && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <Clock size={9} className="shrink-0" />
-                                            Est: {effortEst}
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                  })()}
-                                </div>
-                              </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {planningItems.length === 0 && !tomorrowScheduledLoading && dedupedTomorrowItems.length === 0 && (
-                      <div className="flex flex-col items-center gap-4 text-center mb-8">
-                        <div className="flex flex-col items-center gap-3 opacity-30">
-                          <Calendar
-                            size={40}
-                            className="text-[#DA7756]/20"
-                          />
-                          <p className="text-base font-bold text-gray-400 tracking-tight">
-                            Plan your next working day!
-                          </p>
-                        </div>
-                        <p className="text-xs text-gray-500 font-medium -mt-2">
-                          List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
-                          to stay focused.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* <div className="mt-4">
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 border-[#DA7756]/30 text-[#DA7756] font-bold text-sm bg-white hover:bg-[#DA7756]/5 rounded-[8px] flex items-center justify-center gap-2"
-                        onClick={addPlanningItem}
-                      >
-                        <Plus size={18} />
-                        Add Item
-                      </Button>
-                    </div> */}
-                  </CardContent>
-                </Card>
+            {isAbsent && (
+              <div className="bc-daily-card">
+                <div className="bc-daily-card-body space-y-4">
+                  <Label className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                    Reason for Absence <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    placeholder="Why are you absent today?"
+                    value={absenceReason}
+                    onChange={(e) => {
+                      markDraftDirty();
+                      setAbsenceReason(e.target.value);
+                    }}
+                    className="h-12 rounded-[10px] border-gray-200 focus:ring-[#DA7756]/20"
+                  />
+                </div>
               </div>
             )}
 
-            {/* Submission Section */}
-            <Card className="rounded-[16px] border border-[#DA7756]/20 shadow-sm bg-white p-6 mt-6">
-              <div className="flex flex-col gap-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="flex-1 w-full space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-bold text-black">
-                        Self Rating (1-10)
-                      </Label>
-                      <span className="text-sm font-black text-[#DA7756]">
-                        {selfRating[0]}/10
-                      </span>
-                    </div>
-                    <Slider
-                      value={selfRating}
-                      onValueChange={(value) => {
-                        markDraftDirty();
-                        setSelfRating(value);
-                      }}
-                      max={10}
-                      step={1}
-                      className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3 bg-[#DA7756]/5 px-4 py-3 rounded-[10px] border border-[#DA7756]/20 min-w-[150px] justify-center">
-                    <Checkbox
-                      id="absent"
-                      checked={isAbsent}
-                      onCheckedChange={(checked) => {
-                        markDraftDirty();
-                        setIsAbsent(checked as boolean);
-                      }}
-                      className="h-5 w-5 rounded-[4px] border-[#DA7756]/40 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
-                    />
-                    <label
-                      htmlFor="absent"
-                      className="text-sm font-bold text-[#1a1a1a] cursor-pointer"
-                    >
-                      Mark as Absent
-                    </label>
-                  </div>
-                </div>
-
-                {isAbsent && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <Label className="text-sm font-bold text-gray-700 flex items-center gap-1">
-                      Reason for Absence <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      placeholder="Why are you absent today?"
-                      value={absenceReason}
-                      onChange={(e) => {
-                        markDraftDirty();
-                        setAbsenceReason(e.target.value);
-                      }}
-                      className="h-12 rounded-[10px] border-gray-200 focus:ring-[#22c55e]/20"
-                    />
-                  </div>
-                )}
-
-                <div className="pt-2">
-                  {submitError && (
-                    <div className="mb-4 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
-                      <AlertCircle size={16} />
-                      {submitError}
-                    </div>
-                  )}
-                  {submitSuccess && (
-                    <div className="mb-4 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-green-100">
-                      <CheckCircle2 size={16} />
-                      {currentReportId
-                        ? "Daily report updated successfully. Redirecting to history..."
-                        : "Daily report submitted successfully. Redirecting to history..."}
-                    </div>
-                  )}
-                  <button
-                    className={cn(
-                      "w-full h-[56px] font-black text-[18px] rounded-[14px] transition-all duration-200 ease-in-out border-none flex items-center justify-center gap-2",
-                      isSubmitting
-                        ? "opacity-60 cursor-not-allowed"
-                        : "cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(218,119,86,0.35)] active:translate-y-0 active:shadow-sm",
-                      currentReportId
-                        ? "!bg-[#c45f3a] hover:!bg-[#b3532f]"
-                        : "!bg-[#DA7756] hover:!bg-[#c45f3a]"
-                    )}
-                    style={{ color: "#ffffff" }}
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2
-                          size={20}
-                          className="animate-spin"
-                          style={{ color: "#ffffff" }}
-                        />
-                        <span style={{ color: "#ffffff" }}>
-                          {currentReportId ? "Updating..." : "Submitting..."}
-                        </span>
-                      </>
-                    ) : (
-                      <span style={{ color: "#ffffff" }}>
-                        {currentReportId ? "Update" : "Submit"} Daily Report
-                        (for {selectedDate} {selectedMonth.slice(0, 3)})
-                      </span>
-                    )}
-                  </button>
-                </div>
+            {submitError && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
+                <AlertCircle size={16} />
+                {submitError}
               </div>
-            </Card>
-
+            )}
+            {submitSuccess && (
+              <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-green-100">
+                <CheckCircle2 size={16} />
+                {currentReportId
+                  ? "Daily report updated successfully. Redirecting to history..."
+                  : "Daily report submitted successfully. Redirecting to history..."}
+              </div>
+            )}
             {!isAbsent &&
               accomplishments.filter((a) => a.completed).length === 0 &&
               autoAddedAccomplishments.length === 0 && (
-                <p className="mt-4 text-xs text-red-500 text-center font-bold animate-in fade-in duration-500">
+                <p className="text-xs text-red-500 text-center font-bold">
                   Please complete at least one accomplishment before submitting
                 </p>
               )}
+            <button
+              type="button"
+              className="bc-submit-btn"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  {currentReportId ? "Updating..." : "Submitting..."}
+                </>
+              ) : (
+                <>
+                  <Send size={18} />
+                  {currentReportId ? "Update" : "Submit"} Daily Report (
+                  {submitDateLabel})
+                </>
+              )}
+            </button>
 
-            {/* Live Score Preview Section */}
             {!isAbsent && (
-              <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Card className="rounded-[16px] border border-[#DA7756]/20 shadow-sm overflow-hidden bg-white">
-                  <CardContent className="p-6 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-[#DA7756]/10 p-1.5 rounded-full">
-                          <Target size={18} className="text-[#DA7756]" />
-                        </div>
-                        <h3 className="text-sm font-bold text-[#1a1a1a] flex items-center gap-1.5">
-                          Live Score Preview
-                          <HelpCircle
-                            size={14}
-                            className="text-[#DA7756]/60 cursor-pointer"
-                          />
-                        </h3>
-                      </div>
-                      <span className="text-3xl font-black text-[#DA7756] tracking-tighter">
-                        {dailyScore.totalScore}/100
-                      </span>
-                    </div>
+              <div
+                className="bc-score-info-bar"
+                onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
+              >
+                <div className="flex items-center gap-2">
+                  <HelpCircle size={16} className="text-[#DA7756]" />
+                  <span className="text-sm font-medium text-gray-600">
+                    How is the Automated Daily score calculated?{" "}
+                    <span className="text-[#DA7756] font-semibold">
+                      Expand to know more
+                    </span>
+                  </span>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={cn(
+                    "text-gray-400 transition-transform",
+                    isScoreInfoExpanded && "rotate-180"
+                  )}
+                />
+              </div>
+            )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {[
-                        {
-                          label: "KPIs",
-                          score: `${dailyScore.kpiScore}/20`,
-                          color: "text-green-600",
-                        },
-                        {
-                          label: "Accomplishments",
-                          score: `${dailyScore.accomplishmentsScore}/20`,
-                          color: "text-purple-600",
-                        },
-                        {
-                          label: "Tasks",
-                          score: `${dailyScore.tasksIssuesScore}/20`,
-                          color: "text-[#ea580c]",
-                        },
-                        {
-                          label: "Planning",
-                          score: `${dailyScore.planningScore}/20`,
-                          color: "text-blue-600",
-                        },
-                        {
-                          label: "Timing",
-                          score: `${dailyScore.timingScore}/20`,
-                          color: "text-orange-600",
-                        },
-                      ].map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-[#fafafa] p-4 rounded-[10px] border border-[#f3f4f6] flex flex-col items-center gap-1 shadow-sm"
-                        >
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                            {item.label}
-                          </span>
-                          <span
-                            className={cn(
-                              "text-xl font-black tracking-tight",
-                              item.color
-                            )}
-                          >
-                            {item.score}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-4 border-t border-[#DA7756]/10">
+            {/* Detailed Score Calculation - collapsible */}
+            {/* {!isAbsent && !isScoreInfoExpanded && (
+              <div className="mt-4 space-y-4">
+                <div className="bc-daily-card">
+                  <div className="bc-daily-card-body">
+                    <div className="pt-2 border-t border-[#DA7756]/10">
                       <div
                         className="flex items-center justify-between text-gray-400 group cursor-pointer hover:text-[#DA7756] transition-colors"
                         onClick={() =>
@@ -4477,13 +6084,16 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
                             {dailyScore.details.accomplishments.itemBreakdown &&
-                              dailyScore.details.accomplishments.itemBreakdown.length >
-                              0 ? (
+                            dailyScore.details.accomplishments.itemBreakdown
+                              .length > 0 ? (
                               <div className="space-y-1.5">
                                 {dailyScore.details.accomplishments.itemBreakdown.map(
                                   (item) => {
-                                    const completedPoints = item.completed ? 3 : 0;
-                                    const starPoints = item.completed && item.starred ? 2 : 0;
+                                    const completedPoints = item.completed
+                                      ? 3
+                                      : 0;
+                                    const starPoints =
+                                      item.completed && item.starred ? 2 : 0;
 
                                     return (
                                       <div
@@ -4512,7 +6122,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             </span>
                                           )}
                                           <span className="font-black text-purple-700">
-                                            Running total: {item.cumulativePoints} pts
+                                            Running total:{" "}
+                                            {item.cumulativePoints} pts
                                           </span>
                                         </div>
                                       </div>
@@ -4529,7 +6140,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       dailyScore.details.accomplishments
                                         .completedItems
                                     }
-                                    /{dailyScore.details.accomplishments.totalItems}{" "}
+                                    /
+                                    {
+                                      dailyScore.details.accomplishments
+                                        .totalItems
+                                    }{" "}
                                     items
                                   </span>
                                 </div>
@@ -4761,7 +6376,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="flex justify-center">
+                    <div className="flex justify-center mt-4">
                       <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-[#DA7756]/5 px-4 py-1.5 rounded-full">
                         <Zap
                           size={12}
@@ -4773,47 +6388,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            <div className="mt-8">
-              <div
-                className={cn(
-                  "bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden transition-all duration-300 shadow-sm",
-                  isScoreInfoExpanded ? "max-h-[3000px]" : "max-h-[80px]"
-                )}
-              >
-                <div
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#DA7756]/10 transition-all border-b border-transparent"
-                  onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-white p-1.5 rounded-full shadow-sm">
-                      <HelpCircle size={18} className="text-[#DA7756]" />
-                    </div>
-                    <span className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                      How is the Automated Daily Score Calculated?
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!isScoreInfoExpanded && (
-                      <span className="text-xs font-bold text-[#DA7756] uppercase tracking-wider">
-                        Click to Expand
-                      </span>
-                    )}
-                    <ChevronRight
-                      size={18}
-                      className={cn(
-                        "text-[#DA7756]/60 transition-transform duration-300",
-                        isScoreInfoExpanded ? "-rotate-90" : "rotate-90"
-                      )}
-                    />
                   </div>
                 </div>
+              </div>
+            )} */}
 
-                {isScoreInfoExpanded && (
+            {isScoreInfoExpanded && (
+              <div className="mt-4">
+                <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden shadow-sm">
                   <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="grid grid-cols-1 gap-6">
                       {[
@@ -5024,7 +6606,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <li className="flex items-start gap-2">
                           <span className="font-bold text-[#DA7756]">•</span>
                           <span>
-                            <span className="font-black text-[#1a1a1a]">No Daily KPIs:</span>{" "}
+                            <span className="font-black text-[#1a1a1a]">
+                              No Daily KPIs:
+                            </span>{" "}
                             Accomplishments, Tasks, Planning, and Timing each
                             get +5 bonus points
                           </span>
@@ -5032,14 +6616,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </ul>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="history" className="mt-0 pt-0">
             {isHistoryLoading ? (
-              <Card className="p-20 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-[16px]">
+              <Card className="bc-history-empty-card">
                 <Loader2
                   size={40}
                   className="text-[#DA7756]/40 animate-spin mb-4"
@@ -5050,16 +6634,13 @@ const BusinessCompassDailyReport: React.FC = () => {
               </Card>
             ) : reportsList.length > 0 ? (
               <div className="space-y-4">
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-5">
                   {reportsList.map((report) => (
-                    <Card
-                      key={report.id}
-                      className="bg-white border border-[#DA7756]/20 rounded-[16px] shadow-sm overflow-hidden transition-all"
-                    >
-                      <div className="p-6">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
-                          <div>
-                            <h2 className="text-xl font-medium text-[#1a1a1a]">
+                    <Card key={report.id} className="bc-history-card">
+                      <div className="bc-history-card-body">
+                        <div className="bc-history-card-header">
+                          <div className="min-w-0">
+                            <h2 className="bc-history-title">
                               {new Date(report.start_date).toLocaleDateString(
                                 "en-US",
                                 {
@@ -5070,13 +6651,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 }
                               )}
                             </h2>
-                            <p className="text-sm text-gray-500 mt-2">
+                            <p className="text-sm text-gray-500 mt-1.5">
                               By: {user?.firstname} {user?.lastname}
                             </p>
                           </div>
-                          <div className="flex items-start gap-4">
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge className="bg-[#f59e0b] hover:bg-[#f59e0b] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                          <div className="bc-history-actions-wrap">
+                            <div className="bc-history-badges">
+                              <Badge className="bc-history-rating-badge">
                                 <Star size={12} className="fill-white" />
                                 {report.report_data?.details?.self_rating ??
                                   report.report_data?.self_rating ??
@@ -5084,13 +6665,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   0}
                                 /10
                               </Badge>
-                              <Badge className="bg-[#dc2626] hover:bg-[#dc2626] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                              <Badge className="bc-history-score-badge">
                                 <Target size={12} className="fill-white" />
                                 {report.report_data?.total_score || 0}/100
                               </Badge>
                               <Badge
                                 variant="outline"
-                                className="text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-[4px] text-[11px] font-medium w-fit mt-1"
+                                className="bc-history-time-badge"
                               >
                                 {new Date(report.created_at).toLocaleTimeString(
                                   "en-US",
@@ -5098,7 +6679,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 )}
                               </Badge>
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="bc-history-action-buttons">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -5126,14 +6707,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     setAccomplishments(
                                       getNonEmptyReportItems(
                                         report.report_data.accomplishments.items
-                                      )
-                                        .map((ach: any, idx: number) => ({
-                                          id: `fetched-ach-${idx}`,
-                                          text: getReportItemText(ach),
-                                          completed: true,
-                                          starred: false,
-                                          fromYesterday: false,
-                                        }))
+                                      ).map((ach: any, idx: number) => ({
+                                        id: `fetched-ach-${idx}`,
+                                        text: getReportItemText(ach),
+                                        completed: true,
+                                        starred: false,
+                                        fromYesterday: false,
+                                      }))
                                     );
                                   } else {
                                     setAccomplishments([]);
@@ -5142,12 +6722,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     setPlanningItems(
                                       getNonEmptyReportItems(
                                         report.report_data.tomorrow_plan
-                                      )
-                                        .map((p: any, idx: number) => ({
-                                          id: `fetched-plan-${idx}`,
-                                          text: getReportItemText(p),
-                                          starred: false,
-                                        }))
+                                      ).map((p: any, idx: number) => ({
+                                        id: `fetched-plan-${idx}`,
+                                        text: getReportItemText(p),
+                                        starred: false,
+                                      }))
                                     );
                                   } else {
                                     setPlanningItems([]);
@@ -5258,8 +6837,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
-                          <div className="flex items-center justify-between mb-3">
+                        <div className="bc-history-score-panel">
+                          <div className="bc-history-section-header">
                             <div className="flex items-center gap-2">
                               <BarChart3 size={14} className="text-[#DA7756]" />
                               <span className="text-xs font-bold text-[#1a1a1a]">
@@ -5270,50 +6849,40 @@ const BusinessCompassDailyReport: React.FC = () => {
                               Total: {report.report_data?.total_score ?? 0}/100
                             </span>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                          <div className="bc-live-score-metrics">
                             {[
                               {
                                 label: "KPIs",
-                                value: report.report_data?.sections?.kpi_achievement ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
+                                value:
+                                  report.report_data?.sections
+                                    ?.kpi_achievement ?? 0,
                               },
                               {
                                 label: "Accomplishments",
-                                value: report.report_data?.sections?.accomplishments ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
+                                value:
+                                  report.report_data?.sections
+                                    ?.accomplishments ?? 0,
                               },
                               {
-                                label: "Tasks & Issues",
-                                value: report.report_data?.sections?.tasks_issues_todos ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
+                                label: "Tasks",
+                                value:
+                                  report.report_data?.sections
+                                    ?.tasks_issues_todos ?? 0,
                               },
                               {
                                 label: "Planning",
-                                value: report.report_data?.sections?.planning ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
+                                value:
+                                  report.report_data?.sections?.planning ?? 0,
                               },
                               {
                                 label: "Timing",
-                                value: report.report_data?.sections?.timing ?? 0,
-                                color: "text-[#DA7756]",
-                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
+                                value:
+                                  report.report_data?.sections?.timing ?? 0,
                               },
-                            ].map(({ label, value, color, bg }) => (
-                              <div
-                                key={label}
-                                className={cn(
-                                  "border rounded-[8px] py-3 px-2 flex flex-col items-center justify-center shadow-sm gap-0.5",
-                                  bg
-                                )}
-                              >
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider text-center">
-                                  {label}
-                                </p>
-                                <p className={cn("text-lg font-black", color)}>
+                            ].map(({ label, value }) => (
+                              <div key={label} className="bc-live-metric">
+                                <p className="bc-live-metric-label">{label}</p>
+                                <p className="bc-live-metric-value">
                                   {value}/20
                                 </p>
                               </div>
@@ -5323,15 +6892,17 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                         {report.report_data?.past_kpis &&
                           report.report_data.past_kpis.length > 0 && (
-                            <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
-                              <div className="flex items-center gap-2 mb-3">
-                                <TrendingUp
-                                  size={14}
-                                  className="text-[#DA7756]"
-                                />
-                                <span className="text-xs font-bold text-[#1a1a1a]">
-                                  Daily KPIs
-                                </span>
+                            <div className="bc-history-section-card mb-6">
+                              <div className="bc-history-section-header">
+                                <div className="flex items-center gap-2">
+                                  <TrendingUp
+                                    size={14}
+                                    className="text-[#DA7756]"
+                                  />
+                                  <span className="text-xs font-bold text-[#1a1a1a]">
+                                    Daily KPIs
+                                  </span>
+                                </div>
                               </div>
                               <div className="space-y-3">
                                 {report.report_data.past_kpis.map(
@@ -5349,10 +6920,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     return (
                                       <div
                                         key={idx}
-                                        className="bg-white border border-amber-100 rounded-[6px] p-3 shadow-sm"
+                                        className="bc-history-list-item"
                                       >
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-sm font-semibold text-gray-800">
+                                        <div className="flex min-w-0 items-center justify-between gap-3 mb-2">
+                                          <span className="min-w-0 truncate text-sm font-semibold text-gray-800">
                                             {kpi.notes}
                                           </span>
                                           <Badge className="bg-[#DA7756]/10 text-[#DA7756] text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
@@ -5418,7 +6989,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           )} */}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                          <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <CheckCircle2
                                 size={16}
@@ -5432,22 +7003,72 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {getNonEmptyReportItems(
                                 report.report_data?.accomplishments?.items
                               ).length ? (
-                                <ul className="space-y-2">
+                                <div className="space-y-3">
                                   {getNonEmptyReportItems(
                                     report.report_data?.accomplishments?.items
-                                  )
-                                    .map((ach: any, idx: number) => (
-                                      <li
+                                  ).map((ach: any, idx: number) => {
+                                    const sourceType =
+                                      ach.source_type ??
+                                      ach.originalData?.source_type ??
+                                      ach.type;
+                                    const sourceId =
+                                      ach.source_id ?? ach.originalData?.id;
+                                    const itemText = getReportItemText(ach);
+                                    const itemDate = fmtDate(
+                                      ach.originalData?.target_date ||
+                                      ach.originalData?.due_date ||
+                                      ach.originalData?.end_date ||
+                                      ach.originalData?.completed_at ||
+                                      ach.originalData?.updated_at
+                                    );
+                                    const estimatedHours = fmtHours(
+                                      ach.originalData?.total_allocated_hours ||
+                                      ach.originalData?.estimated_hour
+                                    );
+
+                                    return (
+                                      <div
                                         key={idx}
-                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="relative group animate-in fade-in duration-200"
                                       >
-                                        <span className="text-gray-400 font-medium">
-                                          ✓
-                                        </span>
-                                        {getReportItemText(ach)}
-                                      </li>
-                                    ))}
-                                </ul>
+                                        <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all">
+                                          <div className="flex items-start gap-3">
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-sm font-medium text-gray-900 break-words">
+                                                {itemText}
+                                              </p>
+                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                  {sourceType ?? "Note"}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            {(sourceType || sourceId) && (
+                                              <div className="flex items-center gap-1 shrink-0">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleViewReportItem(ach)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`View ${sourceType || "item"} details`}
+                                                >
+                                                  <Eye size={14} className="text-[#DA7756]" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleEditReportItem(ach)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`Edit ${sourceType || "item"}`}
+                                                >
+                                                  <Pencil size={13} className="text-gray-500 hover:text-[#DA7756]" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               ) : (
                                 <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">
@@ -5457,7 +7078,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                          <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <Calendar size={16} className="text-[#DA7756]" />
                               <span className="text-sm font-semibold text-[#1a1a1a]">
@@ -5468,22 +7089,82 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {getNonEmptyReportItems(
                                 report.report_data?.tomorrow_plan
                               ).length ? (
-                                <ul className="space-y-2">
+                                <div className="space-y-3">
                                   {getNonEmptyReportItems(
                                     report.report_data?.tomorrow_plan
-                                  )
-                                    .map((task: any, idx: number) => (
-                                      <li
+                                  ).map((task: any, idx: number) => {
+                                    const sourceType =
+                                      task.source_type ??
+                                      task.originalData?.source_type ??
+                                      task.type;
+                                    const sourceId =
+                                      task.source_id ?? task.originalData?.id;
+                                    const itemText = getReportItemText(task);
+                                    const itemDate = fmtDate(
+                                      task.originalData?.target_date ||
+                                      task.originalData?.due_date ||
+                                      task.originalData?.end_date ||
+                                      task.originalData?.completed_at ||
+                                      task.originalData?.updated_at
+                                    );
+                                    const estimatedHours = fmtHours(
+                                      task.originalData?.total_allocated_hours ||
+                                      task.originalData?.estimated_hour
+                                    );
+
+                                    return (
+                                      <div
                                         key={idx}
-                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="relative group animate-in fade-in duration-200"
                                       >
-                                        <span className="text-gray-400 font-bold mt-0.5">
-                                          •
-                                        </span>
-                                        {getReportItemText(task)}
-                                      </li>
-                                    ))}
-                                </ul>
+                                        <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all">
+                                          <div className="flex items-start gap-3">
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-sm font-medium text-gray-900 break-words">
+                                                {itemText}
+                                              </p>
+                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                  {sourceType ?? "Note"}
+                                                </span>
+                                                {itemDate && (
+                                                  <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                    {itemDate}
+                                                  </span>
+                                                )}
+                                                {estimatedHours && (
+                                                  <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                    {estimatedHours}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            {(sourceType || sourceId) && (
+                                              <div className="flex items-center gap-1 shrink-0">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleViewReportItem(task)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`View ${sourceType || "item"} details`}
+                                                >
+                                                  <Eye size={14} className="text-[#DA7756]" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleEditReportItem(task)}
+                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  title={`Edit ${sourceType || "item"}`}
+                                                >
+                                                  <Pencil size={13} className="text-gray-500 hover:text-[#DA7756]" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               ) : (
                                 <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">
@@ -5554,7 +7235,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             </span>
                                           </div>
                                         </div>
-                                        <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                        <Badge className="bg-[#DA7756]/10 text-[#DA7756] border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
                                           {attachment.active
                                             ? "Active"
                                             : "Inactive"}
@@ -5572,9 +7253,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <Card className="p-20 text-center text-gray-400 bg-white border border-gray-100 rounded-[16px] shadow-sm flex flex-col items-center gap-2">
-                <CalendarIcon size={48} className="opacity-10 mb-2" />
-                <p className="text-lg font-bold text-gray-300 tracking-tight">
+              <Card className="bc-history-empty-card">
+                <CalendarIcon size={48} className="text-[#DA7756]/15 mb-2" />
+                <p className="text-lg font-bold text-gray-400 tracking-tight">
                   No report history found for this period
                 </p>
                 <p className="text-sm font-medium text-gray-400/80">
@@ -5623,7 +7304,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                 title: "",
                 description: "",
                 responsible_person: {
-                  id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+                  id: localStorage.getItem("user")
+                    ? JSON.parse(localStorage.getItem("user") || "{}").id
+                    : "",
                 },
                 tags: [],
                 start_date: preFillDate,
@@ -5644,14 +7327,15 @@ const BusinessCompassDailyReport: React.FC = () => {
           title: "",
           description: "",
           responsible_person: {
-            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+            id: localStorage.getItem("user")
+              ? JSON.parse(localStorage.getItem("user") || "{}").id
+              : "",
           },
           tags: [],
           start_date: preFillDate,
           target_date: preFillDate,
         }}
       />
-
 
       <AddToDoModal
         isModalOpen={openTodoModal}
@@ -5664,7 +7348,9 @@ const BusinessCompassDailyReport: React.FC = () => {
           title: "",
           description: "",
           responsible_person: {
-            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+            id: localStorage.getItem("user")
+              ? JSON.parse(localStorage.getItem("user") || "{}").id
+              : "",
           },
           tags: [],
           start_date: preFillDate,
@@ -5969,7 +7655,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       >
         <MenuItem
           onClick={() => {
-            addPlanningItem()
+            addPlanningItem();
             setPlanningMenuAnchor(null);
           }}
           sx={{
@@ -6104,9 +7790,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         <DialogContent className="pt-6">
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Item is Overdue</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                Item is Overdue
+              </h2>
               <p className="text-sm text-gray-600 mt-1">
-                This item is past its target date. Please provide a reason for the delay.
+                This item is past its target date. Please provide a reason for
+                the delay.
               </p>
             </div>
 
@@ -6240,13 +7929,18 @@ const BusinessCompassDailyReport: React.FC = () => {
           <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
-              <h2 className="text-lg font-bold text-gray-900 capitalize">Reopen {pendingReopenItem.type}</h2>
+              <h2 className="text-lg font-bold text-gray-900 capitalize">
+                Reopen {pendingReopenItem.type}
+              </h2>
             </div>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Please provide a reason for reopening this {pendingReopenItem.type}. This will help track the reopen history.
+              Please provide a reason for reopening this{" "}
+              {pendingReopenItem.type}. This will help track the reopen history.
             </p>
             <div className="mb-6">
-              <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                Reason
+              </label>
               <textarea
                 value={reopenReason}
                 onChange={(e) => setReopenReason(e.target.value)}
@@ -6258,7 +7952,10 @@ const BusinessCompassDailyReport: React.FC = () => {
             </div>
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => { setPendingReopenItem(null); setReopenReason(""); }}
+                onClick={() => {
+                  setPendingReopenItem(null);
+                  setReopenReason("");
+                }}
                 disabled={isReopenLoading}
                 className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
               >
@@ -6292,8 +7989,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                   <Play size={18} className="text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                  <p className="text-xs text-gray-500 mt-0.5">This will start the task.</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Are you sure?
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    This will start the task.
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 justify-end">
@@ -6304,7 +8005,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => { const id = pendingPlayTaskId; setPendingPlayTaskId(null); handlePlayTask(id); }}
+                  onClick={() => {
+                    const id = pendingPlayTaskId;
+                    setPendingPlayTaskId(null);
+                    handlePlayTask(id);
+                  }}
                   className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
                 >
                   Start
@@ -6325,8 +8030,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                   <Pause size={18} className="text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
-                  <p className="text-xs text-gray-500 mt-0.5">This will pause the task.</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Are you sure?
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    This will pause the task.
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 justify-end">
@@ -6337,7 +8046,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => { const id = pendingPauseTaskId; setPendingPauseTaskId(null); setPauseTaskId(id); setIsPauseModalOpen(true); }}
+                  onClick={() => {
+                    const id = pendingPauseTaskId;
+                    setPendingPauseTaskId(null);
+                    setPauseTaskId(id);
+                    setIsPauseModalOpen(true);
+                  }}
                   className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
                 >
                   Pause
@@ -6370,7 +8084,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                   <AlertCircle size={20} className="text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Are you sure?
+                  </p>
                   <p className="text-xs text-gray-500 mt-0.5 capitalize">
                     This will {pendingConfirmAction.label}.
                   </p>
@@ -6397,6 +8113,20 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </ModalPortal>
       )}
+
+      {activeTab === "submit" &&
+        createPortal(
+          <button
+            type="button"
+            className="bc-ai-fab"
+            title="AI Suggestions"
+            aria-label="AI Suggestions"
+            onClick={() => setIsAiPopupOpen((open) => !open)}
+          >
+            <AiSparkleIcon className="bc-ai-fab-icon" />
+          </button>,
+          document.body
+        )}
     </div>
   );
 };
@@ -6427,10 +8157,13 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
             <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
           </div>
           <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-            Please provide a reason for pausing this task. This will help track the pause history.
+            Please provide a reason for pausing this task. This will help track
+            the pause history.
           </p>
           <div className="mb-6">
-            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+              Reason
+            </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}

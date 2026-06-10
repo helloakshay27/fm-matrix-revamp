@@ -8,6 +8,7 @@ import {
   Package,
   Settings,
   CheckSquare,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +38,12 @@ interface SelectedAnalytic {
     | "parking_management"
     | "visitor_management"
     | "checklist_management"
-    | "surveys";
+    | "surveys"
+    | "permit_to_work"
+    | "incident_management"
+    | "utility"
+    | "amount_management"
+    | "quickgate_management";
   endpoint: string;
   title: string;
 }
@@ -306,39 +312,38 @@ const executiveAnalyticsOptions = {
     ],
   },
 
-  asset_management: {
-    icon: Package,
-    label: "Asset Management",
-    color: "#06B6D4",
-    options: [
-      {
-        id: "am_company_asset_overview",
-        endpoint: "company_asset_overview",
-        label: "Company Wise Asset Overview",
-      },
-      {
-        id: "am_center_assets_downtime",
-        endpoint: "center_assets_downtime",
-        label: "Center Wise – Assets And Downtime Metrics",
-      },
-      {
-        id: "am_highest_maintenance_assets",
-        endpoint: "highest_maintenance_assets",
-        label: "Assets With Highest Maintenance Spend",
-      },
-      // {
-      //   id: "am_amc_contract_summary",
-      //   endpoint: "amc_contract_summary",
-      //   label: "AMC Contract Summary",
-      // },
-      {
-        id: "am_amc_contract_expiry_90",
-        endpoint: "amc_contract_expiry_90",
-        label: "AMC Contract Summary – Expiry in Days",
-      },
-     
-    ],
-  },
+  // asset_management: {
+  //   icon: Package,
+  //   label: "Asset Management",
+  //   color: "#06B6D4",
+  //   options: [
+  //     {
+  //       id: "am_company_asset_overview",
+  //       endpoint: "company_asset_overview",
+  //       label: "Company Wise Asset Overview",
+  //     },
+  //     {
+  //       id: "am_center_assets_downtime",
+  //       endpoint: "center_assets_downtime",
+  //       label: "Center Wise – Assets And Downtime Metrics",
+  //     },
+  //     {
+  //       id: "am_highest_maintenance_assets",
+  //       endpoint: "highest_maintenance_assets",
+  //       label: "Assets With Highest Maintenance Spend",
+  //     },
+  //     // {
+  //     //   id: "am_amc_contract_summary",
+  //     //   endpoint: "amc_contract_summary",
+  //     //   label: "AMC Contract Summary",
+  //     // },
+  //     {
+  //       id: "am_amc_contract_expiry_90",
+  //       endpoint: "amc_contract_expiry_90",
+  //       label: "AMC Contract Summary – Expiry in Days",
+  //     },
+  //   ],
+  // },
 
   inventory_management: {
     icon: Package,
@@ -350,11 +355,11 @@ const executiveAnalyticsOptions = {
         endpoint: "inventory_overview_summary",
         label: "Overview Summary",
       },
-      {
-        id: "inv_overstock_top10",
-        endpoint: "inventory_overstock_top10",
-        label: "Overstock Analysis – Top 10 Items",
-      },
+      // {
+      //   id: "inv_overstock_top10",
+      //   endpoint: "inventory_overstock_top10",
+      //   label: "Overstock Analysis – Top 10 Items",
+      // },
        {
         id: "consumables_top_center",
         endpoint: "top_consumables_center",
@@ -365,41 +370,201 @@ const executiveAnalyticsOptions = {
         endpoint: "consumable_inventory_value_quarterly",
         label: "Consumable Inventory Value – Comparison",
       },
-    ],
-  },
-
- 
-  checklist_management: {
-    icon: CheckSquare,
-    label: "Checklist Management",
-    color: "#C4B89D",
-    options: [
       {
-        id: "cm_progress_quarterly",
-        endpoint: "cm_progress_quarterly",
-        label: "Checklist Progress Status – Center-Wise Comparison",
+        id: "inv_consumption_report_green",
+        endpoint: "consumption_report_green",
+        label: "Consumption Report – Green",
       },
       {
-        id: "cm_overdue_centerwise",
-        endpoint: "cm_overdue_centerwise",
-        label:
-          "Top 10 Overdue Checklists – Center-wise Contribution Comparison",
+        id: "inv_consumption_report_non_green",
+        endpoint: "consumption_report_non_green",
+        label: "Consumption Report – Non-Green",
       },
     ],
   },
 
-  // parking_management: {
-  //   icon: BarChart3,
-  //   label: "Parking Management",
-  //   color: "#A0B5C1",
+
+  // checklist_management: {
+  //   icon: CheckSquare,
+  //   label: "Checklist Management",
+  //   color: "#C4B89D",
   //   options: [
   //     {
-  //       id: "parking_allocation_overview",
-  //       endpoint: "parking_allocation_overview",
-  //       label: "Parking Allocation Overview – Paid, Free & Vacant",
+  //       id: "cm_progress_quarterly",
+  //       endpoint: "cm_progress_quarterly",
+  //       label: "Checklist Progress Status – Center-Wise Comparison",
+  //     },
+  //     {
+  //       id: "cm_overdue_centerwise",
+  //       endpoint: "cm_overdue_centerwise",
+  //       label:
+  //         "Top 10 Overdue Checklists – Center-wise Contribution Comparison",
   //     },
   //   ],
   // },
+
+  permit_to_work: {
+    icon: BarChart3,
+    label: "Permit To Work",
+    color: "#C72030",
+    options: [
+      {
+        id: "permit_site_wise",
+        endpoint: "site_wise_permits_report",
+        label: "Permit Site Wise Report",
+      },
+      {
+        id: "permit_status",
+        endpoint: "permits_status_data",
+        label: "Permit Status",
+      },
+    ],
+  },
+
+  incident_management: {
+    icon: BarChart3,
+    label: "Incident Management",
+    color: "#C72030",
+    options: [
+      {
+        id: "incident_top_categories",
+        endpoint: "top_categories",
+        label: "Top 5 Category-wise Incidents",
+      },
+      {
+        id: "incident_status_summary",
+        endpoint: "status_summary",
+        label: "Incident Status Distribution",
+      },
+      {
+        id: "incident_level_wise",
+        endpoint: "level_wise",
+        label: "Level Wise Incidents",
+      },
+      {
+        id: "incident_rca_data",
+        endpoint: "rca_data",
+        label: "RCA Data Table",
+      },
+      {
+        id: "incident_body_injury",
+        endpoint: "body_injury_chart",
+        label: "Body Injury Chart",
+      },
+    ],
+  },
+
+  parking_management: {
+    icon: BarChart3,
+    label: "Parking Management",
+    color: "#A0B5C1",
+    options: [
+      {
+        id: "parking_statistics",
+        endpoint: "parking_statistics",
+        label: "Parking Statistics Overview",
+      },
+    ],
+  },
+
+  amount_management: {
+    icon: BarChart3,
+    label: "Amount",
+    color: "#6B5EA8",
+    options: [
+      {
+        id: "amount_overview",
+        endpoint: "top_management_total_amount",
+        label: "Amount Overview",
+      },
+      {
+        id: "amount_client_wise",
+        endpoint: "total_outstanding_amount_client_wise",
+        label: "Client-wise Outstanding",
+      },
+    ],
+  },
+
+  quickgate_management: {
+    icon: CheckSquare,
+    label: "Quick Gate",
+    color: "#D97655",
+    options: [
+      {
+        id: "quickgate_overview",
+        endpoint: "visitor_summary",
+        label: "Gate Pass Overview",
+      },
+      {
+        id: "quickgate_site_wise_visitors",
+        endpoint: "site_wise_visitors",
+        label: "Site-wise Visitor Count",
+      },
+    ],
+  },
+
+  utility: {
+    icon: Zap,
+    label: "Utility Consumption",
+    color: "#10B981",
+    options: [
+      {
+        id: "utility_energy_kpis",
+        endpoint: "energy_kpis",
+        label: "Energy KPIs",
+      },
+      {
+        id: "utility_sub_meter_sources",
+        endpoint: "sub_meter_sources",
+        label: "Sub Meter Sources",
+      },
+      {
+        id: "utility_site_wise_power",
+        endpoint: "site_wise_power",
+        label: "Site Wise Power",
+      },
+      {
+        id: "utility_water_kpis",
+        endpoint: "water_kpis",
+        label: "Water KPIs",
+      },
+      {
+        id: "utility_source_breakdown",
+        endpoint: "source_breakdown",
+        label: "Source Breakdown",
+      },
+      {
+        id: "utility_site_wise_water",
+        endpoint: "site_wise_water",
+        label: "Site Wise Water",
+      },
+      {
+        id: "utility_water_time_series",
+        endpoint: "water_time_series",
+        label: "Water Consumption Time Series",
+      },
+      {
+        id: "utility_carbon_emission",
+        endpoint: "carbon_emission",
+        label: "Carbon Emission Scopes",
+      },
+      {
+        id: "utility_energy_intensity",
+        endpoint: "energy_intensity",
+        label: "Energy Intensity",
+      },
+      {
+        id: "utility_site_wise_ev_consumption",
+        endpoint: "site_wise_ev_consumption",
+        label: "Site Wise EV Consumption",
+      },
+      {
+        id: "utility_site_wise_dry_waste_segregation",
+        endpoint: "site_wise_dry_waste_segregation",
+        label: "Site Wise Waste Segregation",
+      },
+    ],
+  },
 
   // visitor_management: {
   //   icon: BarChart3,

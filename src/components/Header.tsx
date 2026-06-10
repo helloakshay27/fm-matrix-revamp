@@ -908,7 +908,7 @@ export const Header = () => {
               {/* Menu Items */}
               <div className="py-1">
                 <DropdownMenuItem
-                  onClick={() => navigate("/profile")}
+                  onClick={() => navigate("/business-compass/profile")}
                   className="mx-2 my-1 rounded-md"
                 >
                   <User className="w-4 h-4 mr-2 text-gray-500" />

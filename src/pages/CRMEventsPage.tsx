@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation} from 'react-router-dom';
 import { format } from 'date-fns';
 import { Plus, Edit, Calendar, IndianRupee, CalendarCheck, AlertCircle, CalendarClock, FileCheck, CalendarRange } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -21,19 +21,29 @@ export const CRMEventsPage = () => {
   const token = localStorage.getItem("token");
 
   const { loading } = useAppSelector(state => state.fetchEvents)
-
+  const location = useLocation();
   const [events, setEvents] = useState([])
   const [searchTerm, setSearchTerm] = useState('');
+
   const [filters, setFilters] = useState({
     status: '',
     created_at: '',
     created_by: '',
   });
-  const [pagination, setPagination] = useState({
-    current_page: 1,
+  // const [pagination, setPagination] = useState({
+  //   current_page: 1,
+  //   total_count: 0,
+  //   total_pages: 0,
+  // });
+const [pagination, setPagination] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    current_page: Number(params.get('page')) || 1,
     total_count: 0,
     total_pages: 0,
-  });
+  };
+});
+
   const [openFilterModal, setOpenFilterModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [cardData, setCardData] = useState({
@@ -68,6 +78,14 @@ export const CRMEventsPage = () => {
   });
 
   useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const urlPage = Number(params.get('page')) || 1;
+  if (urlPage !== pagination.current_page) {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+  }
+}, [pagination.current_page]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await dispatch(fetchEvents({ baseUrl, token, page: pagination.current_page, per_page: 10 })).unwrap();
@@ -87,19 +105,19 @@ export const CRMEventsPage = () => {
           pending_requests: stats.pending_requests || "0",
           total_registrations: stats.total_registrations || "0"
         });
-        setPagination({
-          current_page: response.pagination.current_page,
-          total_count: response.pagination.total_count,
-          total_pages: response.pagination.total_pages
-        })
-      } catch (error) {
-        console.log(error);
-        toast.error('Failed to fetch data');
-      }
+      setPagination((prev) => ({
+        ...prev,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages
+      }))
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to fetch data');
     }
+  };
 
     fetchData();
-  }, [])
+  }, [pagination.current_page]); 
 
   const columns = [
     { key: 'event_name', label: 'Event Name', sortable: true, defaultVisible: true },
@@ -305,25 +323,44 @@ export const CRMEventsPage = () => {
     }
   };
 
+  // const handlePageChange = async (page: number) => {
+  //   setPagination((prev) => ({
+  //     ...prev,
+  //     current_page: page,
+  //   }));
+  //   try {
+  //     const response = await dispatch(fetchEvents({ baseUrl, token, page: page, per_page: 10 })).unwrap();
+  //     const mappedEvents = (response.classifieds || response.events).map(mapEventData);
+  //     setEvents(mappedEvents);
+  //     setPagination({
+  //       current_page: response.pagination.current_page,
+  //       total_count: response.pagination.total_count,
+  //       total_pages: response.pagination.total_pages
+  //     })
+  //   } catch (error) {
+  //     toast.error('Failed to fetch bookings');
+  //   }
+  // };
+
   const handlePageChange = async (page: number) => {
+  navigate(`${location.pathname}?page=${page}`, { replace: true });
+  setPagination((prev) => ({
+    ...prev,
+    current_page: page,
+  }));
+  try {
+    const response = await dispatch(fetchEvents({ baseUrl, token, page: page, per_page: 10 })).unwrap();
+    const mappedEvents = (response.classifieds || response.events).map(mapEventData);
+    setEvents(mappedEvents);
     setPagination((prev) => ({
       ...prev,
-      current_page: page,
-    }));
-    try {
-      const response = await dispatch(fetchEvents({ baseUrl, token, page: page, per_page: 10 })).unwrap();
-      const mappedEvents = (response.classifieds || response.events).map(mapEventData);
-      setEvents(mappedEvents);
-      setPagination({
-        current_page: response.pagination.current_page,
-        total_count: response.pagination.total_count,
-        total_pages: response.pagination.total_pages
-      })
-    } catch (error) {
-      toast.error('Failed to fetch bookings');
-    }
-  };
-
+      total_count: response.pagination.total_count,
+      total_pages: response.pagination.total_pages
+    }))
+  } catch (error) {
+    toast.error('Failed to fetch bookings');
+  }
+};
   const renderPaginationItems = () => {
     if (!pagination.total_pages || pagination.total_pages <= 0) {
       return null;

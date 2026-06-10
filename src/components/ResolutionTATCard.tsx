@@ -143,30 +143,32 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
             
             {/* Summary Table */}
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-sm border-collapse border border-gray-300">
-                <thead>
-                  <tr style={{ backgroundColor: '#D97655' }}>
-                    <th className="border border-gray-300 p-2 text-left text-white">Category</th>
-                    <th className="border border-gray-300 p-2 text-center text-white">Breached</th>
-                    <th className="border border-gray-300 p-2 text-center text-white">Achieved</th>
-                    <th className="border border-gray-300 p-2 text-center text-white">Total</th>
-                    <th className="border border-gray-300 p-2 text-center text-white">% Breached</th>
-                    <th className="border border-gray-300 p-2 text-center text-white">% Achieved</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chartData.map((item, index) => (
-                    <tr key={index} className="bg-white">
-                      <td className="border border-gray-300 p-2">{item.category}</td>
-                      <td className="border border-gray-300 p-2 text-center text-red-600">{item.breached}</td>
-                      <td className="border border-gray-300 p-2 text-center text-green-600">{item.achieved}</td>
-                      <td className="border border-gray-300 p-2 text-center font-medium">{item.total}</td>
-                      <td className="border border-gray-300 p-2 text-center text-red-600">{item.percentage_breached.toFixed(1)}%</td>
-                      <td className="border border-gray-300 p-2 text-center text-green-600">{item.percentage_achieved.toFixed(1)}%</td>
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Category</th>
+                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breached</th>
+                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Achieved</th>
+                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
+                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>% Breached</th>
+                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>% Achieved</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {chartData.map((item, index) => (
+                      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left font-medium text-gray-800">{item.category}</td>
+                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-red-600">{item.breached}</td>
+                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-green-600">{item.achieved}</td>
+                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left font-medium">{item.total}</td>
+                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-red-600">{item.percentage_breached.toFixed(1)}%</td>
+                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-green-600">{item.percentage_achieved.toFixed(1)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         ) : (
