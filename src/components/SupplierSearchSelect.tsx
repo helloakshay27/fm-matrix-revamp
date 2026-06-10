@@ -146,27 +146,36 @@ const fetchSupplierById = async (
 
 const buildSelectStyles = (
   hasError: boolean,
-  size: 'default' | 'compact' | 'schedule' = 'default'
+  size: 'default' | 'compact' | 'schedule' = 'default',
+  menuWidth?: number
 ): StylesConfig<ReactSelectOption, false> => {
   const isSchedule = size === 'schedule';
   const isCompact = size === 'compact';
-  const controlHeight = isCompact || isSchedule ? 40 : 56;
-  const focusColor = isSchedule || isCompact ? '#da7756' : '#C72030';
-  const borderDefault = isSchedule || isCompact ? '#ddd' : '#c4c4c4';
+  const controlHeight = isSchedule ? 45 : isCompact ? 40 : 56;
+  const focusColor = isSchedule ? '#1976d2' : isCompact ? '#da7756' : '#C72030';
+  const borderDefault = isSchedule ? '#999' : isCompact ? '#ddd' : '#c4c4c4';
 
   return {
   control: (base, state) => ({
     ...base,
     minHeight: controlHeight,
     height: controlHeight,
-    fontSize: isCompact ? 14 : base.fontSize,
+    width: '100%',
+    fontSize: isCompact || isSchedule ? 14 : base.fontSize,
     borderRadius: 4,
     borderColor: hasError ? '#d32f2f' : state.isFocused ? focusColor : borderDefault,
     boxShadow: 'none',
     backgroundColor: '#fff',
     '&:hover': {
-      borderColor: focusColor,
+      borderColor: hasError ? '#d32f2f' : focusColor,
     },
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
   }),
   valueContainer: (base) => ({
     ...base,
@@ -193,6 +202,14 @@ const buildSelectStyles = (
   menu: (base) => ({
     ...base,
     zIndex: 9999,
+    boxSizing: 'border-box',
+    ...(menuWidth
+      ? {
+          width: menuWidth,
+          minWidth: menuWidth,
+          maxWidth: menuWidth,
+        }
+      : { width: '100%', minWidth: '100%', maxWidth: '100%' }),
   }),
   menuList: (base) => ({
     ...base,
@@ -205,6 +222,9 @@ const buildSelectStyles = (
     color: '#000',
     cursor: 'pointer',
     padding: '8px 12px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }),
   placeholder: (base) => ({
     ...base,
@@ -230,6 +250,8 @@ export interface SupplierSearchSelectProps {
   required?: boolean;
   /** `schedule` = matches Add Schedule TextField/Select (outlined, 56px) */
   size?: 'default' | 'compact' | 'schedule';
+  /** When true, menu renders inline instead of portaling to document.body */
+  disablePortal?: boolean;
 }
 
 export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
@@ -241,10 +263,12 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
   helperText,
   label = 'Supplier',
   size = 'default',
+  disablePortal = false,
 }) => {
   const isCompact = size === 'compact';
   const isSchedule = size === 'schedule';
   const inputId = 'supplier-search-select-input';
+  const controlRef = useRef<HTMLDivElement>(null);
   const [options, setOptions] = useState<ReactSelectOption[]>([]);
   const [selected, setSelected] = useState<ReactSelectOption | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -526,7 +550,7 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
     const List = (
       props: MenuListProps<ReactSelectOption, false, GroupBase<ReactSelectOption>>
     ) => {
-      const { children, maxHeight } = props;
+      const { children, maxHeight, innerRef } = props;
       const scrollRef = useRef<HTMLDivElement>(null);
       const childrenArray = useMemo(
         () => Children.toArray(children),
@@ -537,6 +561,19 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
         MENU_MAX_HEIGHT
       );
 
+      const setScrollRef = useCallback(
+        (node: HTMLDivElement | null) => {
+          scrollRef.current = node;
+          if (typeof innerRef === 'function') {
+            innerRef(node);
+          } else if (innerRef && typeof innerRef === 'object') {
+            (innerRef as React.MutableRefObject<HTMLDivElement | null>).current =
+              node;
+          }
+        },
+        [innerRef]
+      );
+
       const virtualizer = useVirtualizer({
         count: childrenArray.length,
         getScrollElement: () => scrollRef.current,
@@ -544,9 +581,9 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
         overscan: 8,
       });
 
-      const handleScroll = () => {
-        const el = scrollRef.current;
-        if (!el) return;
+      const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        props.innerProps?.onScroll?.(e);
+        const el = e.currentTarget;
         const nearBottom =
           el.scrollHeight - el.scrollTop - el.clientHeight <
           ROW_HEIGHT * LOAD_MORE_THRESHOLD;
@@ -562,43 +599,44 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
       return (
         <components.MenuList
           {...props}
+          innerRef={setScrollRef}
           innerProps={{
             ...props.innerProps,
-            style: { padding: 0 },
+            onScroll: handleScroll,
+            onWheel: (e: React.WheelEvent<HTMLDivElement>) => {
+              e.stopPropagation();
+              props.innerProps?.onWheel?.(e);
+            },
+            style: {
+              ...props.innerProps?.style,
+              padding: 0,
+              maxHeight: listHeight,
+              overflow: 'auto',
+            },
           }}
         >
           <div
-            ref={scrollRef}
-            onScroll={handleScroll}
             style={{
-              maxHeight: listHeight,
-              overflow: 'auto',
+              height: virtualizer.getTotalSize(),
               width: '100%',
+              position: 'relative',
             }}
           >
-            <div
-              style={{
-                height: virtualizer.getTotalSize(),
-                width: '100%',
-                position: 'relative',
-              }}
-            >
-              {virtualizer.getVirtualItems().map((virtualRow) => (
-                <div
-                  key={virtualRow.key}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: ROW_HEIGHT,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
-                  {childrenArray[virtualRow.index]}
-                </div>
-              ))}
-            </div>
+            {virtualizer.getVirtualItems().map((virtualRow) => (
+              <div
+                key={virtualRow.key}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: ROW_HEIGHT,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                {childrenArray[virtualRow.index]}
+              </div>
+            ))}
           </div>
         </components.MenuList>
       );
@@ -614,32 +652,69 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
 
   const isLoading = initialLoading || menuLoading;
 
+  const selectStyles = useMemo(() => {
+    const baseStyles = buildSelectStyles(error, size);
+    return {
+      ...baseStyles,
+      container: (base) => ({
+        ...base,
+        width: '100%',
+      }),
+      menu: (base) => {
+        const measuredWidth = controlRef.current?.getBoundingClientRect().width;
+        const menuBase = {
+          ...base,
+          zIndex: 9999,
+          boxSizing: 'border-box' as const,
+        };
+        if (!measuredWidth) {
+          return {
+            ...menuBase,
+            width: '100%',
+            minWidth: '100%',
+            maxWidth: '100%',
+          };
+        }
+        return {
+          ...menuBase,
+          width: measuredWidth,
+          minWidth: measuredWidth,
+          maxWidth: measuredWidth,
+        };
+      },
+    };
+  }, [error, size]);
+
   const selectControl = (
-    <Select
-      inputId={isSchedule ? inputId : undefined}
-      options={options}
-      value={selected}
-      onChange={handleSelectChange}
-      onInputChange={handleInputChange}
-      components={selectComponents}
-      isDisabled={disabled || initialLoading}
-      isLoading={isLoading}
-      isClearable
-      placeholder={
-        initialLoading ? 'Loading suppliers...' : 'Select Supplier'
-      }
-      isSearchable
-      filterOption={() => true}
-      menuPortalTarget={
-        typeof document !== 'undefined' ? document.body : null
-      }
-      menuPosition="fixed"
-      styles={buildSelectStyles(error, size)}
-      noOptionsMessage={() =>
-        isLoading ? 'Loading suppliers...' : 'No suppliers found'
-      }
-      loadingMessage={() => 'Loading suppliers...'}
-    />
+    <div ref={controlRef} style={{ width: '100%' }}>
+      <Select
+        inputId={isSchedule ? inputId : undefined}
+        options={options}
+        value={selected}
+        onChange={handleSelectChange}
+        onInputChange={handleInputChange}
+        components={selectComponents}
+        isDisabled={disabled || initialLoading}
+        isLoading={isLoading}
+        isClearable
+        placeholder={
+          initialLoading ? 'Loading suppliers...' : 'Select Supplier'
+        }
+        isSearchable
+        filterOption={() => true}
+        menuPortalTarget={
+          disablePortal || typeof document === 'undefined'
+            ? null
+            : document.body
+        }
+        menuPosition={disablePortal ? 'absolute' : 'fixed'}
+        styles={selectStyles}
+        noOptionsMessage={() =>
+          isLoading ? 'Loading suppliers...' : 'No suppliers found'
+        }
+        loadingMessage={() => 'Loading suppliers...'}
+      />
+    </div>
   );
 
   if (isSchedule) {
@@ -647,7 +722,11 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
       <FormControl
         fullWidth
         error={error}
-        sx={{ mt: 1, position: 'relative' }}
+        sx={{
+          position: 'relative',
+          height: '45px',
+          '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' },
+        }}
       >
         {label ? (
           <InputLabel
@@ -663,6 +742,7 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
               backgroundColor: '#fff',
               px: 0.5,
               pointerEvents: 'none',
+              '&.Mui-focused': { color: '#1976d2' },
             }}
           >
             {label}
