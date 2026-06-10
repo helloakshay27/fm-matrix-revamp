@@ -213,7 +213,7 @@ const ExpenseDetailsReport: React.FC = () => {
         <span />
       ) : (
         <button
-          onClick={() => navigate(`/accounting/expenses/${row.id}`)}
+          onClick={() => navigate(`/accounting/expense/${row.id}`)}
           className="text-sm font-medium !text-blue-600 hover:underline text-left"
         >
           {row.transaction_number}

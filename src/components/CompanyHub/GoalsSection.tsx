@@ -97,7 +97,7 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ className = "" }) => {
     return (
       <div className={`space-y-6 ${className}`}>
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black text-gray-800 tracking-tight">
+          <h2 className="text-[18px] font-semibold text-gray-800 tracking-tight">
             Goals
           </h2>
         </div>
@@ -120,14 +120,14 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ className = "" }) => {
     return (
       <div className={`space-y-6 ${className}`}>
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black text-gray-800 tracking-tight">
+          <h2 className="text-[18px] font-semibold text-gray-800 tracking-tight">
             Goals
           </h2>
         </div>
         <Card>
           <CardContent className="p-8 text-center">
             <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load goals</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to load goals</h3>
             <p className="text-gray-600">{error}</p>
           </CardContent>
         </Card>
@@ -141,7 +141,7 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ className = "" }) => {
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-black text-gray-800 tracking-tight">
+        <h2 className="text-[18px] font-semibold text-gray-800 tracking-tight">
           Goals
         </h2>
         <Button variant="outline" size="sm" className="flex items-center gap-2">
@@ -291,7 +291,7 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ className = "" }) => {
         <Card>
           <CardContent className="p-8 text-center">
             <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No goals yet</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No goals yet</h3>
             <p className="text-gray-600 mb-4">Start by creating your first goal to track progress</p>
             <Button>Create Goal</Button>
           </CardContent>

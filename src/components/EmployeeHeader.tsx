@@ -316,7 +316,7 @@ export const EmployeeHeader: React.FC = () => {
   };
 
   const handleProfileClick = () => {
-    navigate("/profile");
+    navigate("/business-compass/profile");
   };
 
   const handleSettingsClick = () => {

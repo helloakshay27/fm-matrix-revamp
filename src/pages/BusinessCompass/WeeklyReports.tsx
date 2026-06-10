@@ -147,8 +147,8 @@ const btnOutline =
 const badgePoints =
     "shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[11px] font-bold text-[#343066] hover:bg-[#ddd8ff]";
 
-const weeklyReportAnimationStyles = `
-@keyframes weeklyScoreColorSweep {
+const weeklyAiSuggestionStyles = `
+@keyframes weeklyAiSuggestionColorSweep {
   0%, 100% {
     background-position: 100% 50%;
     border-color: transparent;
@@ -161,7 +161,7 @@ const weeklyReportAnimationStyles = `
   }
 }
 
-@keyframes weeklyScoreTextPulse {
+@keyframes weeklyAiSuggestionTextPulse {
   0%, 100% {
     color: #DA7756;
   }
@@ -170,19 +170,26 @@ const weeklyReportAnimationStyles = `
   }
 }
 
-.weekly-score-tile {
+.weekly-ai-suggestions-card {
   background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--score-accent) / 0.16) 100%);
   background-size: 220% 220%;
-  animation: weeklyScoreColorSweep 2.6s ease-in-out infinite;
+  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
 }
 
-.weekly-score-value {
-  animation: weeklyScoreTextPulse 2.6s ease-in-out infinite;
+.weekly-ai-suggestions-text {
+  animation: weeklyAiSuggestionTextPulse 2.6s ease-in-out infinite;
+}
+
+.weekly-ai-suggestion-item {
+  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--suggestion-accent) / 0.16) 100%);
+  background-size: 220% 220%;
+  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weekly-score-tile,
-  .weekly-score-value {
+  .weekly-ai-suggestions-card,
+  .weekly-ai-suggestions-text,
+  .weekly-ai-suggestion-item {
     animation: none;
   }
 }
@@ -280,6 +287,43 @@ const normalizeToString = (w: any): string => {
     return String(w ?? "");
 };
 
+const getWeeklyHistoryItemText = (item: any): string => {
+    if (typeof item === "string") return item;
+    if (item && typeof item === "object") {
+        return String(item.title || item.text || item.name || item.description || "");
+    }
+    return String(item ?? "");
+};
+
+const getWeeklyHistoryItemType = (item: any): "task" | "issue" | "todo" | "notes" => {
+    if (!item || typeof item === "string") return "notes";
+
+    const rawType = String(
+        item.source_type ||
+        item.sourceType ||
+        item.type ||
+        item.originalData?.source_type ||
+        item.originalData?.type ||
+        ""
+    ).toLowerCase();
+
+    const rawId = String(item.id || item.source_id || "").toLowerCase();
+
+    if (rawType.includes("task") || rawId.startsWith("task-") || rawId.startsWith("nw-task-")) return "task";
+    if (rawType.includes("issue") || rawId.startsWith("issue-") || rawId.startsWith("nw-issue-")) return "issue";
+    if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-") || rawId.startsWith("nw-todo-")) return "todo";
+
+    return "notes";
+};
+
+const weeklyHistoryTypeBadgeMeta = {
+    task: { label: "Task", className: "border-[#f4c7b8] bg-[#fff3ee] text-[#b85f43]" },
+    issue: { label: "Issue", className: "border-[#d9d5ff] bg-[#f4f2ff] text-[#5b57a6]" },
+    todo: { label: "To Do", className: "border-[#ead9b8] bg-[#fff8ea] text-[#8a6426]" },
+    notes: { label: "Notes", className: "border-[#e2e5ea] bg-[#f8fafc] text-[#64748b]" },
+} as const;
+
+
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
 
 const normalizeSopStatus = (status: any) =>
@@ -324,6 +368,16 @@ const formatSopDate = (value: any) => {
     if (Number.isNaN(date.getTime())) return "Not available";
     return format(date, "dd MMM yyyy, hh:mm a");
 };
+
+const taskIssueGroupKeys = [
+    "overdue",
+    "in_progress",
+    "pending",
+    "on_hold",
+    "reopened",
+] as const;
+type TaskIssueGroupKey = (typeof taskIssueGroupKeys)[number];
+const taskIssueGroupKeySet = new Set<string>(taskIssueGroupKeys);
 
 const roundScore = (score: number) => Number(score.toFixed(2));
 
@@ -2772,14 +2826,6 @@ const WeeklyReports = () => {
                 "Average weekly KPI achievement converted directly into 20 points.",
         },
         {
-            label: "Daily KPI",
-            score: weeklyScore.breakdown.dailyKpi,
-            max: 10,
-            icon: <Activity className="h-3 w-3" />,
-            calculation:
-                "Daily KPI average: 100% = 10, 90-99% = 7, 70-89% = 4, below 70% = 0.",
-        },
-        {
             label: "Achievements",
             score: weeklyScore.breakdown.achievements,
             max: 6,
@@ -2833,6 +2879,26 @@ const WeeklyReports = () => {
         });
     };
 
+    const openOnlyTaskIssueGroup = (activeKey: TaskIssueGroupKey) => {
+        setCollapsedGroups((prev) => {
+            const next = new Set(
+                [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+            );
+            taskIssueGroupKeys.forEach((key) => {
+                if (key !== activeKey) next.add(key);
+            });
+            return next;
+        });
+    };
+
+    const openAllTaskIssueGroups = () => {
+        setCollapsedGroups((prev) => {
+            return new Set(
+                [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+            );
+        });
+    };
+
     const scrollToAccomplishmentsSection = () => {
         accomplishmentsSectionRef.current?.scrollIntoView({
             behavior: "smooth",
@@ -2848,8 +2914,8 @@ const WeeklyReports = () => {
     };
 
     return (
-        <div className="bg-white px-4 pt-6 pb-0 sm:px-6">
-            <style>{weeklyReportAnimationStyles}</style>
+        <div className="mb-5 bg-white px-4 pt-6 pb-0 sm:px-6">
+            <style>{weeklyAiSuggestionStyles}</style>
             {addTaskOpen && (
                 <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
             )}
@@ -2947,86 +3013,7 @@ const WeeklyReports = () => {
                     </TabsList>
 
                     <TabsContent value="submit" className="mb-0 mt-0 space-y-5 pb-0 [&>*:last-child]:mb-0">
-                        <Card
-                            className="weekly-score-tile overflow-hidden rounded-[22px] border border-[#f0e7e1] bg-white p-5 shadow-[0_12px_40px_rgba(218,119,86,0.18)]"
-                            style={{ "--score-accent": "218 119 86" } as React.CSSProperties}
-                        >
-                            <div className="mb-4 flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#DA7756] text-white">
-                                        <Zap className="h-4 w-4" />
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="weekly-score-value text-sm font-bold text-[#111111]">
-                                            AI Suggestions
-                                        </h3>
-                                        <span className="text-xs text-[#55515a]">
-                                            Focus areas to improve your weekly report
-                                        </span>
-                                    </div>
-                                </div>
-                                <Badge className={cn(badgePoints, "weekly-score-value")}>3 insights</Badge>
-                            </div>
-                            <div className="grid gap-3 md:grid-cols-3">
-                                {[
-                                    {
-                                        title: `${overdueSuggestionItems.length} Overdue Tasks`,
-                                        action: "View Tasks",
-                                        body:
-                                            overdueSuggestionItems.length > 0
-                                                ? overdueSuggestionItems
-                                                    .slice(0, 3)
-                                                    .map((item: any) => item.title)
-                                                    .join(", ")
-                                                : "No overdue tasks found for this week.",
-                                        icon: <Clock className="h-4 w-4 text-[#DA7756]" />,
-                                        accent: "218 119 86",
-                                        onAction: scrollToTasksIssuesSection,
-                                    },
-                                    {
-                                        title: "Boost Accomplishments",
-                                        action: "Add Tasks",
-                                        body: "Your rate improves when completed priorities are captured as weekly wins.",
-                                        icon: <TrendingUp className="h-4 w-4 text-teal-500" />,
-                                        accent: "20 184 166",
-                                        onAction: scrollToAccomplishmentsSection,
-                                    },
-                                    {
-                                        title: "Fill Your Daily Plan",
-                                        action: "Open Plan",
-                                        body: "Set strategic priorities before the day ends to improve score and planning accuracy.",
-                                        icon: <Clock className="h-4 w-4 text-[#DA7756]" />,
-                                        accent: "139 92 246",
-                                        onAction: scrollToPlanSection,
-                                    },
-                                ].map((item: any) => (
-                                    <div
-                                        key={item.title}
-                                        className="rounded-[10px] border border-[#e9e4df] bg-white p-4"
-                                    >
-                                        <div className="mb-2 flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-2">
-                                                {item.icon}
-                                                <h4 className="text-xs font-bold text-[#111111]">
-                                                    {item.title}
-                                                </h4>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={item.onAction}
-                                                className="text-[11px] font-medium text-[#DA7756] disabled:cursor-default"
-                                                disabled={!item.onAction}
-                                            >
-                                                {item.action}
-                                            </button>
-                                        </div>
-                                        <p className="text-xs leading-relaxed text-[#6f6b73]">
-                                            {item.body}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
+                      
 
                         {/* Past Weeks KPIs */}
                         <Card ref={planSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
@@ -3192,122 +3179,11 @@ const WeeklyReports = () => {
                             </div>
                         </Card>
 
-                        {/* Daily KPI Achievement */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
-                            <div
-                                className={cn(
-                                    "flex items-start justify-between",
-                                    sectionHeader
-                                )}
-                            >
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <Activity className="h-5 w-5 text-[#DA7756]" />
-                                        <h3 className="font-bold text-neutral-900">
-                                            Daily KPI Summary - Week of{" "}
-                                            {dailyKpiSummary?.week_start
-                                                ? format(new Date(dailyKpiSummary.week_start), "MMM d")
-                                                : "..."}
-                                        </h3>
-                                    </div>
-                                    <p className="text-xs text-neutral-600">
-                                        Average achievement across daily KPIs submitted this week.
-                                    </p>
-                                </div>
-                                <Badge className={badgePoints}>
-                                    {weeklyScore.breakdown.dailyKpi}/10 pts
-                                </Badge>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-neutral-100 bg-slate-50/50">
-                                            <th className="px-4 py-3 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-                                                KPI
-                                            </th>
-                                            {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
-                                                <th
-                                                    key={i}
-                                                    className="px-2 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase"
-                                                >
-                                                    {day}
-                                                </th>
-                                            ))}
-                                            <th className="px-4 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase bg-slate-100/50">
-                                                Target
-                                            </th>
-                                            <th className="px-4 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase bg-slate-100/50">
-                                                Actual
-                                            </th>
-                                            <th className="px-4 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase bg-slate-100/50">
-                                                Ach %
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-neutral-100">
-                                        {dailyKpiSummary?.kpis?.map((kpi: any) => (
-                                            <tr key={kpi.kpi_id} className="hover:bg-neutral-50/30">
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-neutral-900">
-                                                            {kpi.kpi_name}
-                                                        </span>
-                                                        <span className="text-[10px] text-neutral-400 font-medium bg-neutral-100 w-fit px-1.5 py-0.5 rounded mt-1">
-                                                            {kpi.unit}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map(
-                                                    (day) => (
-                                                        <td
-                                                            key={day}
-                                                            className="px-2 py-3 text-center text-xs text-neutral-500 font-medium"
-                                                        >
-                                                            {kpi.daily_values?.[day] ?? "-"}
-                                                        </td>
-                                                    )
-                                                )}
-                                                <td className="px-4 py-3 text-center text-xs font-bold text-neutral-900 bg-slate-50/30">
-                                                    {kpi.target_value}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-xs font-bold text-neutral-900 bg-slate-50/30">
-                                                    {kpi.actual_value}
-                                                </td>
-                                                <td className="px-4 py-3 text-center bg-slate-50/30">
-                                                    <span
-                                                        className={cn(
-                                                            "inline-flex items-center justify-center px-2 py-1 rounded-[5px] text-[10px] font-bold text-white min-w-[35px]",
-                                                            parseFloat(kpi.achievement_percentage) >= 100
-                                                                ? "bg-green-600"
-                                                                : parseFloat(kpi.achievement_percentage) >= 70
-                                                                    ? "bg-amber-500"
-                                                                    : "bg-red-600"
-                                                        )}
-                                                    >
-                                                        {Math.round(kpi.achievement_percentage)}%
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {!dailyKpiSummary?.kpis?.length && (
-                                            <tr>
-                                                <td
-                                                    colSpan={11}
-                                                    className="px-6 py-10 text-center text-sm text-neutral-400 italic"
-                                                >
-                                                    Daily KPI data will be fetched automatically from
-                                                    submitted reports.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </Card>
+
 
                         <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr]">
                         {/* Achievements */}
-                        <Card ref={accomplishmentsSectionRef} className={cn("scroll-mt-24 overflow-hidden pb-4", cardChrome)}>
+                        <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
                             <div
                                 className={cn(
                                     "flex items-center justify-between",
@@ -3335,6 +3211,17 @@ const WeeklyReports = () => {
                                 </div>
                             </div>
                             <div className="space-y-3 px-5 pb-5 max-h-[360px] overflow-y-auto">
+                                {wins.length === 0 && !mergedTasksIssues.some((item: any) => ["completed", "closed", "done"].includes(item.status)) && (
+                                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fdf8f5] mb-3">
+                                            <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                        </div>
+                                        <p className="text-sm font-semibold text-neutral-900">No accomplishments yet</p>
+                                        <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
+                                            Add your weekly wins or complete tasks to see them here.
+                                        </p>
+                                    </div>
+                                )}
                                 {wins.map((win, index) => winDates[index] ? null : (
                                     <div
                                         key={index}
@@ -3687,7 +3574,33 @@ const WeeklyReports = () => {
                                     );
                                 })()}
 
-                                <div className="space-y-4 pt-4 border-t border-neutral-100">
+                            </div>
+
+                            <div className="mt-auto space-y-4 border-t border-neutral-100 px-5 py-4">
+                                    {selectedFileNames.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedFileNames.map((name, i) => (
+                                                <Badge
+                                                    key={i}
+                                                    variant="secondary"
+                                                    className="bg-neutral-100 text-[10px] text-neutral-600 px-2 py-0.5 rounded-lg flex items-center gap-1"
+                                                >
+                                                    <span className="truncate max-w-[150px]">{name}</span>
+                                                    <X
+                                                        className="h-3 w-3 cursor-pointer hover:text-red-500"
+                                                        onClick={() => {
+                                                            const next = selectedFileNames.filter(
+                                                                (_, idx) => idx !== i
+                                                            );
+                                                            setSelectedFileNames(next);
+                                                            setUploadedFilesCount(next.length);
+                                                        }}
+                                                    />
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
                                             <Info className="h-3.5 w-3.5 text-emerald-600" />
@@ -3716,31 +3629,6 @@ const WeeklyReports = () => {
                                             </Button>
                                         </div>
                                     </div>
-
-                                    {selectedFileNames.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedFileNames.map((name, i) => (
-                                                <Badge
-                                                    key={i}
-                                                    variant="secondary"
-                                                    className="bg-neutral-100 text-[10px] text-neutral-600 px-2 py-0.5 rounded-lg flex items-center gap-1"
-                                                >
-                                                    <span className="truncate max-w-[150px]">{name}</span>
-                                                    <X
-                                                        className="h-3 w-3 cursor-pointer hover:text-red-500"
-                                                        onClick={() => {
-                                                            const next = selectedFileNames.filter(
-                                                                (_, idx) => idx !== i
-                                                            );
-                                                            setSelectedFileNames(next);
-                                                            setUploadedFilesCount(next.length);
-                                                        }}
-                                                    />
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
                             </div>
                         </Card>
 
@@ -3764,25 +3652,76 @@ const WeeklyReports = () => {
                                             </Badge> */}
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={openAllTaskIssueGroups}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openAllTaskIssueGroups();
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
+                                            >
+                                                All: {taskIssueCounts.total}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("pending")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("pending");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
                                             >
                                                 Open: {taskIssueCounts.open}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("overdue")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("overdue");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
                                             >
                                                 Overdue: {taskIssueCounts.overdue}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("in_progress");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
                                             >
                                                 In Progress: {taskIssueCounts.inProgress}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("on_hold");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-200"
                                             >
                                                 On Hold: {taskIssueCounts.onHold}
                                             </Badge>
@@ -3907,14 +3846,7 @@ const WeeklyReports = () => {
                                                             "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
                                                             group.headerBg
                                                         )}
-                                                        onClick={() =>
-                                                            setCollapsedGroups((prev) => {
-                                                                const next = new Set(prev);
-                                                                if (next.has(group.key)) next.delete(group.key);
-                                                                else next.add(group.key);
-                                                                return next;
-                                                            })
-                                                        }
+                                                        onClick={() => openOnlyTaskIssueGroup(group.key)}
                                                     >
                                                         <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
                                                             {group.label}
@@ -4227,10 +4159,10 @@ const WeeklyReports = () => {
                                     </Badge>
                                 </div>
                             </div>
-                            <div className="px-5 pb-5">
+                            <div className="max-h-[360px] overflow-y-auto px-5 pb-5 pr-4">
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                                     {upcomingDays.map((day) => (
-                                        <div key={day.key} className="min-h-[230px] min-w-0 space-y-3 rounded-[10px] bg-white p-4">
+                                        <div key={day.key} className="flex min-h-[230px] min-w-0 flex-col rounded-[10px] bg-white p-4">
                                             <div
                                                 className={cn(
                                                     "flex items-center justify-between",
@@ -4261,7 +4193,7 @@ const WeeklyReports = () => {
                                                 )}
                                             </div>
                                             <div
-                                                className="space-y-2"
+                                                className="mt-3 space-y-2"
                                                 onDragOver={(event) => event.preventDefault()}
                                                 onDrop={(event) =>
                                                     handlePlanDrop(
@@ -4338,7 +4270,28 @@ const WeeklyReports = () => {
                                                                     <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => {
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (item.type === "task") {
+                                                                                setEditTaskData(item.originalData);
+                                                                                setIsEditTaskModalOpen(true);
+                                                                            } else if (item.type === "issue") {
+                                                                                setEditIssueData(item.originalData);
+                                                                                setIsEditIssueModalOpen(true);
+                                                                            } else if (item.type === "todo") {
+                                                                                setEditTodoData(item.originalData);
+                                                                                setIsEditTodoModalOpen(true);
+                                                                            }
+                                                                        }}
+                                                                        className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                        title={`Edit ${item.type}`}
+                                                                    >
+                                                                        <Pencil className="h-3 w-3" />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
                                                                             if (item.type === "todo") {
                                                                                 setSelectedTodo(item.originalData);
                                                                                 setIsTodoDetailsModalOpen(true);
@@ -4441,7 +4394,30 @@ const WeeklyReports = () => {
                                                                     {planObj.source_type && sourceId && (
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => {
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (planObj.source_type === "task") {
+                                                                                    setEditTaskData(rawData);
+                                                                                    setIsEditTaskModalOpen(true);
+                                                                                } else if (planObj.source_type === "issue") {
+                                                                                    setEditIssueData(rawData);
+                                                                                    setIsEditIssueModalOpen(true);
+                                                                                } else if (planObj.source_type === "todo") {
+                                                                                    setEditTodoData(rawData);
+                                                                                    setIsEditTodoModalOpen(true);
+                                                                                }
+                                                                            }}
+                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                            title={`Edit ${planObj.source_type}`}
+                                                                        >
+                                                                            <Pencil className="h-3 w-3" />
+                                                                        </button>
+                                                                    )}
+                                                                    {planObj.source_type && sourceId && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
                                                                                 if (planObj.source_type === "todo") {
                                                                                     setSelectedTodo(rawData);
                                                                                     setIsTodoDetailsModalOpen(true);
@@ -4676,7 +4652,7 @@ const WeeklyReports = () => {
                                                     aria-pressed={isActive}
                                                     onClick={() => handleRemarkChipClick(id)}
                                                     className={cn(
-                                                        "inline-flex h-7 items-center rounded-[7px] border px-3.5 text-[9px] font-medium transition-colors [&>svg]:hidden",
+                                                        "inline-flex h-8 items-center rounded-[8px] border px-4 text-[11px] font-medium transition-colors [&>svg]:hidden",
                                                         "active:scale-[0.98] active:brightness-95",
                                                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
                                                         isActive ? meta.chipActive : meta.chipInactive
@@ -4685,7 +4661,7 @@ const WeeklyReports = () => {
                                                     {id === "breakthrough" && (
                                                         <Activity
                                                             className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
+                                                                "mr-1.5 h-4 w-4 shrink-0",
                                                                 isActive ? "text-white" : "text-neutral-500"
                                                             )}
                                                         />
@@ -4693,7 +4669,7 @@ const WeeklyReports = () => {
                                                     {id === "breakdown" && (
                                                         <TrendingUp
                                                             className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
+                                                                "mr-1.5 h-4 w-4 shrink-0",
                                                                 isActive ? "text-white" : "text-neutral-500"
                                                             )}
                                                         />
@@ -4701,7 +4677,7 @@ const WeeklyReports = () => {
                                                     {id === "employeeFeedback" && (
                                                         <User
                                                             className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
+                                                                "mr-1.5 h-4 w-4 shrink-0",
                                                                 isActive ? "text-white" : "text-neutral-500"
                                                             )}
                                                         />
@@ -4709,7 +4685,7 @@ const WeeklyReports = () => {
                                                     {id === "clientFeedback" && (
                                                         <Users
                                                             className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
+                                                                "mr-1.5 h-4 w-4 shrink-0",
                                                                 isActive ? "text-white" : "text-neutral-500"
                                                             )}
                                                         />
@@ -4717,7 +4693,7 @@ const WeeklyReports = () => {
                                                     {id === "remark" && (
                                                         <Smile
                                                             className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
+                                                                "mr-1.5 h-4 w-4 shrink-0",
                                                                 isActive ? "text-white" : "text-neutral-500"
                                                             )}
                                                         />
@@ -4738,7 +4714,7 @@ const WeeklyReports = () => {
                                             ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
                                             : "Add your remark..."
                                     }
-                                    className="min-h-[82px] resize-none rounded-[8px] border border-neutral-200 bg-white px-3.5 py-2.5 text-[10px] shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                                    className="min-h-[86px] resize-none rounded-[10px] border border-neutral-200 bg-white px-4 py-3 text-xs shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
                                 />
                                 <Button
                                     type="button"
@@ -4753,7 +4729,10 @@ const WeeklyReports = () => {
                                 </Button>
 
                                 {remarksList.length > 0 && (
-                                    <div className="mt-3 space-y-2 border-t border-dashed border-neutral-200 pt-3">
+                                    <div className={cn(
+                                        "mt-4 pt-4 space-y-2 border-t border-dashed border-neutral-200 pr-2",
+                                        remarksList.length > 1 ? "max-h-[120px] overflow-y-auto" : ""
+                                    )}>
                                         {remarksList.map((remark, index) => {
                                             const isBreakdown = remark.type === "breakdown";
                                             const isBreakthrough = remark.type === "breakthrough";
@@ -4809,7 +4788,8 @@ const WeeklyReports = () => {
                         </Card>
 
                         {/* Automated Weekly Score Preview */}
-                        <Card className={cn("flex h-full flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
+                        <div className="flex flex-col gap-4">
+                            <Card className={cn("flex flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
                             <div className="mb-3 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
                                     <Target className="h-4 w-4 shrink-0 text-[#111111]" />
@@ -4822,18 +4802,11 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
 
-                            <div className="mb-2.5 grid grid-cols-2 gap-3 md:grid-cols-12">
-                                {liveScoreRows.map((stat, index) => (
+                            <div className="mb-2.5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                {liveScoreRows.map((stat) => (
                                     <div
                                         key={stat.label}
-                                        className={cn(
-                                            "weekly-score-tile flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none",
-                                            index < 4 ? "md:col-span-3" : "md:col-span-4"
-                                        )}
-                                        style={{
-                                            "--score-accent": "218 119 86",
-                                            animationDelay: `${index * 120}ms`,
-                                        } as React.CSSProperties}
+                                        className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
                                     >
                                         <div className="sr-only">
                                             {stat.icon}
@@ -4842,11 +4815,7 @@ const WeeklyReports = () => {
                                             {stat.label}
                                         </p>
                                         <p
-                                            className="weekly-score-value text-[22px] font-bold leading-none text-[#DA7756]"
-                                            style={{
-                                                "--score-accent": "218 119 86",
-                                                animationDelay: `${index * 120}ms`,
-                                            } as React.CSSProperties}
+                                            className="text-[22px] font-bold leading-none text-[#DA7756]"
                                         >
                                             {formatLiveScore(stat.score)}/{stat.max}
                                         </p>
@@ -4854,57 +4823,28 @@ const WeeklyReports = () => {
                                 ))}
                             </div>
 
-                            <div className="w-full leading-none">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsScoreBreakdownOpen((open) => !open)}
-                                    className="flex items-center gap-1 py-0 text-xs font-medium leading-none text-[#DA7756]"
-                                >
-                                    <ChevronRight
-                                        size={14}
-                                        className={cn(
-                                            "transition-transform duration-200",
-                                            isScoreBreakdownOpen && "rotate-90"
-                                        )}
-                                    />
-                                    Detailed Score Calculation Breakdown
-                                </button>
-                                {isScoreBreakdownOpen && (
-                                    <div className="mt-3 overflow-hidden rounded-[10px] border border-[#eadfd7] bg-white text-[11px] shadow-inner">
-                                        <div className="hidden grid-cols-[1fr_0.55fr_0.55fr_2fr] gap-3 bg-[#f8efe9] px-3 py-2 text-[10px] font-black uppercase text-[#8b6f62] sm:grid">
-                                            <span>Section</span>
-                                            <span>Score</span>
-                                            <span>Max</span>
-                                            <span>Calculation</span>
-                                        </div>
-                                        {liveScoreRows.map((row) => (
-                                            <div
-                                                key={row.label}
-                                                className="grid grid-cols-1 gap-1 border-t border-[#f0e7e1] px-3 py-2.5 sm:grid-cols-[1fr_0.55fr_0.55fr_2fr] sm:gap-3"
-                                            >
-                                                <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="font-black text-[#111111]">
-                                                        {row.label}
-                                                    </span>
-                                                    <span className="font-black text-[#DA7756] sm:hidden">
-                                                        {formatLiveScore(row.score)}/{row.max}
-                                                    </span>
-                                                </div>
-                                                <span className="hidden font-black text-[#DA7756] sm:block">
-                                                    {formatLiveScore(row.score)}/{row.max}
-                                                </span>
-                                                <span className="text-[10px] font-bold uppercase text-[#8b6f62] sm:text-[11px] sm:text-[#6f625c]">
-                                                    {row.max} pts
-                                                </span>
-                                                <p className="leading-relaxed text-[#6f625c]">
-                                                    {row.calculation}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+
                         </Card>
+
+                            <div className="mb-0 flex items-start gap-2.5 shrink-0 rounded-[12px] border border-[#efcdbf] bg-[#f6e8df] px-3 py-2.5 shadow-none sm:items-center">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#DA7756] text-white">
+                                    <Star className="h-4 w-4 fill-white text-white" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h4 className="text-sm font-bold leading-tight text-[#2f2f2f]">
+                                            Bonus Opportunity!
+                                        </h4>
+                                        <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-black text-white hover:bg-[#DA7756]">
+                                            + 05 pts
+                                        </Badge>
+                                    </div>
+                                    <p className="mt-0 text-xs leading-tight text-[#6f625c]">
+                                        Submit within the week window to earn bonus points.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                         </div>
 
                         <button
@@ -4931,23 +4871,66 @@ const WeeklyReports = () => {
                             )}
                         </button>
 
-                        <div className="mb-0 flex items-start gap-3 rounded-[16px] border border-[#efcdbf] bg-[#f6e8df] px-4 pb-3 pt-3 shadow-none sm:items-center">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#DA7756] text-white">
-                                <Star className="h-5 w-5 fill-white text-white" />
-                            </div>
-                            <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h4 className="text-base font-bold leading-tight text-[#2f2f2f]">
-                                        Bonus Opportunity!
-                                    </h4>
-                                    <Badge className="border-0 bg-[#DA7756] px-2.5 py-1 text-[11px] font-black text-white hover:bg-[#DA7756]">
-                                        + 05 pts
-                                    </Badge>
+                        <div className="mt-4 w-full overflow-hidden rounded-[14px] border border-[#f1dcd4] bg-[#fffafa] shadow-none">
+                            <button
+                                type="button"
+                                onClick={() => setIsScoreBreakdownOpen((open) => !open)}
+                                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#fff7f4]"
+                            >
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                    <Info className="h-4 w-4 shrink-0 text-[#DA7756]" />
+                                    <p className="min-w-0 text-[15px] font-medium leading-tight text-[#2f3847]">
+                                        How is the Automated Weekly score calculated?{" "}
+                                        <span className="font-medium text-[#DA7756]">
+                                            Expand to know more
+                                        </span>
+                                    </p>
                                 </div>
-                                <p className="mt-0.5 text-sm leading-tight text-[#6f625c]">
-                                    Submit within the week window to earn bonus points.
-                                </p>
-                            </div>
+                                <ChevronRight
+                                    size={16}
+                                    className={cn(
+                                        "shrink-0 text-[#9aa3af] transition-transform duration-200",
+                                        isScoreBreakdownOpen && "rotate-90"
+                                    )}
+                                />
+                            </button>
+
+                            {isScoreBreakdownOpen && (
+                                <div className="border-t border-[#f1dcd4] bg-white px-4 py-3">
+                                    <div className="overflow-hidden rounded-[10px] border border-[#eadfd7] bg-white text-[11px] shadow-none">
+                                        <div className="hidden grid-cols-[1fr_0.55fr_0.55fr_2fr] gap-3 bg-[#f8efe9] px-3 py-2 text-[10px] font-medium uppercase text-[#8b6f62] sm:grid">
+                                            <span>Section</span>
+                                            <span>Score</span>
+                                            <span>Max</span>
+                                            <span>Calculation</span>
+                                        </div>
+                                        {liveScoreRows.map((row) => (
+                                            <div
+                                                key={row.label}
+                                                className="grid grid-cols-1 gap-1 border-t border-[#f0e7e1] px-3 py-2.5 sm:grid-cols-[1fr_0.55fr_0.55fr_2fr] sm:gap-3"
+                                            >
+                                                <div className="flex items-center justify-between gap-3 sm:block">
+                                                    <span className="font-medium text-[#111111]">
+                                                        {row.label}
+                                                    </span>
+                                                    <span className="font-medium text-[#DA7756] sm:hidden">
+                                                        {formatLiveScore(row.score)}/{row.max}
+                                                    </span>
+                                                </div>
+                                                <span className="hidden font-medium text-[#DA7756] sm:block">
+                                                    {formatLiveScore(row.score)}/{row.max}
+                                                </span>
+                                                <span className="text-[10px] font-medium uppercase text-[#8b6f62] sm:text-[11px] sm:text-[#6f625c]">
+                                                    {row.max} pts
+                                                </span>
+                                                <p className="leading-relaxed text-[#6f625c]">
+                                                    {row.calculation}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </TabsContent>
 
@@ -5017,11 +5000,14 @@ const WeeklyReports = () => {
 
                                 const rawAchievements =
                                     reportData.achievements ||
-                                    reportData.accomplishments?.items?.map((i: any) => i.title) ||
-                                    reportData.accomplishments?.map((i: any) => i.title) ||
+                                    reportData.accomplishments?.items ||
+                                    reportData.accomplishments ||
                                     [];
-                                const achievements: string[] =
-                                    rawAchievements.map(normalizeToString);
+                                const achievements = Array.isArray(rawAchievements)
+                                    ? rawAchievements.filter((achievement: any) =>
+                                        getWeeklyHistoryItemText(achievement).trim() !== ""
+                                    )
+                                    : [];
 
                                 const rawTasks =
                                     reportData.upcoming_week_plan ||
@@ -5050,10 +5036,6 @@ const WeeklyReports = () => {
                                     {
                                         label: "Weekly KPI",
                                         value: `${reportData.sections?.weekly_kpi_achievement || 0}/20`,
-                                    },
-                                    {
-                                        label: "Daily KPI",
-                                        value: `${reportData.sections?.daily_kpi_achievement || 0}/10`,
                                     },
                                     {
                                         label: "Achievements",
@@ -5164,28 +5146,17 @@ const WeeklyReports = () => {
                                         </div>
 
                                         <div className="space-y-5 p-4 sm:p-5">
-                                            <div className="grid grid-cols-2 gap-3 md:grid-cols-12">
-                                                {stats.map((s, index) => (
+                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                                {stats.map((s) => (
                                                     <div
                                                         key={s.label}
-                                                        className={cn(
-                                                            "weekly-score-tile flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none",
-                                                            index < 4 ? "md:col-span-3" : "md:col-span-4"
-                                                        )}
-                                                        style={{
-                                                            "--score-accent": "218 119 86",
-                                                            animationDelay: `${index * 120}ms`,
-                                                        } as React.CSSProperties}
+                                                        className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
                                                     >
                                                         <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
                                                             {s.label}
                                                         </p>
                                                         <p
-                                                            className="weekly-score-value text-[22px] font-bold leading-none text-[#DA7756]"
-                                                            style={{
-                                                                "--score-accent": "218 119 86",
-                                                                animationDelay: `${index * 120}ms`,
-                                                            } as React.CSSProperties}
+                                                            className="text-[22px] font-bold leading-none text-[#DA7756]"
                                                         >
                                                             {s.value}
                                                         </p>
@@ -5209,15 +5180,31 @@ const WeeklyReports = () => {
                                                     </div>
                                                     <div className="flex-1 space-y-3 p-4">
                                                         {achievements.length > 0 ? (
-                                                            achievements.map((w: string, i: number) => (
-                                                                <div
-                                                                    key={i}
-                                                                    className="flex items-start gap-2.5 rounded-[10px] bg-[#f8e9e5] p-3 text-sm font-medium text-neutral-700"
-                                                                >
-                                                                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#DA7756]" />
-                                                                    <span>{w}</span>
-                                                                </div>
-                                                            ))
+                                                            achievements.map((w: any, i: number) => {
+                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(w)];
+                                                                return (
+                                                                    <div
+                                                                        key={i}
+                                                                        className="flex items-start justify-between gap-3 rounded-[10px] bg-[#f8e9e5] p-3 text-sm font-medium text-neutral-700"
+                                                                    >
+                                                                        <div className="flex min-w-0 items-start gap-2.5">
+                                                                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#DA7756]" />
+                                                                            <span className="min-w-0 break-words">
+                                                                                {getWeeklyHistoryItemText(w)}
+                                                                            </span>
+                                                                        </div>
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={cn(
+                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                typeMeta.className
+                                                                            )}
+                                                                        >
+                                                                            {typeMeta.label}
+                                                                        </Badge>
+                                                                    </div>
+                                                                );
+                                                            })
                                                         ) : (
                                                             <p className="text-sm italic text-neutral-400">
                                                                 No wins recorded
@@ -5248,19 +5235,31 @@ const WeeklyReports = () => {
                                                                             {day}
                                                                         </div>
                                                                         <div className="space-y-2 pl-1">
-                                                                            {dayTasks.map((t: any, i: number) => (
-                                                                                <div
-                                                                                    key={i}
-                                                                                    className="flex items-start gap-3 text-[14px] font-medium leading-relaxed text-[#4f4a4a]"
-                                                                                >
-                                                                                    <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#DA7756]" />
-                                                                                    <span>
-                                                                                        {typeof t === "string"
-                                                                                            ? t
-                                                                                            : t.text || t.title}
-                                                                                    </span>
-                                                                                </div>
-                                                                            ))}
+                                                                            {dayTasks.map((t: any, i: number) => {
+                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(t)];
+                                                                                return (
+                                                                                    <div
+                                                                                        key={i}
+                                                                                        className="flex items-start justify-between gap-3 text-[14px] font-medium leading-relaxed text-[#4f4a4a]"
+                                                                                    >
+                                                                                        <div className="flex min-w-0 items-start gap-3">
+                                                                                            <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#DA7756]" />
+                                                                                            <span className="min-w-0 break-words">
+                                                                                                {getWeeklyHistoryItemText(t)}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <Badge
+                                                                                            variant="outline"
+                                                                                            className={cn(
+                                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                                typeMeta.className
+                                                                                            )}
+                                                                                        >
+                                                                                            {typeMeta.label}
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
                                                                         </div>
                                                                     </div>
                                                                 );

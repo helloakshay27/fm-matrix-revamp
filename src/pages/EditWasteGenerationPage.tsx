@@ -600,6 +600,9 @@ const EditWasteGenerationPage = () => {
                   notched
                   displayEmpty
                   disabled={loadingOperationalLandlords}
+                  MenuProps={{
+                    className: 'searchable-select-menu'
+                  }}
                 >
                   <MenuItem value="">
                     {loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}

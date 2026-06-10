@@ -292,10 +292,10 @@ const ProjectCreateModal = ({
     }
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    // if (formData.startDate && formData.startDate < todayStr) {
-    //   toast.error("Start date cannot be before today");
-    //   return false;
-    // }
+    if (formData.startDate && formData.startDate < todayStr) {
+      toast.error("Start date cannot be before today");
+      return false;
+    }
     if (
       formData.endDate &&
       formData.startDate &&
@@ -569,9 +569,9 @@ const ProjectCreateModal = ({
                             InputLabelProps={{ shrink: true }}
                             InputProps={{ sx: fieldStyles }}
                             sx={{ mt: 1 }}
-                          // inputProps={{
-                          //   min: minDate,
-                          // }}
+                            inputProps={{
+                              min: minDate,
+                            }}
                           />
                         </div>
                       );

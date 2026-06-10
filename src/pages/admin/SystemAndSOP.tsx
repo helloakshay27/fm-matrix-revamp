@@ -425,8 +425,8 @@ const normalizeSopFromAPI = (raw: any): SopCardData => ({
   status: raw.status ?? "broken",
   kpis: Array.isArray(raw.kpis)
     ? raw.kpis
-      .map(normalizeKpiItem)
-      .filter((kpi: KpiItem | null): kpi is KpiItem => Boolean(kpi))
+        .map(normalizeKpiItem)
+        .filter((kpi: KpiItem | null): kpi is KpiItem => Boolean(kpi))
     : [],
   createdById: raw.created_by_id ?? null,
   _raw: raw,
@@ -616,7 +616,11 @@ const createSop = async (payload: any) => {
 };
 
 const updateSop = async (id: string, payload: any) => {
-  return saveSop(`https://${BASE_URL()}/system_sops/${id}.json`, "PUT", payload);
+  return saveSop(
+    `https://${BASE_URL()}/system_sops/${id}.json`,
+    "PUT",
+    payload
+  );
 };
 
 const patchSopStatus = async (id: string, status: string) => {
@@ -771,13 +775,13 @@ const SearchableSelect = ({
             fontFamily: C.font,
             ...(menuPlacement === "bottom"
               ? {
-                top: "calc(100% + 4px)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
-              }
+                  top: "calc(100% + 4px)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+                }
               : {
-                bottom: "calc(100% + 4px)",
-                boxShadow: "0 -8px 24px rgba(0,0,0,0.10)",
-              }),
+                  bottom: "calc(100% + 4px)",
+                  boxShadow: "0 -8px 24px rgba(0,0,0,0.10)",
+                }),
           }}
         >
           {showClear && value && value !== clearValue && (
@@ -968,10 +972,7 @@ function CopySopModal({
               skip users who already have this SOP.
             </p>
           </div>
-          <div
-            className="p-5 border-b"
-            style={{ borderColor: C.primaryBord }}
-          >
+          <div className="p-5 border-b" style={{ borderColor: C.primaryBord }}>
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
@@ -1013,12 +1014,13 @@ function CopySopModal({
                   <div
                     key={u.value}
                     onClick={() => toggleUser(u.value)}
-                    className={`flex items-center gap-4 rounded-2xl border px-4 py-3 transition-all ${hasIt
-                      ? "opacity-60 cursor-not-allowed"
-                      : isChecked
-                        ? ""
-                        : "cursor-pointer hover:bg-[#fffaf8]"
-                      }`}
+                    className={`flex items-center gap-4 rounded-2xl border px-4 py-3 transition-all ${
+                      hasIt
+                        ? "opacity-60 cursor-not-allowed"
+                        : isChecked
+                          ? ""
+                          : "cursor-pointer hover:bg-[#fffaf8]"
+                    }`}
                     style={{
                       background: isChecked ? C.primaryTint : "#ffffff",
                       borderColor: isChecked ? C.primary : C.primaryBord,
@@ -1154,12 +1156,12 @@ function SopFormModal({
     return exists
       ? opts
       : [
-        {
-          value: String(initialDepartmentName),
-          label: String(initialDepartmentName),
-        },
-        ...opts,
-      ];
+          {
+            value: String(initialDepartmentName),
+            label: String(initialDepartmentName),
+          },
+          ...opts,
+        ];
   }, [departments, initialData, isEdit]);
 
   useEffect(() => {
@@ -1227,8 +1229,9 @@ function SopFormModal({
         (d: any) =>
           String(d.id) === String(department) ||
           normalizeDepartmentMatch(d.value) ===
-          normalizeDepartmentMatch(department) ||
-          normalizeDepartmentMatch(d.label) === normalizeDepartmentMatch(department)
+            normalizeDepartmentMatch(department) ||
+          normalizeDepartmentMatch(d.label) ===
+            normalizeDepartmentMatch(department)
       );
       const kpiOptionsById = new Map(
         kpiOptions.map((k: any) => [Number(k.id), k])
@@ -1237,7 +1240,9 @@ function SopFormModal({
         kpiOptionsById.has(Number(id))
       );
       if (selectedKpiIds.length !== validSelectedKpiIds.length) {
-        toast.warning("Some old KPI links were skipped because they no longer exist");
+        toast.warning(
+          "Some old KPI links were skipped because they no longer exist"
+        );
       }
       const builtKpis = validSelectedKpiIds.map((id, i) => {
         const k: any = kpiOptionsById.get(Number(id));
@@ -1455,7 +1460,9 @@ function SopFormModal({
                           className="block text-[11px] font-medium truncate"
                           style={{ color: C.textMuted }}
                         >
-                          {[k.category, k.frequency].filter(Boolean).join(" - ")}
+                          {[k.category, k.frequency]
+                            .filter(Boolean)
+                            .join(" - ")}
                         </span>
                       </span>
                     </div>
@@ -1530,10 +1537,11 @@ function SopKanbanCard({
   return (
     <div
       {...(dragHandleProps ?? {})}
-      className={`sop-kanban-card bp-card-lift ${dragHandleProps
-        ? "cursor-grab active:cursor-grabbing select-none touch-manipulation"
-        : ""
-        }`}
+      className={`sop-kanban-card bp-card-lift ${
+        dragHandleProps
+          ? "cursor-grab active:cursor-grabbing select-none touch-manipulation"
+          : ""
+      }`}
     >
       <div
         className="absolute inset-x-0 top-0 h-1"
@@ -1653,7 +1661,11 @@ function SopKanbanCard({
             onDuplicateClick?.();
           }}
           className="sop-card-action w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm active:scale-[0.97]"
-          style={{ borderColor: C.primaryBord, color: C.textMuted, background: "#fff" }}
+          style={{
+            borderColor: C.primaryBord,
+            color: C.textMuted,
+            background: "#fff",
+          }}
           title="Assign copy"
         >
           <Copy className="w-3.5 h-3.5" />
@@ -1666,7 +1678,11 @@ function SopKanbanCard({
             onDeleteClick?.();
           }}
           className="sop-card-action w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm active:scale-[0.97] hover:bg-red-50"
-          style={{ borderColor: "#fecaca", color: "#ef4444", background: "#fff" }}
+          style={{
+            borderColor: "#fecaca",
+            color: "#ef4444",
+            background: "#fff",
+          }}
           title="Delete"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -1720,8 +1736,9 @@ function SopColumnBody({ colKey, children, emptySlot }: any) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-[180px] flex-1 flex-col rounded-2xl border-2 border-dashed border-transparent p-1 transition-colors ${isOver ? "drag-over-col" : ""
-        }`}
+      className={`flex min-h-[180px] flex-1 flex-col rounded-2xl border-2 border-dashed border-transparent p-1 transition-colors ${
+        isOver ? "drag-over-col" : ""
+      }`}
     >
       {children}
       {emptySlot}
@@ -1959,29 +1976,33 @@ const SystemAndSOP = () => {
     if (filterDept !== "all")
       filters.push({
         id: "dept",
-        label: `Dept: ${departments.find((d) => d.value === filterDept)?.label || filterDept
-          }`,
+        label: `Dept: ${
+          departments.find((d) => d.value === filterDept)?.label || filterDept
+        }`,
         onClear: () => setFilterDept("all"),
       });
     if (filterAssignee !== "all")
       filters.push({
         id: "assignee",
-        label: `Person: ${users.find((a) => a.value === filterAssignee)?.label || filterAssignee
-          }`,
+        label: `Person: ${
+          users.find((a) => a.value === filterAssignee)?.label || filterAssignee
+        }`,
         onClear: () => setFilterAssignee("all"),
       });
     if (filterPriority !== "all")
       filters.push({
         id: "priority",
-        label: `Priority: ${filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)
-          }`,
+        label: `Priority: ${
+          filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)
+        }`,
         onClear: () => setFilterPriority("all"),
       });
     if (filterStatus !== "all")
       filters.push({
         id: "status",
-        label: `Status: ${COL_TO_STATUS[filterStatus as ColumnKey] || filterStatus
-          }`,
+        label: `Status: ${
+          COL_TO_STATUS[filterStatus as ColumnKey] || filterStatus
+        }`,
         onClear: () => setFilterStatus("all"),
       });
     return filters;
@@ -2210,18 +2231,17 @@ const SystemAndSOP = () => {
 
       {/* ── Tab Bar ── */}
       <div
-        className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto"
-        style={{ background: C.primary }}
+        className="bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm border"
+        style={{ borderColor: "#f3f4f6" }}
       >
         {(["my", "all"] as SopTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setSopTab(t)}
-            className="py-2 px-5 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap"
+            className="py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap"
             style={{
-              background: sopTab === t ? "#fff" : "transparent",
-              color: sopTab === t ? C.primary : "rgba(255,255,255,0.85)",
-              boxShadow: sopTab === t ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
+              background: sopTab === t ? C.primary : "transparent",
+              color: sopTab === t ? "#fff" : "#7b8393",
             }}
           >
             {t === "my" ? "My SOPs" : "All SOPs"}

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 
@@ -74,19 +73,25 @@ export const CumulativePowerWidget: React.FC<CumulativePowerWidgetProps> = ({
   };
 
   return (
-    <Card className={`hover:shadow-lg transition-shadow duration-200 ${className}`}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold text-analytics-text">{title}</CardTitle>
+    <div className={`bg-white rounded-xl border border-gray-200 shadow-sm w-full ${className}`}>
+      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3
+          className="text-base font-semibold text-gray-900"
+          style={{ fontFamily: 'Work Sans, sans-serif' }}
+        >
+          {title}
+        </h3>
         <button
+          type="button"
           onClick={handleDownloadClick}
-          className="p-1.5 rounded-md text-gray-500 hover:text-[#C72030] hover:bg-[#EDEAE3] transition-colors duration-200"
+          className="p-1.5 rounded-md text-gray-400 hover:text-[#C72030] hover:bg-gray-100 transition-colors duration-200"
           title="Download"
         >
           <Download className="w-4 h-4" />
         </button>
-      </CardHeader>
+      </div>
 
-      <CardContent>
+      <div className="p-5">
         <div className="w-full h-[260px] relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -147,7 +152,7 @@ export const CumulativePowerWidget: React.FC<CumulativePowerWidgetProps> = ({
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

@@ -68,7 +68,7 @@ export const SiteWiseTicketBreakdownCard: React.FC<{ data: any }> = ({ data }) =
           <thead>
             <tr>
               {['Site Name', 'Filled', 'Missed', 'Total', 'Closed', 'Open', 'Closure Rate'].map((h) => (
-                <th key={h} className={`px-4 py-3 text-white font-semibold whitespace-nowrap analytics-header ${h === 'Site Name' ? 'text-left' : 'text-center'}`} style={{ backgroundColor: '#D97655' }}>
+                <th key={h} className="px-4 py-3 text-white font-semibold whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655' }}>
                   {h}
                 </th>
               ))}
@@ -90,13 +90,13 @@ export const SiteWiseTicketBreakdownCard: React.FC<{ data: any }> = ({ data }) =
                 const closureRate = total > 0 ? Math.round((closedN / total) * 100) : (site.closure_rate ?? 0);
                 return (
                   <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-                    <td className="px-4 py-3 font-medium text-gray-800 border-b border-gray-100">{name}</td>
-                    <td className="px-4 py-3 text-center font-semibold border-b border-gray-100" style={{ color: '#2E7D6B' }}>{filled}</td>
-                    <td className="px-4 py-3 text-center font-semibold border-b border-gray-100" style={{ color: '#D97655' }}>{missed}</td>
-                    <td className="px-4 py-3 text-center font-bold text-gray-900 border-b border-gray-100">{total}</td>
-                    <td className="px-4 py-3 text-center font-semibold border-b border-gray-100" style={{ color: '#2E7D6B' }}>{closedN}</td>
-                    <td className="px-4 py-3 text-center font-semibold border-b border-gray-100" style={{ color: '#D97655' }}>{openN}</td>
-                    <td className="px-4 py-3 text-center border-b border-gray-100">
+                    <td className="px-4 py-3 font-medium text-gray-800 border-b border-gray-100 text-left">{name}</td>
+                    <td className="px-4 py-3 text-left font-semibold border-b border-gray-100" style={{ color: '#2E7D6B' }}>{filled}</td>
+                    <td className="px-4 py-3 text-left font-semibold border-b border-gray-100" style={{ color: '#D97655' }}>{missed}</td>
+                    <td className="px-4 py-3 text-left font-bold text-gray-900 border-b border-gray-100">{total}</td>
+                    <td className="px-4 py-3 text-left font-semibold border-b border-gray-100" style={{ color: '#2E7D6B' }}>{closedN}</td>
+                    <td className="px-4 py-3 text-left font-semibold border-b border-gray-100" style={{ color: '#D97655' }}>{openN}</td>
+                    <td className="px-4 py-3 text-left border-b border-gray-100">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden min-w-[60px]">
                           <div className="h-full rounded-full" style={{ width: `${closureRate}%`, backgroundColor: '#76CDC1' }} />
@@ -228,12 +228,12 @@ export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureDa
       </div>
       <div className="rounded-xl overflow-hidden border border-gray-200">
       <div className="overflow-x-auto">
-      <table className="min-w-full text-sm text-center">
+      <table className="min-w-full text-sm">
         <thead>
           <tr>
-            <th className="px-3 py-2.5 text-left text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>Site Name</th>
+            <th className="px-3 py-2.5 text-center text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>Site Name</th>
             {centerNames.map((name, i) => (
-              <th key={i} className="px-3 py-2.5 text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>{name}</th>
+              <th key={i} className="px-3 py-2.5 text-center text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>{name}</th>
             ))}
           </tr>
         </thead>
@@ -242,7 +242,7 @@ export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureDa
             <tr key={rIdx} style={{ backgroundColor: row.shaded ? '#EFEFFB' : rIdx % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
               <td className="px-3 py-2.5 text-left font-medium border-b border-gray-100">{row.label}</td>
               {row.values.map((v: any, idx: number) => (
-                <td key={idx} className="px-3 py-2.5 border-b border-gray-100">{v ?? '-'}</td>
+                <td key={idx} className="px-3 py-2.5 text-left border-b border-gray-100">{v ?? '-'}</td>
               ))}
             </tr>
           ))}

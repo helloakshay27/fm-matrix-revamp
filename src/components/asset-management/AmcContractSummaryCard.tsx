@@ -90,7 +90,7 @@ const AmcContractSummaryCard: React.FC<Props> = ({ data, onDownload }) => {
             <thead>
               <tr style={{ backgroundColor: '#4DB6AC' }}>
                 {['AMC Name', 'Contract Start', 'Contract End', 'Renewal Reminder', 'Status'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-white font-semibold text-left whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-4 py-3 text-white font-semibold text-center whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -106,11 +106,11 @@ const AmcContractSummaryCard: React.FC<Props> = ({ data, onDownload }) => {
                 const { bg, color } = getStatusStyle(status);
                 return (
                   <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-800">{name}</td>
-                    <td className="px-4 py-3 text-gray-600">{startDate}</td>
-                    <td className="px-4 py-3 text-gray-600">{endDate}</td>
-                    <td className="px-4 py-3 text-gray-600">{typeof renewal === 'string' ? renewal : '-'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-left font-medium text-gray-800">{name}</td>
+                    <td className="px-4 py-3 text-left text-gray-600">{startDate}</td>
+                    <td className="px-4 py-3 text-left text-gray-600">{endDate}</td>
+                    <td className="px-4 py-3 text-left text-gray-600">{typeof renewal === 'string' ? renewal : '-'}</td>
+                    <td className="px-4 py-3 text-left">
                       <span className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ backgroundColor: bg, color }}>
                         {String(status).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                       </span>

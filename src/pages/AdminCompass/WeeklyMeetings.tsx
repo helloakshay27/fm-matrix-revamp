@@ -1,86 +1,147 @@
-import { useState } from "react"
-import WeeklyReviews from "@/components/AdminCompass/WeeklyReviews"
-import WeeklyLog from "@/components/AdminCompass/WeeklyLog"
-import MeetingHistory from "@/components/AdminCompass/MeetingHistory"
-import WeeklyMeetingReports from "@/components/AdminCompass/WeeklyMeetingReports"
-import WeeklyMeetingSettings from "@/components/AdminCompass/WeeklyMeetingSettings"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, ChartColumn, FileText, History, Settings } from "lucide-react"
+import { useState } from "react";
+import WeeklyReviews from "@/components/AdminCompass/WeeklyReviews";
+import WeeklyLog from "@/components/AdminCompass/WeeklyLog";
+import MeetingHistory from "@/components/AdminCompass/MeetingHistory";
+import WeeklyMeetingReports from "@/components/AdminCompass/WeeklyMeetingReports";
+import WeeklyMeetingSettings from "@/components/AdminCompass/WeeklyMeetingSettings";
+import {
+  Calendar,
+  ChartColumn,
+  FileText,
+  History,
+  Settings,
+} from "lucide-react";
+
+const PRIMARY = "#DA7756";
+
+const TABS = [
+  { key: "weekly", label: "Weekly", Icon: Calendar },
+  { key: "weeklyLog", label: "Weekly Log", Icon: FileText },
+  { key: "meetingHistory", label: "Meeting History", Icon: History },
+  { key: "reports", label: "Reports", Icon: ChartColumn },
+  { key: "settings", label: "Settings", Icon: Settings },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
 
 const WeeklyMeetings = () => {
-    const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date())
-    const [activeTab, setActiveTab] = useState("weekly")
-    const [selectedMeetingId, setSelectedMeetingId] = useState("")
+  const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date());
+  const [activeTab, setActiveTab] = useState<TabKey>("weekly");
+  const [selectedMeetingId, setSelectedMeetingId] = useState("");
 
-    return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee]">
-            {/* Header Section */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold text-[#1a1a1a]">Weekly Meetings</h1>
-                    <p className="text-neutral-500 mt-1">Review weekly reports and conduct team meetings</p>
-                </div>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className='w-full rounded-2xl bg-[#DA7756] p-1 h-auto'>
-                    <TabsTrigger value="weekly" className='w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm'>
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Weekly
-                    </TabsTrigger>
-                    <TabsTrigger value="weeklyLog" className='w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm'>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Weekly Log
-                    </TabsTrigger>
-                    <TabsTrigger value="meetingHistory" className='w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm'>
-                        <History className="h-4 w-4 mr-2" />
-                        Meeting History
-                    </TabsTrigger>
-                    <TabsTrigger value="reports" className='w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm'>
-                        <ChartColumn className="h-4 w-4 mr-2" />
-                        Reports
-                    </TabsTrigger>
-                    <TabsTrigger value="settings" className='w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm'>
-                        <Settings className="h-4 w-4 mr-2" />
-                        Settings
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="weekly" className="mt-5">
-                    <WeeklyReviews
-                        initialWeekDate={selectedWeekDate}
-                        onWeekDateChange={setSelectedWeekDate}
-                        selectedMeetingId={selectedMeetingId}
-                        onSelectedMeetingChange={setSelectedMeetingId}
-                        onMeetingSaved={() => setActiveTab("meetingHistory")}
-                    />
-                </TabsContent>
-                <TabsContent value="weeklyLog" className="mt-5">
-                    <WeeklyLog
-                        initialWeekDate={selectedWeekDate}
-                        onWeekDateChange={setSelectedWeekDate}
-                        selectedMeetingId={selectedMeetingId}
-                        onSelectedMeetingChange={setSelectedMeetingId}
-                    />
-                </TabsContent>
-                <TabsContent value="meetingHistory" className="mt-5">
-                    <MeetingHistory
-                        initialWeekDate={selectedWeekDate}
-                        onWeekDateChange={setSelectedWeekDate}
-                    />
-                </TabsContent>
-                <TabsContent value="reports" className="mt-5">
-                    <WeeklyMeetingReports
-                        selectedMeetingId={selectedMeetingId}
-                        onSelectedMeetingChange={setSelectedMeetingId}
-                    />
-                </TabsContent>
-                <TabsContent value="settings" className="mt-5">
-                    <WeeklyMeetingSettings />
-                </TabsContent>
-            </Tabs>
+  return (
+    <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee]">
+      {/* Header Section */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-[#1a1a1a]">Weekly Meetings</h1>
+          <p className="text-neutral-500 mt-1">
+            Review weekly reports and conduct team meetings
+          </p>
         </div>
-    )
-}
+      </div>
 
-export default WeeklyMeetings
+      {/* Tab Bar */}
+      <div
+        style={{
+          display: "inline-flex",
+          gap: "4px",
+          overflowX: "auto",
+          marginTop: "16px",
+          marginBottom: "24px",
+          padding: "5px",
+          backgroundColor: "#ffffff",
+          borderRadius: "9999px",
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          alignSelf: "flex-start",
+        }}
+      >
+        {TABS.map(({ key, label, Icon }) => {
+          const isActive = activeTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "7px 22px",
+                borderRadius: "9999px",
+                fontSize: "13.5px",
+                fontWeight: isActive ? 700 : 500,
+                whiteSpace: "nowrap",
+                transition: "all 0.18s ease",
+                cursor: "pointer",
+                border: "none",
+                fontFamily: "'Poppins', sans-serif",
+                letterSpacing: "0.01em",
+                ...(isActive
+                  ? {
+                      backgroundColor: PRIMARY,
+                      color: "#ffffff",
+                      boxShadow: "0 2px 10px rgba(218,119,86,0.30)",
+                    }
+                  : {
+                      backgroundColor: "transparent",
+                      color: "#6b7280",
+                    }),
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = "#f3f4f6";
+                  e.currentTarget.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#6b7280";
+                }
+              }}
+            >
+              <Icon style={{ width: 15, height: 15, flexShrink: 0 }} />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-5">
+        {activeTab === "weekly" && (
+          <WeeklyReviews
+            initialWeekDate={selectedWeekDate}
+            onWeekDateChange={setSelectedWeekDate}
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+            onMeetingSaved={() => setActiveTab("meetingHistory")}
+          />
+        )}
+        {activeTab === "weeklyLog" && (
+          <WeeklyLog
+            initialWeekDate={selectedWeekDate}
+            onWeekDateChange={setSelectedWeekDate}
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+          />
+        )}
+        {activeTab === "meetingHistory" && (
+          <MeetingHistory
+            initialWeekDate={selectedWeekDate}
+            onWeekDateChange={setSelectedWeekDate}
+          />
+        )}
+        {activeTab === "reports" && (
+          <WeeklyMeetingReports
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+          />
+        )}
+        {activeTab === "settings" && <WeeklyMeetingSettings />}
+      </div>
+    </div>
+  );
+};
+
+export default WeeklyMeetings;
