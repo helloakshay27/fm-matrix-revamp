@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Building2, Eye, EyeOff } from "lucide-react";
@@ -61,13 +60,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { userRole } = usePermissions();
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  // Keep a ref so handleLogin always sees the latest executeRecaptcha without stale closure
-  const executeRecaptchaRef = useRef(executeRecaptcha);
-  useEffect(() => {
-    executeRecaptchaRef.current = executeRecaptcha;
-  }, [executeRecaptcha]);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedOrganization, setSelectedOrganization] =
@@ -297,39 +289,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const organizationId = selectedOrganization.id;
 
-      let recaptchaToken: string | undefined;
-      const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-
-      if (siteKey) {
-        const maxWaitMs = 10000;
-        const pollMs = 500;
-        let waited = 0;
-        while (!executeRecaptchaRef.current && waited < maxWaitMs) {
-          await new Promise((r) => setTimeout(r, pollMs));
-          waited += pollMs;
-        }
-        const execFn = executeRecaptchaRef.current;
-        if (execFn) {
-          try {
-            recaptchaToken = await execFn("login");
-          } catch {
-            toast.error("reCAPTCHA failed. Please refresh and try again.");
-            setLoginLoading(false);
-            return;
-          }
-        } else {
-          toast.error("reCAPTCHA not ready. Check your network and try again.");
-          setLoginLoading(false);
-          return;
-        }
-      }
-
       const response = await loginUser(
         email,
         password,
         baseUrl,
         organizationId,
-        recaptchaToken
+        captchaToken ?? undefined
       );
 
       if (!response || !response.access_token) {
