@@ -125,7 +125,17 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
 
   const handleSubmit = () => {
     console.log('Applying filters:', filters);
-    
+
+    if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) {
+      toast.error('From Date cannot be later than To Date.');
+      return;
+    }
+
+    if (!filters.commodity && !filters.category && !filters.operationalName && !filters.fromDate && !filters.toDate) {
+      toast.error('Please select at least one filter option.');
+      return;
+    }
+
     const apiFilters: WasteGenerationFilters = {
       commodity_id_eq: filters.commodity || undefined,
       category_id_eq: filters.category || undefined,
