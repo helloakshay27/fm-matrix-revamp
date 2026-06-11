@@ -30,7 +30,10 @@ import { getBaseUrl, getAuthHeaders } from "./Shared";
 import { toast } from "sonner";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
+import AddToDoModal from "../../../components/AddToDoModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 // ─────────────────────────────────────────────
 // MUI z-index override
@@ -272,6 +275,15 @@ const scoreColor = (s, status) => {
   return s >= 50 ? "bg-[#2ECC71] text-white" : "bg-[#EB4A4A] text-white";
 };
 
+const toRoundedScore = (...values) => {
+  for (const value of values) {
+    if (value === null || value === undefined || value === "") continue;
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) return Math.round(numericValue);
+  }
+  return 0;
+};
+
 // ─────────────────────────────────────────────
 // Normalize report_data (same as DailyTab)
 // ─────────────────────────────────────────────
@@ -352,53 +364,36 @@ const resolveRawSource = (report) => {
       false,
   });
 
-  if (!hasReportData && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (report.status === "pending" && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
+  if (hasDraft) return normalizeDraftRaw(draftRaw);
 
   if (hasReportData && report.journal_type === "daily") {
     return normalizeRootRaw(rd);
   }
 
-  if (hasReportData && hasDraft) {
-    const normalizedDraft = normalizeDraftRaw(draftRaw);
-
-    return {
-      ...normalizedDraft,
-      ...rd,
-      tasks_issues: Array.isArray(rd.tasks_issues)
-        ? mergeTasksIssuesPreservingType(
-            normalizedDraft.tasks_issues || [],
-            rd.tasks_issues,
-          )
-        : normalizedDraft.tasks_issues || [],
-      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(
-            rd.tomorrow_plan,
-            normalizedDraft.tomorrow_plan || [],
-          )
-        : normalizedDraft.tomorrow_plan || [],
-      accomplishments:
-        rd.accomplishments?.items ||
-        (Array.isArray(rd.accomplishments)
-          ? rd.accomplishments
-          : normalizedDraft.accomplishments || []),
-      self_rating:
-        rd.self_rating ??
-        report.self_rating ??
-        draftReport.self_rating ??
-        normalizedDraft.self_rating,
-      total_score:
-        rd.total_score ?? report.score ?? normalizedDraft.total_score,
-      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
-    };
-  }
-
   return normalizeRootRaw(rd);
+};
+
+const isAbsentReport = (report) => {
+  const rawSource = resolveRawSource(report || {});
+  return [
+    report?.is_absent,
+    report?.daily_report?.is_absent,
+    rawSource?.is_absent,
+    rawSource?.details?.is_absent,
+    rawSource?.sections?.is_absent,
+  ].some((value) => value === true || value === "true" || value === 1);
+};
+
+const getAbsentReason = (report) => {
+  const rawSource = resolveRawSource(report || {});
+  const reason =
+    report?.absent_reason ??
+    report?.daily_report?.absent_reason ??
+    rawSource?.absent_reason ??
+    rawSource?.details?.absent_reason ??
+    rawSource?.sections?.absent_reason ??
+    "";
+  return String(reason || "").trim();
 };
 
 const getMeetingNotesData = (data) => {
@@ -447,8 +442,64 @@ const mergeUniqueItems = (primary = [], fallback = []) => {
 };
 
 const getItemType = (item) => {
-  if (!item || typeof item !== "object") return "task";
-  return String(item.type || "task").toLowerCase();
+  if (!item || typeof item !== "object") return "note";
+  const rawType = String(
+    item.source_type ||
+      item.sourceType ||
+      item.originalData?.source_type ||
+      item.originalData?.sourceType ||
+      item.type ||
+      "",
+  ).toLowerCase();
+
+  if (rawType.includes("issue")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do")) return "todo";
+  if (rawType.includes("task")) return "task";
+
+  return "note";
+};
+
+const getItemTypeLabel = (type) =>
+  type === "todo"
+    ? "Todo"
+    : type === "issue"
+      ? "Issue"
+      : type === "task"
+        ? "Task"
+        : "Note";
+
+const getItemTypePillClass = (type) =>
+  type === "todo"
+    ? "bg-purple-50 text-purple-700 border-purple-200"
+    : type === "issue"
+      ? "bg-red-50 text-red-600 border-red-200"
+      : type === "task"
+        ? "bg-orange-50 text-orange-600 border-orange-200"
+        : "bg-white text-neutral-700 border-gray-200";
+
+const getItemSourceId = (item) => {
+  const rawId =
+    item?.source_id ??
+    item?.sourceId ??
+    item?.task_id ??
+    item?.taskId ??
+    item?.issue_id ??
+    item?.issueId ??
+    item?.todo_id ??
+    item?.todoId ??
+    item?.originalData?.source_id ??
+    item?.originalData?.sourceId ??
+    item?.originalData?.id ??
+    item?.originalData?.task_id ??
+    item?.originalData?.taskId ??
+    item?.originalData?.issue_id ??
+    item?.originalData?.issueId ??
+    item?.originalData?.todo_id ??
+    item?.originalData?.todoId ??
+    item?.id;
+
+  if (rawId === null || rawId === undefined || rawId === "") return null;
+  return String(rawId).replace(/^(task|issue|todo)-/i, "") || rawId;
 };
 
 const mergeTasksIssuesPreservingType = (primary = [], fallback = []) => {
@@ -525,12 +576,14 @@ const FormattedHighlights = ({ text, isPending }) => {
   }
   if (!text) return <span>-</span>;
 
-  const matchAccChal = text.match(/Acc:\s*(\d+)\s*\|\s*Chal:\s*(\d+)/i);
+  const matchAccChal = text.match(
+    /Acc:\s*(\d+)\s*\|\s*(?:Chal|Plan):\s*(\d+)/i,
+  );
   if (matchAccChal) {
     return (
       <span className="text-[13px] text-[#1A1A1A]">
         <span className="font-bold">{matchAccChal[1]}</span> accomplishments,{" "}
-        <span className="font-bold">{matchAccChal[2]}</span> challenges
+        <span className="font-bold">{matchAccChal[2]}</span> plan for tomorrow
       </span>
     );
   }
@@ -543,11 +596,80 @@ const FormattedHighlights = ({ text, isPending }) => {
 // Uses /user_journals/:id.json — same as before
 // ─────────────────────────────────────────────
 const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
+  const navigate = useNavigate();
   const [details, setDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [isTodoModalOpen, setIsTodoModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState(null);
+  const [actionMemberPrefill, setActionMemberPrefill] = useState(null);
+
+  const openTaskModalForMember = () => {
+    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
+    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTaskModalOpen(true);
+  };
+
+  const openIssueModalForMember = () => {
+    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
+    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsIssueModalOpen(true);
+  };
+
+  const openTodoModalForMember = () => {
+    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
+    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTodoModalOpen(true);
+  };
+
+  const handleViewTaskIssueTodoItem = async (item) => {
+    const sourceType = getItemType(item);
+    const sourceId = getItemSourceId(item);
+    const originalData = item?.originalData || item;
+
+    if (!["task", "issue", "todo"].includes(sourceType)) return;
+
+    if (!sourceId) {
+      toast.error(`${getItemTypeLabel(sourceType)} details not found for this item.`);
+      return;
+    }
+
+    if (sourceType === "todo") {
+      setSelectedTodo({ ...originalData, id: sourceId });
+      setIsDetailsModalOpen(true);
+
+      try {
+        const res = await fetch(`${getBaseUrl()}/todos/${sourceId}.json`, {
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const todoDetails = json?.todo || json?.data?.todo || json?.data || json;
+          if (todoDetails) setSelectedTodo(todoDetails);
+        }
+      } catch (error) {
+        console.error("Failed to fetch todo details:", error);
+      }
+      return;
+    }
+
+    navigate(sourceType === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+  };
 
   const [quickActionOpen, setQuickActionOpen] = useState(false);
   const [quickActionText, setQuickActionText] = useState("");
@@ -615,6 +737,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const rawDisplayRd = resolveRawSource(detailSource);
 
   const displayRd = normalizeReportData(rawDisplayRd);
+  const detailAbsentReason = getAbsentReason(detailSource);
 
   const cleanName = (log.user || "").trim();
 
@@ -629,7 +752,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       !item.member ||
       String(item.member).trim().toLowerCase() === cleanName.toLowerCase(),
   );
-  const groupedTasksIssues = groupTasksIssuesByType(filteredTasksIssues);
+  const visibleTasksIssues = filteredTasksIssues.filter(
+    (item) => !isCompletedStatus(getItemStatus(item)),
+  );
   const filteredTomorrowPlan = displayRd.tomorrow_plan.filter(
     (item) =>
       !item.member ||
@@ -661,8 +786,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const timeAchieved = getScore(sections.timing, kpisFallback.timing);
   const timeMax = 20;
 
-  const totalScoreStr = Math.round(
-    details?.score ?? rawDisplayRd?.total_score ?? log.score ?? 0,
+  const totalScoreStr = toRoundedScore(
+    rawDisplayRd?.total_score,
+    details?.score,
+    log.score,
   );
 
   const selfRating =
@@ -680,10 +807,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 
     const rawSource = resolveRawSource(detailSource);
     const baseReportData =
-      details?.report_data ||
       details?.daily_report?.report_data ||
-      log._raw?.report_data ||
       log._raw?.daily_report?.report_data ||
+      details?.report_data ||
+      log._raw?.report_data ||
       rawSource ||
       {};
 
@@ -962,7 +1089,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   : "text-green-700",
                               )}
                             >
-                              {displayRd.is_absent ? "Absent" : "Present"}
+                              {displayRd.is_absent
+                                ? `Absent${detailAbsentReason ? `: ${detailAbsentReason}` : ""}`
+                                : "Present"}
                             </span>
                           </div>
                         )}
@@ -1001,19 +1130,41 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           </p>
                         ) : (
                           <div className="space-y-1.5">
-                            {filteredAccomplishments.map((item, i) => (
-                              <div
-                                key={i}
-                                className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
-                              >
-                                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-700 uppercase">
-                                  Note
-                                </span>
-                                <span className="text-xs font-bold text-neutral-900 leading-snug">
-                                  {getItemTitle(item)}
-                                </span>
-                              </div>
-                            ))}
+                            {filteredAccomplishments.map((item, i) => {
+                              const type = getItemType(item);
+                              const hasDetails = ["task", "issue", "todo"].includes(type);
+                              return (
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
+                                >
+                                  <span
+                                    className={cn(
+                                      "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                      getItemTypePillClass(type),
+                                    )}
+                                  >
+                                    {getItemTypeLabel(type)}
+                                  </span>
+                                  <span className="text-xs font-bold text-neutral-900 leading-snug">
+                                    {getItemTitle(item)}
+                                  </span>
+                                  {hasDetails && (
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleViewTaskIssueTodoItem(item);
+                                      }}
+                                      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                      title={`View ${getItemTypeLabel(type)}`}
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -1030,10 +1181,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             </h4>
                           </div>
                           <span className="text-xs font-bold text-neutral-500 shrink-0">
-                            {filteredTasksIssues.length}
+                            {visibleTasksIssues.length}
                           </span>
                         </div>
-                        {filteredTasksIssues.length === 0 ? (
+                        {visibleTasksIssues.length === 0 ? (
                           <p className="text-sm text-neutral-400 italic font-medium">
                             None recorded.
                           </p>
@@ -1042,20 +1193,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             {[
                               {
                                 label: "In Progress",
-                                items: filteredTasksIssues.filter(
-                                  (item) =>
-                                    !isCompletedStatus(getItemStatus(item)),
-                                ),
+                                items: visibleTasksIssues,
                                 wrapClass: "bg-blue-50 border-blue-100",
                                 countClass: "bg-blue-100 text-blue-700",
-                              },
-                              {
-                                label: "Completed",
-                                items: filteredTasksIssues.filter((item) =>
-                                  isCompletedStatus(getItemStatus(item)),
-                                ),
-                                wrapClass: "bg-green-50 border-green-100",
-                                countClass: "bg-green-100 text-green-700",
                               },
                             ].map((section) =>
                               section.items.length > 0 ? (
@@ -1081,6 +1221,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   </div>
                                   {section.items.map((item, i) => {
                                     const type = getItemType(item);
+                                    const hasDetails = ["task", "issue", "todo"].includes(type);
                                     return (
                                       <div
                                         key={`${section.label}-${i}`}
@@ -1092,24 +1233,29 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                         )}
                                       >
                                         <span
-                                          className={cn(
-                                            "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                            type === "todo"
-                                              ? "bg-purple-50 text-purple-700 border-purple-200"
-                                              : type === "issue"
-                                                ? "bg-red-50 text-red-600 border-red-200"
-                                                : "bg-orange-50 text-orange-600 border-orange-200",
-                                          )}
-                                        >
-                                          {type === "todo"
-                                            ? "Todo"
-                                            : type === "issue"
-                                              ? "Issue"
-                                              : "Task"}
+                                            className={cn(
+                                              "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                              getItemTypePillClass(type),
+                                            )}
+                                          >
+                                          {getItemTypeLabel(type)}
                                         </span>
                                         <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
                                           {getItemTitle(item)}
                                         </span>
+                                        {hasDetails && (
+                                          <button
+                                            type="button"
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              handleViewTaskIssueTodoItem(item);
+                                            }}
+                                            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                            title={`View ${getItemTypeLabel(type)}`}
+                                          >
+                                            <Eye className="w-3 h-3" />
+                                          </button>
+                                        )}
                                       </div>
                                     );
                                   })}
@@ -1138,6 +1284,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           <div className="space-y-1.5">
                             {filteredTomorrowPlan.map((item, i) => {
                               const type = getItemType(item);
+                              const hasDetails = ["task", "issue", "todo"].includes(type);
                               return (
                                 <div
                                   key={i}
@@ -1146,22 +1293,27 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   <span
                                     className={cn(
                                       "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                      type === "todo"
-                                        ? "bg-purple-50 text-purple-700 border-purple-200"
-                                        : type === "issue"
-                                          ? "bg-red-50 text-red-600 border-red-200"
-                                          : "bg-orange-50 text-orange-600 border-orange-200",
+                                      getItemTypePillClass(type),
                                     )}
                                   >
-                                    {type === "todo"
-                                      ? "Todo"
-                                      : type === "issue"
-                                        ? "Issue"
-                                        : "Task"}
+                                    {getItemTypeLabel(type)}
                                   </span>
                                   <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
                                     {getItemTitle(item)}
                                   </span>
+                                  {hasDetails && (
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleViewTaskIssueTodoItem(item);
+                                      }}
+                                      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                      title={`View ${getItemTypeLabel(type)}`}
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                    </button>
+                                  )}
                                 </div>
                               );
                             })}
@@ -1173,16 +1325,22 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2 pt-1">
                       <button
-                        onClick={() => setIsTaskModalOpen(true)}
+                        onClick={openTaskModalForMember}
                         className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" /> Add Task
                       </button>
                       <button
-                        onClick={() => setIsIssueModalOpen(true)}
+                        onClick={openIssueModalForMember}
                         className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                      </button>
+                      <button
+                        onClick={openTodoModalForMember}
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Todo
                       </button>
                       <button
                         onClick={() => {
@@ -1443,7 +1601,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
               <div className="fixed inset-0 z-[10000] flex justify-end">
                 <div
                   className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                  onClick={() => setIsTaskModalOpen(false)}
+                  onClick={() => {
+                    setIsTaskModalOpen(false);
+                    setActionMemberPrefill(null);
+                  }}
                 />
                 <div
                   className="relative flex flex-col bg-white shadow-2xl h-full border-l border-gray-200"
@@ -1454,7 +1615,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                       Add Task
                     </h2>
                     <button
-                      onClick={() => setIsTaskModalOpen(false)}
+                      onClick={() => {
+                        setIsTaskModalOpen(false);
+                        setActionMemberPrefill(null);
+                      }}
                       className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors text-gray-500"
                     >
                       <X className="w-5 h-5" />
@@ -1463,12 +1627,16 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                   <div className="flex-1 overflow-y-auto p-4">
                     <ProjectTaskCreateModal
                       isEdit={false}
-                      onCloseModal={() => setIsTaskModalOpen(false)}
+                      onCloseModal={() => {
+                        setIsTaskModalOpen(false);
+                        setActionMemberPrefill(null);
+                      }}
                       className="max-w-full mx-0"
-                      prefillData={null}
+                      prefillData={actionMemberPrefill}
                       opportunityId={null}
                       onSuccess={async () => {
                         setIsTaskModalOpen(false);
+                        setActionMemberPrefill(null);
                         refetchDetails(true);
                       }}
                       isConversion={false}
@@ -1483,11 +1651,39 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             <MuiZIndexFix>
               <AddIssueModal
                 openDialog={isIssueModalOpen}
-                handleCloseDialog={() => setIsIssueModalOpen(false)}
+                handleCloseDialog={() => {
+                  setIsIssueModalOpen(false);
+                  setActionMemberPrefill(null);
+                }}
                 preSelectedProjectId={undefined}
+                prefillData={actionMemberPrefill}
               />
             </MuiZIndexFix>
           )}
+
+          {isTodoModalOpen && (
+            <MuiZIndexFix>
+              <AddToDoModal
+                isModalOpen={isTodoModalOpen}
+                setIsModalOpen={(val) => {
+                  setIsTodoModalOpen(val);
+                  if (!val) setActionMemberPrefill(null);
+                }}
+                getTodos={async () => {
+                  setIsTodoModalOpen(false);
+                  setActionMemberPrefill(null);
+                  refetchDetails(true);
+                }}
+                prefillData={actionMemberPrefill}
+              />
+            </MuiZIndexFix>
+          )}
+
+          <TodoDetailsModal
+            isModalOpen={isDetailsModalOpen}
+            setIsModalOpen={setIsDetailsModalOpen}
+            todo={selectedTodo}
+          />
         </div>,
         document.body,
       )}
@@ -1669,32 +1865,38 @@ const DailyLogTab = ({
                 detailedReportNames.has(normalizeName(report.name)),
             )
           : allReports.filter(
-              (r) => r.status !== "pending" || !!r.daily_report,
+              (r) =>
+                r.status !== "pending" || !!r.daily_report,
             );
 
       // Map to table row format
       let logsArray = submittedReports.map((report) => {
-        const rawRd = resolveRawSource(report);
-        const rd = normalizeReportData(rawRd);
+          const rawRd = resolveRawSource(report);
+          const rd = normalizeReportData(rawRd);
+          const isAbsent = isAbsentReport(report);
+          const absentReason = getAbsentReason(report);
 
-        // Build highlights summary from accomplishments count
-        const highlights =
-          rd.accomplishments.length > 0 || rd.tasks_issues.length > 0
-            ? `Acc: ${rd.accomplishments.length} | Chal: ${rd.tasks_issues.length}`
-            : "";
+          // Build highlights summary from accomplishments and tomorrow plan counts
+          const highlights = isAbsent
+            ? `Absent${absentReason ? `: ${absentReason}` : ""}`
+            : rd.accomplishments.length > 0 || rd.tomorrow_plan.length > 0
+              ? `Acc: ${rd.accomplishments.length} | Plan: ${rd.tomorrow_plan.length}`
+              : "";
 
         return {
           // journal_id is null for draft-only members; fall back to daily_report.id
           id: report.journal_id || report.daily_report?.id || report.id,
           user: report.name || "",
           email: report.email || "",
-          score: Math.round(report.score ?? rawRd?.total_score ?? 0),
+          score: toRoundedScore(rawRd?.total_score, report.score),
           dept: report.department || "",
           highlights,
           submittedAt: report.submitted_at
             ? formatDateTime(report.submitted_at)
             : "—",
           status: report.status,
+          isAbsent,
+          absentReason,
           date: selectedDate,
           userId: report.user_id,
           _raw: report,
@@ -1720,8 +1922,10 @@ const DailyLogTab = ({
           };
           const rawRd = resolveRawSource(hydratedReport);
           const rd = normalizeReportData(rawRd);
+          const isAbsent = isAbsentReport(hydratedReport);
+          const absentReason = getAbsentReason(hydratedReport);
           const accomplishments = rd.accomplishments;
-          const tasksIssues = rd.tasks_issues;
+          const tomorrowPlan = rd.tomorrow_plan;
           const reportSelfRating =
             Number(String(report.self_rating || "0").split("/")[0]) || 0;
 
@@ -1735,16 +1939,21 @@ const DailyLogTab = ({
               selectedDate,
             user: hydratedReport.name || report.name || "",
             email: hydratedReport.email || "",
-            score: Math.round(
-              hydratedReport.score ?? rawRd?.total_score ?? reportSelfRating,
+            score: toRoundedScore(
+              rawRd?.total_score,
+              hydratedReport.score,
+              reportSelfRating,
             ),
             dept: hydratedReport.department || "",
-            highlights:
-              accomplishments.length > 0 || tasksIssues.length > 0
-                ? `Acc: ${accomplishments.length} | Chal: ${tasksIssues.length}`
+            highlights: isAbsent
+              ? `Absent${absentReason ? `: ${absentReason}` : ""}`
+              : accomplishments.length > 0 || tomorrowPlan.length > 0
+                ? `Acc: ${accomplishments.length} | Plan: ${tomorrowPlan.length}`
                 : "",
             submittedAt: "—",
             status: "submitted",
+            isAbsent,
+            absentReason,
             date: selectedDate,
             userId: hydratedReport.user_id || report.user_id,
             _raw: hydratedReport,
@@ -1786,7 +1995,7 @@ const DailyLogTab = ({
         setGroupedApiLogs({});
       }
 
-      setMetaSubmitted(detailedReports.length || logsArray.length);
+      setMetaSubmitted(logsArray.length);
       setMetaExpected(missedCount);
     } catch (err) {
       setApiError(err.message);
@@ -1884,6 +2093,13 @@ const DailyLogTab = ({
           <div className="text-xs font-semibold text-[#8C8580] mt-0.5 truncate">
             {log.email}
           </div>
+          {log.isAbsent && (
+            <div className="mt-1 inline-flex max-w-full items-center rounded-md border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700">
+              <span className="truncate">
+                Absent{log.absentReason ? `: ${log.absentReason}` : ""}
+              </span>
+            </div>
+          )}
         </td>
         <td className="px-3 py-4 sm:px-4">
           <span

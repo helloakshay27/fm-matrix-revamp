@@ -365,11 +365,23 @@ const getViewSourceId = (item: any): any => {
   return cleaned || rawId;
 };
 
-const groupTasksIssuesByType = (items: any[] = []) => ({
-  tasks: items.filter((item) => getItemType(item) === "task"),
-  issues: items.filter((item) => getItemType(item) === "issue"),
-  todos: items.filter((item) => getItemType(item) === "todo"),
-});
+const getPayloadSourceType = (item: any): any => {
+  const rawType = String(
+    item?.source_type ||
+    item?.sourceType ||
+    item?.originalData?.source_type ||
+    item?.originalData?.sourceType ||
+    item?.type ||
+    ""
+  ).toLowerCase();
+  const rawId = String(item?.id || item?.source_id || "").toLowerCase();
+
+  if (rawType.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-")) return "todo";
+  if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return null;
+};
 
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
   const merged: any[] = [];
@@ -478,7 +490,6 @@ const resolveRawSource = (report: any) => {
   const draftReport = report.daily_report || {};
   const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
-  const hasReportData = rd && Object.keys(rd).length > 0;
 
   const normalizeDraftRaw = (raw: any) => ({
     ...raw,
@@ -506,43 +517,7 @@ const resolveRawSource = (report: any) => {
       null,
   });
 
-  if (!hasReportData && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (report.status === "pending" && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (hasReportData && hasDraft) {
-    const normalizedDraft = normalizeDraftRaw(draftRaw);
-
-    return {
-      ...normalizedDraft,
-      ...rd,
-      tasks_issues: Array.isArray(rd.tasks_issues)
-        ? mergeTasksIssuesPreservingType(
-          normalizedDraft.tasks_issues || [],
-          rd.tasks_issues
-        )
-        : normalizedDraft.tasks_issues || [],
-      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(
-          rd.tomorrow_plan,
-          normalizedDraft.tomorrow_plan || []
-        )
-        : normalizedDraft.tomorrow_plan || [],
-      accomplishments:
-        rd.accomplishments?.items ||
-        (Array.isArray(rd.accomplishments)
-          ? rd.accomplishments
-          : normalizedDraft.accomplishments || []),
-      self_rating: normalizedDraft.self_rating,
-      total_score: rd.total_score ?? normalizedDraft.total_score,
-      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
-      absent_reason: rd.absent_reason ?? normalizedDraft.absent_reason,
-    };
-  }
+  if (hasDraft) return normalizeDraftRaw(draftRaw);
 
   return rd;
 };
@@ -965,7 +940,7 @@ const DailyTab = ({
 
     const rawSource = resolveRawSource(report);
     const baseReportData =
-      report.report_data || report.daily_report?.report_data || rawSource || {};
+      report.daily_report?.report_data || report.report_data || rawSource || {};
 
     if (patch.tomorrow_plan_item) {
       const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
@@ -1262,26 +1237,24 @@ const DailyTab = ({
         meeting_notes: meetingNotesObj,
         accomplishments: allAccomplishments.map((a) => ({
           title: a.title || a.text || "",
+          source_id: getViewSourceId(a),
+          source_type: getPayloadSourceType(a),
         })),
-        tasks_issues: allTasksIssues.map((t) => ({
-          type: getViewSourceType(t),
-          title: t.title || t.text || "",
-          status: t.status || "open",
-          source_id: getViewSourceId(t),
-          source_type: getViewSourceType(t),
-        })),
+        tasks_issues: allTasksIssues
+          .filter((t) => !isCompletedStatus(getItemStatus(t)))
+          .map((t) => ({
+            type: getViewSourceType(t),
+            title: t.title || t.text || "",
+            status: t.status || "open",
+            source_id: getViewSourceId(t),
+            source_type: getViewSourceType(t),
+          })),
         big_win: combinedBigWin || null,
         tomorrow_plan: allTomorrowPlan.map((p) => {
-          const sourceType =
-            p.source_type ||
-            p.sourceType ||
-            p.originalData?.source_type ||
-            p.originalData?.sourceType ||
-            p.type ||
-            null;
+          const sourceType = getPayloadSourceType(p);
           return {
             title: p.title || p.text || "",
-            source_id: sourceType ? getViewSourceId(p) : null,
+            source_id: getViewSourceId(p),
             source_type: sourceType,
           };
         }),
@@ -1459,26 +1432,24 @@ const DailyTab = ({
         meeting_notes: meetingNotesObj,
         accomplishments: allAccomplishments.map((a) => ({
           title: a.title || a.text || "",
+          source_id: getViewSourceId(a),
+          source_type: getPayloadSourceType(a),
         })),
-        tasks_issues: allTasksIssues.map((t) => ({
-          type: getViewSourceType(t),
-          title: t.title || t.text || "",
-          status: t.status || "open",
-          source_id: getViewSourceId(t),
-          source_type: getViewSourceType(t),
-        })),
+        tasks_issues: allTasksIssues
+          .filter((t) => !isCompletedStatus(getItemStatus(t)))
+          .map((t) => ({
+            type: getViewSourceType(t),
+            title: t.title || t.text || "",
+            status: t.status || "open",
+            source_id: getViewSourceId(t),
+            source_type: getViewSourceType(t),
+          })),
         big_win: combinedBigWin || null,
         tomorrow_plan: allTomorrowPlan.map((p) => {
-          const sourceType =
-            p.source_type ||
-            p.sourceType ||
-            p.originalData?.source_type ||
-            p.originalData?.sourceType ||
-            p.type ||
-            null;
+          const sourceType = getPayloadSourceType(p);
           return {
             title: p.title || p.text || "",
-            source_id: sourceType ? getViewSourceId(p) : null,
+            source_id: getViewSourceId(p),
             source_type: sourceType,
           };
         }),
@@ -2144,6 +2115,14 @@ const DailyTab = ({
                       rawDisplayRd,
                       displayRd
                     );
+                    const attendanceLabel = isAbsentReport ? "Absent" : "Present";
+                    const absentReasonText =
+                      isAbsentReport && absentReason.toLowerCase() !== "absent"
+                        ? absentReason
+                        : "";
+                    const attendanceBadgeClass = isAbsentReport
+                      ? "bg-red-50 text-red-700 border-red-100"
+                      : "bg-green-50 text-green-700 border-green-100";
 
                     const normalizedReportName = (report.name || "")
                       .trim()
@@ -2163,8 +2142,9 @@ const DailyTab = ({
                         String(item.member).trim().toLowerCase() ===
                         normalizedReportName
                     );
-                    const groupedTasksIssues =
-                      groupTasksIssuesByType(userTasksIssues);
+                    const visibleTasksIssues = userTasksIssues.filter(
+                      (item: any) => !isCompletedStatus(getItemStatus(item))
+                    );
 
                     const userTomorrowPlan = displayRd.tomorrow_plan.filter(
                       (item: any) =>
@@ -2178,11 +2158,9 @@ const DailyTab = ({
                       draftRaw?.sections ||
                       rawDisplayRd?.sections ||
                       displayRd?.sections ||
-                      report?.report_data?.sections ||
                       {};
                     const kpisFallback =
                       report.kpis ||
-                      report.report_data?.kpis ||
                       rawDisplayRd?.kpis ||
                       {};
 
@@ -2315,6 +2293,24 @@ const DailyTab = ({
                                     Not submitted
                                   </span>
                                 )}
+                                {!isPending && (
+                                  <>
+                                    <span className="text-[10px] font-bold text-white bg-[#10B981] border border-[#10B981] px-2 py-0.5 rounded-full shrink-0">
+                                      Submitted
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        "border text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                                        attendanceBadgeClass
+                                      )}
+                                    >
+                                      {attendanceLabel}
+                                      {absentReasonText
+                                        ? `: ${absentReasonText}`
+                                        : ""}
+                                    </span>
+                                  </>
+                                )}
                                 {canExpand && (
                                   <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
                                     <ChevronDown
@@ -2328,7 +2324,7 @@ const DailyTab = ({
                               </div>
                             </div>
 
-                            {(!isPending || hasDraft) && (
+                            {canExpand && (
                               <div className="flex flex-wrap items-center gap-2 mb-1">
                                 <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
                                   KPI: {kpiStr}
@@ -2345,7 +2341,7 @@ const DailyTab = ({
                               </div>
                             )}
 
-                            {(!isPending || hasDraft) && dateRow.length > 0 && (
+                            {canExpand && dateRow.length > 0 && (
                               <div className="flex items-center gap-2 mt-2">
                                 <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
                                   {configName}
@@ -2395,8 +2391,14 @@ const DailyTab = ({
                                 <span className="text-gray-400">
                                   Total Score: {totalScoreStr}
                                 </span>
-                                <span className="text-gray-400">
-                                  Missed: {isAbsentReport ? 1 : 0}
+                                <span
+                                  className={cn(
+                                    "font-semibold",
+                                    isAbsentReport ? "text-red-600" : "text-green-600"
+                                  )}
+                                >
+                                  {attendanceLabel}
+                                  {absentReasonText ? `: ${absentReasonText}` : ""}
                                 </span>
                               </div>
 
@@ -2425,7 +2427,7 @@ const DailyTab = ({
                                       Accomplishments
                                     </h4>
                                   </div>
-                                  {userAccomplishments.length === 0 ? (
+                                  {isAbsentReport || userAccomplishments.length === 0 ? (
                                     <p className="text-xs text-neutral-300 italic">
                                       None recorded.
                                     </p>
@@ -2488,13 +2490,13 @@ const DailyTab = ({
                                     <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
                                       Task, Issues & To Do
                                     </h4>
-                                    {userTasksIssues.length > 0 && (
+                                    {visibleTasksIssues.length > 0 && (
                                       <span className="ml-auto text-[10px] font-bold text-neutral-400">
-                                        {userTasksIssues.length}
+                                        {visibleTasksIssues.length}
                                       </span>
                                     )}
                                   </div>
-                                  {userTasksIssues.length === 0 ? (
+                                  {isAbsentReport || visibleTasksIssues.length === 0 ? (
                                     <p className="text-xs text-neutral-300 italic">
                                       None recorded.
                                     </p>
@@ -2575,7 +2577,7 @@ const DailyTab = ({
                                         ] as const
                                       ).map((bucket) => {
                                         const bucketItems =
-                                          userTasksIssues.filter((item: any) =>
+                                          visibleTasksIssues.filter((item: any) =>
                                             (
                                               bucket.statuses as readonly string[]
                                             ).includes(
@@ -2766,7 +2768,7 @@ const DailyTab = ({
                                       Tomorrow's Plan
                                     </h4>
                                   </div>
-                                  {userTomorrowPlan.length === 0 ? (
+                                  {isAbsentReport || userTomorrowPlan.length === 0 ? (
                                     <p className="text-xs text-neutral-300 italic">
                                       None recorded.
                                     </p>
