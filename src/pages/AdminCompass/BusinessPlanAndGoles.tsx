@@ -1898,15 +1898,7 @@ const TOOLTIP_CONTENT: Record<
 //  CoreValuesInlineCard
 // ─────────────────────────────────
 const getInitials = (text: string): string => {
-  const words = text.trim().split(/\s+/);
-  if (words.length === 1) {
-    return words[0].slice(0, 3).toUpperCase();
-  }
-  return words
-    .slice(0, 3)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
+  return text.trim().charAt(0).toUpperCase();
 };
 
 const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
@@ -1918,7 +1910,7 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
     <div className="flex flex-wrap gap-3">
       {safeValues.map((v, idx) => (
         <div key={v.id ?? idx} className="group/avatar relative">
-          <div className="flex h-12 w-12 cursor-default items-center justify-center rounded-full bg-[#fff0ea] text-[11px] font-extrabold text-[#DA7756] ring-2 ring-[#f3d8ce] transition-all duration-200 hover:bg-[#DA7756] hover:text-white hover:ring-[#DA7756]">
+          <div className="flex h-12 w-12 cursor-default items-center justify-center rounded-full bg-[#fff0ea] text-[18px] font-extrabold text-[#DA7756] ring-2 ring-[#f3d8ce] transition-all duration-200 hover:bg-[#DA7756] hover:text-white hover:ring-[#DA7756]">
             {getInitials(v.value)}
           </div>
           <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#1a1a1a] px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/avatar:opacity-100">
@@ -3961,12 +3953,9 @@ const BusinessPlanAndGoles = () => {
                 </div>
 
                 <div className="min-w-0">
-                  <span className="block text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#070707]">
+                  <span className="block text-[13px] font-extrabold uppercase tracking-[0.14em] text-[#070707]">
                     Our Business Plan
                   </span>
-                  <p className="mt-0.5 text-[10px] font-semibold text-[#6b7280]">
-                    Add images and explainer videos
-                  </p>
                 </div>
               </div>
 
