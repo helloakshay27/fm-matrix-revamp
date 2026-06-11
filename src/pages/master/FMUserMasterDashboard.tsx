@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useSearchParams } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -112,6 +112,7 @@ export const FMUserMasterDashboard = () => {
   const token = localStorage.getItem("token") ?? "";
   const { setCurrentSection } = useLayout() as LayoutContext;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const user = getUser();
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
@@ -242,12 +243,21 @@ export const FMUserMasterDashboard = () => {
     }
   }
 
+  // useEffect(() => {
+  //   if (baseUrl && token) {
+  //     fetchUsers(1);
+  //     getShortFmUsers()
+  //   }
+  // }, [baseUrl, token]);
+
   useEffect(() => {
-    if (baseUrl && token) {
-      fetchUsers(1);
-      getShortFmUsers()
-    }
-  }, [baseUrl, token]);
+  if (baseUrl && token) {
+    const page = Number(searchParams.get("page")) || 1;
+
+    fetchUsers(page);
+    getShortFmUsers();
+  }
+}, [baseUrl, token]);
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -538,28 +548,36 @@ export const FMUserMasterDashboard = () => {
       app_downloaded_eq: newFilters.downloaded,
     });
   };
+
+
   const handlePageChange = async (page: number) => {
-    console.log(page)
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
-      return;
-    }
+  if (
+    page < 1 ||
+    page > pagination.total_pages ||
+    page === pagination.current_page ||
+    loading
+  ) {
+    return;
+  }
 
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      fetchUsers(page, {
-        lock_user_permission_status_eq: filters.status,
-        app_downloaded_eq: filters.downloaded,
-        firstname_cont: filters.name,
-        lastname_cont: filters.name,
-        email_cont: filters.email,
-        search_all_fields_cont: searchTerm
-      });
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
-  };
+  try {
+    setSearchParams({
+      page: page.toString(),
+    });
 
+    fetchUsers(page, {
+      lock_user_permission_status_eq: filters.status,
+      app_downloaded_eq: filters.downloaded,
+      firstname_cont: filters.name,
+      lastname_cont: filters.name,
+      email_cont: filters.email,
+      search_all_fields_cont: searchTerm,
+    });
+  } catch (error) {
+    console.error("Error changing page:", error);
+    toast.error("Failed to load page data. Please try again.");
+  }
+};
   const renderPaginationItems = () => {
     if (!pagination.total_pages || pagination.total_pages <= 0) {
       return null;
