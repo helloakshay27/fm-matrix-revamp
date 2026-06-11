@@ -51,6 +51,7 @@ type SidebarItem = {
   subItems?: SidebarItem[];
   color?: string;
   blank?: boolean;
+  additionalRoutes?: string[];
 };
 
 const modulesByPackage = {
@@ -59,6 +60,7 @@ const modulesByPackage = {
       name: "Memberships",
       icon: Star,
       href: "/club-management/membership/groups",
+      additionalRoutes: ["/club-management/group-membership"],
     },
     {
       name: "User Management",
@@ -978,6 +980,7 @@ export const ClubSidebar: React.FC = () => {
     const collectHrefs = (items: SidebarItem[]): string[] =>
       items.flatMap((item) => [
         ...(item.href ? [item.href] : []),
+        ...(item.additionalRoutes ?? []),
         ...(item.subItems ? collectHrefs(item.subItems) : []),
       ]);
 

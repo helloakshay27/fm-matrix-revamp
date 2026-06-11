@@ -473,7 +473,7 @@ import { Plus, Edit, Eye } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import axios from 'axios';
 
@@ -536,9 +536,13 @@ const PAGE_SIZE = 15;
 
 export const UtilityRequestDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [consumptionData, setConsumptionData] = useState<ConsumptionData[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+ const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [totalPages, setTotalPages] = useState(1);
   const [totalEntries, setTotalEntries] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -581,7 +585,6 @@ export const UtilityRequestDashboard = () => {
 
       const pagination = response.data.pagination as Pagination;
       setConsumptionData(mappedData);
-      setCurrentPage(page);
       setTotalPages(pagination.total_pages || 1);
       setTotalEntries(pagination.total_entries || 0);
     } catch (err: any) {
@@ -593,9 +596,9 @@ export const UtilityRequestDashboard = () => {
   }, []);
 
   useEffect(() => {
-    fetchData(1);
-  }, [fetchData]);
-
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+    fetchData(currentPage);
+  }, [currentPage]);
   const filteredData = consumptionData.filter(
     (item) =>
       item.entity.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -603,12 +606,12 @@ export const UtilityRequestDashboard = () => {
       item.id.includes(searchTerm)
   );
 
-  const handlePageChange = async (page: number) => {
+  const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage || loading) {
       return;
     }
-
-    await fetchData(page);
+    setCurrentPage(page);
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
   };
 
   const handleEdit = (item: any) => {

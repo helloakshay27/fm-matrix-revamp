@@ -102,8 +102,13 @@ const statusBadgeMap: Record<string, string> = {
 };
 
 const PaymentsMadeReport: React.FC = () => {
-  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
-  const [filters, setFilters] = useState(defaultRange);
+  // const defaultRange = useMemo(() => getCurrentMonthRange(), []);
+  // const [filters, setFilters] = useState(defaultRange);
+// 
+  const [filters, setFilters] = useState({
+  fromDate: "",
+  toDate: "",
+});
   const [rows, setRows] = useState<PaymentMadeRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -121,12 +126,25 @@ const PaymentsMadeReport: React.FC = () => {
       const lockAccountId = localStorage.getItem("lock_account_id");
 
       const response = await axios.get(`https://${baseUrl}/lock_payments.json`, {
+        // params: {
+        //   lock_account_id: lockAccountId,
+        //   "q[payment_made_eq]": 1,
+        //   "q[payment_date_gteq]": fromDate,
+        //   "q[payment_date_lteq]": toDate,
+        // },
+
         params: {
-          lock_account_id: lockAccountId,
-          "q[payment_made_eq]": 1,
-          "q[payment_date_gteq]": fromDate,
-          "q[payment_date_lteq]": toDate,
-        },
+  lock_account_id: lockAccountId,
+  "q[payment_made_eq]": 1,
+
+  ...(fromDate && {
+    "q[payment_date_gteq]": fromDate,
+  }),
+
+  ...(toDate && {
+    "q[payment_date_lteq]": toDate,
+  }),
+},
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -161,9 +179,13 @@ const PaymentsMadeReport: React.FC = () => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   fetchPaymentsMade(defaultRange.fromDate, defaultRange.toDate);
+  // }, [defaultRange.fromDate, defaultRange.toDate, fetchPaymentsMade]);
+
   useEffect(() => {
-    fetchPaymentsMade(defaultRange.fromDate, defaultRange.toDate);
-  }, [defaultRange.fromDate, defaultRange.toDate, fetchPaymentsMade]);
+  fetchPaymentsMade("", "");
+}, [fetchPaymentsMade]);
 
   const totalAmount = useMemo(() => rows.reduce((acc, r) => acc + r.amount, 0), [rows]);
 
@@ -230,7 +252,8 @@ const PaymentsMadeReport: React.FC = () => {
             label="From Date"
             type="date"
             name="fromDate"
-            value={toInputDate(filters.fromDate)}
+            // value={toInputDate(filters.fromDate)}
+            value={filters.fromDate ? toInputDate(filters.fromDate) : ""}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
             size="small"
@@ -240,7 +263,8 @@ const PaymentsMadeReport: React.FC = () => {
             label="To Date"
             type="date"
             name="toDate"
-            value={toInputDate(filters.toDate)}
+            // value={toInputDate(filters.toDate)}
+            value={filters.toDate ? toInputDate(filters.toDate) : ""}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
             size="small"
@@ -261,9 +285,14 @@ const PaymentsMadeReport: React.FC = () => {
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
           {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Payments Made</h1>
-          <p className="mt-1 text-sm text-[#475467]">
+          {/* <p className="mt-1 text-sm text-[#475467]">
             From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
-          </p>
+          </p> */}
+          <p className="mt-1 text-sm text-[#475467]">
+  {filters.fromDate || filters.toDate
+    ? `From ${formatDisplayDate(filters.fromDate)} To ${formatDisplayDate(filters.toDate)}`
+    : "Select date range and click View"}
+</p>
         </div>
 
         <div className="p-4">

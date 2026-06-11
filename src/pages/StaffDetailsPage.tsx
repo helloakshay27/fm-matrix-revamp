@@ -95,7 +95,7 @@ export const StaffDetailsPage = () => {
               Retry
             </Button>
             <Button 
-              onClick={() => navigate('/security/staff')}
+              onClick={() => navigate(-1)}
               variant="outline"
               size="sm"
             >
@@ -252,7 +252,7 @@ export const StaffDetailsPage = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={() => navigate('/security/staff')} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
+          <button  onClick={() => navigate(-1)} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="font-bold text-[#1a1a1a]">Back to Staff List</span>
           </button>

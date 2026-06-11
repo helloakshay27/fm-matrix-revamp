@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useSearchParams } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch } from "react-redux";
 import moment from "moment";
@@ -82,11 +82,14 @@ export const OccupantUserMasterDashboard = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
   const [occupantUser, setOccupantUser] = useState([]);
   const [occupantUsersState, setOccupantUsersState] = useState<any[]>([]);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+const currentPage = Number(searchParams.get("page")) || 1;
+ const [pagination, setPagination] = useState({
+  current_page: currentPage,
+  total_count: 0,
+  total_pages: 0,
+});
   const [filters, setFilters] = useState<{
     name?: string;
     email?: string;
@@ -229,7 +232,7 @@ export const OccupantUserMasterDashboard = () => {
     try {
       dispatch(
         fetchOccupantUsers({
-          page: pagination.current_page,
+          page: currentPage,
           perPage: 10,
           //  lock_user_permissions_user_type_eq: 'pms_occupant' 
         })
@@ -264,10 +267,9 @@ export const OccupantUserMasterDashboard = () => {
   };
 
   const handlePageChange = async (page: number) => {
-    setPagination((prev) => ({
-      ...prev,
-      current_page: page,
-    }));
+   setSearchParams({
+  page: String(page),
+});
     try {
       dispatch(
         fetchOccupantUsers({
@@ -648,7 +650,7 @@ export const OccupantUserMasterDashboard = () => {
         className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
       >
         <Plus className="w-4 h-4" />
-        Action
+        Action 
       </Button>
     </>
   );

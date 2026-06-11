@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import axios from 'axios';
 import { getFullUrl } from '@/config/apiConfig';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation} from 'react-router-dom';
 import { toast } from 'sonner';
 import AddOpportunityModal from '@/components/AddOpportunityModal';
 import EditOpportunityModal from '@/components/EditOpportunityModal';
@@ -75,6 +75,7 @@ const OpportunityDashboard = () => {
 
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem('baseUrl');
 
@@ -83,6 +84,10 @@ const OpportunityDashboard = () => {
     const [error, setError] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+});
     const [users, setUsers] = useState([])
     const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | null>(null);
 
@@ -94,6 +99,12 @@ const OpportunityDashboard = () => {
     const [selectedTags, setSelectedTags] = useState<any[]>([]);
     const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
     const [availableTags, setAvailableTags] = useState<any[]>([]);
+
+    useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, {
+        replace: true,
+    });
+}, [currentPage, navigate, location.pathname]);
 
     // Dropdowns state for filter modal
     const [dropdowns, setDropdowns] = useState({
@@ -372,7 +383,7 @@ const OpportunityDashboard = () => {
             case 'id':
                 return (
                     <button
-                        onClick={() => navigate(`/opportunity/${item.id}`)}
+                        onClick={() => navigate(`/opportunity/${item.id}?page=${currentPage}`)}
                         className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                     >
                         OP-{item.id}
@@ -548,14 +559,14 @@ const OpportunityDashboard = () => {
             <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/vas/opportunity/${item.id}`)}
+                onClick={() => navigate(`/vas/opportunity/${item.id}?page=${currentPage}`)}
                 className="text-blue-600 hover:text-blue-800"
             >
                 <Eye className="w-4 h-4" />
             </Button>
         </div>
     );
-
+ 
     const leftActions = (
         <>
             <Button
@@ -597,6 +608,8 @@ const OpportunityDashboard = () => {
                 storageKey="opportunity-table"
                 pagination={true}
                 pageSize={10}
+                currentPage={currentPage}
+                onPageChange={(page) => setCurrentPage(page)}
                 loading={loading}
                 emptyMessage="No opportunities found"
             />
@@ -618,7 +631,6 @@ const OpportunityDashboard = () => {
                     opportunityId={selectedOpportunityId}
                 />
             )}
-
             {/* Filter Modal */}
             <OpportunityFilterModal
                 isOpen={isFilterModalOpen}

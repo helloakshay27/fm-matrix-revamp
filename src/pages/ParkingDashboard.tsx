@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/pagination";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { fetchParkingBookings, ParkingBookingClient, ParkingBookingSummary } from '@/services/parkingConfigurationsAPI';
@@ -27,6 +27,7 @@ const ParkingDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +38,10 @@ const ParkingDashboard = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+ const [currentPage, setCurrentPage] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return Number(params.get('page')) || 1;
+});
   const [itemsPerPage] = useState(10);
 
   // Column visibility state
@@ -50,6 +54,13 @@ const ParkingDashboard = () => {
     { key: 'paidParking', label: 'Paid Parking', visible: true },
     { key: 'availableSlots', label: 'Available Parking Slots', visible: true }
   ]);
+  
+  useEffect(() => {
+  navigate(`${location.pathname}?page=${currentPage}`, {
+    replace: true,
+  });
+}, [currentPage]);
+
 
   // Fetch parking bookings data on component mount
   useEffect(() => {
@@ -73,8 +84,10 @@ const ParkingDashboard = () => {
   }, []);
 
   const handleViewDetails = (clientId: number) => {
-    navigate(`/vas/parking/details/${encodeURIComponent(clientId.toString())}`);
-  };
+  navigate(
+    `/vas/parking/details/${encodeURIComponent(clientId.toString())}?page=${currentPage}`
+  );
+};
 
   // Generate parking stats from summary data
   const parkingStats = useMemo(() => {

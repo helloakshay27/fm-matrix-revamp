@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams,useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Download, Eye, Loader2, Package, Info } from "lucide-react";
@@ -117,6 +117,7 @@ const columns: ColumnConfig[] = [
 export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }) => {
   const { id } = useParams()
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -125,10 +126,13 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   const [restoId, setRestoId] = useState<number | undefined>();
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
+ const [pagination, setPagination] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      current_page: Number(params.get('page')) || 1,
+      total_count: 0,
+      total_pages: 0,
+    };
   });
 
   // Analytics date range state (default: last 7 days)
@@ -192,11 +196,11 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
             };
           const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
           setOrders(response.food_orders || []);
-          setPagination({
-            current_page: response.current_page || 1,
+          setPagination(prev => ({
+            ...prev,
             total_count: response.total_records || 0,
             total_pages: response.total_pages || 0
-          })
+          }));
         } catch (error) {
           console.error('Error fetching orders:', error);
           toast.error('Failed to fetch orders');
@@ -302,6 +306,10 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
     navigate(`/vas/fnb/details/${restoId}/restaurant-order/${order.id}`);
   };
 
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+  }, [pagination.current_page]);
+
   const handlePageChange = async (page: number) => {
     setPagination((prev) => ({
       ...prev,
@@ -327,11 +335,11 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         };
       const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
       setOrders(response.food_orders || []);
-      setPagination({
-        current_page: response.current_page || page,
+     setPagination(prev => ({
+        ...prev,
         total_count: response.total_records || 0,
         total_pages: response.total_pages || 0
-      });
+      }));
     } catch (error) {
       toast.error('Failed to fetch orders');
       setOrders([]);
@@ -605,7 +613,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
                 fill="currentColor"
               />
             </svg>
-            Analytics
+            Analytics 
           </TabsTrigger>
         </TabsList>
 

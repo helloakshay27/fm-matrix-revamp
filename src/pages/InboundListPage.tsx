@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,useLocation} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, Plus, X, Flag, Check } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -137,10 +137,14 @@ const mapInboundRecord = (item: any): InboundMail => ({
 
 export const InboundListPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [inboundMails, setInboundMails] = useState<InboundMail[]>([]);
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+});
     const PER_PAGE = 10;
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
@@ -293,6 +297,12 @@ export const InboundListPage = () => {
         });
     }, [counts]);
 
+    useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, {
+        replace: true,
+    });
+}, [currentPage]);
+
     // Fetch vendors when filter modal opens
     useEffect(() => {
         const fetchVendors = async () => {
@@ -398,9 +408,10 @@ export const InboundListPage = () => {
         totalRecords === 0 ? 0 : startRecord + filteredInboundMails.length - 1;
 
     const handleViewInbound = (id: number) => {
-        // Navigate to view/edit page
-        navigate(`/vas/mailroom/inbound/${id}`);
-    };
+    navigate(
+        `/vas/mailroom/inbound/${id}?page=${currentPage}`
+    );
+};
 
     const columns: ColumnConfig[] = [
         {
@@ -934,7 +945,7 @@ export const InboundListPage = () => {
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
         >
             <Plus className="w-4 h-4" />
-            Add
+            Add 
         </Button>
     );
 
