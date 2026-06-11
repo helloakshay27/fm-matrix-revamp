@@ -737,6 +737,12 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const rawDisplayRd = resolveRawSource(detailSource);
 
   const displayRd = normalizeReportData(rawDisplayRd);
+  const isDetailAbsent =
+    isAbsentReport(detailSource) ||
+    displayRd.is_absent === true ||
+    displayRd.is_absent === "true" ||
+    displayRd.is_absent === 1 ||
+    log.isAbsent === true;
   const detailAbsentReason = getAbsentReason(detailSource);
 
   const cleanName = (log.user || "").trim();
@@ -993,16 +999,18 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                   {/* Profile section */}
                   <div className="p-4 bg-white border-b border-[#F0EBE8]">
                     <div className="flex items-start gap-4">
-                      <div className="flex flex-col items-center gap-1 shrink-0">
-                        <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl bg-white">
-                          {totalScoreStr}
-                        </div>
-                        {selfRating != null && (
+                      {!isDetailAbsent && (
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl bg-white">
+                            {totalScoreStr}
+                          </div>
+                          {selfRating != null && (
                           <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
                             ⭐ {selfRating}/10
                           </span>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1036,15 +1044,19 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 
                         {/* KPI Pills */}
                         <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            KPI: {kpiAchieved}/{kpiMax}
-                          </span>
-                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            Tasks, Issues & Todos: {tasksAchieved}/{tasksMax}
-                          </span>
-                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            Planning: {planAchieved}/{planMax}
-                          </span>
+                          {!isDetailAbsent && (
+                            <>
+                              <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                                KPI: {kpiAchieved}/{kpiMax}
+                              </span>
+                              <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                                Tasks, Issues & Todos: {tasksAchieved}/{tasksMax}
+                              </span>
+                              <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                                Planning: {planAchieved}/{planMax}
+                              </span>
+                            </>
+                          )}
                           <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
                             Timing: {timeAchieved}/{timeMax}
                           </span>
@@ -1071,12 +1083,13 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           </span>
                         </div>
                       )}
-                      {displayRd.is_absent !== null &&
-                        displayRd.is_absent !== undefined && (
+                      {(isDetailAbsent ||
+                        (displayRd.is_absent !== null &&
+                          displayRd.is_absent !== undefined)) && (
                           <div
                             className={cn(
                               "flex items-center gap-2 rounded-xl px-4 py-2.5 border shadow-sm",
-                              displayRd.is_absent
+                              isDetailAbsent
                                 ? "bg-red-50 border-red-100"
                                 : "bg-green-50 border-green-100",
                             )}
@@ -1084,12 +1097,12 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             <span
                               className={cn(
                                 "text-sm font-bold",
-                                displayRd.is_absent
+                                isDetailAbsent
                                   ? "text-red-700"
                                   : "text-green-700",
                               )}
                             >
-                              {displayRd.is_absent
+                              {isDetailAbsent
                                 ? `Absent${detailAbsentReason ? `: ${detailAbsentReason}` : ""}`
                                 : "Present"}
                             </span>
@@ -1098,7 +1111,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     </div>
 
                     {/* Big Win */}
-                    {displayRd.big_win && (
+                    {!isDetailAbsent && displayRd.big_win && (
                       <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 flex items-start gap-3 shadow-sm">
                         <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
@@ -1113,6 +1126,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     )}
 
                     {/* 3-Column: Accomplishments | Tasks, Issues & Todos | Tomorrow's Plan */}
+                    {!isDetailAbsent && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                       {/* Accomplishments */}
                       <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
@@ -1321,8 +1335,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                         )}
                       </div>
                     </div>
+                    )}
 
                     {/* Action Buttons */}
+                    {!isDetailAbsent && (
                     <div className="flex flex-wrap gap-2 pt-1">
                       <button
                         onClick={openTaskModalForMember}
@@ -1367,9 +1383,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                         <MessageSquare className="w-3.5 h-3.5" /> Feedback
                       </button>
                     </div>
+                    )}
 
                     {/* Quick Add to Plan */}
-                    {quickActionOpen && (
+                    {!isDetailAbsent && quickActionOpen && (
                       <div className="bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
                         <p className="text-xs font-black text-orange-800 uppercase tracking-widest mb-3 flex items-center gap-2">
                           <Plus className="w-3.5 h-3.5" /> Add to Tomorrow's Plan
@@ -1432,7 +1449,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     )}
 
                     {/* Feedback Block */}
-                    {feedbackOpen && (
+                    {!isDetailAbsent && feedbackOpen && (
                       <div className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           {/* Left: Add new feedback */}

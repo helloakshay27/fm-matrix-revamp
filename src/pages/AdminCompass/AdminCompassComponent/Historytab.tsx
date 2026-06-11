@@ -295,6 +295,13 @@ const compileMeetingNotes = (historyData: any): string => {
         : getReportDataSource(report);
     const isAbsent = isAbsentReport(matchingMemberReport || report, rawSource);
     const absentReason = getAbsentReason(matchingMemberReport || report, rawSource);
+    const timingValue =
+      rawSource?.sections?.timing ??
+      rawSource?.kpis?.timing ??
+      rawSource?.kpis?.time ??
+      report?.kpis?.timing ??
+      report?.timing ??
+      null;
 
     let accRaw: any[] = [];
     if (Array.isArray(rawSource.accomplishments))
@@ -324,6 +331,14 @@ const compileMeetingNotes = (historyData: any): string => {
         ? `✗ Absent${absentReason ? `: ${absentReason}` : ""}`
         : report.attendance || "✓ Present"
     }\n`;
+
+    if (isAbsent) {
+      if (timingValue !== null && timingValue !== undefined && timingValue !== "") {
+        detailedText += `**Timing:** ${timingValue}/20\n`;
+      }
+      detailedText += `\n---\n\n`;
+      return;
+    }
 
     if (report.self_rating) {
       detailedText += `**Self Rating:** ${report.self_rating}\n`;
