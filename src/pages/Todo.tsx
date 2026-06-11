@@ -709,7 +709,18 @@ export default function Todo() {
             setIsModalOpen={setIsConvertModalOpen}
             prefillData={convertTodoData}
             todoId={convertTodoId}
-            onSuccess={() => {
+            onSuccess={async (taskId?: number) => {
+              if (taskId && convertTodoId) {
+                try {
+                  await axios.put(
+                    `https://${baseUrl}/todos/${convertTodoId}.json`,
+                    { todo: { task_management_id: taskId } },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                  );
+                } catch (error) {
+                  console.error("Failed to update todo with task_management_id:", error);
+                }
+              }
               refetch();
               setIsConvertModalOpen(false);
             }}
