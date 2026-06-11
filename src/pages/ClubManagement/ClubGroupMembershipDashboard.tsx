@@ -582,7 +582,7 @@ export const ClubGroupMembershipDashboard = () => {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
+            onClick={() => navigate(`/club-management/group-membership/${item.id}/edit/members`)}
             title="Edit"
             className="p-0"
           >
