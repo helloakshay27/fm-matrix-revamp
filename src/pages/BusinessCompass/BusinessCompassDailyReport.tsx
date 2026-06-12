@@ -3198,7 +3198,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 item.type !== "holiday" &&
                                 handleSelectDate(item)
                               }
-                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-lg relative"
+                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-[12px] relative"
                               style={{
                                 background: cardBg,
                                 border: isSelected
@@ -3218,7 +3218,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             >
                               {topBarColor !== "transparent" && (
                                 <div
-                                  className="absolute top-0 left-0 right-0 h-2 rounded-t-lg"
+                                  className="absolute top-0 left-0 right-0 h-2 rounded-t-[12px]"
                                   style={{ backgroundColor: topBarColor }}
                                 />
                               )}
@@ -6646,17 +6646,28 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <div className="bc-history-card-body">
                         <div className="bc-history-card-header">
                           <div className="min-w-0">
-                            <h2 className="bc-history-title">
-                              {new Date(report.start_date).toLocaleDateString(
-                                "en-US",
-                                {
-                                  weekday: "long",
-                                  month: "long",
-                                  day: "numeric",
-                                  year: "numeric",
-                                }
-                              )}
-                            </h2>
+                            <div className="bc-history-title-row">
+                              <h2 className="bc-history-title">
+                                {new Date(report.start_date).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "long",
+                                    month: "long",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </h2>
+                              <Badge
+                                variant="outline"
+                                className="bc-history-time-badge"
+                              >
+                                {new Date(report.created_at).toLocaleTimeString(
+                                  "en-US",
+                                  { hour: "numeric", minute: "2-digit" }
+                                )}
+                              </Badge>
+                            </div>
                             <p className="text-sm text-gray-500 mt-1.5">
                               By: {user?.firstname} {user?.lastname}
                             </p>
@@ -6675,21 +6686,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <Target size={12} className="fill-white" />
                                 {report.report_data?.total_score || 0}/100
                               </Badge>
-                              <Badge
-                                variant="outline"
-                                className="bc-history-time-badge"
-                              >
-                                {new Date(report.created_at).toLocaleTimeString(
-                                  "en-US",
-                                  { hour: "numeric", minute: "2-digit" }
-                                )}
-                              </Badge>
                             </div>
                             <div className="bc-history-action-buttons">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-4 text-[#DA7756] border-[#DA7756]/30 hover:bg-[#DA7756]/5 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                className="bc-history-action-btn text-[#DA7756] border-[#DA7756]/30 hover:bg-[#DA7756]/5 text-xs font-medium rounded-[4px] shadow-sm"
                                 onClick={() => {
                                   const date = new Date(report.start_date);
                                   const formattedDate =
@@ -6769,7 +6771,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-4 text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                className="bc-history-action-btn text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] shadow-sm"
                                 onClick={async () => {
                                   if (
                                     !window.confirm(

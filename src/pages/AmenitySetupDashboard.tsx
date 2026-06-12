@@ -6,7 +6,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { fetchAmenity } from "@/store/slices/amenitySlice";
 import { Eye, Edit, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
@@ -28,7 +28,12 @@ const columns: ColumnConfig[] = [
 
 const AmenitySetupDashboard = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useAppDispatch();
+    const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
     const token = localStorage.getItem('token')
     const baseUrl = localStorage.getItem('baseUrl')
     const siteId = localStorage.getItem('selectedSiteId')
@@ -56,6 +61,11 @@ const AmenitySetupDashboard = () => {
     useEffect(() => {
         fetchData()
     }, [])
+
+    useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
+
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
@@ -124,6 +134,11 @@ const AmenitySetupDashboard = () => {
                 pagination={true}
                 pageSize={10}
                 loading={loadingData}
+                currentPage={currentPage}
+                onPageChange={(page) => {
+                setCurrentPage(page);
+                navigate(`${location.pathname}?page=${page}`, { replace: true });
+        }}
             />
 
             <AddAmenityModal
