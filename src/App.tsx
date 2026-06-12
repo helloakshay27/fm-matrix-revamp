@@ -1084,6 +1084,7 @@ const AddGuestUserPage = lazy(() => import("./pages/ClubManagement/AddGuestUserP
 const AddMembershipPlanPage = lazy(() => import("./pages/AddMembershipPlanPage").then(m => ({ default: m.AddMembershipPlanPage })));
 const AddPaymentPlan = lazy(() => import("./pages/settings/AddPaymentPlan").then(m => ({ default: m.AddPaymentPlan })));
 const AmenityBookingDetailsClubPage = lazy(() => import("./pages/ClubManagement/AmenityBookingDetails").then(m => ({ default: m.AmenityBookingDetailsClubPage })));
+const AmenityBookingEditPage = lazy(() => import("./pages/ClubManagement/AmenityBookingEdit").then(m => ({ default: m.AmenityBookingEditPage })));
 const BillCreatePage = lazy(() => import("./pages/BillCreatePage").then(m => ({ default: m.BillCreatePage })));
 const BillCyclesDetails = lazy(() => import("./pages/ClubManagement/BillCyclesDetails").then(m => ({ default: m.BillCyclesDetails })));
 const BillDetailPage = lazy(() => import("./pages/BillDetailPage").then(m => ({ default: m.BillDetailPage })));
@@ -1136,6 +1137,8 @@ const ViewClubOccupantUser = lazy(() => import("./pages/master/ViewClubOccupantU
 const ViewGuestUserPage = lazy(() => import("./pages/ClubManagement/ViewGuestUserPage").then(m => ({ default: m.ViewGuestUserPage })));
 const AddClubMembershipPage = lazy(() => import("./pages/ClubManagement/AddClubMembershipPage"));
 const AddGroupMembershipPage = lazy(() => import("./pages/ClubManagement/AddGroupMembershipPage"));
+const EditGroupMembershipStep1Page = lazy(() => import("./pages/ClubManagement/EditGroupMembershipStep1Page").then(m => ({ default: m.EditGroupMembershipStep1Page })));
+const EditGroupMembershipStep2Page = lazy(() => import("./pages/ClubManagement/EditGroupMembershipStep2Page").then(m => ({ default: m.EditGroupMembershipStep2Page })));
 const AmenityBookingListClub = lazy(() => import("./pages/ClubManagement/AmenityBookingList"));
 const AccountTypeSummaryReport = lazy(() => import("./pages/ClubManagement/AccountTypeSummaryReport"));
 const AccountTypeSummaryDetailReport = lazy(() => import("./pages/ClubManagement/AccountTypeSummaryDetailReport"));
@@ -2808,7 +2811,11 @@ function App() {
                             />
                             <Route
                               path="/club-management/group-membership/:id/edit"
-                              element={<AddGroupMembershipPage />}
+                              element={<EditGroupMembershipStep1Page />}
+                            />
+                            <Route
+                              path="/club-management/group-membership/:id/edit/members"
+                              element={<EditGroupMembershipStep2Page />}
                             />
                             <Route
                               path="/club-management/membership/group-details/:id"
@@ -3719,6 +3726,10 @@ function App() {
                             <Route
                               path="/club-management/amenities-booking-club/:id"
                               element={<AmenityBookingDetailsClubPage />}
+                            />
+                            <Route
+                              path="/club-management/amenities-booking-club/:id/edit"
+                              element={<AmenityBookingEditPage />}
                             />
                             <Route
                               path="/vas/booking-club/list"
