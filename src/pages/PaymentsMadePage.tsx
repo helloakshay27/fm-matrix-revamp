@@ -487,9 +487,16 @@ export const PaymentsMadePage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6 bg-white min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">All Payments</h1>
+      {/* Header with orange theme */}
+      {/* <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+        <span>Accounting</span>
+        <span>&gt;</span>
+        <span>Purchases</span>
+        <span>&gt;</span>
+        <span>Payments Made</span>
+      </div> */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-work-sans font-semibold text-2xl text-[#1a1a1a]">PAYMENTS MADE</h1>
       </div>
 
       <EnhancedTaskTable
@@ -497,11 +504,10 @@ export const PaymentsMadePage: React.FC = () => {
         columns={columns}
         leftActions={
           <Button
-            // className="bg-[#d23f57] hover:bg-[#b03045] text-white gap-2 h-9 px-4 rounded-[4px]"
-             className='fm-button-fix fm-button-brand px-4 py-2P'
+            className="bg-[#C72030] hover:bg-[#b01a28] text-white"
             onClick={() => navigate("/accounting/payments-made/create")}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 mr-2" />
             Add
           </Button>
         }
