@@ -314,6 +314,14 @@ const getItemStatus = (item: any): string => {
 const isCompletedStatus = (status: string) =>
   ["closed", "completed", "done"].includes(status.toLowerCase());
 
+const getCalendarDisplayStatus = (status: any) => {
+  const normalizedStatus = String(status || "").toLowerCase();
+  if (["holiday", "non_meeting"].includes(normalizedStatus)) {
+    return "holiday";
+  }
+  return normalizedStatus;
+};
+
 const getItemType = (item: any): string => {
   if (!item || typeof item !== "object") return "task";
   return String(item.type || "task").toLowerCase();
@@ -365,11 +373,23 @@ const getViewSourceId = (item: any): any => {
   return cleaned || rawId;
 };
 
-const groupTasksIssuesByType = (items: any[] = []) => ({
-  tasks: items.filter((item) => getItemType(item) === "task"),
-  issues: items.filter((item) => getItemType(item) === "issue"),
-  todos: items.filter((item) => getItemType(item) === "todo"),
-});
+const getPayloadSourceType = (item: any): any => {
+  const rawType = String(
+    item?.source_type ||
+    item?.sourceType ||
+    item?.originalData?.source_type ||
+    item?.originalData?.sourceType ||
+    item?.type ||
+    ""
+  ).toLowerCase();
+  const rawId = String(item?.id || item?.source_id || "").toLowerCase();
+
+  if (rawType.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-")) return "todo";
+  if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return null;
+};
 
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
   const merged: any[] = [];
@@ -478,7 +498,6 @@ const resolveRawSource = (report: any) => {
   const draftReport = report.daily_report || {};
   const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
-  const hasReportData = rd && Object.keys(rd).length > 0;
 
   const normalizeDraftRaw = (raw: any) => ({
     ...raw,
@@ -506,43 +525,7 @@ const resolveRawSource = (report: any) => {
       null,
   });
 
-  if (!hasReportData && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (report.status === "pending" && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (hasReportData && hasDraft) {
-    const normalizedDraft = normalizeDraftRaw(draftRaw);
-
-    return {
-      ...normalizedDraft,
-      ...rd,
-      tasks_issues: Array.isArray(rd.tasks_issues)
-        ? mergeTasksIssuesPreservingType(
-          normalizedDraft.tasks_issues || [],
-          rd.tasks_issues
-        )
-        : normalizedDraft.tasks_issues || [],
-      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(
-          rd.tomorrow_plan,
-          normalizedDraft.tomorrow_plan || []
-        )
-        : normalizedDraft.tomorrow_plan || [],
-      accomplishments:
-        rd.accomplishments?.items ||
-        (Array.isArray(rd.accomplishments)
-          ? rd.accomplishments
-          : normalizedDraft.accomplishments || []),
-      self_rating: normalizedDraft.self_rating,
-      total_score: rd.total_score ?? normalizedDraft.total_score,
-      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
-      absent_reason: rd.absent_reason ?? normalizedDraft.absent_reason,
-    };
-  }
+  if (hasDraft) return normalizeDraftRaw(draftRaw);
 
   return rd;
 };
@@ -965,7 +948,7 @@ const DailyTab = ({
 
     const rawSource = resolveRawSource(report);
     const baseReportData =
-      report.report_data || report.daily_report?.report_data || rawSource || {};
+      report.daily_report?.report_data || report.report_data || rawSource || {};
 
     if (patch.tomorrow_plan_item) {
       const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
@@ -1045,11 +1028,10 @@ const DailyTab = ({
     if (currentIndex !== -1) {
       let nextIndex = currentIndex + days;
       while (nextIndex >= 0 && nextIndex < calendarRow.length) {
-        const s = calendarRow[nextIndex].status;
+        const s = getCalendarDisplayStatus(calendarRow[nextIndex].status);
         const nextDate = calendarRow[nextIndex].full_date;
         if (
           s !== "holiday" &&
-          s !== "non_meeting" &&
           s !== "upcoming" &&
           (days < 0 || nextDate <= todayKey)
         ) {
@@ -1262,26 +1244,24 @@ const DailyTab = ({
         meeting_notes: meetingNotesObj,
         accomplishments: allAccomplishments.map((a) => ({
           title: a.title || a.text || "",
+          source_id: getViewSourceId(a),
+          source_type: getPayloadSourceType(a),
         })),
-        tasks_issues: allTasksIssues.map((t) => ({
-          type: getViewSourceType(t),
-          title: t.title || t.text || "",
-          status: t.status || "open",
-          source_id: getViewSourceId(t),
-          source_type: getViewSourceType(t),
-        })),
+        tasks_issues: allTasksIssues
+          .filter((t) => !isCompletedStatus(getItemStatus(t)))
+          .map((t) => ({
+            type: getViewSourceType(t),
+            title: t.title || t.text || "",
+            status: t.status || "open",
+            source_id: getViewSourceId(t),
+            source_type: getViewSourceType(t),
+          })),
         big_win: combinedBigWin || null,
         tomorrow_plan: allTomorrowPlan.map((p) => {
-          const sourceType =
-            p.source_type ||
-            p.sourceType ||
-            p.originalData?.source_type ||
-            p.originalData?.sourceType ||
-            p.type ||
-            null;
+          const sourceType = getPayloadSourceType(p);
           return {
             title: p.title || p.text || "",
-            source_id: sourceType ? getViewSourceId(p) : null,
+            source_id: getViewSourceId(p),
             source_type: sourceType,
           };
         }),
@@ -1459,26 +1439,24 @@ const DailyTab = ({
         meeting_notes: meetingNotesObj,
         accomplishments: allAccomplishments.map((a) => ({
           title: a.title || a.text || "",
+          source_id: getViewSourceId(a),
+          source_type: getPayloadSourceType(a),
         })),
-        tasks_issues: allTasksIssues.map((t) => ({
-          type: getViewSourceType(t),
-          title: t.title || t.text || "",
-          status: t.status || "open",
-          source_id: getViewSourceId(t),
-          source_type: getViewSourceType(t),
-        })),
+        tasks_issues: allTasksIssues
+          .filter((t) => !isCompletedStatus(getItemStatus(t)))
+          .map((t) => ({
+            type: getViewSourceType(t),
+            title: t.title || t.text || "",
+            status: t.status || "open",
+            source_id: getViewSourceId(t),
+            source_type: getViewSourceType(t),
+          })),
         big_win: combinedBigWin || null,
         tomorrow_plan: allTomorrowPlan.map((p) => {
-          const sourceType =
-            p.source_type ||
-            p.sourceType ||
-            p.originalData?.source_type ||
-            p.originalData?.sourceType ||
-            p.type ||
-            null;
+          const sourceType = getPayloadSourceType(p);
           return {
             title: p.title || p.text || "",
-            source_id: sourceType ? getViewSourceId(p) : null,
+            source_id: getViewSourceId(p),
             source_type: sourceType,
           };
         }),
@@ -1644,7 +1622,7 @@ const DailyTab = ({
         {/* ══ LEFT COLUMN ══ */}
         <div className="h-full">
           {/* ══ CALENDAR CARD ══ */}
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden h-full flex flex-col">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full flex flex-col">
             <div className="p-5">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
@@ -1679,7 +1657,7 @@ const DailyTab = ({
 
               {/* ── Calendar Body ── */}
               {isLoading && !dailyData ? (
-                <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
+                <div className="flex gap-4 overflow-x-auto pb-8 pt-4 scrollbar-none snap-x">
                   {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                     <div
                       key={i}
@@ -1703,7 +1681,7 @@ const DailyTab = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
+                <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-8 pt-4 scrollbar-none snap-x">
                   {calendarRow.map((dateItem: any) => {
                     const isSelected = dateItem.full_date === activeDate;
                     let rawStatus = dateItem.status;
@@ -1712,41 +1690,20 @@ const DailyTab = ({
                       rawStatus = "submitted";
                     }
 
-                    const isUpcoming = rawStatus === "upcoming";
-
-                    if (isUpcoming) {
-                      return (
-                        <div
-                          key={dateItem.full_date}
-                          className="min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-not-allowed transition-all shrink-0 snap-center relative overflow-hidden opacity-60"
-                          style={{
-                            background: "#F5F5F5",
-                            border: "1.5px solid transparent",
-                          }}
-                          title="Upcoming – not selectable"
-                        >
-                          <span className="text-[11px] font-semibold text-gray-400 mt-2">
-                            {dateItem.day}
-                          </span>
-                          <span className="text-[22px] font-black text-gray-400 leading-tight">
-                            {dateItem.date}
-                          </span>
-                          <span className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5 text-gray-400 bg-gray-100">
-                            Upcoming
-                          </span>
-                        </div>
-                      );
-                    }
-
-                    const isHoliday =
-                      rawStatus === "holiday" || rawStatus === "non_meeting";
+                    const displayStatus =
+                      getCalendarDisplayStatus(rawStatus) ||
+                      (dateItem.full_date > getLocalDateKey()
+                        ? "upcoming"
+                        : "");
+                    const isHoliday = displayStatus === "holiday";
+                    const isUpcoming = displayStatus === "upcoming";
                     const isFilled =
-                      rawStatus === "done" || rawStatus === "submitted";
-                    const isMissed = rawStatus === "missed";
+                      displayStatus === "done" || displayStatus === "submitted";
+                    const isMissed = displayStatus === "missed";
 
                     // top bar color (BusinessCompass style)
                     let topBarColor = "transparent";
-                    let displayLabel = "Holiday";
+                    let displayLabel = "Upcoming";
                     if (isFilled) {
                       topBarColor = "#61CDBB";
                       displayLabel = "Filled";
@@ -1756,19 +1713,21 @@ const DailyTab = ({
                     } else if (isHoliday) {
                       topBarColor = "#D1D5DB";
                       displayLabel = "Holiday";
+                    } else if (isUpcoming) {
+                      displayLabel = "Upcoming";
                     }
 
                     return (
                       <div
                         key={dateItem.full_date}
                         onClick={
-                          isHoliday
+                          isHoliday || isUpcoming
                             ? undefined
                             : () => setActiveDate(dateItem.full_date)
                         }
                         className={cn(
-                          "min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all shrink-0 snap-center relative overflow-hidden",
-                          isHoliday
+                          "min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all shrink-0 snap-center relative",
+                          isHoliday || isUpcoming
                             ? "cursor-not-allowed opacity-70"
                             : "cursor-pointer"
                         )}
@@ -1782,17 +1741,27 @@ const DailyTab = ({
                             : "none",
                         }}
                         title={
-                          isHoliday ? "Holiday – not selectable" : undefined
+                          isHoliday
+                            ? "Holiday - not selectable"
+                            : isUpcoming
+                              ? "Upcoming - not selectable"
+                              : undefined
                         }
                       >
                         {topBarColor !== "transparent" && (
                           <div
-                            className="absolute top-0 left-0 right-0 h-[5px] rounded-t-xl"
+                            className="absolute top-[-1.5px] left-[-1.5px] right-[-1.5px] z-10 h-2.5 rounded-t-xl"
                             style={{ backgroundColor: topBarColor }}
                           />
                         )}
-                        {dateItem.is_today && !isSelected && (
-                          <div className="absolute top-1 right-1 w-2 h-2 bg-[#DA7756] rounded-full" />
+                        {isUpcoming && !isSelected && (
+                          <div
+                            className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border border-white"
+                            style={{
+                              backgroundColor: "#E28B8B",
+                              transform: "translate(30%, -30%)",
+                            }}
+                          />
                         )}
                         <span className="text-[11px] font-semibold text-gray-500 mt-2">
                           {dateItem.day}
@@ -1851,7 +1820,10 @@ const DailyTab = ({
                     Holiday
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
-                    <span className="w-3 h-3 rounded-sm bg-gray-200" />
+                    <span
+                      className="w-3 h-3 rounded-full"
+                      style={{ background: "#E28B8B" }}
+                    />
                     Upcoming
                   </div>
                 </div>
@@ -1926,22 +1898,22 @@ const DailyTab = ({
               </div>
 
               {/* Footer: Select All + Save */}
-              <div className="flex items-center justify-between bg-gray-50 p-3 px-4 border-t border-gray-100 mt-auto">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+              <div className="flex items-center justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
+                <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={areAllVisibleReportsSelected}
                     onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                    className="w-4 h-4 shrink-0 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
                   />
-                  <span className="text-sm font-medium text-[#1A1A1A]">
+                  <span className="text-sm font-bold leading-tight text-[#1A1A1A] whitespace-nowrap">
                     Select All
                   </span>
                 </label>
                 {isActiveDateSubmitted ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
                     {!notesChanged && (
-                      <span className="text-[11px] text-neutral-400 font-medium italic">
+                      <span className="min-w-0 max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
                         Edit notes to enable update
                       </span>
                     )}
@@ -1950,7 +1922,7 @@ const DailyTab = ({
                       onClick={handleUpdateNotesOnly}
                       disabled={isSavingMeeting || !notesChanged}
                       loading={isSavingMeeting}
-                      className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                      className="min-h-[44px] min-w-[156px] whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100"
                     >
                       {isSavingMeeting ? "Updating..." : "Update Notes"}
                     </BtnPrimary>
@@ -2144,6 +2116,14 @@ const DailyTab = ({
                       rawDisplayRd,
                       displayRd
                     );
+                    const attendanceLabel = isAbsentReport ? "Absent" : "Present";
+                    const absentReasonText =
+                      isAbsentReport && absentReason.toLowerCase() !== "absent"
+                        ? absentReason
+                        : "";
+                    const attendanceBadgeClass = isAbsentReport
+                      ? "bg-red-50 text-red-700 border-red-100"
+                      : "bg-green-50 text-green-700 border-green-100";
 
                     const normalizedReportName = (report.name || "")
                       .trim()
@@ -2163,8 +2143,9 @@ const DailyTab = ({
                         String(item.member).trim().toLowerCase() ===
                         normalizedReportName
                     );
-                    const groupedTasksIssues =
-                      groupTasksIssuesByType(userTasksIssues);
+                    const visibleTasksIssues = userTasksIssues.filter(
+                      (item: any) => !isCompletedStatus(getItemStatus(item))
+                    );
 
                     const userTomorrowPlan = displayRd.tomorrow_plan.filter(
                       (item: any) =>
@@ -2178,11 +2159,9 @@ const DailyTab = ({
                       draftRaw?.sections ||
                       rawDisplayRd?.sections ||
                       displayRd?.sections ||
-                      report?.report_data?.sections ||
                       {};
                     const kpisFallback =
                       report.kpis ||
-                      report.report_data?.kpis ||
                       rawDisplayRd?.kpis ||
                       {};
 
@@ -2315,6 +2294,24 @@ const DailyTab = ({
                                     Not submitted
                                   </span>
                                 )}
+                                {!isPending && (
+                                  <>
+                                    <span className="text-[10px] font-bold text-white bg-[#10B981] border border-[#10B981] px-2 py-0.5 rounded-full shrink-0">
+                                      Submitted
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        "border text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                                        attendanceBadgeClass
+                                      )}
+                                    >
+                                      {attendanceLabel}
+                                      {absentReasonText
+                                        ? `: ${absentReasonText}`
+                                        : ""}
+                                    </span>
+                                  </>
+                                )}
                                 {canExpand && (
                                   <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
                                     <ChevronDown
@@ -2328,7 +2325,7 @@ const DailyTab = ({
                               </div>
                             </div>
 
-                            {(!isPending || hasDraft) && (
+                            {canExpand && (
                               <div className="flex flex-wrap items-center gap-2 mb-1">
                                 <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
                                   KPI: {kpiStr}
@@ -2345,17 +2342,14 @@ const DailyTab = ({
                               </div>
                             )}
 
-                            {(!isPending || hasDraft) && dateRow.length > 0 && (
+                            {canExpand && dateRow.length > 0 && (
                               <div className="flex items-center gap-2 mt-2">
                                 <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
                                   {configName}
                                 </span>
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   {dateRow.map((d: any, i: number) => {
-                                    const s =
-                                      d.status === "non_meeting"
-                                        ? "holiday"
-                                        : d.status;
+                                    const s = getCalendarDisplayStatus(d.status);
                                     return (
                                       <div
                                         key={i}
@@ -2366,7 +2360,7 @@ const DailyTab = ({
                                             : s === "missed"
                                               ? "bg-[#EF4444] text-white border-[#EF4444]"
                                               : s === "holiday"
-                                                ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                                ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
                                                 : "bg-gray-100 text-gray-400 border-gray-200"
                                         )}
                                       >
@@ -2395,8 +2389,14 @@ const DailyTab = ({
                                 <span className="text-gray-400">
                                   Total Score: {totalScoreStr}
                                 </span>
-                                <span className="text-gray-400">
-                                  Missed: {isAbsentReport ? 1 : 0}
+                                <span
+                                  className={cn(
+                                    "font-semibold",
+                                    isAbsentReport ? "text-red-600" : "text-green-600"
+                                  )}
+                                >
+                                  {attendanceLabel}
+                                  {absentReasonText ? `: ${absentReasonText}` : ""}
                                 </span>
                               </div>
 
@@ -2425,7 +2425,7 @@ const DailyTab = ({
                                       Accomplishments
                                     </h4>
                                   </div>
-                                  {userAccomplishments.length === 0 ? (
+                                  {isAbsentReport || userAccomplishments.length === 0 ? (
                                     <p className="text-xs text-neutral-300 italic">
                                       None recorded.
                                     </p>
@@ -2488,13 +2488,13 @@ const DailyTab = ({
                                     <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
                                       Task, Issues & To Do
                                     </h4>
-                                    {userTasksIssues.length > 0 && (
+                                    {visibleTasksIssues.length > 0 && (
                                       <span className="ml-auto text-[10px] font-bold text-neutral-400">
-                                        {userTasksIssues.length}
+                                        {visibleTasksIssues.length}
                                       </span>
                                     )}
                                   </div>
-                                  {userTasksIssues.length === 0 ? (
+                                  {isAbsentReport || visibleTasksIssues.length === 0 ? (
                                     <p className="text-xs text-neutral-300 italic">
                                       None recorded.
                                     </p>
@@ -2575,7 +2575,7 @@ const DailyTab = ({
                                         ] as const
                                       ).map((bucket) => {
                                         const bucketItems =
-                                          userTasksIssues.filter((item: any) =>
+                                          visibleTasksIssues.filter((item: any) =>
                                             (
                                               bucket.statuses as readonly string[]
                                             ).includes(
@@ -2766,7 +2766,7 @@ const DailyTab = ({
                                       Tomorrow's Plan
                                     </h4>
                                   </div>
-                                  {userTomorrowPlan.length === 0 ? (
+                                  {isAbsentReport || userTomorrowPlan.length === 0 ? (
                                     <p className="text-xs text-neutral-300 italic">
                                       None recorded.
                                     </p>
@@ -3202,9 +3202,7 @@ const DailyTab = ({
                               const s =
                                 d.full_date === activeDate
                                   ? "missed"
-                                  : d.status === "non_meeting"
-                                    ? "holiday"
-                                    : d.status;
+                                  : getCalendarDisplayStatus(d.status);
 
                               return (
                                 <div
@@ -3216,7 +3214,7 @@ const DailyTab = ({
                                       : s === "missed"
                                         ? "bg-[#EF4444] text-white border-[#EF4444]"
                                         : s === "holiday"
-                                          ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                          ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
                                           : "bg-gray-100 text-gray-400 border-gray-200"
                                   )}
                                 >

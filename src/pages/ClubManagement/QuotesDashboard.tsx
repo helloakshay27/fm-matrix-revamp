@@ -452,7 +452,7 @@ export const QuotesDashboard: React.FC = () => {
     };
 
     const handleEdit = (id: number) => {
-        navigate(`/accounting/sales-order/edit/${id}`);
+        navigate(`/accounting/quotes/edit/${id}`);
     };
 
     const handleDelete = async () => {

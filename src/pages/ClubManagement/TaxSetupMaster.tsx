@@ -393,7 +393,8 @@ export const TaxSetupMaster: React.FC = () => {
             className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setAddModalOpen(true)}
           >
-            <Plus className="w-4 h-4 mr-2" /> Add
+            <Plus className="w-4 h-4 mr-2 !text-white" /> 
+            <span className="!text-white" >Add</span> 
           </Button>
         )}
       />

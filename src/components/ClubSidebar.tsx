@@ -1318,7 +1318,7 @@ export const ClubSidebar: React.FC = () => {
 
         <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
           <h3
-            className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
+            className={`text-sm font-medium text-[#C72030] uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
           >
             {isSidebarCollapsed ? "" : currentSection || "Club Management"}
           </h3>

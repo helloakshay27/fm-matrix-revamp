@@ -2740,7 +2740,7 @@ export const QuotesAdd: React.FC = () => {
 
                 <Button
                     variant="outlined"
-                    onClick={() => navigate('/accounting/quotes/list')}
+                    onClick={() => navigate('/accounting/quotes')}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',
