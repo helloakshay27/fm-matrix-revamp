@@ -12,7 +12,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 // registerServiceWorker();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
-if (window.location.hostname === "fm-matrix.lockated.com" || window.location.hostname === "localhost") {
+if (window.location.hostname === "fm-matrix.lockated.com" || window.location.hostname === "localhost" || window.location.hostname === "club.lockated.com") {
   import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
   // Initialise runtime color patcher — overrides MUI inline styles and any
   // legacy #C72030 / #C62828 colors injected via sx props or inline styles.
