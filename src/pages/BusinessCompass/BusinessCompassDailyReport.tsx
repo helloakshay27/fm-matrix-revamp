@@ -3218,7 +3218,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             >
                               {topBarColor !== "transparent" && (
                                 <div
-                                  className="absolute top-0 left-0 right-0 h-2 rounded-t-lg"
+                                  className="absolute top-0 left-0 right-0 h-2 rounded-t-[12px]"
                                   style={{ backgroundColor: topBarColor }}
                                 />
                               )}
