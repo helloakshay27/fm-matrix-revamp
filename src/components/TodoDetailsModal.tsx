@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle, Slide } from '@mui/material';
-import { X, CheckCircle2, AlertCircle, Calendar, User, Link2, Clock, Flag, Edit } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Calendar, User, Link2, Clock, Flag, Edit, Loader2 } from 'lucide-react';
 import { forwardRef, useEffect, useRef } from 'react';
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
@@ -12,7 +12,7 @@ const Transition = forwardRef(function Transition(
     return <Slide direction="left" ref={ref} {...props} />;
 });
 
-const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClick }: { isModalOpen: boolean; setIsModalOpen: (open: boolean) => void; todo: any | null; onEditClick?: () => void }) => {
+const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClick, isLoading = false }: { isModalOpen: boolean; setIsModalOpen: (open: boolean) => void; todo: any | null; onEditClick?: () => void; isLoading?: boolean }) => {
     const quillRef = useRef<HTMLDivElement>(null);
     const quillEditorRef = useRef<Quill | null>(null);
 
@@ -89,7 +89,7 @@ const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClic
         setIsModalOpen(false);
     };
 
-    if (!todo) return null;
+    if (!todo && !isLoading) return null;
 
     return (
         <Dialog
@@ -132,7 +132,13 @@ const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClic
                     overflow: 'auto',
                 }}
             >
-                <div className="pb-12 px-8">
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-64 gap-3">
+                        <Loader2 className="animate-spin text-[#c72030]" size={36} />
+                        <p className="text-sm text-gray-500">Loading todo details...</p>
+                    </div>
+                ) : null}
+                <div className="pb-12 px-8" style={{ display: isLoading ? 'none' : undefined }}>
                     <div className="space-y-6">
                         {/* Title Section with Status */}
                         <div>
