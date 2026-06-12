@@ -356,15 +356,48 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
   const [editTodoData, setEditTodoData] = useState<any>(null);
 
-  const handleViewReportItem = (item: any) => {
+  const [isTodoDetailsLoading, setIsTodoDetailsLoading] = useState(false);
+
+  const handleViewReportItem = async (item: any) => {
     const sourceType =
       item.source_type ?? item.originalData?.source_type ?? item.type;
     const sourceId = item.source_id ?? item.originalData?.id;
-    const originalData = item.originalData ?? item;
 
     if (sourceType === "todo") {
-      setSelectedTodo(originalData);
-      setIsDetailsModalOpen(true);
+      // Try cached live todos first
+      const cachedTodo = todosData?.todos?.find((t: any) => t.id === sourceId);
+      if (cachedTodo) {
+        setSelectedTodo(cachedTodo);
+        setIsDetailsModalOpen(true);
+        return;
+      }
+      // If originalData already has full fields, use it
+      const originalData = item.originalData ?? item;
+      if (originalData?.status || originalData?.priority || originalData?.description) {
+        setSelectedTodo(originalData);
+        setIsDetailsModalOpen(true);
+        return;
+      }
+      // Fetch full todo from API
+      if (sourceId) {
+        // Open modal immediately with minimal data so it renders while fetching
+        setSelectedTodo({ ...originalData, title: originalData.title || 'Loading...' });
+        setIsDetailsModalOpen(true);
+        try {
+          setIsTodoDetailsLoading(true);
+          const urlBase = `https://${baseUrl}`;
+          const headers = { Authorization: `Bearer ${token}` };
+          const res = await axios.get(`${urlBase}/todos/${sourceId}.json`, { headers });
+          setSelectedTodo(res.data?.todo ?? res.data ?? originalData);
+        } catch {
+          setSelectedTodo(originalData);
+        } finally {
+          setIsTodoDetailsLoading(false);
+        }
+      } else {
+        setSelectedTodo(originalData);
+        setIsDetailsModalOpen(true);
+      }
       return;
     }
 
@@ -7879,9 +7912,9 @@ const BusinessCompassDailyReport: React.FC = () => {
         isModalOpen={isDetailsModalOpen}
         setIsModalOpen={setIsDetailsModalOpen}
         todo={selectedTodo}
+        isLoading={isTodoDetailsLoading}
         onEditClick={() => {
           setIsDetailsModalOpen(false);
-          // Can add edit functionality here if needed
         }}
       />
 
