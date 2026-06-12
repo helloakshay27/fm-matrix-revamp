@@ -18,6 +18,10 @@ interface InvoiceDetailRow {
   customerName: string;
   total: number;
   balance: number;
+   // ✅ Add these
+  creditNoteNo?: string;
+  creditNoteAmount?: number;
+  creditNoteStatus?: string;
 }
 
 const statusColorMap: Record<string, string> = {
@@ -32,6 +36,9 @@ const columns: ColumnConfig[] = [
   { key: "invoiceNo", label: "Invoice#", sortable: true },
   { key: "orderNumber", label: "Order Number", sortable: true },
   { key: "customerName", label: "Customer Name", sortable: true },
+  //   { key: "creditNoteNo", label: "Credit Note#", sortable: true },
+  // { key: "creditNoteStatus", label: "CN Status", sortable: true },
+  // { key: "creditNoteAmount", label: "CN Amount", sortable: true },
   { key: "total", label: "Total", sortable: true },
   { key: "balance", label: "Balance", sortable: true },
 ];
@@ -48,15 +55,21 @@ const InvoiceDetailsReport: React.FC = () => {
   const [rows, setRows] = useState<InvoiceDetailRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const defaultRange = useMemo(() => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    const fmt = (d: Date) =>
-      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-    return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
-  }, []);
-  const [filters, setFilters] = useState(defaultRange);
+  // const defaultRange = useMemo(() => {
+  //   const today = new Date();
+  //   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  //   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  //   const fmt = (d: Date) =>
+  //     `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  //   return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
+  // }, []);
+  // const [filters, setFilters] = useState(defaultRange);
+
+
+  const [filters, setFilters] = useState({
+  fromDate: "",
+  toDate: "",
+});
 
    const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -104,22 +117,98 @@ const InvoiceDetailsReport: React.FC = () => {
 
       const apiData = res?.data || [];
 
-      const mapped: InvoiceDetailRow[] = apiData.map(
-        (item: any, index: number) => ({
-          id: item.id ? String(item.id) : `row-${index}`,
-          invoiceId: item.id || "",
-          status: item.status === "overdue" ? "Overdue" : "Sent",
-          invoiceDate: formatDate(item.date) || "--",
-          dueDate: formatDate(item.due_date) || "--",
-          invoiceNo: item.invoice_number || "--",
-          orderNumber: item.order_number || "--",
-          customerName: item.customer_name || "Lockated",
-          total: Number(item.total_amount || 0),
-          balance: Number(item.balance_due || 0),
-        })
-      );
+      // const mapped: InvoiceDetailRow[] = apiData.map(
+      //   (item: any, index: number) => ({
+      //     id: item.id ? String(item.id) : `row-${index}`,
+      //     invoiceId: item.id || "",
+      //     status: item.status === "overdue" ? "Overdue" : "Sent",
+      //     invoiceDate: formatDate(item.date) || "--",
+      //     dueDate: formatDate(item.due_date) || "--",
+      //     invoiceNo: item.invoice_number || "--",
+      //     orderNumber: item.order_number || "--",
+      //     customerName: item.customer_name || "Lockated",
+      //     total: Number(item.total_amount || 0),
+      //     balance: Number(item.balance_due || 0),
+      //   })
+      // );
 
-      setRows(mapped);
+//       const mapped: InvoiceDetailRow[] = apiData.map(
+//   (item: any, index: number) => {
+//     const creditNote = item.credit_notes?.[0];
+
+//     return {
+//       id: item.id ? String(item.id) : `row-${index}`,
+//       invoiceId: item.id || "",
+//       status: item.status === "overdue" ? "Overdue" : "Sent",
+//       invoiceDate: formatDate(item.date) || "--",
+//       dueDate: formatDate(item.due_date) || "--",
+//       invoiceNo: item.invoice_number || "--",
+//       orderNumber: item.order_number || "--",
+//       customerName: item.customer_name || "Lockated",
+//       total: Number(item.total_amount || 0),
+//       balance: Number(item.balance_due || 0),
+
+//       // ✅ Credit Note Data
+//       creditNoteNo: creditNote?.credit_note_number || "--",
+//       creditNoteStatus: creditNote?.status || "--",
+//       creditNoteAmount: Number(creditNote?.total_amount || 0),
+//     };
+//   }
+// );
+
+      // setRows(mapped);
+
+
+
+      const mapped: InvoiceDetailRow[] = [];
+
+apiData.forEach((item: any, index: number) => {
+  // ✅ Invoice Row
+  mapped.push({
+    id: item.id ? `invoice-${item.id}` : `invoice-row-${index}`,
+    invoiceId: item.id || "",
+    status: item.status === "overdue" ? "Overdue" : "Sent",
+    invoiceDate: formatDate(item.date) || "--",
+    dueDate: formatDate(item.due_date) || "--",
+    invoiceNo: item.invoice_number || "--",
+    orderNumber: item.order_number || "--",
+    customerName: item.customer_name || "Lockated",
+    total: Number(item.total_amount || 0),
+    balance: Number(item.balance_due || 0),
+  });
+
+  // ✅ Credit Note Rows
+  if (item.credit_notes?.length) {
+    item.credit_notes.forEach((cn: any) => {
+      mapped.push({
+        // id: `credit-note-${cn.id}`,
+        // invoiceId: item.id || "",
+        // status: "",
+        // invoiceDate: formatDate(cn.date) || "--",
+        // dueDate: "--",
+        // invoiceNo: `CN - ${cn.credit_note_number}`,
+        // orderNumber: cn.reference_number || "--",
+        // customerName: item.customer_name || "Lockated",
+        // total: -Math.abs(Number(cn.total_amount || 0)), // negative amount
+        // balance: 0,
+
+
+        id: `credit-note-${cn.id}`,
+        invoiceId: item.id || "",
+        status: cn.status || "--",
+        invoiceDate: formatDate(cn.date) || "--",
+        dueDate: "--",
+        invoiceNo: `Credit Note - ${cn.credit_note_number}`,
+        orderNumber: cn.reference_number || "--",
+        customerName: item.customer_name || "Lockated",
+        total: Math.abs(Number(cn.total_amount || 0)),
+        balance: 0,
+      });
+    });
+  }
+});
+
+setRows(mapped);
     } catch (err) {
       console.error(err);
     } finally {
@@ -207,13 +296,108 @@ const InvoiceDetailsReport: React.FC = () => {
 // };
 
 
+
+
+// const renderRow = (row: InvoiceDetailRow) => {
+//   const isTotalRow = row.id === "total-row";
+// const isCreditNote = row.invoiceNo?.startsWith("CN -") ||
+//     row.invoiceNo?.startsWith("Credit Note");
+//   return {
+//     status: isTotalRow ? (
+//       <span className="font-semibold text-black">Total</span>
+//     ) : (
+//       <span
+//         className={`px-2 py-1 rounded-full text-xs font-medium ${
+//           statusColorMap[row.status] || "bg-gray-100"
+//         }`}
+//       >
+//         {row.status}
+//       </span>
+//     ),
+
+//     invoiceDate: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.invoiceDate}</span>,
+//     dueDate: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.dueDate}</span>,
+//     // invoiceNo: isTotalRow ? <span /> : (
+//     //   <button
+//     //     onClick={() => navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)}
+//     //     className="text-sm font-medium !text-blue-600 hover:underline text-left"
+//     //   >
+//     //     {row.invoiceNo}
+//     //   </button>
+//     // ),
+
+//     invoiceNo: isTotalRow ? (
+//   <span />
+// ) : isCreditNote ? (
+//   <span className="text-sm font-medium text-green-600 pl-6">
+//     {row.invoiceNo}
+//   </span>
+// ) : (
+//   <button
+//     onClick={() =>
+//       navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)
+//     }
+//     className="text-sm font-medium !text-blue-600 hover:underline text-left"
+//   >
+//     {row.invoiceNo}
+//   </button>
+// ),
+//     orderNumber: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.orderNumber}</span>,
+
+//     customerName: (
+//       <span className={isTotalRow ? "font-semibold text-black" : "text-blue-600"}>
+//         {isTotalRow ? "" : row.customerName}
+//       </span>
+//     ),
+
+//     // total: (
+//     //   <span className="font-semibold text-blue-700">
+//     //     {formatCurrency(row.total)}
+//     //   </span>
+//     // ),
+
+//     total: (
+//   <span
+//     className={`font-semibold ${
+//       row.total < 0 ? "text-green-600" : "text-blue-700"
+//     }`}
+//   >
+//     {formatCurrency(row.total)}
+//   </span>
+// ),
+
+//     balance: (
+//       <span className="font-semibold text-black">
+//         {formatCurrency(row.balance)}
+//       </span>
+//     ),
+
+
+   
+//   };
+// };
+
+
+
 const renderRow = (row: InvoiceDetailRow) => {
   const isTotalRow = row.id === "total-row";
 
+  // ✅ Detect Credit Note Row
+  const isCreditNote =
+    row.invoiceNo?.startsWith("CN -") ||
+    row.invoiceNo?.startsWith("Credit Note");
+
   return {
-    status: isTotalRow ? (
-      <span className="font-semibold text-black">Total</span>
-    ) : (
+    // ✅ Status
+   
+
+      status: isTotalRow ? (
+  <span className="font-semibold text-black">Total</span>
+) : isCreditNote ? (
+  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 capitalize">
+    {row.status || "--"}
+  </span>
+) : (
       <span
         className={`px-2 py-1 rounded-full text-xs font-medium ${
           statusColorMap[row.status] || "bg-gray-100"
@@ -223,32 +407,91 @@ const renderRow = (row: InvoiceDetailRow) => {
       </span>
     ),
 
-    invoiceDate: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.invoiceDate}</span>,
-    dueDate: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.dueDate}</span>,
-    invoiceNo: isTotalRow ? <span /> : (
+
+    
+
+    // ✅ Invoice Date
+    invoiceDate: (
+      <span
+        className={`text-sm ${
+          isCreditNote ? "text-gray-700" : "text-gray-600"
+        }`}
+      >
+        {isTotalRow ? "" : row.invoiceDate}
+      </span>
+    ),
+
+    // ✅ Due Date
+    dueDate: (
+      <span className="text-sm text-gray-600">
+        {isTotalRow || isCreditNote ? "" : row.dueDate}
+      </span>
+    ),
+
+    // ✅ Invoice Number / Credit Note Number
+    invoiceNo: isTotalRow ? (
+      <span />
+    ) : isCreditNote ? (
+      <div className="pl-6">
+        <span className="text-sm font-medium text-gray-600">
+          {row.invoiceNo}
+        </span>
+      </div>
+    ) : (
       <button
-        onClick={() => navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)}
+        onClick={() =>
+          navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)
+        }
         className="text-sm font-medium !text-blue-600 hover:underline text-left"
       >
         {row.invoiceNo}
       </button>
     ),
-    orderNumber: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.orderNumber}</span>,
 
+    // ✅ Order Number
+    orderNumber: (
+      <span
+        className={`text-sm ${
+          isCreditNote ? "text-gray-700" : "text-gray-600"
+        }`}
+      >
+        {isTotalRow ? "" : row.orderNumber}
+      </span>
+    ),
+
+    // ✅ Customer Name
     customerName: (
-      <span className={isTotalRow ? "font-semibold text-black" : "text-blue-600"}>
+      <span
+        className={
+          isTotalRow
+            ? "font-semibold text-black"
+            : isCreditNote
+            ? "text-gray-700 font-medium"
+            : "text-blue-600"
+        }
+      >
         {isTotalRow ? "" : row.customerName}
       </span>
     ),
 
+    // ✅ Total
     total: (
-      <span className="font-semibold text-blue-700">
+      <span
+        className={`font-semibold ${
+          row.total < 0 ? "text-red-600" : "text-blue-700"
+        }`}
+      >
         {formatCurrency(row.total)}
       </span>
     ),
 
+    // ✅ Balance
     balance: (
-      <span className="font-semibold text-black">
+      <span
+        className={`font-semibold ${
+          isCreditNote ? "text-gray-700" : "text-black"
+        }`}
+      >
         {formatCurrency(row.balance)}
       </span>
     ),

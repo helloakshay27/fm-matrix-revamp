@@ -3249,27 +3249,32 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-center gap-4 mt-6 mb-2 flex-wrap">
                       {[
-                        { color: "#61CDBB", label: "Filled" },
-                        { color: "#E28B8B", label: "Missed" },
-                        { color: "#D1D5DB", label: "Holiday" },
-                        /* {
+                        {
+                          color: "#61CDBB",
+                          label: "Filled",
+                          isCircle: false,
+                        },
+                        {
                           color: "#E28B8B",
-                          label: "Upcoming tasks",
-                          isDot: true,
-                        }, */
-                      ].map(({ color, label, isDot }) => (
+                          label: "Missed",
+                          isCircle: false,
+                        },
+                        {
+                          color: "#D1D5DB",
+                          label: "Holiday",
+                          isCircle: false,
+                        },
+                        {
+                          color: "#E28B8B",
+                          label: "Upcoming",
+                          isCircle: true,
+                        },
+                      ].map(({ color, label, isCircle }) => (
                         <div key={label} className="flex items-center gap-1.5">
-                          {isDot ? (
-                            <div
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: color }}
-                            />
-                          ) : (
-                            <div
-                              className="w-4 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: color }}
-                            />
-                          )}
+                          <div
+                            className={`w-2.5 h-2.5 flex-shrink-0 ${isCircle ? "rounded-full" : "rounded-[2px]"}`}
+                            style={{ backgroundColor: color }}
+                          />
                           <span className="text-[11px] text-gray-500 font-medium">
                             {label}
                           </span>

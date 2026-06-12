@@ -54,9 +54,38 @@ const getItemTitle = (item: any): string => {
 };
 
 const getItemType = (item: any): string => {
-  if (!item || typeof item !== "object") return "task";
-  return String(item.type || "task").toLowerCase();
+  if (!item || typeof item !== "object") return "note";
+  const rawType = String(
+    item.source_type ||
+      item.sourceType ||
+      item.originalData?.source_type ||
+      item.originalData?.sourceType ||
+      item.type ||
+      ""
+  ).toLowerCase();
+
+  if (rawType.includes("issue")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do")) return "todo";
+  if (rawType.includes("task")) return "task";
+  return "note";
 };
+
+const getItemTypeLabel = (itemOrType: any): string => {
+  const type =
+    typeof itemOrType === "string" ? itemOrType.toLowerCase() : getItemType(itemOrType);
+  if (type === "task") return "Task";
+  if (type === "issue") return "Issue";
+  if (type === "todo") return "Todo";
+  return "Note";
+};
+
+const getItemStatus = (item: any): string => {
+  if (!item || typeof item !== "object") return "open";
+  return String(item.status || "open");
+};
+
+const isCompletedStatus = (status: any): boolean =>
+  ["completed", "done", "closed"].includes(String(status || "").toLowerCase());
 
 const toItemArray = (value: any): any[] => {
   if (Array.isArray(value)) return value;
@@ -91,7 +120,13 @@ const mergeTasksIssuesPreservingType = (
     if (!title) return;
 
     const type = getItemType(item);
-    const hasExplicitType = !!item?.type;
+    const hasExplicitType = !!(
+      item?.type ||
+      item?.source_type ||
+      item?.sourceType ||
+      item?.originalData?.source_type ||
+      item?.originalData?.sourceType
+    );
     const typedKey = `${title.toLowerCase()}|${type}`;
     const titleHasTypedItem = merged.some(
       (existing) =>
@@ -127,28 +162,32 @@ const getReportDataSource = (report: any) => {
     typeof draftData === "object" &&
     Object.keys(draftData).length > 0;
 
-  if (hasReportData && hasDraftData) {
-    return {
-      ...draftData,
-      ...reportData,
-      tasks_issues: Array.isArray(reportData.tasks_issues)
-        ? mergeTasksIssuesPreservingType(
-            draftData.tasks_issues || [],
-            reportData.tasks_issues
-          )
-        : draftData.tasks_issues || [],
-      tomorrow_plan: Array.isArray(reportData.tomorrow_plan)
-        ? mergeUniqueItems(reportData.tomorrow_plan, draftData.tomorrow_plan || [])
-        : draftData.tomorrow_plan || [],
-      accomplishments:
-        reportData.accomplishments?.items ||
-        (Array.isArray(reportData.accomplishments)
-          ? reportData.accomplishments
-          : draftData.accomplishments || []),
-    };
-  }
+  if (report?.daily_report) return draftData;
 
   return hasReportData ? reportData : draftData;
+};
+
+const isAbsentReport = (report: any, rawSource: any = null): boolean => {
+  const source = rawSource || getReportDataSource(report || {});
+  return [
+    report?.is_absent,
+    report?.daily_report?.is_absent,
+    source?.is_absent,
+    source?.details?.is_absent,
+    source?.sections?.is_absent,
+  ].some((value) => value === true || value === "true" || value === 1);
+};
+
+const getAbsentReason = (report: any, rawSource: any = null): string => {
+  const source = rawSource || getReportDataSource(report || {});
+  const reason =
+    report?.absent_reason ??
+    report?.daily_report?.absent_reason ??
+    source?.absent_reason ??
+    source?.details?.absent_reason ??
+    source?.sections?.absent_reason ??
+    "";
+  return String(reason || "").trim();
 };
 
 const getMeetingNotesData = (historyData: any) => {
@@ -244,30 +283,25 @@ const compileMeetingNotes = (historyData: any): string => {
     const memberRawSource = matchingMemberReport
       ? getReportDataSource(matchingMemberReport)
       : {};
-    // Check both submitted report_data and drafted daily_report.report_data
+    const hasMemberDailyReportData =
+      memberRawSource &&
+      typeof memberRawSource === "object" &&
+      Object.keys(memberRawSource).length > 0;
     const rawSource =
       detailedReports.length > 0
-        ? {
-            ...memberRawSource,
-            ...report,
-            accomplishments: Array.isArray(report.accomplishments)
-              ? mergeUniqueItems(report.accomplishments, memberRawSource.accomplishments || [])
-              : memberRawSource.accomplishments,
-            tomorrow_plan: Array.isArray(report.tomorrow_plan)
-              ? mergeUniqueItems(report.tomorrow_plan, memberRawSource.tomorrow_plan || [])
-              : memberRawSource.tomorrow_plan,
-            tasks_issues: Array.isArray(report.tasks_issues)
-              ? mergeTasksIssuesPreservingType(
-                  memberRawSource.tasks_issues || [],
-                  report.tasks_issues
-                )
-              : memberRawSource.tasks_issues,
-            kpis:
-              Array.isArray(report.kpis) || typeof report.kpis === "object"
-                ? report.kpis
-                : memberRawSource.kpis,
-          }
+        ? hasMemberDailyReportData
+          ? memberRawSource
+          : report
         : getReportDataSource(report);
+    const isAbsent = isAbsentReport(matchingMemberReport || report, rawSource);
+    const absentReason = getAbsentReason(matchingMemberReport || report, rawSource);
+    const timingValue =
+      rawSource?.sections?.timing ??
+      rawSource?.kpis?.timing ??
+      rawSource?.kpis?.time ??
+      report?.kpis?.timing ??
+      report?.timing ??
+      null;
 
     let accRaw: any[] = [];
     if (Array.isArray(rawSource.accomplishments))
@@ -288,19 +322,23 @@ const compileMeetingNotes = (historyData: any): string => {
       rawSource.self_rating ??
       null;
 
-    const isAbsent =
-      rawSource.details?.is_absent ??
-      rawSource.sections?.is_absent ??
-      rawSource.is_absent ??
-      false;
-
     // Check past_kpis (common in drafts) and kpis
     const kpis = rawSource.past_kpis || rawSource.kpis || report.kpis || [];
 
     detailedText += `**${(report.name || "Unknown Member").trim()}**\n`;
     detailedText += `**Attendance:** ${
-      report.attendance || (isAbsent ? "✗ Absent" : "✓ Present")
+      isAbsent
+        ? `✗ Absent${absentReason ? `: ${absentReason}` : ""}`
+        : report.attendance || "✓ Present"
     }\n`;
+
+    if (isAbsent) {
+      if (timingValue !== null && timingValue !== undefined && timingValue !== "") {
+        detailedText += `**Timing:** ${timingValue}/20\n`;
+      }
+      detailedText += `\n---\n\n`;
+      return;
+    }
 
     if (report.self_rating) {
       detailedText += `**Self Rating:** ${report.self_rating}\n`;
@@ -332,23 +370,26 @@ const compileMeetingNotes = (historyData: any): string => {
     if (accRaw.length > 0) {
       detailedText += `**Accomplishments:**\n`;
       accRaw.forEach((item: any) => {
-        const title =
-          item.title ||
-          item.name ||
-          item.text ||
-          (typeof item === "string" ? item : "");
+        const title = getItemTitle(item);
         const isDone =
           item.status === "done" ||
           item.status === "completed" ||
           item.completed === true ||
           item.done === true ||
           item.star === true;
-        if (title) detailedText += `${isDone ? "✓" : "○"} ${title.trim()}\n`;
+        if (title)
+          detailedText += `${isDone ? "✓" : "○"} [${getItemTypeLabel(
+            item
+          )}] ${title.trim()}\n`;
       });
     }
 
-    if (tasksRaw.length > 0) {
-      const groupedTasksIssues = groupTasksIssuesByType(tasksRaw);
+    const visibleTasksRaw = tasksRaw.filter(
+      (item: any) => !isCompletedStatus(getItemStatus(item))
+    );
+
+    if (visibleTasksRaw.length > 0) {
+      const groupedTasksIssues = groupTasksIssuesByType(visibleTasksRaw);
       detailedText += `**Tasks:**\n`;
       if (groupedTasksIssues.tasks.length === 0) {
         detailedText += `None recorded.\n`;
@@ -356,7 +397,7 @@ const compileMeetingNotes = (historyData: any): string => {
         groupedTasksIssues.tasks.forEach((item: any) => {
           const title = getItemTitle(item);
           if (title)
-            detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
+            detailedText += `[${getItemStatus(item)}] ${title.trim()}\n`;
         });
       }
 
@@ -367,7 +408,7 @@ const compileMeetingNotes = (historyData: any): string => {
         groupedTasksIssues.issues.forEach((item: any) => {
           const title = getItemTitle(item);
           if (title)
-            detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
+            detailedText += `[${getItemStatus(item)}] ${title.trim()}\n`;
         });
       }
 
@@ -378,7 +419,7 @@ const compileMeetingNotes = (historyData: any): string => {
         groupedTasksIssues.todos.forEach((item: any) => {
           const title = getItemTitle(item);
           if (title)
-            detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
+            detailedText += `[${getItemStatus(item)}] ${title.trim()}\n`;
         });
       }
     }
@@ -389,12 +430,8 @@ const compileMeetingNotes = (historyData: any): string => {
     if (tpRaw.length > 0) {
       detailedText += `**Tomorrow's Plan:**\n`;
       tpRaw.forEach((item: any) => {
-        const title =
-          item.title ||
-          item.name ||
-          item.text ||
-          (typeof item === "string" ? item : "");
-        if (title) detailedText += `- ${title.trim()}\n`;
+        const title = getItemTitle(item);
+        if (title) detailedText += `- [${getItemTypeLabel(item)}] ${title.trim()}\n`;
       });
     }
 
@@ -1094,17 +1131,8 @@ const AllMeetingsView = ({
             </div>
 
             {isLoading ? (
-              <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden">
-                <div className="h-[100px] bg-[#CE7A5A]/60 rounded-t-[24px] animate-pulse" />
-                <div className="p-6 space-y-2">
-                  {[80, 60, 70].map((w, i) => (
-                    <div
-                      key={i}
-                      className="h-3 bg-[#F0EBF8] rounded-full animate-pulse"
-                      style={{ width: `${w}%` }}
-                    />
-                  ))}
-                </div>
+              <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden py-16 flex items-center justify-center">
+                <Loader2 className="animate-spin w-6 h-6 text-[#CE7A5A]" />
               </div>
             ) : !hasData ? (
               <div className="bg-white border-2 border-dashed border-[#E0D8F0] rounded-[24px] py-10 flex flex-col items-center justify-center gap-2">
@@ -1327,18 +1355,9 @@ const HistoryTab = ({
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden"
+                className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden py-16 flex items-center justify-center"
               >
-                <div className="h-[100px] bg-[#CE7A5A]/60 rounded-t-[24px] animate-pulse" />
-                <div className="p-6 space-y-2">
-                  {[80, 60, 70].map((w, j) => (
-                    <div
-                      key={j}
-                      className="h-3 bg-[#F0EBF8] rounded-full animate-pulse"
-                      style={{ width: `${w}%` }}
-                    />
-                  ))}
-                </div>
+                <Loader2 className="animate-spin w-6 h-6 text-[#CE7A5A]" />
               </div>
             ))}
           </div>

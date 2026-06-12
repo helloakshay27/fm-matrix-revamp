@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, RefreshCw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
@@ -144,6 +144,7 @@ const columns: ColumnConfig[] = [{
 }];
 export const PatrollingDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -153,7 +154,10 @@ export const PatrollingDashboard = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedPatrollingId, setSelectedPatrollingId] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+ const [currentPage, setCurrentPage] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return Number(params.get('page')) || 1;
+});
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
@@ -293,7 +297,12 @@ export const PatrollingDashboard = () => {
     };
     loadUsers();
   }, []);
-
+ 
+  useEffect(() => {
+  navigate(`${location.pathname}?page=${currentPage}`, {
+    replace: true,
+  });
+}, [currentPage]);
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
     console.log('Effect triggered - debouncedSearchQuery:', debouncedSearchQuery); // Debug log
@@ -399,7 +408,7 @@ export const PatrollingDashboard = () => {
   });
   const handleView = (id: number) => {
     console.log('View patrolling:', id);
-    navigate(`/security/patrolling/details/${id}`);
+    navigate(`/security/patrolling/details/${id}?page=${currentPage}`);
   };
 
   const handleEdit = (id: number) => {
@@ -412,6 +421,7 @@ export const PatrollingDashboard = () => {
     setSelectedPatrollingId(id);
     setIsDeleteModalOpen(true);
   };
+  
 
   const handleDeleteConfirm = async () => {
     if (!selectedPatrollingId) return;

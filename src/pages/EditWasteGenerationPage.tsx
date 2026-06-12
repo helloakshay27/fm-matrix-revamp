@@ -48,6 +48,50 @@ const fieldStyles = {
   },
 };
 
+const operationalLandlordMenuProps = {
+  className: 'searchable-select-menu',
+  disablePortal: false,
+  anchorOrigin: { vertical: 'bottom' as const, horizontal: 'left' as const },
+  transformOrigin: { vertical: 'top' as const, horizontal: 'left' as const },
+  PaperProps: {
+    sx: { maxHeight: 280, zIndex: 99999 },
+    onWheel: (e: React.WheelEvent) => e.stopPropagation(),
+  },
+  MenuListProps: {
+    sx: { maxHeight: 240, overflowY: 'auto', py: 0 },
+    onWheel: (e: React.WheelEvent) => e.stopPropagation(),
+  },
+  PopperProps: {
+    placement: 'bottom-start' as const,
+    modifiers: [
+      {
+        name: 'sameWidth',
+        enabled: true,
+        phase: 'beforeWrite',
+        requires: ['computeStyles'],
+        fn: ({
+          state,
+        }: {
+          state: {
+            styles: { popper: Record<string, string> };
+            rects: { reference: { width: number } };
+          };
+        }) => {
+          state.styles.popper.width = `${state.rects.reference.width}px`;
+        },
+      },
+      {
+        name: 'preventOverflow',
+        options: {
+          altBoundary: true,
+          tether: false,
+          rootBoundary: 'viewport',
+        },
+      },
+    ],
+  },
+};
+
 const EditWasteGenerationPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -600,15 +644,23 @@ const EditWasteGenerationPage = () => {
                   notched
                   displayEmpty
                   disabled={loadingOperationalLandlords}
-                  MenuProps={{
-                    className: 'searchable-select-menu'
-                  }}
+                  MenuProps={operationalLandlordMenuProps}
                 >
                   <MenuItem value="">
                     {loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}
                   </MenuItem>
                   {Array.isArray(operationalLandlords) && operationalLandlords.map((landlord) => (
-                    <MenuItem key={landlord.id} value={landlord.id.toString()}>
+                    <MenuItem
+                      key={landlord.id}
+                      value={landlord.id.toString()}
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'block',
+                      }}
+                      title={landlord.category_name}
+                    >
                       {landlord.category_name}
                     </MenuItem>
                   ))}

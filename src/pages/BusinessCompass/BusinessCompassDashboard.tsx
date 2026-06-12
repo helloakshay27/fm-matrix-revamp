@@ -118,7 +118,7 @@ const STATUS_DOT: Record<DayStatus, string> = {
   filled: "#22c55e",
   missed: "#f87171",
   holiday: "#fbbf24",
-  upcoming: "#fb923c",
+  upcoming: "#e29393",
   none: "transparent",
 };
 
@@ -1206,7 +1206,9 @@ const BusinessCompassDashboard: React.FC = () => {
                               {status === "upcoming" && !isSunday && (
                                 <div
                                   className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full shadow-sm"
-                                  style={{ backgroundColor: "#e29393" }}
+                                  style={{
+                                    backgroundColor: STATUS_DOT.upcoming,
+                                  }}
                                 />
                               )}
                               {/* Decorative Top Strip */}
@@ -1264,7 +1266,11 @@ const BusinessCompassDashboard: React.FC = () => {
                         { color: "#82D4C4", label: "Filled", isCircle: false },
                         { color: "#e29393", label: "Missed", isCircle: false },
                         { color: "#D1D5DB", label: "Holiday", isCircle: false },
-                        // { color: "#e29393", label: "Upcoming tasks", isCircle: true }
+                        {
+                          color: STATUS_DOT.upcoming,
+                          label: "Upcoming",
+                          isCircle: true,
+                        },
                       ].map(({ color, label, isCircle }) => (
                         <div key={label} className="flex items-center gap-1.5">
                           <div

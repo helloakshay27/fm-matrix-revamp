@@ -51,6 +51,7 @@ type SidebarItem = {
   subItems?: SidebarItem[];
   color?: string;
   blank?: boolean;
+  additionalRoutes?: string[];
 };
 
 const modulesByPackage = {
@@ -59,6 +60,7 @@ const modulesByPackage = {
       name: "Memberships",
       icon: Star,
       href: "/club-management/membership/groups",
+      additionalRoutes: ["/club-management/group-membership"],
     },
     {
       name: "User Management",
@@ -147,21 +149,38 @@ const modulesByPackage = {
       name: "Amenities Setup",
       icon: Gem,
       href: "/settings/vas/booking-club/setup",
+      additionalRoutes: [
+        "/settings/vas/booking-club/setup/add",
+        "/settings/vas/booking-club/setup/details",
+        "/settings/vas/booking-club/setup/edit",
+      ],
     },
     {
       name: "Membership Plan Setup",
       icon: ClipboardList,
       href: "/settings/vas/membership-plan/setup",
+      additionalRoutes: [
+        "/settings/vas/membership-plan/setup/add",
+        "/settings/vas/membership-plan/setup/edit",
+        "/settings/vas/membership-plan/setup/details",
+      ],
     },
     {
       name: "Accessories Setup",
       icon: Boxes,
       href: "/settings/accessories",
+      additionalRoutes: ["/settings/accessories"],
     },
     {
       name: "Payment Plan Setup",
       icon: CreditCard,
       href: "/settings/payment-plan/setup",
+      additionalRoutes: [
+        "/settings/payment-plan/add",
+        "/settings/payment-plan/edit",
+        "/settings/payment-plan/details",
+        "/settings/payment-management",
+      ],
     },
     {
       name: "Templates",
@@ -978,6 +997,7 @@ export const ClubSidebar: React.FC = () => {
     const collectHrefs = (items: SidebarItem[]): string[] =>
       items.flatMap((item) => [
         ...(item.href ? [item.href] : []),
+        ...(item.additionalRoutes ?? []),
         ...(item.subItems ? collectHrefs(item.subItems) : []),
       ]);
 
@@ -1115,7 +1135,10 @@ export const ClubSidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(key);
-    const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
+    const isActive = item.href
+      ? isActiveRoute(item.href, "prefix") ||
+        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      : false;
 
     if (hasSubItems) {
       return (
@@ -1184,7 +1207,10 @@ export const ClubSidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(item.name);
-    const active = item.href ? isActiveRoute(item.href, "prefix") : false;
+    const active = item.href
+      ? isActiveRoute(item.href, "prefix") ||
+        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      : false;
 
     if (isStaticItem) {
       return (

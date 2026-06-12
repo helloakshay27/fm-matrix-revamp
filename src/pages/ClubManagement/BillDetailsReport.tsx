@@ -37,7 +37,7 @@ const formatDisplayDate = (value: string) => {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
 
-  return `${day}/${month}/${year}`; 
+  return `${day}/${month}/${year}`;
 };
 
 const formatAmount = (value: number) =>
@@ -82,7 +82,11 @@ const columns: ColumnConfig[] = [
 
 const BillDetailsReport: React.FC = () => {
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
-  const [filters, setFilters] = useState(defaultRange);
+  // const [filters, setFilters] = useState(defaultRange);
+  const [filters, setFilters] = useState({
+    fromDate: "",
+    toDate: "",
+  });
   const [rows, setRows] = useState<BillRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -94,11 +98,20 @@ const BillDetailsReport: React.FC = () => {
       const lock_account_id = localStorage.getItem("lock_account_id");
 
       const res = await axios.get(`https://${baseUrl}/lock_account_bills.json`, {
+        // params: {
+        //   lock_account_id,
+        //   "q[date_gteq]": toApiDate(from),
+        //   "q[date_lteq]": toApiDate(to),
+        // },
         params: {
-          lock_account_id,
-          "q[date_gteq]": toApiDate(from),
-          "q[date_lteq]": toApiDate(to),
-        },
+  lock_account_id,
+  ...(from && {
+    "q[date_gteq]": toApiDate(from),
+  }),
+  ...(to && {
+    "q[date_lteq]": toApiDate(to),
+  }),
+},
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -125,9 +138,12 @@ const BillDetailsReport: React.FC = () => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   fetchBills();
+  // }, []);
   useEffect(() => {
-    fetchBills(defaultRange.fromDate, defaultRange.toDate);
-  }, [fetchBills]);
+  fetchBills("", "");
+}, [fetchBills]);
 
   const totals = useMemo(
     () =>
@@ -241,8 +257,13 @@ const BillDetailsReport: React.FC = () => {
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
           <p className="text-sm font-medium text-[#667085]">Lockated</p>
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Bill Details</h1>
-          <p className="mt-1 text-sm text-[#475467]">
+          {/* <p className="mt-1 text-sm text-[#475467]">
             From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
+          </p> */}
+          <p className="mt-1 text-sm text-[#475467]">
+            {filters.fromDate || filters.toDate
+              ? `From ${formatDisplayDate(filters.fromDate)} To ${formatDisplayDate(filters.toDate)}`
+              : "Select date range and click View"}
           </p>
         </div>
 

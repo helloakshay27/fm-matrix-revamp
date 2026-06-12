@@ -323,6 +323,95 @@ const weeklyHistoryTypeBadgeMeta = {
     notes: { label: "Notes", className: "border-[#e2e5ea] bg-[#f8fafc] text-[#64748b]" },
 } as const;
 
+const getWeeklyHistorySourceId = (item: any) => {
+    let rawId =
+        item?.source_id ??
+        item?.sourceId ??
+        item?.originalData?.source_id ??
+        item?.originalData?.sourceId ??
+        item?.originalData?.id;
+
+    if ((rawId === null || rawId === undefined || rawId === "") && /^(nw-)?(task|issue|todo)-/i.test(String(item?.id || ""))) {
+        rawId = item.id;
+    }
+
+    if (rawId === null || rawId === undefined || rawId === "") return null;
+    const cleanedId = String(rawId).replace(/^(nw-)?(task|issue|todo)-/i, "");
+    return cleanedId || rawId;
+};
+
+const getWeeklyHistorySourceRecord = (item: any) => {
+    const sourceId = getWeeklyHistorySourceId(item);
+    const sourceType = getWeeklyHistoryItemType(item);
+    return item?.originalData || {
+        ...item,
+        id: sourceId,
+        source_id: sourceId,
+        source_type: sourceType === "notes" ? item?.source_type : sourceType,
+        title: item?.title || item?.text || getWeeklyHistoryItemText(item),
+    };
+};
+
+const normalizeWeeklyHistoryTodoForEdit = (item: any, details: any = null) => {
+    const sourceId = getWeeklyHistorySourceId(item);
+    const sourceRecord = getWeeklyHistorySourceRecord(item);
+    const raw =
+        details?.todo ||
+        details?.data?.todo ||
+        details?.data?.todos?.[0] ||
+        details?.todos?.[0] ||
+        details?.data ||
+        details ||
+        sourceRecord ||
+        item ||
+        {};
+    const fallback = sourceRecord || item || {};
+    const priority = raw.priority || fallback.priority || "";
+
+    return {
+        ...fallback,
+        ...raw,
+        id: raw.id ?? sourceId,
+        title:
+            raw.title ||
+            raw.name ||
+            raw.heading ||
+            fallback.title ||
+            fallback.text ||
+            getWeeklyHistoryItemText(item),
+        description:
+            raw.description ||
+            raw.body ||
+            fallback.description ||
+            fallback.body ||
+            "",
+        target_date:
+            raw.target_date ||
+            raw.due_date ||
+            raw.end_date ||
+            raw.date ||
+            raw.start_date ||
+            fallback.target_date ||
+            fallback.due_date ||
+            fallback.end_date ||
+            fallback.start_date ||
+            fallback.plan_for_date ||
+            null,
+        user_id:
+            raw.user_id ||
+            raw.responsible_person_id ||
+            raw.assigned_to_id ||
+            raw.user?.id ||
+            raw.responsible_person?.id ||
+            fallback.user_id ||
+            fallback.responsible_person_id ||
+            fallback.responsible_person?.id ||
+            "",
+        priority: ["P1", "P2", "P3", "P4"].includes(String(priority)) ? priority : "",
+        status: raw.status || fallback.status || "open",
+    };
+};
+
 
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
 
@@ -591,6 +680,68 @@ const WeeklyReports = () => {
             ? raw
             : `https://${raw}`;
     }, [baseUrl]);
+
+    const fetchWeeklyHistoryTodo = React.useCallback(async (todoId: any) => {
+        if (!todoId || !normalizedBaseUrl) return null;
+
+        try {
+            const response = await fetch(`${normalizedBaseUrl}/todos/${todoId}.json`, {
+                headers: {
+                    Accept: "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+            if (!response.ok) return null;
+
+            const json = await response.json();
+            return (
+                json?.todo ||
+                json?.data?.todo ||
+                json?.data?.todos?.[0] ||
+                json?.todos?.[0] ||
+                json?.data ||
+                json
+            );
+        } catch (error) {
+            console.error("Failed to fetch weekly history todo:", error);
+            return null;
+        }
+    }, [normalizedBaseUrl, token]);
+
+    const handleViewWeeklyHistoryItem = React.useCallback(async (item: any) => {
+        const sourceType = getWeeklyHistoryItemType(item);
+        const sourceId = getWeeklyHistorySourceId(item);
+        if (sourceType === "notes" || !sourceId) return;
+
+        if (sourceType === "todo") {
+            const todoDetails = await fetchWeeklyHistoryTodo(sourceId);
+            setSelectedTodo(normalizeWeeklyHistoryTodoForEdit(item, todoDetails));
+            setIsTodoDetailsModalOpen(true);
+            return;
+        }
+
+        navigate(sourceType === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+    }, [fetchWeeklyHistoryTodo, navigate]);
+
+    const handleEditWeeklyHistoryItem = React.useCallback(async (item: any) => {
+        const sourceType = getWeeklyHistoryItemType(item);
+        const sourceId = getWeeklyHistorySourceId(item);
+        if (sourceType === "notes" || !sourceId) return;
+
+        const sourceRecord = getWeeklyHistorySourceRecord(item);
+        if (sourceType === "task") {
+            setEditTaskData(sourceRecord);
+            setIsEditTaskModalOpen(true);
+        } else if (sourceType === "issue") {
+            setEditIssueData(sourceRecord);
+            setIsEditIssueModalOpen(true);
+        } else if (sourceType === "todo") {
+            const todoDetails = await fetchWeeklyHistoryTodo(sourceId);
+            setEditTodoData(normalizeWeeklyHistoryTodoForEdit(item, todoDetails));
+            setIsEditTodoModalOpen(true);
+        }
+    }, [fetchWeeklyHistoryTodo]);
+
     const weekDraftKey = React.useMemo(
         () =>
             `business-compass-weekly-report-draft:${userId || "guest"}:${format(weekStart, "yyyy-MM-dd")}`,
@@ -5181,7 +5332,10 @@ const WeeklyReports = () => {
                                                     <div className="flex-1 space-y-3 p-4">
                                                         {achievements.length > 0 ? (
                                                             achievements.map((w: any, i: number) => {
-                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(w)];
+                                                                const sourceType = getWeeklyHistoryItemType(w);
+                                                                const sourceId = getWeeklyHistorySourceId(w);
+                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[sourceType];
+                                                                const canOpenSource = sourceType !== "notes" && !!sourceId;
                                                                 return (
                                                                     <div
                                                                         key={i}
@@ -5193,15 +5347,43 @@ const WeeklyReports = () => {
                                                                                 {getWeeklyHistoryItemText(w)}
                                                                             </span>
                                                                         </div>
-                                                                        <Badge
-                                                                            variant="outline"
-                                                                            className={cn(
-                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
-                                                                                typeMeta.className
+                                                                        <div className="flex shrink-0 items-center gap-1">
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className={cn(
+                                                                                    "whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                    typeMeta.className
+                                                                                )}
+                                                                            >
+                                                                                {typeMeta.label}
+                                                                            </Badge>
+                                                                            {canOpenSource && (
+                                                                                <>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(event) => {
+                                                                                            event.stopPropagation();
+                                                                                            handleViewWeeklyHistoryItem(w);
+                                                                                        }}
+                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-white/70 hover:text-[#DA7756]"
+                                                                                        title={`View ${typeMeta.label}`}
+                                                                                    >
+                                                                                        <Eye className="h-3.5 w-3.5" />
+                                                                                    </button>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(event) => {
+                                                                                            event.stopPropagation();
+                                                                                            handleEditWeeklyHistoryItem(w);
+                                                                                        }}
+                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-white/70 hover:text-[#DA7756]"
+                                                                                        title={`Edit ${typeMeta.label}`}
+                                                                                    >
+                                                                                        <Pencil className="h-3.5 w-3.5" />
+                                                                                    </button>
+                                                                                </>
                                                                             )}
-                                                                        >
-                                                                            {typeMeta.label}
-                                                                        </Badge>
+                                                                        </div>
                                                                     </div>
                                                                 );
                                                             })
@@ -5236,7 +5418,10 @@ const WeeklyReports = () => {
                                                                         </div>
                                                                         <div className="space-y-2 pl-1">
                                                                             {dayTasks.map((t: any, i: number) => {
-                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(t)];
+                                                                                const sourceType = getWeeklyHistoryItemType(t);
+                                                                                const sourceId = getWeeklyHistorySourceId(t);
+                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[sourceType];
+                                                                                const canOpenSource = sourceType !== "notes" && !!sourceId;
                                                                                 return (
                                                                                     <div
                                                                                         key={i}
@@ -5248,15 +5433,43 @@ const WeeklyReports = () => {
                                                                                                 {getWeeklyHistoryItemText(t)}
                                                                                             </span>
                                                                                         </div>
-                                                                                        <Badge
-                                                                                            variant="outline"
-                                                                                            className={cn(
-                                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
-                                                                                                typeMeta.className
+                                                                                        <div className="flex shrink-0 items-center gap-1">
+                                                                                            <Badge
+                                                                                                variant="outline"
+                                                                                                className={cn(
+                                                                                                    "whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                                    typeMeta.className
+                                                                                                )}
+                                                                                            >
+                                                                                                {typeMeta.label}
+                                                                                            </Badge>
+                                                                                            {canOpenSource && (
+                                                                                                <>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={(event) => {
+                                                                                                            event.stopPropagation();
+                                                                                                            handleViewWeeklyHistoryItem(t);
+                                                                                                        }}
+                                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-[#fef6f4] hover:text-[#DA7756]"
+                                                                                                        title={`View ${typeMeta.label}`}
+                                                                                                    >
+                                                                                                        <Eye className="h-3.5 w-3.5" />
+                                                                                                    </button>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={(event) => {
+                                                                                                            event.stopPropagation();
+                                                                                                            handleEditWeeklyHistoryItem(t);
+                                                                                                        }}
+                                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-[#fef6f4] hover:text-[#DA7756]"
+                                                                                                        title={`Edit ${typeMeta.label}`}
+                                                                                                    >
+                                                                                                        <Pencil className="h-3.5 w-3.5" />
+                                                                                                    </button>
+                                                                                                </>
                                                                                             )}
-                                                                                        >
-                                                                                            {typeMeta.label}
-                                                                                        </Badge>
+                                                                                        </div>
                                                                                     </div>
                                                                                 );
                                                                             })}

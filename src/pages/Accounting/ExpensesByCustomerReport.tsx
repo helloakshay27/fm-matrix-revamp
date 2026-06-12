@@ -82,7 +82,12 @@ const toNumber = (v?: string | number) => parseFloat(String(v ?? 0)) || 0;
 
 const ExpensesByCustomerReport: React.FC = () => {
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
-  const [filters, setFilters] = useState(defaultRange);
+  // const [filters, setFilters] = useState(defaultRange);
+
+  const [filters, setFilters] = useState({
+  fromDate: "",
+  toDate: "",
+});
   const [rows, setRows] = useState<ExpensesByCustomerRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -109,11 +114,20 @@ const ExpensesByCustomerReport: React.FC = () => {
       const response = await axios.get(
         `https://${baseUrl}/expenses/summary_by_customer.json`,
         {
+          // params: {
+          //   lock_account_id: lockAccountId,
+          //   "q[date_gteq]": toApiDate(fromDate),
+          //   "q[date_lteq]": toApiDate(toDate),
+          // },
           params: {
-            lock_account_id: lockAccountId,
-            "q[date_gteq]": toApiDate(fromDate),
-            "q[date_lteq]": toApiDate(toDate),
-          },
+  lock_account_id: lockAccountId,
+  ...(fromDate && {
+    "q[date_gteq]": toApiDate(fromDate),
+  }),
+  ...(toDate && {
+    "q[date_lteq]": toApiDate(toDate),
+  }),
+},
           headers: { Authorization: `Bearer ${token}` },
         }
       );
@@ -201,8 +215,8 @@ const ExpensesByCustomerReport: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchData(defaultRange.fromDate, defaultRange.toDate);
-  }, [defaultRange.fromDate, defaultRange.toDate, fetchData]);
+    fetchData();
+  }, []);
 
   const totals = useMemo(
     () =>
@@ -328,9 +342,15 @@ const ExpensesByCustomerReport: React.FC = () => {
               <h1 className="text-2xl font-semibold text-[#101828]">
                 Expenses For {detailItem.name}
               </h1>
-              <p className="mt-1 text-sm text-[#475467]">
+              {/* <p className="mt-1 text-sm text-[#475467]">
                 From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
-              </p>
+              </p> */}
+
+              <p className="mt-1 text-sm text-[#475467]">
+  {filters.fromDate || filters.toDate
+    ? `From ${formatDisplayDate(filters.fromDate)} To ${formatDisplayDate(filters.toDate)}`
+    : "Select date range and click View"}
+</p>
             </div>
           </div>
 

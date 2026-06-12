@@ -227,7 +227,7 @@ export const BreakdownModal: React.FC<BreakdownModalProps> = ({
           {/* Reason */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-900">
-              Reason <span className="text-red-500">*</span>
+              Failure Reason <span className="text-red-500">*</span>
             </label>
             <textarea
               name="reason"
@@ -247,7 +247,7 @@ export const BreakdownModal: React.FC<BreakdownModalProps> = ({
           {/* Date */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-900">
-              Date <span className="text-red-500">*</span>
+               Breakdown Date <span className="text-red-500">*</span>
             </label>
             <input
               type="datetime-local"
@@ -295,7 +295,7 @@ export const BreakdownModal: React.FC<BreakdownModalProps> = ({
             {/* Severity */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-900">
-                Severity <span className="text-red-500">*</span>
+                Severity Level<span className="text-red-500">*</span>
               </label>
               <select
                 name="severity"
@@ -321,11 +321,11 @@ export const BreakdownModal: React.FC<BreakdownModalProps> = ({
           {/* Expected Repair Duration */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-900">
-              Expected Repair Duration (days){" "}
+              Target Restoration Date{" "}
               <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
+              type="date"
               name="expected_repair_duration"
               value={formData.expected_repair_duration}
               onChange={handleInputChange}

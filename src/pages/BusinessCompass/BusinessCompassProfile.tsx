@@ -583,6 +583,7 @@ const BusinessCompassProfile = () => {
     email: string;
     phone: string;
     jobTitle: string;
+    departmentName: string;
     address: string;
     city: string;
     state: string;
@@ -612,6 +613,7 @@ const BusinessCompassProfile = () => {
       email: authUser?.email || "operational@lockated.com",
       phone: authUser?.mobile || authUser?.phone || "9673565064",
       jobTitle: authUser?.firstname || "Common Admin Id",
+      departmentName: (authUser as any)?.department_name || "",
       address: "",
       city: "",
       state: "",
@@ -662,6 +664,10 @@ const BusinessCompassProfile = () => {
       email: userData.email ?? apiData.email ?? currentData.email,
       phone: userData.mobile ?? apiData.mobile ?? currentData.phone,
       jobTitle: userData.user_title ?? currentData.jobTitle,
+      departmentName:
+        (userData as any).department_name ??
+        (apiData as any).department_name ??
+        currentData.departmentName,
       address: userData.alternate_address ?? currentData.address,
       city: extra.city ?? currentData.city,
       state: extra.state ?? currentData.state,
@@ -707,6 +713,10 @@ const BusinessCompassProfile = () => {
         accountData.designation ||
         accountData.profile_type ||
         currentData.jobTitle,
+      departmentName:
+        (accountData as any).department_name ||
+        (extra as any).department_name ||
+        currentData.departmentName,
       address: accountData.alternate_address || currentData.address,
       city: extra.city || currentData.city,
       state: extra.state || currentData.state,
@@ -2013,8 +2023,8 @@ const BusinessCompassProfile = () => {
                         value: formData.jobTitle || "Not provided",
                       },
                       {
-                        label: "Work",
-                        value: formData.jobTitle || "Not provided",
+                        label: "Department",
+                        value: formData.departmentName || "Not provided",
                       },
                     ].map(({ label, value }) => (
                       <div key={label}>
@@ -2273,9 +2283,9 @@ const BusinessCompassProfile = () => {
                   </div>
                 </div>
 
-                {/* Work Details + Emergency Recovery */}
+                {/* Department Details + Emergency Recovery */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Work Details */}
+                  {/* Department Details */}
                   <div className="bg-[#F6F4EE] rounded-2xl p-4 sm:p-5">
                     <h3 className="flex items-center gap-2 text-[13px] sm:text-[14px] font-bold text-[#1a1a1a] mb-3 sm:mb-4">
                       <Briefcase
@@ -2283,11 +2293,11 @@ const BusinessCompassProfile = () => {
                         className="text-gray-500"
                         strokeWidth={2}
                       />
-                      Work Details
+                      Department
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       <span className="bg-white text-gray-600 text-[12px] font-medium px-4 py-2 rounded-lg border border-gray-200">
-                        Company Admin
+                        {formData.departmentName || "Not provided"}
                       </span>
                       <span className="bg-white text-teal-600 text-[12px] font-medium px-4 py-2 rounded-lg border border-teal-100">
                         Active Member

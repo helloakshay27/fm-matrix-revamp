@@ -64,8 +64,12 @@ const toNumber = (v?: string | number) => parseFloat(String(v ?? 0)) || 0;
 
 const BillableExpenseDetails: React.FC = () => {
   const navigate = useNavigate();
-  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
-  const [filters, setFilters] = useState(defaultRange);
+  // const defaultRange = useMemo(() => getCurrentMonthRange(), []);
+  // const [filters, setFilters] = useState(defaultRange);
+  const [filters, setFilters] = useState({
+  fromDate: "",
+  toDate: "",
+});
   const [rows, setRows] = useState<BillableExpenseRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -84,11 +88,20 @@ const BillableExpenseDetails: React.FC = () => {
       const response = await axios.get(
         `https://${baseUrl}/expenses/billable_expense_details.json`,
         {
+          // params: {
+          //   lock_account_id: lockAccountId,
+          //   "q[date_gteq]": toApiDate(fromDate),
+          //   "q[date_lteq]": toApiDate(toDate),
+          // },
           params: {
-            lock_account_id: lockAccountId,
-            "q[date_gteq]": toApiDate(fromDate),
-            "q[date_lteq]": toApiDate(toDate),
-          },
+  lock_account_id: lockAccountId,
+  ...(fromDate && {
+    "q[date_gteq]": toApiDate(fromDate),
+  }),
+  ...(toDate && {
+    "q[date_lteq]": toApiDate(toDate),
+  }),
+},
           headers: { Authorization: `Bearer ${token}` },
         }
       );
@@ -124,9 +137,13 @@ const BillableExpenseDetails: React.FC = () => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   fetchData(defaultRange.fromDate, defaultRange.toDate);
+  // }, [defaultRange.fromDate, defaultRange.toDate, fetchData]);
+
   useEffect(() => {
-    fetchData(defaultRange.fromDate, defaultRange.toDate);
-  }, [defaultRange.fromDate, defaultRange.toDate, fetchData]);
+    fetchData();
+  }, []);
 
   const totals = useMemo(
     () =>
@@ -178,7 +195,7 @@ const BillableExpenseDetails: React.FC = () => {
         <span className={amtClass}>{formatCurrency(row.item_amount_bcy)}</span>
       ) : (
         <button
-          onClick={() => navigate(`/accounting/expenses/${row.id}`)}
+          onClick={() => navigate(`/accounting/expense/${row.id}`)}
           className="text-sm font-medium !text-blue-600 hover:underline text-left"
         >
           {formatCurrency(row.item_amount_bcy)}
@@ -240,9 +257,14 @@ const BillableExpenseDetails: React.FC = () => {
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Billable Expense Details</h1>
-          <p className="mt-1 text-sm text-[#475467]">
+          {/* <p className="mt-1 text-sm text-[#475467]">
             From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
-          </p>
+          </p> */}
+          <p className="mt-1 text-sm text-[#475467]">
+  {filters.fromDate || filters.toDate
+    ? `From ${formatDisplayDate(filters.fromDate)} To ${formatDisplayDate(filters.toDate)}`
+    : "Select date range and click View"}
+</p>
         </div>
 
         <div className="p-4">
