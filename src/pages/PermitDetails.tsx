@@ -390,6 +390,7 @@ export const PermitDetails = () => {
     // Check if we came from pending approvals page
     const levelId = searchParams.get('level_id');
     const userId = searchParams.get('user_id');
+    const invoiceApprovalHistoryId = searchParams.get('invoice_approval_history_id');
     const closureId = searchParams.get('closure_id');
     const resourceId = searchParams.get('resource_id');
     const isApprovalPage = searchParams.get('type') === 'approval';
@@ -549,6 +550,9 @@ export const PermitDetails = () => {
             // Create form data for URL encoded content
             const formData = new URLSearchParams();
             formData.append('rejection_reason', rejectComment.trim());
+            if (invoiceApprovalHistoryId) {
+                formData.append('invoice_approval_history_id', invoiceApprovalHistoryId);
+            }
 
             const response = await fetch(`${baseUrl}/pms/permits/${id}/update_rejection_reason.json?user_id=${userId}`, {
                 method: 'PUT',

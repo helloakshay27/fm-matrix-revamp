@@ -92,7 +92,7 @@ export const PermitPendingApprovalsDashboard = () => {
     return resourceType.split('::').pop() || resourceType;
   };
 
-  const handleViewPermit = (permitId: number, levelId: number, resourceType: string) => {
+  const handleViewPermit = (permitId: number, levelId: number, resourceType: string,invoice_approval_history_id: string) => {
     const userId = localStorage.getItem('user_id') || localStorage.getItem('userId') || '';
 
     // Add null/undefined checks before converting to string
@@ -101,6 +101,7 @@ export const PermitPendingApprovalsDashboard = () => {
       user_id: userId,
       approve: 'true',
       type: 'approval',
+      invoice_approval_history_id: (invoice_approval_history_id ?? '').toString(),
       resource_type: resourceType === "Pms::PermitExtend" ? 'permit_extend' : resourceType === "Pms::Permit" ? 'permit' : resourceType === "Pms::PermitClosure" ? 'permit_closure' : "",
 
     });
@@ -192,7 +193,8 @@ export const PermitPendingApprovalsDashboard = () => {
                   handleViewPermit(
                     approval.permit_id || 0,
                     approval.level_id || 0,
-                    approval.resource_type || ''
+                    approval.resource_type || '',
+                    approval.id || ''
                   );
                 }}
               />

@@ -2348,7 +2348,8 @@ export const CreditNoteAddPage: React.FC = () => {
                     //         color: 'white'
                     //     }
                     // }}
-                    className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                    // className="px-4 py-2 rounded border-[#C72030] text-white hover:bg-[#C72030] hover:text-white"
+                    className="px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#A01020]"
                 >
                     Save as Draft
                 </Button>
@@ -2365,7 +2366,8 @@ export const CreditNoteAddPage: React.FC = () => {
                     //     },
                     //     textTransform: 'none'
                     // }}
-                    className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                    // className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                    className="px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#A01020]"
                 >
                     {isSubmitting ? 'Submitting...' : 'Save as Open'}
                 </Button>

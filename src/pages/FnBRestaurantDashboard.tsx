@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, Plus } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -34,7 +34,12 @@ interface Restaurant {
 
 export const FnBRestaurantDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
@@ -46,6 +51,10 @@ export const FnBRestaurantDashboard = () => {
   const handleViewRestaurant = (id: number) => {
     navigate(`/settings/vas/fnb/details/${id}`);
   };
+
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -278,6 +287,12 @@ export const FnBRestaurantDashboard = () => {
         hideTableExport={true}
         pagination={true}
         pageSize={10}
+        currentPage={currentPage}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          navigate(`${location.pathname}?page=${page}`, { replace: true });
+        }}
+        
       />
     </div>
   );

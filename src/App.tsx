@@ -559,6 +559,12 @@ const GDNPendingApprovalsDashboard = lazy(() => import("./pages/GDNPendingApprov
 const GDNPendingApprovalsDetails = lazy(() => import("./pages/GDNPendingApprovalsDetails").then(m => ({ default: m.GDNPendingApprovalsDetails })));
 const InvoiceDashboard = lazy(() => import("./pages/InvoiceDashboard"));
 
+// Import Vendor Pages
+const VendorPOListPage = lazy(() => import("./pages/vendor/VendorPOListPage").then(m => ({ default: m.VendorPOListPage })));
+const VendorGRNListPage = lazy(() => import("./pages/vendor/VendorGRNListPage").then(m => ({ default: m.VendorGRNListPage })));
+const VendorWOListPage = lazy(() => import("./pages/vendor/VendorWOListPage").then(m => ({ default: m.VendorWOListPage })));
+const VendorInvoiceListPage = lazy(() => import("./pages/vendor/VendorInvoiceListPage").then(m => ({ default: m.VendorInvoiceListPage })));
+
 // Import WBS page
 const WBSElementDashboard = lazy(() => import("./pages/WBSElementDashboard").then(m => ({ default: m.WBSElementDashboard })));
 
@@ -1084,6 +1090,7 @@ const AddGuestUserPage = lazy(() => import("./pages/ClubManagement/AddGuestUserP
 const AddMembershipPlanPage = lazy(() => import("./pages/AddMembershipPlanPage").then(m => ({ default: m.AddMembershipPlanPage })));
 const AddPaymentPlan = lazy(() => import("./pages/settings/AddPaymentPlan").then(m => ({ default: m.AddPaymentPlan })));
 const AmenityBookingDetailsClubPage = lazy(() => import("./pages/ClubManagement/AmenityBookingDetails").then(m => ({ default: m.AmenityBookingDetailsClubPage })));
+const AmenityBookingEditPage = lazy(() => import("./pages/ClubManagement/AmenityBookingEdit").then(m => ({ default: m.AmenityBookingEditPage })));
 const BillCreatePage = lazy(() => import("./pages/BillCreatePage").then(m => ({ default: m.BillCreatePage })));
 const BillCyclesDetails = lazy(() => import("./pages/ClubManagement/BillCyclesDetails").then(m => ({ default: m.BillCyclesDetails })));
 const BillDetailPage = lazy(() => import("./pages/BillDetailPage").then(m => ({ default: m.BillDetailPage })));
@@ -1136,6 +1143,8 @@ const ViewClubOccupantUser = lazy(() => import("./pages/master/ViewClubOccupantU
 const ViewGuestUserPage = lazy(() => import("./pages/ClubManagement/ViewGuestUserPage").then(m => ({ default: m.ViewGuestUserPage })));
 const AddClubMembershipPage = lazy(() => import("./pages/ClubManagement/AddClubMembershipPage"));
 const AddGroupMembershipPage = lazy(() => import("./pages/ClubManagement/AddGroupMembershipPage"));
+const EditGroupMembershipStep1Page = lazy(() => import("./pages/ClubManagement/EditGroupMembershipStep1Page").then(m => ({ default: m.EditGroupMembershipStep1Page })));
+const EditGroupMembershipStep2Page = lazy(() => import("./pages/ClubManagement/EditGroupMembershipStep2Page").then(m => ({ default: m.EditGroupMembershipStep2Page })));
 const AmenityBookingListClub = lazy(() => import("./pages/ClubManagement/AmenityBookingList"));
 const AccountTypeSummaryReport = lazy(() => import("./pages/ClubManagement/AccountTypeSummaryReport"));
 const AccountTypeSummaryDetailReport = lazy(() => import("./pages/ClubManagement/AccountTypeSummaryDetailReport"));
@@ -2808,7 +2817,11 @@ function App() {
                             />
                             <Route
                               path="/club-management/group-membership/:id/edit"
-                              element={<AddGroupMembershipPage />}
+                              element={<EditGroupMembershipStep1Page />}
+                            />
+                            <Route
+                              path="/club-management/group-membership/:id/edit/members"
+                              element={<EditGroupMembershipStep2Page />}
                             />
                             <Route
                               path="/club-management/membership/group-details/:id"
@@ -3721,6 +3734,10 @@ function App() {
                               element={<AmenityBookingDetailsClubPage />}
                             />
                             <Route
+                              path="/club-management/amenities-booking-club/:id/edit"
+                              element={<AmenityBookingEditPage />}
+                            />
+                            <Route
                               path="/vas/booking-club/list"
                               element={<AmenityBookingListClub />}
                             />
@@ -4347,6 +4364,13 @@ function App() {
                               path="/finance/service-pr/feeds/:id"
                               element={<ServicePRFeedsPage />}
                             />
+
+                            {/* Vendor Module Routes */}
+                            <Route path="/vendor/po" element={<VendorPOListPage />} />
+                            <Route path="/vendor/grn" element={<VendorGRNListPage />} />
+                            <Route path="/vendor/wo" element={<VendorWOListPage />} />
+                            <Route path="/vendor/invoice" element={<VendorInvoiceListPage />} />
+
                             <Route path="/finance/po" element={<PODashboard />} />
                             <Route
                               path="/finance/po/add"

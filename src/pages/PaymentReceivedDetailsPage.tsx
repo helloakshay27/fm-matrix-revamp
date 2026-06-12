@@ -438,19 +438,19 @@ const [activeTab, setActiveTab] = React.useState("details");
           {selected && (
             <div className="absolute -top-3 left-0 z-10">
               <div
-                className={`text-white px-4 py-1 rotate-[-45deg] transform origin-left shadow text-sm font-medium ${
-                  selected.status === "PAID"
-                    ? "bg-green-500"
-                    : selected.status === "VOID"
-                    ? "bg-red-500"
-                    : "bg-yellow-500"
-                }`}
+                // className={`text-white px-4 py-1 rotate-[-45deg] transform origin-left shadow text-sm font-medium ${
+                //   selected.status === "PAID"
+                //     ? "bg-green-500"
+                //     : selected.status === "VOID"
+                //     ? "bg-red-500"
+                //     : "bg-yellow-500"
+                // }`}
               >
-                {selected.status === "PAID"
+                {/* {selected.status === "PAID"
                   ? "Paid"
                   : selected.status === "VOID"
                   ? "Void"
-                  : "Draft"}
+                  : "Draft"} */}
               </div>
             </div>
           )}
