@@ -461,9 +461,17 @@ export const BillListPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">All Bills</h1>
-      </header>
+      {/* Header with orange theme */}
+      {/* <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+        <span>Accounting</span>
+        <span>&gt;</span>
+        <span>Purchases</span>
+        <span>&gt;</span>
+        <span>Bills</span>
+      </div> */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-work-sans font-semibold text-2xl text-[#1a1a1a]">BILLS</h1>
+      </div>
 
       <EnhancedTaskTable
         data={paginatedBills}
@@ -477,11 +485,10 @@ export const BillListPage: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            // className="fm-button-fix fm-button-brand px-4 py-2 gap-2"
-             className='fm-button-fix fm-button-brand px-4 py-2P'
+            className="bg-[#C72030] hover:bg-[#b01a28] text-white"
             onClick={() => navigate("/accounting/bills/create")}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
         }

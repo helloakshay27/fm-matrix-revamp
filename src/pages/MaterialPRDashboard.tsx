@@ -123,17 +123,20 @@ export const MaterialPRDashboard = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    referenceNumber: urlParams.get("referenceNumber") || "",
+    prNumber: urlParams.get("prNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+    approvalStatus: urlParams.get("approvalStatus") || "",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [materialPR, setMaterialPR] = useState([]);
-  const [filters, setFilters] = useState({
-    referenceNumber: "",
-    prNumber: "",
-    supplierName: "",
-    approvalStatus: "",
-  });
-  // Restore page from URL query param (set by list-back navigation)
-  const urlPage = Number(new URLSearchParams(location.search).get("page")) || 1;
+  const [filters, setFilters] = useState(initialFilters);
   const [pagination, setPagination] = useState({
     current_page: urlPage,
     total_count: 0,
@@ -148,7 +151,7 @@ export const MaterialPRDashboard = () => {
       po_number: item.po_number,
       referenceNo: item.reference_number,
       supplierName: item.supplier?.company_name,
-      createdBy: item.user.full_name,
+      createdBy: item.user?.full_name || "-",
       createdOn: item.created_at,
       lastApprovedBy: item.approved_by_user,
       approvedStatus: item.all_level_approved
@@ -216,8 +219,28 @@ export const MaterialPRDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData({ page: urlPage });
+    fetchData({ 
+      page: urlPage,
+      search: initialSearch,
+      reference_number: initialFilters.referenceNumber,
+      external_id: initialFilters.prNumber,
+      supplier_name: initialFilters.supplierName,
+      approval_status: initialFilters.approvalStatus,
+    });
   }, []);
+
+  // Update URL whenever pagination, filters or search changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
+    if (filters.prNumber) params.set("prNumber", filters.prNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
+    
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   // Invalidate cache and re-fetch when site changes while page is open
   useEffect(() => {
@@ -360,7 +383,7 @@ export const MaterialPRDashboard = () => {
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/finance/material-pr/details/${item.id}`, {
-              state: { returnTo: `/finance/material-pr?page=${pagination.current_page}` },
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
             });
           }}
         >
@@ -373,7 +396,9 @@ export const MaterialPRDashboard = () => {
             className="p-1"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/finance/material-pr/edit/${item.id}`);
+              navigate(`/finance/material-pr/edit/${item.id}`, {
+                state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+              });
             }}
           >
             <Edit className="w-4 h-4" />

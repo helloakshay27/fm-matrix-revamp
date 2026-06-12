@@ -236,12 +236,19 @@ export const SectionMaster: React.FC = () => {
         enableSearch={true}
         loading={loading}
         leftActions={(
+          // <Button
+          //   className="bg-primary text-white hover:bg-primary/90"
+          //   onClick={() => setAddModalOpen(true)}
+          // >
+          //   <Plus className="w-4 h-4 mr-2 text-white" /> Add
+          // </Button>
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={() => setAddModalOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" /> Add
-          </Button>
+  className="bg-primary !text-white hover:bg-primary/90"
+  onClick={() => setAddModalOpen(true)}
+>
+  <Plus className="w-4 h-4 mr-2 !text-white" />
+  <span className="!text-white" >Add</span> 
+</Button>
         )}
       />
 

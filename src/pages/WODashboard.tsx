@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye, Plus, RefreshCw } from "lucide-react";
-import { useNavigate,useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { WOFilterDialog } from "@/components/WOFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -235,22 +236,24 @@ export const WODashboard = () => {
   const bgRefreshingRef = useRef(false);
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    referenceNumber: urlParams.get("referenceNumber") || "",
+    poNumber: urlParams.get("poNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [workOrders, setWorkOrders] = useState([]);
-  const [filters, setFilters] = useState({
-    referenceNumber: '',
-    poNumber: '',
-    supplierName: ''
-  });
- const [pagination, setPagination] = useState(() => {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    current_page: Number(params.get('page')) || 1,
+  const [filters, setFilters] = useState(initialFilters);
+  const [pagination, setPagination] = useState({
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
-  };
-});
+  });
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const applyResponse = (response: any) => {
@@ -330,17 +333,27 @@ useEffect(() => {
       }
     }, []);
 
-useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const urlPage = Number(params.get('page')) || 1;
-  if (urlPage !== pagination.current_page) {
-    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
-  }
-}, [pagination.current_page]);
+  useEffect(() => {
+    fetchData({ 
+      page: urlPage,
+      search: initialSearch,
+      reference_number: initialFilters.referenceNumber,
+      external_id: initialFilters.poNumber,
+      supplier_name: initialFilters.supplierName,
+    });
+  }, []);
 
-useEffect(() => {
-    fetchData({ page: pagination.current_page });
-  }, [pagination.current_page]);
+  // Update URL whenever pagination, filters or search changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
+    if (filters.poNumber) params.set("poNumber", filters.poNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -360,7 +373,9 @@ useEffect(() => {
     supplierName: string;
   }) => {
     setFilters(newFilters); // Update filter state
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
     fetchData({
+      page: 1,
       reference_number: newFilters.referenceNumber,
       external_id: newFilters.poNumber,
       supplier_name: newFilters.supplierName,
@@ -368,10 +383,16 @@ useEffect(() => {
   };
 
   const debouncedFetchData = useCallback(
-    debounce((query: string) => {
-      fetchData({ search: query });
+    debounce((query: string, currentFilters: any) => {
+      fetchData({ 
+        page: 1,
+        search: query,
+        reference_number: currentFilters.reference_number,
+        external_id: currentFilters.external_id,
+        supplier_name: currentFilters.supplier_name
+      });
     }, 500),
-    [pagination.current_page, filters]
+    []
   );
 
   const handleSearchChange = (query: string) => {
@@ -455,7 +476,7 @@ useEffect(() => {
       case "retention_outstanding":
       case "qc_amount":
       case "qc_outstanding":
-        return value.toFixed(2);
+        return value ? value.toFixed(2) : "0.00";
       case "active":
         return (
           <Switch
@@ -480,7 +501,9 @@ useEffect(() => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/finance/wo/details/${item.id}`)}
+        onClick={() => navigate(`/finance/wo/details/${item.id}`, {
+          state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+        })}
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -491,7 +514,9 @@ useEffect(() => {
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/finance/wo/edit/${item.id}`);
+            navigate(`/finance/wo/edit/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
           }}
         >
           <Edit className="w-4 h-4" />
