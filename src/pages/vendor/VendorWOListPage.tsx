@@ -106,7 +106,7 @@ export const VendorWOListPage = () => {
       if (filterData.supplier_name) params.append("supplier_name", filterData.supplier_name);
 
       const response = await fetch(
-        `https://${baseUrl}/pms/work_orders.json?${params.toString()}`,
+        `https://${baseUrl}/pms/work_orders/work_order_list.json?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed to fetch vendor WO data");

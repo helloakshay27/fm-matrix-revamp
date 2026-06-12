@@ -564,6 +564,9 @@ const VendorPOListPage = lazy(() => import("./pages/vendor/VendorPOListPage").th
 const VendorGRNListPage = lazy(() => import("./pages/vendor/VendorGRNListPage").then(m => ({ default: m.VendorGRNListPage })));
 const VendorWOListPage = lazy(() => import("./pages/vendor/VendorWOListPage").then(m => ({ default: m.VendorWOListPage })));
 const VendorInvoiceListPage = lazy(() => import("./pages/vendor/VendorInvoiceListPage").then(m => ({ default: m.VendorInvoiceListPage })));
+const SupplierDetails = lazy(() => import("./pages/vendor/SupplierDetails"));
+const VendorOtherBillsPage = lazy(() => import("./pages/vendor/VendorOtherBillsPage").then(m => ({ default: m.VendorOtherBillsPage })));
+const VendorPermitsPage = lazy(() => import("./pages/vendor/VendorPermitsPage").then(m => ({ default: m.VendorPermitsPage })));
 
 // Import WBS page
 const WBSElementDashboard = lazy(() => import("./pages/WBSElementDashboard").then(m => ({ default: m.WBSElementDashboard })));
@@ -4370,6 +4373,9 @@ function App() {
                             <Route path="/vendor/grn" element={<VendorGRNListPage />} />
                             <Route path="/vendor/wo" element={<VendorWOListPage />} />
                             <Route path="/vendor/invoice" element={<VendorInvoiceListPage />} />
+                            <Route path="/vendor/supplier-details/:id" element={<SupplierDetails />} />
+                            <Route path="/vendor/other-bills" element={<VendorOtherBillsPage />} />
+                            <Route path="/vendor/permits" element={<VendorPermitsPage />} />
 
                             <Route path="/finance/po" element={<PODashboard />} />
                             <Route
