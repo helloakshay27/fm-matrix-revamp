@@ -52,7 +52,7 @@ export const LockFunctionView = () => {
   };
 
   const handleBack = () => {
-    navigate('/settings/account/lock-function');
+    navigate(-1);
   };
 
   if (loading) {

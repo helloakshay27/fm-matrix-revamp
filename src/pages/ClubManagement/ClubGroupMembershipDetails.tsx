@@ -100,6 +100,7 @@ interface GroupMembershipDetail {
   preferred_start_date?: string | null;
   referred_by?: string;
   club_members: ClubMember[];
+  status: string;
   allocation_payment_detail?: {
     id: number;
     club_member_allocation_id: number;
@@ -528,7 +529,7 @@ export const ClubGroupMembershipDetails = () => {
     try {
       const token = localStorage.getItem('token');
       const baseUrl = localStorage.getItem('baseUrl');
-      const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail`;
+      const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail.json`;
       await axios.post(url, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -771,14 +772,18 @@ export const ClubGroupMembershipDetails = () => {
               }
 
             </Button>
-            <Button
-              onClick={handleEditMembershipPlan}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030]"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Change Membership Plan
-            </Button>
+            {
+              membershipData.status === 'pending' && (
+                <Button
+                  onClick={handleEditMembershipPlan}
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030]"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Change Membership Plan
+                </Button>
+              )
+            }
             <Button
               onClick={handleEdit}
               variant="outline"

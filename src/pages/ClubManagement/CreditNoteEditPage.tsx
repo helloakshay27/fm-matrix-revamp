@@ -972,7 +972,10 @@ export const CreditNoteEditPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                <Button onClick={handleUpdate} disabled={isSubmitting} className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
+                <Button onClick={handleUpdate} disabled={isSubmitting} 
+                // className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                className="px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#A01020]"
+                >
                     {isSubmitting ? 'Updating...' : 'Update'}
                 </Button>
                 <Button onClick={() => navigate('/accounting/credit-note')} disabled={isSubmitting} variant="outline">

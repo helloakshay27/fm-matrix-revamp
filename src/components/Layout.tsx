@@ -40,6 +40,8 @@ import { AdminCompassSidebar } from "./AdminCompassSidebar";
 import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
 import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
 import TopNavigation from "./CompanyHub/TopNavigation";
+import VendorSidebar from "./VendorSidebar";
+import VendorDynamicHeader from "./VendorDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -155,6 +157,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (isClubManagementRoute) {
       console.warn("✅ Rendering ClubSidebar");
       return <ClubSidebar />;
+    }
+
+    // Check if user is in Vendor Module route - render VendorSidebar
+    if (location.pathname.startsWith("/vendor")) {
+      console.warn("✅ Rendering VendorSidebar");
+      return <VendorSidebar />;
     }
 
     if (isViSite) {
@@ -310,6 +318,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
       return <ClubDynamicHeader />;
+    }
+
+    // Check if user is in Vendor Module route - render VendorDynamicHeader
+    if (location.pathname.startsWith("/vendor")) {
+      return <VendorDynamicHeader />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority

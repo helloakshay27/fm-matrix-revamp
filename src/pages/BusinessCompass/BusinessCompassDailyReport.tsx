@@ -356,15 +356,48 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
   const [editTodoData, setEditTodoData] = useState<any>(null);
 
-  const handleViewReportItem = (item: any) => {
+  const [isTodoDetailsLoading, setIsTodoDetailsLoading] = useState(false);
+
+  const handleViewReportItem = async (item: any) => {
     const sourceType =
       item.source_type ?? item.originalData?.source_type ?? item.type;
     const sourceId = item.source_id ?? item.originalData?.id;
-    const originalData = item.originalData ?? item;
 
     if (sourceType === "todo") {
-      setSelectedTodo(originalData);
-      setIsDetailsModalOpen(true);
+      // Try cached live todos first
+      const cachedTodo = todosData?.todos?.find((t: any) => t.id === sourceId);
+      if (cachedTodo) {
+        setSelectedTodo(cachedTodo);
+        setIsDetailsModalOpen(true);
+        return;
+      }
+      // If originalData already has full fields, use it
+      const originalData = item.originalData ?? item;
+      if (originalData?.status || originalData?.priority || originalData?.description) {
+        setSelectedTodo(originalData);
+        setIsDetailsModalOpen(true);
+        return;
+      }
+      // Fetch full todo from API
+      if (sourceId) {
+        // Open modal immediately with minimal data so it renders while fetching
+        setSelectedTodo({ ...originalData, title: originalData.title || 'Loading...' });
+        setIsDetailsModalOpen(true);
+        try {
+          setIsTodoDetailsLoading(true);
+          const urlBase = `https://${baseUrl}`;
+          const headers = { Authorization: `Bearer ${token}` };
+          const res = await axios.get(`${urlBase}/todos/${sourceId}.json`, { headers });
+          setSelectedTodo(res.data?.todo ?? res.data ?? originalData);
+        } catch {
+          setSelectedTodo(originalData);
+        } finally {
+          setIsTodoDetailsLoading(false);
+        }
+      } else {
+        setSelectedTodo(originalData);
+        setIsDetailsModalOpen(true);
+      }
       return;
     }
 
@@ -6646,17 +6679,28 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <div className="bc-history-card-body">
                         <div className="bc-history-card-header">
                           <div className="min-w-0">
-                            <h2 className="bc-history-title">
-                              {new Date(report.start_date).toLocaleDateString(
-                                "en-US",
-                                {
-                                  weekday: "long",
-                                  month: "long",
-                                  day: "numeric",
-                                  year: "numeric",
-                                }
-                              )}
-                            </h2>
+                            <div className="bc-history-title-row">
+                              <h2 className="bc-history-title">
+                                {new Date(report.start_date).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "long",
+                                    month: "long",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </h2>
+                              <Badge
+                                variant="outline"
+                                className="bc-history-time-badge"
+                              >
+                                {new Date(report.created_at).toLocaleTimeString(
+                                  "en-US",
+                                  { hour: "numeric", minute: "2-digit" }
+                                )}
+                              </Badge>
+                            </div>
                             <p className="text-sm text-gray-500 mt-1.5">
                               By: {user?.firstname} {user?.lastname}
                             </p>
@@ -6675,21 +6719,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <Target size={12} className="fill-white" />
                                 {report.report_data?.total_score || 0}/100
                               </Badge>
-                              <Badge
-                                variant="outline"
-                                className="bc-history-time-badge"
-                              >
-                                {new Date(report.created_at).toLocaleTimeString(
-                                  "en-US",
-                                  { hour: "numeric", minute: "2-digit" }
-                                )}
-                              </Badge>
                             </div>
                             <div className="bc-history-action-buttons">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-4 text-[#DA7756] border-[#DA7756]/30 hover:bg-[#DA7756]/5 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                className="bc-history-action-btn text-[#DA7756] border-[#DA7756]/30 hover:bg-[#DA7756]/5 text-xs font-medium rounded-[4px] shadow-sm"
                                 onClick={() => {
                                   const date = new Date(report.start_date);
                                   const formattedDate =
@@ -6769,7 +6804,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-4 text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                className="bc-history-action-btn text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] shadow-sm"
                                 onClick={async () => {
                                   if (
                                     !window.confirm(
@@ -7877,9 +7912,9 @@ const BusinessCompassDailyReport: React.FC = () => {
         isModalOpen={isDetailsModalOpen}
         setIsModalOpen={setIsDetailsModalOpen}
         todo={selectedTodo}
+        isLoading={isTodoDetailsLoading}
         onEditClick={() => {
           setIsDetailsModalOpen(false);
-          // Can add edit functionality here if needed
         }}
       />
 

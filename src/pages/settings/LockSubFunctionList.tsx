@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Key, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -166,8 +166,12 @@ const transformLockSubFunctionData = (apiData: ApiLockSubFunctionItem[]): LockSu
 
 export const LockSubFunctionList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const itemsPerPage = 15; // Same as ShiftDashboard
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
@@ -200,14 +204,16 @@ export const LockSubFunctionList = () => {
     fetchLockSubFunctionData();
   }, []);
 
-  // Reset pagination when data changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [allLockSubFunctionData.length]);
+useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
 
-  // Reset pagination when search changes
+  const prevSearchRef = React.useRef('');
   useEffect(() => {
-    setCurrentPage(1);
+    if (debouncedSearchQuery !== prevSearchRef.current) {
+      prevSearchRef.current = debouncedSearchQuery;
+      setCurrentPage(1);
+    }
   }, [debouncedSearchQuery]);
 
   // Filter and paginate data
@@ -239,17 +245,22 @@ export const LockSubFunctionList = () => {
   // Pagination functions
   const goToPage = (page: number) => {
     setCurrentPage(page);
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
   };
 
   const goToPrevious = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
     }
   };
 
   const goToNext = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
     }
   };
 
