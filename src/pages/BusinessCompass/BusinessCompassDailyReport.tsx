@@ -2740,6 +2740,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     ? "completed"
                     : item.status,
                 type: item.type,
+                source_id: item.originalData?.id,
               })),
             tomorrow_plan_date: getNextWorkingDay(startDate),
             tomorrow_plan: tomorrowPlanPayload,
