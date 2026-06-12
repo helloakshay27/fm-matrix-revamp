@@ -3198,7 +3198,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 item.type !== "holiday" &&
                                 handleSelectDate(item)
                               }
-                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-lg relative"
+                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-[12px] relative"
                               style={{
                                 background: cardBg,
                                 border: isSelected
