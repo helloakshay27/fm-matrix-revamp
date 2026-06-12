@@ -528,7 +528,7 @@ export const ClubGroupMembershipDetails = () => {
     try {
       const token = localStorage.getItem('token');
       const baseUrl = localStorage.getItem('baseUrl');
-      const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail`;
+      const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail.json`;
       await axios.post(url, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
