@@ -1360,15 +1360,6 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                       </button>
                       <button
                         onClick={() => {
-                          setQuickActionOpen(!quickActionOpen);
-                          setQuickActionText("");
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add to Plan
-                      </button>
-                      <button
-                        onClick={() => {
                           if (feedbackOpen) {
                             setFeedbackOpen(false);
                           } else {
@@ -1696,11 +1687,13 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             </MuiZIndexFix>
           )}
 
-          <TodoDetailsModal
-            isModalOpen={isDetailsModalOpen}
-            setIsModalOpen={setIsDetailsModalOpen}
-            todo={selectedTodo}
-          />
+          <MuiZIndexFix>
+            <TodoDetailsModal
+              isModalOpen={isDetailsModalOpen}
+              setIsModalOpen={setIsDetailsModalOpen}
+              todo={selectedTodo}
+            />
+          </MuiZIndexFix>
         </div>,
         document.body,
       )}
