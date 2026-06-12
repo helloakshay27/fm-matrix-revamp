@@ -707,6 +707,10 @@ export const ClubGroupMembershipDashboard = () => {
           label: "Draft",
           className: "bg-gray-500 text-white",
         },
+        cancelled: {
+          label: "Cancelled",
+          className: "bg-slate-500 text-white",
+        },
       };
 
       const currentStatus = statusMap[status] || {

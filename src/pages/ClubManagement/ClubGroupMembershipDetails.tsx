@@ -100,6 +100,7 @@ interface GroupMembershipDetail {
   preferred_start_date?: string | null;
   referred_by?: string;
   club_members: ClubMember[];
+  status: string;
   allocation_payment_detail?: {
     id: number;
     club_member_allocation_id: number;
@@ -771,14 +772,18 @@ export const ClubGroupMembershipDetails = () => {
               }
 
             </Button>
-            <Button
-              onClick={handleEditMembershipPlan}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030]"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Change Membership Plan
-            </Button>
+            {
+              membershipData.status === 'pending' && (
+                <Button
+                  onClick={handleEditMembershipPlan}
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030]"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Change Membership Plan
+                </Button>
+              )
+            }
             <Button
               onClick={handleEdit}
               variant="outline"
