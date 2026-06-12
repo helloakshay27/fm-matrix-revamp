@@ -559,6 +559,12 @@ const GDNPendingApprovalsDashboard = lazy(() => import("./pages/GDNPendingApprov
 const GDNPendingApprovalsDetails = lazy(() => import("./pages/GDNPendingApprovalsDetails").then(m => ({ default: m.GDNPendingApprovalsDetails })));
 const InvoiceDashboard = lazy(() => import("./pages/InvoiceDashboard"));
 
+// Import Vendor Pages
+const VendorPOListPage = lazy(() => import("./pages/vendor/VendorPOListPage").then(m => ({ default: m.VendorPOListPage })));
+const VendorGRNListPage = lazy(() => import("./pages/vendor/VendorGRNListPage").then(m => ({ default: m.VendorGRNListPage })));
+const VendorWOListPage = lazy(() => import("./pages/vendor/VendorWOListPage").then(m => ({ default: m.VendorWOListPage })));
+const VendorInvoiceListPage = lazy(() => import("./pages/vendor/VendorInvoiceListPage").then(m => ({ default: m.VendorInvoiceListPage })));
+
 // Import WBS page
 const WBSElementDashboard = lazy(() => import("./pages/WBSElementDashboard").then(m => ({ default: m.WBSElementDashboard })));
 
@@ -4358,6 +4364,13 @@ function App() {
                               path="/finance/service-pr/feeds/:id"
                               element={<ServicePRFeedsPage />}
                             />
+
+                            {/* Vendor Module Routes */}
+                            <Route path="/vendor/po" element={<VendorPOListPage />} />
+                            <Route path="/vendor/grn" element={<VendorGRNListPage />} />
+                            <Route path="/vendor/wo" element={<VendorWOListPage />} />
+                            <Route path="/vendor/invoice" element={<VendorInvoiceListPage />} />
+
                             <Route path="/finance/po" element={<PODashboard />} />
                             <Route
                               path="/finance/po/add"
