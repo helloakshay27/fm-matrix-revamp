@@ -301,11 +301,11 @@ type UserAiConfig = {
   is_active?: boolean;
   message?: string;
   provider?:
-    | string
-    | {
-        id?: string;
-        display_name?: string;
-      };
+  | string
+  | {
+    id?: string;
+    display_name?: string;
+  };
   provider_id?: string;
   model?: string | AiModel;
   model_name?: string;
@@ -449,9 +449,8 @@ const buildUserAiConfigPath = (
   }
 
   const query = params.toString();
-  return `/user_ai_config/user/${encodeURIComponent(userId)}${
-    query ? `?${query}` : ""
-  }`;
+  return `/user_ai_config/user/${encodeURIComponent(userId)}${query ? `?${query}` : ""
+    }`;
 };
 
 const AI_PROVIDER_LINKS = [
@@ -1116,7 +1115,7 @@ const BusinessCompassProfile = () => {
         setAiModels(models);
         setSelectedAiModel((current) =>
           current &&
-          models.some((model: AiModel) => model.model_name === current)
+            models.some((model: AiModel) => model.model_name === current)
             ? current
             : ""
         );
@@ -1304,7 +1303,7 @@ const BusinessCompassProfile = () => {
         window.open(cleanUrl, "_blank", "noopener,noreferrer");
         toast.info(
           data?.message ||
-            "Open the URL, authorize, then paste the code back here"
+          "Open the URL, authorize, then paste the code back here"
         );
       } else {
         throw new Error("No authorization URL received");
@@ -1380,8 +1379,8 @@ const BusinessCompassProfile = () => {
         } else {
           toast.error(
             data?.message ||
-              data?.error ||
-              "Exchange failed. Get a fresh code and try again."
+            data?.error ||
+            "Exchange failed. Get a fresh code and try again."
           );
         }
         setOauthCode("");
@@ -1455,11 +1454,11 @@ const BusinessCompassProfile = () => {
       setUserAiConfig((prev) =>
         prev
           ? {
-              ...prev,
-              ...data.config,
-              is_active: newActive,
-              configured: newActive,
-            }
+            ...prev,
+            ...data.config,
+            is_active: newActive,
+            configured: newActive,
+          }
           : prev
       );
       toast.success(
@@ -1901,7 +1900,7 @@ const BusinessCompassProfile = () => {
   const completionPct = Math.round(
     (completionFields.filter((f) => f?.trim()).length /
       completionFields.length) *
-      100
+    100
   );
 
   /* ─────────────────────────────────────────────────────────────────────
@@ -1985,7 +1984,7 @@ const BusinessCompassProfile = () => {
                       <button
                         onClick={() => setIsEditing(true)}
                         disabled={isProfileLoading}
-                        className="flex-shrink-0 border border-[#DA7756] text-[#DA7756] text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#fef6f4] transition-colors whitespace-nowrap"
+                        className="flex-shrink-0 border border-[#DA7756] text-[#DA7756] text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-[12px] hover:bg-[#fef6f4] transition-colors whitespace-nowrap"
                       >
                         Edit Profile
                       </button>
@@ -1994,13 +1993,13 @@ const BusinessCompassProfile = () => {
                         <button
                           onClick={handleSave}
                           disabled={isSaving || isProfileLoading}
-                          className="bg-[#DA7756] text-white text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#c9673f] transition-colors disabled:opacity-60 whitespace-nowrap"
+                          className="bg-[#DA7756] text-white text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-[12px] hover:bg-[#c9673f] transition-colors disabled:opacity-60 whitespace-nowrap"
                         >
                           {isSaving ? "Saving…" : "Save"}
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="border border-gray-300 text-gray-500 text-[12px] font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                          className="border border-gray-300 text-gray-500 text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-[12px] hover:bg-gray-50 transition-colors"
                         >
                           Cancel
                         </button>
@@ -2112,7 +2111,7 @@ const BusinessCompassProfile = () => {
                     key={id}
                     onClick={() => setActiveTab(id)}
                     className={cn(
-                      "px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[12px] sm:text-[13px] font-semibold transition-colors",
+                      "px-4 sm:px-5 py-1.5 sm:py-2 rounded-[8px] text-[12px] sm:text-[13px] font-semibold transition-colors",
                       activeTab === id
                         ? "bg-[#DA7756] text-white"
                         : "text-gray-500 hover:text-gray-700"
@@ -2251,7 +2250,7 @@ const BusinessCompassProfile = () => {
                             <AdvancedDatePicker
                               value={
                                 formData[
-                                  field as keyof typeof formData
+                                field as keyof typeof formData
                                 ] as string
                               }
                               onChange={(v) => handleInputChange(field, v)}
@@ -2262,7 +2261,7 @@ const BusinessCompassProfile = () => {
                               className="h-8 text-[12px] border-gray-200"
                               value={
                                 formData[
-                                  field as keyof typeof formData
+                                field as keyof typeof formData
                                 ] as string
                               }
                               onChange={(e) =>
@@ -2648,23 +2647,23 @@ const BusinessCompassProfile = () => {
                     userKpis.length > 0
                       ? userKpis
                       : ([
-                          {
-                            id: "p1",
-                            frequency: "Daily",
-                            name: "Courtesy call",
-                            currentValue: 0,
-                            target: 2,
-                            unit: "calls",
-                          },
-                          {
-                            id: "p2",
-                            frequency: "Daily",
-                            name: "Courtesy call",
-                            currentValue: 0,
-                            target: 2,
-                            unit: "calls",
-                          },
-                        ] as typeof userKpis);
+                        {
+                          id: "p1",
+                          frequency: "Daily",
+                          name: "Courtesy call",
+                          currentValue: 0,
+                          target: 2,
+                          unit: "calls",
+                        },
+                        {
+                          id: "p2",
+                          frequency: "Daily",
+                          name: "Courtesy call",
+                          currentValue: 0,
+                          target: 2,
+                          unit: "calls",
+                        },
+                      ] as typeof userKpis);
 
                   const pairs: (typeof userKpis)[] = [];
                   for (let i = 0; i < pool.length; i += 2) {
