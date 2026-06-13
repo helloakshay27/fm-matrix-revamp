@@ -1160,7 +1160,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   >
                                     {getItemTypeLabel(type)}
                                   </span>
-                                  <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
+                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                     {getItemTitle(item)}
                                   </span>
                                   {hasDetails && (
@@ -1254,7 +1254,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                           >
                                           {getItemTypeLabel(type)}
                                         </span>
-                                        <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
+                                        <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                           {getItemTitle(item)}
                                         </span>
                                         {hasDetails && (
@@ -1312,7 +1312,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   >
                                     {getItemTypeLabel(type)}
                                   </span>
-                                  <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
+                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                     {getItemTitle(item)}
                                   </span>
                                   {hasDetails && (
