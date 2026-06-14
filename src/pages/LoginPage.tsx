@@ -148,7 +148,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
-      toast.error("Failed to fetch organizations. Please try again.");
+      toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
       console.error("Auto-select organization error:", error);
     } finally {
       setIsLoading(false);
@@ -254,7 +254,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
-      toast.error("Failed to fetch organizations. Please try again.");
+      toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
     } finally {
       setIsLoading(false);
     }
