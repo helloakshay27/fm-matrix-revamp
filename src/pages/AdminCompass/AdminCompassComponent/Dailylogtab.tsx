@@ -971,7 +971,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             onClick={onClose}
           />
 
-          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1400px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
+          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[920px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
               <h2 className="text-xl font-bold text-[#1A1A1A]">
@@ -1150,7 +1150,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                               return (
                                 <div
                                   key={i}
-                                  className="flex items-center gap-2 overflow-x-auto rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
+                                  className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
                                 >
                                   <span
                                     className={cn(
@@ -1160,7 +1160,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   >
                                     {getItemTypeLabel(type)}
                                   </span>
-                                  <span className="flex-1 whitespace-nowrap text-xs font-bold leading-snug text-neutral-900">
+                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                     {getItemTitle(item)}
                                   </span>
                                   {hasDetails && (
@@ -1240,7 +1240,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                       <div
                                         key={`${section.label}-${i}`}
                                         className={cn(
-                                          "flex items-center gap-2 overflow-x-auto rounded-lg border px-2.5 py-2 min-h-[36px] bg-white",
+                                          "flex items-center gap-2 rounded-lg border px-2.5 py-2 min-h-[36px] bg-white",
                                           isCompletedStatus(getItemStatus(item))
                                             ? "border-green-200 bg-green-50"
                                             : "border-orange-200 bg-orange-50",
@@ -1254,7 +1254,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                           >
                                           {getItemTypeLabel(type)}
                                         </span>
-                                        <span className="flex-1 whitespace-nowrap text-xs font-bold leading-snug text-neutral-900">
+                                        <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                           {getItemTitle(item)}
                                         </span>
                                         {hasDetails && (
@@ -1302,7 +1302,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                               return (
                                 <div
                                   key={i}
-                                  className="flex items-center gap-2 overflow-x-auto rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
+                                  className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
                                 >
                                   <span
                                     className={cn(
@@ -1312,7 +1312,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   >
                                     {getItemTypeLabel(type)}
                                   </span>
-                                  <span className="flex-1 whitespace-nowrap text-xs font-bold leading-snug text-neutral-900">
+                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                     {getItemTitle(item)}
                                   </span>
                                   {hasDetails && (
