@@ -159,8 +159,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ClubSidebar />;
     }
 
-    // Check if user is in Vendor Module route - render VendorSidebar
-    if (location.pathname.startsWith("/vendor")) {
+    // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
       console.warn("✅ Rendering VendorSidebar");
       return <VendorSidebar />;
     }
@@ -320,8 +320,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ClubDynamicHeader />;
     }
 
-    // Check if user is in Vendor Module route - render VendorDynamicHeader
-    if (location.pathname.startsWith("/vendor")) {
+    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
       return <VendorDynamicHeader />;
     }
 

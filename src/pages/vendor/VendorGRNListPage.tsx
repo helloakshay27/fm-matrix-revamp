@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, RefreshCw } from "lucide-react";
+import { Eye, RefreshCw, Settings, Banknote, CreditCard, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { VendorGRNFilterDialog } from "@/components/VendorGRNFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -60,6 +60,12 @@ export const VendorGRNListPage = () => {
     supplierName: "",
     status: "",
   });
+  const [stats, setStats] = useState({
+    totalCount: 0,
+    totalAmount: 0,
+    totalPaidAmount: 0,
+    totalPendingAmount: 0,
+  });
   const [pagination, setPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
@@ -70,6 +76,14 @@ export const VendorGRNListPage = () => {
   });
 
   const applyResponse = (response: any) => {
+    const cards = response?.cards || {};
+    setStats({
+      totalCount: cards.total || cards.total_grn || 0,
+      totalAmount: cards.total_amount || 0,
+      totalPaidAmount: cards.total_paid_amount || cards.paid_amount || 0,
+      totalPendingAmount: cards.total_pending_amount || cards.pending_amount || 0,
+    });
+
     const items = response?.grn_records || response?.data || [];
     const formatted = items.map((item: any) => ({
       id: item.id,
@@ -110,7 +124,7 @@ export const VendorGRNListPage = () => {
       if (filterData.status) params.append("status", filterData.status);
 
       const response = await fetch(
-        `https://${baseUrl}/pms/grn_records.json?${params.toString()}`,
+        `https://${baseUrl}/pms/grns/grns_list.json?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed to fetch vendor GRN data");
@@ -252,6 +266,49 @@ export const VendorGRNListPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">{stats.totalCount}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total no. of GRN</p>
+          </div>
+        </div>
+        
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Banknote className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalAmount).toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Value Amount</p>
+          </div>
+        </div>
+
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <CreditCard className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalPaidAmount).toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Paid Amount</p>
+          </div>
+        </div>
+
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Clock className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalPendingAmount).toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Pending Amount</p>
+          </div>
+        </div>
+      </div>
+
       <EnhancedTable
         data={grnList}
         columns={columns}

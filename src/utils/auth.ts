@@ -14,6 +14,8 @@ export interface User {
   spree_api_key?: string;
   is_login?: boolean;
   access_token?: string;
+  is_vendor?: boolean;
+  supplier_id?: number;
   number_verified?: number | boolean;
   lock_role?: {
     id: number;
@@ -41,6 +43,8 @@ export interface LoginResponse {
   firstname: string;
   lastname: string;
   access_token: string;
+  is_vendor?: boolean;
+  supplier_id?: number;
   verified?: boolean; // OTP verification status
   mobile?: string;
   latitude?: number;
@@ -261,7 +265,7 @@ export const getOrganizationsByEmail = async (
 ): Promise<Organization[]> => {
   if (isOmanSite || isFmSite) {
     const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");

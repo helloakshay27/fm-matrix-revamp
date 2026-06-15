@@ -137,6 +137,11 @@ const Index = () => {
       hostname.includes("pulse-uat.panchshil.com");
     const isClubSite = hostname.includes("club.lockated.com");
 
+    if (currentUser?.is_vendor && currentUser?.supplier_id) {
+      navigate(`/vendor/supplier-details/${currentUser.supplier_id}`, { replace: true });
+      return;
+    }
+
     // PRIORITY 1: Localhost with userType-based routing (highest priority for localhost)
     if (userType && isLocalhost) {
       // Navigate based on userType using dynamic links
