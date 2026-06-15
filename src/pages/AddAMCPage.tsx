@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -371,8 +371,8 @@ export const AddAMCPage = () => {
       .then(data => {
         const templates = Array.isArray(data) ? data
           : Array.isArray(data?.templates) ? data.templates
-          : Array.isArray(data?.custom_forms) ? data.custom_forms
-          : [];
+            : Array.isArray(data?.custom_forms) ? data.custom_forms
+              : [];
         setChecklistTemplates(templates);
       })
       .catch(() => toast.error('Failed to fetch checklist templates'))
@@ -557,6 +557,22 @@ export const AddAMCPage = () => {
       if (!formData.firstService) {
         newErrors.firstService = 'Please select a first service date.';
         isValid = false;
+      }
+
+      if (formData.firstService) {
+        const firstServiceDate = new Date(formData.firstService);
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+
+        if (firstServiceDate < startDate) {
+          newErrors.firstService =
+            'First Service Date cannot be before Start Date.';
+          isValid = false;
+        } else if (firstServiceDate > endDate) {
+          newErrors.firstService =
+            'First Service Date cannot be after End Date.';
+          isValid = false;
+        }
       }
       if (!formData.cost) {
         newErrors.cost = 'Please enter the cost.';
@@ -1509,7 +1525,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Asset"
                             checked={formData.details === 'Asset'}
                             readOnly
@@ -1522,7 +1538,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Service"
                             checked={formData.details === 'Service'}
                             readOnly
@@ -1541,7 +1557,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Comprehensive"
                             checked={formData.amcType === 'Comprehensive'}
                             readOnly
@@ -1554,7 +1570,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Non-Comprehensive"
                             checked={formData.amcType === 'Non-Comprehensive'}
                             readOnly
@@ -1573,7 +1589,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Individual"
                             checked={formData.type === 'Individual'}
                             readOnly
@@ -1586,7 +1602,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Group"
                             checked={formData.type === 'Group'}
                             readOnly
@@ -1815,7 +1831,7 @@ export const AddAMCPage = () => {
                         sx={{ mb: 3 }}
                       />
 
-                      <TextField
+                      {/* <TextField
                         disabled
                         label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
                         type="date"
@@ -1823,6 +1839,25 @@ export const AddAMCPage = () => {
                         value={formData.firstService || ''}
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 3 }}
+                      /> */}
+
+                      <TextField
+                        label={
+                          <span>
+                            First Service Date <span style={{ color: 'red' }}>*</span>
+                          </span>
+                        }
+                        type="date"
+                        fullWidth
+                        value={formData.firstService}
+                        onChange={(e) => handleInputChange('firstService', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: formData.startDate || undefined,
+                          max: formData.endDate || undefined,
+                        }}
+                        error={!!errors.firstService}
+                        helperText={errors.firstService}
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
@@ -1851,6 +1886,7 @@ export const AddAMCPage = () => {
                         fullWidth
                         value={formData.cost}
                         sx={{ mb: 3 }}
+
                       />
 
                       <TextField
@@ -2010,7 +2046,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Asset"
                           checked={formData.details === 'Asset'}
                           readOnly
@@ -2023,7 +2059,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Service"
                           checked={formData.details === 'Service'}
                           readOnly
@@ -2042,7 +2078,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Comprehensive"
                           checked={formData.amcType === 'Comprehensive'}
                           readOnly
@@ -2055,7 +2091,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Non-Comprehensive"
                           checked={formData.amcType === 'Non-Comprehensive'}
                           readOnly
@@ -2074,7 +2110,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Individual"
                           checked={formData.type === 'Individual'}
                           readOnly
@@ -2087,7 +2123,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Group"
                           checked={formData.type === 'Group'}
                           readOnly
@@ -2831,8 +2867,8 @@ export const AddAMCPage = () => {
                                     {assetSearchLoading
                                       ? 'Searching…'
                                       : assetQuery.length > 0 && assetQuery.length < 3
-                                      ? 'Type at least 3 characters to search'
-                                      : 'No assets found'}
+                                        ? 'Type at least 3 characters to search'
+                                        : 'No assets found'}
                                   </td>
                                 </tr>
                               ) : (
@@ -2859,13 +2895,13 @@ export const AddAMCPage = () => {
                                           type="checkbox"
                                           style={{ accentColor: '#C72030' }}
                                           checked={isChecked}
-                                          onChange={() => {}}
+                                          onChange={() => { }}
                                           disabled={isSubmitting}
                                         />
                                       </td>
                                       <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id  || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.floor || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.room || '-'}</td>
@@ -2989,239 +3025,239 @@ export const AddAMCPage = () => {
 
 
 
-<FormControl fullWidth error={!!errors.service_ids}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Services <span style={{ color: "#C72030" }}>*</span>
-  </Typography>
+                      <FormControl fullWidth error={!!errors.service_ids}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Services <span style={{ color: "#C72030" }}>*</span>
+                        </Typography>
 
-  <Select
-    isMulti
-    options={(services || []).map((item) => ({
-      value: item.id,
-      label: item.service_name,
-    }))}
-    value={(services || [])
-      .filter((item) =>
-        formData.service_ids.includes(item.id)
-      )
-      .map((item) => ({
-        value: item.id,
-        label: item.service_name,
-      }))}
-    onChange={(selected: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        service_ids: selected
-          ? selected.map((item: any) => item.value)
-          : [],
-      }));
+                        <Select
+                          isMulti
+                          options={(services || []).map((item) => ({
+                            value: item.id,
+                            label: item.service_name,
+                          }))}
+                          value={(services || [])
+                            .filter((item) =>
+                              formData.service_ids.includes(item.id)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.service_name,
+                            }))}
+                          onChange={(selected: any) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              service_ids: selected
+                                ? selected.map((item: any) => item.value)
+                                : [],
+                            }));
 
-      setErrors((prev: any) => ({
-        ...prev,
-        service_ids: "",
-      }));
-    }}
-    isClearable
-    closeMenuOnSelect={false}
-    hideSelectedOptions={false}
-    placeholder="Search Services"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.service_ids
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                            setErrors((prev: any) => ({
+                              ...prev,
+                              service_ids: "",
+                            }));
+                          }}
+                          isClearable
+                          closeMenuOnSelect={false}
+                          hideSelectedOptions={false}
+                          placeholder="Search Services"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.service_ids
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                            // option: (base, state) => ({
+                            //   ...base,
+                            //   backgroundColor: state.isFocused
+                            //     ? "rgba(199,32,48,0.08)"
+                            //     : "#fff",
+                            //   color: "#000",
+                            //   cursor: "pointer",
+                            // }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff" // faint blue on hover
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                            placeholder: (base) => ({
+                              ...base,
+                              color: "#999",
+                            }),
 
-      multiValue: (base) => ({
-        ...base,
-        backgroundColor: "rgba(199,32,48,0.08)",
-      }),
+                            multiValue: (base) => ({
+                              ...base,
+                              backgroundColor: "rgba(199,32,48,0.08)",
+                            }),
 
-      multiValueLabel: (base) => ({
-        ...base,
-        color: "#C72030",
-        fontWeight: 500,
-      }),
+                            multiValueLabel: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              fontWeight: 500,
+                            }),
 
-      multiValueRemove: (base) => ({
-        ...base,
-        color: "#C72030",
-        ":hover": {
-          backgroundColor: "#C72030",
-          color: "#fff",
-        },
-      }),
-    }}
-  />
+                            multiValueRemove: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              ":hover": {
+                                backgroundColor: "#C72030",
+                                color: "#fff",
+                              },
+                            }),
+                          }}
+                        />
 
-  {errors.service_ids && (
-    <FormHelperText>
-      {errors.service_ids}
-    </FormHelperText>
-  )}
-</FormControl>
+                        {errors.service_ids && (
+                          <FormHelperText>
+                            {errors.service_ids}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
                     )}
 
 
 
 
 
-{supplierField}
+                    {supplierField}
 
 
 
 
 
 
-                  
 
 
-<FormControl fullWidth error={!!errors.technician}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Technician
-  </Typography>
 
-  <Select
-    options={(technicianOptions || []).map((item) => ({
-      value: item.id,
-      label: item.full_name || item.name,
-    }))}
-    value={
-      (technicianOptions || [])
-        .filter(
-          (item) =>
-            String(item.id) ===
-            String(formData.technician)
-        )
-        .map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))[0] || null
-    }
-    onChange={(selected: any) => {
-      handleInputChange(
-        "technician",
-        selected ? String(selected.value) : ""
-      );
+                    <FormControl fullWidth error={!!errors.technician}>
+                      <Typography
+                        sx={{
+                          fontSize: "14px",
+                          mb: 1,
+                          fontWeight: 500,
+                          color: "#444",
+                        }}
+                      >
+                        Technician
+                      </Typography>
 
-      setErrors((prev: any) => ({
-        ...prev,
-        technician: "",
-      }));
-    }}
-    isDisabled={
-      loading || techniciansLoading || isSubmitting
-    }
-    isClearable
-    placeholder="Search Technician"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.technician
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                      <Select
+                        options={(technicianOptions || []).map((item) => ({
+                          value: item.id,
+                          label: item.full_name || item.name,
+                        }))}
+                        value={
+                          (technicianOptions || [])
+                            .filter(
+                              (item) =>
+                                String(item.id) ===
+                                String(formData.technician)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.full_name || item.name,
+                            }))[0] || null
+                        }
+                        onChange={(selected: any) => {
+                          handleInputChange(
+                            "technician",
+                            selected ? String(selected.value) : ""
+                          );
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                          setErrors((prev: any) => ({
+                            ...prev,
+                            technician: "",
+                          }));
+                        }}
+                        isDisabled={
+                          loading || techniciansLoading || isSubmitting
+                        }
+                        isClearable
+                        placeholder="Search Technician"
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            minHeight: "56px",
+                            borderRadius: "4px",
+                            borderColor: errors.technician
+                              ? "#d32f2f"
+                              : state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                            boxShadow: "none",
+                            "&:hover": {
+                              borderColor: "#C72030",
+                            },
+                          }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
+                          menu: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+
+                          // option: (base, state) => ({
+                          //   ...base,
+                          //   backgroundColor: state.isFocused
+                          //     ? "rgba(199,32,48,0.08)"
+                          //     : "#fff",
+                          //   color: "#000",
+                          //   cursor: "pointer",
+                          // }),
 
 
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused
+                              ? "#eff6ff" // faint blue on hover
+                              : "#fff",
+                            color: "#000",
+                            cursor: "pointer",
+                          }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: "#999",
+                          }),
 
-      singleValue: (base) => ({
-        ...base,
-        color: "#000",
-      }),
-    }}
-  />
+                          singleValue: (base) => ({
+                            ...base,
+                            color: "#000",
+                          }),
+                        }}
+                      />
 
-  {errors.technician && (
-    <FormHelperText>
-      {errors.technician}
-    </FormHelperText>
-  )}
-</FormControl>
+                      {errors.technician && (
+                        <FormHelperText>
+                          {errors.technician}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
                   </>
                 ) : (
                   // <>
@@ -3303,237 +3339,237 @@ export const AddAMCPage = () => {
                   // </>
 
 
-<>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    {/* Group */}
-    <FormControl fullWidth error={!!errors.group}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Group
-      </Typography>
+                      {/* Group */}
+                      <FormControl fullWidth error={!!errors.group}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Group
+                        </Typography>
 
-      <Select
-        options={(assetGroups || []).map((group) => ({
-          value: group.id,
-          label: group.name,
-        }))}
-        value={
-          (assetGroups || [])
-            .filter(
-              (group) =>
-                String(group.id) === String(formData.group)
-            )
-            .map((group) => ({
-              value: group.id,
-              label: group.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleGroupChange(
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={loading || isSubmitting}
-        placeholder="Search Group"
-        isClearable
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: errors.group
-              ? "#d32f2f"
-              : state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(assetGroups || []).map((group) => ({
+                            value: group.id,
+                            label: group.name,
+                          }))}
+                          value={
+                            (assetGroups || [])
+                              .filter(
+                                (group) =>
+                                  String(group.id) === String(formData.group)
+                              )
+                              .map((group) => ({
+                                value: group.id,
+                                label: group.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleGroupChange(
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={loading || isSubmitting}
+                          placeholder="Search Group"
+                          isClearable
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.group
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.group && (
-        <FormHelperText>
-          {errors.group}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.group && (
+                          <FormHelperText>
+                            {errors.group}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-    {/* SubGroup */}
-    <FormControl fullWidth>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        SubGroup
-      </Typography>
+                      {/* SubGroup */}
+                      <FormControl fullWidth>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          SubGroup
+                        </Typography>
 
-      <Select
-        options={(subGroups || []).map((subGroup) => ({
-          value: subGroup.id,
-          label: subGroup.name,
-        }))}
-        value={
-          (subGroups || [])
-            .filter(
-              (subGroup) =>
-                String(subGroup.id) === String(formData.subgroup)
-            )
-            .map((subGroup) => ({
-              value: subGroup.id,
-              label: subGroup.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "subgroup",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          !formData.group || loading || isSubmitting
-        }
-        isClearable
-        placeholder="Search SubGroup"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(subGroups || []).map((subGroup) => ({
+                            value: subGroup.id,
+                            label: subGroup.name,
+                          }))}
+                          value={
+                            (subGroups || [])
+                              .filter(
+                                (subGroup) =>
+                                  String(subGroup.id) === String(formData.subgroup)
+                              )
+                              .map((subGroup) => ({
+                                value: subGroup.id,
+                                label: subGroup.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "subgroup",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            !formData.group || loading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search SubGroup"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
-    </FormControl>
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
+                      </FormControl>
 
-    {supplierField}
+                      {supplierField}
 
-    {/* Technician */}
-    <FormControl fullWidth error={!!errors.technician}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Technician
-      </Typography>
+                      {/* Technician */}
+                      <FormControl fullWidth error={!!errors.technician}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Technician
+                        </Typography>
 
-      <Select
-        options={(technicianOptions || []).map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))}
-        value={
-          (technicianOptions || [])
-            .filter(
-              (item) =>
-                String(item.id) === String(formData.technician)
-            )
-            .map((item) => ({
-              value: item.id,
-              label: item.full_name || item.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "technician",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          loading || techniciansLoading || isSubmitting
-        }
-        isClearable
-        placeholder="Search Technician"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(technicianOptions || []).map((item) => ({
+                            value: item.id,
+                            label: item.full_name || item.name,
+                          }))}
+                          value={
+                            (technicianOptions || [])
+                              .filter(
+                                (item) =>
+                                  String(item.id) === String(formData.technician)
+                              )
+                              .map((item) => ({
+                                value: item.id,
+                                label: item.full_name || item.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "technician",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            loading || techniciansLoading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search Technician"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.technician && (
-        <FormHelperText>
-          {errors.technician}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.technician && (
+                          <FormHelperText>
+                            {errors.technician}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-  </div>
-</>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -3656,6 +3692,11 @@ export const AddAMCPage = () => {
                     fullWidth
                     value={formData.cost}
                     onChange={e => handleInputChange('cost', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     error={!!errors.cost}
                     helperText={errors.cost}
                     sx={{ mb: 3 }}
@@ -3675,6 +3716,11 @@ export const AddAMCPage = () => {
                         handleInputChange('noOfVisits', value);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     error={!!errors.noOfVisits}
                     helperText={errors.noOfVisits}
                     sx={{ mb: 3 }}
@@ -3691,6 +3737,11 @@ export const AddAMCPage = () => {
                       const value = e.target.value;
                       if (/^\d*$/.test(value)) {
                         handleInputChange('assetsPerDay', value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
                       }
                     }}
                     sx={{ mb: 3 }}
@@ -3786,20 +3837,23 @@ export const AddAMCPage = () => {
               <CardContent className="p-4">
                 {/* Toggle */}
                 <div className="flex items-center gap-3 mb-4">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={createChecklist}
-                      onChange={e => {
-                        setCreateChecklist(e.target.checked);
-                        if (!e.target.checked) {
-                          setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
-                        }
-                      }}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
-                  </label>
+                  <Switch
+                    checked={createChecklist}
+                    onChange={(e) => {
+                      setCreateChecklist(e.target.checked);
+                      if (!e.target.checked) {
+                        setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#C72030',
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#C72030',
+                      },
+                    }}
+                  />
                   <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
                 </div>
 
