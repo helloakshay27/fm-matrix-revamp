@@ -113,7 +113,7 @@ const WeeklyMeetingReports = ({ selectedMeetingId: externalSelectedMeetingId, on
     useEffect(() => {
         const fetchMeetings = async () => {
             try {
-                const res = await axios.get(`${apiBase()}/weekly_meeting_configs`, { headers: getHeaders() })
+                const res = await axios.get(`${apiBase()}/weekly_meeting_configs.json`, { headers: getHeaders() })
                 const raw = res.data
                 let list: MeetingConfig[] = []
                 if (Array.isArray(raw))              list = raw
@@ -146,7 +146,7 @@ const WeeklyMeetingReports = ({ selectedMeetingId: externalSelectedMeetingId, on
         try {
             const params: Record<string, string> = { period, meeting_id: meetingId }
 
-            const res = await axios.get(`${apiBase()}/user_journals/weekly_meeting_report`, {
+            const res = await axios.get(`${apiBase()}/user_journals/weekly_meeting_report.json`, {
                 headers: getHeaders(),
                 params,
             })
