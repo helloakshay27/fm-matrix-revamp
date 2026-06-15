@@ -231,6 +231,7 @@ export const ClubGroupMembershipDetails = () => {
   const [loadingBill, setLoadingBill] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [sendingInvoice, setSendingInvoice] = useState(false);
+  const [sendingBillId, setSendingBillId] = useState<number | null>(null);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
 
   // Payment modal state
@@ -542,6 +543,24 @@ export const ClubGroupMembershipDetails = () => {
     }
   };
 
+  const handleSendInvoiceBill = async (billId: number) => {
+    setSendingBillId(billId);
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail.json`;
+      await axios.post(url, { bill_id: billId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Invoice sent successfully');
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
+      toast.error(msg);
+    } finally {
+      setSendingBillId(null);
+    }
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-GB');
@@ -757,21 +776,6 @@ export const ClubGroupMembershipDetails = () => {
           </div>
 
           <div className="flex gap-3">
-            <Button
-              onClick={handleSendInvoice}
-              disabled={sendingInvoice}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030]"
-            >
-              {
-                sendingInvoice ? (
-                  <Loader className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <span>Send Invoice</span>
-                )
-              }
-
-            </Button>
             {
               membershipData.status === 'pending' && (
                 <Button
@@ -1131,6 +1135,23 @@ export const ClubGroupMembershipDetails = () => {
                         </>
                       )}
                     </Button>
+                    <Button
+                      onClick={() => handleSendInvoiceBill(selectedBill.id)}
+                      disabled={sendingBillId === selectedBill.id}
+                      className="bg-[#C72030] hover:bg-[#A01828] text-white"
+                    >
+                      {sendingBillId === selectedBill.id ? (
+                        <>
+                          <Loader className="w-4 h-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-4 h-4 mr-2" />
+                          Send Invoice
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
 
@@ -1321,11 +1342,10 @@ export const ClubGroupMembershipDetails = () => {
                   {billDetails.map((bill) => (
                     <div
                       key={bill.id}
-                      onClick={() => setSelectedBill(bill)} // Set the selected bill
-                      className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors cursor-pointer"
+                      className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="cursor-pointer flex-1" onClick={() => setSelectedBill(bill)}>
                           <h3 className="font-semibold text-gray-900">Bill #{bill.bill_number || bill.id}</h3>
                           <p className="text-sm text-gray-500">Due: {formatDate(bill.due_date)}</p>
                         </div>
