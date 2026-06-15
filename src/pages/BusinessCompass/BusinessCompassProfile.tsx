@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   User,
   Mail,
@@ -2091,7 +2091,7 @@ const BusinessCompassProfile = () => {
               {(
                 [
                   "basic",
-                  // "face_enroll",
+                  "face_enroll",
                   // "assets",
                   "attendance",
                   // "my_roster",
