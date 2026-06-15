@@ -1175,6 +1175,28 @@ const DailyTab = ({
         if (Array.isArray(rawSource.tomorrow_plan))
           tpRaw = rawSource.tomorrow_plan;
 
+        const tasksIssuesRaw = Array.isArray(rawSource.tasks_issues)
+          ? rawSource.tasks_issues
+          : [];
+        const tasks_issues = tasksIssuesRaw
+          .filter((item: any) => !isCompletedStatus(getItemStatus(item)))
+          .map((item: any) => ({
+            type: getViewSourceType(item),
+            title: item.title || item.text || item.name || "",
+            text: item.title || item.text || item.name || "",
+            status: item.status || "open",
+            priority: item.priority || item.urgency || "",
+            target_date:
+              item.target_date ||
+              item.due_date ||
+              item.end_date ||
+              item.deadline ||
+              null,
+            source_id: getViewSourceId(item),
+            source_type: getViewSourceType(item),
+            originalData: item.originalData || item,
+          }));
+
         const tomorrow_plan = tpRaw.map((p: any) =>
           typeof p === "string" ? p : p.title || p.text || ""
         );
@@ -1198,6 +1220,7 @@ const DailyTab = ({
           self_rating: `${selfRatingVal}/10`,
           kpis: Array.isArray(rawSource.kpis) ? rawSource.kpis : [],
           accomplishments,
+          tasks_issues,
           tomorrow_plan,
         };
       });

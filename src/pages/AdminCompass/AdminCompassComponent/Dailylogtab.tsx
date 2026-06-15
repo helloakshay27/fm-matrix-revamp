@@ -1206,76 +1206,149 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           <div className="space-y-2">
                             {[
                               {
-                                label: "In Progress",
-                                items: visibleTasksIssues,
-                                wrapClass: "bg-blue-50 border-blue-100",
-                                countClass: "bg-blue-100 text-blue-700",
+                                key: "overdue",
+                                label: "Overdue",
+                                statuses: ["overdue", "overdued"],
+                                colorClass: "text-red-700",
+                                headerBg: "bg-red-50 hover:bg-red-100",
+                                pillBg: "bg-red-100 text-red-700",
+                                itemBg: "bg-red-50/60 border-red-100",
                               },
-                            ].map((section) =>
-                              section.items.length > 0 ? (
+                              {
+                                key: "in_progress",
+                                label: "In Progress",
+                                statuses: ["in_progress", "started"],
+                                colorClass: "text-sky-700",
+                                headerBg: "bg-sky-50 hover:bg-sky-100",
+                                pillBg: "bg-sky-100 text-sky-700",
+                                itemBg: "bg-sky-50/60 border-sky-100",
+                              },
+                              {
+                                key: "open",
+                                label: "Open",
+                                statuses: ["open", "pending", "reopen", "reopened"],
+                                colorClass: "text-slate-600",
+                                headerBg: "bg-slate-50 hover:bg-slate-100",
+                                pillBg: "bg-slate-100 text-slate-600",
+                                itemBg: "bg-slate-50/60 border-slate-100",
+                              },
+                              {
+                                key: "on_hold",
+                                label: "On Hold",
+                                statuses: ["on_hold"],
+                                colorClass: "text-orange-700",
+                                headerBg: "bg-orange-50 hover:bg-orange-100",
+                                pillBg: "bg-orange-100 text-orange-700",
+                                itemBg: "bg-orange-50/60 border-orange-100",
+                              },
+                              {
+                                key: "completed",
+                                label: "Completed",
+                                statuses: ["completed", "closed", "done"],
+                                colorClass: "text-green-700",
+                                headerBg: "bg-green-50 hover:bg-green-100",
+                                pillBg: "bg-green-100 text-green-700",
+                                itemBg: "bg-green-50/60 border-green-100",
+                              },
+                            ].map((section) => {
+                              const sectionItems = visibleTasksIssues.filter((item) =>
+                                section.statuses.includes(
+                                  String(getItemStatus(item)).toLowerCase(),
+                                ),
+                              );
+                              return sectionItems.length > 0 ? (
                                 <div
-                                  key={section.label}
-                                  className={cn(
-                                    "rounded-lg border p-1.5 space-y-1.5",
-                                    section.wrapClass,
-                                  )}
+                                  key={section.key}
+                                  className="space-y-1.5"
                                 >
-                                  <div className="flex items-center justify-between gap-2 px-1">
-                                    <p className="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">
+                                  <div
+                                    className={cn(
+                                      "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
+                                      section.headerBg,
+                                    )}
+                                  >
+                                    <p
+                                      className={cn(
+                                        "text-[10px] font-extrabold uppercase tracking-wider flex-1",
+                                        section.colorClass,
+                                      )}
+                                    >
                                       {section.label}
                                     </p>
                                     <span
                                       className={cn(
-                                        "min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-extrabold",
-                                        section.countClass,
+                                        "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                                        section.pillBg,
                                       )}
                                     >
-                                      {section.items.length}
+                                      {sectionItems.length}
                                     </span>
                                   </div>
-                                  {section.items.map((item, i) => {
+                                  {sectionItems.map((item, i) => {
                                     const type = getItemType(item);
                                     const hasDetails = ["task", "issue", "todo"].includes(type);
+                                    const dueDate =
+                                      item.target_date ||
+                                      item.due_date ||
+                                      item.end_date ||
+                                      item.deadline;
                                     return (
                                       <div
-                                        key={`${section.label}-${i}`}
+                                        key={`${section.key}-${i}`}
+                                        onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
                                         className={cn(
-                                          "flex items-center gap-2 rounded-lg border px-2.5 py-2 min-h-[36px] bg-white",
-                                          isCompletedStatus(getItemStatus(item))
-                                            ? "border-green-200 bg-green-50"
-                                            : "border-orange-200 bg-orange-50",
+                                          "flex flex-col rounded-lg border transition-all",
+                                          section.itemBg,
+                                          hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]",
                                         )}
                                       >
-                                        <span
+                                        <div className="flex items-center gap-2 px-2.5 py-2 min-h-[36px]">
+                                          <span
                                             className={cn(
                                               "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
                                               getItemTypePillClass(type),
                                             )}
                                           >
-                                          {getItemTypeLabel(type)}
-                                        </span>
-                                        <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
-                                          {getItemTitle(item)}
-                                        </span>
-                                        {hasDetails && (
-                                          <button
-                                            type="button"
-                                            onClick={(event) => {
-                                              event.stopPropagation();
-                                              handleViewTaskIssueTodoItem(item);
-                                            }}
-                                            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                            title={`View ${getItemTypeLabel(type)}`}
-                                          >
-                                            <Eye className="w-3 h-3" />
-                                          </button>
+                                            {getItemTypeLabel(type)}
+                                          </span>
+                                          <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
+                                            {getItemTitle(item)}
+                                          </span>
+                                          {hasDetails && (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleViewTaskIssueTodoItem(item);
+                                              }}
+                                              className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                              title={`View ${getItemTypeLabel(type)}`}
+                                            >
+                                              <Eye className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                        </div>
+                                        {dueDate && (
+                                          <div className="flex items-center gap-1 px-2.5 pb-2 -mt-1">
+                                            <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+                                            <span className="text-[10px] text-gray-500">
+                                              {new Date(dueDate).toLocaleDateString(
+                                                "en-GB",
+                                                {
+                                                  day: "2-digit",
+                                                  month: "short",
+                                                  year: "numeric",
+                                                },
+                                              )}
+                                            </span>
+                                          </div>
                                         )}
                                       </div>
                                     );
                                   })}
                                 </div>
-                              ) : null,
-                            )}
+                              ) : null;
+                            })}
                           </div>
                         )}
                       </div>
