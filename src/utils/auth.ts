@@ -265,8 +265,11 @@ export const getOrganizationsByEmail = async (
 ): Promise<Organization[]> => {
   if (isOmanSite || isFmSite) {
     const response = await fetch(
-      `https://uat.lockated.comapi/users/get_organizations_by_email.json?email=${email}`
+      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
+
+
+
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
     }
