@@ -971,7 +971,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             onClick={onClose}
           />
 
-          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[920px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
+          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1220px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
               <h2 className="text-xl font-bold text-[#1A1A1A]">
