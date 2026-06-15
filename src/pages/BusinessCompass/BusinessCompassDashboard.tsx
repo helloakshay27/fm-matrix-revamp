@@ -72,6 +72,24 @@ interface DashboardData {
   };
 }
 
+interface AiSuggestion {
+  category: "issues" | "kpi" | "goals" | "systems";
+  priority: "high" | "medium" | "low";
+  potential_points: number;
+  title: string;
+  description: string;
+  timeline: string;
+}
+
+interface AiSuggestionsResponse {
+  success: boolean;
+  score: number;
+  data: {
+    total_potential_improvement: number;
+    suggestions: AiSuggestion[];
+  };
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -196,6 +214,11 @@ const BusinessCompassDashboard: React.FC = () => {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const [aiSuggestionsOpen, setAiSuggestionsOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
+  const [aiSuggestionsLoading, setAiSuggestionsLoading] = useState(false);
+  const [totalPotentialImprovement, setTotalPotentialImprovement] =
+    useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
 
   // ── Daily dynamic data ────────────────────────────────────────────────
   const [filledDates, setFilledDates] = useState<Set<string>>(new Set());
@@ -617,8 +640,53 @@ const BusinessCompassDashboard: React.FC = () => {
   }, []);
 
   // ── AI Summary ───────────────────────────────────────────────
-  const handleGenerateAiSummary = () => {
+  const handleGenerateAiSummary = async () => {
+    setAiSuggestionsLoading(true);
     setAiSuggestionsOpen(true);
+    try {
+      const baseUrl = (getBaseUrl() ?? "https://fm-uat-api.lockated.com").replace(
+        /\/$/,
+        ""
+      );
+      const token = getToken();
+      if (!token) {
+        console.error("No token found");
+        setAiSuggestionsLoading(false);
+        return;
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const response = await fetch(
+        `${baseUrl}/business_compass/generate_ai_suggestions`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({}),
+        }
+      );
+
+      if (response.ok) {
+        const data: AiSuggestionsResponse = await response.json();
+        if (data.success && data.data) {
+          setAiSuggestions(data.data.suggestions || []);
+          setTotalPotentialImprovement(
+            data.data.total_potential_improvement || 0
+          );
+          setCurrentScore(data.score || 0);
+        }
+      } else {
+        console.error("Failed to fetch AI suggestions");
+      }
+    } catch (error) {
+      console.error("Error fetching AI suggestions:", error);
+    } finally {
+      setAiSuggestionsLoading(false);
+    }
   };
 
   const issueBadgeStyle = (priority: string): React.CSSProperties => {
@@ -873,22 +941,30 @@ const BusinessCompassDashboard: React.FC = () => {
 
                       {/* Header */}
                       <div className="flex items-start justify-between px-3 pt-3 pb-1">
-                        <div>
-                          <h4 className="text-[13px] font-bold text-[#1a1a1a]">
-                            AI Suggestions
-                          </h4>
-                          <p className="text-[11px] text-gray-400 mt-0.5">
-                            Implementing all suggestions could boost your score
-                            by{" "}
-                            <span className="font-bold text-[#DA7756]">
-                              +46 pts
-                            </span>{" "}
-                            →{" "}
-                            <span className="font-bold text-[#DA7756]">
-                              121/100
-                            </span>
-                          </p>
-                        </div>
+                        {aiSuggestionsLoading ? (
+                          <div className="flex-1">
+                            <p className="text-[11px] text-gray-400 italic">
+                              Loading AI suggestions...
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <h4 className="text-[13px] font-bold text-[#1a1a1a]">
+                              AI Suggestions
+                            </h4>
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              Implementing all suggestions could boost your
+                              score by{" "}
+                              <span className="font-bold text-[#DA7756]">
+                                +{totalPotentialImprovement} pts
+                              </span>{" "}
+                              →{" "}
+                              <span className="font-bold text-[#DA7756]">
+                                {currentScore + totalPotentialImprovement}/100
+                              </span>
+                            </p>
+                          </div>
+                        )}
                         <button
                           onClick={() => setAiSuggestionsOpen(false)}
                           className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 flex-shrink-0 transition-colors ml-2"
@@ -899,173 +975,108 @@ const BusinessCompassDashboard: React.FC = () => {
 
                       {/* 2×2 cards */}
                       <div className="grid grid-cols-2 gap-2 px-3 pb-2">
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#fce8e8",
-                            border: "1px solid #fbcfcf",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#f87171]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                Issues
-                              </span>
-                              <span
-                                className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
+                        {!aiSuggestionsLoading && aiSuggestions.length > 0 ? (
+                          aiSuggestions.map((suggestion, idx) => {
+                            const categoryConfig: Record<string, any> = {
+                              issues: {
+                                bgColor: "#fce8e8",
+                                borderColor: "#fbcfcf",
+                                dotColor: "#f87171",
+                                label: "Issues",
+                              },
+                              systems: {
+                                bgColor: "#e8f0fe",
+                                borderColor: "#c7d9fd",
+                                dotColor: "#60a5fa",
+                                label: "Systems",
+                              },
+                              goals: {
+                                bgColor: "#edf7ed",
+                                borderColor: "#c3e6c4",
+                                dotColor: "#4ade80",
+                                label: "Goals",
+                              },
+                              kpi: {
+                                bgColor: "#fff3e8",
+                                borderColor: "#fddcbc",
+                                dotColor: "#fb923c",
+                                label: "KPI",
+                              },
+                            };
+
+                            const config =
+                              categoryConfig[suggestion.category] ||
+                              categoryConfig.issues;
+                            const priorityStyles =
+                              suggestion.priority === "high"
+                                ? {
+                                    backgroundColor: "#ffe4e4",
+                                    color: "#e05050",
+                                  }
+                                : {
+                                    backgroundColor: "#fef3c7",
+                                    color: "#b45309",
+                                  };
+
+                            return (
+                              <div
+                                key={idx}
+                                className="rounded-xl p-2.5 flex flex-col gap-1"
                                 style={{
-                                  backgroundColor: "#ffe4e4",
-                                  color: "#e05050",
+                                  backgroundColor: config.bgColor,
+                                  border: `1px solid ${config.borderColor}`,
                                 }}
                               >
-                                High
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +12 pts
-                            </span>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1">
+                                    <div
+                                      className="w-1.5 h-1.5 rounded-full"
+                                      style={{
+                                        backgroundColor: config.dotColor,
+                                      }}
+                                    />
+                                    <span className="text-[10px] font-bold text-gray-700">
+                                      {config.label}
+                                    </span>
+                                    <span
+                                      className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
+                                      style={priorityStyles}
+                                    >
+                                      {suggestion.priority.charAt(0).toUpperCase() +
+                                        suggestion.priority.slice(1)}
+                                    </span>
+                                  </div>
+                                  <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
+                                    +{suggestion.potential_points} pts
+                                  </span>
+                                </div>
+                                <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
+                                  {suggestion.title}
+                                </p>
+                                <p className="text-[10px] text-gray-500 leading-relaxed">
+                                  {suggestion.description}
+                                </p>
+                                <div className="flex items-center justify-between mt-0.5">
+                                  <div className="flex items-center gap-1 text-[9px] text-gray-400">
+                                    <Clock size={9} />
+                                    <span>{suggestion.timeline}</span>
+                                  </div>
+                                  <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
+                                    Start &gt;
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : aiSuggestionsLoading ? (
+                          <div className="col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                            Generating suggestions...
                           </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Resolve your top 20 critical issues
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            Fix top 20 by severity to reduce score drag and
-                            improve KPI by ~8%.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>1–2 weeks</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
+                        ) : (
+                          <div className="col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                            No suggestions available
                           </div>
-                        </div>
-
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#e8f0fe",
-                            border: "1px solid #c7d9fd",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#60a5fa]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                Systems
-                              </span>
-                              <span
-                                className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
-                                style={{
-                                  backgroundColor: "#ffe4e4",
-                                  color: "#e05050",
-                                }}
-                              >
-                                High
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +18 pts
-                            </span>
-                          </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Connect all 6 business systems
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            0 of 6 systems integrated. Enables automated data
-                            flow and removes reporting gaps.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>2–3 weeks</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
-                          </div>
-                        </div>
-
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#edf7ed",
-                            border: "1px solid #c3e6c4",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#4ade80]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                Goals
-                              </span>
-                              <span className="text-[9px] font-semibold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                Medium
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +9 pts
-                            </span>
-                          </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Define and track 4 business goals
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            No goals set. Measurable quarterly goals improve KPI
-                            tracking by up to 15%.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>4–6 weeks</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
-                          </div>
-                        </div>
-
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#fff3e8",
-                            border: "1px solid #fddcbc",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#fb923c]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                KPI
-                              </span>
-                              <span className="text-[9px] font-semibold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                Medium
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +7 pts
-                            </span>
-                          </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Recalibrate KPI targets to benchmarks
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            KPI at 59%, below 72% industry average. Benchmark
-                            data can close this gap faster.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>1 week</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
-                          </div>
-                        </div>
+                        )}
                       </div>
 
                       {/* CTA */}
