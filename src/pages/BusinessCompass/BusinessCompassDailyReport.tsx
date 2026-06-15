@@ -2760,7 +2760,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                 (item) =>
                   selectedTasksIssues[item.id] === true ||
                   item.status === "overdue" ||
-                  item.status === "in_progress"
+                  item.status === "in_progress" ||
+                  item.status === "on_hold" ||
+                  item.status === "open"
               )
               .map((item) => ({
                 title:

@@ -580,6 +580,7 @@ const DailyTab = ({
 
   // Feedback specific states
   const [feedbackOpenId, setFeedbackOpenId] = useState<any>(null);
+  const [feedbackClosingId, setFeedbackClosingId] = useState<any>(null);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [fetchedFeedbacks, setFetchedFeedbacks] = useState<any[]>([]);
@@ -1174,6 +1175,28 @@ const DailyTab = ({
         if (Array.isArray(rawSource.tomorrow_plan))
           tpRaw = rawSource.tomorrow_plan;
 
+        const tasksIssuesRaw = Array.isArray(rawSource.tasks_issues)
+          ? rawSource.tasks_issues
+          : [];
+        const tasks_issues = tasksIssuesRaw
+          .filter((item: any) => !isCompletedStatus(getItemStatus(item)))
+          .map((item: any) => ({
+            type: getViewSourceType(item),
+            title: item.title || item.text || item.name || "",
+            text: item.title || item.text || item.name || "",
+            status: item.status || "open",
+            priority: item.priority || item.urgency || "",
+            target_date:
+              item.target_date ||
+              item.due_date ||
+              item.end_date ||
+              item.deadline ||
+              null,
+            source_id: getViewSourceId(item),
+            source_type: getViewSourceType(item),
+            originalData: item.originalData || item,
+          }));
+
         const tomorrow_plan = tpRaw.map((p: any) =>
           typeof p === "string" ? p : p.title || p.text || ""
         );
@@ -1197,6 +1220,7 @@ const DailyTab = ({
           self_rating: `${selfRatingVal}/10`,
           kpis: Array.isArray(rawSource.kpis) ? rawSource.kpis : [],
           accomplishments,
+          tasks_issues,
           tomorrow_plan,
         };
       });
@@ -1598,6 +1622,27 @@ const DailyTab = ({
     navigate("/admin-compass/feedback-dashboard");
   };
 
+  const resetFeedbackForm = () => {
+    setFeedbackRating(0);
+    setFeedbackMessage("");
+  };
+
+  const openFeedbackPanel = (panelId: any, targetUserId?: string | number) => {
+    setFeedbackClosingId(null);
+    setFeedbackOpenId(panelId);
+    resetFeedbackForm();
+    if (targetUserId) loadPastFeedbacks(targetUserId);
+  };
+
+  const closeFeedbackPanel = (panelId: any) => {
+    setFeedbackClosingId(panelId);
+    window.setTimeout(() => {
+      setFeedbackOpenId((current: any) => (current === panelId ? null : current));
+      setFeedbackClosingId((current: any) => (current === panelId ? null : current));
+      resetFeedbackForm();
+    }, 180);
+  };
+
   const visibleReportIds = memberReports.map((r: any) =>
     String(r.journal_id || r.user_id)
   );
@@ -1618,6 +1663,20 @@ const DailyTab = ({
       className="pb-12 space-y-6"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
+      <style>
+        {`
+          @keyframes feedbackPanelIn {
+            from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes feedbackPanelOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-6px) scale(0.985); }
+          }
+          .feedback-panel-enter { animation: feedbackPanelIn 180ms ease-out both; }
+          .feedback-panel-exit { animation: feedbackPanelOut 180ms ease-in both; }
+        `}
+      </style>
       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
         {/* ══ LEFT COLUMN ══ */}
         <div className="h-full">
@@ -2097,6 +2156,9 @@ const DailyTab = ({
                   .map((report: any) => {
                     const rId = report.journal_id || report.user_id;
                     const isExpanded = expandedReports.includes(rId);
+                    const isFeedbackVisible =
+                      feedbackOpenId === rId || feedbackClosingId === rId;
+                    const isFeedbackClosing = feedbackClosingId === rId;
                     const isRawPending = report.status === "pending";
                     const hasDraft = !!report.daily_report;
                     const isPermanentlyChecked =
@@ -2852,15 +2914,12 @@ const DailyTab = ({
                                 <button
                                   onClick={() => {
                                     if (feedbackOpenId === rId) {
-                                      setFeedbackOpenId(null);
+                                      closeFeedbackPanel(rId);
                                     } else {
-                                      setFeedbackOpenId(rId);
-                                      setFeedbackRating(0);
-                                      setFeedbackMessage("");
-                                      loadPastFeedbacks(report.user_id);
+                                      openFeedbackPanel(rId, report.user_id);
                                     }
                                   }}
-                                  className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-[#DA7756] border border-[#c96546] rounded-full text-xs font-bold shadow-sm hover:bg-[#c96546] transition-all duration-150 active:scale-95"
                                 >
                                   <MessageSquare className="w-3.5 h-3.5" />{" "}
                                   Feedback
@@ -2868,18 +2927,36 @@ const DailyTab = ({
                               </div>
 
                               {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
-                              {feedbackOpenId === rId && (
-                                <div className="border-t border-[#EAE3DF] pt-5 mt-2">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              {isFeedbackVisible && (
+                                <div
+                                  className={cn(
+                                    "border-t border-[#EAE3DF] pt-3 mt-2",
+                                    isFeedbackClosing
+                                      ? "feedback-panel-exit pointer-events-none"
+                                      : "feedback-panel-enter"
+                                  )}
+                                >
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {/* COLUMN 1: Add New Feedback */}
-                                    <div>
-                                      <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                        Provide Feedback
-                                      </p>
-                                      <p className="text-sm font-bold text-neutral-800 mb-2">
-                                        Rating (1-5 stars)
-                                      </p>
-                                      <div className="flex items-center gap-1 mb-4">
+                                    <div className="h-full rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center">
+                                          <MessageSquare className="w-3.5 h-3.5 text-[#DA7756]" />
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-bold text-gray-900 leading-none">
+                                            Provide Feedback
+                                          </p>
+                                          <p className="text-[10px] font-medium text-gray-400 mt-0.5">
+                                            Share rating and feedback
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="rounded-lg border border-gray-100 bg-gray-50/70 px-3 py-2 mb-2">
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                          Rating
+                                        </p>
+                                        <div className="flex items-center gap-1">
                                         {[1, 2, 3, 4, 5].map((star) => (
                                           <button
                                             key={star}
@@ -2887,20 +2964,20 @@ const DailyTab = ({
                                             onClick={() =>
                                               setFeedbackRating(star)
                                             }
-                                            className="transition-transform hover:scale-110"
+                                            className="rounded-lg transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20"
                                           >
                                             <svg
-                                              className="w-8 h-8"
+                                              className="w-6 h-6"
                                               viewBox="0 0 24 24"
                                               fill={
                                                 star <= feedbackRating
-                                                  ? "#F59E0B"
+                                                  ? "#ffb000"
                                                   : "none"
                                               }
                                               stroke={
                                                 star <= feedbackRating
-                                                  ? "#F59E0B"
-                                                  : "#D1D5DB"
+                                                  ? "#ffb000"
+                                                  : "#CBD5E1"
                                               }
                                               strokeWidth="1.5"
                                             >
@@ -2911,8 +2988,9 @@ const DailyTab = ({
                                             </svg>
                                           </button>
                                         ))}
+                                        </div>
                                       </div>
-                                      <p className="text-sm font-bold text-neutral-800 mb-2">
+                                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                                         Feedback Message
                                       </p>
                                       <textarea
@@ -2923,9 +3001,9 @@ const DailyTab = ({
                                         }
                                         placeholder="Enter constructive feedback..."
                                         rows={3}
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                                        className="w-full min-h-[68px] resize-none rounded-lg border border-[#F0E8E3] bg-[#FFFCFA] px-3 py-2 text-xs text-neutral-800 placeholder:text-gray-400 shadow-sm outline-none transition-all focus:border-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/15"
                                       />
-                                      <div className="flex items-center gap-3 mt-4">
+                                      <div className="flex items-center gap-2 mt-3">
                                         <button
                                           onClick={async () => {
                                             if (feedbackRating === 0) {
@@ -2966,9 +3044,7 @@ const DailyTab = ({
                                                   `HTTP ${res.status}`
                                                 );
                                               toast.success("Feedback added!");
-                                              setFeedbackOpenId(null);
-                                              setFeedbackRating(0);
-                                              setFeedbackMessage("");
+                                              closeFeedbackPanel(rId);
                                               await loadDailyData(false);
                                             } catch (err: any) {
                                               toast.error(
@@ -2977,17 +3053,15 @@ const DailyTab = ({
                                               );
                                             }
                                           }}
-                                          className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                          className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-[#DA7756] px-4 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#c96546]"
                                         >
                                           Submit Feedback
                                         </button>
                                         <button
                                           onClick={() => {
-                                            setFeedbackOpenId(null);
-                                            setFeedbackRating(0);
-                                            setFeedbackMessage("");
+                                            closeFeedbackPanel(rId);
                                           }}
-                                          className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                          className="inline-flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-neutral-700 shadow-sm transition-all duration-150 hover:bg-gray-50 active:scale-95"
                                         >
                                           Cancel
                                         </button>
@@ -2995,14 +3069,19 @@ const DailyTab = ({
                                     </div>
 
                                     {/* COLUMN 2: Recent Feedbacks — sorted newest first */}
-                                    <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
-                                      <div className="flex items-center justify-between mb-4">
-                                        <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
-                                          Recent Feedbacks
-                                        </p>
+                                    <div className="h-full bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm w-full flex flex-col">
+                                      <div className="flex h-8 items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-6 h-6 rounded-lg bg-purple-50 flex items-center justify-center">
+                                            <Star className="w-3 h-3 text-purple-500" />
+                                          </div>
+                                          <p className="text-xs font-bold text-gray-900">
+                                            Recent Feedbacks
+                                          </p>
+                                        </div>
                                         <button
                                           onClick={handleFeedback}
-                                          className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                          className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-[11px] font-bold text-[#DA7756] hover:bg-orange-50"
                                         >
                                           View All{" "}
                                           <ChevronRight className="w-3 h-3" />
@@ -3021,14 +3100,14 @@ const DailyTab = ({
                                           </span>
                                         </div>
                                       ) : (
-                                        <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                        <div className="mt-2 space-y-2">
                                           {/* Already sorted newest-first in loadPastFeedbacks */}
                                           {fetchedFeedbacks
                                             .slice(0, 3)
                                             .map((fb: any, idx: number) => (
                                               <div
                                                 key={fb.id ?? idx}
-                                                className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                                                className="bg-gray-50/80 px-2.5 py-2 rounded-lg border border-gray-100 shadow-sm"
                                               >
                                                 <div className="flex items-center gap-1 mb-1.5">
                                                   {[1, 2, 3, 4, 5].map(
@@ -3109,6 +3188,9 @@ const DailyTab = ({
             {failedMembers.map((member: any, i: number) => {
               const missedId = `missed-${member.id || member.user_id || member.name || i}`;
               const isMissedExpanded = expandedReports.includes(missedId);
+              const isMissedFeedbackVisible =
+                feedbackOpenId === missedId || feedbackClosingId === missedId;
+              const isMissedFeedbackClosing = feedbackClosingId === missedId;
 
               return (
                 <div
@@ -3300,74 +3382,101 @@ const DailyTab = ({
 
                         <div className="flex flex-wrap gap-2 pt-1">
                           <button
-                            onClick={() => openTaskModalForMember(member)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTaskModalForMember(member);
+                            }}
                             className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
                           >
                             <Plus className="w-3.5 h-3.5" /> Add Task
                           </button>
                           <button
-                            onClick={() => openIssueModalForMember(member)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openIssueModalForMember(member);
+                            }}
                             className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
                           >
                             <Plus className="w-3.5 h-3.5" /> Stuck Issue
                           </button>
                           <button
-                            onClick={() => openTodoModalForMember(member)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTodoModalForMember(member);
+                            }}
                             className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
                           >
                             <Plus className="w-3.5 h-3.5" /> Add Todo
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (feedbackOpenId === missedId) {
-                                setFeedbackOpenId(null);
+                                closeFeedbackPanel(missedId);
                               } else {
-                                setFeedbackOpenId(missedId);
-                                setFeedbackRating(0);
-                                setFeedbackMessage("");
-                                if (member.id || member.user_id) {
-                                  loadPastFeedbacks(
-                                    member.id || member.user_id
-                                  );
-                                }
+                                openFeedbackPanel(
+                                  missedId,
+                                  member.id || member.user_id
+                                );
                               }
                             }}
-                            className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-[#DA7756] border border-[#c96546] rounded-full text-xs font-bold shadow-sm hover:bg-[#c96546] transition-all duration-150 active:scale-95"
                           >
                             <MessageSquare className="w-3.5 h-3.5" /> Feedback
                           </button>
                         </div>
 
-                        {feedbackOpenId === missedId && (
-                          <div className="border-t border-[#EAE3DF] pt-5 mt-2">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              <div>
-                                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                  Provide Feedback
-                                </p>
-                                <p className="text-sm font-bold text-neutral-800 mb-2">
-                                  Rating (1-5 stars)
-                                </p>
-                                <div className="flex items-center gap-1 mb-4">
+                        {isMissedFeedbackVisible && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className={cn(
+                              "border-t border-[#EAE3DF] pt-3 mt-2",
+                              isMissedFeedbackClosing
+                                ? "feedback-panel-exit pointer-events-none"
+                                : "feedback-panel-enter"
+                            )}
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="h-full rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center">
+                                    <MessageSquare className="w-3.5 h-3.5 text-[#DA7756]" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-gray-900 leading-none">
+                                      Provide Feedback
+                                    </p>
+                                    <p className="text-[10px] font-medium text-gray-400 mt-0.5">
+                                      Share rating and feedback
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="rounded-lg border border-gray-100 bg-gray-50/70 px-3 py-2 mb-2">
+                                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                    Rating
+                                  </p>
+                                  <div className="flex items-center gap-1">
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <button
                                       key={star}
                                       type="button"
                                       onClick={() => setFeedbackRating(star)}
-                                      className="transition-transform hover:scale-110"
+                                      className="rounded-lg transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20"
                                     >
                                       <Star
                                         className={cn(
-                                          "w-8 h-8",
+                                          "w-6 h-6",
                                           star <= feedbackRating
-                                            ? "text-yellow-400 fill-yellow-400"
-                                            : "text-gray-300"
+                                            ? "text-[#ffb000] fill-[#ffb000]"
+                                            : "text-slate-300 fill-transparent"
                                         )}
+                                        strokeWidth={1.5}
                                       />
                                     </button>
                                   ))}
+                                  </div>
                                 </div>
-                                <p className="text-sm font-bold text-neutral-800 mb-2">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                                   Feedback Message
                                 </p>
                                 <textarea
@@ -3378,9 +3487,9 @@ const DailyTab = ({
                                   }
                                   placeholder="Enter constructive feedback..."
                                   rows={3}
-                                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                                  className="w-full min-h-[68px] resize-none rounded-lg border border-[#F0E8E3] bg-[#FFFCFA] px-3 py-2 text-xs text-neutral-800 placeholder:text-gray-400 shadow-sm outline-none transition-all focus:border-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/15"
                                 />
-                                <div className="flex items-center gap-3 mt-4">
+                                <div className="flex items-center gap-2 mt-3">
                                   <button
                                     onClick={async () => {
                                       if (feedbackRating === 0) {
@@ -3427,9 +3536,7 @@ const DailyTab = ({
                                         if (!res.ok)
                                           throw new Error(`HTTP ${res.status}`);
                                         toast.success("Feedback added!");
-                                        setFeedbackOpenId(null);
-                                        setFeedbackRating(0);
-                                        setFeedbackMessage("");
+                                        closeFeedbackPanel(missedId);
                                         await loadDailyData(false);
                                       } catch (err: any) {
                                         toast.error(
@@ -3438,31 +3545,34 @@ const DailyTab = ({
                                         );
                                       }
                                     }}
-                                    className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                    className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-[#DA7756] px-4 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#c96546]"
                                   >
                                     Submit Feedback
                                   </button>
                                   <button
                                     onClick={() => {
-                                      setFeedbackOpenId(null);
-                                      setFeedbackRating(0);
-                                      setFeedbackMessage("");
+                                      closeFeedbackPanel(missedId);
                                     }}
-                                    className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                    className="inline-flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-neutral-700 shadow-sm transition-all duration-150 hover:bg-gray-50 active:scale-95"
                                   >
                                     Cancel
                                   </button>
                                 </div>
                               </div>
 
-                              <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
-                                <div className="flex items-center justify-between mb-4">
-                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
-                                    Recent Feedbacks
-                                  </p>
+                              <div className="h-full bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm w-full flex flex-col">
+                                <div className="flex h-8 items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-lg bg-purple-50 flex items-center justify-center">
+                                      <Star className="w-3 h-3 text-purple-500" />
+                                    </div>
+                                    <p className="text-xs font-bold text-gray-900">
+                                      Recent Feedbacks
+                                    </p>
+                                  </div>
                                   <button
                                     onClick={handleFeedback}
-                                    className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                    className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-[11px] font-bold text-[#DA7756] hover:bg-orange-50"
                                   >
                                     View All{" "}
                                     <ChevronRight className="w-3 h-3" />
@@ -3481,14 +3591,14 @@ const DailyTab = ({
                                     </span>
                                   </div>
                                 ) : (
-                                  <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                    {fetchedFeedbacks
-                                      .slice(0, 3)
-                                      .map((fb: any, idx: number) => (
-                                        <div
-                                          key={fb.id ?? idx}
-                                          className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
-                                        >
+                                      <div className="mt-2 space-y-2">
+                                        {fetchedFeedbacks
+                                          .slice(0, 3)
+                                          .map((fb: any, idx: number) => (
+                                            <div
+                                              key={fb.id ?? idx}
+                                              className="bg-gray-50/80 px-2.5 py-2 rounded-lg border border-gray-100 shadow-sm"
+                                            >
                                           <div className="flex items-center gap-1 mb-1.5">
                                             {[1, 2, 3, 4, 5].map((star) => (
                                               <Star

@@ -489,11 +489,11 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
         try {
             const { week, year } = getISOWeek(currentWeek);
             const weekParam = `${year}-W${String(week).padStart(2, '0')}`;
-            const meetingsRes = await axios.get(`${apiBase()}/weekly_meeting_configs`, { headers: getHeaders() });
+            const meetingsRes = await axios.get(`${apiBase()}/weekly_meeting_configs.json`, { headers: getHeaders() });
             const meetingConfigs = parseMeetingConfigs(meetingsRes.data);
 
             if (meetingConfigs.length === 0) {
-                const res = await axios.get(`${apiBase()}/user_journals/weekly_history`, {
+                const res = await axios.get(`${apiBase()}/user_journals/weekly_history.json`, {
                     headers: getHeaders(),
                     params: { week: weekParam },
                 });
@@ -504,7 +504,7 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
             const responses = await Promise.all(
                 meetingConfigs.map(async (meetingConfig) => {
                     try {
-                        const res = await axios.get(`${apiBase()}/user_journals/weekly_history`, {
+                        const res = await axios.get(`${apiBase()}/user_journals/weekly_history.json`, {
                             headers: getHeaders(),
                             params: {
                                 week: weekParam,
