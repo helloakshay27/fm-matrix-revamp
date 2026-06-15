@@ -575,6 +575,18 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         />
       </div>
 
+      {
+        !orgsFetched && (
+          <Button
+            onClick={() => fetchOrganizations(email.trim())}
+            disabled={!email.trim() || isLoading}
+            className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Continue
+          </Button>
+        )
+      }
+
       {/* Org fetch loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-3 text-gray-500 text-sm">
