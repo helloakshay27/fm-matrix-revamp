@@ -138,7 +138,7 @@ const Index = () => {
     const isClubSite = hostname.includes("club.lockated.com");
 
     if (currentUser?.is_vendor && currentUser?.supplier_id) {
-      navigate(`/vendor/supplier-details/${currentUser.supplier_id}`, { replace: true });
+      navigate(`/vendor/dashboard`, { replace: true });
       return;
     }
 

@@ -1215,6 +1215,8 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
+import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
+import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
@@ -4369,6 +4371,7 @@ function App() {
                             />
 
                             {/* Vendor Module Routes */}
+                            <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                             <Route path="/vendor/po" element={<VendorPOListPage />} />
                             <Route path="/vendor/grn" element={<VendorGRNListPage />} />
                             <Route path="/vendor/wo" element={<VendorWOListPage />} />
