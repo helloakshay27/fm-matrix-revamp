@@ -861,7 +861,7 @@ export const AmenityBookingDetailsClubPage = () => {
               <Edit className="w-4 h-4 mr-1" />
               Edit
             </Button>
-            {(bookings?.current_status === 'Pending') || (bookings?.payment_method === "pay_on_facility" && bookings?.amount_paid === null) && (
+            {((bookings?.current_status === 'Pending') || (bookings?.payment_method === "pay_on_facility" && bookings?.amount_paid === null)) && (
               <Button variant="outline" onClick={() => setOpenPaymentModal(true)}>
                 <CreditCard className="w-4 h-4 mr-1" />
                 Payment
