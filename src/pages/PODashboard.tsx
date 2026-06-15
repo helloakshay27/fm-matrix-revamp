@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { POFilterDialog } from "@/components/POFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -144,55 +145,6 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
-  // {
-  //   key: "retentionAmount",
-  //   label: "Retention Amount",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "retentionOutstanding",
-  //   label: "Retention Outstanding",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "qcAmount",
-  //   label: "QC Amount",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "qcOutstanding",
-  //   label: "QC Outstanding",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "noOfGrns",
-  //   label: "No of Grns",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "totalAmountPaid",
-  //   label: "Total Amount Paid",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "outstanding",
-  //   label: "Outstanding",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
   {
     key: "debitCreditNoteRaised",
     label: "Debit/Credit Note Raised",
@@ -214,23 +166,25 @@ export const PODashboard = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    referenceNumber: urlParams.get("referenceNumber") || "",
+    poNumber: urlParams.get("poNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+    approvalStatus: urlParams.get("approvalStatus") || "",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [poList, setPoList] = useState([]);
-  const [filters, setFilters] = useState({
-    referenceNumber: '',
-    poNumber: '',
-    supplierName: '',
-    approvalStatus: ''
-  });
- const [pagination, setPagination] = useState(() => {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    current_page: Number(params.get('page')) || 1,
+  const [filters, setFilters] = useState(initialFilters);
+  const [pagination, setPagination] = useState({
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
-  };
-});
+  });
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const applyResponse = (response: any) => {
@@ -319,7 +273,6 @@ export const PODashboard = () => {
   };
     useEffect(() => {
       try {
-        // first try explicit org_id stored separately (common pattern)
         const storedOrg = localStorage.getItem('org_id');
         if (storedOrg) {
           const num = Number(storedOrg);
@@ -329,7 +282,6 @@ export const PODashboard = () => {
           }
         }
   
-        // fallback to user object which may contain org_id/company_id
         const userStr = localStorage.getItem('user');
         if (userStr) {
           const user = JSON.parse(userStr);
@@ -346,16 +298,27 @@ export const PODashboard = () => {
   
 
     useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const urlPage = Number(params.get('page')) || 1;
-  if (urlPage !== pagination.current_page) {
-    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
-  }
-}, [pagination.current_page]);
+    fetchData({ 
+      page: urlPage,
+      search: initialSearch,
+      reference_number: initialFilters.referenceNumber,
+      external_id: initialFilters.poNumber,
+      supplier_name: initialFilters.supplierName,
+      approval_status: initialFilters.approvalStatus,
+    });
+  }, []);
 
-useEffect(() => {
-    fetchData({ page: pagination.current_page });
-  }, [pagination.current_page]);
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
+    if (filters.poNumber) params.set("poNumber", filters.poNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
+    
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -375,25 +338,27 @@ useEffect(() => {
     supplierName: string;
     approvalStatus: string;
   }) => {
-    setFilters(newFilters); // Update filter state
+    setFilters(newFilters);
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
     fetchData({
+      page: 1,
       reference_number: newFilters.referenceNumber,
       external_id: newFilters.poNumber,
       supplier_name: newFilters.supplierName,
       approval_status: newFilters.approvalStatus
-    }); // Fetch data with filters
+    });
   };
 
   const debouncedFetchData = useCallback(
-    debounce((query: string) => {
-      fetchData({ search: query });
+    debounce((query: string, filterParams: any) => {
+      fetchData({ page: 1, search: query, ...filterParams });
     }, 500),
-    [pagination.current_page, filters]
+    []
   );
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
     debouncedFetchData(query, {
       reference_number: filters.referenceNumber,
       external_id: filters.poNumber,
@@ -501,7 +466,9 @@ useEffect(() => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/finance/po/details/${item.id}`)}
+        onClick={() => navigate(`/finance/po/details/${item.id}`, {
+            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+        })}
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -512,7 +479,9 @@ useEffect(() => {
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/finance/po/edit/${item.id}`);
+            navigate(`/finance/po/edit/${item.id}`, {
+            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
           }}
         >
           <Edit className="w-4 h-4" />

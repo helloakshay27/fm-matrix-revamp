@@ -1160,7 +1160,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   >
                                     {getItemTypeLabel(type)}
                                   </span>
-                                  <span className="text-xs font-bold text-neutral-900 leading-snug">
+                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                     {getItemTitle(item)}
                                   </span>
                                   {hasDetails && (
@@ -1254,7 +1254,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                           >
                                           {getItemTypeLabel(type)}
                                         </span>
-                                        <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
+                                        <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                           {getItemTitle(item)}
                                         </span>
                                         {hasDetails && (
@@ -1312,7 +1312,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                   >
                                     {getItemTypeLabel(type)}
                                   </span>
-                                  <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
+                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
                                     {getItemTitle(item)}
                                   </span>
                                   {hasDetails && (
@@ -1357,15 +1357,6 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                         className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" /> Add Todo
-                      </button>
-                      <button
-                        onClick={() => {
-                          setQuickActionOpen(!quickActionOpen);
-                          setQuickActionText("");
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add to Plan
                       </button>
                       <button
                         onClick={() => {
@@ -1696,11 +1687,13 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             </MuiZIndexFix>
           )}
 
-          <TodoDetailsModal
-            isModalOpen={isDetailsModalOpen}
-            setIsModalOpen={setIsDetailsModalOpen}
-            todo={selectedTodo}
-          />
+          <MuiZIndexFix>
+            <TodoDetailsModal
+              isModalOpen={isDetailsModalOpen}
+              setIsModalOpen={setIsDetailsModalOpen}
+              todo={selectedTodo}
+            />
+          </MuiZIndexFix>
         </div>,
         document.body,
       )}
