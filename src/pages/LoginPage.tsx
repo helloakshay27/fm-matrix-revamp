@@ -418,6 +418,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
           user_roster_id: response?.user_roster_id,
+          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -464,6 +465,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
           user_roster_id: response?.user_roster_id,
+          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -501,7 +503,14 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
         user_roster_id: response?.user_roster_id,
+        is_vendor: response.is_vendor,
+        supplier_id: response.supplier_id,
       });
+
+      // Store vendor/supplier ID for vendor portal routing
+      if (response.supplier_id) {
+        localStorage.setItem("vendor_id", response.supplier_id.toString());
+      }
       saveToken(response.access_token);
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
@@ -533,6 +542,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/ops-console/settings/account/user-list-otp", {
             replace: true,
           });
+          return;
+        }
+
+        if (response.is_vendor && response.supplier_id) {
+          navigate(`/vendor/supplier-details/${response.supplier_id}`, { replace: true });
           return;
         }
 

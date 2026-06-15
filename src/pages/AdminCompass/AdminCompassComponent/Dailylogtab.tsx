@@ -445,11 +445,11 @@ const getItemType = (item) => {
   if (!item || typeof item !== "object") return "note";
   const rawType = String(
     item.source_type ||
-      item.sourceType ||
-      item.originalData?.source_type ||
-      item.originalData?.sourceType ||
-      item.type ||
-      "",
+    item.sourceType ||
+    item.originalData?.source_type ||
+    item.originalData?.sourceType ||
+    item.type ||
+    "",
   ).toLowerCase();
 
   if (rawType.includes("issue")) return "issue";
@@ -724,15 +724,15 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const detailSource =
     details && (details.report_data || details.daily_report)
       ? {
-          ...log._raw,
-          ...details,
-          report_data: details.report_data ?? log._raw?.report_data,
-          daily_report: details.daily_report ?? log._raw?.daily_report,
-        }
+        ...log._raw,
+        ...details,
+        report_data: details.report_data ?? log._raw?.report_data,
+        daily_report: details.daily_report ?? log._raw?.daily_report,
+      }
       : log._raw || {
-          report_data: rd,
-          daily_report: details?.daily_report,
-        };
+        report_data: rd,
+        daily_report: details?.daily_report,
+      };
 
   const rawDisplayRd = resolveRawSource(detailSource);
 
@@ -858,9 +858,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
               : current.report_data,
             daily_report: current.daily_report
               ? {
-                  ...current.daily_report,
-                  report_data: updatedReportData,
-                }
+                ...current.daily_report,
+                report_data: updatedReportData,
+              }
               : current.daily_report,
           };
         });
@@ -971,7 +971,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             onClick={onClose}
           />
 
-          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[920px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
+          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1220px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
               <h2 className="text-xl font-bold text-[#1A1A1A]">
@@ -1005,9 +1005,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             {totalScoreStr}
                           </div>
                           {selfRating != null && (
-                          <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                            ⭐ {selfRating}/10
-                          </span>
+                            <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                              ⭐ {selfRating}/10
+                            </span>
                           )}
                         </div>
                       )}
@@ -1019,10 +1019,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           </h3>
                           {(log.user?.includes("HOD") ||
                             log.user?.includes("TL")) && (
-                            <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
-                              <Crown className="w-3 h-3 fill-orange-400" /> HOD
-                            </span>
-                          )}
+                              <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                                <Crown className="w-3 h-3 fill-orange-400" /> HOD
+                              </span>
+                            )}
                           {log.dept && (
                             <span className="border border-blue-200 bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0">
                               {log.dept}
@@ -1127,61 +1127,61 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 
                     {/* 3-Column: Accomplishments | Tasks, Issues & Todos | Tomorrow's Plan */}
                     {!isDetailAbsent && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                      {/* Accomplishments */}
-                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-                          <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                        {/* Accomplishments */}
+                        <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
+                          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                            <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="w-3 h-3 text-green-600" />
+                            </div>
+                            <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
+                              Accomplishments
+                            </h4>
                           </div>
-                          <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
-                            Accomplishments
-                          </h4>
-                        </div>
-                        {filteredAccomplishments.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">
-                            None recorded.
-                          </p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {filteredAccomplishments.map((item, i) => {
-                              const type = getItemType(item);
-                              const hasDetails = ["task", "issue", "todo"].includes(type);
-                              return (
-                                <div
-                                  key={i}
-                                  className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
-                                >
-                                  <span
-                                    className={cn(
-                                      "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                      getItemTypePillClass(type),
-                                    )}
+                          {filteredAccomplishments.length === 0 ? (
+                            <p className="text-sm text-neutral-400 italic font-medium">
+                              None recorded.
+                            </p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {filteredAccomplishments.map((item, i) => {
+                                const type = getItemType(item);
+                                const hasDetails = ["task", "issue", "todo"].includes(type);
+                                return (
+                                  <div
+                                    key={i}
+                                    className="flex items-center gap-2 rounded-[10px] border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
                                   >
-                                    {getItemTypeLabel(type)}
-                                  </span>
-                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
-                                    {getItemTitle(item)}
-                                  </span>
-                                  {hasDetails && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        handleViewTaskIssueTodoItem(item);
-                                      }}
-                                      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                      title={`View ${getItemTypeLabel(type)}`}
+                                    <span
+                                      className={cn(
+                                        "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                        getItemTypePillClass(type),
+                                      )}
                                     >
-                                      <Eye className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+                                      {getItemTypeLabel(type)}
+                                    </span>
+                                    <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
+                                      {getItemTitle(item)}
+                                    </span>
+                                    {hasDetails && (
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleViewTaskIssueTodoItem(item);
+                                        }}
+                                        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                        title={`View ${getItemTypeLabel(type)}`}
+                                      >
+                                        <Eye className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
 
                       {/* Tasks, Issues & Todos */}
                       <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
@@ -1353,100 +1353,100 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                         )}
                       </div>
 
-                      {/* Tomorrow's Plan */}
-                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-                          <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                            <Calendar className="w-3 h-3 text-blue-600" />
+                        {/* Tomorrow's Plan */}
+                        <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
+                          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                              <Calendar className="w-3 h-3 text-blue-600" />
+                            </div>
+                            <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
+                              Tomorrow's Plan
+                            </h4>
                           </div>
-                          <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
-                            Tomorrow's Plan
-                          </h4>
-                        </div>
-                        {filteredTomorrowPlan.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">
-                            None recorded.
-                          </p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {filteredTomorrowPlan.map((item, i) => {
-                              const type = getItemType(item);
-                              const hasDetails = ["task", "issue", "todo"].includes(type);
-                              return (
-                                <div
-                                  key={i}
-                                  className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
-                                >
-                                  <span
-                                    className={cn(
-                                      "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                      getItemTypePillClass(type),
-                                    )}
+                          {filteredTomorrowPlan.length === 0 ? (
+                            <p className="text-sm text-neutral-400 italic font-medium">
+                              None recorded.
+                            </p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {filteredTomorrowPlan.map((item, i) => {
+                                const type = getItemType(item);
+                                const hasDetails = ["task", "issue", "todo"].includes(type);
+                                return (
+                                  <div
+                                    key={i}
+                                    className="flex items-center gap-2 rounded-[10px] border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
                                   >
-                                    {getItemTypeLabel(type)}
-                                  </span>
-                                  <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
-                                    {getItemTitle(item)}
-                                  </span>
-                                  {hasDetails && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        handleViewTaskIssueTodoItem(item);
-                                      }}
-                                      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                      title={`View ${getItemTypeLabel(type)}`}
+                                    <span
+                                      className={cn(
+                                        "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                        getItemTypePillClass(type),
+                                      )}
                                     >
-                                      <Eye className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                                      {getItemTypeLabel(type)}
+                                    </span>
+                                    <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
+                                      {getItemTitle(item)}
+                                    </span>
+                                    {hasDetails && (
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleViewTaskIssueTodoItem(item);
+                                        }}
+                                        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                        title={`View ${getItemTypeLabel(type)}`}
+                                      >
+                                        <Eye className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
                     )}
 
                     {/* Action Buttons */}
                     {!isDetailAbsent && (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      <button
-                        onClick={openTaskModalForMember}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add Task
-                      </button>
-                      <button
-                        onClick={openIssueModalForMember}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Stuck Issue
-                      </button>
-                      <button
-                        onClick={openTodoModalForMember}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add Todo
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (feedbackOpen) {
-                            setFeedbackOpen(false);
-                          } else {
-                            setFeedbackOpen(true);
-                            setFeedbackRating(0);
-                            setFeedbackMessage("");
-                            loadPastFeedbacks();
-                          }
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" /> Feedback
-                      </button>
-                    </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          onClick={openTaskModalForMember}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Task
+                        </button>
+                        <button
+                          onClick={openIssueModalForMember}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                        </button>
+                        <button
+                          onClick={openTodoModalForMember}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Todo
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (feedbackOpen) {
+                              setFeedbackOpen(false);
+                            } else {
+                              setFeedbackOpen(true);
+                              setFeedbackRating(0);
+                              setFeedbackMessage("");
+                              loadPastFeedbacks();
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                        </button>
+                      </div>
                     )}
 
                     {/* Quick Add to Plan */}
@@ -1597,8 +1597,8 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                               </p>
                               <button
                                 onClick={() =>
-                                  (window.location.href =
-                                    "/admin-compass/feedback-dashboard")
+                                (window.location.href =
+                                  "/admin-compass/feedback-dashboard")
                                 }
                                 className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
                               >
@@ -1943,28 +1943,28 @@ const DailyLogTab = ({
       const submittedReports =
         detailedReports.length > 0
           ? allReports.filter(
-              (report) =>
-                detailedReportUserIds.has(Number(report.user_id)) ||
-                detailedReportNames.has(normalizeName(report.name)),
-            )
+            (report) =>
+              detailedReportUserIds.has(Number(report.user_id)) ||
+              detailedReportNames.has(normalizeName(report.name)),
+          )
           : allReports.filter(
-              (r) =>
-                r.status !== "pending" || !!r.daily_report,
-            );
+            (r) =>
+              r.status !== "pending" || !!r.daily_report,
+          );
 
       // Map to table row format
       let logsArray = submittedReports.map((report) => {
-          const rawRd = resolveRawSource(report);
-          const rd = normalizeReportData(rawRd);
-          const isAbsent = isAbsentReport(report);
-          const absentReason = getAbsentReason(report);
+        const rawRd = resolveRawSource(report);
+        const rd = normalizeReportData(rawRd);
+        const isAbsent = isAbsentReport(report);
+        const absentReason = getAbsentReason(report);
 
-          // Build highlights summary from accomplishments and tomorrow plan counts
-          const highlights = isAbsent
-            ? `Absent${absentReason ? `: ${absentReason}` : ""}`
-            : rd.accomplishments.length > 0 || rd.tomorrow_plan.length > 0
-              ? `Acc: ${rd.accomplishments.length} | Plan: ${rd.tomorrow_plan.length}`
-              : "";
+        // Build highlights summary from accomplishments and tomorrow plan counts
+        const highlights = isAbsent
+          ? `Absent${absentReason ? `: ${absentReason}` : ""}`
+          : rd.accomplishments.length > 0 || rd.tomorrow_plan.length > 0
+            ? `Acc: ${rd.accomplishments.length} | Plan: ${rd.tomorrow_plan.length}`
+            : "";
 
         return {
           // journal_id is null for draft-only members; fall back to daily_report.id
@@ -2138,9 +2138,9 @@ const DailyLogTab = ({
         report_data: raw.report_data ? updatedReportData : raw.report_data,
         daily_report: raw.daily_report
           ? {
-              ...raw.daily_report,
-              report_data: updatedReportData,
-            }
+            ...raw.daily_report,
+            report_data: updatedReportData,
+          }
           : raw.daily_report,
       };
       return { ...log, _raw: updatedRaw };

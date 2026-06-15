@@ -615,12 +615,7 @@ export const AmenityBookingDetailsClubPage = () => {
               <div className="flex justify-between items-center py-2 border-b border-gray-200">
                 <span className="text-gray-700 font-medium">Subtotal</span>
                 <span className="text-gray-900 font-medium">
-                  ₹{(
-                    (bookings?.member_charges || 0) +
-                    (bookings?.guest_charges || 0) +
-                    (bookings?.slot_charges || 0) +
-                    (bookings?.facility_booking_accessories?.reduce((acc, curr) => acc + curr.facility_booking_accessory.total, 0) || 0)
-                  ).toFixed(2)}
+                  ₹{bookings?.sub_total.toFixed(2) || '0.00'}
                 </span>
               </div>
 
@@ -866,8 +861,9 @@ export const AmenityBookingDetailsClubPage = () => {
               <Edit className="w-4 h-4 mr-1" />
               Edit
             </Button>
-            {bookings?.current_status === 'Pending' && (
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setOpenPaymentModal(true)}>
+            {(bookings?.current_status === 'Pending') || (bookings?.payment_method === "pay_on_facility" && bookings?.amount_paid === null) && (
+              <Button variant="outline" onClick={() => setOpenPaymentModal(true)}>
+                <CreditCard className="w-4 h-4 mr-1" />
                 Payment
               </Button>
             )}

@@ -210,7 +210,17 @@ const ChannelSidebar = () => {
                     onClick={() => setIsMessagesOpen(!isMessagesOpen)}
                 >
                     <span className="text-sm font-medium">Direct Messages</span>
-                    {isMessagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <div className="flex items-center gap-1.5">
+                        {(() => {
+                            const unreadCount = conversations.filter(c => c.last_message_read === false).length;
+                            return unreadCount > 0 ? (
+                                <span className="bg-red-600 text-white text-xs font-semibold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                                    {unreadCount}
+                                </span>
+                            ) : null;
+                        })()}
+                        {isMessagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </div>
                 </button>
 
                 {isMessagesOpen && (
@@ -277,7 +287,17 @@ const ChannelSidebar = () => {
                     onClick={() => setIsGroupsOpen(!isGroupsOpen)}
                 >
                     <span className="text-sm font-medium">Groups</span>
-                    {isGroupsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <div className="flex items-center gap-1.5">
+                        {(() => {
+                            const unreadCount = groups.filter(g => g.last_message_read === false).length;
+                            return unreadCount > 0 ? (
+                                <span className="bg-red-600 text-white text-xs font-semibold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                                    {unreadCount}
+                                </span>
+                            ) : null;
+                        })()}
+                        {isGroupsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </div>
                 </button>
 
                 {isGroupsOpen && (

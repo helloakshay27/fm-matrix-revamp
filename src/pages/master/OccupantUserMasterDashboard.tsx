@@ -200,25 +200,42 @@ const currentPage = Number(searchParams.get("page")) || 1;
 
   const handleExport = async () => {
     try {
-      const response = await axios.get(
-        `https://${localStorage.getItem(
-          "baseUrl"
-        )}/pms/account_setups/export_occupant_users.xlsx`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          responseType: "blob",
-        }
-      );
+      const nameParts = (filters.name || "").trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts[1] || "";
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const params = new URLSearchParams();
+      if (firstName) params.append("q[firstname_cont]", firstName);
+      if (lastName) params.append("q[lastname_cont]", lastName);
+      if (filters.email) params.append("q[email_cont]", filters.email);
+      if (filters.mobile) params.append("q[mobile_cont]", filters.mobile);
+      if (filters.status) params.append("q[lock_user_permission_status_eq]", filters.status);
+      if (filters.entity) params.append("q[entity_id_eq]", filters.entity);
+      if (filters.downloaded !== undefined) params.append("q[app_downloaded_eq]", String(filters.downloaded));
+      if (filters.created_at) params.append("q[created_at_eq]", filters.created_at);
+      if (filters.created_date_from) params.append("q[created_at_gteq]", filters.created_date_from);
+      if (filters.created_date_to) params.append("q[created_at_lteq]", filters.created_date_to);
+      if (searchTerm) params.append("q[search_all_fields_cont]", searchTerm);
+
+      const queryString = params.toString();
+      const baseUrl = localStorage.getItem("baseUrl");
+      const url = `https://${baseUrl}/pms/account_setups/export_occupant_users.xlsx${queryString ? `?${queryString}` : ""}`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        responseType: "blob",
+      });
+
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadUrl;
       link.setAttribute("download", "occupant_users.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
 
       toast.success("Data exported successfully");
     } catch (error) {
