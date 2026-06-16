@@ -1135,23 +1135,26 @@ export const ClubGroupMembershipDetails = () => {
                         </>
                       )}
                     </Button>
-                    <Button
-                      onClick={() => handleSendInvoiceBill(selectedBill.id)}
-                      disabled={sendingBillId === selectedBill.id}
-                      className="bg-[#C72030] hover:bg-[#A01828] text-white"
-                    >
-                      {sendingBillId === selectedBill.id ? (
-                        <>
-                          <Loader className="w-4 h-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="w-4 h-4 mr-2" />
-                          Send Invoice
-                        </>
-                      )}
-                    </Button>
+                    {selectedBill.status?.toLowerCase() === 'paid' && (
+                      <Button
+                        onClick={() => handleSendInvoiceBill(selectedBill.id)}
+                        disabled={sendingBillId === selectedBill.id}
+                        className="bg-[#C72030] hover:bg-[#A01828] text-white"
+                      >
+                        {sendingBillId === selectedBill.id ? (
+                          <>
+                            <Loader className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Invoice
+                          </>
+                        )}
+                      </Button>
+                    )}
+
                   </div>
                 </div>
 
