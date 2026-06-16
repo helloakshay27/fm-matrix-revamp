@@ -5,6 +5,7 @@ import { useNavigate,useLocation} from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Loader2 } from "lucide-react";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface PendingApproval {
   permit_id?: number;
@@ -21,6 +22,7 @@ interface ApiResponse {
 }
 
 export const PermitPendingApprovalsDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const[currentPage,setCurrentPage] = useState(()=>{
@@ -185,20 +187,22 @@ export const PermitPendingApprovalsDashboard = () => {
           //   <Eye className="h-4 w-4" />
           // </Button>
           <div className="flex items-center gap-2">
-            <div title="View permit details">
-              <Eye
-                className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewPermit(
-                    approval.permit_id || 0,
-                    approval.level_id || 0,
-                    approval.resource_type || '',
-                    approval.id || ''
-                  );
-                }}
-              />
-            </div>
+            {shouldShow("Permit", "show") && (
+              <div title="View permit details">
+                <Eye
+                  className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewPermit(
+                      approval.permit_id || 0,
+                      approval.level_id || 0,
+                      approval.resource_type || '',
+                      approval.id || ''
+                    );
+                  }}
+                />
+              </div>
+            )}
           </div>
         );
       case 'permit_type':
