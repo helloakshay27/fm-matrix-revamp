@@ -23,6 +23,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -158,6 +159,7 @@ export const PODashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions()
   const [orgId, setOrgId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -221,7 +223,7 @@ export const PODashboard = () => {
       outstanding: item.outstanding,
       debitCreditNoteRaised: item.debit_credit_note_raised,
     }));
-   setPoList(formattedData);
+    setPoList(formattedData);
     setPagination((prev) => ({
       ...prev,
       total_count: response.total_count,
@@ -271,34 +273,34 @@ export const PODashboard = () => {
       setLoading(false);
     }
   };
-    useEffect(() => {
-      try {
-        const storedOrg = localStorage.getItem('org_id');
-        if (storedOrg) {
-          const num = Number(storedOrg);
-          if (!Number.isNaN(num)) {
-            setOrgId(num);
-            return;
-          }
+  useEffect(() => {
+    try {
+      const storedOrg = localStorage.getItem('org_id');
+      if (storedOrg) {
+        const num = Number(storedOrg);
+        if (!Number.isNaN(num)) {
+          setOrgId(num);
+          return;
         }
-  
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          if (user.org_id) {
-            setOrgId(user.org_id);
-          } else if (user.company_id) {
-            setOrgId(user.company_id);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load org_id:', error);
       }
-    }, []);
-  
 
-    useEffect(() => {
-    fetchData({ 
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.org_id) {
+          setOrgId(user.org_id);
+        } else if (user.company_id) {
+          setOrgId(user.company_id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load org_id:', error);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    fetchData({
       page: urlPage,
       search: initialSearch,
       reference_number: initialFilters.referenceNumber,
@@ -316,7 +318,7 @@ export const PODashboard = () => {
     if (filters.poNumber) params.set("poNumber", filters.poNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
     if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
-    
+
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
 
@@ -462,25 +464,30 @@ export const PODashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/po/details/${item.id}`, {
-            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-        })}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
       {
-        item.allLevelApproved === null && <Button
+        shouldShow("PO", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => navigate(`/finance/po/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            })}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {
+        shouldShow("PO", "update") && item.allLevelApproved === null && <Button
           size="sm"
           variant="ghost"
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/finance/po/edit/${item.id}`, {
-            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
             });
           }}
         >
@@ -640,9 +647,11 @@ export const PODashboard = () => {
     fetchData();
   };
 
+  console.log("PO create", shouldShow("PO", "create"));
+
   const leftActions = (
     <div className="flex items-center gap-2">
-      {orgId !== 63 && (
+      {shouldShow("PO", "create") && orgId !== 63 && (
         <Button
           className="fm-button-fix fm-button-brand px-4 py-2"
           variant="ghost"

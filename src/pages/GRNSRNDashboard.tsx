@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getGRN } from "@/store/slices/grnSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -139,6 +140,7 @@ export const GRNSRNDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions();
 
   const { loading } = useAppSelector(state => state.getGRN)
 
@@ -196,7 +198,7 @@ export const GRNSRNDashboard = () => {
     if (filters.poNumber) params.set("poNumber", filters.poNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
     if (filters.status) params.set("status", filters.status);
-    
+
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
 
@@ -290,21 +292,23 @@ export const GRNSRNDashboard = () => {
 
   const renderActions = (item) => (
     <div className="flex gap-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/grn-srn/details/${item.id}`, {
-            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-          });
-        }}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      {
-        item.approved_status === 'Pending' && <Button
+      {shouldShow("GRN/ SRN", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/grn-srn/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
+          }}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
+      {shouldShow("GRN/ SRN", "update") && item.approved_status === 'Pending' && (
+        <Button
           size="sm"
           variant="ghost"
           className="p-1"
@@ -317,19 +321,21 @@ export const GRNSRNDashboard = () => {
         >
           <Edit className="w-4 h-4" />
         </Button>
-      }
+      )}
     </div>
   );
 
   const leftActions = (
     <div className="flex gap-3">
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={handleAddNew}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {shouldShow("GRN/ SRN", "create") && (
+        <Button
+          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          onClick={handleAddNew}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+      )}
     </div>
   );
 
@@ -339,11 +345,11 @@ export const GRNSRNDashboard = () => {
     }
     setPagination((prev) => ({ ...prev, current_page: page }));
     fetchData(page, {
-        grn_number: filters.grnNumber,
-        po_number: filters.poNumber,
-        supplier_name: filters.supplierName,
-        approval_status: filters.status,
-        search: searchQuery,
+      grn_number: filters.grnNumber,
+      po_number: filters.poNumber,
+      supplier_name: filters.supplierName,
+      approval_status: filters.status,
+      search: searchQuery,
     });
   };
 

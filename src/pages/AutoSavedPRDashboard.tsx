@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
-import { useNavigate,useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface PRData {
   id: string;
@@ -48,6 +49,7 @@ export const AutoSavedPRDashboard = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions()
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -97,17 +99,22 @@ export const AutoSavedPRDashboard = () => {
   const renderActions = (item: PRData) => {
     return (
       <div className="flex space-x-2 justify-center">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleNavigate(item);
-          }}
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+        {
+          shouldShow("Auto Saved PR", "show") && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="p-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNavigate(item);
+              }}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )
+        }
+
       </div>
     );
   };
@@ -117,7 +124,7 @@ export const AutoSavedPRDashboard = () => {
     navigate(`${location.pathname}?page=${page}`, { replace: true });
   };
 
- 
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-3">Temp Requests</h1>
