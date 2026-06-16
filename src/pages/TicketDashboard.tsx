@@ -1189,7 +1189,7 @@ export const TicketDashboard = () => {
   }];
   const renderCustomActions = () => (
     <div className="flex gap-3">
-      {shouldShow("tickets", "add") && (
+      {shouldShow("Ticket", "create") && (
         <Button
           onClick={handleAddButton}
           className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
@@ -1349,7 +1349,7 @@ export const TicketDashboard = () => {
       return (
         <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
           <div title="View ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
-            {shouldShow("tickets", "view") && (
+            {shouldShow("Ticket", "show") && (
               <Eye
                 className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
                 onClick={(e) => {
