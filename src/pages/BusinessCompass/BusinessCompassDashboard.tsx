@@ -73,8 +73,8 @@ interface DashboardData {
 }
 
 interface AiSuggestion {
-  category: "issues" | "kpi" | "goals" | "systems";
-  priority: "high" | "medium" | "low";
+  category: string;
+  priority: string;
   potential_points: number;
   title: string;
   description: string;
@@ -84,7 +84,8 @@ interface AiSuggestion {
 interface AiSuggestionsResponse {
   success: boolean;
   score: number;
-  data: {
+  message?: string;
+  data?: {
     total_potential_improvement: number;
     suggestions: AiSuggestion[];
   };
@@ -92,6 +93,65 @@ interface AiSuggestionsResponse {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const AI_SUGGESTION_CATEGORY_STYLE = {
+  issues: {
+    bgColor: "#fce8e8",
+    borderColor: "#fbcfcf",
+    dotColor: "#f87171",
+    label: "Issues",
+  },
+  systems: {
+    bgColor: "#e8f0fe",
+    borderColor: "#c7d9fd",
+    dotColor: "#60a5fa",
+    label: "Systems",
+  },
+  goals: {
+    bgColor: "#edf7ed",
+    borderColor: "#c3e6c4",
+    dotColor: "#4ade80",
+    label: "Goals",
+  },
+  kpi: {
+    bgColor: "#fff3e8",
+    borderColor: "#fddcbc",
+    dotColor: "#fb923c",
+    label: "KPI",
+  },
+} as const;
+
+const getAiSuggestionCategoryStyle = (category: string) =>
+  AI_SUGGESTION_CATEGORY_STYLE[
+    category?.toLowerCase() as keyof typeof AI_SUGGESTION_CATEGORY_STYLE
+  ] || AI_SUGGESTION_CATEGORY_STYLE.issues;
+
+const getAiSuggestionPriorityStyle = (priority: string) => {
+  const normalizedPriority = priority?.toLowerCase();
+  if (normalizedPriority === "high") {
+    return {
+      backgroundColor: "#ffe4e4",
+      color: "#e05050",
+    };
+  }
+
+  if (normalizedPriority === "low") {
+    return {
+      backgroundColor: "#dcfce7",
+      color: "#15803d",
+    };
+  }
+
+  return {
+    backgroundColor: "#fef3c7",
+    color: "#b45309",
+  };
+};
+
+const formatAiSuggestionLabel = (value: string) =>
+  value
+    ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+    : "Medium";
 
 function getWeekDates(offset: number): Date[] {
   const today = new Date();
@@ -211,14 +271,15 @@ const BusinessCompassDashboard: React.FC = () => {
     "accomplishments"
   );
   const [aiMessage, setAiMessage] = useState("");
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const [aiSuggestionsOpen, setAiSuggestionsOpen] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = useState(false);
+  const [aiSuggestionsError, setAiSuggestionsError] = useState("");
   const [totalPotentialImprovement, setTotalPotentialImprovement] =
     useState(0);
   const [currentScore, setCurrentScore] = useState(0);
+  const [applyingSuggestions, setApplyingSuggestions] = useState(false);
+  const [suggestionApplied, setSuggestionApplied] = useState(false);
 
   // ── Daily dynamic data ────────────────────────────────────────────────
   const [filledDates, setFilledDates] = useState<Set<string>>(new Set());
@@ -641,18 +702,23 @@ const BusinessCompassDashboard: React.FC = () => {
 
   // ── AI Summary ───────────────────────────────────────────────
   const handleGenerateAiSummary = async () => {
+    if (aiSuggestionsLoading) return;
+
     setAiSuggestionsLoading(true);
+    setAiSuggestionsError("");
+    setAiSuggestions([]);
     setAiSuggestionsOpen(true);
+
     try {
-      const baseUrl = (getBaseUrl() ?? "https://fm-uat-api.lockated.com").replace(
-        /\/$/,
-        ""
-      );
+      const configuredBaseUrl = getBaseUrl();
+      if (!configuredBaseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const baseUrl = configuredBaseUrl.replace(/\/$/, "");
       const token = getToken();
       if (!token) {
-        console.error("No token found");
-        setAiSuggestionsLoading(false);
-        return;
+        throw new Error("Authentication token not found.");
       }
 
       const headers = {
@@ -670,22 +736,114 @@ const BusinessCompassDashboard: React.FC = () => {
         }
       );
 
-      if (response.ok) {
-        const data: AiSuggestionsResponse = await response.json();
-        if (data.success && data.data) {
-          setAiSuggestions(data.data.suggestions || []);
-          setTotalPotentialImprovement(
-            data.data.total_potential_improvement || 0
-          );
-          setCurrentScore(data.score || 0);
-        }
-      } else {
-        console.error("Failed to fetch AI suggestions");
+      const data = (await response.json().catch(() => null)) as
+        | AiSuggestionsResponse
+        | null;
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || `Failed to fetch AI suggestions (${response.status})`
+        );
       }
+
+      if (!data?.success || !data.data) {
+        throw new Error(data?.message || "AI suggestions response is invalid.");
+      }
+
+      setAiSuggestions(
+        Array.isArray(data.data.suggestions) ? data.data.suggestions : []
+      );
+      setTotalPotentialImprovement(
+        Number(data.data.total_potential_improvement) || 0
+      );
+      setCurrentScore(Number(data.score) || 0);
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate AI suggestions.";
+      setAiSuggestionsError(message);
+      setTotalPotentialImprovement(0);
+      setCurrentScore(0);
       console.error("Error fetching AI suggestions:", error);
     } finally {
       setAiSuggestionsLoading(false);
+    }
+  };
+
+  // ── Apply Suggestions ─────────────────────────────────────────────────
+  const handleApplySuggestions = async () => {
+    if (aiSuggestions.length === 0) {
+      console.warn("No suggestions to apply");
+      return;
+    }
+
+    setApplyingSuggestions(true);
+    try {
+      const configuredBaseUrl = getBaseUrl();
+      if (!configuredBaseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const baseUrl = configuredBaseUrl.replace(/\/$/, "");
+      const token = getToken();
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      // Format suggestions for API
+      const formattedSuggestions = aiSuggestions.map((suggestion) => ({
+        category: suggestion.category,
+        priority: suggestion.priority,
+        title: suggestion.title,
+        description: suggestion.description,
+      }));
+
+      const response = await fetch(
+        `${baseUrl}/business_compass/apply_ai_suggestions`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ suggestions: formattedSuggestions }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to apply suggestions (${response.status})`);
+      }
+
+      setSuggestionApplied(true);
+
+      // Refetch dashboard data to update business health score
+      const dashRes = await fetch(`${baseUrl}/business_compass/dashboard`, {
+        headers,
+      });
+      if (dashRes.ok) {
+        const updatedData = await dashRes.json();
+        setDashboardData(updatedData);
+      }
+
+      // Auto close panel after 2 seconds
+      setTimeout(() => {
+        setAiSuggestionsOpen(false);
+        setSuggestionApplied(false);
+      }, 2000);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to apply suggestions.";
+      console.error("Error applying suggestions:", error);
+      // Show error but allow retry
+      setApplyingSuggestions(false);
+    } finally {
+      setApplyingSuggestions(false);
     }
   };
 
@@ -910,6 +1068,7 @@ const BusinessCompassDashboard: React.FC = () => {
                     </div>
                     <button
                       onClick={handleGenerateAiSummary}
+                      disabled={aiSuggestionsLoading}
                       style={{
                         backgroundColor: "#DA7756",
                         color: "#fff",
@@ -918,21 +1077,22 @@ const BusinessCompassDashboard: React.FC = () => {
                         padding: "8px 22px",
                         fontSize: "13px",
                         fontWeight: 700,
-                        cursor: "pointer",
+                        cursor: aiSuggestionsLoading ? "not-allowed" : "pointer",
                         whiteSpace: "nowrap",
                         flexShrink: 0,
                         transition: "background-color 0.2s",
+                        opacity: aiSuggestionsLoading ? 0.7 : 1,
                       }}
                       onMouseEnter={(e) => {
-                        (e.target as HTMLButtonElement).style.backgroundColor =
-                          "#c9673f";
+                        if (!aiSuggestionsLoading) {
+                          e.currentTarget.style.backgroundColor = "#c9673f";
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        (e.target as HTMLButtonElement).style.backgroundColor =
-                          "#DA7756";
+                        e.currentTarget.style.backgroundColor = "#DA7756";
                       }}
                     >
-                      Generate
+                      {aiSuggestionsLoading ? "Generating..." : "Generate"}
                     </button>
                   </div>
                   {aiSuggestionsOpen && (
@@ -952,17 +1112,19 @@ const BusinessCompassDashboard: React.FC = () => {
                             <h4 className="text-[13px] font-bold text-[#1a1a1a]">
                               AI Suggestions
                             </h4>
-                            <p className="text-[11px] text-gray-400 mt-0.5">
-                              Implementing all suggestions could boost your
-                              score by{" "}
-                              <span className="font-bold text-[#DA7756]">
-                                +{totalPotentialImprovement} pts
-                              </span>{" "}
-                              →{" "}
-                              <span className="font-bold text-[#DA7756]">
-                                {currentScore + totalPotentialImprovement}/100
-                              </span>
-                            </p>
+                            {aiSuggestions.length > 0 && (
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                Implementing all suggestions could boost your
+                                score by{" "}
+                                <span className="font-bold text-[#DA7756]">
+                                  +{totalPotentialImprovement} pts
+                                </span>{" "}
+                                →{" "}
+                                <span className="font-bold text-[#DA7756]">
+                                  {currentScore + totalPotentialImprovement}/100
+                                </span>
+                              </p>
+                            )}
                           </div>
                         )}
                         <button
@@ -976,51 +1138,18 @@ const BusinessCompassDashboard: React.FC = () => {
                       {/* 2×2 cards */}
                       <div className="grid grid-cols-2 gap-2 px-3 pb-2">
                         {!aiSuggestionsLoading && aiSuggestions.length > 0 ? (
-                          aiSuggestions.map((suggestion, idx) => {
-                            const categoryConfig: Record<string, any> = {
-                              issues: {
-                                bgColor: "#fce8e8",
-                                borderColor: "#fbcfcf",
-                                dotColor: "#f87171",
-                                label: "Issues",
-                              },
-                              systems: {
-                                bgColor: "#e8f0fe",
-                                borderColor: "#c7d9fd",
-                                dotColor: "#60a5fa",
-                                label: "Systems",
-                              },
-                              goals: {
-                                bgColor: "#edf7ed",
-                                borderColor: "#c3e6c4",
-                                dotColor: "#4ade80",
-                                label: "Goals",
-                              },
-                              kpi: {
-                                bgColor: "#fff3e8",
-                                borderColor: "#fddcbc",
-                                dotColor: "#fb923c",
-                                label: "KPI",
-                              },
-                            };
-
-                            const config =
-                              categoryConfig[suggestion.category] ||
-                              categoryConfig.issues;
+                          aiSuggestions.map((suggestion) => {
+                            const config = getAiSuggestionCategoryStyle(
+                              suggestion.category
+                            );
                             const priorityStyles =
-                              suggestion.priority === "high"
-                                ? {
-                                    backgroundColor: "#ffe4e4",
-                                    color: "#e05050",
-                                  }
-                                : {
-                                    backgroundColor: "#fef3c7",
-                                    color: "#b45309",
-                                  };
+                              getAiSuggestionPriorityStyle(
+                                suggestion.priority
+                              );
 
                             return (
                               <div
-                                key={idx}
+                                key={`${suggestion.category}-${suggestion.title}`}
                                 className="rounded-xl p-2.5 flex flex-col gap-1"
                                 style={{
                                   backgroundColor: config.bgColor,
@@ -1042,8 +1171,9 @@ const BusinessCompassDashboard: React.FC = () => {
                                       className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
                                       style={priorityStyles}
                                     >
-                                      {suggestion.priority.charAt(0).toUpperCase() +
-                                        suggestion.priority.slice(1)}
+                                      {formatAiSuggestionLabel(
+                                        suggestion.priority
+                                      )}
                                     </span>
                                   </div>
                                   <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
@@ -1072,6 +1202,10 @@ const BusinessCompassDashboard: React.FC = () => {
                           <div className="col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
                             Generating suggestions...
                           </div>
+                        ) : aiSuggestionsError ? (
+                          <div className="col-span-2 rounded-xl border border-red-100 bg-red-50 px-3 py-4 text-center text-[12px] font-semibold text-red-600">
+                            {aiSuggestionsError}
+                          </div>
                         ) : (
                           <div className="col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
                             No suggestions available
@@ -1082,14 +1216,38 @@ const BusinessCompassDashboard: React.FC = () => {
                       {/* CTA */}
                       <div className="px-3 pb-3">
                         <button
-                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-bold text-white transition-opacity hover:opacity-90"
+                          onClick={handleApplySuggestions}
+                          disabled={applyingSuggestions || aiSuggestions.length === 0}
+                          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all ${
+                            applyingSuggestions
+                              ? "opacity-70 cursor-not-allowed"
+                              : "hover:opacity-90 cursor-pointer"
+                          }`}
                           style={{
-                            background:
-                              "linear-gradient(135deg, #DA7756 0%, #c9673f 100%)",
-                            boxShadow: "0 3px 12px rgba(218,119,86,0.25)",
+                            background: suggestionApplied
+                              ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+                              : "linear-gradient(135deg, #DA7756 0%, #c9673f 100%)",
+                            boxShadow: suggestionApplied
+                              ? "0 3px 12px rgba(34,197,94,0.25)"
+                              : "0 3px 12px rgba(218,119,86,0.25)",
                           }}
                         >
-                          ✦ Apply all suggestions to my action plan
+                          {applyingSuggestions ? (
+                            <>
+                              <span className="inline-block animate-spin">⚙️</span>
+                              Applying...
+                            </>
+                          ) : suggestionApplied ? (
+                            <>
+                              <span>✓</span>
+                              Suggestions Applied!
+                            </>
+                          ) : (
+                            <>
+                              <span>✦</span>
+                              Apply all suggestions to my action plan
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
