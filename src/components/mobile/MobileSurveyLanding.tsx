@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { surveyApi } from "@/services/surveyApi";
-// import comingSoonSign from "@/assets/coming-soon-sign.svg";
 import baseClient from "@/utils/withoutTokenBase";
 import { FormViewAllQuestions, SurveyAnswers } from "./survey";
 
