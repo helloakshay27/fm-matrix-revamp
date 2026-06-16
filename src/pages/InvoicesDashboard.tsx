@@ -10,6 +10,7 @@ import { getInvoinces } from '@/store/slices/invoicesSlice';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const columns: ColumnConfig[] = [
   {
@@ -186,6 +187,7 @@ export const InvoicesDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem("token");
@@ -220,7 +222,7 @@ export const InvoicesDashboard = () => {
       //   total_count: response.pagination.total_count,
       //   total_pages: response.pagination.total_pages
       // })
-       setInvoicesData(response.work_order_invoices);
+      setInvoicesData(response.work_order_invoices);
       setPagination((prev) => ({
         ...prev,
         total_count: response.pagination.total_count,
@@ -232,7 +234,7 @@ export const InvoicesDashboard = () => {
     }
   }
 
-useEffect(() => {
+  useEffect(() => {
     fetchData(urlPage);
   }, []);
 
@@ -244,7 +246,7 @@ useEffect(() => {
     if (appliedFilters.invoiceNumber) params.set("invoiceNumber", appliedFilters.invoiceNumber);
     if (appliedFilters.invoiceDate) params.set("invoiceDate", appliedFilters.invoiceDate);
     if (appliedFilters.supplierName) params.set("supplierName", appliedFilters.supplierName);
-    
+
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchTerm, appliedFilters, navigate]);
 
@@ -270,16 +272,18 @@ useEffect(() => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-3">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/invoices/${item.id}`, {
+      {shouldShow("Invoices", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => navigate(`/finance/invoices/${item.id}`, {
             state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-        })}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
+          })}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
     </div>
   );
 
@@ -301,7 +305,7 @@ useEffect(() => {
     }
   };
 
- const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
