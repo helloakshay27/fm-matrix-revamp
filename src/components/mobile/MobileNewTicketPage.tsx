@@ -39,7 +39,7 @@ import {
 } from "@/services/ticketManagementAPI";
 import { getUser } from "@/utils/auth";
 import { useToast } from "@/hooks/use-toast";
-import comingSoonSign from "@/assets/coming-soon-sign.svg";
+
 import { co } from "node_modules/@fullcalendar/core/internal-common";
 
 const CATEGORY_ICON_LIST = [
@@ -1235,7 +1235,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
         {/* Coming soon illustration */}
         <div className="mb-8 flex justify-center">
           <img
-            src={comingSoonSign}
+            // src={comingSoonSign}
             alt="Coming soon"
             className="w-64 max-w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.08)]"
           />
