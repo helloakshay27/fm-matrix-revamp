@@ -1576,10 +1576,15 @@ const CustomersEdit = () => {
             if (value.length > 10) return;
         }
 
-        // ── GSTIN: auto-uppercase ──
+        // ── GSTIN: auto-uppercase + auto-extract PAN ──
         if (name === 'gstin') {
             value = value.toUpperCase();
             if (value.length > 15) return;
+            // Auto-extract PAN from GSTIN (characters 3–12, i.e. index 2–11)
+            // e.g. GSTIN 27ABCDE1234F1Z5 → PAN ABCDE1234F
+            const extractedPan = value.length >= 12 ? value.substring(2, 12) : '';
+            setForm((p) => ({ ...p, gstin: value, pan: extractedPan }));
+            return;
         }
 
         // ── Opening Balance: numeric only, allow up to 2 decimal places ──
