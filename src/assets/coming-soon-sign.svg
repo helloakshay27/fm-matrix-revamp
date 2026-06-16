@@ -1,0 +1,11 @@
+<svg width="560" height="560" viewBox="0 0 560 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="560" height="560" fill="#F4F4F4"/>
+  <circle cx="280" cy="28" r="24" stroke="#B50000" stroke-width="8" fill="none"/>
+  <path d="M106 240L272 54" stroke="#B50000" stroke-width="6"/>
+  <path d="M288 54L438 232" stroke="#B50000" stroke-width="6"/>
+  <g transform="translate(40 125) rotate(-14 240 180)">
+    <rect x="0" y="0" rx="34" ry="34" width="480" height="360" fill="#C40000"/>
+    <text x="240" y="170" text-anchor="middle" fill="white" font-size="86" font-family="Arial, Helvetica, sans-serif" font-weight="700">COMING</text>
+    <text x="240" y="270" text-anchor="middle" fill="white" font-size="86" font-family="Arial, Helvetica, sans-serif" font-weight="700">SOON</text>
+  </g>
+</svg>
