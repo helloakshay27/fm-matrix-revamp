@@ -2348,6 +2348,10 @@ function App() {
                               element={<SystemAndSOP />}
                             />
                             <Route
+                              path="/admin-compass/team-setup"
+                              element={<TeamSetup />}
+                            />
+                            <Route
                               path="/admin-compass/disc-report"
                               element={<DiscReport />}
                             />
@@ -5818,10 +5822,6 @@ function App() {
                             <Route
                               path="/settings/company-hub/announcements"
                               element={<AnnouncementsSetup />}
-                            />
-                            <Route
-                              path="/settings/company-hub/team-setup"
-                              element={<TeamSetup />}
                             />
                             <Route
                               path="/settings/company-hub/face-authentication"

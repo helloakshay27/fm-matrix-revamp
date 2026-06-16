@@ -35,6 +35,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { ReportExpandedView } from './WeeklyReviews/ReportExpandedView';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface WeeklyLogReport {
@@ -225,222 +226,192 @@ const getBaseUrl = () => {
 const getWeeklyReportJournalId = (entry: { journal_id?: number | null }) =>
     entry.journal_id || null;
 
-const isSubmittedReport = (entry: { status?: string; journal_id?: number | null }) =>
-    entry.status === 'submitted' && !!getWeeklyReportJournalId(entry);
+const isSubmittedReport = (entry: { status?: string; journal_id?: number | null; meeting_journal_id?: number | null }) =>
+    !!entry.meeting_journal_id;
 
-const getDisplayStatus = (entry: { status?: string; journal_id?: number | null }) =>
+const getDisplayStatus = (entry: { status?: string; journal_id?: number | null; meeting_journal_id?: number | null }) =>
     isSubmittedReport(entry) ? 'submitted' : 'missed';
 
-const formatReportValue = (value: any): string => {
-    if (typeof value === 'string') return value;
-    if (value && typeof value === 'object') return value.title || value.text || value.name || JSON.stringify(value);
-    return String(value ?? '-');
-};
-
-const renderDetailReviewValue = (value: any) => {
-    if (Array.isArray(value)) {
-        if (value.length === 0) return '-';
-        return value.map(formatReportValue).join(', ');
-    }
-    if (value && typeof value === 'object') return JSON.stringify(value);
-    return String(value ?? '-');
-};
-
-const getItemTitle = (item: any): string => {
-    if (typeof item === 'string') return item;
-    if (item && typeof item === 'object') return String(item.title || item.text || item.name || item.notes || '');
-    return String(item ?? '');
-};
-
-const getItemType = (item: any): string => {
-    if (!item || typeof item !== 'object') return 'task';
-    return String(item.type || 'task').toLowerCase();
-};
-
-const normalizeList = (...values: any[]) => {
-    for (const value of values) {
-        if (Array.isArray(value)) return value;
-        if (Array.isArray(value?.items)) return value.items;
-    }
-    return [];
-};
-
-const normalizePlanItems = (plans: any[] = []) => {
-    const items: any[] = [];
-
-    plans.forEach((plan) => {
-        if (!plan) return;
-        if (typeof plan !== 'object' || Array.isArray(plan)) {
-            items.push(plan);
-            return;
-        }
-
-        if (plan.title || plan.text || plan.day || plan.member || plan.user_id) {
-            items.push(plan);
-            return;
-        }
-
-        Object.entries(plan).forEach(([day, values]: [string, any]) => {
-            const dayItems = Array.isArray(values) ? values : [];
-            dayItems.forEach((item) => {
-                items.push({
-                    ...(item && typeof item === 'object' ? item : { title: item }),
-                    day,
-                });
-            });
-        });
-    });
-
-    return items;
-};
-
-const buildMemberGroups = (reportData: any, fallbackEntry: WeeklyLogReport) => {
-    const groups = new Map<string, any>();
-
-    const ensureGroup = (source: any = {}) => {
-        const userId = source.user_id ?? source.id;
-        const hasMemberIdentity = !!(source.user_id ?? source.id ?? source.member ?? source.name ?? source.user_name);
-        const name = source.member || source.name || source.user_name || (!hasMemberIdentity ? fallbackEntry.name : '') || (userId === fallbackEntry.user_id ? fallbackEntry.name : '') || 'Unknown Member';
-        const normalizedName = String(name).trim().toLowerCase();
-        const userKey = userId ? `user-${userId}` : '';
-        const nameKey = `name-${normalizedName}`;
-        let key = userKey || nameKey;
-
-        if (userKey && groups.has(nameKey) && !groups.has(userKey)) {
-            const existing = groups.get(nameKey);
-            groups.delete(nameKey);
-            existing.key = userKey;
-            existing.user_id = userId;
-            groups.set(userKey, existing);
-        } else if (!userKey) {
-            const existingWithName = Array.from(groups.values()).find((group) => String(group.name).trim().toLowerCase() === normalizedName);
-            if (existingWithName) key = existingWithName.key;
-        }
-
-        if (!groups.has(key)) {
-            groups.set(key, {
-                key,
-                user_id: userId,
-                name,
-                accomplishments: [],
-                tasksIssues: [],
-                plans: [],
-                remarks: [],
-                pastKpis: [],
-                reviews: [],
-            });
-        }
-
-        const group = groups.get(key);
-        if (!group.name && name) group.name = name;
-        if (!group.user_id && userId) group.user_id = userId;
-        if (!group.user_id && !hasMemberIdentity) group.user_id = fallbackEntry.user_id;
-        return group;
-    };
-
-    normalizeList(reportData.detailed_reviews, reportData.meeting_notes?.detailed_reports).forEach((review: any) => {
-        const group = ensureGroup(review);
-        group.reviews.push(review);
-    });
-
-    normalizeList(reportData.accomplishments, reportData.all_accomplishments, reportData.achievements).forEach((item: any) => {
-        ensureGroup(item).accomplishments.push(item);
-    });
-
-    normalizeList(reportData.tasks_issues, reportData.all_tasks_issues).forEach((item: any) => {
-        ensureGroup(item).tasksIssues.push(item);
-    });
-
-    normalizePlanItems(normalizeList(reportData.upcoming_week_plan, reportData.tomorrow_plan, reportData.all_upcoming_week_plan, reportData.tasks)).forEach((item: any) => {
-        ensureGroup(item).plans.push(item);
-    });
-
-    normalizeList(reportData.remarks, reportData.all_remarks).forEach((item: any) => {
-        ensureGroup(item).remarks.push(item);
-    });
-
-    normalizeList(reportData.past_kpis, reportData.all_past_kpis).forEach((item: any) => {
-        ensureGroup(item).pastKpis.push(item);
-    });
-
-    return Array.from(groups.values()).filter((group) =>
-        group.accomplishments.length ||
-        group.tasksIssues.length ||
-        group.plans.length ||
-        group.remarks.length ||
-        group.pastKpis.length ||
-        group.reviews.length
-    );
-};
-
-const filterGroupsForEntry = (groups: any[], entry: WeeklyLogReport) => {
-    const entryUserId = String(entry.user_id || '');
-    const entryName = String(entry.name || '').trim().toLowerCase();
-    const matched = groups.filter((group) => {
-        const groupUserId = String(group.user_id || '');
-        const groupName = String(group.name || '').trim().toLowerCase();
-        return (entryUserId && groupUserId === entryUserId) || (!!entryName && groupName === entryName);
-    });
-
-    return matched.length > 0 ? matched : groups;
-};
-
-const DetailList = ({ items, emptyText, renderItem }: { items: any[]; emptyText: string; renderItem?: (item: any, idx: number) => React.ReactNode }) => (
-    items.length > 0 ? (
-        <ul className="space-y-1.5 text-xs text-gray-700">
-            {items.map((item, idx) => (
-                <li key={idx} className="break-words">
-                    - {renderItem ? renderItem(item, idx) : formatReportValue(item)}
-                </li>
-            ))}
-        </ul>
-    ) : (
-        <p className="text-xs text-gray-400">{emptyText}</p>
-    )
-);
+const PRIORITY_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClose: () => void }) => {
     const [details, setDetails] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        const detailJournalId = getWeeklyReportJournalId(entry);
+    // Interactive state for the shared expanded view (same UI as the Weekly tab).
+    const [activeTab, setActiveTab] = useState('Daily');
+    const [priorityText, setPriorityText] = useState('');
+    const [selectedPriorityDay, setSelectedPriorityDay] = useState('Mon');
+    const [showDayDropdown, setShowDayDropdown] = useState<string | null>(null);
+    const [priorityLoading, setPriorityLoading] = useState<Record<number, boolean>>({});
+    const [feedbackText, setFeedbackText] = useState('');
+    const [feedbackScore, setFeedbackScore] = useState(0);
+    const [feedbackLoading, setFeedbackLoading] = useState<Record<number, boolean>>({});
+    const [ratingsData, setRatingsData] = useState<Record<number, any>>({});
+    const [ratingsLoading, setRatingsLoading] = useState<Record<number, boolean>>({});
+
+    const detailJournalId = getWeeklyReportJournalId(entry);
+
+    const fetchDetails = useCallback(async () => {
         if (!detailJournalId) return;
+        setLoading(true);
+        try {
+            const res = await axios.get(`${getBaseUrl()}/user_journals/${detailJournalId}.json`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            setDetails(res.data?.data ?? res.data ?? null);
+        } catch (err) {
+            console.error('Failed to load weekly report details', err);
+            toast.error('Failed to load report details');
+        } finally {
+            setLoading(false);
+        }
+    }, [detailJournalId]);
 
-        const fetchDetails = async () => {
-            setLoading(true);
-            try {
-                const res = await axios.get(`${getBaseUrl()}/user_journals/${detailJournalId}.json`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-                setDetails(res.data?.data ?? res.data ?? null);
-            } catch (err) {
-                console.error('Failed to load weekly report details', err);
-                toast.error('Failed to load report details');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDetails();
-    }, [entry.journal_id]);
+    useEffect(() => { fetchDetails(); }, [fetchDetails]);
 
     const reportData = details?.report_data || details?.weekly_report?.report_data || details?.journal?.report_data || {};
-    const achievements = Array.isArray(reportData.achievements) ? reportData.achievements : [];
-    const plans = reportData.upcoming_week_plan || reportData.tasks || [];
-    const remarks = Array.isArray(reportData.remarks) ? reportData.remarks : [];
-    const detailedReviews = Array.isArray(reportData.detailed_reviews) ? reportData.detailed_reviews : [];
-    const kpiSummary = reportData.kpi_summary && typeof reportData.kpi_summary === 'object' ? reportData.kpi_summary : {};
-    const memberGroups = filterGroupsForEntry(buildMemberGroups(reportData, entry), entry);
+
+    // Shape the entry like a Weekly-tab member report so ReportExpandedView renders identically.
+    const report = {
+        ...(details || {}),
+        user_id: entry.user_id,
+        name: entry.name,
+        email: entry.email,
+        department: entry.department,
+        status: entry.status,
+        journal_id: entry.journal_id,
+        report_data: reportData,
+        weekly_report: { id: detailJournalId, report_data: reportData },
+    };
+
+    const fetchRatings = async (userId: number) => {
+        try {
+            setRatingsLoading((prev) => ({ ...prev, [userId]: true }));
+            const baseUrl = getBaseUrl();
+            const token = localStorage.getItem('token');
+            if (!baseUrl || !token) return;
+            const loggedInUserId = localStorage.getItem('userId') || '';
+            const res = await axios.get(
+                `${baseUrl}/ratings.json?resource_type=User&resource_id=${userId}&rating_from_id=${loggedInUserId}`,
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+            );
+            setRatingsData((prev) => ({ ...prev, [userId]: res.data }));
+        } catch (error) {
+            console.error('Error fetching ratings:', error);
+        } finally {
+            setRatingsLoading((prev) => ({ ...prev, [userId]: false }));
+        }
+    };
+
+    const handleSubmitFeedback = async () => {
+        const userId = entry.user_id;
+        const text = feedbackText.trim();
+        if (!text) { toast.error('Please enter feedback'); return; }
+        if (!feedbackScore) { toast.error('Please select a rating'); return; }
+        try {
+            setFeedbackLoading((prev) => ({ ...prev, [userId]: true }));
+            const baseUrl = getBaseUrl();
+            const token = localStorage.getItem('token');
+            if (!baseUrl || !token) return;
+            await axios.post(
+                `${baseUrl}/ratings.json`,
+                {
+                    resource_type: 'User',
+                    resource_id: userId,
+                    rating_from_id: localStorage.getItem('userId') || '',
+                    score: feedbackScore,
+                    reviews: text,
+                    positive_opening: '',
+                    constructive_feedback: '',
+                    positive_closing: '',
+                },
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+            );
+            toast.success('Feedback submitted');
+            setFeedbackText('');
+            setFeedbackScore(0);
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            toast.error('Failed to submit feedback');
+        } finally {
+            setFeedbackLoading((prev) => ({ ...prev, [userId]: false }));
+        }
+    };
+
+    const handleAddPriority = async () => {
+        const text = priorityText.trim();
+        if (!text) return;
+        const userId = entry.user_id;
+        if (!detailJournalId) {
+            toast.error('Priority can be added only after weekly report is submitted');
+            return;
+        }
+        try {
+            setPriorityLoading((prev) => ({ ...prev, [userId]: true }));
+            const baseUrl = getBaseUrl();
+            const token = localStorage.getItem('token');
+            if (!baseUrl || !token) return;
+
+            const existingTasks = reportData.upcoming_week_plan || reportData.tasks || [];
+            const dayKey = selectedPriorityDay.toLowerCase();
+            const priorityItem = {
+                id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`,
+                text,
+                starred: false,
+            };
+            let mergedTasks: any[];
+            if (Array.isArray(existingTasks) && existingTasks.length > 0 && typeof existingTasks[0] === 'object' && !Array.isArray(existingTasks[0])) {
+                const dayKeyedObject = existingTasks[0];
+                mergedTasks = [{ ...dayKeyedObject, [dayKey]: [...(dayKeyedObject[dayKey] || []), priorityItem] }];
+            } else {
+                mergedTasks = [{ [dayKey]: [priorityItem] }];
+            }
+
+            const payload = {
+                user_id: entry.user_id,
+                name: entry.name,
+                email: entry.email,
+                department: entry.department,
+                status: entry.status,
+                journal_id: entry.journal_id,
+                report_data: {
+                    ...reportData,
+                    upcoming_week_plan: mergedTasks,
+                    tasks: reportData.tasks || [],
+                    kpi: reportData.kpi || '',
+                    achievements: reportData.achievements || [],
+                    remarks: reportData.remarks || [],
+                    remark_type: reportData.remark_type || 'remark',
+                    past_kpis: reportData.past_kpis || [],
+                    total_score: reportData.total_score || 0,
+                    sections: reportData.sections || { daily_scores: [0, 0, 0, 0, 0], bonus: 0, self_rating: 0, is_absent: false },
+                    details: reportData.details || { self_rating: 0, is_absent: false },
+                },
+            };
+
+            await axios.put(`${baseUrl}/user_journals/${detailJournalId}.json`, payload, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            });
+            setPriorityText('');
+            toast.success('Priority added');
+            fetchDetails();
+        } catch (error) {
+            console.error('Error adding priority:', error);
+            toast.error('Failed to add priority');
+        } finally {
+            setPriorityLoading((prev) => ({ ...prev, [userId]: false }));
+        }
+    };
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
+        <div className="fixed inset-0 z-[900] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
             <div
-                className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-                style={{ maxHeight: '82vh' }}
+                className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+                style={{ maxHeight: '88vh' }}
             >
                 <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
                     <div>
@@ -475,196 +446,33 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                                 </div>
                             </div>
 
-                            <section className="hidden rounded-xl border border-gray-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-gray-800">Meeting Summary</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                                    <div><span className="font-bold text-gray-500">Total:</span> {reportData.total_members ?? '-'}</div>
-                                    <div><span className="font-bold text-gray-500">Submitted:</span> {reportData.total_submitted ?? '-'}</div>
-                                    <div><span className="font-bold text-gray-500">Missed:</span> {reportData.total_missed ?? '-'}</div>
-                                </div>
-                            </section>
-
-                            <section className="rounded-xl border border-indigo-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-indigo-700">KPI Summary</h4>
-                                {Object.keys(kpiSummary).length > 0 ? (
-                                    <div className="space-y-2 text-sm text-gray-700">
-                                        {Object.entries(kpiSummary).map(([name, data]: [string, any]) => (
-                                            <div key={name} className="rounded-lg bg-gray-50 p-3">
-                                                <p className="font-bold break-words">{name}</p>
-                                                <p className="text-xs text-gray-500">Achieved: {data?.achieved ?? 0}/{data?.total ?? 0}</p>
-                                                {Array.isArray(data?.names) && <p className="text-xs text-gray-500 break-words">Members: {data.names.join(', ')}</p>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : <p className="text-sm text-gray-400">No KPI summary recorded</p>}
-                            </section>
-
-                            <section className="rounded-xl border border-purple-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-purple-700">Member Wise Details</h4>
-                                {memberGroups.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {memberGroups.map((member) => {
-                                            const tasks = member.tasksIssues.filter((item: any) => getItemType(item) === 'task');
-                                            const issues = member.tasksIssues.filter((item: any) => getItemType(item) === 'issue');
-                                            const others = member.tasksIssues.filter((item: any) => !['task', 'issue'].includes(getItemType(item)));
-
-                                            return (
-                                                <div key={member.key} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                                                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                                                        <p className="text-sm font-black text-gray-900 break-words">{member.name}</p>
-                                                    </div>
-
-                                                    {member.reviews.length > 0 && (
-                                                        <div className="mb-3 rounded-lg bg-white p-3 text-xs text-gray-700">
-                                                            {member.reviews.map((review: any, idx: number) => (
-                                                                <div key={idx} className="space-y-1">
-                                                                    {Object.entries(review).filter(([key]) => !['name', 'user_id'].includes(key)).map(([key, value]) => (
-                                                                        <p key={key} className="break-words">
-                                                                            <span className="font-bold capitalize text-gray-500">{key.replace(/_/g, ' ')}:</span> {renderDetailReviewValue(value)}
-                                                                        </p>
-                                                                    ))}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                                        <div className="rounded-lg bg-white p-3">
-                                                            <p className="mb-2 text-[11px] font-black uppercase text-green-700">Top Wins</p>
-                                                            <DetailList items={member.accomplishments} emptyText="No achievements recorded" />
-                                                        </div>
-
-                                                        <div className="rounded-lg bg-white p-3">
-                                                            <p className="mb-2 text-[11px] font-black uppercase text-blue-700">Next Week Plan</p>
-                                                            <DetailList
-                                                                items={member.plans}
-                                                                emptyText="No plan recorded"
-                                                                renderItem={(item: any) => (
-                                                                    <>
-                                                                        {item.day && <span className="font-bold uppercase text-gray-500">{item.day}: </span>}
-                                                                        {getItemTitle(item) || formatReportValue(item)}
-                                                                    </>
-                                                                )}
-                                                            />
-                                                        </div>
-
-                                                        <div className="rounded-lg bg-white p-3">
-                                                            <p className="mb-2 text-[11px] font-black uppercase text-amber-700">Tasks</p>
-                                                            <DetailList
-                                                                items={tasks}
-                                                                emptyText="No tasks recorded"
-                                                                renderItem={(item: any) => (
-                                                                    <>
-                                                                        {getItemTitle(item) || formatReportValue(item)}
-                                                                        {item?.status && <span className="text-gray-400"> ({item.status})</span>}
-                                                                    </>
-                                                                )}
-                                                            />
-                                                        </div>
-
-                                                        <div className="rounded-lg bg-white p-3">
-                                                            <p className="mb-2 text-[11px] font-black uppercase text-red-700">Issues</p>
-                                                            <DetailList
-                                                                items={issues}
-                                                                emptyText="No issues recorded"
-                                                                renderItem={(item: any) => (
-                                                                    <>
-                                                                        {getItemTitle(item) || formatReportValue(item)}
-                                                                        {item?.status && <span className="text-gray-400"> ({item.status})</span>}
-                                                                    </>
-                                                                )}
-                                                            />
-                                                            {others.length > 0 && (
-                                                                <div className="mt-3 border-t border-gray-100 pt-3">
-                                                                    <p className="mb-2 text-[11px] font-black uppercase text-gray-500">Other Items</p>
-                                                                    <DetailList items={others} emptyText="" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="rounded-lg bg-white p-3">
-                                                            <p className="mb-2 text-[11px] font-black uppercase text-orange-700">Remarks</p>
-                                                            <DetailList items={member.remarks} emptyText="No remarks recorded" />
-                                                        </div>
-
-                                                        <div className="rounded-lg bg-white p-3">
-                                                            <p className="mb-2 text-[11px] font-black uppercase text-indigo-700">Past KPIs</p>
-                                                            <DetailList
-                                                                items={member.pastKpis}
-                                                                emptyText="No past KPIs recorded"
-                                                                renderItem={(item: any) => (
-                                                                    <>
-                                                                        KPI {item.kpi_id ?? '-'}: {item.actual_value ?? 0}/{item.target_value ?? '-'}
-                                                                        {item.notes && <span className="text-gray-400"> - {item.notes}</span>}
-                                                                    </>
-                                                                )}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : <p className="text-sm text-gray-400">No member-specific details recorded</p>}
-                            </section>
-
-                            <section className="hidden rounded-xl border border-purple-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-purple-700">Detailed Reviews</h4>
-                                {detailedReviews.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {detailedReviews.map((review: any, idx: number) => (
-                                            <div key={idx} className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                                                <p className="font-bold text-gray-900 break-words">{review.name || `Member ${idx + 1}`}</p>
-                                                {Object.entries(review).filter(([key]) => key !== 'name').map(([key, value]) => (
-                                                    <p key={key} className="break-words">
-                                                        <span className="font-bold capitalize text-gray-500">{key.replace(/_/g, ' ')}:</span> {renderDetailReviewValue(value)}
-                                                    </p>
-                                                ))}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : <p className="text-sm text-gray-400">No detailed reviews recorded</p>}
-                            </section>
-
-                            <section className="hidden rounded-xl border border-green-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-green-700">Top Wins</h4>
-                                {achievements.length > 0 ? (
-                                    <ul className="space-y-2 text-sm text-gray-700">
-                                        {achievements.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
-                                    </ul>
-                                ) : <p className="text-sm text-gray-400">No achievements recorded</p>}
-                            </section>
-
-                            <section className="hidden rounded-xl border border-blue-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-blue-700">Next Week Plan</h4>
-                                {Array.isArray(plans) && plans.length > 0 ? (
-                                    <div className="space-y-2 text-sm text-gray-700">
-                                        {plans.map((plan: any, idx: number) => (
-                                            <div key={idx}>
-                                                {plan && typeof plan === 'object' && !Array.isArray(plan)
-                                                    ? Object.entries(plan).map(([day, items]: [string, any]) => (
-                                                        <div key={day} className="mb-2">
-                                                            <p className="font-bold uppercase text-gray-500">{day}</p>
-                                                            {(Array.isArray(items) ? items : []).map((item, itemIdx) => (
-                                                                <p key={itemIdx} className="break-words">• {formatReportValue(item)}</p>
-                                                            ))}
-                                                        </div>
-                                                    ))
-                                                    : <p className="break-words">• {formatReportValue(plan)}</p>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : <p className="text-sm text-gray-400">No plan recorded</p>}
-                            </section>
-
-                            <section className="hidden rounded-xl border border-orange-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-orange-700">Remarks</h4>
-                                {remarks.length > 0 ? (
-                                    <ul className="space-y-2 text-sm text-gray-700">
-                                        {remarks.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
-                                    </ul>
-                                ) : <p className="text-sm text-gray-400">No remarks recorded</p>}
-                            </section>
+                            <ReportExpandedView
+                                report={report}
+                                activeTab={activeTab}
+                                priorityText={priorityText}
+                                selectedPriorityDay={selectedPriorityDay}
+                                showDayDropdown={showDayDropdown}
+                                priorityLoading={priorityLoading}
+                                daysOfWeek={PRIORITY_DAYS}
+                                feedbackText={feedbackText}
+                                feedbackScore={feedbackScore}
+                                feedbackLoading={feedbackLoading}
+                                ratingsData={ratingsData}
+                                ratingsLoading={ratingsLoading}
+                                onPriorityChange={setPriorityText}
+                                onPriorityDaySelect={setSelectedPriorityDay}
+                                onTogglePriorityDropdown={() =>
+                                    setShowDayDropdown((prev) =>
+                                        prev === `priority-${entry.user_id}` ? null : `priority-${entry.user_id}`
+                                    )
+                                }
+                                onAddPriority={handleAddPriority}
+                                onFeedbackChange={setFeedbackText}
+                                onFeedbackScoreChange={setFeedbackScore}
+                                onSubmitFeedback={handleSubmitFeedback}
+                                onTabChange={setActiveTab}
+                                onFetchRatings={fetchRatings}
+                            />
                         </>
                     )}
                 </div>

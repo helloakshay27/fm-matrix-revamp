@@ -102,10 +102,6 @@ const navigationStructure = {
             href: "/settings/company-hub/announcements",
           },
           {
-            name: "Team Setup",
-            href: "/settings/company-hub/team-setup",
-          },
-          {
             name: "Face Authentication",
             href: "/settings/company-hub/face-authentication",
           },
@@ -1557,10 +1553,6 @@ const modulesByPackage = {
         {
           name: "Announcements Setup",
           href: "/settings/company-hub/announcements",
-        },
-        {
-          name: "Team Setup",
-          href: "/settings/company-hub/team-setup",
         },
         {
           name: "Face Authentication",
