@@ -183,9 +183,9 @@ const formatNamesWithEllipsis = (names: string[], maxDisplay: number = 3): strin
 };
 
 export const AMCDashboard = () => {
-  // Ref for anchoring MUI Select menus inside filter dialog
   const filterDialogRef = useRef<HTMLDivElement | null>(null);
   const amcTypeControlRef = useRef<HTMLDivElement | null>(null);
+  const serviceNameControlRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -1835,17 +1835,22 @@ export const AMCDashboard = () => {
                       </FormControl>
                     </div>
                     <div>
-                      <FormControl fullWidth size="small">
+                      <FormControl fullWidth size="small" ref={serviceNameControlRef}>
                         <InputLabel id="service-name-filter-label">Service Name</InputLabel>
                         <MUISelect
                           labelId="service-name-filter-label"
                           label="Service Name"
                           value={tempServiceNameFilter || 'all'}
                           onChange={(e) => setTempServiceNameFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                          MenuProps={{
+                            PaperProps: { sx: { mt: 0.5, borderRadius: '10px', boxShadow: '0 6px 18px rgba(0,0,0,0.18)', maxWidth: serviceNameControlRef.current?.offsetWidth || '100%' } },
+                          }}
                         >
                           <MenuItem value="all">All Services</MenuItem>
                           {serviceOptions.map((s) => (
-                            <MenuItem key={s.id} value={s.name}>{s.name}</MenuItem>
+                            <MenuItem key={s.id} value={s.name}>
+                              <div className="truncate w-full" title={s.name}>{s.name}</div>
+                            </MenuItem>
                           ))}
                         </MUISelect>
                       </FormControl>
@@ -1933,11 +1938,11 @@ export const AMCDashboard = () => {
                 </div>
               </Box>
 
-              <div className="flex justify-end gap-4 mt-12 pt-6 border-t">
+              <div className="flex justify-center gap-2 mt-12 pt-6 border-t">
                 <Button
                   variant="outline"
                   onClick={handleResetFilters}
-                  className="h-11 px-6 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/5"
+                  className="px-4 py-2 text-sm font-medium rounded hover:opacity-80 transition-opacity"
                 >
                   Clear All
                 </Button>
