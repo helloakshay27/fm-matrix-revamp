@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { surveyApi } from "@/services/surveyApi";
+import comingSoonSign from "@/assets/coming-soon-sign.svg";
 import baseClient from "@/utils/withoutTokenBase";
 import { FormViewAllQuestions, SurveyAnswers } from "./survey";
 
@@ -77,9 +78,12 @@ interface SurveyAttach {
 export const MobileSurveyLanding: React.FC = () => {
   const navigate = useNavigate();
   const { mappingId: rawMappingId } = useParams<{ mappingId: string }>();
+  const hostname = window.location.hostname;
+  const isOigComingSoonDomain =
+    hostname.includes("oig.gophygital.work") || hostname === "localhost";
 
   // Clean up mappingId in case it contains URL segments
-  const mappingId = rawMappingId?.split('/')[0];
+  const mappingId = rawMappingId?.split("/")[0];
 
   // Loading and data states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -158,6 +162,11 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Fetch survey data
   useEffect(() => {
+    if (isOigComingSoonDomain) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchSurveyData = async () => {
       if (!mappingId) return;
 
@@ -190,7 +199,7 @@ export const MobileSurveyLanding: React.FC = () => {
     };
 
     fetchSurveyData();
-  }, [mappingId]);
+  }, [isOigComingSoonDomain, mappingId]);
 
   // Get current question
   const getCurrentQuestion = (): SurveyQuestion | null => {
@@ -208,7 +217,7 @@ export const MobileSurveyLanding: React.FC = () => {
   // Calculate progress percentage
   const getProgressPercentage = (): number => {
     if (!surveyData || !surveyData.snag_checklist) return 0;
-    const totalQuestions = (surveyData?.snag_checklist?.questions_count ?? 0);
+    const totalQuestions = surveyData?.snag_checklist?.questions_count ?? 0;
     // For the final "Any additional comments?" page, show 100%
     if (currentQuestionIndex >= totalQuestions) {
       return 100;
@@ -218,7 +227,12 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Check if survey has text-based questions (text, input, description)
   const hasTextBasedQuestions = (): boolean => {
-    if (!surveyData || !surveyData.snag_checklist || !surveyData.snag_checklist.snag_questions) return false;
+    if (
+      !surveyData ||
+      !surveyData.snag_checklist ||
+      !surveyData.snag_checklist.snag_questions
+    )
+      return false;
     return surveyData.snag_checklist.snag_questions.some(
       (question) =>
         question.qtype === "text" ||
@@ -276,7 +290,8 @@ export const MobileSurveyLanding: React.FC = () => {
       const currentQuestion = getCurrentQuestion();
       if (!currentQuestion) return;
 
-      const isSingleQuestion = surveyData?.snag_checklist?.questions_count === 1;
+      const isSingleQuestion =
+        surveyData?.snag_checklist?.questions_count === 1;
 
       // Check for negative option (option_type === 'n') from API response
       const hasNegative = option.option_type === "n";
@@ -339,7 +354,8 @@ export const MobileSurveyLanding: React.FC = () => {
       const currentQuestion = getCurrentQuestion();
       if (!currentQuestion) return;
 
-      const isSingleQuestion = surveyData?.snag_checklist?.questions_count === 1;
+      const isSingleQuestion =
+        surveyData?.snag_checklist?.questions_count === 1;
 
       // For rating questions, check if the selected rating corresponds to a negative option
       // Map rating to option index based on API options count
@@ -604,9 +620,7 @@ export const MobileSurveyLanding: React.FC = () => {
       // Use the provided answer override or get from state
       const currentAnswer = answerOverride || answers[currentQuestion.id];
       if (!currentAnswer) {
-        console.error(
-          `No answer found for question ${currentQuestion.id}`
-        );
+        console.error(`No answer found for question ${currentQuestion.id}`);
         return;
       }
 
@@ -638,11 +652,12 @@ export const MobileSurveyLanding: React.FC = () => {
       // Include additional fields based on question type and available data
       switch (currentQuestion.qtype) {
         case "multiple":
-          if (currentAnswer.selectedOptions && currentAnswer.selectedOptions.length > 0) {
-            surveyResponseItem.option_id =
-              currentAnswer.selectedOptions[0].id;
-            surveyResponseItem.label =
-              currentAnswer.selectedOptions[0].qname;
+          if (
+            currentAnswer.selectedOptions &&
+            currentAnswer.selectedOptions.length > 0
+          ) {
+            surveyResponseItem.option_id = currentAnswer.selectedOptions[0].id;
+            surveyResponseItem.label = currentAnswer.selectedOptions[0].qname;
             surveyResponseItem.ans_descr =
               currentAnswer.selectedOptions[0].qname;
           }
@@ -660,7 +675,8 @@ export const MobileSurveyLanding: React.FC = () => {
 
           // Add label and ans_descr for rating
           const ratingLabel =
-            currentAnswer.label || getRatingLabel(currentQuestion, currentAnswer.rating);
+            currentAnswer.label ||
+            getRatingLabel(currentQuestion, currentAnswer.rating);
           if (ratingLabel) {
             surveyResponseItem.label = ratingLabel;
             surveyResponseItem.ans_descr = ratingLabel;
@@ -680,8 +696,9 @@ export const MobileSurveyLanding: React.FC = () => {
             );
             if (selectedMapping) {
               surveyResponseItem.option_id =
-                currentQuestion.snag_quest_options[selectedMapping.optionIndex]
-                  .id;
+                currentQuestion.snag_quest_options[
+                  selectedMapping.optionIndex
+                ].id;
             }
           }
           break;
@@ -717,16 +734,22 @@ export const MobileSurveyLanding: React.FC = () => {
             );
             if (selectedMapping) {
               surveyResponseItem.option_id =
-                currentQuestion.snag_quest_options[selectedMapping.optionIndex]
-                  .id;
+                currentQuestion.snag_quest_options[
+                  selectedMapping.optionIndex
+                ].id;
             }
           }
           break;
         }
 
         case "checkbox":
-          if (currentAnswer.selectedOptions && currentAnswer.selectedOptions.length > 0) {
-            surveyResponseItem.response_text = currentAnswer.selectedOptions.map((opt) => opt.qname).join(", ");
+          if (
+            currentAnswer.selectedOptions &&
+            currentAnswer.selectedOptions.length > 0
+          ) {
+            surveyResponseItem.response_text = currentAnswer.selectedOptions
+              .map((opt) => opt.qname)
+              .join(", ");
             surveyResponseItem.ans_descr = surveyResponseItem.response_text;
           }
           surveyResponseItem.answer_type = currentQuestion.qtype;
@@ -866,7 +889,10 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.answer_mode = "emoji_selection";
 
           // For emoji/smiley questions, find and add option_id from API response
-          if (answerData.rating !== undefined && surveyData.snag_checklist?.snag_questions) {
+          if (
+            answerData.rating !== undefined &&
+            surveyData.snag_checklist?.snag_questions
+          ) {
             const questionData = surveyData.snag_checklist.snag_questions.find(
               (q) => q.id === currentQuestion.id
             );
@@ -902,7 +928,9 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
           // Use label from answer data or fetch dynamically from API options
-          const ratingLabelNeg = answerData.label || getRatingLabel(currentQuestion, answerData.rating);
+          const ratingLabelNeg =
+            answerData.label ||
+            getRatingLabel(currentQuestion, answerData.rating);
           if (ratingLabelNeg) {
             surveyResponseItem.label = ratingLabelNeg;
             surveyResponseItem.ans_descr = ratingLabelNeg; // dynamic label from API
@@ -1035,7 +1063,10 @@ export const MobileSurveyLanding: React.FC = () => {
     setShowGenericTags(false);
 
     // Move to next question or show final comments
-    if (currentQuestionIndex < (surveyData?.snag_checklist?.questions_count ?? 0) - 1) {
+    if (
+      currentQuestionIndex <
+      (surveyData?.snag_checklist?.questions_count ?? 0) - 1
+    ) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       // All questions completed, show final comments step
@@ -1053,7 +1084,10 @@ export const MobileSurveyLanding: React.FC = () => {
     setShowGenericTags(false);
 
     // Move to next question or show final description
-    if (currentQuestionIndex < (surveyData?.snag_checklist?.questions_count ?? 0) - 1) {
+    if (
+      currentQuestionIndex <
+      (surveyData?.snag_checklist?.questions_count ?? 0) - 1
+    ) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       // All questions completed, show final description step
@@ -1132,7 +1166,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   const selectedOption =
                     selectedOptionMapping &&
                     previousQuestion.snag_quest_options?.[
-                    selectedOptionMapping.optionIndex
+                      selectedOptionMapping.optionIndex
                     ];
 
                   if (selectedOption) {
@@ -1177,7 +1211,7 @@ export const MobileSurveyLanding: React.FC = () => {
               }
               break;
 
-              case "checkbox":
+            case "checkbox":
               if (savedAnswer.selectedOptions) {
                 setSelectedOptions(savedAnswer.selectedOptions);
               }
@@ -1341,7 +1375,8 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.answer_type = question.qtype;
             surveyResponseItem.answer_mode = "star_rating";
             // Use label from answer data or fetch dynamically from API options
-            const ratingLabelMulti = answer.label || getRatingLabel(question, answer.rating);
+            const ratingLabelMulti =
+              answer.label || getRatingLabel(question, answer.rating);
             if (ratingLabelMulti) {
               surveyResponseItem.label = ratingLabelMulti;
               surveyResponseItem.ans_descr = ratingLabelMulti; // dynamic label from API
@@ -1384,7 +1419,9 @@ export const MobileSurveyLanding: React.FC = () => {
 
           case "checkbox":
             if (answer.selectedOptions && answer.selectedOptions.length > 0) {
-              surveyResponseItem.response_text = answer.selectedOptions.map((opt) => opt.qname).join(", ");
+              surveyResponseItem.response_text = answer.selectedOptions
+                .map((opt) => opt.qname)
+                .join(", ");
               surveyResponseItem.ans_descr = surveyResponseItem.response_text;
             }
             surveyResponseItem.answer_type = question.qtype;
@@ -1455,7 +1492,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       // Calculate minimum rating from all answers for thank you page
       const allRatings = Object.values(answers)
-        .map(answer => answer.rating)
+        .map((answer) => answer.rating)
         .filter((rating): rating is number => rating !== undefined);
       const minRating = allRatings.length > 0 ? Math.min(...allRatings) : 5;
 
@@ -1590,51 +1627,111 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Render loading state
-  // Show Coming Soon page for specific domains or org_ids
-  const orgId = new URLSearchParams(window.location.search).get("org_id");
-  const hostname = window.location.hostname;
-  if (hostname.includes("oig.gophygital.work") || hostname === "localhost" ) {
+  // Show Coming Soon page for specific domains
+  if (isOigComingSoonDomain) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ background: 'linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)' }}>
-        {/* Logo */}
-        <div className="mb-8">
-       
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-6"
+        style={{
+          background: "linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)",
+        }}
+      >
+        {/* OIG Logo */}
+        <div className="flex justify-end">
+          <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
+            {surveyData?.company_logo_url ? (
+              <img
+                src={surveyData.company_logo_url}
+                alt="Company Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://oig.gophygital.work" ? (
+              <img
+                src="/Without bkg.svg"
+                alt="OIG Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://web.gophygital.work" &&
+              new URLSearchParams(window.location.search).get("org_id") ===
+                "3" ? (
+              <img
+                src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
+                alt="PSIPL Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://web.gophygital.work" ? (
+              <img
+                src="/PSIPL-logo (1).png"
+                alt="PSIPL Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="gophygital Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="gophygital Logo"
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
         </div>
 
-        {/* Rocket icon */}
-        <div className="mb-6">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(199,32,48,0.08)' }}>
-            <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-                fill="rgba(199,32,48,0.12)" />
-              <path d="M13.41 7.59L9 12l4.41 4.41L15 14.83l-2.83-2.83L15 9.17l-1.59-1.58z"
-                fill="#C72030" />
-              <circle cx="12" cy="12" r="3" fill="#C72030" opacity="0.3" />
-              <path d="M12 5l2 4H10l2-4zM12 19l-2-4h4l-2 4z" fill="#C72030" />
-            </svg>
-          </div>
+        {/* Coming soon illustration */}
+        <div className="mb-8 flex justify-center">
+          <img
+            src={comingSoonSign}
+            alt="Coming soon"
+            className="w-64 max-w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.08)]"
+          />
         </div>
 
         {/* Text */}
         <div className="text-center max-w-sm">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3"
-            style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          <h1
+            className="text-3xl font-bold text-gray-900 mb-2"
+            style={{ fontFamily: "Work Sans, sans-serif" }}
+          >
             Coming Soon
           </h1>
-         
+          <p
+            className="text-gray-500 text-sm mb-4"
+            style={{ fontFamily: "Work Sans, sans-serif" }}
+          >
+            We're working on something amazing. Stay tuned!
+          </p>
 
           {/* Decorative dots */}
           <div className="flex items-center justify-center gap-2 mt-2">
-            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce" style={{ animationDelay: '300ms' }} />
+            <span
+              className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            />
+            <span
+              className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            />
+            <span
+              className="w-2 h-2 rounded-full bg-[#C72030] animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            />
           </div>
         </div>
 
         {/* Footer */}
-       
+        <div className="absolute bottom-6 text-center">
+          <p
+            className="text-xs text-gray-400"
+            style={{ fontFamily: "Work Sans, sans-serif" }}
+          >
+            Powered by{" "}
+            <span className="font-semibold text-gray-500">Gophygital</span>
+          </p>
+        </div>
       </div>
     );
   }
@@ -1793,7 +1890,7 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.answer_mode = "multiple_choice";
             break;
 
-          case "rating":
+          case "rating": {
             if (answer.rating !== undefined) {
               surveyResponseItem.rating = answer.rating;
               surveyResponseItem.level_id = answer.rating;
@@ -1802,7 +1899,8 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.answer_mode = "star_rating";
 
             // Add label and ans_descr for rating
-            const formRatingLabel = answer.label || getRatingLabel(question, answer.rating);
+            const formRatingLabel =
+              answer.label || getRatingLabel(question, answer.rating);
             if (formRatingLabel) {
               surveyResponseItem.label = formRatingLabel;
               surveyResponseItem.ans_descr = formRatingLabel;
@@ -1826,6 +1924,7 @@ export const MobileSurveyLanding: React.FC = () => {
               }
             }
             break;
+          }
 
           case "emoji":
           case "smiley":
@@ -1864,7 +1963,9 @@ export const MobileSurveyLanding: React.FC = () => {
 
           case "checkbox":
             if (answer.selectedOptions && answer.selectedOptions.length > 0) {
-              surveyResponseItem.response_text = answer.selectedOptions.map((opt) => opt.qname).join(", ");
+              surveyResponseItem.response_text = answer.selectedOptions
+                .map((opt) => opt.qname)
+                .join(", ");
               surveyResponseItem.ans_descr = surveyResponseItem.response_text;
             }
             surveyResponseItem.answer_type = question.qtype;
@@ -1916,9 +2017,10 @@ export const MobileSurveyLanding: React.FC = () => {
 
       // Calculate minimum rating from all answers for thank you page
       const allFormRatings = Object.values(answers)
-        .map(answer => answer.rating)
+        .map((answer) => answer.rating)
         .filter((rating): rating is number => rating !== undefined);
-      const minFormRating = allFormRatings.length > 0 ? Math.min(...allFormRatings) : 5;
+      const minFormRating =
+        allFormRatings.length > 0 ? Math.min(...allFormRatings) : 5;
 
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
@@ -1940,10 +2042,13 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   const currentQuestion = getCurrentQuestion();
-  const isMultiQuestion = (surveyData?.snag_checklist?.questions_count ?? 0) > 1;
+  const isMultiQuestion =
+    (surveyData?.snag_checklist?.questions_count ?? 0) > 1;
   const isLastStep =
     currentQuestionIndex >= (surveyData?.snag_checklist?.questions_count ?? 0);
-  const isFormView = surveyData?.snag_checklist?.form_view === true || surveyData?.snag_checklist?.form_view === "true";
+  const isFormView =
+    surveyData?.snag_checklist?.form_view === true ||
+    surveyData?.snag_checklist?.form_view === "true";
 
   // Debug current question data
   if (currentQuestion) {
@@ -1979,9 +2084,7 @@ export const MobileSurveyLanding: React.FC = () => {
         <div className="flex justify-between items-center">
           <div className="flex justify-start items-center">
             {!isFormView &&
-              ((currentQuestion &&
-                !isLastStep &&
-                currentQuestionIndex > 0) ||
+              ((currentQuestion && !isLastStep && currentQuestionIndex > 0) ||
                 showGenericTags ||
                 (isLastStep && isMultiQuestion)) && (
                 <button
@@ -2031,7 +2134,9 @@ export const MobileSurveyLanding: React.FC = () => {
                   alt="OIG Logo"
                   className="w-full h-full object-contain"
                 />
-              ) : window.location.origin === "https://web.gophygital.work" && new URLSearchParams(window.location.search).get("org_id") === "3" ? (
+              ) : window.location.origin === "https://web.gophygital.work" &&
+                new URLSearchParams(window.location.search).get("org_id") ===
+                  "3" ? (
                 <img
                   src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
                   alt="PSIPL Logo"
@@ -2043,7 +2148,8 @@ export const MobileSurveyLanding: React.FC = () => {
                   alt="PSIPL Logo"
                   className="w-full h-full object-contain"
                 />
-              ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
+              ) : window.location.origin ===
+                "https://fm-matrix.lockated.com" ? (
                 <img
                   src="/gophygital-logo-min.jpg"
                   alt="gophygital Logo"
@@ -2106,13 +2212,15 @@ export const MobileSurveyLanding: React.FC = () => {
               {/* Normal View: Question by Question */}
               <div className="flex-1 flex flex-col justify-center">
                 {/* Survey Title for Normal View */}
-                {currentQuestion && currentQuestion.qtype !== "emoji" && currentQuestion.qtype !== "smiley" && (
-                  <div className="text-center mb-6">
-                    <h1 className="text-xl font-bold text-black/100 mb-2">
-                      {surveyData.survey_title}
-                    </h1>
-                  </div>
-                )}
+                {currentQuestion &&
+                  currentQuestion.qtype !== "emoji" &&
+                  currentQuestion.qtype !== "smiley" && (
+                    <div className="text-center mb-6">
+                      <h1 className="text-xl font-bold text-black/100 mb-2">
+                        {surveyData.survey_title}
+                      </h1>
+                    </div>
+                  )}
 
                 {/* Show Final Description Step */}
                 {isLastStep && isMultiQuestion && (
@@ -2153,11 +2261,11 @@ export const MobileSurveyLanding: React.FC = () => {
                   </div>
                 )}
 
-                {!((
+                {!(
                   isLastStep &&
                   currentQuestionIndex ===
-                  (surveyData?.snag_checklist?.questions_count ?? 0)
-                )) &&
+                    (surveyData?.snag_checklist?.questions_count ?? 0)
+                ) &&
                   currentQuestion &&
                   !showGenericTags &&
                   currentQuestion.qtype !== "emoji" &&
@@ -2185,12 +2293,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                   type="button"
                                   key={option.id}
                                   onClick={() => handleOptionSelect(option)}
-                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${selectedOptions.some(
-                                    (opt) => opt.id === option.id
-                                  )
-                                    ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
-                                    : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
-                                    }`}
+                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
+                                    selectedOptions.some(
+                                      (opt) => opt.id === option.id
+                                    )
+                                      ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
+                                  }`}
                                 >
                                   <div className="flex items-center justify-between">
                                     <span className="font-semibold text-base">
@@ -2199,20 +2308,20 @@ export const MobileSurveyLanding: React.FC = () => {
                                     {selectedOptions.some(
                                       (opt) => opt.id === option.id
                                     ) && (
-                                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                                          <svg
-                                            className="w-4 h-4 text-blue-500"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                          >
-                                            <path
-                                              fillRule="evenodd"
-                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                              clipRule="evenodd"
-                                            />
-                                          </svg>
-                                        </div>
-                                      )}
+                                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                                        <svg
+                                          className="w-4 h-4 text-blue-500"
+                                          fill="currentColor"
+                                          viewBox="0 0 20 20"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                      </div>
+                                    )}
                                   </div>
                                 </button>
                               )
@@ -2275,8 +2384,8 @@ export const MobileSurveyLanding: React.FC = () => {
                               type="button"
                               onClick={async () => {
                                 const isSingleQuestion =
-                                  (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                                  1;
+                                  (surveyData?.snag_checklist
+                                    ?.questions_count ?? 0) === 1;
                                 const answerData = saveCurrentAnswer();
                                 if (isSingleQuestion) {
                                   handleSingleQuestionSubmit(answerData);
@@ -2287,7 +2396,8 @@ export const MobileSurveyLanding: React.FC = () => {
                               disabled={!isCurrentAnswerValid()}
                               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                             >
-                              {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                              {(surveyData?.snag_checklist?.questions_count ??
+                                0) === 1
                                 ? "Submit Survey"
                                 : "Continue"}
                             </button>
@@ -2313,8 +2423,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                                1;
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2329,7 +2439,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                            {(surveyData?.snag_checklist?.questions_count ??
+                              0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2354,8 +2465,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                                1;
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2370,7 +2481,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                            {(surveyData?.snag_checklist?.questions_count ??
+                              0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2395,8 +2507,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                                1;
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2411,7 +2523,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                            {(surveyData?.snag_checklist?.questions_count ??
+                              0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2437,8 +2550,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                                1;
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2453,7 +2566,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                            {(surveyData?.snag_checklist?.questions_count ??
+                              0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2472,11 +2586,12 @@ export const MobileSurveyLanding: React.FC = () => {
                                       type="button"
                                       key={rating}
                                       onClick={() => handleRatingSelect(rating)}
-                                      className={`w-12 h-12 rounded-full transition-all ${selectedRating !== null &&
+                                      className={`w-12 h-12 rounded-full transition-all ${
+                                        selectedRating !== null &&
                                         rating <= selectedRating
-                                        ? "text-yellow-400"
-                                        : "text-gray-300 hover:text-yellow-300"
-                                        }`}
+                                          ? "text-yellow-400"
+                                          : "text-gray-300 hover:text-yellow-300"
+                                      }`}
                                     >
                                       <svg
                                         className="w-full h-full"
@@ -2519,8 +2634,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                                1;
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
                               const answerData = saveCurrentAnswer();
                               if (isSingleQuestion) {
                                 handleSingleQuestionSubmit(answerData);
@@ -2531,7 +2646,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                            {(surveyData?.snag_checklist?.questions_count ??
+                              0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2565,10 +2681,11 @@ export const MobileSurveyLanding: React.FC = () => {
                                           option.label
                                         )
                                       }
-                                      className={`flex flex-col items-center justify-between rounded-lg p-1.5 xs:p-2 sm:p-3 transition-all duration-200 flex-1 min-w-[60px] xs:min-w-[68px] sm:min-w-[75px] max-w-[70px] xs:max-w-[85px] sm:max-w-[95px] h-[90px] xs:h-[100px] sm:h-[110px] ${selectedRating === option.rating
-                                        ? "bg-gradient-to-b from-blue-500 to-blue-600 border-2 border-blue-400 shadow-xl scale-105"
-                                        : "bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 hover:shadow-md hover:scale-[1.02]"
-                                        }`}
+                                      className={`flex flex-col items-center justify-between rounded-lg p-1.5 xs:p-2 sm:p-3 transition-all duration-200 flex-1 min-w-[60px] xs:min-w-[68px] sm:min-w-[75px] max-w-[70px] xs:max-w-[85px] sm:max-w-[95px] h-[90px] xs:h-[100px] sm:h-[110px] ${
+                                        selectedRating === option.rating
+                                          ? "bg-gradient-to-b from-blue-500 to-blue-600 border-2 border-blue-400 shadow-xl scale-105"
+                                          : "bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 hover:shadow-md hover:scale-[1.02]"
+                                      }`}
                                     >
                                       <div className="flex-1 flex items-center justify-center">
                                         <span className="text-3xl xs:text-4xl sm:text-5xl">
@@ -2614,7 +2731,10 @@ export const MobileSurveyLanding: React.FC = () => {
                                     )
                                 );
                                 return (
-                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0" style={{ minWidth: 'calc(100% + 1px)' }}>
+                                  <div
+                                    className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0"
+                                    style={{ minWidth: "calc(100% + 1px)" }}
+                                  >
                                     {pages.map((pageTags, pageIdx) => (
                                       <div
                                         key={pageIdx}
@@ -2629,17 +2749,18 @@ export const MobileSurveyLanding: React.FC = () => {
                                               onClick={() =>
                                                 handleGenericTagClick(tag)
                                               }
-                                              className={`flex flex-col items-center justify-center p-2 xs:p-2.5 rounded-lg text-center transition-all border-2 ${selectedTags.some(
-                                                (selectedTag) =>
-                                                  selectedTag.id === tag.id
-                                              )
-                                                ? "border-blue-500 bg-blue-50"
-                                                : "border-transparent bg-gray-50/50"
-                                                }`}
+                                              className={`flex flex-col items-center justify-center p-2 xs:p-2.5 rounded-lg text-center transition-all border-2 ${
+                                                selectedTags.some(
+                                                  (selectedTag) =>
+                                                    selectedTag.id === tag.id
+                                                )
+                                                  ? "border-blue-500 bg-blue-50"
+                                                  : "border-transparent bg-gray-50/50"
+                                              }`}
                                             >
                                               <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 mb-1.5 xs:mb-2 flex items-center justify-center">
                                                 {tag.icons &&
-                                                  tag.icons.length > 0 ? (
+                                                tag.icons.length > 0 ? (
                                                   <img
                                                     src={tag.icons[0].url}
                                                     alt={tag.category_name}
@@ -2658,13 +2779,18 @@ export const MobileSurveyLanding: React.FC = () => {
                                               </span>
                                             </button>
                                           ))}
-                                          
+
                                           {/* Fill empty slots in grid to maintain layout */}
-                                          {pageTags.length < itemsPerPage && 
-                                            Array.from({ length: itemsPerPage - pageTags.length }).map((_, idx) => (
-                                              <div key={`empty-${idx}`} className="flex-1" />
-                                            ))
-                                          }
+                                          {pageTags.length < itemsPerPage &&
+                                            Array.from({
+                                              length:
+                                                itemsPerPage - pageTags.length,
+                                            }).map((_, idx) => (
+                                              <div
+                                                key={`empty-${idx}`}
+                                                className="flex-1"
+                                              />
+                                            ))}
                                         </div>
                                       </div>
                                     ))}
@@ -2675,20 +2801,25 @@ export const MobileSurveyLanding: React.FC = () => {
 
                             {/* Scroll Indicator Dots */}
                             {(() => {
-                              const tags = getCurrentQuestion()?.generic_tags || [];
+                              const tags =
+                                getCurrentQuestion()?.generic_tags || [];
                               const itemsPerPage = 4;
-                              const totalPages = Math.ceil(tags.length / itemsPerPage);
+                              const totalPages = Math.ceil(
+                                tags.length / itemsPerPage
+                              );
 
                               if (totalPages <= 1) return null;
 
                               return (
                                 <div className="flex justify-center gap-1.5 mt-2 pb-1">
-                                  {Array.from({ length: totalPages }).map((_, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="w-1.5 h-1.5 rounded-full bg-gray-400"
-                                    />
-                                  ))}
+                                  {Array.from({ length: totalPages }).map(
+                                    (_, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="w-1.5 h-1.5 rounded-full bg-gray-400"
+                                      />
+                                    )
+                                  )}
                                 </div>
                               );
                             })()}
@@ -2714,8 +2845,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                                1;
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
 
                               // Save answer with tags and description, then proceed
                               let answerData: SurveyAnswers[number] | undefined;
@@ -2803,11 +2934,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                   Submitting...
                                 </span>
                               </div>
-                            ) : (surveyData?.snag_checklist?.questions_count ?? 0) ===
-                              1 ? (
+                            ) : (surveyData?.snag_checklist?.questions_count ??
+                                0) === 1 ? (
                               "Submit Survey"
                             ) : currentQuestionIndex <
-                              (surveyData?.snag_checklist?.questions_count ?? 0) - 1 ? (
+                              (surveyData?.snag_checklist?.questions_count ??
+                                0) -
+                                1 ? (
                               "Next Question"
                             ) : (
                               "Continue"
