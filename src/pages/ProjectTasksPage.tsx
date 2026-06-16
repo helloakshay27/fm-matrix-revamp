@@ -1229,10 +1229,10 @@ const ProjectTasksPage = () => {
                 params['q[project_management_id_in][]'] = selectedProjects;
             }
             if (dates.startDate) {
-                params['q[start_date_eq]'] = dates.startDate;
+                params['q[expected_start_date_eq]'] = dates.startDate;
             }
             if (dates.endDate) {
-                params['q[end_date_eq]'] = dates.endDate;
+                params['q[target_date_eq]'] = dates.endDate;
             }
             if (dates.completedAt) {
                 params['q[completed_at_gteq]'] = `${dates.completedAt}T00:00:00`;
@@ -1301,10 +1301,10 @@ const ProjectTasksPage = () => {
             filters['q[task_tags_company_tag_id_in][]'] = selectedTags;
         }
         if (dates.startDate) {
-            filters['q[start_date_eq]'] = dates.startDate;
+            filters['q[expected_start_date_eq]'] = dates.startDate;
         }
         if (dates.endDate) {
-            filters['q[end_date_eq]'] = dates.endDate;
+            filters['q[target_date_eq]'] = dates.endDate;
         }
         if (dates.completedAt) {
             filters['q[completed_at_gteq]'] = `${dates.completedAt}T00:00:00`;
