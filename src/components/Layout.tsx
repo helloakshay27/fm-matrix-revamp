@@ -160,10 +160,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
-    // if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
-    //   console.warn("✅ Rendering VendorSidebar");
-    //   return <VendorSidebar />;
-    // }
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      console.warn("✅ Rendering VendorSidebar");
+      return <VendorSidebar />;
+    }
 
     if (isViSite) {
       console.warn("✅ Rendering ViSidebar");
@@ -249,8 +249,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "testtwo@gmail.com" ||
       // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work"||
-      userEmail === "atharv.karnekar@lockated.com"
+      userEmail === "abdul.g@gophygital.work"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -322,9 +321,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
-    // if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
-    //   return <VendorDynamicHeader />;
-    // }
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      return <VendorDynamicHeader />;
+    }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Employees don't need dynamic header, they use EmployeeHeader instead
@@ -359,8 +358,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "testtwo@gmail.com" ||
       // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work" ||
-      userEmail === "atharv.karnekar@lockated.com"
+      userEmail === "abdul.g@gophygital.work"
     ) {
       return <ActionHeader />;
     }
