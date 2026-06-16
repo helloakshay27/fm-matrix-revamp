@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { surveyApi } from "@/services/surveyApi";
-import comingSoonSign from "@/assets/coming-soon-sign.svg";
+// import comingSoonSign from "@/assets/coming-soon-sign.svg";
 import baseClient from "@/utils/withoutTokenBase";
 import { FormViewAllQuestions, SurveyAnswers } from "./survey";
 
@@ -1678,7 +1678,7 @@ export const MobileSurveyLanding: React.FC = () => {
         {/* Coming soon illustration */}
         <div className="mb-8 flex justify-center">
           <img
-            src={comingSoonSign}
+            // src={comingSoonSign}
             alt="Coming soon"
             className="w-64 max-w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.08)]"
           />
