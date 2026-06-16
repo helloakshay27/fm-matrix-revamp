@@ -840,7 +840,8 @@ export const SiteTab: React.FC<SiteTabProps> = ({
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={
               <Button
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                // className="bg-primary text-primary-foreground hover:bg-primary/90"
+                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditSite}
               >
