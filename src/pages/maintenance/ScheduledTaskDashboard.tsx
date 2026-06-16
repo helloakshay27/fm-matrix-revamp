@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 
 import {
@@ -286,6 +287,7 @@ export const ScheduledTaskDashboard = () => {
     };
   };
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
     const location = useLocation();
 
   const [dateFrom, setDateFrom] = useState("01/07/2025");
@@ -1336,19 +1338,19 @@ export const ScheduledTaskDashboard = () => {
                         : []),
                     ].filter(Boolean)}
                     renderRow={(task) => ({
-                      actions: (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewTask(task.id);
-                          }}
-                          className="p-2 h-8 w-8 hover:bg-accent"
-                        >
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        </Button>
-                      ),
+                     actions: shouldShow("Tasks", "show") ? (
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={(e) => {
+      e.stopPropagation();
+      handleViewTask(task.id);
+    }}
+    className="p-2 h-8 w-8 hover:bg-accent"
+  >
+    <Eye className="w-4 h-4 text-muted-foreground" />
+  </Button>
+) : null,
                       id: task.id,
                       checklist: task.checklist,
                       type: task.type,

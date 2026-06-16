@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface ServiceRecord {
   id: number;
@@ -98,6 +99,8 @@ const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
+
   const location = useLocation();
   const dispatch = useAppDispatch();
   const servicesState = useAppSelector((state) => state.services);
@@ -749,9 +752,10 @@ export const ServiceDashboard = () => {
       case 'actions':
         return (
           <div className="flex items-center gap-2">
+            {shouldShow("Soft Services","show")&&(
             <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
               <Eye className="w-4 h-4" />
-            </Button>
+            </Button>)}
             <div title="Flag Service">
               <Flag
                 className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
@@ -915,9 +919,10 @@ export const ServiceDashboard = () => {
 
   const leftActions = useMemo(() => (
     <div className="flex flex-wrap gap-3">
+      {shouldShow("Soft Services","create")&&(
       <Button onClick={handleActionClick} className="fm-button-fix fm-button-brand !h-8 !min-h-8 !px-3 !py-1.5 text-sm">
         <Plus className="w-4 h-4" /> Action
-      </Button>
+      </Button>)}
       {selectedItems.length > 0 && (
         <Button
           className="bg-primary text-primary-foreground hover:bg-primary/90"

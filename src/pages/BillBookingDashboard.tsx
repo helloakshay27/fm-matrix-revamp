@@ -4,9 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search, Settings, Banknote, CreditCard, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const BillBookingDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleAddClick = () => {
@@ -71,13 +73,15 @@ export const BillBookingDashboard = () => {
 
         {/* Add Button */}
         <div className="mb-6">
-          <Button
-            onClick={handleAddClick}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
+          {shouldShow("Bill Booking", "create") && (
+            <Button
+              onClick={handleAddClick}
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          )}
         </div>
 
         {/* Table Section */}

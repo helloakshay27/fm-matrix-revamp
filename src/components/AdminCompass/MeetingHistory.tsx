@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ReportExpandedView } from './WeeklyReviews/ReportExpandedView';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface MemberReport {
@@ -112,77 +113,192 @@ const getMeetingHeadLabel = (config?: HistoryConfig) =>
 const isMeetingSubmitted = (entry: WeekHistory) =>
     entry.member_reports.some((member) => !!member.meeting_journal_id);
 
-const isSubmittedMember = (member: MemberReport, meetingSubmitted = true) =>
-    meetingSubmitted &&
-    (
-        member.status === 'submitted' ||
-        member.weekly_report?.status === 'submitted'
-    ) &&
-    (
-        !!getMemberDetailJournalId(member) ||
-        !!member.report_data ||
-        !!member.submitted_at
-    );
+const isSubmittedMember = (member: MemberReport, _meetingSubmitted = true) =>
+    !!member.meeting_journal_id;
 
 const getDisplayStatus = (member: MemberReport, meetingSubmitted = true) =>
     isSubmittedMember(member, meetingSubmitted) ? 'submitted' : 'missed';
 
-const formatReportValue = (value: any): string => {
-    if (typeof value === 'string') return value;
-    if (value && typeof value === 'object') return value.title || value.text || value.name || JSON.stringify(value);
-    return String(value ?? '-');
-};
-
-const renderDetailReviewValue = (value: any) => {
-    if (Array.isArray(value)) {
-        if (value.length === 0) return '-';
-        return value.map(formatReportValue).join(', ');
-    }
-    if (value && typeof value === 'object') return JSON.stringify(value);
-    return String(value ?? '-');
-};
+const PRIORITY_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose: () => void }) => {
     const [details, setDetails] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        const detailJournalId = getMemberDetailJournalId(member);
+    // Interactive state for the shared expanded view (same UI as the Weekly tab).
+    const [activeTab, setActiveTab] = useState('Daily');
+    const [priorityText, setPriorityText] = useState('');
+    const [selectedPriorityDay, setSelectedPriorityDay] = useState('Mon');
+    const [showDayDropdown, setShowDayDropdown] = useState<string | null>(null);
+    const [priorityLoading, setPriorityLoading] = useState<Record<number, boolean>>({});
+    const [feedbackText, setFeedbackText] = useState('');
+    const [feedbackScore, setFeedbackScore] = useState(0);
+    const [feedbackLoading, setFeedbackLoading] = useState<Record<number, boolean>>({});
+    const [ratingsData, setRatingsData] = useState<Record<number, any>>({});
+    const [ratingsLoading, setRatingsLoading] = useState<Record<number, boolean>>({});
+
+    const detailJournalId = getMemberDetailJournalId(member);
+
+    const fetchDetails = useCallback(async () => {
         if (!detailJournalId) return;
+        setLoading(true);
+        try {
+            const res = await axios.get(`${getBaseUrl()}/user_journals/${detailJournalId}.json`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            setDetails(res.data?.data ?? res.data ?? null);
+        } catch (err) {
+            console.error('Failed to load weekly report details', err);
+            toast.error('Failed to load report details');
+        } finally {
+            setLoading(false);
+        }
+    }, [detailJournalId]);
 
-        const fetchDetails = async () => {
-            setLoading(true);
-            try {
-                const res = await axios.get(`${getBaseUrl()}/user_journals/${detailJournalId}.json`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-                setDetails(res.data?.data ?? res.data ?? null);
-            } catch (err) {
-                console.error('Failed to load weekly report details', err);
-                toast.error('Failed to load report details');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDetails();
-    }, [member.journal_id, member.meeting_journal_id]);
+    useEffect(() => { fetchDetails(); }, [fetchDetails]);
 
     const reportData = details?.report_data || details?.weekly_report?.report_data || details?.journal?.report_data || member.report_data || {};
-    const achievements = Array.isArray(reportData.achievements) ? reportData.achievements : [];
-    const plans = (reportData.upcoming_week_plan || reportData.tasks || []) as any[];
-    const remarks = Array.isArray(reportData.remarks) ? reportData.remarks : [];
-    const detailedReviews = Array.isArray(reportData.detailed_reviews) ? reportData.detailed_reviews : [];
-    const kpiSummary = reportData.kpi_summary && typeof reportData.kpi_summary === 'object' ? reportData.kpi_summary : {};
+
+    // Shape the member like a Weekly-tab member report so ReportExpandedView renders identically.
+    const report = {
+        ...(details || {}),
+        user_id: member.user_id,
+        name: member.name,
+        email: member.email,
+        department: member.department,
+        status: member.status,
+        journal_id: member.journal_id,
+        report_data: reportData,
+        weekly_report: { id: detailJournalId, report_data: reportData },
+    };
+
+    const fetchRatings = async (userId: number) => {
+        try {
+            setRatingsLoading((prev) => ({ ...prev, [userId]: true }));
+            const baseUrl = getBaseUrl();
+            const token = localStorage.getItem('token');
+            if (!baseUrl || !token) return;
+            const loggedInUserId = localStorage.getItem('userId') || '';
+            const res = await axios.get(
+                `${baseUrl}/ratings.json?resource_type=User&resource_id=${userId}&rating_from_id=${loggedInUserId}`,
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+            );
+            setRatingsData((prev) => ({ ...prev, [userId]: res.data }));
+        } catch (error) {
+            console.error('Error fetching ratings:', error);
+        } finally {
+            setRatingsLoading((prev) => ({ ...prev, [userId]: false }));
+        }
+    };
+
+    const handleSubmitFeedback = async () => {
+        const userId = member.user_id;
+        const text = feedbackText.trim();
+        if (!text) { toast.error('Please enter feedback'); return; }
+        if (!feedbackScore) { toast.error('Please select a rating'); return; }
+        try {
+            setFeedbackLoading((prev) => ({ ...prev, [userId]: true }));
+            const baseUrl = getBaseUrl();
+            const token = localStorage.getItem('token');
+            if (!baseUrl || !token) return;
+            await axios.post(
+                `${baseUrl}/ratings.json`,
+                {
+                    resource_type: 'User',
+                    resource_id: userId,
+                    rating_from_id: localStorage.getItem('userId') || '',
+                    score: feedbackScore,
+                    reviews: text,
+                    positive_opening: '',
+                    constructive_feedback: '',
+                    positive_closing: '',
+                },
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+            );
+            toast.success('Feedback submitted');
+            setFeedbackText('');
+            setFeedbackScore(0);
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            toast.error('Failed to submit feedback');
+        } finally {
+            setFeedbackLoading((prev) => ({ ...prev, [userId]: false }));
+        }
+    };
+
+    const handleAddPriority = async () => {
+        const text = priorityText.trim();
+        if (!text) return;
+        const userId = member.user_id;
+        if (!detailJournalId) {
+            toast.error('Priority can be added only after weekly report is submitted');
+            return;
+        }
+        try {
+            setPriorityLoading((prev) => ({ ...prev, [userId]: true }));
+            const baseUrl = getBaseUrl();
+            const token = localStorage.getItem('token');
+            if (!baseUrl || !token) return;
+
+            const existingTasks = reportData.upcoming_week_plan || reportData.tasks || [];
+            const dayKey = selectedPriorityDay.toLowerCase();
+            const priorityItem = {
+                id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`,
+                text,
+                starred: false,
+            };
+            let mergedTasks: any[];
+            if (Array.isArray(existingTasks) && existingTasks.length > 0 && typeof existingTasks[0] === 'object' && !Array.isArray(existingTasks[0])) {
+                const dayKeyedObject = existingTasks[0];
+                mergedTasks = [{ ...dayKeyedObject, [dayKey]: [...(dayKeyedObject[dayKey] || []), priorityItem] }];
+            } else {
+                mergedTasks = [{ [dayKey]: [priorityItem] }];
+            }
+
+            const payload = {
+                user_id: member.user_id,
+                name: member.name,
+                email: member.email,
+                department: member.department,
+                status: member.status,
+                journal_id: member.journal_id,
+                report_data: {
+                    ...reportData,
+                    upcoming_week_plan: mergedTasks,
+                    tasks: reportData.tasks || [],
+                    kpi: reportData.kpi || '',
+                    achievements: reportData.achievements || [],
+                    remarks: reportData.remarks || [],
+                    remark_type: reportData.remark_type || 'remark',
+                    past_kpis: reportData.past_kpis || [],
+                    total_score: reportData.total_score || 0,
+                    sections: reportData.sections || { daily_scores: [0, 0, 0, 0, 0], bonus: 0, self_rating: 0, is_absent: false },
+                    details: reportData.details || { self_rating: 0, is_absent: false },
+                },
+            };
+
+            await axios.put(`${baseUrl}/user_journals/${detailJournalId}.json`, payload, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            });
+            setPriorityText('');
+            toast.success('Priority added');
+            fetchDetails();
+        } catch (error) {
+            console.error('Error adding priority:', error);
+            toast.error('Failed to add priority');
+        } finally {
+            setPriorityLoading((prev) => ({ ...prev, [userId]: false }));
+        }
+    };
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
+        <div className="fixed inset-0 z-[900] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
             <div
-                className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-                style={{ maxHeight: '82vh' }}
+                className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+                style={{ maxHeight: '88vh' }}
             >
                 <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
                     <div>
@@ -217,87 +333,33 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
                                 </div>
                             </div>
 
-                            <section className="hidden rounded-xl border border-gray-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-gray-800">Meeting Summary</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                                    <div><span className="font-bold text-gray-500">Total:</span> {reportData.total_members ?? '-'}</div>
-                                    <div><span className="font-bold text-gray-500">Submitted:</span> {reportData.total_submitted ?? '-'}</div>
-                                    <div><span className="font-bold text-gray-500">Missed:</span> {reportData.total_missed ?? '-'}</div>
-                                </div>
-                            </section>
-
-                            <section className="rounded-xl border border-indigo-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-indigo-700">KPI Summary</h4>
-                                {Object.keys(kpiSummary).length > 0 ? (
-                                    <div className="space-y-2 text-sm text-gray-700">
-                                        {Object.entries(kpiSummary).map(([name, data]: [string, any]) => (
-                                            <div key={name} className="rounded-lg bg-gray-50 p-3">
-                                                <p className="font-bold break-words">{name}</p>
-                                                <p className="text-xs text-gray-500">Achieved: {data?.achieved ?? 0}/{data?.total ?? 0}</p>
-                                                {Array.isArray(data?.names) && <p className="text-xs text-gray-500 break-words">Members: {data.names.join(', ')}</p>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : <p className="text-sm text-gray-400">No KPI summary recorded</p>}
-                            </section>
-
-                            <section className="rounded-xl border border-purple-100 p-4">
-                                <h4 className="mb-3 text-sm font-bold text-purple-700">Detailed Reviews</h4>
-                                {detailedReviews.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {detailedReviews.map((review: any, idx: number) => (
-                                            <div key={idx} className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                                                <p className="font-bold text-gray-900 break-words">{review.name || `Member ${idx + 1}`}</p>
-                                                {Object.entries(review).filter(([key]) => key !== 'name').map(([key, value]) => (
-                                                    <p key={key} className="break-words">
-                                                        <span className="font-bold capitalize text-gray-500">{key.replace(/_/g, ' ')}:</span> {renderDetailReviewValue(value)}
-                                                    </p>
-                                                ))}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : <p className="text-sm text-gray-400">No detailed reviews recorded</p>}
-                            </section>
-
-                            <section className="rounded-xl border border-green-100 p-4">
-                        <h4 className="mb-3 text-sm font-bold text-green-700">Top Wins</h4>
-                        {achievements.length > 0 ? (
-                            <ul className="space-y-2 text-sm text-gray-700">
-                                {achievements.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
-                            </ul>
-                        ) : <p className="text-sm text-gray-400">No achievements recorded</p>}
-                            </section>
-
-                            <section className="rounded-xl border border-blue-100 p-4">
-                        <h4 className="mb-3 text-sm font-bold text-blue-700">Next Week Plan</h4>
-                        {Array.isArray(plans) && plans.length > 0 ? (
-                            <div className="space-y-2 text-sm text-gray-700">
-                                {plans.map((plan: any, idx: number) => (
-                                    <div key={idx}>
-                                        {plan && typeof plan === 'object' && !Array.isArray(plan)
-                                            ? Object.entries(plan).map(([day, items]: [string, any]) => (
-                                                <div key={day} className="mb-2">
-                                                    <p className="font-bold uppercase text-gray-500">{day}</p>
-                                                    {(Array.isArray(items) ? items : []).map((item, itemIdx) => (
-                                                        <p key={itemIdx} className="break-words">• {formatReportValue(item)}</p>
-                                                    ))}
-                                                </div>
-                                            ))
-                                            : <p className="break-words">• {formatReportValue(plan)}</p>}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : <p className="text-sm text-gray-400">No plan recorded</p>}
-                            </section>
-
-                            <section className="rounded-xl border border-orange-100 p-4">
-                        <h4 className="mb-3 text-sm font-bold text-orange-700">Remarks</h4>
-                        {remarks.length > 0 ? (
-                            <ul className="space-y-2 text-sm text-gray-700">
-                                {remarks.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
-                            </ul>
-                        ) : <p className="text-sm text-gray-400">No remarks recorded</p>}
-                            </section>
+                            <ReportExpandedView
+                                report={report}
+                                activeTab={activeTab}
+                                priorityText={priorityText}
+                                selectedPriorityDay={selectedPriorityDay}
+                                showDayDropdown={showDayDropdown}
+                                priorityLoading={priorityLoading}
+                                daysOfWeek={PRIORITY_DAYS}
+                                feedbackText={feedbackText}
+                                feedbackScore={feedbackScore}
+                                feedbackLoading={feedbackLoading}
+                                ratingsData={ratingsData}
+                                ratingsLoading={ratingsLoading}
+                                onPriorityChange={setPriorityText}
+                                onPriorityDaySelect={setSelectedPriorityDay}
+                                onTogglePriorityDropdown={() =>
+                                    setShowDayDropdown((prev) =>
+                                        prev === `priority-${member.user_id}` ? null : `priority-${member.user_id}`
+                                    )
+                                }
+                                onAddPriority={handleAddPriority}
+                                onFeedbackChange={setFeedbackText}
+                                onFeedbackScoreChange={setFeedbackScore}
+                                onSubmitFeedback={handleSubmitFeedback}
+                                onTabChange={setActiveTab}
+                                onFetchRatings={fetchRatings}
+                            />
                         </>
                     )}
                 </div>

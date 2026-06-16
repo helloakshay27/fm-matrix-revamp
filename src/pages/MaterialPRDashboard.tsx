@@ -13,6 +13,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { cache } from "@/utils/cacheUtils";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const CACHE_TTL = 5 * 60 * 1000;   // 5 minutes — fresh
 const STALE_TTL = 30 * 60 * 1000;  // 30 minutes — show stale while revalidating
@@ -67,7 +68,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
-   {
+  {
     key: "lastApprovedBy",
     label: "Last Approved By",
     sortable: true,
@@ -95,7 +96,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
- 
+
   {
     key: "prAmount",
     label: "PR Amount",
@@ -116,6 +117,8 @@ export const MaterialPRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+
+  const { shouldShow } = useDynamicPermissions()
 
   const [loading, setLoading] = useState(false);
   const bgRefreshingRef = useRef(false);
@@ -219,7 +222,7 @@ export const MaterialPRDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData({ 
+    fetchData({
       page: urlPage,
       search: initialSearch,
       reference_number: initialFilters.referenceNumber,
@@ -238,7 +241,7 @@ export const MaterialPRDashboard = () => {
     if (filters.prNumber) params.set("prNumber", filters.prNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
     if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
-    
+
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
 
@@ -376,21 +379,26 @@ export const MaterialPRDashboard = () => {
   const renderActions = (item: any) => {
     return (
       <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/finance/material-pr/details/${item.id}`, {
-              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-            });
-          }}
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
         {
-          item.canEditAll && <Button
+          shouldShow("Material PR", "show") && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="p-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/finance/material-pr/details/${item.id}`, {
+                  state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+                });
+              }}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )
+        }
+
+        {
+          shouldShow("Material PR", "update") && item.canEditAll && <Button
             size="sm"
             variant="ghost"
             className="p-1"
@@ -415,13 +423,17 @@ export const MaterialPRDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/finance/material-pr/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("Material PR", "create") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => navigate("/finance/material-pr/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </div>
   );
 

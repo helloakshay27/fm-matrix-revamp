@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface SurveyItem {
   id: number;
@@ -59,6 +60,7 @@ interface FilterState {
 
 export const SurveyListDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const [surveys, setSurveys] = useState<SurveyItem[]>([]);
@@ -335,20 +337,24 @@ export const SurveyListDashboard = () => {
         case "actions":
           return (
             <div className="flex justify-center items-center gap-2">
-              <button
-                onClick={() => handleRowAction("View", item.id)}
-                className="p-1 text-black-600 hover:text-black-800"
-                title="View"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleRowAction("Edit", item.id)}
-                className="p-1 text-black-600 hover:text-black-800"
-                title="Edit"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
+              {shouldShow("Survey List", "show") && (
+                <button
+                  onClick={() => handleRowAction("View", item.id)}
+                  className="p-1 text-black-600 hover:text-black-800"
+                  title="View"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              )}
+              {shouldShow("Survey List", "update") && (
+                <button
+                  onClick={() => handleRowAction("Edit", item.id)}
+                  className="p-1 text-black-600 hover:text-black-800"
+                  title="Edit"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              )}
             </div>
           );
         case "name":
@@ -364,19 +370,15 @@ export const SurveyListDashboard = () => {
             </div>
           );
         case "ticket_category":
-          return (
-            <span>
-              {item.ticket_configs?.category || "-"}
-            </span>
-          );
+          return <span>{item.ticket_configs?.category || "-"}</span>;
         case "created_at":
           return (
             <span>
               {item.created_at
-                ? new Date(item.created_at).toLocaleDateString('en-IN', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
+                ? new Date(item.created_at).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
                     // hour: '2-digit',
                     // minute: '2-digit'
                   })
@@ -384,11 +386,7 @@ export const SurveyListDashboard = () => {
             </span>
           );
         case "assigned_to":
-          return (
-            <span>
-              {item.ticket_configs?.assigned_to || "-"}
-            </span>
-          );
+          return <span>{item.ticket_configs?.assigned_to || "-"}</span>;
         case "snag_audit_sub_category":
           return <span>{item.snag_audit_sub_category || "-"}</span>;
         case "status": {
@@ -426,7 +424,7 @@ export const SurveyListDashboard = () => {
           );
       }
     },
-    [navigate, toast]
+    [navigate, toast, shouldShow]
   );
 
   const filteredSurveys = useMemo(() => {
@@ -482,13 +480,15 @@ export const SurveyListDashboard = () => {
           pageSize={10}
           leftActions={
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
-              <Button
-                onClick={handleAddSurvey}
-                className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
-              >
-                <Plus className="w-4 h-4" />
-                Add
-              </Button>
+              {shouldShow("Survey List", "create") && (
+                <Button
+                  onClick={handleAddSurvey}
+                  className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </Button>
+              )}
             </div>
           }
           onFilterClick={handleOpenFilterModal}
