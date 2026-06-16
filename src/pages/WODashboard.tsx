@@ -22,6 +22,7 @@ const buildCacheKey = (siteId: string, page: number, params: Record<string, any>
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -226,6 +227,7 @@ const columns: ColumnConfig[] = [
 export const WODashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
 
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -306,35 +308,35 @@ export const WODashboard = () => {
       setLoading(false);
     }
   };
-useEffect(() => {
-      try {
-        // first try explicit org_id stored separately (common pattern)
-        const storedOrg = localStorage.getItem('org_id');
-        if (storedOrg) {
-          const num = Number(storedOrg);
-          if (!Number.isNaN(num)) {
-            setOrgId(num);
-            return;
-          }
+  useEffect(() => {
+    try {
+      // first try explicit org_id stored separately (common pattern)
+      const storedOrg = localStorage.getItem('org_id');
+      if (storedOrg) {
+        const num = Number(storedOrg);
+        if (!Number.isNaN(num)) {
+          setOrgId(num);
+          return;
         }
-  
-        // fallback to user object which may contain org_id/company_id
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          if (user.org_id) {
-            setOrgId(user.org_id);
-          } else if (user.company_id) {
-            setOrgId(user.company_id);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load org_id:', error);
       }
-    }, []);
+
+      // fallback to user object which may contain org_id/company_id
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.org_id) {
+          setOrgId(user.org_id);
+        } else if (user.company_id) {
+          setOrgId(user.company_id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load org_id:', error);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchData({ 
+    fetchData({
       page: urlPage,
       search: initialSearch,
       reference_number: initialFilters.referenceNumber,
@@ -351,7 +353,7 @@ useEffect(() => {
     if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
     if (filters.poNumber) params.set("poNumber", filters.poNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
-    
+
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
 
@@ -384,7 +386,7 @@ useEffect(() => {
 
   const debouncedFetchData = useCallback(
     debounce((query: string, currentFilters: any) => {
-      fetchData({ 
+      fetchData({
         page: 1,
         search: query,
         reference_number: currentFilters.reference_number,
@@ -497,18 +499,23 @@ useEffect(() => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center gap-3">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/wo/details/${item.id}`, {
-          state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-        })}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
       {
-        item.all_level_approved === null && <Button
+        shouldShow("WO", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => navigate(`/finance/wo/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            })}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {
+        shouldShow("WO", "update") && item.all_level_approved === null && <Button
           size="sm"
           variant="ghost"
           className="p-1"
@@ -532,7 +539,7 @@ useEffect(() => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      {orgId !== 63 && (
+      {shouldShow("WO", "create") && orgId !== 63 && (
         <Button
           className="fm-button-fix fm-button-brand px-4 py-2"
           variant="ghost"
@@ -558,7 +565,7 @@ useEffect(() => {
     </Button>
   );
 
- const handlePageChange = async (page: number) => {
+  const handlePageChange = async (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }

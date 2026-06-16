@@ -95,7 +95,7 @@ interface UserStats {
 }
 
 const TeamSetup: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"active" | "inactive" | "invitations" | "email-logs">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "inactive" | "invitations" | "invitation-history" | "email-logs">("active");
   const [users, setUsers] = useState<TeamUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -205,13 +205,11 @@ const TeamSetup: React.FC = () => {
           }
           
           setTotalPages(Math.ceil(res.total / limit));
-          setMeta({
+          setStats({
             total: res.total,
             active: 0,
             inactive: 0,
             pending: activeTab === "invitations" ? res.total : 0,
-            page: 1,
-            per_page: limit
           });
         }
         setIsLoading(false);

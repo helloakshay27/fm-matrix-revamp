@@ -6,6 +6,7 @@ import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import {
   Pagination,
   PaginationContent,
@@ -89,6 +90,7 @@ const columns: ColumnConfig[] = [
 
 export const GDNDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [gdnData, setGdnData] = useState<GDNRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState<GDNPagination>({
@@ -177,17 +179,21 @@ export const GDNDashboard = () => {
   };
 
   const renderActions = (item: GDNRequest) => (
-    <Button
-      size="sm"
-      variant="ghost"
-      className="p-1"
-      onClick={() => navigate(`/finance/gdn/details/${item.id}`)}
-    >
-      <Eye className="h-4 w-4" />
-    </Button>
+    <>
+      {shouldShow("GDN", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => navigate(`/finance/gdn/details/${item.id}`)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      )}
+    </>
   );
 
-  const leftActions = (
+  const leftActions = shouldShow("GDN", "create") ? (
     <Button
       className="fm-button-fix fm-button-brand px-4 py-2"
       onClick={() => navigate("/finance/gdn/request-add")}
@@ -195,7 +201,7 @@ export const GDNDashboard = () => {
       <Plus className="w-4 h-4 mr-2" />
       Add
     </Button>
-  );
+  ) : null;
 
   const handlePageChange = (page: number) => {
     if (

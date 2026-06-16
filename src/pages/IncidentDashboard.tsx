@@ -24,6 +24,7 @@ import { incidentService, type Incident } from "@/services/incidentService";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
 import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
@@ -539,6 +540,7 @@ const RcaTable = ({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const IncidentDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
 
   // ── List tab state
@@ -1166,15 +1168,17 @@ export const IncidentDashboard = () => {
             columns={columns}
             renderCell={renderCell}
             renderActions={(item) => (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  navigate(`/safety/incident/new-details/${item.id}`)
-                }
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
+              shouldShow("Incident", "show") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    navigate(`/safety/incident/new-details/${item.id}`)
+                  }
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+              )
             )}
             loading={loading}
             emptyMessage={error ?? "No incidents found"}
@@ -1184,12 +1188,14 @@ export const IncidentDashboard = () => {
             storageKey="incidents-dashboard"
             pagination={false}
             leftActions={
-              <Button
-                onClick={() => navigate("/safety/incident/add")}
-                className="bg-[#C72030] text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" /> Add Incident
-              </Button>
+              shouldShow("Incident", "create") && (
+                <Button
+                  onClick={() => navigate("/safety/incident/add")}
+                  className="bg-[#C72030] text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add Incident
+                </Button>
+              )
             }
             onFilterClick={() => setIsFilterModalOpen(true)}
           />

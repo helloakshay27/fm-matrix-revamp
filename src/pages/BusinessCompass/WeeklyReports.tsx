@@ -31,6 +31,7 @@ import {
     ListTodo,
     Play,
     Pause,
+    Sparkles,
 } from "lucide-react";
 import {
     addDays,
@@ -148,48 +149,26 @@ const badgePoints =
     "shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[11px] font-bold text-[#343066] hover:bg-[#ddd8ff]";
 
 const weeklyAiSuggestionStyles = `
-@keyframes weeklyAiSuggestionColorSweep {
-  0%, 100% {
-    background-position: 100% 50%;
-    border-color: transparent;
-    box-shadow: 0 0 0 rgb(var(--score-accent) / 0);
-  }
-  45% {
-    background-position: 0% 50%;
-    border-color: rgb(var(--score-accent) / 0.34);
-    box-shadow: 0 8px 18px rgb(var(--score-accent) / 0.14);
-  }
+@keyframes aiSuggestionColorMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-@keyframes weeklyAiSuggestionTextPulse {
-  0%, 100% {
-    color: #DA7756;
-  }
-  45% {
-    color: rgb(var(--score-accent) / 1);
-  }
+@keyframes aiSuggestionBorderFlow {
+  0%, 100% { border-color: rgba(218, 119, 86, 0.55); }
+  33%      { border-color: rgba(129, 106, 229, 0.55); }
+  66%      { border-color: rgba(49, 130, 206, 0.55); }
 }
 
 .weekly-ai-suggestions-card {
-  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--score-accent) / 0.16) 100%);
+  background-image: linear-gradient(120deg, #ffffff 0%, #fff4ef 22%, #f2ecff 45%, #ebf4ff 68%, #ffffff 100%);
   background-size: 220% 220%;
-  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
-}
-
-.weekly-ai-suggestions-text {
-  animation: weeklyAiSuggestionTextPulse 2.6s ease-in-out infinite;
-}
-
-.weekly-ai-suggestion-item {
-  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--suggestion-accent) / 0.16) 100%);
-  background-size: 220% 220%;
-  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
+  animation: aiSuggestionColorMove 7s ease-in-out infinite, aiSuggestionBorderFlow 6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weekly-ai-suggestions-card,
-  .weekly-ai-suggestions-text,
-  .weekly-ai-suggestion-item {
+  .weekly-ai-suggestions-card {
     animation: none;
   }
 }
@@ -322,95 +301,6 @@ const weeklyHistoryTypeBadgeMeta = {
     todo: { label: "To Do", className: "border-[#ead9b8] bg-[#fff8ea] text-[#8a6426]" },
     notes: { label: "Notes", className: "border-[#e2e5ea] bg-[#f8fafc] text-[#64748b]" },
 } as const;
-
-const getWeeklyHistorySourceId = (item: any) => {
-    let rawId =
-        item?.source_id ??
-        item?.sourceId ??
-        item?.originalData?.source_id ??
-        item?.originalData?.sourceId ??
-        item?.originalData?.id;
-
-    if ((rawId === null || rawId === undefined || rawId === "") && /^(nw-)?(task|issue|todo)-/i.test(String(item?.id || ""))) {
-        rawId = item.id;
-    }
-
-    if (rawId === null || rawId === undefined || rawId === "") return null;
-    const cleanedId = String(rawId).replace(/^(nw-)?(task|issue|todo)-/i, "");
-    return cleanedId || rawId;
-};
-
-const getWeeklyHistorySourceRecord = (item: any) => {
-    const sourceId = getWeeklyHistorySourceId(item);
-    const sourceType = getWeeklyHistoryItemType(item);
-    return item?.originalData || {
-        ...item,
-        id: sourceId,
-        source_id: sourceId,
-        source_type: sourceType === "notes" ? item?.source_type : sourceType,
-        title: item?.title || item?.text || getWeeklyHistoryItemText(item),
-    };
-};
-
-const normalizeWeeklyHistoryTodoForEdit = (item: any, details: any = null) => {
-    const sourceId = getWeeklyHistorySourceId(item);
-    const sourceRecord = getWeeklyHistorySourceRecord(item);
-    const raw =
-        details?.todo ||
-        details?.data?.todo ||
-        details?.data?.todos?.[0] ||
-        details?.todos?.[0] ||
-        details?.data ||
-        details ||
-        sourceRecord ||
-        item ||
-        {};
-    const fallback = sourceRecord || item || {};
-    const priority = raw.priority || fallback.priority || "";
-
-    return {
-        ...fallback,
-        ...raw,
-        id: raw.id ?? sourceId,
-        title:
-            raw.title ||
-            raw.name ||
-            raw.heading ||
-            fallback.title ||
-            fallback.text ||
-            getWeeklyHistoryItemText(item),
-        description:
-            raw.description ||
-            raw.body ||
-            fallback.description ||
-            fallback.body ||
-            "",
-        target_date:
-            raw.target_date ||
-            raw.due_date ||
-            raw.end_date ||
-            raw.date ||
-            raw.start_date ||
-            fallback.target_date ||
-            fallback.due_date ||
-            fallback.end_date ||
-            fallback.start_date ||
-            fallback.plan_for_date ||
-            null,
-        user_id:
-            raw.user_id ||
-            raw.responsible_person_id ||
-            raw.assigned_to_id ||
-            raw.user?.id ||
-            raw.responsible_person?.id ||
-            fallback.user_id ||
-            fallback.responsible_person_id ||
-            fallback.responsible_person?.id ||
-            "",
-        priority: ["P1", "P2", "P3", "P4"].includes(String(priority)) ? priority : "",
-        status: raw.status || fallback.status || "open",
-    };
-};
 
 
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
@@ -680,68 +570,6 @@ const WeeklyReports = () => {
             ? raw
             : `https://${raw}`;
     }, [baseUrl]);
-
-    const fetchWeeklyHistoryTodo = React.useCallback(async (todoId: any) => {
-        if (!todoId || !normalizedBaseUrl) return null;
-
-        try {
-            const response = await fetch(`${normalizedBaseUrl}/todos/${todoId}.json`, {
-                headers: {
-                    Accept: "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-            });
-            if (!response.ok) return null;
-
-            const json = await response.json();
-            return (
-                json?.todo ||
-                json?.data?.todo ||
-                json?.data?.todos?.[0] ||
-                json?.todos?.[0] ||
-                json?.data ||
-                json
-            );
-        } catch (error) {
-            console.error("Failed to fetch weekly history todo:", error);
-            return null;
-        }
-    }, [normalizedBaseUrl, token]);
-
-    const handleViewWeeklyHistoryItem = React.useCallback(async (item: any) => {
-        const sourceType = getWeeklyHistoryItemType(item);
-        const sourceId = getWeeklyHistorySourceId(item);
-        if (sourceType === "notes" || !sourceId) return;
-
-        if (sourceType === "todo") {
-            const todoDetails = await fetchWeeklyHistoryTodo(sourceId);
-            setSelectedTodo(normalizeWeeklyHistoryTodoForEdit(item, todoDetails));
-            setIsTodoDetailsModalOpen(true);
-            return;
-        }
-
-        navigate(sourceType === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
-    }, [fetchWeeklyHistoryTodo, navigate]);
-
-    const handleEditWeeklyHistoryItem = React.useCallback(async (item: any) => {
-        const sourceType = getWeeklyHistoryItemType(item);
-        const sourceId = getWeeklyHistorySourceId(item);
-        if (sourceType === "notes" || !sourceId) return;
-
-        const sourceRecord = getWeeklyHistorySourceRecord(item);
-        if (sourceType === "task") {
-            setEditTaskData(sourceRecord);
-            setIsEditTaskModalOpen(true);
-        } else if (sourceType === "issue") {
-            setEditIssueData(sourceRecord);
-            setIsEditIssueModalOpen(true);
-        } else if (sourceType === "todo") {
-            const todoDetails = await fetchWeeklyHistoryTodo(sourceId);
-            setEditTodoData(normalizeWeeklyHistoryTodoForEdit(item, todoDetails));
-            setIsEditTodoModalOpen(true);
-        }
-    }, [fetchWeeklyHistoryTodo]);
-
     const weekDraftKey = React.useMemo(
         () =>
             `business-compass-weekly-report-draft:${userId || "guest"}:${format(weekStart, "yyyy-MM-dd")}`,
@@ -3064,6 +2892,71 @@ const WeeklyReports = () => {
         });
     };
 
+    const weeklyAiSuggestions = [
+        {
+            tone: "red",
+            title: `${overdueSuggestionItems.length || 3} Overdue Tasks`,
+            actionLabel: "View Tasks",
+            description:
+                "Overdue items from last week need attention. Reschedule or complete them to avoid further delays.",
+            Icon: AlertCircle,
+            action: scrollToTasksIssuesSection,
+        },
+        {
+            tone: "green",
+            title: "Boost Accomplishments",
+            actionLabel: "Add Tasks",
+            description:
+                "Your rate is 55% today - completing 2 more logged tasks will push you past the 75% target.",
+            Icon: TrendingUp,
+            action: scrollToAccomplishmentsSection,
+        },
+        {
+            tone: "orange",
+            title: "Fill Your Daily Plan",
+            actionLabel: "Open Plan",
+            description:
+                "0/6 planning items completed. Set strategic priorities now before the day ends.",
+            Icon: Clock,
+            action: scrollToPlanSection,
+        },
+        {
+            tone: "purple",
+            title: "Assign Task Timings",
+            actionLabel: "Set Timing",
+            description:
+                "0/4 timing slots set. Adding time estimates improves your score and planning accuracy.",
+            Icon: Clock,
+            action: scrollToPlanSection,
+        },
+    ];
+
+    const weeklyAiToneStyles: Record<
+        string,
+        { icon: string; action: string; iconBg: string }
+    > = {
+        red: {
+            icon: "text-[#ef4444]",
+            action: "text-[#ef6b62]",
+            iconBg: "bg-[#fff1f0]",
+        },
+        green: {
+            icon: "text-[#29b881]",
+            action: "text-[#23c989]",
+            iconBg: "bg-[#eefbf5]",
+        },
+        orange: {
+            icon: "text-[#f59e0b]",
+            action: "text-[#f28a4b]",
+            iconBg: "bg-[#fff6eb]",
+        },
+        purple: {
+            icon: "text-[#7567d9]",
+            action: "text-[#9586e8]",
+            iconBg: "bg-[#f3f1ff]",
+        },
+    };
+
     return (
         <div className="mb-5 bg-white px-4 pt-6 pb-0 sm:px-6">
             <style>{weeklyAiSuggestionStyles}</style>
@@ -3164,7 +3057,76 @@ const WeeklyReports = () => {
                     </TabsList>
 
                     <TabsContent value="submit" className="mb-0 mt-0 space-y-5 pb-0 [&>*:last-child]:mb-0">
-                      
+                        <div
+                            className="weekly-ai-suggestions-card overflow-hidden rounded-[16px] border border-[#e9ddf6]"
+                            style={{
+                                boxShadow:
+                                    "-10px 12px 24px rgba(218,119,86,0.16), 8px 10px 24px rgba(129,106,229,0.13)",
+                            }}
+                        >
+                            <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] bg-[#DA7756] text-white">
+                                        <Sparkles size={12} />
+                                    </span>
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <span className="whitespace-nowrap text-[12px] font-bold leading-none text-[#1f1f1f]">
+                                            AI Suggestions
+                                        </span>
+                                        <span className="truncate text-[10px] font-medium text-[#57545f]">
+                                            - Focus areas to improve your weekly report
+                                        </span>
+                                    </div>
+                                </div>
+                                <span className="shrink-0 rounded-full bg-[#e8e3ff] px-3 py-1 text-[9px] font-bold leading-none text-[#6b5eca]">
+                                    4 insights
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
+                                {weeklyAiSuggestions.map((suggestion) => {
+                                    const tone = weeklyAiToneStyles[suggestion.tone];
+                                    const SuggestionIcon = suggestion.Icon;
+
+                                    return (
+                                        <div
+                                            key={suggestion.title}
+                                            className="min-h-[90px] rounded-[10px] border border-[#eceef4] bg-white px-3 py-3.5"
+                                        >
+                                            <div className="mb-1.5 flex items-center justify-between gap-2">
+                                                <div className="flex min-w-0 items-center gap-1.5">
+                                                    <span
+                                                        className={cn(
+                                                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                                                            tone.iconBg,
+                                                            tone.icon
+                                                        )}
+                                                    >
+                                                        <SuggestionIcon size={10} />
+                                                    </span>
+                                                    <span className="truncate text-[10px] font-bold leading-none text-[#2f2c34]">
+                                                        {suggestion.title}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={suggestion.action}
+                                                    className={cn(
+                                                        "shrink-0 text-[9px] font-medium leading-none hover:underline",
+                                                        tone.action
+                                                    )}
+                                                >
+                                                    {suggestion.actionLabel} &gt;
+                                                </button>
+                                            </div>
+                                            <p className="line-clamp-2 text-[10px] font-medium leading-[1.35] text-[#706d78]">
+                                                {suggestion.description}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
                         {/* Past Weeks KPIs */}
                         <Card ref={planSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
@@ -4313,7 +4275,18 @@ const WeeklyReports = () => {
                             <div className="max-h-[360px] overflow-y-auto px-5 pb-5 pr-4">
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                                     {upcomingDays.map((day) => (
-                                        <div key={day.key} className="flex min-h-[230px] min-w-0 flex-col rounded-[10px] bg-white p-4">
+                                        <div
+                                            key={day.key}
+                                            className="flex min-h-[230px] min-w-0 flex-col rounded-[10px] bg-white p-4"
+                                            onDragOver={(event) => event.preventDefault()}
+                                            onDrop={(event) =>
+                                                handlePlanDrop(
+                                                    event,
+                                                    day.key,
+                                                    dayPlans[day.key]?.length ?? 0
+                                                )
+                                            }
+                                        >
                                             <div
                                                 className={cn(
                                                     "flex items-center justify-between",
@@ -4344,7 +4317,7 @@ const WeeklyReports = () => {
                                                 )}
                                             </div>
                                             <div
-                                                className="mt-3 space-y-2"
+                                                className="mt-3 flex-1 space-y-2"
                                                 onDragOver={(event) => event.preventDefault()}
                                                 onDrop={(event) =>
                                                     handlePlanDrop(
@@ -5022,7 +4995,7 @@ const WeeklyReports = () => {
                             )}
                         </button>
 
-                        <div className="mt-4 w-full overflow-hidden rounded-[14px] border border-[#f1dcd4] bg-[#fffafa] shadow-none">
+                        <div className="mt-4 mb-6 w-full overflow-hidden rounded-[14px] border border-[#f1dcd4] bg-[#fffafa] shadow-none">
                             <button
                                 type="button"
                                 onClick={() => setIsScoreBreakdownOpen((open) => !open)}
@@ -5332,10 +5305,7 @@ const WeeklyReports = () => {
                                                     <div className="flex-1 space-y-3 p-4">
                                                         {achievements.length > 0 ? (
                                                             achievements.map((w: any, i: number) => {
-                                                                const sourceType = getWeeklyHistoryItemType(w);
-                                                                const sourceId = getWeeklyHistorySourceId(w);
-                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[sourceType];
-                                                                const canOpenSource = sourceType !== "notes" && !!sourceId;
+                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(w)];
                                                                 return (
                                                                     <div
                                                                         key={i}
@@ -5347,43 +5317,15 @@ const WeeklyReports = () => {
                                                                                 {getWeeklyHistoryItemText(w)}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="flex shrink-0 items-center gap-1">
-                                                                            <Badge
-                                                                                variant="outline"
-                                                                                className={cn(
-                                                                                    "whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
-                                                                                    typeMeta.className
-                                                                                )}
-                                                                            >
-                                                                                {typeMeta.label}
-                                                                            </Badge>
-                                                                            {canOpenSource && (
-                                                                                <>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={(event) => {
-                                                                                            event.stopPropagation();
-                                                                                            handleViewWeeklyHistoryItem(w);
-                                                                                        }}
-                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-white/70 hover:text-[#DA7756]"
-                                                                                        title={`View ${typeMeta.label}`}
-                                                                                    >
-                                                                                        <Eye className="h-3.5 w-3.5" />
-                                                                                    </button>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={(event) => {
-                                                                                            event.stopPropagation();
-                                                                                            handleEditWeeklyHistoryItem(w);
-                                                                                        }}
-                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-white/70 hover:text-[#DA7756]"
-                                                                                        title={`Edit ${typeMeta.label}`}
-                                                                                    >
-                                                                                        <Pencil className="h-3.5 w-3.5" />
-                                                                                    </button>
-                                                                                </>
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={cn(
+                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                typeMeta.className
                                                                             )}
-                                                                        </div>
+                                                                        >
+                                                                            {typeMeta.label}
+                                                                        </Badge>
                                                                     </div>
                                                                 );
                                                             })
@@ -5418,10 +5360,7 @@ const WeeklyReports = () => {
                                                                         </div>
                                                                         <div className="space-y-2 pl-1">
                                                                             {dayTasks.map((t: any, i: number) => {
-                                                                                const sourceType = getWeeklyHistoryItemType(t);
-                                                                                const sourceId = getWeeklyHistorySourceId(t);
-                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[sourceType];
-                                                                                const canOpenSource = sourceType !== "notes" && !!sourceId;
+                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(t)];
                                                                                 return (
                                                                                     <div
                                                                                         key={i}
@@ -5433,43 +5372,15 @@ const WeeklyReports = () => {
                                                                                                 {getWeeklyHistoryItemText(t)}
                                                                                             </span>
                                                                                         </div>
-                                                                                        <div className="flex shrink-0 items-center gap-1">
-                                                                                            <Badge
-                                                                                                variant="outline"
-                                                                                                className={cn(
-                                                                                                    "whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
-                                                                                                    typeMeta.className
-                                                                                                )}
-                                                                                            >
-                                                                                                {typeMeta.label}
-                                                                                            </Badge>
-                                                                                            {canOpenSource && (
-                                                                                                <>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        onClick={(event) => {
-                                                                                                            event.stopPropagation();
-                                                                                                            handleViewWeeklyHistoryItem(t);
-                                                                                                        }}
-                                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-[#fef6f4] hover:text-[#DA7756]"
-                                                                                                        title={`View ${typeMeta.label}`}
-                                                                                                    >
-                                                                                                        <Eye className="h-3.5 w-3.5" />
-                                                                                                    </button>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        onClick={(event) => {
-                                                                                                            event.stopPropagation();
-                                                                                                            handleEditWeeklyHistoryItem(t);
-                                                                                                        }}
-                                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-[#fef6f4] hover:text-[#DA7756]"
-                                                                                                        title={`Edit ${typeMeta.label}`}
-                                                                                                    >
-                                                                                                        <Pencil className="h-3.5 w-3.5" />
-                                                                                                    </button>
-                                                                                                </>
+                                                                                        <Badge
+                                                                                            variant="outline"
+                                                                                            className={cn(
+                                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                                typeMeta.className
                                                                                             )}
-                                                                                        </div>
+                                                                                        >
+                                                                                            {typeMeta.label}
+                                                                                        </Badge>
                                                                                     </div>
                                                                                 );
                                                                             })}
@@ -6522,7 +6433,7 @@ const PauseReasonModal = ({
                         placeholder="Enter reason for pausing this task..."
                         className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
                         rows={4}
-                        disabled={isLoading}
+                        disabled={isLoading}    
                     />
                 </div>
                 <div className="flex gap-3 justify-end">

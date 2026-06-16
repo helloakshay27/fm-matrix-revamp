@@ -1,7 +1,24 @@
 import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
-import { Calendar, ChartColumn, Loader2, RefreshCw, TrendingUp, Users, CheckCircle2, XCircle } from 'lucide-react'
+import { getWeek } from 'date-fns'
+import {
+    Calendar,
+    ChartColumn,
+    Loader2,
+    RefreshCw,
+    TrendingUp,
+    Users,
+    CheckCircle2,
+    XCircle,
+    BarChart3,
+    Trophy,
+    CheckSquare,
+    Zap,
+    Target,
+    MessageSquare,
+    Award,
+} from 'lucide-react'
 import {
     Select,
     SelectContent,
@@ -65,6 +82,168 @@ const PERIOD_OPTIONS = [
     { value: 'last_6_months', label: 'Last 6 Months' },
 ]
 
+// How many weeks of reports to aggregate scores over, per period.
+const PERIOD_WEEKS: Record<string, number> = {
+    last_4_weeks: 4,
+    last_8_weeks: 8,
+    last_12_weeks: 12,
+    last_6_months: 26,
+}
+
+// ── Score breakdown (mirrors WeeklyReports.tsx points system, total = 100) ──────
+const SCORE_CATEGORIES = [
+    { key: 'weekly_kpi',   label: 'Weekly KPI',   max: 20, icon: BarChart3 },
+    { key: 'daily_kpi',    label: 'Daily KPI',    max: 10, icon: TrendingUp },
+    { key: 'achievements', label: 'Achievements', max: 6,  icon: Trophy },
+    { key: 'tasks',        label: 'Tasks',        max: 10, icon: CheckSquare },
+    { key: 'sop',          label: 'SOPs',         max: 20, icon: Zap },
+    { key: 'planning',     label: 'Planning',     max: 20, icon: Target },
+    { key: 'remarks',      label: 'Remarks',      max: 14, icon: MessageSquare },
+] as const
+
+type ScoreKey = (typeof SCORE_CATEGORIES)[number]['key']
+
+interface ScoreSummary {
+    averages: Record<ScoreKey, number>
+    total: number
+    reportCount: number
+}
+
+const toNumber = (value: any) => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+}
+
+const getReportData = (report: any) => report?.weekly_report?.report_data || report?.report_data || {}
+
+const isSubmittedReport = (report: any) => {
+    const status = report?.weekly_report?.status || report?.status
+    return status === 'submitted' || report?.weekly_report != null
+}
+
+// Mirrors WeeklyReports.tsx "Weekly KPI Achievement (Max 20 points)".
+const calculateWeeklyKpiScore = (pastKpis: any[]) => {
+    if (!Array.isArray(pastKpis) || pastKpis.length === 0) return null
+    const percentages = pastKpis.map((kpi) => {
+        const actual = toNumber(kpi?.actual_value ?? kpi?.actual ?? kpi?.value)
+        const target = toNumber(kpi?.target_value ?? kpi?.target ?? kpi?.goal)
+        if (target === 0) return actual > 0 ? 100 : 0
+        return Math.min((actual / target) * 100, 100)
+    })
+    const average = percentages.reduce((sum, value) => sum + value, 0) / percentages.length
+    return Math.round(((20 * average) / 100) * 10) / 10
+}
+
+const REMARK_BONUS_TYPES = ['breakthrough', 'breakdown', 'clientFeedback', 'employeeFeedback']
+
+const getRemarkType = (remark: any): string => {
+    if (!remark || typeof remark === 'string') return 'remark'
+    if (typeof remark === 'object') {
+        if (remark.type) return String(remark.type)
+        return Object.keys(remark)[0] || 'remark'
+    }
+    return 'remark'
+}
+
+// Mirrors WeeklyReports.tsx "Remarks Logged (Max 14 points)".
+const calculateRemarksScore = (remarks: any) => {
+    if (!Array.isArray(remarks) || remarks.length === 0) return null
+    const score = remarks.reduce(
+        (sum, remark) => sum + (REMARK_BONUS_TYPES.includes(getRemarkType(remark)) ? 3 : 1),
+        0,
+    )
+    return Math.min(score, 14)
+}
+
+// Mirrors WeeklyReports.tsx "Tasks & Issues (Max 10 points)".
+const calculateTasksScore = (items: any) => {
+    if (!Array.isArray(items) || items.length === 0) return null
+    const statusOf = (item: any) => String(item?.status || '').toLowerCase()
+    const closed = items.filter((i) => ['completed', 'complete', 'closed', 'done'].includes(statusOf(i))).length
+    const open = items.filter((i) => ['open', 'reopen', 'reopened', 'pending'].includes(statusOf(i))).length
+    const overdue = items.filter((i) => ['overdue', 'overdued'].includes(statusOf(i))).length
+    const positive = closed * 2
+    const openPenalty = Math.max(open * -0.5, -3)
+    const overduePenalty = Math.max(overdue * -2, -5)
+    return Math.min(Math.max(positive + openPenalty + overduePenalty, 0), 10)
+}
+
+// Per-report category scores, preferring the saved section value and falling back
+// to a value derived from the logged items (matching WeeklyReports.tsx).
+const getReportScores = (report: any): Record<ScoreKey, number> => {
+    const reportData = getReportData(report)
+    const sections = reportData.sections || {}
+
+    const tasks = sections.tasks_issues_todos ?? sections.tasks_issues ?? calculateTasksScore(reportData.tasks_issues)
+    const remarks = sections.remarks ?? calculateRemarksScore(reportData.remarks)
+    const weeklyKpi = sections.weekly_kpi_achievement ?? calculateWeeklyKpiScore(Array.isArray(reportData.past_kpis) ? reportData.past_kpis : [])
+
+    return {
+        weekly_kpi: toNumber(weeklyKpi),
+        daily_kpi: toNumber(sections.daily_kpi_achievement),
+        achievements: toNumber(sections.starred_achievements),
+        tasks: toNumber(tasks),
+        sop: toNumber(sections.sop_health),
+        planning: toNumber(sections.planning),
+        remarks: toNumber(remarks),
+    }
+}
+
+const getReportTotal = (report: any, scores: Record<ScoreKey, number>) => {
+    const reportData = getReportData(report)
+    if (reportData.total_score !== undefined && reportData.total_score !== null) {
+        return toNumber(reportData.total_score)
+    }
+    const sum = SCORE_CATEGORIES.reduce((acc, category) => acc + scores[category.key], 0)
+    return Math.min(sum, 100)
+}
+
+const buildScoreSummary = (reports: any[]): ScoreSummary | null => {
+    const submitted = reports.filter(isSubmittedReport)
+    if (submitted.length === 0) return null
+
+    const totals = SCORE_CATEGORIES.reduce((acc, category) => {
+        acc[category.key] = 0
+        return acc
+    }, {} as Record<ScoreKey, number>)
+    let overall = 0
+
+    submitted.forEach((report) => {
+        const scores = getReportScores(report)
+        SCORE_CATEGORIES.forEach((category) => {
+            totals[category.key] += scores[category.key]
+        })
+        overall += getReportTotal(report, scores)
+    })
+
+    const averages = SCORE_CATEGORIES.reduce((acc, category) => {
+        acc[category.key] = Math.round((totals[category.key] / submitted.length) * 10) / 10
+        return acc
+    }, {} as Record<ScoreKey, number>)
+
+    return {
+        averages,
+        total: Math.round((overall / submitted.length) * 10) / 10,
+        reportCount: submitted.length,
+    }
+}
+
+const getWeekString = (date: Date): string => {
+    const year = date.getFullYear()
+    const week = String(getWeek(date)).padStart(2, '0')
+    return `${year}-W${week}`
+}
+
+// Week strings for the last N weeks (current week first), matching the API's `week` param.
+const getRecentWeekStrings = (weeks: number): string[] => {
+    const result: string[] = []
+    const base = new Date()
+    for (let i = 0; i < weeks; i += 1) {
+        result.push(getWeekString(new Date(base.getTime() - i * 7 * 24 * 60 * 60 * 1000)))
+    }
+    return result
+}
+
 // ── Custom tooltip ─────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
     if (!active || !payload?.length) return null
@@ -90,6 +269,8 @@ const WeeklyMeetingReports = ({ selectedMeetingId: externalSelectedMeetingId, on
     const [meetings, setMeetings]     = useState<MeetingConfig[]>([])
     const [reportData, setReportData] = useState<ReportData | null>(null)
     const [loading, setLoading]       = useState(false)
+    const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(null)
+    const [scoreLoading, setScoreLoading] = useState(false)
 
     const getHeaders = () => ({
         Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -161,6 +342,41 @@ const WeeklyMeetingReports = ({ selectedMeetingId: externalSelectedMeetingId, on
 
     useEffect(() => { fetchReport() }, [fetchReport])
 
+    // Aggregate per-category scores from individual weekly reports across the period.
+    const fetchScoreSummary = useCallback(async () => {
+        if (!meetingId) {
+            setScoreSummary(null)
+            return
+        }
+        setScoreLoading(true)
+        try {
+            const weeks = getRecentWeekStrings(PERIOD_WEEKS[period] ?? 12)
+            const responses = await Promise.all(
+                weeks.map((week) =>
+                    axios
+                        .get(`${apiBase()}/user_journals/weekly_meeting.json`, {
+                            headers: getHeaders(),
+                            params: { meeting_id: meetingId, week },
+                        })
+                        .then((res) => res.data?.data ?? res.data ?? null)
+                        .catch(() => null),
+                ),
+            )
+
+            const allReports = responses.flatMap((data: any) =>
+                Array.isArray(data?.member_reports) ? data.member_reports : [],
+            )
+            setScoreSummary(buildScoreSummary(allReports))
+        } catch (err) {
+            console.error('Failed to load score breakdown', err)
+            setScoreSummary(null)
+        } finally {
+            setScoreLoading(false)
+        }
+    }, [meetingId, period])
+
+    useEffect(() => { fetchScoreSummary() }, [fetchScoreSummary])
+
     const trend      = reportData?.weekly_trend ?? []
     const maxSubmitted = Math.max(...trend.map(t => t.submitted), 1)
 
@@ -206,7 +422,7 @@ const WeeklyMeetingReports = ({ selectedMeetingId: externalSelectedMeetingId, on
                     <Button
                         variant="outline"
                         size="icon"
-                        onClick={fetchReport}
+                        onClick={() => { fetchReport(); fetchScoreSummary(); }}
                         disabled={loading}
                         className="h-9 w-9 rounded-xl border border-[#DA7756]/25 bg-white text-[#DA7756] hover:bg-[#fef6f4] shadow-sm"
                     >
@@ -270,6 +486,68 @@ const WeeklyMeetingReports = ({ selectedMeetingId: externalSelectedMeetingId, on
                                 <p className="text-2xl font-bold text-gray-700">{reportData.total_expected}</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* ── Average score breakdown ── */}
+                    <div className="rounded-2xl border border-[#DA7756]/15 bg-white p-6 shadow-sm">
+                        <div className="flex items-center justify-between gap-2 mb-5">
+                            <div className="flex items-center gap-2">
+                                <div className="rounded-lg bg-[#FAECE7] p-1.5">
+                                    <Award className="w-4 h-4 text-[#DA7756]" />
+                                </div>
+                                <h3 className="text-sm font-bold text-neutral-700">Average Score Breakdown</h3>
+                            </div>
+                            {scoreSummary && (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-neutral-400">
+                                        Avg of {scoreSummary.reportCount} report{scoreSummary.reportCount === 1 ? '' : 's'}
+                                    </span>
+                                    <span className="rounded-full bg-[#DA7756] px-3 py-1 text-sm font-bold text-white">
+                                        {scoreSummary.total}/100
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {scoreLoading ? (
+                            <div className="flex items-center justify-center h-32 gap-2 text-sm text-neutral-400">
+                                <Loader2 className="w-4 h-4 animate-spin" /> Calculating scores…
+                            </div>
+                        ) : !scoreSummary ? (
+                            <div className="flex items-center justify-center h-32 text-sm text-neutral-400">
+                                No submitted reports to score in this period
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {SCORE_CATEGORIES.map((category) => {
+                                    const value = scoreSummary.averages[category.key]
+                                    const pct = category.max > 0 ? Math.min((value / category.max) * 100, 100) : 0
+                                    const Icon = category.icon
+                                    return (
+                                        <div
+                                            key={category.key}
+                                            className="rounded-xl border border-[#DA7756]/10 bg-[#fffaf8] p-4"
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="flex items-center gap-1.5 text-xs font-bold text-neutral-600">
+                                                    <Icon className="w-3.5 h-3.5 text-[#DA7756]" />
+                                                    {category.label}
+                                                </span>
+                                                <span className="text-sm font-bold text-[#DA7756]">
+                                                    {value}<span className="text-neutral-400 font-semibold">/{category.max}</span>
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full rounded-full bg-[#EDE5DF] overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-[#DA7756] transition-all"
+                                                    style={{ width: `${pct}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {/* ── Weekly trend chart ── */}

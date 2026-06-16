@@ -250,6 +250,23 @@ function CircleProgress({
   );
 }
 
+const AiSparkleIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path
+      d="M5.5 2.5L6.55 6.85L10.9 7.9L6.55 8.95L5.5 13.3L4.45 8.95L0.1 7.9L4.45 6.85L5.5 2.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M17.2 5.5L17.75 7.65L19.9 8.2L17.75 8.75L17.2 10.9L16.65 8.75L14.5 8.2L16.65 7.65L17.2 5.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M9.8 13.8L10.55 16.75L13.5 17.5L10.55 18.25L9.8 21.2L9.05 18.25L6.1 17.5L9.05 16.75L9.8 13.8Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 // ── Main Component ─────────────────────────────────────────────────────────
 const BusinessCompassDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -1264,23 +1281,6 @@ const BusinessCompassDashboard: React.FC = () => {
                   <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1a1a1a]">
                     Today's Focus
                   </h3>
-                  <div className="relative">
-                    <select
-                      value={focusMode}
-                      onChange={(e) => {
-                        setFocusMode(e.target.value as "Daily" | "Weekly");
-                        setKpiPage(0);
-                      }}
-                      className="appearance-none text-[12px] sm:text-[13px] border border-gray-200 rounded-xl pl-3 pr-8 py-1.5 text-[#1a1a1a] font-semibold bg-white outline-none cursor-pointer"
-                    >
-                      <option>Daily</option>
-                      <option>Weekly</option>
-                    </select>
-                    <ChevronRight
-                      size={12}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 text-gray-500 pointer-events-none"
-                    />
-                  </div>
                 </div>
 
                 {/* Row 1: Calendar + Tasks Overview */}
@@ -1980,55 +1980,17 @@ const BusinessCompassDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Floating AI trigger – glassmorphism button */}
+      {/* Floating AI trigger – shared bc-ai-fab button (same as Daily Report) */}
       {!aiChatOpen && (
-        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              inset: "-18px",
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle at 42% 38%, rgba(218,119,86,0.38) 0%, rgba(249,170,130,0.16) 50%, transparent 72%)",
-              filter: "blur(10px)",
-            }}
-          />
-          <div className="ai-btn-glow-outer">
-            <div className="ai-btn-glow-spinner" />
-            <button
-              onClick={() => setAiChatOpen(true)}
-              title="AI Assistant"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.06)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-              style={{
-                position: "relative",
-                zIndex: 1,
-                width: "52px",
-                height: "52px",
-                borderRadius: "17.5px",
-                background:
-                  "linear-gradient(148deg, rgba(255,255,255,0.97) 10%, rgba(253,218,196,0.84) 100%)",
-                backdropFilter: "blur(14px)",
-                WebkitBackdropFilter: "blur(14px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                border: "none",
-                outline: "none",
-                boxShadow:
-                  "inset 0 1px 0 rgba(255,255,255,1), 0 4px 14px rgba(218,119,86,0.15)",
-                transition: "transform 0.2s ease",
-              }}
-            >
-              <Sparkles size={24} color="#DA7756" />
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          className="bc-ai-fab"
+          title="AI Assistant"
+          aria-label="AI Assistant"
+          onClick={() => setAiChatOpen(true)}
+        >
+          <AiSparkleIcon className="bc-ai-fab-icon" />
+        </button>
       )}
     </div>
   );

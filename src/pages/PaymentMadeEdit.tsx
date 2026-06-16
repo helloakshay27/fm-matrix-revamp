@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast as sonnerToast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 
@@ -137,8 +137,9 @@ import {
   Close as MuiClose,
 } from "@mui/icons-material";
 
-export const CreatePaymentPage: React.FC = () => {
+export const EditPaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  const { id: paymentId = "" } = useParams<{ id: string }>();
   const [lockAccountId, setLockAccountId] = useState(
     () => localStorage.getItem("lock_account_id") || ""
   );
@@ -224,6 +225,7 @@ export const CreatePaymentPage: React.FC = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [date, setDate] = useState<Date>(new Date("2026-02-12"));
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
   // Form State
   const [paymentNumber, setPaymentNumber] = useState("");
@@ -284,6 +286,7 @@ export const CreatePaymentPage: React.FC = () => {
   // Attachments
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const initialAppliedAmountsRef = useRef<Record<number, string> | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   // Bills fetched from API after vendor selection
@@ -321,6 +324,75 @@ export const CreatePaymentPage: React.FC = () => {
   useEffect(() => {
     fetchSuppliers();
   }, [fetchSuppliers]);
+
+  const fetchPaymentDetails = useCallback(async () => {
+    if (!paymentId) return;
+    const accountId = await ensureLockAccountId();
+    if (!accountId) return;
+
+    setIsLoadingPayment(true);
+    try {
+      const res = await accountingClient.get("/lock_payments.json", {
+        params: {
+          lock_account_id: accountId,
+          "q[payment_made_eq]": 1,
+          "q[id_eq]": paymentId,
+          page: 1,
+          per_page: 10,
+        },
+      });
+      const list = res.data?.lock_payments ?? (Array.isArray(res.data) ? res.data : []);
+      const payment = list[0];
+      if (!payment) return;
+
+      if (payment.advance !== undefined) {
+        setActiveTab(payment.advance ? "vendor_advance" : "bill_payment");
+      }
+      if (payment.payment_of_id) setSelectedVendor(String(payment.payment_of_id));
+      if (payment.paid_amount != null) setAmount(String(payment.paid_amount));
+      if (payment.payment_date) {
+        const d = new Date(payment.payment_date);
+        if (!isNaN(d.getTime())) setDate(d);
+      }
+      if (payment.payment_mode) setPaymentMode(payment.payment_mode);
+      if (payment.order_number) setPaymentNumber(payment.order_number);
+      if (payment.neft_reference) setReference(payment.neft_reference);
+      if (payment.paid_from_ledger_id) setPaidThrough(String(payment.paid_from_ledger_id));
+      if (payment.notes) setNotes(payment.notes);
+      if (payment.lock_account_tax_id) setSelectedTds(String(payment.lock_account_tax_id));
+      if (payment.reverse_charge !== undefined) setIsReverseCharge(payment.reverse_charge);
+      if (payment.reverse_charge_tax_id) setReverseChargeTax(String(payment.reverse_charge_tax_id));
+      if (payment.source_of_supply) setSourceOfSupply(payment.source_of_supply);
+      if (payment.destination_of_supply) setDestinationOfSupply(payment.destination_of_supply);
+      if (payment.description_of_supply) setDescriptionOfSupply(payment.description_of_supply);
+
+      // Store bill amounts in ref; applied after bills finish loading
+      if (Array.isArray(payment.lock_bill_payments) && payment.lock_bill_payments.length > 0) {
+        const amounts: Record<number, string> = {};
+        payment.lock_bill_payments.forEach((bp: { resource_id?: number; amount?: number | string }) => {
+          if (bp.resource_id != null) amounts[bp.resource_id] = String(bp.amount ?? "");
+        });
+        initialAppliedAmountsRef.current = amounts;
+      }
+    } catch (err) {
+      console.error("Failed to fetch payment details:", err);
+      sonnerToast.error("Failed to load payment details.");
+    } finally {
+      setIsLoadingPayment(false);
+    }
+  }, [paymentId, accountingClient, ensureLockAccountId]);
+
+  useEffect(() => {
+    fetchPaymentDetails();
+  }, [fetchPaymentDetails]);
+
+  // After bills finish loading, restore the pre-filled applied amounts
+  useEffect(() => {
+    if (!billsLoading && initialAppliedAmountsRef.current) {
+      setAppliedAmounts(initialAppliedAmountsRef.current);
+      initialAppliedAmountsRef.current = null;
+    }
+  }, [billsLoading]);
 
   // Fetch TDS taxes from API (only TDS, not TCS)
   useEffect(() => {
@@ -580,7 +652,7 @@ export const CreatePaymentPage: React.FC = () => {
       sonnerToast.success("Payment saved successfully!");
       const newId = res.data?.id || res.data?.lock_payment?.id;
       if (newId) {
-        navigate(`/accounting/payments-made`);
+        navigate(`/accounting/payments-made?paymentId=${newId}&view=detail`);
       } else {
         navigate("/accounting/payments-made");
       }
@@ -590,6 +662,96 @@ export const CreatePaymentPage: React.FC = () => {
         err instanceof Error
           ? err.message
           : "Failed to save payment. Please try again.";
+      sonnerToast.error(msg);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedVendor) { sonnerToast.error("Please select a vendor."); return; }
+    if (!amount || isNaN(parseFloat(amount))) { sonnerToast.error("Please enter a valid amount."); return; }
+    if (!paidThrough) { sonnerToast.error("Please select an account in 'Paid Through'."); return; }
+    if (!paymentId) { sonnerToast.error("Payment ID not found."); return; }
+
+    const accountId = await ensureLockAccountId();
+    if (!accountId) { sonnerToast.error("Could not find lock account for this session."); return; }
+
+    setIsSaving(true);
+    try {
+      const attachments_attributes =
+        attachmentFiles.length > 0
+          ? await Promise.all(
+              attachmentFiles.map(async (file) => ({
+                document: await fileToBase64(file),
+                active: true,
+              }))
+            )
+          : undefined;
+
+      const paymentDate = date
+        ? format(date, "dd/MM/yyyy")
+        : format(new Date(), "dd/MM/yyyy");
+
+      const lock_bill_payments_attributes =
+        activeTab === "bill_payment"
+          ? Object.entries(appliedAmounts)
+              .filter(([, v]) => parseFloat(v) > 0)
+              .map(([billId, v]) => ({
+                resource_id: parseInt(billId, 10),
+                resource_type: "LockAccountBill",
+                amount: parseFloat(v),
+                payment_date: paymentDate,
+              }))
+          : [];
+
+      const paidAmount = parseFloat(amount) || 0;
+      const paymentAmount = totalApplied;
+      const excessAmount = Math.max(0, paidAmount - totalApplied);
+
+      const payload = {
+        lock_payment: {
+          lock_account_id: accountId,
+          payment_of: "Pms::Supplier",
+          payment_of_id: parseInt(selectedVendor, 10),
+          paid_amount: paidAmount,
+          lock_account_tax_id: selectedTds ? parseInt(selectedTds, 10) : lockAccountTaxId,
+          tds_amount: tdsAmount > 0 ? tdsAmount : undefined,
+          tds_percentage: tdsPercentage > 0 ? tdsPercentage : undefined,
+          net_amount: tdsAmount > 0 ? paidAmount - tdsAmount : undefined,
+          payment_date: paymentDate,
+          payment_mode: paymentMode,
+          order_number: paymentNumber || "",
+          neft_reference: reference,
+          paid_from_ledger_id: parseInt(paidThrough, 10),
+          deposit_to_ledger_id: depositToLedgerId,
+          advance: activeTab === "vendor_advance",
+          reverse_charge: activeTab === "vendor_advance" ? isReverseCharge : undefined,
+          reverse_charge_tax_id:
+            activeTab === "vendor_advance" && isReverseCharge && reverseChargeTax
+              ? parseInt(reverseChargeTax, 10)
+              : undefined,
+          source_of_supply: activeTab === "vendor_advance" ? sourceOfSupply : undefined,
+          destination_of_supply: activeTab === "vendor_advance" ? destinationOfSupply : undefined,
+          description_of_supply: activeTab === "vendor_advance" ? descriptionOfSupply : undefined,
+          notes: notes,
+          payment_amount: paymentAmount,
+          excess_amount: excessAmount,
+          lock_bill_payments_attributes,
+          ...(attachments_attributes && { attachments_attributes }),
+        },
+      };
+
+      await accountingClient.put(
+        `/lock_payments/${paymentId}.json?lock_account_id=${accountId}`,
+        payload
+      );
+      sonnerToast.success("Payment updated successfully!");
+      navigate("/accounting/payments-made");
+    } catch (err: unknown) {
+      console.error("Error updating payment:", err);
+      const msg =
+        err instanceof Error ? err.message : "Failed to update payment. Please try again.";
       sonnerToast.error(msg);
     } finally {
       setIsSaving(false);
@@ -1550,19 +1712,11 @@ export const CreatePaymentPage: React.FC = () => {
               {/* Footer Actions */}
               <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-200 pt-6 pb-4">
                 <Button
-                  variant="outline"
-                  disabled={isSaving}
-                  className="fm-button-fix border border-[#DA7756] text-[#DA7756] hover:!bg-[#DA7756]/10 h-9 px-4 text-sm font-medium rounded-[4px]"
-                  onClick={() => handleSave("DRAFT")}
-                >
-                  {isSaving ? "Saving..." : "Save as Draft"}
-                </Button>
-                <Button
-                  disabled={isSaving}
+                  disabled={isSaving || isLoadingPayment}
                   className="fm-button-fix fm-button-brand h-9 px-4 text-sm font-medium rounded-[4px]"
-                  onClick={() => handleSave("PAID")}
+                  onClick={handleUpdate}
                 >
-                  {isSaving ? "Saving..." : "Save as Paid"}
+                  {isSaving ? "Updating..." : "Update"}
                 </Button>
                 <Button
                   variant="outline"

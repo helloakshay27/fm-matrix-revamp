@@ -1059,7 +1059,7 @@ export const SurveyResponsePage = () => {
       case "actions":
         return (
           <div className="flex justify-center items-center gap-2">
-            {shouldShow("survey_response", "view") && (
+            {shouldShow("Response", "show") && (
               <button
                 onClick={() => handleViewDetails(item)}
                 className="p-1 text-black-600 hover:text-black-800 transition-colors"

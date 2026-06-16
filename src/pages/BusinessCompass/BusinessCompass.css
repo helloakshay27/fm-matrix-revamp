@@ -860,18 +860,18 @@
 
 .bc-ai-fab {
   position: fixed;
-  bottom: 28px;
-  right: 28px;
-  width: 58px;
-  height: 58px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 17.5px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
   background:
-    radial-gradient(ellipse 90% 80% at 50% 110%, rgba(252, 180, 140, 0.65) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 50% at 30% 20%, rgba(255, 255, 255, 0.9) 0%, transparent 70%),
-    linear-gradient(160deg, rgba(255, 252, 249, 0.95) 0%, rgba(255, 238, 225, 0.82) 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+    radial-gradient(circle at 65% 72%, rgba(218, 119, 86, 0.34) 0%, rgba(218, 119, 86, 0.14) 36%, transparent 64%),
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.52) 48%, transparent 72%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 236, 224, 0.34) 100%);
+  backdrop-filter: blur(22px) saturate(1.45);
+  -webkit-backdrop-filter: blur(22px) saturate(1.45);
   color: #b85c3a;
   display: flex;
   align-items: center;
@@ -879,32 +879,163 @@
   cursor: pointer;
   z-index: 9999;
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.9),
-    inset 0 -1px 2px rgba(194, 125, 95, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.96),
+    inset 0 -10px 22px rgba(218, 119, 86, 0.08),
     0 0 0 1px rgba(230, 126, 94, 0.1),
-    0 0 28px rgba(230, 126, 94, 0.28),
-    0 8px 28px rgba(194, 125, 95, 0.22);
+    0 0 20px rgba(230, 126, 94, 0.22),
+    0 10px 24px rgba(194, 125, 95, 0.18);
   transition: transform 0.22s ease, box-shadow 0.22s ease;
+  animation: bcAiFabBorderGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes bcAiFabBorderGlow {
+  0%,
+  100% {
+    border-color: rgba(255, 255, 255, 0.82);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.96),
+      inset 0 -10px 22px rgba(218, 119, 86, 0.08),
+      0 0 0 1px rgba(230, 126, 94, 0.1),
+      0 0 20px rgba(230, 126, 94, 0.22),
+      0 10px 24px rgba(194, 125, 95, 0.18);
+  }
+  50% {
+    border-color: rgba(218, 119, 86, 0.42);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.98),
+      inset 0 -10px 22px rgba(218, 119, 86, 0.12),
+      0 0 0 1px rgba(218, 119, 86, 0.2),
+      0 0 30px rgba(218, 119, 86, 0.34),
+      0 12px 28px rgba(194, 125, 95, 0.22);
+  }
 }
 
 .bc-ai-fab:hover {
-  transform: scale(1.06);
+  transform: translateY(-2px) scale(1.04);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.95),
     0 0 0 1px rgba(230, 126, 94, 0.16),
-    0 0 36px rgba(230, 126, 94, 0.38),
-    0 10px 32px rgba(194, 125, 95, 0.28);
+    0 0 28px rgba(230, 126, 94, 0.32),
+    0 12px 28px rgba(194, 125, 95, 0.24);
 }
 
 .bc-ai-fab:active {
-  transform: scale(1.02);
+  transform: translateY(0) scale(1.01);
 }
 
 .bc-ai-fab-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   color: #b85c3a;
   filter: drop-shadow(0 1px 1px rgba(184, 92, 58, 0.15));
+}
+
+.bc-ai-glass-modal {
+  position: fixed;
+  right: 24px;
+  bottom: 96px;
+  z-index: 9998;
+  width: min(430px, calc(100vw - 32px));
+  min-height: 190px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(218, 119, 86, 0.42);
+  background:
+    radial-gradient(circle at 86% 0%, rgba(129, 106, 229, 0.2), transparent 26%),
+    radial-gradient(circle at 10% 100%, rgba(218, 119, 86, 0.18), transparent 28%),
+    rgba(255, 255, 255, 0.68);
+  box-shadow:
+    0 18px 40px rgba(32, 22, 16, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset,
+    0 0 28px rgba(218, 119, 86, 0.18);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  animation: bcAiGlassIn 0.18s ease-out;
+}
+
+@keyframes bcAiGlassIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bc-ai-glass-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bc-ai-glass-tab {
+  height: 28px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1f1f1f;
+  cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.bc-ai-glass-tab:hover,
+.bc-ai-glass-tab-active {
+  background: rgba(232, 232, 232, 0.82);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.bc-ai-glass-input-wrap {
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 24px rgba(26, 26, 26, 0.06);
+}
+
+.bc-ai-glass-input {
+  display: block;
+  width: 100%;
+  min-height: 128px;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1a1a1a;
+}
+
+.bc-ai-glass-input::placeholder {
+  color: #9f9f9f;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .bc-ai-fab {
+    right: 16px;
+    bottom: 18px;
+  }
+
+  .bc-ai-glass-modal {
+    right: 16px;
+    bottom: 88px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-ai-fab {
+    animation: none;
+  }
 }
 
 .bc-absent-btn {

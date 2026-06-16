@@ -23,6 +23,7 @@ import axios from 'axios';
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, TextField } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { RecentAttendanceSidebar } from '@/components/RecentAttendanceSidebar';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -83,6 +84,7 @@ const columns: ColumnConfig[] = [
 
 export const AttendanceDashboard = () => {
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const dispatch = useAppDispatch();
 
@@ -436,9 +438,10 @@ export const AttendanceDashboard = () => {
       case 'actions':
         return (
           <>
+          {shouldShow("attendance","show")&&(
             <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item)} className="hover:bg-gray-100">
               <Eye className="w-4 h-4" />
-            </Button>
+            </Button>)}
           </>
         );
       case 'name':

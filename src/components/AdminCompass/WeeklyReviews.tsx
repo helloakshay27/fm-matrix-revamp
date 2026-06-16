@@ -38,7 +38,19 @@ const getItemStatus = (item: any): string => {
 
 const getItemType = (item: any): string => {
     if (!item || typeof item !== 'object') return 'task';
-    return String(item.type || 'task').toLowerCase();
+    const rawType = String(
+        item.type ||
+        item.source_type ||
+        item.sourceType ||
+        item.originalData?.source_type ||
+        item.originalData?.sourceType ||
+        ''
+    ).toLowerCase();
+    const rawId = String(item.id || item.source_id || item.sourceId || '').toLowerCase();
+
+    if (rawType.includes('issue') || rawId.startsWith('issue-')) return 'issue';
+    if (rawType.includes('todo') || rawType.includes('to_do') || rawId.startsWith('todo-')) return 'todo';
+    return 'task';
 };
 
 const normalizeReportList = (value: any): any[] => {
@@ -47,17 +59,40 @@ const normalizeReportList = (value: any): any[] => {
     return [];
 };
 
+const toNumber = (value: any) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const calculateWeeklyKpiScore = (pastKpis: any[]) => {
+    const percentages = pastKpis
+        .map((kpi) => {
+            const actual = toNumber(kpi?.actual_value ?? kpi?.actual ?? kpi?.value);
+            const target = toNumber(kpi?.target_value ?? kpi?.target ?? kpi?.goal);
+            if (target === 0) return actual > 0 ? 100 : 0;
+            return Math.min((actual / target) * 100, 100);
+        })
+        .filter((value) => Number.isFinite(value));
+
+    if (percentages.length === 0) return null;
+    const average = percentages.reduce((sum, value) => sum + value, 0) / percentages.length;
+    return Math.round(((20 * average) / 100) * 10) / 10;
+};
+
 const normalizeWeeklyReportData = (reportData: any) => {
     const rd = reportData && typeof reportData === 'object' ? reportData : {};
+    const pastKpis = normalizeReportList(rd.past_kpis);
+    const sections = rd.sections && typeof rd.sections === 'object' ? rd.sections : {};
+    const weeklyKpiScore = sections.weekly_kpi_achievement ?? calculateWeeklyKpiScore(pastKpis);
     return {
         achievements: normalizeReportList(rd.achievements || rd.accomplishments),
-        tasks_issues: normalizeReportList(rd.tasks_issues),
+        tasks_issues: normalizeReportList(rd.tasks_issues || rd.task_issues || rd.tasks_issues_todos || rd.all_tasks_issues),
         upcoming_week_plan: normalizeReportList(rd.upcoming_week_plan || rd.tasks),
         remarks: normalizeReportList(rd.remarks),
-        past_kpis: normalizeReportList(rd.past_kpis),
+        past_kpis: pastKpis,
         kpi: rd.kpi || '',
         kpis: rd.kpis && typeof rd.kpis === 'object' ? rd.kpis : {},
-        sections: rd.sections && typeof rd.sections === 'object' ? rd.sections : {},
+        sections: { ...sections, ...(weeklyKpiScore !== null && weeklyKpiScore !== undefined ? { weekly_kpi_achievement: weeklyKpiScore } : {}) },
         details: rd.details && typeof rd.details === 'object' ? rd.details : {},
         total_score: rd.total_score ?? null,
         is_absent: rd.details?.is_absent ?? rd.sections?.is_absent ?? rd.is_absent ?? false,
@@ -182,7 +217,6 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
 
     const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const isCheckedInMeeting = (report: any) => report?.checked_in_meeting === true;
     const getReportSelectionKey = (report: any) => report?.journal_id || report?.user_id;
 
     const handleUserCheck = (report: any, isChecked: boolean) => {
@@ -240,12 +274,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
 
     useEffect(() => {
         if (!weeklyData) return;
-        const checkedInIds = (weeklyData.member_reports || [])
-            .filter((report: any) => report.checked_in_meeting === true)
-            .map((report: any) => getReportSelectionKey(report))
-            .filter(Boolean);
-
-        setSelectedReports(checkedInIds);
+        // Selection is driven purely by manual ticks; reset whenever the week/meeting data changes.
+        setSelectedReports([]);
     }, [weeklyData]);
 
     const getSelectedReportRows = () => {
@@ -404,7 +434,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
 
             const sections = reportData.sections || {};
             combinedKpis.score += Number(reportData.total_score) || 0;
-            combinedKpis.tasks += Number(sections.tasks_issues) || 0;
+            combinedKpis.tasks += Number(sections.tasks_issues_todos ?? sections.tasks_issues) || 0;
             combinedKpis.issues += reportData.tasks_issues.filter((item: any) => getItemType(item) === 'issue').length;
             combinedKpis.planning += Number(sections.planning) || 0;
             combinedKpis.timing += Number(sections.timing) || 0;
@@ -493,8 +523,12 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
                     })).filter((item: any) => item.title),
                     tasks_issues: reportData.tasks_issues.map((item: any) => ({
                         type: getItemType(item),
+                        source_type: getItemType(item),
+                        source_id: item.source_id ?? item.sourceId ?? item.id ?? item.originalData?.id,
                         title: getItemTitle(item),
                         status: getItemStatus(item),
+                        priority: item.priority || item.priority_level || '',
+                        due_date: item.due_date || item.target_date || item.deadline || null,
                     })).filter((item: any) => item.title),
                     priorities: prioritiesByDay,
                     upcoming_week_plan: prioritiesByDay,
@@ -715,9 +749,13 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
                 })),
                 tasks_issues: allTasksIssues.map((item: any) => ({
                     type: getItemType(item),
+                    source_type: getItemType(item),
+                    source_id: item.source_id ?? item.sourceId ?? item.id ?? item.originalData?.id,
                     title: item.title || item.text || '',
                     text: item.text || item.title || '',
                     status: item.status || 'open',
+                    priority: item.priority || item.priority_level || '',
+                    due_date: item.due_date || item.target_date || item.deadline || null,
                     member: item.member,
                     user_id: item.user_id,
                 })),
@@ -1196,12 +1234,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
             setSelectedReports(submittedReports.map((report: any) => getReportSelectionKey(report)).filter(Boolean));
             return;
         }
-
-        const checkedInIds = submittedReports
-            .filter((report: any) => report.checked_in_meeting === true)
-            .map((report: any) => getReportSelectionKey(report))
-            .filter(Boolean);
-        setSelectedReports(checkedInIds);
+        setSelectedReports([]);
     };
 
     return (
@@ -1261,20 +1294,21 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
                             markAllAttended={areAllVisibleReportsSelected}
                             isSubmittedMeeting={isSubmittedMeeting}
                             saveMeetingLoading={saveMeetingLoading}
+                            hasSelection={selectedReportKeys.length > 0}
                             onMeetingNotesChange={setMeetingNotes}
                             onMarkAllAttendedChange={handleSelectAll}
                             onSaveMeeting={handleSaveMeeting}
                             onClearNotes={() => setMeetingNotes('')}
                         />
 
-                        <div className="grid gap-4 max-h-[640px] overflow-y-auto overflow-x-hidden min-w-0 mt-6 pr-1">
+                        <div className="grid gap-4 min-w-0 mt-6">
                             {submittedReports.map((report: any) => (
                                 <MemberReportCard
                                     key={report.user_id}
                                     report={report}
                                     isExpanded={expandedUserId === report.user_id}
-                                    isChecked={isCheckedInMeeting(report) || selectedReportKeys.includes(String(getReportSelectionKey(report)))}
-                                    isAttendanceLocked={isSubmittedMeeting || isCheckedInMeeting(report)}
+                                    isChecked={selectedReportKeys.includes(String(getReportSelectionKey(report)))}
+                                    isAttendanceLocked={isSubmittedMeeting}
                                     activeTab={activeTab}
                                     priorityText={priorityInputs[report.user_id] || ''}
                                     selectedPriorityDay={getSelectedPriorityDay(report.user_id)}

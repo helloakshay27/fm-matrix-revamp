@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import {
     CalendarIcon,
     TrendingUp,
     FileText,
     Clipboard,
-    Activity,
     Star,
     MessageSquare,
+    Eye,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import TodoDetailsModal from '@/components/TodoDetailsModal';
 import { WinsAndPriorities } from './WinsAndPriorities';
 
 interface KpiRow {
@@ -29,6 +32,67 @@ const getItemText = (item: any) => {
     return String(item ?? '');
 };
 
+const getBaseUrl = () => {
+    const rawBase = localStorage.getItem('baseUrl') || '';
+    if (!rawBase) return '';
+    return rawBase.startsWith('http://') || rawBase.startsWith('https://') ? rawBase.replace(/\/$/, '') : `https://${rawBase.replace(/\/$/, '')}`;
+};
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+};
+
+const normalizeStatus = (status: any) => String(status || 'open').toLowerCase().replace(/\s+/g, '_');
+
+const getItemType = (item: any): 'task' | 'issue' | 'todo' => {
+    const rawType = String(
+        item?.source_type ||
+        item?.sourceType ||
+        item?.originalData?.source_type ||
+        item?.originalData?.sourceType ||
+        item?.type ||
+        '',
+    ).toLowerCase();
+    const rawId = String(item?.id || item?.source_id || '').toLowerCase();
+
+    if (rawType.includes('issue') || rawId.startsWith('issue-')) return 'issue';
+    if (rawType.includes('todo') || rawType.includes('to_do') || rawId.startsWith('todo-')) return 'todo';
+    return 'task';
+};
+
+const getItemSourceId = (item: any) => {
+    const rawId =
+        item?.source_id ??
+        item?.sourceId ??
+        item?.task_id ??
+        item?.taskId ??
+        item?.issue_id ??
+        item?.issueId ??
+        item?.todo_id ??
+        item?.todoId ??
+        item?.originalData?.source_id ??
+        item?.originalData?.sourceId ??
+        item?.originalData?.id ??
+        item?.originalData?.task_id ??
+        item?.originalData?.taskId ??
+        item?.originalData?.issue_id ??
+        item?.originalData?.issueId ??
+        item?.originalData?.todo_id ??
+        item?.originalData?.todoId ??
+        item?.id;
+
+    if (rawId === null || rawId === undefined || rawId === '') return null;
+    return String(rawId).replace(/^(task|issue|todo)-/i, '') || rawId;
+};
+
+const isVisibleTaskIssueStatus = (status: any) =>
+    ['open', 'pending', 'reopen', 'reopened', 'in_progress', 'started', 'on_hold'].includes(normalizeStatus(status)) &&
+    !['completed', 'complete', 'closed', 'done'].includes(normalizeStatus(status));
+
 const formatCell = (value: any) => {
     if (value === undefined || value === null || value === '') return '-';
     if (Array.isArray(value)) return value.map(getItemText).filter(Boolean).join(', ') || '-';
@@ -36,18 +100,50 @@ const formatCell = (value: any) => {
     return String(value);
 };
 
+const toNumber = (value: any) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const calculateWeeklyKpiScore = (rows: any[]) => {
+    const percentages = rows
+        .map((row) => {
+            const actual = toNumber(row?.actual_value ?? row?.actual ?? row?.value ?? row?.current);
+            const target = toNumber(row?.target_value ?? row?.target ?? row?.goal ?? row?.expected);
+            if (target === 0) return actual > 0 ? 100 : 0;
+            return Math.min((actual / target) * 100, 100);
+        })
+        .filter((value) => Number.isFinite(value));
+
+    if (percentages.length === 0) return null;
+    const average = percentages.reduce((sum, value) => sum + value, 0) / percentages.length;
+    return Math.round(((20 * average) / 100) * 10) / 10;
+};
+
 const normalizeKpiRow = (item: any, fallbackName = ''): KpiRow | null => {
     if (typeof item === 'string') return { name: item };
     if (!item || typeof item !== 'object') return null;
 
-    const name = item.name || item.title || item.kpi || item.label || fallbackName;
+    const actual = item.actual ?? item.actual_value ?? item.value ?? item.current ?? item.score;
+    const target = item.target ?? item.target_value ?? item.goal ?? item.expected;
+    const calculatedAchievement =
+        item.achievement ??
+        item.achievement_percentage ??
+        item.achieved_percentage ??
+        item.percent ??
+        item.percentage;
+    const name = item.name || item.title || item.kpi_name || item.kpi || item.notes || item.label || fallbackName;
     if (!name) return null;
 
     return {
         name: String(name),
-        target: item.target ?? item.goal ?? item.expected,
-        actual: item.actual ?? item.value ?? item.current ?? item.score,
-        achievement: item.achievement ?? item.achievement_percentage ?? item.achieved_percentage ?? item.percent ?? item.percentage,
+        target,
+        actual,
+        achievement:
+            calculatedAchievement ??
+            (target !== undefined && actual !== undefined
+                ? `${Math.round((toNumber(target) === 0 ? (toNumber(actual) > 0 ? 100 : 0) : Math.min((toNumber(actual) / toNumber(target)) * 100, 100)) * 10) / 10}%`
+                : undefined),
         total: item.total,
         achieved: item.achieved,
         period: item.period ?? item.week ?? item.month ?? item.date,
@@ -80,7 +176,7 @@ const getKpiRows = (reportData: any, type: 'daily' | 'weekly' | 'monthly' | 'qua
 
     const sourceByType: Record<string, any[]> = {
         daily: [reportData.daily_kpis, reportData.daily_kpi, reportData.kpis?.daily],
-        weekly: [reportData.weekly_kpis, reportData.weekly_kpi, reportData.kpi_summary, reportData.kpis?.weekly, reportData.kpi],
+        weekly: [reportData.past_kpis, reportData.weekly_kpis, reportData.weekly_kpi, reportData.kpi_summary, reportData.kpis?.weekly],
         monthly: [reportData.monthly_kpis, reportData.monthly_kpi, reportData.kpis?.monthly],
         quarterly: [reportData.quarterly_kpis, reportData.qtrly_kpis, reportData.kpis?.quarterly],
         other: [reportData.other_kpis, reportData.other_kpi, reportData.kpis?.other],
@@ -88,12 +184,21 @@ const getKpiRows = (reportData: any, type: 'daily' | 'weekly' | 'monthly' | 'qua
 
     const rows = sourceByType[type].flatMap(rowsFromSource);
 
-    if (type === 'daily' && sections.daily_kpi_achievement !== undefined && rows.length === 0) {
+    if (type === 'daily' && sections.daily_kpi_achievement !== undefined && Number(sections.daily_kpi_achievement) !== 0 && rows.length === 0) {
         rows.push({ name: 'Daily KPI Achievement', achievement: sections.daily_kpi_achievement });
     }
 
-    if (type === 'weekly' && sections.weekly_kpi_achievement !== undefined && rows.length === 0) {
-        rows.push({ name: 'Weekly KPI Achievement', achievement: sections.weekly_kpi_achievement });
+    if (type === 'weekly') {
+        const calculatedScore = calculateWeeklyKpiScore(Array.isArray(reportData.past_kpis) ? reportData.past_kpis : []);
+        const score = sections.weekly_kpi_achievement ?? calculatedScore;
+        if (score !== undefined && score !== null) {
+            rows.unshift({
+                name: 'Weekly KPI Score',
+                target: '20 pts',
+                actual: `${score} pts`,
+                achievement: `${score}/20`,
+            });
+        }
     }
 
     return rows;
@@ -110,8 +215,23 @@ const getFeedbackList = (ratingsData: Record<number, any>, userId: number) => {
 interface ReportExpandedViewProps {
     report: any;
     activeTab: string;
+    priorityText: string;
+    selectedPriorityDay: string;
+    showDayDropdown: string | null;
+    priorityLoading: Record<number, boolean>;
+    daysOfWeek: string[];
+    feedbackText: string;
+    feedbackScore: number;
+    feedbackLoading: Record<number, boolean>;
     ratingsData: Record<number, any>;
     ratingsLoading: Record<number, boolean>;
+    onPriorityChange: (text: string) => void;
+    onPriorityDaySelect: (day: string) => void;
+    onTogglePriorityDropdown: () => void;
+    onAddPriority: () => void;
+    onFeedbackChange: (text: string) => void;
+    onFeedbackScoreChange: (score: number) => void;
+    onSubmitFeedback: () => void;
     onTabChange: (tab: string) => void;
     onFetchRatings: (userId: number) => void;
 }
@@ -119,48 +239,84 @@ interface ReportExpandedViewProps {
 export const ReportExpandedView = ({
     report,
     activeTab,
+    priorityText,
+    selectedPriorityDay,
+    showDayDropdown,
+    priorityLoading,
+    daysOfWeek,
+    feedbackText,
+    feedbackScore,
+    feedbackLoading,
     ratingsData,
     ratingsLoading,
+    onPriorityChange,
+    onPriorityDaySelect,
+    onTogglePriorityDropdown,
+    onAddPriority,
+    onFeedbackChange,
+    onFeedbackScoreChange,
+    onSubmitFeedback,
     onTabChange,
     onFetchRatings,
 }: ReportExpandedViewProps) => {
+    const navigate = useNavigate();
     const reportData = getReportData(report);
     const feedbackList = getFeedbackList(ratingsData, report.user_id);
-    const tasksIssues = Array.isArray(reportData.tasks_issues) ? reportData.tasks_issues : [];
+    const savedTasksIssues = Array.isArray(reportData.tasks_issues) ? reportData.tasks_issues : [];
+    const [selectedTodo, setSelectedTodo] = useState<any>(null);
+    const [isTodoDetailsModalOpen, setIsTodoDetailsModalOpen] = useState(false);
     const remarks = Array.isArray(reportData.remarks) ? reportData.remarks : [];
     const sections = reportData.sections || {};
     const dailyRows = getKpiRows(reportData, 'daily');
     const weeklyRows = getKpiRows(reportData, 'weekly');
-    const monthlyRows = getKpiRows(reportData, 'monthly');
-    const quarterlyRows = getKpiRows(reportData, 'quarterly');
-    const otherRows = getKpiRows(reportData, 'other');
     const hasSopScore = sections.sop_health !== undefined && sections.sop_health !== null;
+    const taskIssueDisplayItems = savedTasksIssues.filter((item) => isVisibleTaskIssueStatus(item.status));
+
+    const fetchTodoDetails = async (todoId: any) => {
+        const baseUrl = getBaseUrl();
+        if (!baseUrl || !todoId) return null;
+        try {
+            const response = await fetch(`${baseUrl}/todos/${todoId}.json`, { headers: getAuthHeaders() });
+            if (!response.ok) return null;
+            const json = await response.json();
+            return json?.todo || json?.data?.todo || json?.data || json;
+        } catch (error) {
+            console.error('Failed to fetch todo details:', error);
+            return null;
+        }
+    };
+
+    const handleViewTaskIssueTodo = async (item: any) => {
+        const type = getItemType(item);
+        const sourceId = getItemSourceId(item);
+        if (!sourceId) return;
+
+        if (type === 'todo') {
+            const details = await fetchTodoDetails(sourceId);
+            setSelectedTodo(details || { ...item.originalData, ...item, id: sourceId });
+            setIsTodoDetailsModalOpen(true);
+            return;
+        }
+
+        navigate(type === 'task' ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+    };
 
     const tabs = [
         { label: 'Daily', count: dailyRows.length, color: 'bg-[#4f46e5]', icon: CalendarIcon },
         { label: 'Weekly', count: weeklyRows.length, color: 'bg-[#4f46e5]', icon: TrendingUp },
-        { label: 'Monthly', count: monthlyRows.length, color: 'bg-[#4f46e5]', icon: CalendarIcon },
-        { label: 'Qtrly', count: quarterlyRows.length, color: 'bg-[#4f46e5]', icon: CalendarIcon },
-        { label: 'Other', count: otherRows.length, color: 'bg-[#9333ea]', icon: Activity },
-        { label: 'Task/Issues', count: tasksIssues.length, color: 'bg-[#475569]', icon: FileText },
+        { label: 'Task/Issues/Todos', count: taskIssueDisplayItems.length, color: 'bg-[#475569]', icon: FileText },
         { label: 'SOPs', count: hasSopScore ? 1 : 0, color: 'bg-[#475569]', icon: Clipboard },
-        { label: 'FB', count: feedbackList.length, color: 'bg-[#475569]', icon: Star },
     ];
 
     return (
         <div className="mt-4 space-y-5 border-t border-slate-100 pt-4 animate-in fade-in slide-in-from-top-2 duration-300 min-w-0 max-w-full overflow-hidden">
-            <Tabs defaultValue={activeTab} onValueChange={onTabChange} className="w-full">
+            <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
                 <div className="flex items-center justify-center w-full">
                     <TabsList className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-2 h-auto w-full">
                         {tabs.map((tab) => (
                             <TabsTrigger
                                 key={tab.label}
                                 value={tab.label}
-                                onClick={() => {
-                                    if (tab.label === 'FB' && !ratingsData[report.user_id]) {
-                                        onFetchRatings(report.user_id);
-                                    }
-                                }}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap text-white shadow-sm data-[state=active]:bg-[#c21e1e] data-[state=active]:text-white data-[state=active]:shadow-md ${tab.color} hover:opacity-90`}
                                 style={{ fontSize: '11px' }}
                             >
@@ -180,35 +336,50 @@ export const ReportExpandedView = ({
                         <KpiTable title="Weekly KPIs" icon={TrendingUp} rows={weeklyRows} emptyText="No weekly KPIs recorded" />
                     </TabsContent>
 
-                    <TabsContent value="Monthly">
-                        <KpiTable title="Monthly KPIs" icon={CalendarIcon} rows={monthlyRows} emptyText="No monthly KPIs recorded" />
-                    </TabsContent>
-
-                    <TabsContent value="Qtrly">
-                        <KpiTable title="Quarterly KPIs" icon={CalendarIcon} rows={quarterlyRows} emptyText="No quarterly KPIs recorded" />
-                    </TabsContent>
-
-                    <TabsContent value="Other">
-                        <KpiTable title="Other KPIs" icon={Activity} rows={otherRows} emptyText="No other KPIs recorded" />
-                    </TabsContent>
-
-                    <TabsContent value="Task/Issues">
-                        <TasksIssuesContent items={tasksIssues} />
+                    <TabsContent value="Task/Issues/Todos">
+                        <TasksIssuesContent
+                            items={taskIssueDisplayItems}
+                            isLoading={false}
+                            onViewItem={handleViewTaskIssueTodo}
+                        />
                     </TabsContent>
 
                     <TabsContent value="SOPs">
                         <SopsContent sections={sections} />
                     </TabsContent>
-
-                    <TabsContent value="FB">
-                        <FeedbackContent report={report} ratingsData={ratingsData} ratingsLoading={ratingsLoading} />
-                    </TabsContent>
                 </div>
             </Tabs>
 
-            <WinsAndPriorities report={report} />
+            <WinsAndPriorities
+                report={report}
+                priorityText={priorityText}
+                selectedPriorityDay={selectedPriorityDay}
+                isPriorityDropdownOpen={showDayDropdown === `priority-${report.user_id}`}
+                priorityLoading={priorityLoading[report.user_id] || false}
+                daysOfWeek={daysOfWeek}
+                feedbackText={feedbackText}
+                feedbackScore={feedbackScore}
+                feedbackLoading={feedbackLoading[report.user_id] || false}
+                recentFeedbacks={feedbackList}
+                recentFeedbacksLoading={ratingsLoading[report.user_id] || false}
+                onPriorityChange={onPriorityChange}
+                onPriorityDaySelect={onPriorityDaySelect}
+                onTogglePriorityDropdown={onTogglePriorityDropdown}
+                onAddPriority={onAddPriority}
+                onFeedbackChange={onFeedbackChange}
+                onFeedbackScoreChange={onFeedbackScoreChange}
+                onSubmitFeedback={onSubmitFeedback}
+                onFetchRatings={() => onFetchRatings(report.user_id)}
+                onViewItem={handleViewTaskIssueTodo}
+            />
 
             <CommentsAndFeedback report={report} remarks={remarks} />
+
+            <TodoDetailsModal
+                isModalOpen={isTodoDetailsModalOpen}
+                setIsModalOpen={setIsTodoDetailsModalOpen}
+                todo={selectedTodo}
+            />
         </div>
     );
 };
@@ -262,33 +433,91 @@ const KpiTable = ({
     </div>
 );
 
-const TasksIssuesContent = ({ items }: { items: any[] }) => (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm min-w-0">
-        <div className="bg-slate-50 p-4 border-b border-slate-100 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-slate-600" />
-            <span className="font-black text-slate-700" style={{ fontSize: '12px' }}>
-                Tasks & Issues
-            </span>
+const TasksIssuesContent = ({
+    items,
+    isLoading,
+    onViewItem,
+}: {
+    items: any[];
+    isLoading: boolean;
+    onViewItem: (item: any) => void;
+}) => {
+    const buckets = [
+        {
+            key: 'in_progress',
+            label: 'In Progress',
+            statuses: ['in_progress', 'started'],
+            colorClass: 'text-sky-700',
+            headerBg: 'bg-sky-50',
+            pillBg: 'bg-sky-100 text-sky-700',
+            itemBg: 'bg-sky-50/60 border-sky-100',
+        },
+        {
+            key: 'open',
+            label: 'Open',
+            statuses: ['open', 'pending', 'reopen', 'reopened'],
+            colorClass: 'text-slate-600',
+            headerBg: 'bg-slate-50',
+            pillBg: 'bg-slate-100 text-slate-600',
+            itemBg: 'bg-slate-50/60 border-slate-100',
+        },
+        {
+            key: 'on_hold',
+            label: 'On Hold',
+            statuses: ['on_hold'],
+            colorClass: 'text-orange-700',
+            headerBg: 'bg-orange-50',
+            pillBg: 'bg-orange-100 text-orange-700',
+            itemBg: 'bg-orange-50/60 border-orange-100',
+        },
+    ];
+
+    return (
+        <div className="bg-white border border-[#F0E8E3] rounded-2xl overflow-hidden shadow-sm min-w-0">
+            <div className="bg-[#FFFAF8] p-4 border-b border-[#F0E8E3] flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#DA7756]" />
+                <span className="font-black text-neutral-700" style={{ fontSize: '12px' }}>
+                    Tasks, Issues & Todos
+                </span>
+                <span className="ml-auto text-[10px] font-bold text-neutral-400">{items.length}</span>
+            </div>
+            <div className="p-4 space-y-3 min-w-0">
+                {isLoading ? (
+                    <p className="text-sm font-semibold text-slate-400">Loading tasks, issues and todos...</p>
+                ) : items.length > 0 ? (
+                    buckets.map((bucket) => {
+                        const bucketItems = items.filter((item) => bucket.statuses.includes(normalizeStatus(item.status)));
+                        if (bucketItems.length === 0) return null;
+                        return (
+                            <div key={bucket.key} className="space-y-2">
+                                <div className={`flex items-center gap-2 px-2 py-1.5 rounded-[6px] ${bucket.headerBg}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-wider flex-1 ${bucket.colorClass}`}>
+                                        {bucket.label}
+                                    </span>
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${bucket.pillBg}`}>
+                                        {bucketItems.length}
+                                    </span>
+                                </div>
+                                <div className="space-y-1.5">
+                                    {bucketItems.map((item, index) => (
+                                        <TaskCard
+                                            key={item.id ?? `${bucket.key}-${index}`}
+                                            item={item}
+                                            itemBg={bucket.itemBg}
+                                            onViewItem={onViewItem}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p className="text-sm font-semibold text-slate-400">No open, in-progress, or on-hold tasks/issues/todos</p>
+                )}
+            </div>
         </div>
-        <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto min-w-0">
-            {items.length > 0 ? (
-                items.map((item, idx) => (
-                    <TaskCard
-                        key={item.id ?? idx}
-                        title={getItemText(item)}
-                        priority={item.priority || item.priority_level || '-'}
-                        status={item.status || '-'}
-                        dueDate={item.due_date || item.target_date || item.created_at || '-'}
-                        completion={item.completion || item.completion_percentage || '-'}
-                        color={(item.priority || '').toLowerCase() === 'high' ? 'orange' : 'yellow'}
-                    />
-                ))
-            ) : (
-                <p className="text-sm font-semibold text-slate-400">No tasks or issues recorded</p>
-            )}
-        </div>
-    </div>
-);
+    );
+};
 
 const SopsContent = ({ sections }: { sections: any }) => (
     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm p-4 min-w-0">
@@ -309,34 +538,74 @@ const SopsContent = ({ sections }: { sections: any }) => (
     </div>
 );
 
-interface TaskCardProps {
-    title: string;
-    priority: string;
-    status: string;
-    dueDate: string;
-    completion: string;
-    color: 'orange' | 'yellow';
-}
-
-const TaskCard = ({ title, priority, status, dueDate, completion, color }: TaskCardProps) => {
-    const bgColor = color === 'orange' ? 'bg-orange-50 border-orange-100' : 'bg-yellow-50 border-yellow-100';
-    const badgeColor = color === 'orange' ? 'bg-orange-500' : 'bg-yellow-500';
+const TaskCard = ({
+    item,
+    itemBg,
+    onViewItem,
+}: {
+    item: any;
+    itemBg: string;
+    onViewItem: (item: any) => void;
+}) => {
+    const type = getItemType(item);
+    const typePillStyle =
+        type === 'issue'
+            ? 'bg-red-100 text-red-700 border-red-200'
+            : type === 'todo'
+                ? 'bg-violet-100 text-violet-700 border-violet-200'
+                : 'bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30';
+    const priority = item.priority || item.priority_level || '';
+    const priorityPill =
+        String(priority).toLowerCase() === 'high'
+            ? 'bg-red-50 text-red-600 border-red-200'
+            : String(priority).toLowerCase() === 'medium'
+                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                : String(priority).toLowerCase() === 'low'
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : '';
+    const dueDate = item.due_date || item.target_date || item.end_date || item.deadline;
 
     return (
-        <div className={`border rounded-xl p-4 ${bgColor} min-w-0 shadow-sm`}>
-            <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                    <p className="font-black text-slate-800" style={{ fontSize: '12px' }}>
-                        <span className="break-words">{title}</span>
-                    </p>
+        <div
+            className={`flex flex-col rounded-[10px] border transition-all cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5] ${itemBg}`}
+            onClick={() => onViewItem(item)}
+        >
+            <div className="flex items-center gap-2 px-3 py-2.5">
+                <span className={`shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border ${typePillStyle}`}>
+                    {type === 'todo' ? 'todo' : type}
+                </span>
+                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight break-words">
+                    {getItemText(item)}
+                </span>
+                {priorityPill && (
+                    <span className={`shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full border ${priorityPill}`}>
+                        {priority}
+                    </span>
+                )}
+                <button
+                    type="button"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onViewItem(item);
+                    }}
+                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                    title={`View ${type}`}
+                >
+                    <Eye className="w-3 h-3" />
+                </button>
+            </div>
+            {dueDate && (
+                <div className="flex items-center gap-1 px-3 pb-2 -mt-1">
+                    <CalendarIcon className="w-3 h-3 text-gray-400 shrink-0" />
+                    <span className="text-[10px] text-gray-500">
+                        {new Date(dueDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                        })}
+                    </span>
                 </div>
-                <span className={`${badgeColor} text-white px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap ml-2`}>{priority}</span>
-            </div>
-            <div className="flex items-center gap-4 flex-wrap" style={{ fontSize: '11px' }}>
-                <span className="bg-white border border-gray-300 px-2 py-1 rounded text-gray-700 font-medium">{status}</span>
-                <span className="text-gray-600">Due: {dueDate}</span>
-                <span className="text-gray-600">{completion} complete</span>
-            </div>
+            )}
         </div>
     );
 };
@@ -368,7 +637,7 @@ const FeedbackContent = ({ report, ratingsData, ratingsLoading }: FeedbackConten
                             </span>
                         </div>
 
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                        <div className="space-y-4">
                             {feedbackList.slice(0, 10).map((rating: any, idx: number) => (
                                 <div key={rating.id ?? idx} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-white min-w-0 shadow-sm">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
