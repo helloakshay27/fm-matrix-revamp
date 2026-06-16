@@ -435,7 +435,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     };
 
     const handleEdit = (id: number) => {
-        navigate(`/accounting/sales-order/edit/${id}`);
+        navigate(`/accounting/invoices/edit/${id}`);
     };
 
     const handleDelete = async () => {

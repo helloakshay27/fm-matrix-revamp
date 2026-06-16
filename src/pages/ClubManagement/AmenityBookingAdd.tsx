@@ -14,55 +14,7 @@ import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import axios from 'axios';
-import Invoice from '@/components/Invoice';
-import { API_CONFIG } from '@/config/apiConfig';
-import { getToken } from '@/utils/auth';
-import BookingInvoice from '@/components/BookingInvoice';
 
-// Formatter helper: Converts facility booking API response into Invoice-compatible format
-const formatFacilityBookingInvoice = (apiResponse: any): any => {
-  const invoiceData = apiResponse?.invoice_data;
-  if (!invoiceData) return null;
-
-  const invoice = invoiceData?.invoice || {};
-  const member = invoiceData?.member || {};
-  const lineItems = invoiceData?.line_items || [];
-  const totals = invoiceData?.totals || {};
-
-  return {
-    id: invoice.invoice_number || apiResponse?.id || 'FB-' + apiResponse?.id,
-    lock_account_bill_id: invoiceData.lock_account_bill_id,
-    created_at: invoice.invoice_date || new Date().toLocaleDateString('en-IN'),
-    booking_id: apiResponse?.id,
-    club_members: [{
-      user_name: member.full_name || 'Guest',
-      user_email: member.email || '',
-      user_mobile: member.mobile || '',
-    }],
-    membership_plan: { name: apiResponse?.facility_name || 'Facility Booking' },
-    site_name: apiResponse?.site_name || 'Site',
-    allocation_payment_detail: {
-      base_amount: lineItems[0]?.rate || 0,
-      discount: totals.discount || 0,
-      cgst: totals.cgst || 0,
-      sgst: totals.sgst || 0,
-      cgst_per: 9,
-      sgst_per: 9,
-      total_tax: (totals.cgst || 0) + (totals.sgst || 0),
-      total_amount: totals.total_amount || 0,
-      payment_mode: apiResponse?.payment_method || 'prepaid',
-      payment_status: apiResponse?.payment_status || 'pending',
-    },
-    invoice_data: {
-      lock_account_bill_id: invoiceData.lock_account_bill_id,
-      invoice: invoice,
-      member: member,
-      booking: invoiceData?.booking || {},
-      line_items: lineItems,
-      totals: totals,
-    },
-  };
-};
 
 export const AddFacilityBookingClubPage = () => {
   const navigate = useNavigate();
@@ -235,14 +187,6 @@ export const AddFacilityBookingClubPage = () => {
     user: string;
     level: string;
   }>>([]);
-
-  // Invoice generation state
-  const [invoiceData, setInvoiceData] = useState<any>(null);
-  const [showInvoice, setShowInvoice] = useState(false);
-  const [autoDownloadInvoice, setAutoDownloadInvoice] = useState(false);
-  const [collectedPDF, setCollectedPDF] = useState<{ bill_id: number | string; base64: string; filename: string } | null>(null);
-  const [isUploadingPDF, setIsUploadingPDF] = useState(false);
-  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
   // Fetch guest users
   const fetchGuestUsers = async () => {
@@ -885,19 +829,7 @@ export const AddFacilityBookingClubPage = () => {
 
       if (response.status === 200 || response.status === 201) {
         toast.success('Booking created successfully!');
-
-        // Format and display invoice
-        const formattedInvoice = formatFacilityBookingInvoice(response.data);
-        if (formattedInvoice) {
-          console.log('Displaying invoice:', formattedInvoice);
-          setInvoiceData(formattedInvoice);
-          setShowInvoice(true);
-          setAutoDownloadInvoice(true);
-          setIsGeneratingInvoice(true);
-        } else {
-          // If no invoice data, navigate back
-          navigate(-1);
-        }
+        navigate(-1);
       }
     } catch (error: any) {
       console.error('Error creating facility booking:', error);
@@ -908,112 +840,6 @@ export const AddFacilityBookingClubPage = () => {
       toast.error('Error creating booking. Please check the console for details.');
     }
   };
-
-  // Handle close invoice and navigate back
-  const handleCloseInvoice = () => {
-    setShowInvoice(false);
-    setInvoiceData(null);
-    navigate(-1);
-  };
-
-  // Handle when PDF is generated
-  const handleBase64Generated = (base64: string) => {
-    console.log('PDF generated from Invoice');
-    setIsGeneratingInvoice(false);
-    console.log(invoiceData)
-    // Use invoice_data.lock_account_bill_id or fallback to booking_id or invoice number
-    const billId = invoiceData?.lock_account_bill_id
-
-    if (billId) {
-      setCollectedPDF({
-        bill_id: billId,
-        base64: base64,
-        filename: `invoice_${invoiceData?.id || invoiceData?.booking_id}.pdf`
-      });
-      console.log('PDF collected with bill_id:', billId);
-    }
-  };
-
-  // Send PDF to API using the same endpoint as AddGroupMembershipPage
-  const handleUploadPDFToAPI = async () => {
-    if (!collectedPDF) {
-      toast.error('No PDF to upload');
-      return;
-    }
-
-    setIsUploadingPDF(true);
-    try {
-      const savedToken = getToken();
-
-      console.log('Uploading PDF with bill_id:', collectedPDF.bill_id);
-
-      // Build the bills array for API - same format as AddGroupMembershipPage
-      const billsPayload = [
-        {
-          bill_id: collectedPDF.bill_id,
-          attachment_type: 'facility_booking_creation',
-          filename: collectedPDF.filename,
-          file: collectedPDF.base64 // Contains the data:image/png;base64,... format
-        }
-      ];
-
-      console.log('Bills payload:', billsPayload);
-
-      // Send to API using the exact same endpoint as AddGroupMembershipPage
-      const response = await axios.post(
-        `${API_CONFIG.BASE_URL}/lock_account_bills/bulk_attach_invoice.json`,
-        { bills: billsPayload },
-        {
-          headers: {
-            Authorization: `Bearer ${savedToken}`,
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        toast.success('Invoice uploaded successfully!');
-        console.log('PDF uploaded successfully');
-
-        // Reset states and navigate back
-        setCollectedPDF(null);
-        setShowInvoice(false);
-        setInvoiceData(null);
-
-        // Navigate back after a short delay
-        setTimeout(() => {
-          navigate(-1);
-        }, 500);
-      }
-    } catch (error: any) {
-      console.error('Error uploading PDF:', error);
-      const errorMsg = axios.isAxiosError(error) ? error.response?.data?.message || error.message : 'Failed to upload invoice';
-      toast.error(errorMsg);
-
-      // Still navigate back after delay
-      setTimeout(() => {
-        navigate(-1);
-      }, 1000);
-    } finally {
-      setIsUploadingPDF(false);
-    }
-  };
-
-  console.log(collectedPDF)
-  console.log(isUploadingPDF)
-  console.log(showInvoice)
-
-  // Auto-upload PDF when collected
-  useEffect(() => {
-    if (collectedPDF && !isUploadingPDF && showInvoice) {
-      console.log('PDF collected, auto-uploading...');
-      const timer = setTimeout(() => {
-        handleUploadPDFToAPI();
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [collectedPDF, isUploadingPDF, showInvoice]);
 
   const handleBackToList = () => {
     navigate(-1);
@@ -1046,83 +872,7 @@ export const AddFacilityBookingClubPage = () => {
 
   return (
     <>
-      {showInvoice && invoiceData ? (
-        <div className="w-full">
-          {/* Loading Overlay while generating or uploading invoice */}
-          {(isGeneratingInvoice || isUploadingPDF) && (
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
-              <div className="bg-white rounded-lg shadow-2xl p-8 text-center max-w-sm">
-                <div className="mb-6 flex justify-center">
-                  <div className="relative w-16 h-16">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-spin" style={{
-                      backgroundClip: 'padding-box',
-                      padding: '3px',
-                      background: 'conic-gradient(from 0deg, #3b82f6, #1e40af)'
-                    }}>
-                      <div className="absolute inset-3 bg-white rounded-full"></div>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl animate-spin">⏳</span>
-                    </div>
-                  </div>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Booking created successfully</h3>
-                <p className="text-gray-600 font-medium">
-                  Invoice is being prepared and will be emailed shortly.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Invoice Section with blur when generating or uploading */}
-          <div className={`w-full transition-all duration-300 ${isGeneratingInvoice || isUploadingPDF ? 'blur-sm opacity-50 pointer-events-none' : ''}`}>
-            <div className="fixed top-4 right-4 z-50 flex gap-3">
-              {isUploadingPDF ? (
-                <Button
-                  disabled={true}
-                  className="bg-[#C72030] text-white"
-                >
-                  <span className="animate-spin mr-2">⏳</span>
-                  Uploading Invoice...
-                </Button>
-              ) : collectedPDF ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
-                  <span className="text-sm font-medium text-green-700">✓ Invoice collected</span>
-                  <span className="text-xs text-green-600">Uploading...</span>
-                </div>
-              ) : (
-                <Button
-                  disabled={true}
-                  className="bg-gray-400 text-white"
-                >
-                  ⏳ Generating Invoice...
-                </Button>
-              )}
-
-              <Button
-                onClick={handleCloseInvoice}
-                disabled={isUploadingPDF || isGeneratingInvoice}
-                variant="outline"
-                className="bg-white"
-              >
-                Back to List
-              </Button>
-            </div>
-
-            <BookingInvoice
-              key={`invoice-${invoiceData?.booking_id}`}
-              data={invoiceData}
-              returnBase64={true}
-              onBase64Generated={handleBase64Generated}
-              onClose={handleCloseInvoice}
-              showButton={true}
-              autoDownload={autoDownloadInvoice}
-              isFromBookingPage={true}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="p-6 mx-auto">
+      <div className="p-6 mx-auto">
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
@@ -2138,8 +1888,7 @@ export const AddFacilityBookingClubPage = () => {
               </DialogActions>
             </Dialog>
           </form>
-        </div>
-      )}
+      </div>
     </>
   );
 };

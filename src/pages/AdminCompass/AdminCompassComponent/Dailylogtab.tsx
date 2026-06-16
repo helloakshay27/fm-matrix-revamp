@@ -30,7 +30,10 @@ import { getBaseUrl, getAuthHeaders } from "./Shared";
 import { toast } from "sonner";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
+import AddToDoModal from "../../../components/AddToDoModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 // ─────────────────────────────────────────────
 // MUI z-index override
@@ -272,6 +275,15 @@ const scoreColor = (s, status) => {
   return s >= 50 ? "bg-[#2ECC71] text-white" : "bg-[#EB4A4A] text-white";
 };
 
+const toRoundedScore = (...values) => {
+  for (const value of values) {
+    if (value === null || value === undefined || value === "") continue;
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) return Math.round(numericValue);
+  }
+  return 0;
+};
+
 // ─────────────────────────────────────────────
 // Normalize report_data (same as DailyTab)
 // ─────────────────────────────────────────────
@@ -352,53 +364,36 @@ const resolveRawSource = (report) => {
       false,
   });
 
-  if (!hasReportData && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (report.status === "pending" && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
+  if (hasDraft) return normalizeDraftRaw(draftRaw);
 
   if (hasReportData && report.journal_type === "daily") {
     return normalizeRootRaw(rd);
   }
 
-  if (hasReportData && hasDraft) {
-    const normalizedDraft = normalizeDraftRaw(draftRaw);
-
-    return {
-      ...normalizedDraft,
-      ...rd,
-      tasks_issues: Array.isArray(rd.tasks_issues)
-        ? mergeTasksIssuesPreservingType(
-            normalizedDraft.tasks_issues || [],
-            rd.tasks_issues,
-          )
-        : normalizedDraft.tasks_issues || [],
-      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(
-            rd.tomorrow_plan,
-            normalizedDraft.tomorrow_plan || [],
-          )
-        : normalizedDraft.tomorrow_plan || [],
-      accomplishments:
-        rd.accomplishments?.items ||
-        (Array.isArray(rd.accomplishments)
-          ? rd.accomplishments
-          : normalizedDraft.accomplishments || []),
-      self_rating:
-        rd.self_rating ??
-        report.self_rating ??
-        draftReport.self_rating ??
-        normalizedDraft.self_rating,
-      total_score:
-        rd.total_score ?? report.score ?? normalizedDraft.total_score,
-      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
-    };
-  }
-
   return normalizeRootRaw(rd);
+};
+
+const isAbsentReport = (report) => {
+  const rawSource = resolveRawSource(report || {});
+  return [
+    report?.is_absent,
+    report?.daily_report?.is_absent,
+    rawSource?.is_absent,
+    rawSource?.details?.is_absent,
+    rawSource?.sections?.is_absent,
+  ].some((value) => value === true || value === "true" || value === 1);
+};
+
+const getAbsentReason = (report) => {
+  const rawSource = resolveRawSource(report || {});
+  const reason =
+    report?.absent_reason ??
+    report?.daily_report?.absent_reason ??
+    rawSource?.absent_reason ??
+    rawSource?.details?.absent_reason ??
+    rawSource?.sections?.absent_reason ??
+    "";
+  return String(reason || "").trim();
 };
 
 const getMeetingNotesData = (data) => {
@@ -447,8 +442,64 @@ const mergeUniqueItems = (primary = [], fallback = []) => {
 };
 
 const getItemType = (item) => {
-  if (!item || typeof item !== "object") return "task";
-  return String(item.type || "task").toLowerCase();
+  if (!item || typeof item !== "object") return "note";
+  const rawType = String(
+    item.source_type ||
+    item.sourceType ||
+    item.originalData?.source_type ||
+    item.originalData?.sourceType ||
+    item.type ||
+    "",
+  ).toLowerCase();
+
+  if (rawType.includes("issue")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do")) return "todo";
+  if (rawType.includes("task")) return "task";
+
+  return "note";
+};
+
+const getItemTypeLabel = (type) =>
+  type === "todo"
+    ? "Todo"
+    : type === "issue"
+      ? "Issue"
+      : type === "task"
+        ? "Task"
+        : "Note";
+
+const getItemTypePillClass = (type) =>
+  type === "todo"
+    ? "bg-purple-50 text-purple-700 border-purple-200"
+    : type === "issue"
+      ? "bg-red-50 text-red-600 border-red-200"
+      : type === "task"
+        ? "bg-orange-50 text-orange-600 border-orange-200"
+        : "bg-white text-neutral-700 border-gray-200";
+
+const getItemSourceId = (item) => {
+  const rawId =
+    item?.source_id ??
+    item?.sourceId ??
+    item?.task_id ??
+    item?.taskId ??
+    item?.issue_id ??
+    item?.issueId ??
+    item?.todo_id ??
+    item?.todoId ??
+    item?.originalData?.source_id ??
+    item?.originalData?.sourceId ??
+    item?.originalData?.id ??
+    item?.originalData?.task_id ??
+    item?.originalData?.taskId ??
+    item?.originalData?.issue_id ??
+    item?.originalData?.issueId ??
+    item?.originalData?.todo_id ??
+    item?.originalData?.todoId ??
+    item?.id;
+
+  if (rawId === null || rawId === undefined || rawId === "") return null;
+  return String(rawId).replace(/^(task|issue|todo)-/i, "") || rawId;
 };
 
 const mergeTasksIssuesPreservingType = (primary = [], fallback = []) => {
@@ -525,12 +576,14 @@ const FormattedHighlights = ({ text, isPending }) => {
   }
   if (!text) return <span>-</span>;
 
-  const matchAccChal = text.match(/Acc:\s*(\d+)\s*\|\s*Chal:\s*(\d+)/i);
+  const matchAccChal = text.match(
+    /Acc:\s*(\d+)\s*\|\s*(?:Chal|Plan):\s*(\d+)/i,
+  );
   if (matchAccChal) {
     return (
       <span className="text-[13px] text-[#1A1A1A]">
         <span className="font-bold">{matchAccChal[1]}</span> accomplishments,{" "}
-        <span className="font-bold">{matchAccChal[2]}</span> challenges
+        <span className="font-bold">{matchAccChal[2]}</span> plan for tomorrow
       </span>
     );
   }
@@ -543,11 +596,80 @@ const FormattedHighlights = ({ text, isPending }) => {
 // Uses /user_journals/:id.json — same as before
 // ─────────────────────────────────────────────
 const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
+  const navigate = useNavigate();
   const [details, setDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [isTodoModalOpen, setIsTodoModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState(null);
+  const [actionMemberPrefill, setActionMemberPrefill] = useState(null);
+
+  const openTaskModalForMember = () => {
+    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
+    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTaskModalOpen(true);
+  };
+
+  const openIssueModalForMember = () => {
+    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
+    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsIssueModalOpen(true);
+  };
+
+  const openTodoModalForMember = () => {
+    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
+    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTodoModalOpen(true);
+  };
+
+  const handleViewTaskIssueTodoItem = async (item) => {
+    const sourceType = getItemType(item);
+    const sourceId = getItemSourceId(item);
+    const originalData = item?.originalData || item;
+
+    if (!["task", "issue", "todo"].includes(sourceType)) return;
+
+    if (!sourceId) {
+      toast.error(`${getItemTypeLabel(sourceType)} details not found for this item.`);
+      return;
+    }
+
+    if (sourceType === "todo") {
+      setSelectedTodo({ ...originalData, id: sourceId });
+      setIsDetailsModalOpen(true);
+
+      try {
+        const res = await fetch(`${getBaseUrl()}/todos/${sourceId}.json`, {
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const todoDetails = json?.todo || json?.data?.todo || json?.data || json;
+          if (todoDetails) setSelectedTodo(todoDetails);
+        }
+      } catch (error) {
+        console.error("Failed to fetch todo details:", error);
+      }
+      return;
+    }
+
+    navigate(sourceType === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+  };
 
   const [quickActionOpen, setQuickActionOpen] = useState(false);
   const [quickActionText, setQuickActionText] = useState("");
@@ -602,19 +724,26 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const detailSource =
     details && (details.report_data || details.daily_report)
       ? {
-          ...log._raw,
-          ...details,
-          report_data: details.report_data ?? log._raw?.report_data,
-          daily_report: details.daily_report ?? log._raw?.daily_report,
-        }
+        ...log._raw,
+        ...details,
+        report_data: details.report_data ?? log._raw?.report_data,
+        daily_report: details.daily_report ?? log._raw?.daily_report,
+      }
       : log._raw || {
-          report_data: rd,
-          daily_report: details?.daily_report,
-        };
+        report_data: rd,
+        daily_report: details?.daily_report,
+      };
 
   const rawDisplayRd = resolveRawSource(detailSource);
 
   const displayRd = normalizeReportData(rawDisplayRd);
+  const isDetailAbsent =
+    isAbsentReport(detailSource) ||
+    displayRd.is_absent === true ||
+    displayRd.is_absent === "true" ||
+    displayRd.is_absent === 1 ||
+    log.isAbsent === true;
+  const detailAbsentReason = getAbsentReason(detailSource);
 
   const cleanName = (log.user || "").trim();
 
@@ -629,7 +758,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       !item.member ||
       String(item.member).trim().toLowerCase() === cleanName.toLowerCase(),
   );
-  const groupedTasksIssues = groupTasksIssuesByType(filteredTasksIssues);
+  const visibleTasksIssues = filteredTasksIssues.filter(
+    (item) => !isCompletedStatus(getItemStatus(item)),
+  );
   const filteredTomorrowPlan = displayRd.tomorrow_plan.filter(
     (item) =>
       !item.member ||
@@ -661,8 +792,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const timeAchieved = getScore(sections.timing, kpisFallback.timing);
   const timeMax = 20;
 
-  const totalScoreStr = Math.round(
-    details?.score ?? rawDisplayRd?.total_score ?? log.score ?? 0,
+  const totalScoreStr = toRoundedScore(
+    rawDisplayRd?.total_score,
+    details?.score,
+    log.score,
   );
 
   const selfRating =
@@ -680,10 +813,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 
     const rawSource = resolveRawSource(detailSource);
     const baseReportData =
-      details?.report_data ||
       details?.daily_report?.report_data ||
-      log._raw?.report_data ||
       log._raw?.daily_report?.report_data ||
+      details?.report_data ||
+      log._raw?.report_data ||
       rawSource ||
       {};
 
@@ -725,9 +858,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
               : current.report_data,
             daily_report: current.daily_report
               ? {
-                  ...current.daily_report,
-                  report_data: updatedReportData,
-                }
+                ...current.daily_report,
+                report_data: updatedReportData,
+              }
               : current.daily_report,
           };
         });
@@ -838,7 +971,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             onClick={onClose}
           />
 
-          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[920px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
+          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1220px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
               <h2 className="text-xl font-bold text-[#1A1A1A]">
@@ -866,16 +999,18 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                   {/* Profile section */}
                   <div className="p-4 bg-white border-b border-[#F0EBE8]">
                     <div className="flex items-start gap-4">
-                      <div className="flex flex-col items-center gap-1 shrink-0">
-                        <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl bg-white">
-                          {totalScoreStr}
+                      {!isDetailAbsent && (
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl bg-white">
+                            {totalScoreStr}
+                          </div>
+                          {selfRating != null && (
+                            <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                              ⭐ {selfRating}/10
+                            </span>
+                          )}
                         </div>
-                        {selfRating != null && (
-                          <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                            ⭐ {selfRating}/10
-                          </span>
-                        )}
-                      </div>
+                      )}
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -884,10 +1019,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           </h3>
                           {(log.user?.includes("HOD") ||
                             log.user?.includes("TL")) && (
-                            <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
-                              <Crown className="w-3 h-3 fill-orange-400" /> HOD
-                            </span>
-                          )}
+                              <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                                <Crown className="w-3 h-3 fill-orange-400" /> HOD
+                              </span>
+                            )}
                           {log.dept && (
                             <span className="border border-blue-200 bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0">
                               {log.dept}
@@ -909,15 +1044,19 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 
                         {/* KPI Pills */}
                         <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            KPI: {kpiAchieved}/{kpiMax}
-                          </span>
-                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            Tasks, Issues & Todos: {tasksAchieved}/{tasksMax}
-                          </span>
-                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            Planning: {planAchieved}/{planMax}
-                          </span>
+                          {!isDetailAbsent && (
+                            <>
+                              <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                                KPI: {kpiAchieved}/{kpiMax}
+                              </span>
+                              <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                                Tasks, Issues & Todos: {tasksAchieved}/{tasksMax}
+                              </span>
+                              <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                                Planning: {planAchieved}/{planMax}
+                              </span>
+                            </>
+                          )}
                           <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
                             Timing: {timeAchieved}/{timeMax}
                           </span>
@@ -944,12 +1083,13 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           </span>
                         </div>
                       )}
-                      {displayRd.is_absent !== null &&
-                        displayRd.is_absent !== undefined && (
+                      {(isDetailAbsent ||
+                        (displayRd.is_absent !== null &&
+                          displayRd.is_absent !== undefined)) && (
                           <div
                             className={cn(
                               "flex items-center gap-2 rounded-xl px-4 py-2.5 border shadow-sm",
-                              displayRd.is_absent
+                              isDetailAbsent
                                 ? "bg-red-50 border-red-100"
                                 : "bg-green-50 border-green-100",
                             )}
@@ -957,19 +1097,21 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             <span
                               className={cn(
                                 "text-sm font-bold",
-                                displayRd.is_absent
+                                isDetailAbsent
                                   ? "text-red-700"
                                   : "text-green-700",
                               )}
                             >
-                              {displayRd.is_absent ? "Absent" : "Present"}
+                              {isDetailAbsent
+                                ? `Absent${detailAbsentReason ? `: ${detailAbsentReason}` : ""}`
+                                : "Present"}
                             </span>
                           </div>
                         )}
                     </div>
 
                     {/* Big Win */}
-                    {displayRd.big_win && (
+                    {!isDetailAbsent && displayRd.big_win && (
                       <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 flex items-start gap-3 shadow-sm">
                         <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
@@ -984,39 +1126,62 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     )}
 
                     {/* 3-Column: Accomplishments | Tasks, Issues & Todos | Tomorrow's Plan */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                      {/* Accomplishments */}
-                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-                          <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="w-3 h-3 text-green-600" />
+                    {!isDetailAbsent && (
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                        {/* Accomplishments */}
+                        <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
+                          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                            <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="w-3 h-3 text-green-600" />
+                            </div>
+                            <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
+                              Accomplishments
+                            </h4>
                           </div>
-                          <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
-                            Accomplishments
-                          </h4>
+                          {filteredAccomplishments.length === 0 ? (
+                            <p className="text-sm text-neutral-400 italic font-medium">
+                              None recorded.
+                            </p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {filteredAccomplishments.map((item, i) => {
+                                const type = getItemType(item);
+                                const hasDetails = ["task", "issue", "todo"].includes(type);
+                                return (
+                                  <div
+                                    key={i}
+                                    className="flex items-center gap-2 rounded-[10px] border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
+                                  >
+                                    <span
+                                      className={cn(
+                                        "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                        getItemTypePillClass(type),
+                                      )}
+                                    >
+                                      {getItemTypeLabel(type)}
+                                    </span>
+                                    <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
+                                      {getItemTitle(item)}
+                                    </span>
+                                    {hasDetails && (
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleViewTaskIssueTodoItem(item);
+                                        }}
+                                        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                        title={`View ${getItemTypeLabel(type)}`}
+                                      >
+                                        <Eye className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                        {filteredAccomplishments.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">
-                            None recorded.
-                          </p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {filteredAccomplishments.map((item, i) => (
-                              <div
-                                key={i}
-                                className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
-                              >
-                                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-700 uppercase">
-                                  Note
-                                </span>
-                                <span className="text-xs font-bold text-neutral-900 leading-snug">
-                                  {getItemTitle(item)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
 
                       {/* Tasks, Issues & Todos */}
                       <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
@@ -1030,10 +1195,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             </h4>
                           </div>
                           <span className="text-xs font-bold text-neutral-500 shrink-0">
-                            {filteredTasksIssues.length}
+                            {visibleTasksIssues.length}
                           </span>
                         </div>
-                        {filteredTasksIssues.length === 0 ? (
+                        {visibleTasksIssues.length === 0 ? (
                           <p className="text-sm text-neutral-400 italic font-medium">
                             None recorded.
                           </p>
@@ -1041,177 +1206,251 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           <div className="space-y-2">
                             {[
                               {
-                                label: "In Progress",
-                                items: filteredTasksIssues.filter(
-                                  (item) =>
-                                    !isCompletedStatus(getItemStatus(item)),
-                                ),
-                                wrapClass: "bg-blue-50 border-blue-100",
-                                countClass: "bg-blue-100 text-blue-700",
+                                key: "overdue",
+                                label: "Overdue",
+                                statuses: ["overdue", "overdued"],
+                                colorClass: "text-red-700",
+                                headerBg: "bg-red-50 hover:bg-red-100",
+                                pillBg: "bg-red-100 text-red-700",
+                                itemBg: "bg-red-50/60 border-red-100",
                               },
                               {
-                                label: "Completed",
-                                items: filteredTasksIssues.filter((item) =>
-                                  isCompletedStatus(getItemStatus(item)),
-                                ),
-                                wrapClass: "bg-green-50 border-green-100",
-                                countClass: "bg-green-100 text-green-700",
+                                key: "in_progress",
+                                label: "In Progress",
+                                statuses: ["in_progress", "started"],
+                                colorClass: "text-sky-700",
+                                headerBg: "bg-sky-50 hover:bg-sky-100",
+                                pillBg: "bg-sky-100 text-sky-700",
+                                itemBg: "bg-sky-50/60 border-sky-100",
                               },
-                            ].map((section) =>
-                              section.items.length > 0 ? (
+                              {
+                                key: "open",
+                                label: "Open",
+                                statuses: ["open", "pending", "reopen", "reopened"],
+                                colorClass: "text-slate-600",
+                                headerBg: "bg-slate-50 hover:bg-slate-100",
+                                pillBg: "bg-slate-100 text-slate-600",
+                                itemBg: "bg-slate-50/60 border-slate-100",
+                              },
+                              {
+                                key: "on_hold",
+                                label: "On Hold",
+                                statuses: ["on_hold"],
+                                colorClass: "text-orange-700",
+                                headerBg: "bg-orange-50 hover:bg-orange-100",
+                                pillBg: "bg-orange-100 text-orange-700",
+                                itemBg: "bg-orange-50/60 border-orange-100",
+                              },
+                              {
+                                key: "completed",
+                                label: "Completed",
+                                statuses: ["completed", "closed", "done"],
+                                colorClass: "text-green-700",
+                                headerBg: "bg-green-50 hover:bg-green-100",
+                                pillBg: "bg-green-100 text-green-700",
+                                itemBg: "bg-green-50/60 border-green-100",
+                              },
+                            ].map((section) => {
+                              const sectionItems = visibleTasksIssues.filter((item) =>
+                                section.statuses.includes(
+                                  String(getItemStatus(item)).toLowerCase(),
+                                ),
+                              );
+                              return sectionItems.length > 0 ? (
                                 <div
-                                  key={section.label}
-                                  className={cn(
-                                    "rounded-lg border p-1.5 space-y-1.5",
-                                    section.wrapClass,
-                                  )}
+                                  key={section.key}
+                                  className="space-y-1.5"
                                 >
-                                  <div className="flex items-center justify-between gap-2 px-1">
-                                    <p className="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">
+                                  <div
+                                    className={cn(
+                                      "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
+                                      section.headerBg,
+                                    )}
+                                  >
+                                    <p
+                                      className={cn(
+                                        "text-[10px] font-extrabold uppercase tracking-wider flex-1",
+                                        section.colorClass,
+                                      )}
+                                    >
                                       {section.label}
                                     </p>
                                     <span
                                       className={cn(
-                                        "min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-extrabold",
-                                        section.countClass,
+                                        "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                                        section.pillBg,
                                       )}
                                     >
-                                      {section.items.length}
+                                      {sectionItems.length}
                                     </span>
                                   </div>
-                                  {section.items.map((item, i) => {
+                                  {sectionItems.map((item, i) => {
                                     const type = getItemType(item);
+                                    const hasDetails = ["task", "issue", "todo"].includes(type);
+                                    const dueDate =
+                                      item.target_date ||
+                                      item.due_date ||
+                                      item.end_date ||
+                                      item.deadline;
                                     return (
                                       <div
-                                        key={`${section.label}-${i}`}
+                                        key={`${section.key}-${i}`}
+                                        onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
                                         className={cn(
-                                          "flex items-center gap-2 rounded-lg border px-2.5 py-2 min-h-[36px] bg-white",
-                                          isCompletedStatus(getItemStatus(item))
-                                            ? "border-green-200 bg-green-50"
-                                            : "border-orange-200 bg-orange-50",
+                                          "flex flex-col rounded-lg border transition-all",
+                                          section.itemBg,
+                                          hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]",
                                         )}
                                       >
-                                        <span
-                                          className={cn(
-                                            "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                            type === "todo"
-                                              ? "bg-purple-50 text-purple-700 border-purple-200"
-                                              : type === "issue"
-                                                ? "bg-red-50 text-red-600 border-red-200"
-                                                : "bg-orange-50 text-orange-600 border-orange-200",
+                                        <div className="flex items-center gap-2 px-2.5 py-2 min-h-[36px]">
+                                          <span
+                                            className={cn(
+                                              "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                              getItemTypePillClass(type),
+                                            )}
+                                          >
+                                            {getItemTypeLabel(type)}
+                                          </span>
+                                          <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
+                                            {getItemTitle(item)}
+                                          </span>
+                                          {hasDetails && (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleViewTaskIssueTodoItem(item);
+                                              }}
+                                              className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                              title={`View ${getItemTypeLabel(type)}`}
+                                            >
+                                              <Eye className="w-3 h-3" />
+                                            </button>
                                           )}
-                                        >
-                                          {type === "todo"
-                                            ? "Todo"
-                                            : type === "issue"
-                                              ? "Issue"
-                                              : "Task"}
-                                        </span>
-                                        <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
-                                          {getItemTitle(item)}
-                                        </span>
+                                        </div>
+                                        {dueDate && (
+                                          <div className="flex items-center gap-1 px-2.5 pb-2 -mt-1">
+                                            <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+                                            <span className="text-[10px] text-gray-500">
+                                              {new Date(dueDate).toLocaleDateString(
+                                                "en-GB",
+                                                {
+                                                  day: "2-digit",
+                                                  month: "short",
+                                                  year: "numeric",
+                                                },
+                                              )}
+                                            </span>
+                                          </div>
+                                        )}
                                       </div>
                                     );
                                   })}
                                 </div>
-                              ) : null,
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Tomorrow's Plan */}
-                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-                          <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                            <Calendar className="w-3 h-3 text-blue-600" />
-                          </div>
-                          <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
-                            Tomorrow's Plan
-                          </h4>
-                        </div>
-                        {filteredTomorrowPlan.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">
-                            None recorded.
-                          </p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {filteredTomorrowPlan.map((item, i) => {
-                              const type = getItemType(item);
-                              return (
-                                <div
-                                  key={i}
-                                  className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
-                                >
-                                  <span
-                                    className={cn(
-                                      "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                      type === "todo"
-                                        ? "bg-purple-50 text-purple-700 border-purple-200"
-                                        : type === "issue"
-                                          ? "bg-red-50 text-red-600 border-red-200"
-                                          : "bg-orange-50 text-orange-600 border-orange-200",
-                                    )}
-                                  >
-                                    {type === "todo"
-                                      ? "Todo"
-                                      : type === "issue"
-                                        ? "Issue"
-                                        : "Task"}
-                                  </span>
-                                  <span className="flex-1 text-xs font-bold text-neutral-900 leading-snug min-w-0 truncate">
-                                    {getItemTitle(item)}
-                                  </span>
-                                </div>
-                              );
+                              ) : null;
                             })}
                           </div>
                         )}
                       </div>
-                    </div>
+
+                        {/* Tomorrow's Plan */}
+                        <div className="bg-white border border-[#F0E8E3] rounded-xl p-3 shadow-sm min-h-[210px]">
+                          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                              <Calendar className="w-3 h-3 text-blue-600" />
+                            </div>
+                            <h4 className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wider">
+                              Tomorrow's Plan
+                            </h4>
+                          </div>
+                          {filteredTomorrowPlan.length === 0 ? (
+                            <p className="text-sm text-neutral-400 italic font-medium">
+                              None recorded.
+                            </p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {filteredTomorrowPlan.map((item, i) => {
+                                const type = getItemType(item);
+                                const hasDetails = ["task", "issue", "todo"].includes(type);
+                                return (
+                                  <div
+                                    key={i}
+                                    className="flex items-center gap-2 rounded-[10px] border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
+                                  >
+                                    <span
+                                      className={cn(
+                                        "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
+                                        getItemTypePillClass(type),
+                                      )}
+                                    >
+                                      {getItemTypeLabel(type)}
+                                    </span>
+                                    <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
+                                      {getItemTitle(item)}
+                                    </span>
+                                    {hasDetails && (
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleViewTaskIssueTodoItem(item);
+                                        }}
+                                        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                        title={`View ${getItemTypeLabel(type)}`}
+                                      >
+                                        <Eye className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      <button
-                        onClick={() => setIsTaskModalOpen(true)}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add Task
-                      </button>
-                      <button
-                        onClick={() => setIsIssueModalOpen(true)}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Stuck Issue
-                      </button>
-                      <button
-                        onClick={() => {
-                          setQuickActionOpen(!quickActionOpen);
-                          setQuickActionText("");
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add to Plan
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (feedbackOpen) {
-                            setFeedbackOpen(false);
-                          } else {
-                            setFeedbackOpen(true);
-                            setFeedbackRating(0);
-                            setFeedbackMessage("");
-                            loadPastFeedbacks();
-                          }
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" /> Feedback
-                      </button>
-                    </div>
+                    {!isDetailAbsent && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          onClick={openTaskModalForMember}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Task
+                        </button>
+                        <button
+                          onClick={openIssueModalForMember}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                        </button>
+                        <button
+                          onClick={openTodoModalForMember}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Todo
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (feedbackOpen) {
+                              setFeedbackOpen(false);
+                            } else {
+                              setFeedbackOpen(true);
+                              setFeedbackRating(0);
+                              setFeedbackMessage("");
+                              loadPastFeedbacks();
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                        </button>
+                      </div>
+                    )}
 
                     {/* Quick Add to Plan */}
-                    {quickActionOpen && (
+                    {!isDetailAbsent && quickActionOpen && (
                       <div className="bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
                         <p className="text-xs font-black text-orange-800 uppercase tracking-widest mb-3 flex items-center gap-2">
                           <Plus className="w-3.5 h-3.5" /> Add to Tomorrow's Plan
@@ -1274,7 +1513,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                     )}
 
                     {/* Feedback Block */}
-                    {feedbackOpen && (
+                    {!isDetailAbsent && feedbackOpen && (
                       <div className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           {/* Left: Add new feedback */}
@@ -1358,8 +1597,8 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                               </p>
                               <button
                                 onClick={() =>
-                                  (window.location.href =
-                                    "/admin-compass/feedback-dashboard")
+                                (window.location.href =
+                                  "/admin-compass/feedback-dashboard")
                                 }
                                 className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
                               >
@@ -1443,7 +1682,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
               <div className="fixed inset-0 z-[10000] flex justify-end">
                 <div
                   className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                  onClick={() => setIsTaskModalOpen(false)}
+                  onClick={() => {
+                    setIsTaskModalOpen(false);
+                    setActionMemberPrefill(null);
+                  }}
                 />
                 <div
                   className="relative flex flex-col bg-white shadow-2xl h-full border-l border-gray-200"
@@ -1454,7 +1696,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                       Add Task
                     </h2>
                     <button
-                      onClick={() => setIsTaskModalOpen(false)}
+                      onClick={() => {
+                        setIsTaskModalOpen(false);
+                        setActionMemberPrefill(null);
+                      }}
                       className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors text-gray-500"
                     >
                       <X className="w-5 h-5" />
@@ -1463,12 +1708,16 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                   <div className="flex-1 overflow-y-auto p-4">
                     <ProjectTaskCreateModal
                       isEdit={false}
-                      onCloseModal={() => setIsTaskModalOpen(false)}
+                      onCloseModal={() => {
+                        setIsTaskModalOpen(false);
+                        setActionMemberPrefill(null);
+                      }}
                       className="max-w-full mx-0"
-                      prefillData={null}
+                      prefillData={actionMemberPrefill}
                       opportunityId={null}
                       onSuccess={async () => {
                         setIsTaskModalOpen(false);
+                        setActionMemberPrefill(null);
                         refetchDetails(true);
                       }}
                       isConversion={false}
@@ -1483,11 +1732,41 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
             <MuiZIndexFix>
               <AddIssueModal
                 openDialog={isIssueModalOpen}
-                handleCloseDialog={() => setIsIssueModalOpen(false)}
+                handleCloseDialog={() => {
+                  setIsIssueModalOpen(false);
+                  setActionMemberPrefill(null);
+                }}
                 preSelectedProjectId={undefined}
+                prefillData={actionMemberPrefill}
               />
             </MuiZIndexFix>
           )}
+
+          {isTodoModalOpen && (
+            <MuiZIndexFix>
+              <AddToDoModal
+                isModalOpen={isTodoModalOpen}
+                setIsModalOpen={(val) => {
+                  setIsTodoModalOpen(val);
+                  if (!val) setActionMemberPrefill(null);
+                }}
+                getTodos={async () => {
+                  setIsTodoModalOpen(false);
+                  setActionMemberPrefill(null);
+                  refetchDetails(true);
+                }}
+                prefillData={actionMemberPrefill}
+              />
+            </MuiZIndexFix>
+          )}
+
+          <MuiZIndexFix>
+            <TodoDetailsModal
+              isModalOpen={isDetailsModalOpen}
+              setIsModalOpen={setIsDetailsModalOpen}
+              todo={selectedTodo}
+            />
+          </MuiZIndexFix>
         </div>,
         document.body,
       )}
@@ -1664,23 +1943,27 @@ const DailyLogTab = ({
       const submittedReports =
         detailedReports.length > 0
           ? allReports.filter(
-              (report) =>
-                detailedReportUserIds.has(Number(report.user_id)) ||
-                detailedReportNames.has(normalizeName(report.name)),
-            )
+            (report) =>
+              detailedReportUserIds.has(Number(report.user_id)) ||
+              detailedReportNames.has(normalizeName(report.name)),
+          )
           : allReports.filter(
-              (r) => r.status !== "pending" || !!r.daily_report,
-            );
+            (r) =>
+              r.status !== "pending" || !!r.daily_report,
+          );
 
       // Map to table row format
       let logsArray = submittedReports.map((report) => {
         const rawRd = resolveRawSource(report);
         const rd = normalizeReportData(rawRd);
+        const isAbsent = isAbsentReport(report);
+        const absentReason = getAbsentReason(report);
 
-        // Build highlights summary from accomplishments count
-        const highlights =
-          rd.accomplishments.length > 0 || rd.tasks_issues.length > 0
-            ? `Acc: ${rd.accomplishments.length} | Chal: ${rd.tasks_issues.length}`
+        // Build highlights summary from accomplishments and tomorrow plan counts
+        const highlights = isAbsent
+          ? `Absent${absentReason ? `: ${absentReason}` : ""}`
+          : rd.accomplishments.length > 0 || rd.tomorrow_plan.length > 0
+            ? `Acc: ${rd.accomplishments.length} | Plan: ${rd.tomorrow_plan.length}`
             : "";
 
         return {
@@ -1688,13 +1971,15 @@ const DailyLogTab = ({
           id: report.journal_id || report.daily_report?.id || report.id,
           user: report.name || "",
           email: report.email || "",
-          score: Math.round(report.score ?? rawRd?.total_score ?? 0),
+          score: toRoundedScore(rawRd?.total_score, report.score),
           dept: report.department || "",
           highlights,
           submittedAt: report.submitted_at
             ? formatDateTime(report.submitted_at)
             : "—",
           status: report.status,
+          isAbsent,
+          absentReason,
           date: selectedDate,
           userId: report.user_id,
           _raw: report,
@@ -1720,8 +2005,10 @@ const DailyLogTab = ({
           };
           const rawRd = resolveRawSource(hydratedReport);
           const rd = normalizeReportData(rawRd);
+          const isAbsent = isAbsentReport(hydratedReport);
+          const absentReason = getAbsentReason(hydratedReport);
           const accomplishments = rd.accomplishments;
-          const tasksIssues = rd.tasks_issues;
+          const tomorrowPlan = rd.tomorrow_plan;
           const reportSelfRating =
             Number(String(report.self_rating || "0").split("/")[0]) || 0;
 
@@ -1735,16 +2022,21 @@ const DailyLogTab = ({
               selectedDate,
             user: hydratedReport.name || report.name || "",
             email: hydratedReport.email || "",
-            score: Math.round(
-              hydratedReport.score ?? rawRd?.total_score ?? reportSelfRating,
+            score: toRoundedScore(
+              rawRd?.total_score,
+              hydratedReport.score,
+              reportSelfRating,
             ),
             dept: hydratedReport.department || "",
-            highlights:
-              accomplishments.length > 0 || tasksIssues.length > 0
-                ? `Acc: ${accomplishments.length} | Chal: ${tasksIssues.length}`
+            highlights: isAbsent
+              ? `Absent${absentReason ? `: ${absentReason}` : ""}`
+              : accomplishments.length > 0 || tomorrowPlan.length > 0
+                ? `Acc: ${accomplishments.length} | Plan: ${tomorrowPlan.length}`
                 : "",
             submittedAt: "—",
             status: "submitted",
+            isAbsent,
+            absentReason,
             date: selectedDate,
             userId: hydratedReport.user_id || report.user_id,
             _raw: hydratedReport,
@@ -1786,7 +2078,7 @@ const DailyLogTab = ({
         setGroupedApiLogs({});
       }
 
-      setMetaSubmitted(detailedReports.length || logsArray.length);
+      setMetaSubmitted(logsArray.length);
       setMetaExpected(missedCount);
     } catch (err) {
       setApiError(err.message);
@@ -1846,9 +2138,9 @@ const DailyLogTab = ({
         report_data: raw.report_data ? updatedReportData : raw.report_data,
         daily_report: raw.daily_report
           ? {
-              ...raw.daily_report,
-              report_data: updatedReportData,
-            }
+            ...raw.daily_report,
+            report_data: updatedReportData,
+          }
           : raw.daily_report,
       };
       return { ...log, _raw: updatedRaw };
@@ -1884,6 +2176,13 @@ const DailyLogTab = ({
           <div className="text-xs font-semibold text-[#8C8580] mt-0.5 truncate">
             {log.email}
           </div>
+          {log.isAbsent && (
+            <div className="mt-1 inline-flex max-w-full items-center rounded-md border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700">
+              <span className="truncate">
+                Absent{log.absentReason ? `: ${log.absentReason}` : ""}
+              </span>
+            </div>
+          )}
         </td>
         <td className="px-3 py-4 sm:px-4">
           <span

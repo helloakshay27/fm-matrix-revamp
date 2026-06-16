@@ -216,14 +216,6 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         };
     };
 
-    useEffect(() => {
-        boqDetails.forEach((boq) => {
-            if (boq.selectedBOQ) {
-                fetchBOQDetails(boq.selectedBOQ, boq.id);
-            }
-        });
-    }, [boqDetails.map((boq) => boq.selectedBOQ).join(',')]);
-
     const resetForm = () => {
         setErrors({ invoiceNumber: '', invoiceDate: '', postingDate: '', boq: '' });
         setBoqErrors({});
@@ -361,7 +353,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
     };
 
     const updateBOQDetail = (id: string, field: keyof BOQDetail, value: string) => {
-        setBOQDetails(boqDetails.map(boq => {
+        setBOQDetails(prev => prev.map(boq => {
             if (boq.id === id) {
                 const updatedBOQ = { ...boq, [field]: value };
                 if (field === 'quantity') {
@@ -372,6 +364,10 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             }
             return boq;
         }));
+
+        if (field === 'selectedBOQ' && value) {
+            fetchBOQDetails(value, id);
+        }
     };
 
     return (

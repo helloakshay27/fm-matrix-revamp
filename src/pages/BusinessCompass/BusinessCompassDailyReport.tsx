@@ -356,15 +356,48 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
   const [editTodoData, setEditTodoData] = useState<any>(null);
 
-  const handleViewReportItem = (item: any) => {
+  const [isTodoDetailsLoading, setIsTodoDetailsLoading] = useState(false);
+
+  const handleViewReportItem = async (item: any) => {
     const sourceType =
       item.source_type ?? item.originalData?.source_type ?? item.type;
     const sourceId = item.source_id ?? item.originalData?.id;
-    const originalData = item.originalData ?? item;
 
     if (sourceType === "todo") {
-      setSelectedTodo(originalData);
-      setIsDetailsModalOpen(true);
+      // Try cached live todos first
+      const cachedTodo = todosData?.todos?.find((t: any) => t.id === sourceId);
+      if (cachedTodo) {
+        setSelectedTodo(cachedTodo);
+        setIsDetailsModalOpen(true);
+        return;
+      }
+      // If originalData already has full fields, use it
+      const originalData = item.originalData ?? item;
+      if (originalData?.status || originalData?.priority || originalData?.description) {
+        setSelectedTodo(originalData);
+        setIsDetailsModalOpen(true);
+        return;
+      }
+      // Fetch full todo from API
+      if (sourceId) {
+        // Open modal immediately with minimal data so it renders while fetching
+        setSelectedTodo({ ...originalData, title: originalData.title || 'Loading...' });
+        setIsDetailsModalOpen(true);
+        try {
+          setIsTodoDetailsLoading(true);
+          const urlBase = `https://${baseUrl}`;
+          const headers = { Authorization: `Bearer ${token}` };
+          const res = await axios.get(`${urlBase}/todos/${sourceId}.json`, { headers });
+          setSelectedTodo(res.data?.todo ?? res.data ?? originalData);
+        } catch {
+          setSelectedTodo(originalData);
+        } finally {
+          setIsTodoDetailsLoading(false);
+        }
+      } else {
+        setSelectedTodo(originalData);
+        setIsDetailsModalOpen(true);
+      }
       return;
     }
 
@@ -2727,7 +2760,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                 (item) =>
                   selectedTasksIssues[item.id] === true ||
                   item.status === "overdue" ||
-                  item.status === "in_progress"
+                  item.status === "in_progress" ||
+                  item.status === "on_hold" ||
+                  item.status === "open"
               )
               .map((item) => ({
                 title:
@@ -2740,6 +2775,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     ? "completed"
                     : item.status,
                 type: item.type,
+                source_id: item.originalData?.id,
               })),
             tomorrow_plan_date: getNextWorkingDay(startDate),
             tomorrow_plan: tomorrowPlanPayload,
@@ -3197,7 +3233,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 item.type !== "holiday" &&
                                 handleSelectDate(item)
                               }
-                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-lg relative"
+                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-[12px] relative"
                               style={{
                                 background: cardBg,
                                 border: isSelected
@@ -3217,7 +3253,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             >
                               {topBarColor !== "transparent" && (
                                 <div
-                                  className="absolute top-0 left-0 right-0 h-2 rounded-t-lg"
+                                  className="absolute top-0 left-0 right-0 h-2 rounded-t-[12px]"
                                   style={{ backgroundColor: topBarColor }}
                                 />
                               )}
@@ -3249,27 +3285,32 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-center gap-4 mt-6 mb-2 flex-wrap">
                       {[
-                        { color: "#61CDBB", label: "Filled" },
-                        { color: "#E28B8B", label: "Missed" },
-                        { color: "#D1D5DB", label: "Holiday" },
-                        /* {
+                        {
+                          color: "#61CDBB",
+                          label: "Filled",
+                          isCircle: false,
+                        },
+                        {
                           color: "#E28B8B",
-                          label: "Upcoming tasks",
-                          isDot: true,
-                        }, */
-                      ].map(({ color, label, isDot }) => (
+                          label: "Missed",
+                          isCircle: false,
+                        },
+                        {
+                          color: "#D1D5DB",
+                          label: "Holiday",
+                          isCircle: false,
+                        },
+                        {
+                          color: "#E28B8B",
+                          label: "Upcoming",
+                          isCircle: true,
+                        },
+                      ].map(({ color, label, isCircle }) => (
                         <div key={label} className="flex items-center gap-1.5">
-                          {isDot ? (
-                            <div
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: color }}
-                            />
-                          ) : (
-                            <div
-                              className="w-4 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: color }}
-                            />
-                          )}
+                          <div
+                            className={`w-2.5 h-2.5 flex-shrink-0 ${isCircle ? "rounded-full" : "rounded-[2px]"}`}
+                            style={{ backgroundColor: color }}
+                          />
                           <span className="text-[11px] text-gray-500 font-medium">
                             {label}
                           </span>
@@ -6640,17 +6681,28 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <div className="bc-history-card-body">
                         <div className="bc-history-card-header">
                           <div className="min-w-0">
-                            <h2 className="bc-history-title">
-                              {new Date(report.start_date).toLocaleDateString(
-                                "en-US",
-                                {
-                                  weekday: "long",
-                                  month: "long",
-                                  day: "numeric",
-                                  year: "numeric",
-                                }
-                              )}
-                            </h2>
+                            <div className="bc-history-title-row">
+                              <h2 className="bc-history-title">
+                                {new Date(report.start_date).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "long",
+                                    month: "long",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </h2>
+                              <Badge
+                                variant="outline"
+                                className="bc-history-time-badge"
+                              >
+                                {new Date(report.created_at).toLocaleTimeString(
+                                  "en-US",
+                                  { hour: "numeric", minute: "2-digit" }
+                                )}
+                              </Badge>
+                            </div>
                             <p className="text-sm text-gray-500 mt-1.5">
                               By: {user?.firstname} {user?.lastname}
                             </p>
@@ -6669,21 +6721,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <Target size={12} className="fill-white" />
                                 {report.report_data?.total_score || 0}/100
                               </Badge>
-                              <Badge
-                                variant="outline"
-                                className="bc-history-time-badge"
-                              >
-                                {new Date(report.created_at).toLocaleTimeString(
-                                  "en-US",
-                                  { hour: "numeric", minute: "2-digit" }
-                                )}
-                              </Badge>
                             </div>
                             <div className="bc-history-action-buttons">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-4 text-[#DA7756] border-[#DA7756]/30 hover:bg-[#DA7756]/5 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                className="bc-history-action-btn text-[#DA7756] border-[#DA7756]/30 hover:bg-[#DA7756]/5 text-xs font-medium rounded-[4px] shadow-sm"
                                 onClick={() => {
                                   const date = new Date(report.start_date);
                                   const formattedDate =
@@ -6763,7 +6806,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-4 text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                className="bc-history-action-btn text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] shadow-sm"
                                 onClick={async () => {
                                   if (
                                     !window.confirm(
@@ -6837,7 +6880,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bc-history-score-panel">
+                        {report.is_absent && (
+                          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-[10px] px-4 py-3 mb-4">
+                            <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-red-700">Absent</p>
+                              {report.description && (
+                                <p className="text-xs text-red-600 mt-0.5 break-words">{report.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {!report.is_absent && <div className="bc-history-score-panel">
                           <div className="bc-history-section-header">
                             <div className="flex items-center gap-2">
                               <BarChart3 size={14} className="text-[#DA7756]" />
@@ -6888,7 +6943,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </div>
                             ))}
                           </div>
-                        </div>
+                        </div>}
 
                         {report.report_data?.past_kpis &&
                           report.report_data.past_kpis.length > 0 && (
@@ -6988,7 +7043,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           )} */}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {!report.is_absent && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <CheckCircle2
@@ -7031,18 +7086,23 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         key={idx}
                                         className="relative group animate-in fade-in duration-200"
                                       >
-                                        <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all">
-                                          <div className="flex items-start gap-3">
-                                            <div className="min-w-0 flex-1">
-                                              <p className="text-sm font-medium text-gray-900 break-words">
-                                                {itemText}
-                                              </p>
-                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
-                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
-                                                  {sourceType ?? "Note"}
-                                                </span>
-                                              </div>
-                                            </div>
+                                        <div className="flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all border-[#DA7756]/10 bg-[#DA7756]/10">
+                                          <div className="flex items-center gap-4">
+                                            <span className={cn(
+                                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                              sourceType === "task"
+                                                ? "bg-[#DA7756] text-white"
+                                                : sourceType === "issue"
+                                                  ? "bg-violet-100 text-violet-700"
+                                                  : sourceType === "todo"
+                                                    ? "bg-yellow-100 text-yellow-700"
+                                                    : "bg-gray-500 text-white"
+                                            )}>
+                                              {sourceType ?? "Note"}
+                                            </span>
+                                            <span className="flex-1 text-sm font-medium text-gray-400 truncate">
+                                              {itemText}
+                                            </span>
                                             {(sourceType || sourceId) && (
                                               <div className="flex items-center gap-1 shrink-0">
                                                 <button
@@ -7064,6 +7124,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               </div>
                                             )}
                                           </div>
+                                          {/* {itemDate && (
+                                            <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                <CalendarIcon size={9} className="shrink-0" />
+                                                {itemDate}
+                                              </span>
+                                            </div>
+                                          )} */}
                                         </div>
                                       </div>
                                     );
@@ -7117,28 +7185,23 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         key={idx}
                                         className="relative group animate-in fade-in duration-200"
                                       >
-                                        <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all">
-                                          <div className="flex items-start gap-3">
-                                            <div className="min-w-0 flex-1">
-                                              <p className="text-sm font-medium text-gray-900 break-words">
-                                                {itemText}
-                                              </p>
-                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
-                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
-                                                  {sourceType ?? "Note"}
-                                                </span>
-                                                {itemDate && (
-                                                  <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
-                                                    {itemDate}
-                                                  </span>
-                                                )}
-                                                {estimatedHours && (
-                                                  <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
-                                                    {estimatedHours}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
+                                        <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] hover:border-[#DA7756]/30 transition-all">
+                                          <div className="flex min-w-0 items-center gap-2">
+                                            <span className={cn(
+                                              "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                              sourceType === "task"
+                                                ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                                : sourceType === "issue"
+                                                  ? "bg-violet-100 text-violet-700"
+                                                  : sourceType === "todo"
+                                                    ? "bg-yellow-100 text-yellow-700"
+                                                    : "bg-gray-500 text-white"
+                                            )}>
+                                              {sourceType ?? "Note"}
+                                            </span>
+                                            <span className="min-w-0 flex-1 text-sm font-medium text-gray-700 truncate">
+                                              {itemText}
+                                            </span>
                                             {(sourceType || sourceId) && (
                                               <div className="flex items-center gap-1 shrink-0">
                                                 <button
@@ -7160,6 +7223,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               </div>
                                             )}
                                           </div>
+                                          {/* {(itemDate || estimatedHours) && (
+                                            <div className="mt-2 flex flex-wrap items-center gap-2 pl-6 text-[11px] text-gray-500">
+                                              {itemDate && (
+                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                  {itemDate}
+                                                </span>
+                                              )}
+                                              {estimatedHours && (
+                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
+                                                  {estimatedHours}
+                                                </span>
+                                              )}
+                                            </div>
+                                          )} */}
                                         </div>
                                       </div>
                                     );
@@ -7174,7 +7251,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                           </div>
-                        </div>
+                        </div>}
 
                         {report.attachments &&
                           report.attachments.length > 0 && (
@@ -7837,9 +7914,9 @@ const BusinessCompassDailyReport: React.FC = () => {
         isModalOpen={isDetailsModalOpen}
         setIsModalOpen={setIsDetailsModalOpen}
         todo={selectedTodo}
+        isLoading={isTodoDetailsLoading}
         onEditClick={() => {
           setIsDetailsModalOpen(false);
-          // Can add edit functionality here if needed
         }}
       />
 

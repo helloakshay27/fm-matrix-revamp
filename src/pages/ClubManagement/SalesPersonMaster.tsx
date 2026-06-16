@@ -361,7 +361,8 @@ export const SalesPersonMaster: React.FC = () => {
                             setAddModalOpen(true);
                         }}
                     >
-                        <Plus className="w-4 h-4 mr-2" /> Add
+                        <Plus className="w-4 h-4 mr-2 !text-white" />
+                        <span className="!text-white" >Add</span> 
                     </Button>
                 }
             />

@@ -27,7 +27,7 @@ const DailyMeeting = () => {
 
   const handleMeetingSaved = (date: string) => {
     setSelectedMeetingDate(date);
-    setActiveTab("Log");
+    setActiveTab("History");
   };
 
   return (

@@ -132,6 +132,23 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
     fetchHistory();
   }, [assetId, asset.id]);
 
+  const calcDuration = (from: string | null | undefined, to: string | null | undefined): string => {
+    if (!from) return '—';
+    const start = new Date(from).getTime();
+    const end = to ? new Date(to).getTime() : Date.now();
+    const diffMs = end - start;
+    if (isNaN(diffMs) || diffMs < 0) return '—';
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const days = Math.floor(totalMinutes / 1440);
+    const hours = Math.floor((totalMinutes % 1440) / 60);
+    const minutes = totalMinutes % 60;
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+    return (to ? '' : '') + parts.join(' ');
+  };
+
   // Basic asset info mapped from asset prop
   const basicAssetInfo = [
     { label: 'Asset Name', value: asset?.name || '-' },
@@ -235,13 +252,17 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="font-medium">Date</TableHead>
-                      <TableHead className="font-medium">Reason</TableHead>
+                      <TableHead className="font-medium">Breakdown Date</TableHead>
+                      <TableHead className="font-medium">Reported By</TableHead>
+
+                      <TableHead className="font-medium">Failure Reason</TableHead>
                       <TableHead className="font-medium">Type</TableHead>
-                      <TableHead className="font-medium">Severity</TableHead>
-                      <TableHead className="font-medium">Repair Duration (days)</TableHead>
-                      <TableHead className="font-medium">Restored On</TableHead>
-                      <TableHead className="font-medium">Submitted By</TableHead>
+                      <TableHead className="font-medium">Severity Level</TableHead>
+                      <TableHead className="font-medium">Target Restoration Date</TableHead>
+                      <TableHead className="font-medium">Actual Restoration Date</TableHead>
+                      <TableHead className="font-medium">Duration</TableHead>
+                      <TableHead className="font-medium">Restored By</TableHead>
+
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -250,7 +271,10 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
                         <TableCell className="text-sm">
                           {breakdown.date ? new Date(breakdown.date).toLocaleString() : '-'}
                         </TableCell>
+                        <TableCell className="text-sm">{breakdown.submitted_by || '-'}</TableCell>
+
                         <TableCell className="text-sm">{breakdown.reason || '-'}</TableCell>
+                        
                         <TableCell className="text-sm">{breakdown.type || '-'}</TableCell>
                         <TableCell>
                           <span
@@ -271,7 +295,15 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
                         <TableCell className="text-sm">
                           {breakdown.in_use_date ? new Date(breakdown.in_use_date).toLocaleString() : 'Not restored'}
                         </TableCell>
-                        <TableCell className="text-sm">{breakdown.submitted_by || '-'}</TableCell>
+                        <TableCell className="text-sm font-medium">
+                          <span className={breakdown.in_use_date ? 'text-green-700' : 'text-orange-600'}>
+                            {calcDuration(breakdown.date, breakdown.in_use_date)}
+                          </span>
+                          {!breakdown.in_use_date && breakdown.date && (
+                            <span className="block text-xs text-gray-400 font-normal">ongoing</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">{breakdown.marked_in_use_by || '-'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

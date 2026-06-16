@@ -194,9 +194,10 @@ export const CustomersDetails = () => {
                         </Button>
                         <div className="flex items-center gap-2">
                             <Button
-                                variant="outline"
+                                // variant="outline"
                                 onClick={handleEditClick}
-                                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                                className="bg-[#C72030] hover:bg-[#A01020] text-white"
                             >
                                 Edit
                             </Button>

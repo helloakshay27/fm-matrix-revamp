@@ -238,7 +238,7 @@ export const OutboundDetailPage: React.FC = () => {
     }, [fetchOutboundDetails]);
 
     const handleBack = () => {
-        navigate('/vas/mailroom/outbound');
+        navigate(-1);
     };
 
     const handleAddAttachments = () => {

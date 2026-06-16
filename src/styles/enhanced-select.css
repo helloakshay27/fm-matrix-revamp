@@ -552,6 +552,23 @@ td:last-child {
   color: #1976d2 !important;
 }
 
+/* Searchable select menu — match trigger width, scroll with mouse wheel */
+.searchable-select-menu .MuiPaper-root {
+  overflow-x: hidden !important;
+}
+
+.searchable-select-menu .MuiMenuItem-root {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  display: block !important;
+}
+
+.searchable-select-menu .MuiList-root {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
 /* Global MUI Select Search Enhancement Styles */
 
 /* Search input container in dropdowns */

@@ -733,7 +733,7 @@ const TransactionsEdit = () => {
                             </Box>
                         )}
                     </Box>
-                    <div className="flex gap-3 pt-4 justify-center">
+                    {/* <div className="flex gap-3 pt-4 justify-center">
 
                         <Button
                             type="submit"
@@ -757,7 +757,7 @@ const TransactionsEdit = () => {
                         >
                             Cancel
                         </Button>
-                    </div>
+                    </div> */}
 
 
                     <div className="flex gap-3 pt-4 justify-center">
