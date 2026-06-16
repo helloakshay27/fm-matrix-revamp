@@ -43,6 +43,7 @@ interface SurveyOption {
 interface SurveyMapping {
   id: number;
   survey_id: number;
+  site_id?: number;
   survey_title: string;
   site_name: string;
   building_name: string;
@@ -78,10 +79,6 @@ interface SurveyAttach {
 export const MobileSurveyLanding: React.FC = () => {
   const navigate = useNavigate();
   const { mappingId: rawMappingId } = useParams<{ mappingId: string }>();
-  const hostname = window.location.hostname;
-  const isOigComingSoonDomain =
-    hostname.includes("oig.gophygital.work") || hostname === "localhost";
-
   // Clean up mappingId in case it contains URL segments
   const mappingId = rawMappingId?.split("/")[0];
 
@@ -89,6 +86,8 @@ export const MobileSurveyLanding: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [surveyData, setSurveyData] = useState<SurveyMapping | null>(null);
+
+  const isOigComingSoonDomain = surveyData?.site_id === 2893;
 
   // Survey flow states
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -162,11 +161,6 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Fetch survey data
   useEffect(() => {
-    if (isOigComingSoonDomain) {
-      setIsLoading(false);
-      return;
-    }
-
     const fetchSurveyData = async () => {
       if (!mappingId) return;
 
@@ -199,7 +193,7 @@ export const MobileSurveyLanding: React.FC = () => {
     };
 
     fetchSurveyData();
-  }, [isOigComingSoonDomain, mappingId]);
+  }, [mappingId]);
 
   // Get current question
   const getCurrentQuestion = (): SurveyQuestion | null => {

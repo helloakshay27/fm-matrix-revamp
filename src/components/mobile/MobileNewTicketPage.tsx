@@ -464,8 +464,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
   const customFieldIdParam = searchParams.get("custom_field_id");
   const isLocationFromUrl = !!buildingIdParam;
   const hostname = window.location.hostname;
-  const isOigComingSoonDomain =
-    hostname.includes("oig.gophygital.work") || hostname === "localhost";
+  const isOigComingSoonDomain = siteId === 2893;
 
   const [siteDomain, setSiteDomain] = useState<string>("");
   const [siteError, setSiteError] = useState<string>("");
