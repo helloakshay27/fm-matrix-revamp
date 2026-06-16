@@ -163,7 +163,7 @@ const WeeklyMeetingSettings = () => {
                 }
 
                 const response = await axios.get(
-                    `https://${baseUrl}/daily_meeting_configs`,
+                    `https://${baseUrl}/daily_meeting_configs.json`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -296,7 +296,7 @@ const WeeklyMeetingSettings = () => {
                 }
 
                 const response = await axios.get(
-                    `https://${baseUrl}/weekly_meeting_configs`,
+                    `https://${baseUrl}/weekly_meeting_configs.json`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -455,7 +455,7 @@ const WeeklyMeetingSettings = () => {
             if (editingMeeting) {
                 // Update existing meeting
                 await axios.put(
-                    `https://${baseUrl}/weekly_meeting_configs/${editingMeeting.id}`,
+                    `https://${baseUrl}/weekly_meeting_configs/${editingMeeting.id}.json`,
                     payload,
                     {
                         headers: {
@@ -468,7 +468,7 @@ const WeeklyMeetingSettings = () => {
             } else {
                 // Create new meeting
                 await axios.post(
-                    `https://${baseUrl}/weekly_meeting_configs`,
+                    `https://${baseUrl}/weekly_meeting_configs.json`,
                     payload,
                     {
                         headers: {
@@ -482,7 +482,7 @@ const WeeklyMeetingSettings = () => {
 
             // Refresh weekly meetings list
             const listResponse = await axios.get(
-                `https://${baseUrl}/weekly_meeting_configs`,
+                `https://${baseUrl}/weekly_meeting_configs.json`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -517,7 +517,7 @@ const WeeklyMeetingSettings = () => {
             }
 
             await axios.delete(
-                `https://${baseUrl}/weekly_meeting_configs/${meetingToDelete.id}`,
+                `https://${baseUrl}/weekly_meeting_configs/${meetingToDelete.id}.json`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -529,7 +529,7 @@ const WeeklyMeetingSettings = () => {
 
             // Refresh weekly meetings list
             const response = await axios.get(
-                `https://${baseUrl}/weekly_meeting_configs`,
+                `https://${baseUrl}/weekly_meeting_configs.json`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`

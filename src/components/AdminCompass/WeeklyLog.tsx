@@ -752,7 +752,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: exter
     useEffect(() => {
         const fetchMeetings = async () => {
             try {
-                const res = await axios.get(`${baseUrl()}/weekly_meeting_configs`, { headers: getHeaders() });
+                const res = await axios.get(`${baseUrl()}/weekly_meeting_configs.json`, { headers: getHeaders() });
                 const raw = res.data;
                 // Handle array response or { data: [...] } or { data: { id, name } } (single)
                 let list: MeetingConfig[] = [];
@@ -795,7 +795,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: exter
             if (debouncedSearch.trim())   params.search        = debouncedSearch.trim();
             if (groupByDept)              params.group_by_dept = 'true';
 
-            const res = await axios.get(`${baseUrl()}/user_journals/weekly_log`, {
+            const res = await axios.get(`${baseUrl()}/user_journals/weekly_log.json`, {
                 headers: getHeaders(),
                 params,
             });

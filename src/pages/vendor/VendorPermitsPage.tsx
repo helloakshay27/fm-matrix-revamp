@@ -33,34 +33,16 @@ export const VendorPermitsPage = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  const [permitList, setPermitList] = useState<any[]>([
-    {
-      id: 448, refNo: 21610, permitType: "Electrical Work", permitFor: "wiring", createdBy: "Testing 1", designation: "TECHNICAL", status: "Draft", location: "Site - Panchshil Test / Building - Vinayak Build / Wing - NA / Floor - NA / Area - NA", createdOn: "11/06/2026 12:30 PM", permitExpiry: ""
-    },
-    {
-      id: 447, refNo: 21609, permitType: "Electrical Work", permitFor: "Height work", createdBy: "Testing 1", designation: "TECHNICAL", status: "Draft", location: "Site - Panchshil Test / Building - Vinayak Build / Wing - NA / Floor - NA / Area - NA", createdOn: "11/06/2026 12:28 PM", permitExpiry: ""
-    },
-    {
-      id: 443, refNo: 21590, permitType: "Height Work", permitFor: "cleaning", createdBy: "Testing 1", designation: "TECHNICAL", status: "Draft", location: "Site - Panchshil Test / Building - Vinayak Build / Wing - NA / Floor - NA / Area - NA", createdOn: "10/06/2026 10:49 AM", permitExpiry: ""
-    },
-    {
-      id: 442, refNo: 21587, permitType: "Height Work", permitFor: "Tank cleaning", createdBy: "Testing 1", designation: "TECHNICAL", status: "Draft", location: "Site - Panchshil Test / Building - Vinayak Build / Wing - NA / Floor - NA / Area - NA", createdOn: "10/06/2026 10:32 AM", permitExpiry: ""
-    },
-    {
-      id: 441, refNo: 21558, permitType: "Confined Space Work", permitFor: "tank cleaning", createdBy: "Testing 1", designation: "TECHNICAL", status: "Open", location: "Site - Panchshil Test / Building - Vinayak Build / Wing - NA / Floor - NA / Area - NA", createdOn: "08/06/2026 11:20 AM", permitExpiry: ""
-    },
-    {
-      id: 440, refNo: 21556, permitType: "Height Work", permitFor: "cctv", createdBy: "Testing 1", designation: "TECHNICAL", status: "Expired", location: "Site - Panchshil Test / Building - Vinayak Build / Wing - NA / Floor - NA / Area - NA", createdOn: "08/06/2026 11:04 AM", permitExpiry: "10/06/2026 6:00 PM"
-    },
-  ]);
+  const [permitList, setPermitList] = useState<any[]>([]);
 
   const [stats, setStats] = useState({
-    totalPermits: 14,
-    draftPermits: 7,
-    openPermits: 3,
-    approvedPermits: 1,
+    totalPermits: 0,
+    draftPermits: 0,
+    holdPermits: 0,
+    openPermits: 0,
+    approvedPermits: 0,
     rejectedPermits: 0,
-    extendedPermits: 1,
+    extendedPermits: 0,
     closedPermits: 0,
   });
 
@@ -72,9 +54,55 @@ export const VendorPermitsPage = () => {
 
   const fetchData = async (page: number) => {
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `https://${baseUrl}/pms/permits/pending_permit_form.json?page=${page}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) throw new Error("Failed to fetch permit data");
+      const data = await response.json();
+      
+      const items = data?.permits || data?.data || [];
+      const formatted = items.map((item: any) => ({
+        id: item.id,
+        refNo: item.reference_number || item.ref_no || "-",
+        permitType: item.permit_type?.name || item.permit_type || "-",
+        permitFor: item.permit_for || "-",
+        createdBy: item.created_by?.name || item.created_by || "-",
+        designation: item.designation || "-",
+        status: item.status || "-",
+        location: item.location?.name || item.location || "-",
+        createdOn: item.created_on || item.created_at || "-",
+        permitExpiry: item.permit_expiry || "-",
+      }));
+      setPermitList(formatted);
+      
+      if (data?.cards) {
+        setStats({
+          totalPermits: data.cards.total || 0,
+          draftPermits: data.cards.draft || 0,
+          holdPermits: data.cards.hold || 0,
+          openPermits: data.cards.open || 0,
+          approvedPermits: data.cards.approved || 0,
+          rejectedPermits: data.cards.rejected || 0,
+          extendedPermits: data.cards.extended || 0,
+          closedPermits: data.cards.closed || 0,
+        });
+      }
+
+      setPagination((prev) => ({
+        ...prev,
+        total_count: data?.total_count || formatted.length,
+        total_pages: data?.total_pages || 1,
+      }));
+    } catch (error: any) {
+      console.error(error);
+      setPermitList([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   useEffect(() => {
@@ -149,34 +177,78 @@ export const VendorPermitsPage = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="rounded-lg p-3 flex items-center gap-3 text-white flex-1 min-w-[140px]" style={{ background: "linear-gradient(90deg, #6c3258 0%, #d87d3a 100%)" }}>
-          <div className="bg-white/20 p-1.5 rounded-full"><Settings className="w-5 h-5" /></div>
-          <div><div className="text-xl font-bold">{stats.totalPermits}</div><div className="text-xs font-medium">Total Permits</div></div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.totalPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Total Permits</p>
+          </div>
         </div>
-        <div className="rounded-lg p-3 flex items-center gap-3 text-white flex-1 min-w-[140px]" style={{ background: "linear-gradient(90deg, #e47738 0%, #d45934 100%)" }}>
-          <div className="bg-white/20 p-1.5 rounded-full"><Settings className="w-5 h-5" /></div>
-          <div><div className="text-xl font-bold">{stats.draftPermits}</div><div className="text-xs font-medium">Draft Permits</div></div>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.draftPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Draft Permits</p>
+          </div>
         </div>
-        <div className="rounded-lg p-3 flex items-center gap-3 text-white flex-1 min-w-[140px]" style={{ background: "linear-gradient(90deg, #e47738 0%, #d45934 100%)" }}>
-          <div className="bg-white/20 p-1.5 rounded-full"><Settings className="w-5 h-5" /></div>
-          <div><div className="text-xl font-bold">{stats.openPermits}</div><div className="text-xs font-medium">Open Permits</div></div>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.holdPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Hold Permits</p>
+          </div>
         </div>
-        <div className="rounded-lg p-3 flex items-center gap-3 text-white flex-1 min-w-[140px]" style={{ background: "linear-gradient(90deg, #1aa476 0%, #157956 100%)" }}>
-          <div className="bg-white/20 p-1.5 rounded-full"><Settings className="w-5 h-5" /></div>
-          <div><div className="text-xl font-bold">{stats.approvedPermits}</div><div className="text-xs font-medium">Approved Permits</div></div>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.openPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Open Permits</p>
+          </div>
         </div>
-        <div className="rounded-lg p-3 flex items-center gap-3 text-white flex-1 min-w-[140px]" style={{ background: "linear-gradient(90deg, #c44d32 0%, #aa3e28 100%)" }}>
-          <div className="bg-white/20 p-1.5 rounded-full"><Settings className="w-5 h-5" /></div>
-          <div><div className="text-xl font-bold">{stats.rejectedPermits}</div><div className="text-xs font-medium">Rejected Permits</div></div>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.approvedPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Approved</p>
+          </div>
         </div>
-        <div className="rounded-lg p-3 flex items-center gap-3 text-white flex-1 min-w-[140px]" style={{ background: "linear-gradient(90deg, #25c4be 0%, #1b908b 100%)" }}>
-          <div className="bg-white/20 p-1.5 rounded-full"><Settings className="w-5 h-5" /></div>
-          <div><div className="text-xl font-bold">{stats.extendedPermits}</div><div className="text-xs font-medium">Extended Permits</div></div>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.rejectedPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Rejected</p>
+          </div>
         </div>
-        <div className="rounded-lg p-3 flex items-center gap-3 text-white flex-1 min-w-[140px]" style={{ background: "linear-gradient(90deg, #1aa476 0%, #157956 100%)" }}>
-          <div className="bg-white/20 p-1.5 rounded-full"><Settings className="w-5 h-5" /></div>
-          <div><div className="text-xl font-bold">{stats.closedPermits}</div><div className="text-xs font-medium">Closed Permits</div></div>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.extendedPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Extended</p>
+          </div>
+        </div>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.closedPermits}</p>
+            <p className="text-xs text-gray-500 font-medium">Closed</p>
+          </div>
         </div>
       </div>
 

@@ -932,7 +932,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
             if (selectedMeeting) {
                 const weekString = getWeekString(currentWeek);
                 const response = await axios.get(
-                    `${baseUrl}/user_journals/weekly_meeting?meeting_id=${selectedMeeting}&week=${weekString}`,
+                    `${baseUrl}/user_journals/weekly_meeting.json?meeting_id=${selectedMeeting}&week=${weekString}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -962,7 +962,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
 
             const loggedInUserId = localStorage.getItem('userId') || '';
             const response = await axios.get(
-                `${baseUrl}/ratings?resource_type=User&resource_id=${userId}&rating_from_id=${loggedInUserId}`,
+                `${baseUrl}/ratings.json?resource_type=User&resource_id=${userId}&rating_from_id=${loggedInUserId}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -1004,7 +1004,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
             }
 
             await axios.post(
-                `${baseUrl}/ratings`,
+                `${baseUrl}/ratings.json`,
                 {
                     resource_type: 'User',
                     resource_id: userId,
@@ -1064,7 +1064,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
                 }
 
                 const response = await axios.get(
-                    `${baseUrl}/weekly_meeting_configs`,
+                    `${baseUrl}/weekly_meeting_configs.json`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -1121,7 +1121,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
 
                 const weekString = getWeekString(currentWeek);
                 const response = await axios.get(
-                    `${baseUrl}/user_journals/weekly_meeting?meeting_id=${selectedMeeting}&week=${weekString}`,
+                    `${baseUrl}/user_journals/weekly_meeting.json?meeting_id=${selectedMeeting}&week=${weekString}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, RefreshCw, Settings, Info, CreditCard } from "lucide-react";
+import { Eye, RefreshCw, Settings, Info, CreditCard, Banknote, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import {
@@ -64,17 +65,64 @@ export const VendorOtherBillsPage = () => {
   const fetchData = async (page: number) => {
     setLoading(true);
     try {
-      // Mock data representing what would normally come from the API
-      setStats({
-        totalBills: 0,
-        totalAmount: 0,
-        totalPaidAmount: 0,
-        totalPendingAmount: 0,
+      const url = getFullUrl(`/pms/bills/bills_list.json?page=${page}`);
+      const response = await fetch(url, {
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      setBillList([]);
-      setPagination((prev) => ({ ...prev, current_page: page, total_pages: 1 }));
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch bills data");
+      }
+
+      const data = await response.json();
+
+      // Assuming data structure based on standard Lockated API
+      const cards = data.cards || {};
+      setStats({
+        totalBills: cards.total || cards.total_bills || 0,
+        totalAmount: cards.total_amount || 0,
+        totalPaidAmount: cards.total_paid_amount || cards.paid_amount || 0,
+        totalPendingAmount: cards.total_pending_amount || cards.pending_amount || 0,
+      });
+
+      const list = data.bills_list || data.bills || data.data || [];
+      const mappedList = list.map((item: any) => ({
+        id: item.id,
+        description: item.description,
+        supplier: item.supplier_name || item.supplier,
+        amount: item.amount || item.bill_amount,
+        deduction: item.deduction,
+        tdsPercent: item.tds_percent || item.tds_percentage,
+        tdsAmount: item.tds_amount,
+        retentionPercent: item.retention_percent || item.retention_percentage,
+        retentionAmount: item.retention_amount,
+        payableAmount: item.payable_amount,
+        billDate: item.bill_date,
+        invoiceNumber: item.invoice_number,
+        paymentTenure: item.payment_tenure,
+        lastApprovedBy: item.last_approved_by,
+        amountPaid: item.amount_paid,
+        balanceAmount: item.balance_amount,
+        paymentStatus: item.payment_status,
+        createdOn: item.created_at,
+        createdBy: item.created_by,
+        ...item // keep original keys just in case
+      }));
+
+      setBillList(mappedList);
+      
+      const paginationData = data.pagination || {};
+      setPagination((prev) => ({ 
+        ...prev, 
+        current_page: paginationData.current_page || data.current_page || page, 
+        total_pages: paginationData.total_pages || data.total_pages || 1,
+        total_count: paginationData.total_count || data.total_count || mappedList.length,
+      }));
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching bills:", error);
     } finally {
       setLoading(false);
     }
@@ -135,43 +183,43 @@ export const VendorOtherBillsPage = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-lg p-4 flex items-center gap-4 text-white" style={{ background: "linear-gradient(90deg, #872e4a 0%, #d25039 100%)" }}>
-          <div className="bg-white/20 p-2 rounded-full">
-            <Settings className="w-6 h-6" />
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-5 h-5 text-[#D92818]" />
           </div>
           <div>
-            <div className="text-2xl font-bold">{stats.totalBills}</div>
-            <div className="text-sm font-medium">Total Bills</div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.totalBills}</p>
+            <p className="text-xs text-gray-500 font-medium">Total Bills</p>
           </div>
         </div>
         
-        <div className="rounded-lg p-4 flex items-center gap-4 text-white" style={{ background: "linear-gradient(90deg, #6c3258 0%, #d87d3a 100%)" }}>
-          <div className="bg-white/20 p-2 rounded-full">
-            <span className="font-bold text-lg">₹</span>
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Banknote className="w-5 h-5 text-[#D92818]" />
           </div>
           <div>
-            <div className="text-2xl font-bold">₹ {stats.totalAmount}</div>
-            <div className="text-sm font-medium">Total Amount</div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">₹ {stats.totalAmount}</p>
+            <p className="text-xs text-gray-500 font-medium">Total Amount</p>
           </div>
         </div>
 
-        <div className="rounded-lg p-4 flex items-center gap-4 text-white" style={{ background: "linear-gradient(90deg, #e47738 0%, #d45934 100%)" }}>
-          <div className="bg-white/20 p-2 rounded-full">
-            <Settings className="w-6 h-6" />
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <CreditCard className="w-5 h-5 text-[#D92818]" />
           </div>
           <div>
-            <div className="text-2xl font-bold">₹ {stats.totalPaidAmount}</div>
-            <div className="text-sm font-medium">Total Paid Amount</div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">₹ {stats.totalPaidAmount}</p>
+            <p className="text-xs text-gray-500 font-medium">Total Paid Amount</p>
           </div>
         </div>
 
-        <div className="rounded-lg p-4 flex items-center gap-4 text-white" style={{ background: "linear-gradient(90deg, #c44d32 0%, #aa3e28 100%)" }}>
-          <div className="bg-white/20 p-2 rounded-full">
-            <CreditCard className="w-6 h-6" />
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-[#D92818]" />
           </div>
           <div>
-            <div className="text-2xl font-bold">₹ {stats.totalPendingAmount}</div>
-            <div className="text-sm font-medium">Total Pending Amount</div>
+            <p className="text-[#D92818] font-bold text-lg leading-tight">₹ {stats.totalPendingAmount}</p>
+            <p className="text-xs text-gray-500 font-medium">Total Pending Amount</p>
           </div>
         </div>
       </div>
