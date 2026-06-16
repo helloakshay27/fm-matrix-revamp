@@ -1190,9 +1190,9 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
         {/* OIG Logo */}
         <div className="flex justify-end">
           <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
-            {surveyData?.company_logo_url ? (
+            {companyLogo ? (
               <img
-                src={surveyData.company_logo_url}
+                src={companyLogo}
                 alt="Company Logo"
                 className="w-full h-full object-contain"
               />
