@@ -41,7 +41,7 @@ export const ActionSelectionPanel: React.FC<ActionSelectionPanelProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Add Visitor Button */}
-          {shouldShow("assets", "add") && (
+          {shouldShow("Visitor", "create") && (
             <Button
               onClick={onAddVisitor}
               variant="ghost"

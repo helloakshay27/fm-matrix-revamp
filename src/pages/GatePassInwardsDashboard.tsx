@@ -27,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 /**
  * DUMMY MODE ENABLED: 
@@ -42,6 +43,7 @@ const API_BASE_URL = API_CONFIG.BASE_URL;
 export const GatePassInwardsDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { shouldShow } = useDynamicPermissions();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [inwardData, setInwardData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -414,18 +416,22 @@ useEffect(() => {
     const rowData: any = {
       actions: (
         <div className="flex gap-2 justify-center" style={{ maxWidth: '80px' }}>
-          <div title="View details">
-            <Eye
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
-              onClick={() => handleViewDetails(entry.id)}
-            />
-          </div>
-          <div title={entry.isFlagged ? 'Remove Flag' : 'Flag'}>
-            <Flag
-              className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
-              onClick={() => !togglingIds.has(entry.id) && handleFlagToggle(entry)}
-            />
-          </div>
+          {shouldShow("Inwards", "show") && (
+            <div title="View details">
+              <Eye
+                className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+                onClick={() => handleViewDetails(entry.id)}
+              />
+            </div>
+          )}
+          {/* {shouldShow("gate_pass_inwards", "update") && ( */}
+            <div title={entry.isFlagged ? 'Remove Flag' : 'Flag'}>
+              <Flag
+                className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
+                onClick={() => !togglingIds.has(entry.id) && handleFlagToggle(entry)}
+              />
+            </div>
+          {/* )} */}
         </div>
       ),
       id: <span style={{ maxWidth: '60px' }}>{entry.id}</span>,
@@ -472,26 +478,21 @@ useEffect(() => {
 
   // SelectionPanel actions (customize as needed)
   const selectionActions = [
-    { label: 'Add', icon: Plus, onClick: handleAddInward },
+    ...(shouldShow("Inwards", "create") ? [{ label: 'Add', icon: Plus, onClick: handleAddInward }] : []),
   ];
 
   // Render Action button for leftActions
   const renderActionButton = () => (
-    // <Button
-    //   onClick={() => setShowActionPanel((prev) => !prev)}
-    //   className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-    // >
-    //   <Plus className="w-4 h-4 mr-2" />
-    //   Action
-    // </Button>
-    <Button
-      size="sm"
-      className="fm-button-fix fm-button-brand px-8 py-2"
-      onClick={() => setShowActionPanel((prev) => !prev)}
-    >
-      <Plus className="w-4 h-4 mr-2" />
-      Action
-    </Button>
+    shouldShow("Inwards", "create") && (
+      <Button
+        size="sm"
+        className="fm-button-fix fm-button-brand px-8 py-2"
+        onClick={() => setShowActionPanel((prev) => !prev)}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Action
+      </Button>
+    )
   );
 
   return (
