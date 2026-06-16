@@ -11,6 +11,7 @@ import {
   User,
   Receipt,
   FileCheck2,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface VendorNavItem {
@@ -20,6 +21,7 @@ interface VendorNavItem {
 }
 
 const NAV_ITEMS: VendorNavItem[] = [
+  { label: "Dashboard", href: "/vendor/dashboard", icon: LayoutDashboard },
   { label: "My Profile", href: `/vendor/supplier-details/${localStorage.getItem('vendor_id') || '46204'}`, icon: User },
   { label: "My PO", href: "/vendor/po", icon: ShoppingCart },
   { label: "My GRN", href: "/vendor/grn", icon: PackageCheck },

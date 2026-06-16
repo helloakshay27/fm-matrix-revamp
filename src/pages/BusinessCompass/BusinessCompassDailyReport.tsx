@@ -2974,6 +2974,93 @@ const BusinessCompassDailyReport: React.FC = () => {
     addAccomplishment,
   ]);
 
+  const dailyAiSuggestions = useMemo(() => {
+    const accRate = livePreviewMetrics.accPct || 59;
+    const neededAccomplishments = Math.max(1, Math.ceil((75 - accRate) / 20));
+    const planCount = planningItems.filter(
+      (p) => cleanReportText(p.text) !== ""
+    ).length;
+
+    return [
+      {
+        tone: "red",
+        title: `${taskIssueCounts.overdue || 3} Overdue Tasks`,
+        actionLabel: "View Tasks",
+        description:
+          "Overdue items from yesterday need attention. Reschedule or complete them to avoid further delays.",
+        Icon: AlertCircle,
+        action: () => {
+          setTaskStatusFilter("overdue");
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        tone: "green",
+        title: "Boost Accomplishments",
+        actionLabel: "Add Tasks",
+        description: `Your rate is ${accRate}% today - completing ${neededAccomplishments} more logged tasks will push you past the 75% target.`,
+        Icon: TrendingUp,
+        action: () => {
+          accomplishmentsSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+          });
+          addAccomplishment();
+        },
+      },
+      {
+        tone: "orange",
+        title: "Fill Your Daily Plan",
+        actionLabel: "Open Plan",
+        description: `${planCount}/6 planning items completed. Set strategic priorities now before the day ends.`,
+        Icon: Clock,
+        action: () => {
+          planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        tone: "purple",
+        title: "Assign Task Timings",
+        actionLabel: "Set Timing",
+        description: `${livePreviewMetrics.timing} timing slots set. Adding time estimates improves your score and planning accuracy.`,
+        Icon: Target,
+        action: () => {
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+    ];
+  }, [
+    livePreviewMetrics,
+    planningItems,
+    taskIssueCounts.overdue,
+    addAccomplishment,
+  ]);
+
+  const dailyAiToneStyles: Record<
+    string,
+    { icon: string; action: string; iconBg: string }
+  > = {
+    red: {
+      icon: "text-[#ef4444]",
+      action: "text-[#ef6b62]",
+      iconBg: "bg-[#fff1f0]",
+    },
+    green: {
+      icon: "text-[#29b881]",
+      action: "text-[#23c989]",
+      iconBg: "bg-[#eefbf5]",
+    },
+    orange: {
+      icon: "text-[#f59e0b]",
+      action: "text-[#f28a4b]",
+      iconBg: "bg-[#fff6eb]",
+    },
+    purple: {
+      icon: "text-[#7567d9]",
+      action: "text-[#9586e8]",
+      iconBg: "bg-[#f3f1ff]",
+    },
+  };
+
   const filteredTasksForTable = useMemo(() => {
     const statusMap = {
       open: ["open", "pending", "reopen", "reopened"],
@@ -3138,6 +3225,101 @@ const BusinessCompassDailyReport: React.FC = () => {
           </button>
         </div>
 
+
+        {activeTab === "submit" && (
+          <>
+            <style>{`
+              @keyframes aiSuggestionColorMove {
+                0%   { background-position: 0% 50%; }
+                50%  { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+              @keyframes aiSuggestionBorderFlow {
+                0%, 100% { border-color: rgba(218, 119, 86, 0.55); }
+                33%      { border-color: rgba(129, 106, 229, 0.55); }
+                66%      { border-color: rgba(49, 130, 206, 0.55); }
+              }
+              .daily-ai-suggestions-card {
+                background-image: linear-gradient(120deg, #ffffff 0%, #fff4ef 22%, #f2ecff 45%, #ebf4ff 68%, #ffffff 100%);
+                background-size: 220% 220%;
+                animation: aiSuggestionColorMove 7s ease-in-out infinite, aiSuggestionBorderFlow 6s ease-in-out infinite;
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .daily-ai-suggestions-card { animation: none; }
+              }
+            `}</style>
+            <div
+              className="daily-ai-suggestions-card overflow-hidden rounded-[16px] border border-[#e9ddf6]"
+              style={{
+                boxShadow:
+                  "-10px 12px 24px rgba(218,119,86,0.16), 8px 10px 24px rgba(129,106,229,0.13)",
+              }}
+            >
+            <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] bg-[#DA7756] text-white">
+                  <Sparkles size={12} />
+                </span>
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="whitespace-nowrap text-[12px] font-bold leading-none text-[#1f1f1f]">
+                    AI Suggestions
+                  </span>
+                  <span className="truncate text-[10px] font-medium text-[#57545f]">
+                    - Focus areas to improve your daily report
+                  </span>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-[#e8e3ff] px-3 py-1 text-[9px] font-bold leading-none text-[#6b5eca]">
+                4 insights
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
+              {dailyAiSuggestions.map((suggestion) => {
+                const tone = dailyAiToneStyles[suggestion.tone];
+                const SuggestionIcon = suggestion.Icon;
+
+                return (
+                  <div
+                    key={suggestion.title}
+                    className="min-h-[90px] rounded-[10px] border border-[#eceef4] bg-white px-3 py-3.5"
+                  >
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          className={cn(
+                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                            tone.iconBg,
+                            tone.icon
+                          )}
+                        >
+                          <SuggestionIcon size={10} />
+                        </span>
+                        <span className="truncate text-[10px] font-bold leading-none text-[#2f2c34]">
+                          {suggestion.title}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={suggestion.action}
+                        className={cn(
+                          "shrink-0 text-[9px] font-medium leading-none hover:underline",
+                          tone.action
+                        )}
+                      >
+                        {suggestion.actionLabel} &gt;
+                      </button>
+                    </div>
+                    <p className="line-clamp-2 text-[10px] font-medium leading-[1.35] text-[#706d78]">
+                      {suggestion.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            </div>
+          </>
+        )}
 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -5763,48 +5945,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                   </div>
 
                   <div className="bc-daily-card-body p-0 flex-1 flex flex-col">
-                    {isAiPopupOpen && (
-                      <div className="bc-ai-inline-popup">
-                        <div className="bc-ai-inline-tabs">
-                          <button
-                            type="button"
-                            className={cn("bc-ai-popup-tab", aiPopupTab === "accomplishments" && "bc-ai-popup-tab-active")}
-                            onClick={() => setAiPopupTab("accomplishments")}
-                          >
-                            Fill my accomplishments
-                          </button>
-                          <button
-                            type="button"
-                            className={cn("bc-ai-popup-tab", aiPopupTab === "plan" && "bc-ai-popup-tab-active")}
-                            onClick={() => setAiPopupTab("plan")}
-                          >
-                            Plan for next day
-                          </button>
-                        </div>
-                        <div className="bc-ai-popup-input-wrap">
-                          <textarea
-                            value={aiPromptText}
-                            onChange={(e) => setAiPromptText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                setIsAiPopupOpen(false);
-                                setAiPromptText("");
-                                if (aiPopupTab === "accomplishments") {
-                                  accomplishmentsSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-                                  addAccomplishment();
-                                } else {
-                                  planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-                                }
-                              }
-                            }}
-                            placeholder="Ask anything..."
-                            className="bc-ai-popup-input"
-                            autoFocus
-                          />
-                        </div>
-                      </div>
-                    )}
                     {tasksLoading || issuesLoading ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
                         <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
@@ -8193,15 +8333,69 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       {activeTab === "submit" &&
         createPortal(
-          <button
-            type="button"
-            className="bc-ai-fab"
-            title="AI Suggestions"
-            aria-label="AI Suggestions"
-            onClick={() => setIsAiPopupOpen((open) => !open)}
-          >
-            <AiSparkleIcon className="bc-ai-fab-icon" />
-          </button>,
+          <>
+            {isAiPopupOpen && (
+              <div className="bc-ai-glass-modal">
+                <div className="bc-ai-glass-tabs">
+                  <button
+                    type="button"
+                    className={cn(
+                      "bc-ai-glass-tab",
+                      aiPopupTab === "accomplishments" && "bc-ai-glass-tab-active"
+                    )}
+                    onClick={() => setAiPopupTab("accomplishments")}
+                  >
+                    Fill my accomplishments
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "bc-ai-glass-tab",
+                      aiPopupTab === "plan" && "bc-ai-glass-tab-active"
+                    )}
+                    onClick={() => setAiPopupTab("plan")}
+                  >
+                    Plan for next day
+                  </button>
+                </div>
+                <div className="bc-ai-glass-input-wrap">
+                  <textarea
+                    value={aiPromptText}
+                    onChange={(e) => setAiPromptText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        setIsAiPopupOpen(false);
+                        setAiPromptText("");
+                        if (aiPopupTab === "accomplishments") {
+                          accomplishmentsSectionRef.current?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                          addAccomplishment();
+                        } else {
+                          planningSectionRef.current?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                        }
+                      }
+                    }}
+                    placeholder="Ask anything..."
+                    className="bc-ai-glass-input"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              className="bc-ai-fab"
+              title="AI Suggestions"
+              aria-label="AI Suggestions"
+              onClick={() => setIsAiPopupOpen((open) => !open)}
+            >
+              <AiSparkleIcon className="bc-ai-fab-icon" />
+            </button>
+          </>,
           document.body
         )}
     </div>
