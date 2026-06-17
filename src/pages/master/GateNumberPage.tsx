@@ -6,6 +6,7 @@ import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { gateNumberService } from '@/services/gateNumberService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export interface GateNumber {
   id: number;
@@ -18,6 +19,7 @@ export interface GateNumber {
 }
 
 const GateNumberPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const [gateNumbers, setGateNumbers] = useState<GateNumber[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,6 +116,7 @@ const GateNumberPage = () => {
             { label: 'Add', icon: Plus, onClick: handleAddGateNumber },
           ]}
           onClearSelection={() => setShowActionPanel(false)}
+          permissionKey="Gate Number"
         />
       )}
       <EnhancedTable
@@ -130,6 +133,7 @@ const GateNumberPage = () => {
         ]}
         data={gateNumbers.map((gn, idx) => ({ ...gn, srno: idx + 1 }))}
         leftActions={
+          shouldShow("Gate Number", "create") ? (
           <Button
             onClick={() => setShowActionPanel((prev) => !prev)}
             className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
@@ -137,12 +141,14 @@ const GateNumberPage = () => {
             <Plus className="w-4 h-4 mr-2" />
             Action
           </Button>
+          ) : null
         }
         renderCell={(row, key) => {
           if (key === 'srno') return <span>{row[key]}</span>;
           if (key === 'actions') {
             return (
               <div className="flex gap-2 justify-center items-center">
+                {shouldShow("Gate Number", "update") && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -152,6 +158,7 @@ const GateNumberPage = () => {
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
+                )}
               </div>
             );
           }

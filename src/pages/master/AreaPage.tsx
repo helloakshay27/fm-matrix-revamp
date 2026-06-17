@@ -41,8 +41,10 @@ import {
 } from "@/components/ui/select"
 import { apiClient } from "@/utils/apiClient";
 import { AddAreaDialog } from '@/components/AddAreaDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const AreaPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [areas, setAreas] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -388,6 +390,7 @@ export const AreaPage = () => {
                 </DialogContent>
               </Dialog>
 
+              {shouldShow("Area", "create") && (
               <Button
                 onClick={() => setIsAddModalOpen(true)}
                 className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
@@ -395,6 +398,7 @@ export const AreaPage = () => {
                 <Plus className="w-4 h-4" />
                 Add Area
               </Button>
+              )}
             </div>
           </div>
 
@@ -445,9 +449,11 @@ export const AreaPage = () => {
                   currentAreas.map((area) => (
                     <TableRow key={area.id}>
                       <TableCell>
+                        {shouldShow("Area", "update") && (
                         <Button variant="ghost" size="sm" onClick={() => handleEdit(area)}>
                           <Edit className="w-4 h-4 text-[#C72030]" />
                         </Button>
+                        )}
                       </TableCell>
                       <TableCell className="font-medium">{area.name}</TableCell>
                       <TableCell>{area.building?.name || 'N/A'}</TableCell>

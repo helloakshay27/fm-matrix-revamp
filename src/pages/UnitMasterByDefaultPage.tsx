@@ -11,6 +11,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { useAppDispatch } from '@/store/hooks';
 import { createMasterUnit, fetchMasterUnits, fetchMeterType, updateMeterUnitType, updateMeterType } from '@/store/slices/unitMaster';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface AddMeterModalProps {
   isOpen: boolean;
@@ -283,6 +284,7 @@ const EditMeterModal = ({ isOpen, onClose, onSuccess, meterData }: EditModalProp
 };
 
 export const UnitMasterByDefaultPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -335,6 +337,7 @@ export const UnitMasterByDefaultPage = () => {
       <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">UNIT MASTER (BY DEFAULT)</h1>
+          {shouldShow("Unit Master (By Default)", "create") && (
           <Button
             className="bg-[#C72030] hover:bg-[#C72030]/90"
             onClick={() => setAddModalOpen(true)}
@@ -342,6 +345,7 @@ export const UnitMasterByDefaultPage = () => {
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
+          )}
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200">
@@ -371,6 +375,7 @@ export const UnitMasterByDefaultPage = () => {
                     />
                   </TableCell>
                   <TableCell>
+                    {shouldShow("Unit Master (By Default)", "update") && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -378,6 +383,7 @@ export const UnitMasterByDefaultPage = () => {
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

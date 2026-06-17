@@ -25,6 +25,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { ImportOccupantUsers } from "@/components/ImportOccupantUsers";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import axios from "axios";
 import {
   Dialog,
@@ -67,6 +68,7 @@ export const OccupantUserMasterDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = getUser();
+  const { shouldShow } = useDynamicPermissions();
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const isOpsConsole = location.pathname.includes('/ops-console/');
 
@@ -725,6 +727,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
             renderCell={renderCell}
             renderActions={(item: any) => (
               <div className="flex justify-center gap-2">
+                {shouldShow("OCCUPANT USERS", "show") && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -740,6 +743,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
+                )}
                 {isOpsConsole && item.email && (
                   <Button
                     variant="ghost"
@@ -817,6 +821,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
             setIsImportModalOpen(true);
           }}
           onClearSelection={() => setShowActionPanel(false)}
+          permissionKey="OCCUPANT USERS"
         />
       )}
 

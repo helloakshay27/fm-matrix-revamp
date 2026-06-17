@@ -42,7 +42,7 @@ export const WeekSelector = ({
                 <div className="grid flex-1 gap-3 min-w-0">
                     <div className="flex flex-wrap items-center gap-3 min-w-0">
                         <label className="text-xs font-black uppercase tracking-wide text-[#9a553f]">Week</label>
-                        <div className="flex items-center gap-1 min-w-0">
+                        <div className="flex w-full items-center gap-1 min-w-0 sm:w-auto">
                             <Button
                                 variant="outline"
                                 size="icon"
@@ -66,7 +66,7 @@ export const WeekSelector = ({
                         </span>
                         <div className="hidden h-6 w-px bg-[#DA7756]/20 lg:block" />
                         <label className="text-xs font-black uppercase tracking-wide text-[#9a553f]">Meeting</label>
-                        <div className="min-w-[240px] max-w-[360px] flex-1">
+                        <div className="min-w-0 w-full max-w-[360px] flex-1 sm:min-w-[240px]">
                             <Select value={selectedMeeting} onValueChange={onMeetingChange} disabled={loading}>
                                 <SelectTrigger className="w-full rounded-xl border-[#DA7756]/20 bg-white shadow-sm">
                                     <SelectValue placeholder={loading ? 'Loading...' : 'Select meeting'} />
@@ -112,19 +112,19 @@ export const WeekSelector = ({
                 </div>
 
                 <div className="flex shrink-0 flex-wrap gap-2 xl:justify-end">
-                    <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#DA7756]/15 bg-white px-3 shadow-sm">
+                    <div className="inline-flex h-10 flex-1 items-center justify-between gap-2 rounded-xl border border-[#DA7756]/15 bg-white px-3 shadow-sm sm:flex-none sm:justify-start">
                         <span className="text-xs font-bold text-neutral-500">Team</span>
                         <Badge className="rounded-[6px] bg-[#DA7756] text-xs font-bold text-white hover:bg-[#DA7756]">
                             {weeklyData?.total_members || 0}
                         </Badge>
                     </div>
-                    <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 shadow-sm">
+                    <div className="inline-flex h-10 flex-1 items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-white px-3 shadow-sm sm:flex-none sm:justify-start">
                         <span className="text-xs font-bold text-neutral-500">Submitted</span>
                         <Badge className="rounded-[6px] bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-600">
                             {submittedCount}
                         </Badge>
                     </div>
-                    <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 shadow-sm">
+                    <div className="inline-flex h-10 flex-1 items-center justify-between gap-2 rounded-xl border border-red-200 bg-white px-3 shadow-sm sm:flex-none sm:justify-start">
                         <span className="text-xs font-bold text-neutral-500">Missed</span>
                         <Badge className="rounded-[6px] bg-red-600 text-xs font-bold text-white hover:bg-red-600">
                             {missedCount}

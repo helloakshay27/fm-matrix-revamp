@@ -66,7 +66,7 @@ function TutorialVideoCard({ item }: { item: Tutorial }) {
         />
       </div>
       <div className="space-y-3 p-5">
-        <h3 className="text-[17px] font-bold leading-snug text-neutral-900">
+        <h3 className="text-[17px] font-bold leading-snug text-neutral-900 break-words">
           {item.title}
         </h3>
         <div className="flex flex-wrap items-center gap-3">
@@ -330,7 +330,7 @@ const FAQ_CATEGORIES: FaqCategory[] = [
 function GuideCard({ entry }: { entry: GuideEntry }) {
   return (
     <Card className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white p-6 shadow-sm transition-shadow hover:shadow-md sm:p-8">
-      <h3 className="text-[17px] font-bold text-neutral-900">{entry.title}</h3>
+      <h3 className="text-[17px] font-bold text-neutral-900 break-words">{entry.title}</h3>
 
       <div className="mt-6">
         <p className="text-sm font-bold uppercase tracking-wider text-neutral-500 mb-2">
@@ -380,8 +380,8 @@ const HelpCenter = () => {
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
             <HelpCircle className="h-7 w-7 text-white" strokeWidth={2} />
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
+          <div className="min-w-0">
+            <h1 className="text-xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
               Help Center
             </h1>
             <p className="mt-1 text-sm font-medium text-neutral-500">
@@ -394,21 +394,21 @@ const HelpCenter = () => {
           <TabsList className="inline-flex h-auto p-1.5 w-full items-center justify-start gap-1 rounded-[16px] border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm sm:w-auto overflow-x-auto">
             <TabsTrigger
               value="tutorials"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
+              className="h-10 shrink-0 whitespace-nowrap rounded-xl px-3 sm:px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
             >
               <Video className="h-4 w-4 shrink-0" />
               Tutorials
             </TabsTrigger>
             <TabsTrigger
               value="guide"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
+              className="h-10 shrink-0 whitespace-nowrap rounded-xl px-3 sm:px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
             >
               <BookOpen className="h-4 w-4 shrink-0" />
               Guide
             </TabsTrigger>
             <TabsTrigger
               value="faq"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
+              className="h-10 shrink-0 whitespace-nowrap rounded-xl px-3 sm:px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
             >
               <MessageSquare className="h-4 w-4 shrink-0" />
               FAQ
@@ -488,7 +488,7 @@ const HelpCenter = () => {
                         >
                           <AccordionTrigger
                             className={cn(
-                              "py-4 text-left text-[15px] font-bold text-neutral-800 hover:no-underline transition-colors hover:text-[#DA7756]",
+                              "py-4 text-left text-[15px] font-bold text-neutral-800 hover:no-underline transition-colors hover:text-[#DA7756] gap-3 break-words",
                               "[&>svg]:shrink-0 [&>svg]:text-neutral-400"
                             )}
                           >

@@ -206,7 +206,7 @@ export const MemberReportCard = ({
                 isChecked ? 'border-[#CE7A5A] border-l-[4px] bg-[#FFF8F4]' : 'border-[#EAE3DF] bg-white'
             }`}
         >
-            <div className="p-4 transition-colors flex items-start gap-4 hover:bg-black/[0.015]">
+            <div className="p-3 transition-colors flex items-start gap-3 hover:bg-black/[0.015] sm:p-4 sm:gap-4">
                 <label
                     className={`flex shrink-0 items-center gap-2 self-stretch pt-1 ${
                         isAttendanceLocked ? 'cursor-not-allowed' : 'cursor-pointer'
@@ -229,7 +229,7 @@ export const MemberReportCard = ({
                 </label>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                         <div className="min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
@@ -249,11 +249,11 @@ export const MemberReportCard = ({
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-2 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-400 mb-2 min-w-0">
                                 {report.email ? (
                                     <>
                                         <Mail className="h-3.5 w-3.5 shrink-0" />
-                                        <span className="truncate">{report.email}</span>
+                                        <span className="min-w-0 break-all sm:truncate">{report.email}</span>
                                     </>
                                 ) : (
                                     <span>Report submitted</span>
@@ -264,7 +264,7 @@ export const MemberReportCard = ({
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 sm:justify-end">
                             {isSubmitted ? (
                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#10B981] border border-[#10B981] px-2 py-0.5 rounded-full shrink-0">
                                     <CheckCircle2 className="h-3 w-3" />
@@ -306,7 +306,7 @@ export const MemberReportCard = ({
                 </div>
             </div>
 
-            <div className="bg-[#FFFAF8] border-t border-[#EAE3DF] p-4">
+            <div className="bg-[#FFFAF8] border-t border-[#EAE3DF] p-3 sm:p-4">
                 {memberMetrics.length > scorePills.length && (
                     <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
                         {memberMetrics

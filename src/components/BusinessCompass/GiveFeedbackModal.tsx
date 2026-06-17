@@ -139,7 +139,7 @@ export function GiveFeedbackModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
-      <div className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-xl">
+      <div className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-y-auto overflow-x-hidden rounded-[18px] bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-3rem)]">
         <div className="mb-3 flex items-center justify-between px-1">
           <h2 className="text-[17px] font-bold text-[#111827]">
             Feedback for {receiver?.name}

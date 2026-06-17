@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
 import { SlotConfigBulkUploadModal } from '../components/SlotConfigBulkUploadModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { fetchParkingConfigurations, GroupedParkingConfiguration } from '../services/parkingConfigurationsAPI';
 import { fetchParkingCategories, ParkingCategory } from '../services/parkingConfigAPI';
 
@@ -34,6 +35,7 @@ interface SlotConfigurationData {
 }
 
 export const SlotConfigurationPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
@@ -278,6 +280,7 @@ export const SlotConfigurationPage = () => {
     <div className="p-6 min-h-screen">
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
+        {shouldShow("Slot Configuration", "create") && (
         <Button 
           onClick={handleAdd}
           className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
@@ -285,6 +288,7 @@ export const SlotConfigurationPage = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
+        )}
 
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -362,6 +366,7 @@ export const SlotConfigurationPage = () => {
                     {visibleColumns.actions && (
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
+                          {shouldShow("Slot Configuration", "update") && (
                           <button
                             onClick={() => handleEdit(item)}
                             className="p-1 hover:bg-gray-100 rounded"
@@ -369,6 +374,7 @@ export const SlotConfigurationPage = () => {
                           >
                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                           </button>
+                          )}
                         </div>
                       </TableCell>
                     )}

@@ -104,7 +104,7 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
   endDate,
 }) => {
   const [percentages, setPercentages] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {

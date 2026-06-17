@@ -488,6 +488,16 @@
   color: #1a1a1a;
 }
 
+@media (max-width: 640px) {
+  .bc-daily-page {
+    padding: 16px 16px 72px;
+  }
+
+  .bc-daily-header-title {
+    font-size: 22px;
+  }
+}
+
 .bc-daily-header-title {
   font-size: 28px;
   font-weight: 700;
@@ -545,9 +555,16 @@
   align-items: stretch;
 }
 
+/* Grid items must be allowed to shrink below their content width,
+   otherwise wide content (calendar strip, tables, long text) forces
+   the whole page wider than the viewport on mobile. */
+.bc-daily-grid > * {
+  min-width: 0;
+}
+
 @media (max-width: 1100px) {
   .bc-daily-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -759,6 +776,12 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .bc-live-score-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .bc-live-metric {
@@ -1029,6 +1052,17 @@
   .bc-ai-glass-modal {
     right: 16px;
     bottom: 88px;
+  }
+
+  /* Stack card header so the title isn't squeezed into a word-per-line column */
+  .bc-daily-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .bc-daily-card-header h3 {
+    white-space: nowrap;
   }
 }
 
