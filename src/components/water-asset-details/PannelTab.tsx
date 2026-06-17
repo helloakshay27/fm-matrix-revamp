@@ -9,6 +9,7 @@ import {
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface SelectionAction {
   label: string;
@@ -37,6 +38,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   mobileSheet = true,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const { shouldShow } = useDynamicPermissions();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,7 +54,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   }, [onClearSelection]);
 
   const defaultActions: SelectionAction[] = [
-    ...(onAdd ? [{ label: "Add", icon: Plus, onClick: onAdd }] : []),
+    ...(onAdd && permissionKey && shouldShow(permissionKey, "create") ? [{ label: "Add", icon: Plus, onClick: onAdd }] : []),
     ...(onImport ? [{ label: "Import", icon: Upload, onClick: onImport }] : []),
     ...actions,
   ];

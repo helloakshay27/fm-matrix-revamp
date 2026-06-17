@@ -975,14 +975,14 @@ export const AddFMUserPage = () => {
               <Button
                 variant="outline"
                 onClick={handleCancel}
-                className="px-8 py-3 text-base font-medium rounded-lg"
+                className="px-8 py-3 text-base font-medium"
               >
                 Cancel
               </Button>
               <Button
                 disabled={loadingSubmitting}
                 onClick={handleSubmit}
-                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-8 py-3 text-base font-medium rounded-lg"
+                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-8 py-3 text-base font-medium"
               >
                 Submit
               </Button>

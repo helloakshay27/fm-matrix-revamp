@@ -21,12 +21,14 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { fetchParkingBookings, ParkingBookingClient, ParkingBookingSummary } from '@/services/parkingConfigurationsAPI';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 const ParkingDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
   const location = useLocation();
   const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -300,6 +302,7 @@ const ParkingDashboard = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Action Button */}
         <div className="flex gap-2">
+          {shouldShow("Parking","create")&&(
           <Button 
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
             onClick={handleActionClick}
@@ -307,7 +310,7 @@ const ParkingDashboard = () => {
              <Plus className="w-4 h-4 mr-2" />
            
             Action
-          </Button>
+          </Button>)}
         </div>
 
         {/* Right Side Controls */}
@@ -359,13 +362,14 @@ const ParkingDashboard = () => {
                 <TableRow key={row.id} className="hover:bg-gray-50">
                   {isColumnVisible('action') && (
                     <TableCell>
+                      {shouldShow("Parking","show")&&(
                       <button 
                         className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
                         onClick={() => handleViewDetails(row.id)}
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
-                      </button>
+                      </button>)}
                     </TableCell>
                   )}
                   {isColumnVisible('clientName') && <TableCell className="font-medium">{row.name}</TableCell>}

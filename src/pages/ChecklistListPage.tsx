@@ -12,8 +12,10 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { toast, Toaster } from "sonner";
 import { apiClient } from '@/utils/apiClient';
 import { ENDPOINTS } from '@/config/apiConfig';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const ChecklistListPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const [showActionPanel, setShowActionPanel] = useState(false);
@@ -97,6 +99,7 @@ export const ChecklistListPage = () => {
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
+      {shouldShow("Checklist Master", "create") && (
       <Button
         onClick={handleActionClick}
         className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
@@ -104,6 +107,7 @@ export const ChecklistListPage = () => {
         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
       </Button>
+      )}
     </div>
   );
 
@@ -172,6 +176,7 @@ export const ChecklistListPage = () => {
       case 'actions':
         return (
           <div className="flex gap-2">
+            {shouldShow("Checklist Master", "update") && (
             <Button
               variant="ghost"
               size="sm"
@@ -180,6 +185,8 @@ export const ChecklistListPage = () => {
             >
               <Edit className="w-4 h-4" />
             </Button>
+            )}
+            {shouldShow("Checklist Master", "destroy") && (
             <Button
               variant="ghost"
               size="sm"
@@ -188,18 +195,23 @@ export const ChecklistListPage = () => {
             >
               <Trash2 className="w-4 h-4" />
             </Button>
+            )}
           </div>
         );
       case 'view':
         return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleViewChecklist(item)}
-            className="p-1 h-8 w-8"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
+          <>
+            {shouldShow("Checklist Master", "show") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleViewChecklist(item)}
+              className="p-1 h-8 w-8"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            )}
+          </>
         );
       case 'numberOfQuestions':
         return <div className="text-center">{item.numberOfQuestions ?? 0}</div>;
@@ -226,6 +238,7 @@ export const ChecklistListPage = () => {
             onAdd={handleAddChecklist}
             onClearSelection={() => setShowActionPanel(false)}
             onImport={() => setShowImportModal(true)}
+            permissionKey="Checklist Master"
           />
         )}
 

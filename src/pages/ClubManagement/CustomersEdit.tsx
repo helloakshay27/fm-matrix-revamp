@@ -1322,6 +1322,7 @@ const CustomersEdit = () => {
     // React.useEffect(() => {
     //     fetchPaymentTerms();
     // }, [fetchPaymentTerms]);
+
     const navigate = useNavigate();
     const { id } = useParams();
     const isEdit = !!id;
@@ -1426,8 +1427,14 @@ const CustomersEdit = () => {
                     primaryGstDetailId: data.primary_gst_detail?.id || null,
                 });
                 
-                if (data.payment_term) {
-                    setSelectedTerm(data.payment_term.name || "");
+                console.log("payment_term:", data.payment_term, "payment_term_id:", data.payment_term_id);
+                const rawTermId = data.payment_term_id || data.payment_term?.id || null;
+                if (rawTermId) setFetchedPaymentTermId(Number(rawTermId));
+
+                if (data.payment_term?.name) {
+                    setSelectedTerm(data.payment_term.name);
+                } else if (rawTermId) {
+                    setPendingPaymentTermId(Number(rawTermId));
                 }
             }
         } catch (err) {
@@ -1537,9 +1544,22 @@ const CustomersEdit = () => {
 
     // PAYMENT TERM
     const [selectedTerm, setSelectedTerm] = useState("");
+    const [pendingPaymentTermId, setPendingPaymentTermId] = useState<number | null>(null);
+    const [fetchedPaymentTermId, setFetchedPaymentTermId] = useState<number | null>(null);
 
     // PAYMENT TERM
     const [paymentTerms, setPaymentTerms] = React.useState([]);
+
+    React.useEffect(() => {
+        if (pendingPaymentTermId && paymentTerms.length > 0) {
+            const term = (paymentTerms as any[]).find((pt: any) => Number(pt.id) === Number(pendingPaymentTermId));
+            console.log("Resolving pendingPaymentTermId:", pendingPaymentTermId, "found:", term);
+            if (term) {
+                setSelectedTerm(term.name);
+                setPendingPaymentTermId(null);
+            }
+        }
+    }, [pendingPaymentTermId, paymentTerms]);
 
     const [loading, setLoading] = useState(false);
 
@@ -1700,8 +1720,8 @@ const CustomersEdit = () => {
         const lock_account_id = localStorage.getItem("lock_account_id");
 
         // Get payment term id
-        const paymentTerm = paymentTerms.find(pt => pt.name === selectedTerm);
-        const payment_term_id = paymentTerm ? paymentTerm.id : null;
+        const paymentTerm = (paymentTerms as any[]).find((pt: any) => pt.name === selectedTerm);
+        const payment_term_id = paymentTerm ? paymentTerm.id : (fetchedPaymentTermId || null);
 
         // Use lifted billing, shipping, contactPersons, remarks state
         const billingPayload = {

@@ -1258,7 +1258,11 @@ const TodoItem = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleOpenDetails();
+            if (todo.task_management_id) {
+              handleTaskClick();
+            } else {
+              handleOpenDetails();
+            }
           }}
           className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
           title="View todo"

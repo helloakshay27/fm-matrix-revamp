@@ -10,6 +10,7 @@ interface CustomCalendarProps {
     setShowCalender?: (show: boolean) => void;
     shift?: any;
     maxDate?: any;
+    minDate?: any;
     isDateDisabled?: (year: number, month: number, date: number) => boolean;
 }
 
@@ -24,6 +25,7 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
             setShowCalender,
             shift = {},
             maxDate = null,
+            minDate = null,
             isDateDisabled = null,
         },
         forwardedRef
@@ -351,17 +353,22 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
                             new Date(maxDate.year, maxDate.month, maxDate.date)
                             : false;
 
+                        const isBeforeMinDate = minDate
+                            ? new Date(dayObj.year, dayObj.month, dayObj.day) <
+                            new Date(minDate.year, minDate.month, minDate.date)
+                            : false;
+
                         return (
                             <button
                                 type="button"
                                 key={index}
                                 onClick={() => handleDateClick(dayObj)}
-                                disabled={isDisabled || isWeekoff || isAfterMaxDate || isRosterDisabled}
+                                disabled={isDisabled || isWeekoff || isAfterMaxDate || isBeforeMinDate || isRosterDisabled}
                                 className={`
                                 relative flex flex-col items-center justify-center rounded-md text-xs font-medium transition-all py-1 mx-2 min-h-[56px]
                                 ${!dayObj.isCurrentMonth ? 'text-gray-300' : 'text-gray-900'}
-                                ${isDisabled ? 'opacity-50 cursor-not-allowed text-gray-400' : isWeekoff || isAfterMaxDate || isRosterDisabled ? 'bg-red-50 opacity-60 cursor-not-allowed' : isSelected ? 'border-[#c72030] bg-red-50' : 'hover:bg-gray-100'}
-                                ${isToday && !isSelected && !isDisabled && !isWeekoff && !isAfterMaxDate && !isRosterDisabled ? 'border border-red-300' : ''}
+                                ${isDisabled || isBeforeMinDate ? 'opacity-50 cursor-not-allowed text-gray-400' : isWeekoff || isAfterMaxDate || isRosterDisabled ? 'bg-red-50 opacity-60 cursor-not-allowed' : isSelected ? 'border-[#c72030] bg-red-50' : 'hover:bg-gray-100'}
+                                ${isToday && !isSelected && !isDisabled && !isWeekoff && !isAfterMaxDate && !isBeforeMinDate && !isRosterDisabled ? 'border border-red-300' : ''}
                             `}
                             >
                                 <span

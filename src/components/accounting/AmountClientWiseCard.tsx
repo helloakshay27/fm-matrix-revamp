@@ -46,7 +46,7 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
   endDate,
 }) => {
   const [rows, setRows] = useState<ClientRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {

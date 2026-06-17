@@ -18,6 +18,7 @@ import {
   updateUnit
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const UnitPage = () => {
   const dispatch = useAppDispatch();
@@ -28,6 +29,7 @@ export const UnitPage = () => {
     floors,
     units
   } = useAppSelector((state) => state.location);
+  const { shouldShow } = useDynamicPermissions();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -435,6 +437,7 @@ export const UnitPage = () => {
               </Dialog>
 
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                {shouldShow("Unit", "create") && (
                 <DialogTrigger asChild>
                   <Button 
                     className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
@@ -443,6 +446,7 @@ export const UnitPage = () => {
                     Add Unit
                   </Button>
                 </DialogTrigger>
+                )}
               <DialogContent className="max-w-2xl">
                 <DialogHeader className="flex flex-row items-center justify-between pb-0">
                   <DialogTitle className="flex items-center gap-2">
@@ -660,9 +664,11 @@ export const UnitPage = () => {
                   currentUnits.map((unit) => (
                     <TableRow key={unit.id}>
                        <TableCell>
-                         <Button variant="ghost" size="sm" onClick={() => handleEditUnit(unit)}>
-                           <Edit className="w-4 h-4 text-[#C72030]" />
-                         </Button>
+                        {shouldShow("Unit", "update") && (
+                        <Button variant="ghost" size="sm" onClick={() => handleEditUnit(unit)}>
+                          <Edit className="w-4 h-4 text-[#C72030]" />
+                        </Button>
+                        )}
                        </TableCell>
                       <TableCell>
                         <button onClick={() => toggleActiveStatus(unit.id)} className="cursor-pointer">

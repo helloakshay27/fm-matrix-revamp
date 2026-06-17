@@ -14,7 +14,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { API_CONFIG } from "@/config/apiConfig";
-import { Eye } from "lucide-react";
+import { Eye, Edit, } from "lucide-react";
 // API shape returned by lock_payments.json
 interface LockPayment {
   id: number;
@@ -112,10 +112,10 @@ const mapLockPayment = (lp: LockPayment): Payment => {
   const dateRaw = lp.payment_date || lp.bill_payments?.[0]?.payment_date || lp.created_at || "";
   const date = dateRaw
     ? new Date(dateRaw).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
     : "-";
 
   const billNums = (lp.bill_payments || [])
@@ -299,12 +299,12 @@ export const PaymentsMadePage: React.FC = () => {
   // Column configuration for the enhanced table
   const columns: ColumnConfig[] = [
     {
-  key: "actions",
-  label: "ACTIONS",
-  sortable: false,
-  hideable: false,
-  draggable: false,
-},
+      key: "actions",
+      label: "ACTIONS",
+      sortable: false,
+      hideable: false,
+      draggable: false,
+    },
     {
       key: "date",
       label: "DATE",
@@ -393,17 +393,27 @@ export const PaymentsMadePage: React.FC = () => {
   };
 
   const renderRow = (payment: Payment) => ({
-     actions: (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() =>
-        navigate(`/accounting/payments-made/${payment.id}`)
-      }
-    >
-      <Eye className="h-4 w-4 text-blue-600" />
-    </Button>
-  ),
+    actions: (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() =>
+            navigate(`/accounting/payments-made/${payment.id}`)
+          }
+        >
+          <Eye className="h-4 w-4 text-blue-600" />
+        </Button>
+
+        <button
+          onClick={() => navigate(`/accounting/payments-made/edit/${payment.id}`)}
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+      </>
+    ),
 
     date: <span className="text-sm text-gray-900">{payment.date}</span>,
     payment_number: (
@@ -464,25 +474,25 @@ export const PaymentsMadePage: React.FC = () => {
   });
 
   // if (viewMode === "detail") {
-    // return (
-    //   <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-    //     {loading ? (
-    //       <div className="flex items-center justify-center h-screen">
-    //         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
-    //       </div>
-    //     ) : (
-    //       <PaymentDetailView
-    //         payments={filteredPayments}
-    //         selectedPaymentId={selectedPaymentId}
-    //         onSelectPayment={(id) => setSelectedPaymentId(id)}
-    //         onClose={() => {
-    //           setSearchParams({});
-    //           setViewMode("list");
-    //         }}
-    //       />
-    //     )}
-    //   </div>
-    // );
+  // return (
+  //   <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+  //     {loading ? (
+  //       <div className="flex items-center justify-center h-screen">
+  //         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
+  //       </div>
+  //     ) : (
+  //       <PaymentDetailView
+  //         payments={filteredPayments}
+  //         selectedPaymentId={selectedPaymentId}
+  //         onSelectPayment={(id) => setSelectedPaymentId(id)}
+  //         onClose={() => {
+  //           setSearchParams({});
+  //           setViewMode("list");
+  //         }}
+  //       />
+  //     )}
+  //   </div>
+  // );
   // }
 
   return (
@@ -524,7 +534,7 @@ export const PaymentsMadePage: React.FC = () => {
         onRowClick={(payment) => {
           // setSelectedPaymentId(payment.id);
           // setViewMode("detail");
-          navigate(`/accounting/payments-made/${payment.id}`)
+          // navigate(`/accounting/payments-made/${payment.id}`)
         }}
       />
 
