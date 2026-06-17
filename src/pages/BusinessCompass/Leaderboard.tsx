@@ -470,7 +470,7 @@ function LeaderboardTable({
           <div
             key={entry.user_id}
             className={cn(
-              "flex items-center gap-3 px-4 py-3.5 sm:px-5 sm:py-4",
+              "flex items-center gap-2.5 px-3 py-3.5 sm:gap-3 sm:px-5 sm:py-4",
               isTopThree && "bg-gradient-to-r from-[#DA7756]/5 to-transparent",
               rank === 1 && "from-amber-50/60"
             )}
@@ -516,7 +516,7 @@ function LeaderboardTable({
             </div>
 
             {/* Total */}
-            <div className="flex shrink-0 items-center gap-4 text-right">
+            <div className="flex shrink-0 items-center gap-2 text-right sm:gap-4">
               <div className="flex flex-col items-end">
                 <p
                   className={cn(
@@ -732,8 +732,8 @@ function HowScoresWorkContent() {
           Manager feedback uses a 1–5 star rating. Stars add or subtract
           points from your leaderboard total according to this scale:
         </p>
-        <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200">
-          <div className="grid grid-cols-5 divide-x divide-white/40">
+        <div className="mt-4 overflow-x-auto overflow-hidden rounded-xl border border-neutral-200">
+          <div className="grid min-w-[320px] grid-cols-5 divide-x divide-white/40">
             {FEEDBACK_RATING_COLUMNS.map((col) => (
               <div
                 key={col.stars}
@@ -859,19 +859,19 @@ function LeaderboardPage() {
         <ScoresNotLiveAlert />
 
         <Tabs defaultValue="leaderboard" className="w-full">
-          <TabsList className="inline-flex h-auto p-1.5 w-full items-center justify-start gap-1 rounded-[16px] border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm sm:w-auto">
+          <TabsList className="flex h-auto w-full items-center justify-between gap-1 rounded-[16px] border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] p-1 shadow-sm sm:inline-flex sm:w-auto sm:justify-start sm:p-1.5">
             <TabsTrigger
               value="leaderboard"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
+              className="inline-flex h-9 flex-1 items-center justify-center whitespace-nowrap rounded-xl px-2 text-[11px] font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] sm:h-10 sm:flex-none sm:px-5 sm:text-sm"
             >
-              <Trophy className="mr-2 h-4 w-4" />
+              <Trophy className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
               Leaderboard
             </TabsTrigger>
             <TabsTrigger
               value="how-scores"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
+              className="inline-flex h-9 flex-1 items-center justify-center whitespace-nowrap rounded-xl px-2 text-[11px] font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] sm:h-10 sm:flex-none sm:px-5 sm:text-sm"
             >
-              <BookOpen className="mr-2 h-4 w-4" />
+              <BookOpen className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
               How Scores Work
             </TabsTrigger>
           </TabsList>

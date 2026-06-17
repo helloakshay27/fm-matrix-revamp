@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
     Calendar,
     Info,
@@ -2958,15 +2959,15 @@ const WeeklyReports = () => {
     };
 
     return (
-        <div className="mb-5 bg-white px-4 pt-6 pb-0 sm:px-6">
+        <div className="bc-daily-page w-full max-w-full overflow-x-hidden">
             <style>{weeklyAiSuggestionStyles}</style>
             {addTaskOpen && (
                 <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
             )}
-            <div className="mx-auto max-w-[1420px] space-y-5 font-poppins text-[#111111]">
+            <div className="space-y-5 px-4 py-4 sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-[#111111]">
+                        <h1 className="text-2xl sm:text-[30px] font-bold leading-tight tracking-tight text-[#111111]">
                             Weekly Report
                         </h1>
                         <p className="mt-2 text-sm text-[#72717a]">
@@ -3153,8 +3154,8 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
 
-                            <div className="overflow-x-auto border-t border-neutral-100">
-                                <table className="w-full text-left border-collapse">
+                            <div className="w-full max-w-full overflow-x-auto border-t border-neutral-100">
+                                <table className="w-full min-w-[640px] text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-neutral-100">
                                             <th className="px-6 py-4 text-xs font-bold text-neutral-500 uppercase tracking-wider min-w-[200px] whitespace-nowrap">
@@ -3299,24 +3300,24 @@ const WeeklyReports = () => {
                         <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
                             <div
                                 className={cn(
-                                    "flex items-center justify-between",
+                                    "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
                                     sectionHeader
                                 )}
                             >
-                                <div className="flex items-center gap-2">
-                                    <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <Trophy className="h-5 w-5 shrink-0 text-[#DA7756]" />
                                     <h3 className="font-bold text-neutral-900">
                                         Weekly Accomplishments
                                     </h3>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
                                     <Badge className={badgePoints}>
                                         {weeklyScore.breakdown.achievements}/6 pts
                                     </Badge>
                                     <Button
                                         type="button"
                                         onClick={handleAddWin}
-                                        className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                        className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
                                     >
                                         <Plus size={14} />
                                         Add Item
@@ -3341,7 +3342,8 @@ const WeeklyReports = () => {
                                         className="group relative flex items-start gap-3 rounded-[10px] border border-transparent bg-[#f8e9e5] p-3 shadow-none"
                                     >
                                         <Checkbox
-                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                            style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                            className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                                             checked={checkedWins[index] ?? true}
                                             onCheckedChange={(checked) =>
                                                 setCheckedWins((prev) => ({
@@ -3419,7 +3421,7 @@ const WeeklyReports = () => {
                                     const renderItem = (item: any) => (
                                         <div
                                             key={`completed-${item.id}`}
-                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                            className="group relative flex flex-wrap items-start gap-2 sm:gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-3 sm:p-4 shadow-sm"
                                         >
                                             <Checkbox
                                                 checked
@@ -3429,7 +3431,8 @@ const WeeklyReports = () => {
                                                         label: `reopen this ${item.type} (status will change to open)`,
                                                     });
                                                 }}
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
                                             />
                                             <button
                                                 type="button"
@@ -3451,8 +3454,8 @@ const WeeklyReports = () => {
                                                     )}
                                                 />
                                             </button>
-                                            <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
+                                            <div className="flex-1 flex flex-col gap-1 min-w-[150px] basis-[160px]">
+                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60 break-words">
                                                     {item.title}
                                                 </p>
                                                 {(() => {
@@ -3556,7 +3559,8 @@ const WeeklyReports = () => {
                                             className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                         >
                                             <Checkbox
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                                                 checked={checkedWins[winIndex] ?? true}
                                                 onCheckedChange={(checked) =>
                                                     setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
@@ -3714,12 +3718,12 @@ const WeeklyReports = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
-                                            <Info className="h-3.5 w-3.5 text-emerald-600" />
+                                            <Info className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                                             <span>Limits: Images 2MB, Others 5MB</span>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
                                             <span className="text-[10px] font-bold text-neutral-400">
                                                 {uploadedFilesCount}/5
                                             </span>
@@ -3748,10 +3752,10 @@ const WeeklyReports = () => {
                         {/* Tasks & Issues */}
                         <Card ref={tasksIssuesSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
                             <div className="p-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <div className="space-y-2">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0 space-y-2">
                                         <div className="flex items-center gap-3">
-                                            <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                            <CheckSquare className="h-6 w-6 shrink-0 text-[#DA7756]" />
                                             <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                                                 Tasks,Issues & To Do's
                                             </h3>
@@ -3840,12 +3844,12 @@ const WeeklyReports = () => {
                                             </Badge>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
                                         <Badge className={badgePoints}>
                                             {taskIssueCounts.completed}/20 PTS
                                         </Badge>
                                         <Button
-                                            className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                            className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
                                             onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
                                         >
                                             <Plus size={14} />
@@ -4024,7 +4028,7 @@ const WeeklyReports = () => {
                                                                         )}
                                                                     >
                                                                         {/* Controls row */}
-                                                                        <div className="flex items-center gap-2 p-2.5">
+                                                                        <div className="flex flex-wrap items-center gap-2 p-2.5">
                                                                             <Checkbox
                                                                                 checked={
                                                                                     selectedTasksIssues[item.id] ||
@@ -4049,7 +4053,8 @@ const WeeklyReports = () => {
                                                                                         }));
                                                                                     }
                                                                                 }}
-                                                                                className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                                                className="self-center rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
                                                                             />
                                                                             <button
                                                                                 onClick={() => {
@@ -4132,7 +4137,7 @@ const WeeklyReports = () => {
                                                                             )}>
                                                                                 {item.type}
                                                                             </span>
-                                                                            <div className="flex-1 min-w-0">
+                                                                            <div className="flex-1 min-w-[90px] basis-[120px]">
                                                                                 <p className={cn(
                                                                                     "text-sm font-medium truncate",
                                                                                     (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
@@ -4165,7 +4170,7 @@ const WeeklyReports = () => {
                                                                                             "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                                                                             planWeekOpenItemId === item.id
                                                                                                 ? "bg-[#DA7756] border-[#DA7756] text-white"
-                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                                                                         )}
                                                                                         title="Add to next week plan"
                                                                                     >
@@ -5511,7 +5516,7 @@ const WeeklyReports = () => {
 
             {openTaskModal && (
             <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
-                <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
+                <MuiDialogContent className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
                     <div className="sticky top-0 bg-white z-10">
                         <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
                         <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
@@ -5579,7 +5584,7 @@ const WeeklyReports = () => {
                 maxWidth={false}
             >
                 <MuiDialogContent
-                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
                     style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
                     sx={{ padding: "0 !important" }}
                 >
@@ -5670,7 +5675,7 @@ const WeeklyReports = () => {
                     if (!open) setSelectedSopId(null);
                 }}
             >
-                <DialogContent className="max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
+                <DialogContent className="max-h-[88vh] w-[95vw] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
                     {selectedSop && (
                         <div className="flex max-h-[88vh] flex-col">
                             <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
@@ -6195,7 +6200,7 @@ const WeeklyReports = () => {
                         <label className="text-sm font-bold text-[#1a1a1a]">
                             Attach Files (Optional)
                         </label>
-                        <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
                             <div className="space-y-0.5">
                                 <p className="text-xs font-bold text-green-600">
                                     {closureAttachments.length}/5
@@ -6289,12 +6294,19 @@ const WeeklyReports = () => {
             )}
 
             {/* Task completion confirmation modal */}
-            {pendingConfirmAction && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                                <AlertCircle size={20} className="text-amber-600" />
+            {pendingConfirmAction && createPortal(
+                <>
+                    <div
+                        onClick={() => setPendingConfirmAction(null)}
+                        style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 9998 }}
+                    />
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6"
+                        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, width: "min(280px, calc(100vw - 32px))", maxHeight: "calc(100vh - 32px)", overflowY: "auto" }}
+                    >
+                        <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                <AlertCircle size={18} className="text-amber-600" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
@@ -6321,7 +6333,8 @@ const WeeklyReports = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </>,
+                document.body
             )}
         </div>
     );

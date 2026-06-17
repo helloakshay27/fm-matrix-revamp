@@ -608,7 +608,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
     // Default search input
     return (
-      <div className="relative max-w-sm">
+      <div className="relative min-w-0 flex-1 sm:max-w-sm">
         {isSearching && (
           <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
         )}
@@ -733,8 +733,8 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:flex-1 sm:gap-4">
           {leftActions}
 
           {showBulkActions && selectedItems.length > 0 && (
@@ -743,11 +743,11 @@ export function EnhancedTable<T extends Record<string, any>>({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
           {rightActions}
           {!hideTableSearch && (onSearchChange || !externalSearchTerm || enableGlobalSearch) && (
             customSearchInput ? (
-              <div className="relative max-w-sm">
+              <div className="relative min-w-0 flex-1 sm:max-w-sm">
                 {isSearching && (
                   <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
                 )}

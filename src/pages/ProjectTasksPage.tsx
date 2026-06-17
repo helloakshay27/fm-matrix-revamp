@@ -21,7 +21,7 @@ import { createProjectTask, editProjectTask, resetUserAvailability, updateTaskSt
 import { updateSprint, fetchSprints } from "@/store/slices/sprintSlice";
 import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
 import { useDebounce } from "@/hooks/useDebounce";
-import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft, Filter, Grid3x3 } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -579,8 +579,8 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelectedSprintId, onSubmit, isLoading }: any) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem] max-w-full">
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Add to Sprint</h2>
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Select Sprint</label>
@@ -686,6 +686,17 @@ const ProjectTasksPage = () => {
         return (saved as "Kanban" | "List") || "List";
     });
     const [isOpen, setIsOpen] = useState(false);
+    const [isMobileFieldsOpen, setIsMobileFieldsOpen] = useState(false);
+    const [mobileFieldVisibility, setMobileFieldVisibility] = useState({
+        project: true,
+        milestone: true,
+        status: true,
+        workflow: true,
+        responsible: true,
+        endDate: true,
+        priority: true,
+        progress: true,
+    });
     const [openStatusOptions, setOpenStatusOptions] = useState(false)
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
     const [statuses, setStatuses] = useState([])
@@ -2390,6 +2401,134 @@ const ProjectTasksPage = () => {
         }
     };
 
+    const mobileFieldOptions = [
+        { key: "project", label: "Project" },
+        { key: "milestone", label: "Milestone" },
+        { key: "status", label: "Status" },
+        { key: "workflow", label: "Workflow" },
+        { key: "responsible", label: "Responsible" },
+        { key: "endDate", label: "End Date" },
+        { key: "priority", label: "Priority" },
+        { key: "progress", label: "Progress" },
+    ] as const;
+
+    const renderMobileTaskCard = (item: any) => {
+        const isCompleted = item.status === "completed";
+        const isSelected = selectedItems.includes(String(item.id));
+        const hasSubtasks = Number(item.total_sub_tasks || 0) > 0;
+        const statusLabel = statusOptions.find((opt) => opt.value === item.status)?.label || item.status || "Open";
+        const workflowLabel = statuses.find((opt) => String(opt.id) === String(item.project_status_id))?.status;
+        const responsibleName =
+            item.responsible_person_name ||
+            item.responsible_person ||
+            users.find((user: any) => String(user.id) === String(item.responsible_person_id))?.full_name;
+
+        return (
+            <div key={item.id} className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                <div className="flex items-start gap-2">
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(event) => handleSelectItem(String(item.id), event.target.checked)}
+                        className="mt-1 h-4 w-4 shrink-0 accent-[#C72030]"
+                        aria-label={`Select task ${item.id}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="shrink-0 text-xs font-semibold text-[#C72030]">T-{item.id}</span>
+                            <span className="min-w-0 break-words text-sm font-medium leading-snug text-gray-900">
+                                {item.title || "Untitled task"}
+                            </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500">
+                            {mobileFieldVisibility.project && item.project_management_title && <span>{item.project_management_title}</span>}
+                            {mobileFieldVisibility.milestone && item.milestone_title && (
+                                <>
+                                    {mobileFieldVisibility.project && item.project_management_title && <span>•</span>}
+                                    <span>{item.milestone_title}</span>
+                                </>
+                            )}
+                            {mobileFieldVisibility.endDate && item.target_date && (
+                                <>
+                                    {((mobileFieldVisibility.project && item.project_management_title) || (mobileFieldVisibility.milestone && item.milestone_title)) && <span>•</span>}
+                                    <span>End: {item.target_date}</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleView(item.id)}
+                        className="shrink-0 rounded p-1 text-gray-600 transition hover:bg-gray-100 hover:text-[#C72030]"
+                        title="View task"
+                    >
+                        <Eye className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                    {mobileFieldVisibility.status && (
+                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                            {statusLabel}
+                        </span>
+                    )}
+                    {mobileFieldVisibility.workflow && workflowLabel && (
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                            {workflowLabel}
+                        </span>
+                    )}
+                    {mobileFieldVisibility.priority && item.priority && (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            {String(item.priority).charAt(0).toUpperCase() + String(item.priority).slice(1)}
+                        </span>
+                    )}
+                    {mobileFieldVisibility.progress && (
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                            {item.completion_percent || 0}%
+                        </span>
+                    )}
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 text-xs text-gray-500">
+                        {item.is_started ? (
+                            <ActiveTimer
+                                activeTimeTillNow={item.active_time_till_now}
+                                isStarted={item.is_started}
+                            />
+                        ) : mobileFieldVisibility.responsible ? (
+                            <span>Responsible: {responsibleName || "-"}</span>
+                        ) : null}
+                    </div>
+                    {!hasSubtasks && !isCompleted && (
+                        item.is_started ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setPauseTaskId(item.id);
+                                    setIsPauseModalOpen(true);
+                                }}
+                                className="shrink-0 rounded p-1 text-orange-500 transition hover:bg-gray-100"
+                                title="Pause task"
+                            >
+                                <Pause size={16} />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => handlePlayTask(item.id)}
+                                className="shrink-0 rounded p-1 text-green-500 transition hover:bg-gray-100"
+                                title="Start task"
+                            >
+                                <Play size={16} />
+                            </button>
+                        )
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     const renderEditableCell = (columnKey: string, value: any, onChange: (val: any) => void) => {
         if (columnKey === "status") {
             return (
@@ -2725,9 +2864,22 @@ const ProjectTasksPage = () => {
                     onClose={handleCloseModal}
                     TransitionComponent={Transition}
                     maxWidth={false}
+                    PaperProps={{
+                        sx: {
+                            width: { xs: "100vw", lg: "50vw" },
+                            maxWidth: "none",
+                            height: "100vh",
+                            maxHeight: "100vh",
+                            margin: 0,
+                            borderRadius: 0,
+                            position: "fixed",
+                            right: 0,
+                            top: 0,
+                        },
+                    }}
                 >
                     <DialogContent
-                        className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                        className="w-full h-full rounded-none bg-[#fff] text-sm overflow-y-auto"
                         style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
                         sx={{
                             padding: "0 !important",
@@ -2798,7 +2950,7 @@ const ProjectTasksPage = () => {
     };
 
     return (
-        <div className="p-6">
+        <div className="p-3 sm:p-6 max-w-full overflow-x-hidden">
             {/* Breadcrumbs */}
             {location.pathname.includes("projects") && (
                 <Breadcrumb className="mb-4">
@@ -2841,45 +2993,135 @@ const ProjectTasksPage = () => {
                 )
             } */}
 
-            <EnhancedTable
-                data={tasks}
-                columns={columns}
-                // renderActions={renderActions}
-                renderCell={renderCell}
-                leftActions={leftActions}
-                rightActions={rightActions}
-                storageKey="projects-table"
-                onSort={handleColumnSort}
-                onSearchChange={handleSearchChange}
-                onFilterClick={() => setIsFilterModalOpen(true)}
-                canAddRow={true}
-                loading={isLoading}
-                readonlyColumns={["id", "duration", "predecessor", "successor"]}
-                onAddRow={(newRowData) => {
-                    handleSubmit(newRowData)
-                }}
-                renderEditableCell={renderEditableCell}
-                newRowPlaceholder="Click to add new task"
-                collapsible={true}
-                getChildrenKey={() => "sub_tasks_managements"}
-                renderChildrenRows={renderChildrenRows}
-                // enableFreeze={true}
-                // freezeColumnsCount={4}
-                selectable={true}
-                selectedItems={selectedItems}
-                onSelectAll={handleSelectAll}
-                onSelectItem={handleSelectItem}
-                getItemId={(item: any) => String(item.id)}
-            />
+            <div className="space-y-3 md:hidden">
+                <div className="flex flex-wrap items-center gap-2">
+                    {leftActions}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    {rightActions}
+                </div>
+                <div className="flex items-center gap-2">
+                    <input
+                        value={searchTerm}
+                        onChange={(event) => handleSearchChange(event.target.value)}
+                        placeholder="Search tasks..."
+                        className="h-10 min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsFilterModalOpen(true)}
+                        className="h-10 shrink-0 px-3"
+                    >
+                        <Filter className="h-4 w-4" />
+                    </Button>
+                    <div className="relative">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsMobileFieldsOpen((open) => !open)}
+                            className="h-10 shrink-0 px-3"
+                            title="Card fields"
+                        >
+                            <Grid3x3 className="h-4 w-4" />
+                        </Button>
+                        {isMobileFieldsOpen && (
+                            <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                                {mobileFieldOptions.map((field) => (
+                                    <button
+                                        key={field.key}
+                                        type="button"
+                                        onClick={() =>
+                                            setMobileFieldVisibility((prev) => ({
+                                                ...prev,
+                                                [field.key]: !prev[field.key],
+                                            }))
+                                        }
+                                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            readOnly
+                                            checked={mobileFieldVisibility[field.key]}
+                                            className="h-4 w-4 accent-[#C72030]"
+                                        />
+                                        <span>{field.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {isLoading ? (
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 text-center text-sm text-gray-500">
+                        Loading tasks...
+                    </div>
+                ) : tasks.length === 0 ? (
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 text-center text-sm text-gray-500">
+                        No tasks found. Create one to get started.
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {tasks.map(renderMobileTaskCard)}
+                    </div>
+                )}
+            </div>
+
+            <div className="hidden md:block">
+                <EnhancedTable
+                    data={tasks}
+                    columns={columns}
+                    // renderActions={renderActions}
+                    renderCell={renderCell}
+                    leftActions={leftActions}
+                    rightActions={rightActions}
+                    storageKey="projects-table"
+                    onSort={handleColumnSort}
+                    onSearchChange={handleSearchChange}
+                    onFilterClick={() => setIsFilterModalOpen(true)}
+                    canAddRow={true}
+                    loading={isLoading}
+                    readonlyColumns={["id", "duration", "predecessor", "successor"]}
+                    onAddRow={(newRowData) => {
+                        handleSubmit(newRowData)
+                    }}
+                    renderEditableCell={renderEditableCell}
+                    newRowPlaceholder="Click to add new task"
+                    collapsible={true}
+                    getChildrenKey={() => "sub_tasks_managements"}
+                    renderChildrenRows={renderChildrenRows}
+                    // enableFreeze={true}
+                    // freezeColumnsCount={4}
+                    selectable={true}
+                    selectedItems={selectedItems}
+                    onSelectAll={handleSelectAll}
+                    onSelectItem={handleSelectItem}
+                    getItemId={(item: any) => String(item.id)}
+                />
+            </div>
 
             <Dialog
                 open={openTaskModal}
                 onClose={handleCloseModal}
                 TransitionComponent={Transition}
                 maxWidth={false}
+                PaperProps={{
+                    sx: {
+                        width: { xs: "100vw", lg: "50vw" },
+                        maxWidth: "none",
+                        height: "100vh",
+                        maxHeight: "100vh",
+                        margin: 0,
+                        borderRadius: 0,
+                        position: "fixed",
+                        right: 0,
+                        top: 0,
+                    },
+                }}
             >
                 <DialogContent
-                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    className="w-full h-full rounded-none bg-[#fff] text-sm overflow-y-auto"
                     style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
                     sx={{
                         padding: "0 !important",
@@ -3333,31 +3575,32 @@ const ProjectTasksPage = () => {
                     onAdd={handleOpenDialog}
                     onImport={() => setIsImportModalOpen(true)}
                     onClearSelection={() => setShowActionPanel(false)}
+                    mobileSheet
                 />
             )}
 
             {selectedItems.length > 0 && (
-                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
-                    <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
+                <div className="fixed bottom-3 left-3 right-3 z-50 flex min-h-[72px] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:h-[105px] sm:w-[30rem] sm:-translate-x-1/2 sm:-translate-y-1/2">
+                    <div className="w-3 sm:w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
                         <div className="text-[#C72030] font-bold text-lg"></div>
                     </div>
-                    <div className="flex items-center justify-between gap-4 px-6 flex-1">
+                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-0">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-[#1a1a1a]">Action</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 onClick={() => { fetchSprintsList(); setIsAddToSprintModalOpen(true); }}
                                 variant="ghost"
                                 size="sm"
-                                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+                                className="flex h-auto flex-col items-center gap-1 px-2 py-1.5 hover:bg-gray-50 transition-colors duration-200 sm:px-3 sm:py-2"
                             >
-                                <Plus className="w-6 h-6 text-black" />
-                                <span className="text-xs text-gray-600">Add to Sprint</span>
+                                <Plus className="h-5 w-5 text-black sm:h-6 sm:w-6" />
+                                <span className="whitespace-nowrap text-[11px] text-gray-600 sm:text-xs">Add to Sprint</span>
                             </Button>
                         </div>
                     </div>
-                    <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
+                    <div className="w-10 sm:w-[44px] flex items-center justify-center border-l border-gray-200">
                         <button
                             onClick={() => setSelectedItems([])}
                             className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
