@@ -5486,7 +5486,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 playingTaskIds.has(item.originalData?.id);
                               const effectiveStatus =
                                 isPlayedOrStarted &&
-                                ["open", "pending"].includes(item.status)
+                                !["completed", "closed", "done"].includes(item.status)
                                   ? "in_progress"
                                   : item.status;
                               return (
