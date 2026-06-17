@@ -19,6 +19,7 @@ import {
   updateRoom
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const RoomPage = () => {
   const dispatch = useAppDispatch();
@@ -30,6 +31,7 @@ export const RoomPage = () => {
     units,
     rooms
   } = useAppSelector((state) => state.location);
+  const { shouldShow } = useDynamicPermissions();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -545,12 +547,14 @@ export const RoomPage = () => {
               </Dialog>
 
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                {shouldShow("Room", "create") && (
                 <DialogTrigger asChild>
                   <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
                     <Square className="w-4 h-4" />
                     Add Room
                   </Button>
                 </DialogTrigger>
+                )}
                 <DialogContent className="max-w-2xl">
                   <DialogHeader className="flex flex-row items-center justify-between pb-0">
                     <DialogTitle className="flex items-center gap-2">
@@ -816,9 +820,11 @@ export const RoomPage = () => {
                   currentRooms.map((room) => (
                     <TableRow key={room.id}>
                        <TableCell>
-                         <Button variant="ghost" size="sm" onClick={() => handleEditRoom(room)}>
-                           <Edit className="w-4 h-4 text-[#C72030]" />
-                         </Button>
+                        {shouldShow("Room", "update") && (
+                        <Button variant="ghost" size="sm" onClick={() => handleEditRoom(room)}>
+                          <Edit className="w-4 h-4 text-[#C72030]" />
+                        </Button>
+                        )}
                        </TableCell>
                       <TableCell>{room.building?.name || 'N/A'}</TableCell>
                       <TableCell>{room.wing?.name || 'N/A'}</TableCell>

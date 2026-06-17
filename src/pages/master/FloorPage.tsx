@@ -17,6 +17,7 @@ import {
   updateFloor
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export function FloorPage() {
   const dispatch = useAppDispatch();
@@ -27,6 +28,7 @@ export function FloorPage() {
     floors
   } = useAppSelector((state) => state.location);
   
+  const { shouldShow } = useDynamicPermissions();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingFloor, setEditingFloor] = useState<any>(null);
@@ -364,6 +366,7 @@ export function FloorPage() {
                 </DialogContent>
               </Dialog>
 
+              {shouldShow("Floor", "create") && (
               <Button 
                 onClick={() => setShowAddDialog(true)} 
                 className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
@@ -371,6 +374,7 @@ export function FloorPage() {
                 <Plus className="h-4 w-4" />
                 Add Floor
               </Button>
+              )}
             </div>
           </div>
 
@@ -418,9 +422,11 @@ export function FloorPage() {
                   currentFloors.map((floor, index) => (
                     <TableRow key={floor.id}>
                       <TableCell>
+                        {shouldShow("Floor", "update") && (
                         <Button variant="ghost" size="sm" onClick={() => handleEditFloor(floor)}>
                           <Edit className="w-4 h-4 text-[#C72030]" />
                         </Button>
+                        )}
                       </TableCell>
                       <TableCell>{floor.building?.name || 'N/A'}</TableCell>
                       <TableCell>{floor.wing?.name || 'N/A'}</TableCell>
