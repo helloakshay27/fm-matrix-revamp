@@ -12,6 +12,7 @@ import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import MuiMultiSelect from "@/components/MuiMultiSelect";
 import { toast } from "sonner";
 import axios from "axios";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -53,6 +54,7 @@ const columns: ColumnConfig[] = [
 
 const ProjectTeams = () => {
     const dispatch = useDispatch<AppDispatch>();
+     const { shouldShow } = useDynamicPermissions();
     const { teams, loading } = useSelector((state: RootState) => state.projectTeams);
 
     const baseUrl = localStorage.getItem("baseUrl");
@@ -246,6 +248,7 @@ const ProjectTeams = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
+                {shouldShow("Project Teams","update")&&(
                 <Button
                     size="sm"
                     variant="ghost"
@@ -253,7 +256,7 @@ const ProjectTeams = () => {
                     onClick={() => openEditDialog(item)}
                 >
                     <Edit className="w-4 h-4" />
-                </Button>
+                </Button>)}
                 {/* <Button
                     size="sm"
                     variant="ghost"
@@ -297,13 +300,14 @@ const ProjectTeams = () => {
 
     const leftActions = (
         <>
+        {shouldShow("Project Teams","create")&&(
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
-            </Button>
+            </Button>)}
         </>
     )
 

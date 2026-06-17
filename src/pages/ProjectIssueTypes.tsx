@@ -5,6 +5,7 @@ import { Edit, Plus, X, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     {
@@ -32,6 +33,8 @@ const columns: ColumnConfig[] = [
 
 const ProjectIssueTypes = () => {
     const baseUrl = localStorage.getItem('baseUrl');
+    const { shouldShow } = useDynamicPermissions();
+
     const token = localStorage.getItem('token');
     const userId = JSON.parse(localStorage.getItem('user'))?.id || '';
 
@@ -213,6 +216,7 @@ const ProjectIssueTypes = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
+                {shouldShow("Issue Types","update")&&(
                 <Button
                     size="sm"
                     variant="ghost"
@@ -220,7 +224,7 @@ const ProjectIssueTypes = () => {
                     onClick={() => openEditDialog(item)}
                 >
                     <Edit className="w-4 h-4" />
-                </Button>
+                </Button>)}
                 {/* <Button
                     size="sm"
                     variant="ghost"
@@ -242,13 +246,14 @@ const ProjectIssueTypes = () => {
 
     const leftActions = (
         <>
+        {shouldShow("Issue Types","create")&&(
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
-            </Button>
+            </Button>)}
         </>
     )
 

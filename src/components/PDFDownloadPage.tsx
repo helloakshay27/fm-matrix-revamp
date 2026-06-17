@@ -2,11 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Download as DownloadIcon, CalendarRange, ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const formatDate = (d: Date) => d.toISOString().slice(0, 10);
 
 const PDFDownloadPage: React.FC = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   const defaults = useMemo(() => {
     const end = new Date();
@@ -141,12 +143,13 @@ const PDFDownloadPage: React.FC = () => {
         <div className="p-4 flex flex-col gap-4">
           <p className="text-sm text-gray-600 max-w-2xl">View or download the consolidated weekly PDF report generated from rolling weekly metrics.</p>
           <div className="flex flex-wrap gap-2">
+            {shouldShow("Report Setup","show")&&(
             <Button
               onClick={() => navigate('/weeklypdf')}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
             >
               <Eye className="w-4 h-4" /> View Weekly Report
-            </Button>
+            </Button>)}
             <Button
               onClick={onWeeklyDownload}
               variant="outline"
@@ -187,12 +190,13 @@ const PDFDownloadPage: React.FC = () => {
               />
             </div>
             <div className="flex flex-wrap gap-2 md:justify-end">
+              {shouldShow("Report Setup","show")&&(
               <Button
                 onClick={onView}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-10 px-4 flex items-center gap-2 shadow-sm"
               >
                 <Eye className="w-4 h-4" /> View
-              </Button>
+              </Button>)}
               <Button
                 onClick={onDownload}
                 variant="outline"

@@ -9,7 +9,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockSubFunctionDialog } from './LockSubFunctionCreate';
 import { CreateSubFunctionDialog } from './CreateSubFunctionDialog';
 import { lockSubFunctionService, LockSubFunction as ApiLockSubFunctionItem } from '@/services/lockSubFunctionService';
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 // Type definitions for the lock sub function data
 interface LockSubFunctionItem {
   id: number;
@@ -166,6 +166,7 @@ const transformLockSubFunctionData = (apiData: ApiLockSubFunctionItem[]): LockSu
 
 export const LockSubFunctionList = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(() => {
@@ -273,13 +274,15 @@ useEffect(() => {
   const renderRow = (lockSubFunction: LockSubFunctionItem) => ({
     actions: (
       <div className="flex items-center gap-2">
+        {shouldShow("Lock Sub Function","update")&&(
         <button 
           onClick={() => handleEdit(lockSubFunction.id)} 
           className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button>)}
+        {shouldShow("Lock Sub Function","show")&&(
         <button 
           onClick={() => handleView(lockSubFunction.id)} 
           className="p-1 text-green-600 hover:bg-green-50 rounded" 
@@ -287,13 +290,15 @@ useEffect(() => {
         >
           <Eye className="w-4 h-4" />
         </button>
+        )}
+        {shouldShow("Lock Sub Function","destroy")&&(
         <button 
           onClick={() => handleDelete(lockSubFunction.id)} 
           className="p-1 text-red-600 hover:bg-red-50 rounded" 
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </button>)}
       </div>
     ),
     subFunctionName: (
@@ -413,6 +418,7 @@ useEffect(() => {
             enableExport={false}
             exportFileName="lock-sub-function-data"
             leftActions={
+              shouldShow("Lock Sub Function","create")&&(
               <Button 
                 onClick={handleAdd} 
                 className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
@@ -420,7 +426,7 @@ useEffect(() => {
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
-            }
+       )}
             pagination={false} // Disable built-in pagination since we're adding custom
             loading={loading}
             emptyMessage="No lock sub functions found. Create your first lock sub function to get started."
