@@ -9,6 +9,7 @@ export const AssetGroupsPageNew = () => {
       apiEndpoint="/pms/asset_groups.json"
       subGroupApiEndpoint="/pms/asset_sub_groups.json"
       groupType="asset"
+      permissionKey="Asset Group & Sub Group"
     />
   );
 };

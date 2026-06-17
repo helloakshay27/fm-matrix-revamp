@@ -5,6 +5,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import {
     Pagination,
     PaginationContent,
@@ -17,6 +18,7 @@ import {
 
 
 const SacHsn = () => {
+    const { shouldShow } = useDynamicPermissions();
 
     const [showActionPanel, setShowActionPanel] = React.useState(false);
     const navigate = useNavigate();
@@ -132,10 +134,12 @@ const SacHsn = () => {
             case 'actions':
                 return (
                     <div className="flex items-center justify-center">
+                        {shouldShow("SAC/HSN Code", "show") && (
                         <Eye
                             className="w-5 h-5 cursor-pointer"
                             onClick={() => navigate(`/settings/inventory-management/sac-hsn-code/${item.id}`)}
                         />
+                        )}
                     </div>
                 );
             case 'type':
@@ -166,9 +170,11 @@ const SacHsn = () => {
 
     const leftActions = (
         <div className="flex flex-wrap gap-3">
+            {shouldShow("SAC/HSN Code", "create") && (
             <Button onClick={handleAddClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <Plus className="w-4 h-4" /> Add
             </Button>
+            )}
         </div>
     );
 
