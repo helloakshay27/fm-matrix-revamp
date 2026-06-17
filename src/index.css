@@ -8,6 +8,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent stray horizontal page scroll on mobile across the whole app */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 /* Mobile-friendly scrollbar styling */
 .scrollbar-thin {
   scrollbar-width: thin;
@@ -1577,9 +1584,16 @@ html {
 
 body {
   overflow-x: hidden;
+  max-width: 100%;
   /* safe area for iOS notch / home bar */
   padding-env: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Hard guard: nothing in the app may cause horizontal scroll/cut */
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* 2. Page content wrapper — used inside <main> on every page */
@@ -1626,12 +1640,19 @@ body {
 
 /* 4. Minimum touch target for all interactive elements */
 @media (max-width: 767px) {
-  button,
+  button:not([role="checkbox"]):not([role="radio"]):not([role="switch"]),
   a,
-  [role="button"],
+  [role="button"] {
+    min-height: 36px;
+  }
+
+  /* Checkboxes/radios must keep their intrinsic size (Radix renders them as <button>) */
+  [role="checkbox"],
+  [role="radio"],
+  [role="switch"],
   input[type="checkbox"],
   input[type="radio"] {
-    min-height: 36px;
+    min-height: 0;
   }
 
   /* Inputs full-width on mobile */

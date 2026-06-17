@@ -16,6 +16,8 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import axios from "axios";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
 
 const columns: ColumnConfig[] = [
     {
@@ -43,6 +45,7 @@ const columns: ColumnConfig[] = [
 
 const ProjectGroups = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const { shouldShow } = useDynamicPermissions();
     const { data: projectGroupsData, loading: projectGroupsLoading } = useSelector((state: RootState) => state.fetchProjectGroups);
 
     // Auth / User context (mocking or getting from localStorage as per request)
@@ -189,6 +192,7 @@ const ProjectGroups = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2 items-center">
+                {shouldShow("Project Groups","update")&&(
                 <Button
                     size="sm"
                     variant="ghost"
@@ -196,7 +200,7 @@ const ProjectGroups = () => {
                     onClick={() => openEditDialog(item)}
                 >
                     <Edit className="w-4 h-4" />
-                </Button>
+                </Button>)}
                 {/* <Button
                     size="sm"
                     variant="ghost"
@@ -256,13 +260,14 @@ const ProjectGroups = () => {
 
     const leftActions = (
         <>
+        {shouldShow("Project Groups","create")&&(
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
-            </Button>
+            </Button>)}
         </>
     )
 

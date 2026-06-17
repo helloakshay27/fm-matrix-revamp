@@ -17,10 +17,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { wingSchema, type WingFormData } from '@/schemas/wingSchema';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export function WingPage() {
   const dispatch = useAppDispatch();
   const { buildings, wings } = useAppSelector((state) => state.location);
+  const { shouldShow } = useDynamicPermissions();
   
   const [search, setSearch] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -341,12 +343,14 @@ export function WingPage() {
               </Dialog>
 
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                {shouldShow("Wing", "create") && (
                 <DialogTrigger asChild>
                   <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Wing
                   </Button>
                 </DialogTrigger>
+                )}
               <DialogContent className="max-w-2xl">
                 <DialogHeader className="flex flex-row items-center justify-between pb-0">
                   <DialogTitle className="flex items-center gap-2">
@@ -473,9 +477,11 @@ export function WingPage() {
                   currentWings.map((wing) => (
                     <TableRow key={wing.id}>
                       <TableCell>
+                        {shouldShow("Wing", "update") && (
                         <Button variant="ghost" size="sm" onClick={() => openEditDialog(wing)}>
                           <Edit className="w-4 h-4 text-[#C72030]" />
                         </Button>
+                        )}
                       </TableCell>
                       <TableCell>{wing.building?.name || 'N/A'}</TableCell>
                       <TableCell>{wing.name}</TableCell>

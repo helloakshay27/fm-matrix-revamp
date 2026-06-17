@@ -685,7 +685,7 @@ export const AMCDetailsPage = () => {
                     </div>
                     SUPPLIER INFORMATION
                   </CardTitle>
-                  <Button
+                  {/* <Button
                     className="px-4 py-2 font-medium t border rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
                     style={{
                       backgroundColor: "#F6F4EE",
@@ -700,7 +700,7 @@ export const AMCDetailsPage = () => {
 
                   >
                     View Supplier
-                  </Button>
+                  </Button> */}
                 </div>
               </CardHeader>
               <CardContent

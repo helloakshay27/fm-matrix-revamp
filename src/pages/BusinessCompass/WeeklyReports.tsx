@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
     Calendar,
     Info,
@@ -2977,15 +2978,15 @@ const WeeklyReports = () => {
     };
 
     return (
-        <div className="mb-5 bg-white px-4 pt-6 pb-0 sm:px-6">
+        <div className="bc-daily-page w-full max-w-full overflow-x-hidden">
             <style>{weeklyAiSuggestionStyles}</style>
             {addTaskOpen && (
                 <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
             )}
-            <div className="mx-auto max-w-[1420px] space-y-5 font-poppins text-[#111111]">
+            <div className="space-y-5 px-4 py-4 sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-[#111111]">
+                        <h1 className="text-2xl sm:text-[30px] font-bold leading-tight tracking-tight text-[#111111]">
                             Weekly Report
                         </h1>
                         <p className="mt-2 text-sm text-[#72717a]">
@@ -3172,8 +3173,8 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
 
-                            <div className="overflow-x-auto border-t border-neutral-100">
-                                <table className="w-full text-left border-collapse">
+                            <div className="w-full max-w-full overflow-x-auto border-t border-neutral-100">
+                                <table className="w-full min-w-[640px] text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-neutral-100">
                                             <th className="px-6 py-4 text-xs font-bold text-neutral-500 uppercase tracking-wider min-w-[200px] whitespace-nowrap">
@@ -3314,47 +3315,103 @@ const WeeklyReports = () => {
 
 
                         <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr]">
-                            {/* Achievements */}
-                            <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
-                                <div
-                                    className={cn(
-                                        "flex items-center justify-between",
-                                        sectionHeader
-                                    )}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <Trophy className="h-5 w-5 text-[#DA7756]" />
-                                        <h3 className="font-bold text-neutral-900">
-                                            Weekly Accomplishments
-                                        </h3>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge className={badgePoints}>
-                                            {weeklyScore.breakdown.achievements}/6 pts
-                                        </Badge>
-                                        <Button
-                                            type="button"
-                                            onClick={handleAddWin}
-                                            className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
-                                        >
-                                            <Plus size={14} />
-                                            Add Item
-                                        </Button>
-                                    </div>
+                        {/* Achievements */}
+                        <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
+                            <div
+                                className={cn(
+                                    "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
+                                    sectionHeader
+                                )}
+                            >
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <Trophy className="h-5 w-5 shrink-0 text-[#DA7756]" />
+                                    <h3 className="font-bold text-neutral-900">
+                                        Weekly Accomplishments
+                                    </h3>
                                 </div>
-                                <div className="space-y-3 px-5 pb-5 max-h-[360px] overflow-y-auto">
-                                    {!wins.some((win) => !autoAddedTitles.has(cleanReportText(win).toLowerCase())) && !mergedTasksIssues.some((item: any) => ["completed", "closed", "done"].includes(item.status)) && (
-                                        <div className="flex flex-col items-center justify-center py-10 text-center">
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fdf8f5] mb-3">
-                                                <Trophy className="h-5 w-5 text-[#DA7756]" />
-                                            </div>
-                                            <p className="text-sm font-semibold text-neutral-900">No accomplishments yet</p>
-                                            <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
-                                                Add your weekly wins or complete tasks to see them here.
-                                            </p>
+                                <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
+                                    <Badge className={badgePoints}>
+                                        {weeklyScore.breakdown.achievements}/6 pts
+                                    </Badge>
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddWin}
+                                        className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                    >
+                                        <Plus size={14} />
+                                        Add Item
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="space-y-3 px-5 pb-5 max-h-[360px] overflow-y-auto">
+                                {wins.length === 0 && !mergedTasksIssues.some((item: any) => ["completed", "closed", "done"].includes(item.status)) && (
+                                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fdf8f5] mb-3">
+                                            <Trophy className="h-5 w-5 text-[#DA7756]" />
                                         </div>
-                                    )}
-
+                                        <p className="text-sm font-semibold text-neutral-900">No accomplishments yet</p>
+                                        <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
+                                            Add your weekly wins or complete tasks to see them here.
+                                        </p>
+                                    </div>
+                                )}
+                                {wins.map((win, index) => winDates[index] ? null : (
+                                    <div
+                                        key={index}
+                                        className="group relative flex items-start gap-3 rounded-[10px] border border-transparent bg-[#f8e9e5] p-3 shadow-none"
+                                    >
+                                        <Checkbox
+                                            style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                            className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                            checked={checkedWins[index] ?? true}
+                                            onCheckedChange={(checked) =>
+                                                setCheckedWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !!checked,
+                                                }))
+                                            }
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setStarredWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !prev[index],
+                                                }))
+                                            }
+                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                        >
+                                            <Star
+                                                className={cn(
+                                                    "h-4 w-4 transition-colors duration-200",
+                                                    starredWins[index]
+                                                        ? "text-yellow-400 fill-yellow-400"
+                                                        : "text-neutral-300 hover:text-yellow-300"
+                                                )}
+                                            />
+                                        </button>
+                                        <AutoSizingTextarea
+                                            value={win}
+                                            onChange={(val: string) => handleWinChange(index, val)}
+                                            placeholder="Describe your win…"
+                                            className={cn(
+                                                "min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0",
+                                                (checkedWins[index] ?? true) && "line-through opacity-60"
+                                            )}
+                                        // className="flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
+                                        />
+                                        <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                            Note
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveWin(index)}
+                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
 
                                     {(() => {
                                         const completedItems = mergedTasksIssues.filter((item: any) =>
@@ -3378,266 +3435,229 @@ const WeeklyReports = () => {
                                             if (!groups[date]) groups[date] = [];
                                             groups[date].push({ kind: "win", winIndex: index });
                                         });
-                                        const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-                                        const renderItem = (item: any) => (
-                                            <div
-                                                key={`completed-${item.id}`}
-                                                className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+                                    const renderItem = (item: any) => (
+                                        <div
+                                            key={`completed-${item.id}`}
+                                            className="group relative flex flex-wrap items-start gap-2 sm:gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-3 sm:p-4 shadow-sm"
+                                        >
+                                            <Checkbox
+                                                checked
+                                                onCheckedChange={() => {
+                                                    setPendingConfirmAction({
+                                                        fn: () => reopenTaskIssueTodo(item),
+                                                        label: `reopen this ${item.type} (status will change to open)`,
+                                                    });
+                                                }}
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const itemKey = String(item.id);
+                                                    setStarredCompletedItems((prev) => ({
+                                                        ...prev,
+                                                        [itemKey]: !prev[itemKey],
+                                                    }));
+                                                }}
+                                                className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
                                             >
-                                                <Checkbox
-                                                    checked
-                                                    onCheckedChange={() => {
-                                                        setPendingConfirmAction({
-                                                            fn: () => reopenTaskIssueTodo(item),
-                                                            label: `reopen this ${item.type} (status will change to open)`,
-                                                        });
-                                                    }}
-                                                    className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const itemKey = String(item.id);
-                                                        setStarredCompletedItems((prev) => ({
-                                                            ...prev,
-                                                            [itemKey]: !prev[itemKey],
-                                                        }));
-                                                    }}
-                                                    className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
-                                                >
-                                                    <Star
-                                                        className={cn(
-                                                            "h-4 w-4 transition-colors duration-200",
-                                                            starredCompletedItems[String(item.id)]
-                                                                ? "text-yellow-400 fill-yellow-400"
-                                                                : "text-neutral-300 hover:text-yellow-300"
-                                                        )}
-                                                    />
-                                                </button>
-                                                <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                                    <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
-                                                        {item.title}
-                                                    </p>
-                                                    {(() => {
-                                                        const d = item.originalData;
-                                                        const completionDate = fmtDate(d?.completed_at || d?.updated_at);
-                                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                        let issueEffort: string | null = null;
-                                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                                            const totalMin = d.issue_allocation_times.reduce(
-                                                                (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                                            );
-                                                            if (totalMin > 0) {
-                                                                const h = Math.floor(totalMin / 60);
-                                                                const m = totalMin % 60;
-                                                                issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                                            }
-                                                        }
-                                                        const hasInfo = completionDate || effortEst || issueEffort;
-                                                        if (!hasInfo) return null;
-                                                        return (
-                                                            <div className="flex items-center gap-3 flex-wrap">
-                                                                {completionDate && (
-                                                                    <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                                        <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                        {completionDate}
-                                                                    </span>
-                                                                )}
-                                                                {effortEst && (
-                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                                        <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                        Est: {effortEst}
-                                                                    </span>
-                                                                )}
-                                                                {issueEffort && (
-                                                                    <span className="flex items-center gap-1 text-[10px] text-purple-500">
-                                                                        <Zap className="h-2.5 w-2.5 shrink-0" />
-                                                                        Effort: {issueEffort}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })()}
-                                                </div>
-                                                <span className={cn(
-                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 mt-1",
-                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                )}>
-                                                    {item.type}
-                                                </span>
-                                                {item.priority && (
-                                                    <span
-                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
-                                                        style={{
-                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                                        }}
-                                                    >
-                                                        {item.priority}
-                                                    </span>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (item.type === "todo") {
-                                                            setSelectedTodo(item.originalData);
-                                                            setIsTodoDetailsModalOpen(true);
-                                                        } else {
-                                                            navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
-                                                        }
-                                                    }}
-                                                    className="mt-1 p-1 hover:bg-gray-100 rounded-[6px] transition-colors shrink-0"
-                                                    title={`View ${item.type} details`}
-                                                >
-                                                    <Eye className="h-4 w-4 text-[#DA7756]" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (item.type === "task") {
-                                                            setEditTaskData(item.originalData);
-                                                            setIsEditTaskModalOpen(true);
-                                                        } else if (item.type === "issue") {
-                                                            setEditIssueData(item.originalData);
-                                                            setIsEditIssueModalOpen(true);
-                                                        } else if (item.type === "todo") {
-                                                            setEditTodoData(item.originalData);
-                                                            setIsEditTodoModalOpen(true);
-                                                        }
-                                                    }}
-                                                    className="mt-1 p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                                    title={`Edit ${item.type}`}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        );
-                                        const renderWin = (winIndex: number) => (
-                                            <div
-                                                key={`win-${winIndex}`}
-                                                className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
-                                            >
-                                                <Checkbox
-                                                    className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                                    checked={checkedWins[winIndex] ?? true}
-                                                    onCheckedChange={(checked) =>
-                                                        setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
-                                                    }
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setStarredWins((prev) => ({ ...prev, [winIndex]: !prev[winIndex] }))
-                                                    }
-                                                    className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
-                                                >
-                                                    <Star
-                                                        className={cn(
-                                                            "h-4 w-4 transition-colors duration-200",
-                                                            starredWins[winIndex]
-                                                                ? "text-yellow-400 fill-yellow-400"
-                                                                : "text-neutral-300 hover:text-yellow-300"
-                                                        )}
-                                                    />
-                                                </button>
-                                                <AutoSizingTextarea
-                                                    value={wins[winIndex]}
-                                                    onChange={(val: string) => handleWinChange(winIndex, val)}
-                                                    placeholder="Describe your win…"
+                                                <Star
                                                     className={cn(
-                                                        "flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200",
-                                                        (checkedWins[winIndex] ?? true) && "line-through opacity-60"
+                                                        "h-4 w-4 transition-colors duration-200",
+                                                        starredCompletedItems[String(item.id)]
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-neutral-300 hover:text-yellow-300"
                                                     )}
                                                 />
-                                                <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
-                                                    Note
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveWin(winIndex)}
-                                                    className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        );
-                                        return (
-                                            <>
-                                                {sortedKeys.map((dateKey) => {
-                                                    const dt = new Date(dateKey + "T00:00:00");
-                                                    const groupKey = `completed-${dateKey}`;
-                                                    const isCollapsed = collapsedGroups.has(groupKey);
-                                                    const label = `${format(dt, "EEEE")} · ${format(dt, "dd MMM yyyy")}`;
+                                            </button>
+                                            <div className="flex-1 flex flex-col gap-1 min-w-[150px] basis-[160px]">
+                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60 break-words">
+                                                    {item.title}
+                                                </p>
+                                                {(() => {
+                                                    const d = item.originalData;
+                                                    const completionDate = fmtDate(d?.completed_at || d?.updated_at);
+                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                    let issueEffort: string | null = null;
+                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                        const totalMin = d.issue_allocation_times.reduce(
+                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                        );
+                                                        if (totalMin > 0) {
+                                                            const h = Math.floor(totalMin / 60);
+                                                            const m = totalMin % 60;
+                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                        }
+                                                    }
+                                                    const hasInfo = completionDate || effortEst || issueEffort;
+                                                    if (!hasInfo) return null;
                                                     return (
-                                                        <div key={dateKey}>
-                                                            <button
-                                                                className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-emerald-50 hover:bg-emerald-100"
-                                                                onClick={() =>
-                                                                    setCollapsedGroups((prev) => {
-                                                                        const next = new Set(prev);
-                                                                        if (next.has(groupKey)) next.delete(groupKey);
-                                                                        else next.add(groupKey);
-                                                                        return next;
-                                                                    })
-                                                                }
-                                                            >
-                                                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-emerald-700">
-                                                                    {label}
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            {completionDate && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                                    <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                    {completionDate}
                                                                 </span>
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                                                                    {groups[dateKey].length}
+                                                            )}
+                                                            {effortEst && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                    <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                    Est: {effortEst}
                                                                 </span>
-                                                                <ChevronRight
-                                                                    size={14}
-                                                                    className={cn(
-                                                                        "transition-transform duration-200 ml-1 text-emerald-700",
-                                                                        !isCollapsed && "rotate-90"
-                                                                    )}
-                                                                />
-                                                            </button>
-                                                            {!isCollapsed && (
-                                                                <div className="space-y-3 pl-1">
-                                                                    {groups[dateKey].map((entry) =>
-                                                                        entry.kind === "win"
-                                                                            ? renderWin(entry.winIndex!)
-                                                                            : renderItem(entry.data)
-                                                                    )}
-                                                                </div>
+                                                            )}
+                                                            {issueEffort && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                                                    <Zap className="h-2.5 w-2.5 shrink-0" />
+                                                                    Effort: {issueEffort}
+                                                                </span>
                                                             )}
                                                         </div>
                                                     );
-                                                })}
-                                                {noDateItems.length > 0 && (
-                                                    <div>
+                                                })()}
+                                            </div>
+                                            <span className={cn(
+                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 mt-1",
+                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                            )}>
+                                                {item.type}
+                                            </span>
+                                            {item.priority && (
+                                                <span
+                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
+                                                    style={{
+                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                    }}
+                                                >
+                                                    {item.priority}
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (item.type === "todo") {
+                                                        setSelectedTodo(item.originalData);
+                                                        setIsTodoDetailsModalOpen(true);
+                                                    } else {
+                                                        navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                    }
+                                                }}
+                                                className="mt-1 p-1 hover:bg-gray-100 rounded-[6px] transition-colors shrink-0"
+                                                title={`View ${item.type} details`}
+                                            >
+                                                <Eye className="h-4 w-4 text-[#DA7756]" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (item.type === "task") {
+                                                        setEditTaskData(item.originalData);
+                                                        setIsEditTaskModalOpen(true);
+                                                    } else if (item.type === "issue") {
+                                                        setEditIssueData(item.originalData);
+                                                        setIsEditIssueModalOpen(true);
+                                                    } else if (item.type === "todo") {
+                                                        setEditTodoData(item.originalData);
+                                                        setIsEditTodoModalOpen(true);
+                                                    }
+                                                }}
+                                                className="mt-1 p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                                title={`Edit ${item.type}`}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    );
+                                    const renderWin = (winIndex: number) => (
+                                        <div
+                                            key={`win-${winIndex}`}
+                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                        >
+                                            <Checkbox
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                checked={checkedWins[winIndex] ?? true}
+                                                onCheckedChange={(checked) =>
+                                                    setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setStarredWins((prev) => ({ ...prev, [winIndex]: !prev[winIndex] }))
+                                                }
+                                                className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                            >
+                                                <Star
+                                                    className={cn(
+                                                        "h-4 w-4 transition-colors duration-200",
+                                                        starredWins[winIndex]
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-neutral-300 hover:text-yellow-300"
+                                                    )}
+                                                />
+                                            </button>
+                                            <AutoSizingTextarea
+                                                value={wins[winIndex]}
+                                                onChange={(val: string) => handleWinChange(winIndex, val)}
+                                                placeholder="Describe your win…"
+                                                className={cn(
+                                                    "flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200",
+                                                    (checkedWins[winIndex] ?? true) && "line-through opacity-60"
+                                                )}
+                                            />
+                                            <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                                Note
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveWin(winIndex)}
+                                                className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    );
+                                    return (
+                                        <>
+                                            {sortedKeys.map((dateKey) => {
+                                                const dt = new Date(dateKey + "T00:00:00");
+                                                const groupKey = `completed-${dateKey}`;
+                                                const isCollapsed = collapsedGroups.has(groupKey);
+                                                const label = `${format(dt, "EEEE")} · ${format(dt, "dd MMM yyyy")}`;
+                                                return (
+                                                    <div key={dateKey}>
                                                         <button
-                                                            className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-slate-50 hover:bg-slate-100"
+                                                            className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-emerald-50 hover:bg-emerald-100"
                                                             onClick={() =>
                                                                 setCollapsedGroups((prev) => {
                                                                     const next = new Set(prev);
-                                                                    if (next.has("completed-no-date")) next.delete("completed-no-date");
-                                                                    else next.add("completed-no-date");
+                                                                    if (next.has(groupKey)) next.delete(groupKey);
+                                                                    else next.add(groupKey);
                                                                     return next;
                                                                 })
                                                             }
                                                         >
-                                                            <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-slate-600">
-                                                                No Date
+                                                            <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-emerald-700">
+                                                                {label}
                                                             </span>
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                                                {noDateItems.length}
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                                                {groups[dateKey].length}
                                                             </span>
                                                             <ChevronRight
                                                                 size={14}
                                                                 className={cn(
-                                                                    "transition-transform duration-200 ml-1 text-slate-600",
-                                                                    !collapsedGroups.has("completed-no-date") && "rotate-90"
+                                                                    "transition-transform duration-200 ml-1 text-emerald-700",
+                                                                    !isCollapsed && "rotate-90"
                                                                 )}
                                                             />
                                                         </button>
-                                                        {!collapsedGroups.has("completed-no-date") && (
+                                                        {!isCollapsed && (
                                                             <div className="space-y-3 pl-1">
-                                                                {noDateItems.map((entry) =>
+                                                                {groups[dateKey].map((entry) =>
                                                                     entry.kind === "win"
                                                                         ? renderWin(entry.winIndex!)
                                                                         : renderItem(entry.data)
@@ -3645,10 +3665,49 @@ const WeeklyReports = () => {
                                                             </div>
                                                         )}
                                                     </div>
-                                                )}
-                                            </>
-                                        );
-                                    })()}
+                                                );
+                                            })}
+                                            {noDateItems.length > 0 && (
+                                                <div>
+                                                    <button
+                                                        className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-slate-50 hover:bg-slate-100"
+                                                        onClick={() =>
+                                                            setCollapsedGroups((prev) => {
+                                                                const next = new Set(prev);
+                                                                if (next.has("completed-no-date")) next.delete("completed-no-date");
+                                                                else next.add("completed-no-date");
+                                                                return next;
+                                                            })
+                                                        }
+                                                    >
+                                                        <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-slate-600">
+                                                            No Date
+                                                        </span>
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                            {noDateItems.length}
+                                                        </span>
+                                                        <ChevronRight
+                                                            size={14}
+                                                            className={cn(
+                                                                "transition-transform duration-200 ml-1 text-slate-600",
+                                                                !collapsedGroups.has("completed-no-date") && "rotate-90"
+                                                            )}
+                                                        />
+                                                    </button>
+                                                    {!collapsedGroups.has("completed-no-date") && (
+                                                        <div className="space-y-3 pl-1">
+                                                            {noDateItems.map((entry) =>
+                                                                entry.kind === "win"
+                                                                    ? renderWin(entry.winIndex!)
+                                                                    : renderItem(entry.data)
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
 
                                 </div>
 
@@ -3677,12 +3736,12 @@ const WeeklyReports = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
-                                            <Info className="h-3.5 w-3.5 text-emerald-600" />
+                                            <Info className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                                             <span>Limits: Images 2MB, Others 5MB</span>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
                                             <span className="text-[10px] font-bold text-neutral-400">
                                                 {uploadedFilesCount}/5
                                             </span>
@@ -3708,117 +3767,117 @@ const WeeklyReports = () => {
                                 </div>
                             </Card>
 
-                            {/* Tasks & Issues */}
-                            <Card ref={tasksIssuesSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
-                                <div className="p-4">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-3">
-                                                <CheckSquare className="h-6 w-6 text-[#DA7756]" />
-                                                <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                                                    Tasks,Issues & To Do's
-                                                </h3>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 pt-1">
-                                                {/* <Badge
+                        {/* Tasks & Issues */}
+                        <Card ref={tasksIssuesSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
+                            <div className="p-4">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0 space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <CheckSquare className="h-6 w-6 shrink-0 text-[#DA7756]" />
+                                            <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                                Tasks,Issues & To Do's
+                                            </h3>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {/* <Badge
                                                 variant="outline"
                                                 className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                                             >
                                                 Completed: {taskIssueCounts.completed}
                                             </Badge> */}
-                                                <Badge
-                                                    variant="outline"
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={openAllTaskIssueGroups}
-                                                    onKeyDown={(event) => {
-                                                        if (event.key === "Enter" || event.key === " ") {
-                                                            event.preventDefault();
-                                                            openAllTaskIssueGroups();
-                                                        }
-                                                    }}
-                                                    className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
-                                                >
-                                                    All: {taskIssueCounts.total}
-                                                </Badge>
-                                                <Badge
-                                                    variant="outline"
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={() => openOnlyTaskIssueGroup("pending")}
-                                                    onKeyDown={(event) => {
-                                                        if (event.key === "Enter" || event.key === " ") {
-                                                            event.preventDefault();
-                                                            openOnlyTaskIssueGroup("pending");
-                                                        }
-                                                    }}
-                                                    className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
-                                                >
-                                                    Open: {taskIssueCounts.open}
-                                                </Badge>
-                                                <Badge
-                                                    variant="outline"
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={() => openOnlyTaskIssueGroup("overdue")}
-                                                    onKeyDown={(event) => {
-                                                        if (event.key === "Enter" || event.key === " ") {
-                                                            event.preventDefault();
-                                                            openOnlyTaskIssueGroup("overdue");
-                                                        }
-                                                    }}
-                                                    className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
-                                                >
-                                                    Overdue: {taskIssueCounts.overdue}
-                                                </Badge>
-                                                <Badge
-                                                    variant="outline"
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={() => openOnlyTaskIssueGroup("in_progress")}
-                                                    onKeyDown={(event) => {
-                                                        if (event.key === "Enter" || event.key === " ") {
-                                                            event.preventDefault();
-                                                            openOnlyTaskIssueGroup("in_progress");
-                                                        }
-                                                    }}
-                                                    className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
-                                                >
-                                                    In Progress: {taskIssueCounts.inProgress}
-                                                </Badge>
-                                                <Badge
-                                                    variant="outline"
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={() => openOnlyTaskIssueGroup("on_hold")}
-                                                    onKeyDown={(event) => {
-                                                        if (event.key === "Enter" || event.key === " ") {
-                                                            event.preventDefault();
-                                                            openOnlyTaskIssueGroup("on_hold");
-                                                        }
-                                                    }}
-                                                    className="cursor-pointer border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-200"
-                                                >
-                                                    On Hold: {taskIssueCounts.onHold}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <Badge className={badgePoints}>
-                                                {taskIssueCounts.completed}/20 PTS
-                                            </Badge>
-                                            <Button
-                                                className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
-                                                onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={openAllTaskIssueGroups}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openAllTaskIssueGroups();
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
                                             >
-                                                <Plus size={14} />
-                                                Add
-                                            </Button>
+                                                All: {taskIssueCounts.total}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("pending")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("pending");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
+                                            >
+                                                Open: {taskIssueCounts.open}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("overdue")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("overdue");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
+                                            >
+                                                Overdue: {taskIssueCounts.overdue}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("in_progress");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
+                                            >
+                                                In Progress: {taskIssueCounts.inProgress}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("on_hold");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-200"
+                                            >
+                                                On Hold: {taskIssueCounts.onHold}
+                                            </Badge>
                                         </div>
                                     </div>
+                                    <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
+                                        <Badge className={badgePoints}>
+                                            {taskIssueCounts.completed}/20 PTS
+                                        </Badge>
+                                        <Button
+                                            className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                            onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
+                                        >
+                                            <Plus size={14} />
+                                            Add
+                                        </Button>
+                                    </div>
                                 </div>
-                                <CardContent className="px-5 pb-5 pt-0">
-                                    {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
+                            </div>
+                            <CardContent className="px-5 pb-5 pt-0">
+                                {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
                                 <p className="text-lg text-neutral-400">
                                     No open tasks or issues.
                                 </p> */}
@@ -3978,246 +4037,247 @@ const WeeklyReports = () => {
 
                                                                     const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
 
-                                                                    return (
-                                                                        <div
-                                                                            key={item.id}
-                                                                            className={cn(
-                                                                                "flex flex-col rounded-[10px] border transition-all group",
-                                                                                group.bgItem
-                                                                            )}
-                                                                        >
-                                                                            {/* Controls row */}
-                                                                            <div className="flex items-center gap-2 p-2.5">
-                                                                                <Checkbox
-                                                                                    checked={
-                                                                                        selectedTasksIssues[item.id] ||
-                                                                                        item.status === "completed" ||
-                                                                                        item.status === "closed"
+                                                                return (
+                                                                    <div
+                                                                        key={item.id}
+                                                                        className={cn(
+                                                                            "flex flex-col rounded-[10px] border transition-all group",
+                                                                            group.bgItem
+                                                                        )}
+                                                                    >
+                                                                        {/* Controls row */}
+                                                                        <div className="flex flex-wrap items-center gap-2 p-2.5">
+                                                                            <Checkbox
+                                                                                checked={
+                                                                                    selectedTasksIssues[item.id] ||
+                                                                                    item.status === "completed" ||
+                                                                                    item.status === "closed"
+                                                                                }
+                                                                                disabled={!!completingTaskIssueIds[item.id]}
+                                                                                onCheckedChange={(checked) => {
+                                                                                    if (
+                                                                                        checked &&
+                                                                                        item.status !== "completed" &&
+                                                                                        item.status !== "closed"
+                                                                                    ) {
+                                                                                        setPendingConfirmAction({
+                                                                                            fn: () => handleCompleteTaskIssueTodo(item),
+                                                                                            label: `complete this ${item.type}`,
+                                                                                        });
+                                                                                    } else {
+                                                                                        setSelectedTasksIssues((prev) => ({
+                                                                                            ...prev,
+                                                                                            [item.id]: checked as boolean,
+                                                                                        }));
                                                                                     }
-                                                                                    disabled={!!completingTaskIssueIds[item.id]}
-                                                                                    onCheckedChange={(checked) => {
-                                                                                        if (
-                                                                                            checked &&
-                                                                                            item.status !== "completed" &&
-                                                                                            item.status !== "closed"
-                                                                                        ) {
-                                                                                            setPendingConfirmAction({
-                                                                                                fn: () => handleCompleteTaskIssueTodo(item),
-                                                                                                label: `complete this ${item.type}`,
-                                                                                            });
-                                                                                        } else {
-                                                                                            setSelectedTasksIssues((prev) => ({
-                                                                                                ...prev,
-                                                                                                [item.id]: checked as boolean,
-                                                                                            }));
-                                                                                        }
-                                                                                    }}
-                                                                                    className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                                                                />
-                                                                                <button
-                                                                                    onClick={() => {
-                                                                                        if (item.type === "todo") {
-                                                                                            setSelectedTodo(item.originalData);
-                                                                                            setIsTodoDetailsModalOpen(true);
-                                                                                            return;
-                                                                                        }
-                                                                                        const detailsUrl =
-                                                                                            item.type === "task"
-                                                                                                ? `/vas/tasks/${item.originalData?.id}`
-                                                                                                : `/vas/issues/${item.originalData?.id}`;
-                                                                                        navigate(detailsUrl);
-                                                                                    }}
-                                                                                    className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                                                                    title={`View ${item.type} details`}
-                                                                                >
-                                                                                    <Eye size={14} className="text-[#DA7756]" />
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        if (item.type === "task") {
-                                                                                            setEditTaskData(item.originalData);
-                                                                                            setIsEditTaskModalOpen(true);
-                                                                                        } else if (item.type === "issue") {
-                                                                                            setEditIssueData(item.originalData);
-                                                                                            setIsEditIssueModalOpen(true);
-                                                                                        } else if (item.type === "todo") {
-                                                                                            setEditTodoData(item.originalData);
-                                                                                            setIsEditTodoModalOpen(true);
-                                                                                        }
-                                                                                    }}
-                                                                                    className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                                                                    title={`Edit ${item.type}`}
-                                                                                >
-                                                                                    <Pencil size={13} />
-                                                                                </button>
-                                                                                {item.type === "task" &&
-                                                                                    item.status !== "completed" &&
-                                                                                    item.status !== "closed" && (
-                                                                                        item.originalData?.is_started ? (
-                                                                                            <button
-                                                                                                onClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    setPauseTaskId(item.originalData.id);
-                                                                                                    setIsPauseModalOpen(true);
-                                                                                                }}
-                                                                                                disabled={!!updatingPlayPauseIds[item.id]}
-                                                                                                className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
-                                                                                                title="Pause task"
-                                                                                            >
-                                                                                                {updatingPlayPauseIds[item.id] ? (
-                                                                                                    <Loader2 size={14} className="text-red-500 animate-spin" />
-                                                                                                ) : (
-                                                                                                    <Pause size={14} className="text-red-500" />
-                                                                                                )}
-                                                                                            </button>
-                                                                                        ) : (
-                                                                                            <button
-                                                                                                onClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    handlePlayTask(item);
-                                                                                                }}
-                                                                                                disabled={!!updatingPlayPauseIds[item.id]}
-                                                                                                className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
-                                                                                                title="Start task"
-                                                                                            >
-                                                                                                {updatingPlayPauseIds[item.id] ? (
-                                                                                                    <Loader2 size={14} className="text-green-600 animate-spin" />
-                                                                                                ) : (
-                                                                                                    <Play size={14} className="text-green-600" />
-                                                                                                )}
-                                                                                            </button>
-                                                                                        )
-                                                                                    )}
-                                                                                <span className={cn(
-                                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                                                )}>
-                                                                                    {item.type}
-                                                                                </span>
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <p className={cn(
-                                                                                        "text-sm font-medium truncate",
-                                                                                        (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
-                                                                                    )}>
-                                                                                        {item.title}
-                                                                                    </p>
-                                                                                </div>
-                                                                                <span
-                                                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                                                                    style={{
-                                                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                                                                    }}
-                                                                                >
-                                                                                    {item.priority}
-                                                                                </span>
-                                                                                {group.showAddToNextWeek && (
-                                                                                    addedToNextWeekIds.has(item.id) ? (
+                                                                                }}
+                                                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                                                className="self-center rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                                                            />
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    if (item.type === "todo") {
+                                                                                        setSelectedTodo(item.originalData);
+                                                                                        setIsTodoDetailsModalOpen(true);
+                                                                                        return;
+                                                                                    }
+                                                                                    const detailsUrl =
+                                                                                        item.type === "task"
+                                                                                            ? `/vas/tasks/${item.originalData?.id}`
+                                                                                            : `/vas/issues/${item.originalData?.id}`;
+                                                                                    navigate(detailsUrl);
+                                                                                }}
+                                                                                className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                                                                title={`View ${item.type} details`}
+                                                                            >
+                                                                                <Eye size={14} className="text-[#DA7756]" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (item.type === "task") {
+                                                                                        setEditTaskData(item.originalData);
+                                                                                        setIsEditTaskModalOpen(true);
+                                                                                    } else if (item.type === "issue") {
+                                                                                        setEditIssueData(item.originalData);
+                                                                                        setIsEditIssueModalOpen(true);
+                                                                                    } else if (item.type === "todo") {
+                                                                                        setEditTodoData(item.originalData);
+                                                                                        setIsEditTodoModalOpen(true);
+                                                                                    }
+                                                                                }}
+                                                                                className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                                                                title={`Edit ${item.type}`}
+                                                                            >
+                                                                                <Pencil size={13} />
+                                                                            </button>
+                                                                            {item.type === "task" &&
+                                                                                item.status !== "completed" &&
+                                                                                item.status !== "closed" && (
+                                                                                    item.originalData?.is_started ? (
                                                                                         <button
-                                                                                            onClick={(e) => { e.stopPropagation(); removeItemFromNextWeek(item); }}
-                                                                                            className="shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                                                            title="Remove from next week plan"
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                setPauseTaskId(item.originalData.id);
+                                                                                                setIsPauseModalOpen(true);
+                                                                                            }}
+                                                                                            disabled={!!updatingPlayPauseIds[item.id]}
+                                                                                            className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
+                                                                                            title="Pause task"
                                                                                         >
-                                                                                            Added ✓
+                                                                                            {updatingPlayPauseIds[item.id] ? (
+                                                                                                <Loader2 size={14} className="text-red-500 animate-spin" />
+                                                                                            ) : (
+                                                                                                <Pause size={14} className="text-red-500" />
+                                                                                            )}
                                                                                         </button>
                                                                                     ) : (
                                                                                         <button
-                                                                                            onClick={(e) => { e.stopPropagation(); setPlanWeekOpenItemId(planWeekOpenItemId === item.id ? null : item.id); }}
-                                                                                            className={cn(
-                                                                                                "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                                                                                planWeekOpenItemId === item.id
-                                                                                                    ? "bg-[#DA7756] border-[#DA7756] text-white"
-                                                                                                    : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
-                                                                                            )}
-                                                                                            title="Add to next week plan"
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                handlePlayTask(item);
+                                                                                            }}
+                                                                                            disabled={!!updatingPlayPauseIds[item.id]}
+                                                                                            className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
+                                                                                            title="Start task"
                                                                                         >
-                                                                                            + Next Week
+                                                                                            {updatingPlayPauseIds[item.id] ? (
+                                                                                                <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                                                            ) : (
+                                                                                                <Play size={14} className="text-green-600" />
+                                                                                            )}
                                                                                         </button>
                                                                                     )
                                                                                 )}
+                                                                            <span className={cn(
+                                                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                            )}>
+                                                                                {item.type}
+                                                                            </span>
+                                                                            <div className="flex-1 min-w-[90px] basis-[120px]">
+                                                                                <p className={cn(
+                                                                                    "text-sm font-medium truncate",
+                                                                                    (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
+                                                                                )}>
+                                                                                    {item.title}
+                                                                                </p>
                                                                             </div>
-                                                                            {/* Info row */}
-                                                                            {hasInfo && (
-                                                                                <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
-                                                                                    {endDate && (
-                                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                            <Calendar size={9} className="shrink-0" />
-                                                                                            {endDate}
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {overdueLabel && (
-                                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                                                            <AlertCircle size={9} className="shrink-0" />
-                                                                                            {overdueLabel}
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {timeLeftLabel && (
-                                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                                                            <Clock size={9} className="shrink-0" />
-                                                                                            {timeLeftLabel}
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {effortEst && (
-                                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                            <Clock size={9} className="shrink-0" />
-                                                                                            Est: {effortEst}
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {issueEffort && (
-                                                                                        <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                                                            <Zap size={9} className="shrink-0" />
-                                                                                            Effort: {issueEffort}
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {item.type === "task" && d?.active_time_till_now && (
-                                                                                        <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                                                            <Zap size={9} className="shrink-0" />
-                                                                                            <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
-                                                                                        </span>
-                                                                                    )}
-                                                                                </div>
-                                                                            )}
-                                                                            {/* Inline day picker */}
-                                                                            {planWeekOpenItemId === item.id && (
-                                                                                <div className="px-3 pb-3 pt-2 flex items-center gap-1.5 flex-wrap border-t border-dashed border-gray-200">
-                                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">
-                                                                                        Pick day:
-                                                                                    </span>
-                                                                                    {upcomingDays.map((day) => (
-                                                                                        <button
-                                                                                            key={day.key}
-                                                                                            onClick={(e) => { e.stopPropagation(); addItemToNextWeek(item, day.key); }}
-                                                                                            className="text-[10px] font-semibold px-2 py-1 rounded-[6px] border border-[#DA7756]/30 bg-white text-[#DA7756] hover:bg-[#DA7756] hover:text-white hover:border-[#DA7756] transition-all whitespace-nowrap"
-                                                                                        >
-                                                                                            {day.short}
-                                                                                        </button>
-                                                                                    ))}
-                                                                                </div>
+                                                                            <span
+                                                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                                                style={{
+                                                                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                                }}
+                                                                            >
+                                                                                {item.priority}
+                                                                            </span>
+                                                                            {group.showAddToNextWeek && (
+                                                                                addedToNextWeekIds.has(item.id) ? (
+                                                                                    <button
+                                                                                        onClick={(e) => { e.stopPropagation(); removeItemFromNextWeek(item); }}
+                                                                                        className="shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                                                                        title="Remove from next week plan"
+                                                                                    >
+                                                                                        Added ✓
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <button
+                                                                                        onClick={(e) => { e.stopPropagation(); setPlanWeekOpenItemId(planWeekOpenItemId === item.id ? null : item.id); }}
+                                                                                        className={cn(
+                                                                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                                                                            planWeekOpenItemId === item.id
+                                                                                                ? "bg-[#DA7756] border-[#DA7756] text-white"
+                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                                                                        )}
+                                                                                        title="Add to next week plan"
+                                                                                    >
+                                                                                        + Next Week
+                                                                                    </button>
+                                                                                )
                                                                             )}
                                                                         </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                            {isLoadingMore && (
-                                                <div className="flex items-center justify-center py-4">
-                                                    <Loader2
-                                                        size={20}
-                                                        className="text-[#b91c1c]/50 animate-spin mr-2"
-                                                    />
-                                                    <p className="text-xs text-gray-500 font-medium">
-                                                        Loading more...
-                                                    </p>
+                                                                        {/* Info row */}
+                                                                        {hasInfo && (
+                                                                            <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                                                                {endDate && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                        <Calendar size={9} className="shrink-0" />
+                                                                                        {endDate}
+                                                                                    </span>
+                                                                                )}
+                                                                                {overdueLabel && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                                        <AlertCircle size={9} className="shrink-0" />
+                                                                                        {overdueLabel}
+                                                                                    </span>
+                                                                                )}
+                                                                                {timeLeftLabel && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                                        <Clock size={9} className="shrink-0" />
+                                                                                        {timeLeftLabel}
+                                                                                    </span>
+                                                                                )}
+                                                                                {effortEst && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                        <Clock size={9} className="shrink-0" />
+                                                                                        Est: {effortEst}
+                                                                                    </span>
+                                                                                )}
+                                                                                {issueEffort && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                                                        <Zap size={9} className="shrink-0" />
+                                                                                        Effort: {issueEffort}
+                                                                                    </span>
+                                                                                )}
+                                                                                {item.type === "task" && d?.active_time_till_now && (
+                                                                                    <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                                                        <Zap size={9} className="shrink-0" />
+                                                                                        <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                        {/* Inline day picker */}
+                                                                        {planWeekOpenItemId === item.id && (
+                                                                            <div className="px-3 pb-3 pt-2 flex items-center gap-1.5 flex-wrap border-t border-dashed border-gray-200">
+                                                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">
+                                                                                    Pick day:
+                                                                                </span>
+                                                                                {upcomingDays.map((day) => (
+                                                                                    <button
+                                                                                        key={day.key}
+                                                                                        onClick={(e) => { e.stopPropagation(); addItemToNextWeek(item, day.key); }}
+                                                                                        className="text-[10px] font-semibold px-2 py-1 rounded-[6px] border border-[#DA7756]/30 bg-white text-[#DA7756] hover:bg-[#DA7756] hover:text-white hover:border-[#DA7756] transition-all whitespace-nowrap"
+                                                                                    >
+                                                                                        {day.short}
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                            );
+                                        })}
+                                        {isLoadingMore && (
+                                            <div className="flex items-center justify-center py-4">
+                                                <Loader2
+                                                    size={20}
+                                                    className="text-[#b91c1c]/50 animate-spin mr-2"
+                                                />
+                                                <p className="text-xs text-gray-500 font-medium">
+                                                    Loading more...
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                         </div>
 
                         {/* Plan for coming week */}
@@ -5473,24 +5533,24 @@ const WeeklyReports = () => {
             </div>
 
             {openTaskModal && (
-                <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
-                    <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
-                        <div className="sticky top-0 bg-white z-10">
-                            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
-                            <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
-                            <hr className="border border-[#E95420] mt-4" />
-                        </div>
-                        <div className="flex-1 overflow-y-auto">
-                            <ProjectTaskCreateModal
-                                isEdit={false}
-                                onCloseModal={() => setOpenTaskModal(false)}
-                                prefillData={{
-                                    start_date: planPreFillDate ?? currentDateValue,
-                                }}
-                            />
-                        </div>
-                    </MuiDialogContent>
-                </MuiDialog>
+            <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
+                <MuiDialogContent className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
+                    <div className="sticky top-0 bg-white z-10">
+                        <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+                        <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
+                        <hr className="border border-[#E95420] mt-4" />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <ProjectTaskCreateModal
+                            isEdit={false}
+                            onCloseModal={() => setOpenTaskModal(false)}
+                            prefillData={{
+                                start_date: planPreFillDate ?? currentDateValue,
+                            }}
+                        />
+                    </div>
+                </MuiDialogContent>
+            </MuiDialog>
             )}
 
             {openIssueModal && (
@@ -5532,43 +5592,43 @@ const WeeklyReports = () => {
             )}
 
             {isEditTaskModalOpen && (
-                <MuiDialog
-                    open={isEditTaskModalOpen}
-                    onClose={() => {
-                        setIsEditTaskModalOpen(false);
-                        setEditTaskData(null);
-                    }}
-                    TransitionComponent={Transition}
-                    maxWidth={false}
+            <MuiDialog
+                open={isEditTaskModalOpen}
+                onClose={() => {
+                    setIsEditTaskModalOpen(false);
+                    setEditTaskData(null);
+                }}
+                TransitionComponent={Transition}
+                maxWidth={false}
+            >
+                <MuiDialogContent
+                    className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                    sx={{ padding: "0 !important" }}
                 >
-                    <MuiDialogContent
-                        className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-                        style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
-                        sx={{ padding: "0 !important" }}
-                    >
-                        <div className="sticky top-0 bg-white z-10">
-                            <h3 className="text-[14px] font-medium text-center mt-8">Edit Task</h3>
-                            <X
-                                className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
-                                onClick={() => {
-                                    setIsEditTaskModalOpen(false);
-                                    setEditTaskData(null);
-                                }}
-                            />
-                            <hr className="border border-[#E95420] mt-4" />
-                        </div>
-                        <div className="flex-1 overflow-y-auto">
-                            <ProjectTaskEditModal
-                                taskId={editTaskData?.id}
-                                onCloseModal={() => {
-                                    setIsEditTaskModalOpen(false);
-                                    setEditTaskData(null);
-                                    setTasksIssuesRefreshKey((key) => key + 1);
-                                }}
-                            />
-                        </div>
-                    </MuiDialogContent>
-                </MuiDialog>
+                    <div className="sticky top-0 bg-white z-10">
+                        <h3 className="text-[14px] font-medium text-center mt-8">Edit Task</h3>
+                        <X
+                            className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+                            onClick={() => {
+                                setIsEditTaskModalOpen(false);
+                                setEditTaskData(null);
+                            }}
+                        />
+                        <hr className="border border-[#E95420] mt-4" />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <ProjectTaskEditModal
+                            taskId={editTaskData?.id}
+                            onCloseModal={() => {
+                                setIsEditTaskModalOpen(false);
+                                setEditTaskData(null);
+                                setTasksIssuesRefreshKey((key) => key + 1);
+                            }}
+                        />
+                    </div>
+                </MuiDialogContent>
+            </MuiDialog>
             )}
 
             {isEditIssueModalOpen && (
@@ -5627,44 +5687,44 @@ const WeeklyReports = () => {
             )}
 
             {selectedSop && (
-                <Dialog
-                    open={Boolean(selectedSop)}
-                    onOpenChange={(open) => {
-                        if (!open) setSelectedSopId(null);
-                    }}
-                >
-                    <DialogContent className="max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
-                        {selectedSop && (
-                            <div className="flex max-h-[88vh] flex-col">
-                                <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
-                                    <DialogClose className="absolute right-5 top-5 rounded-full p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700">
-                                        <X className="h-4 w-4" />
-                                        <span className="sr-only">Close</span>
-                                    </DialogClose>
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                        <div className="flex min-w-0 gap-3">
-                                            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fef6f4] text-[#DA7756]">
-                                                <FileText className="h-5 w-5" />
-                                            </div>
-                                            <div className="min-w-0 space-y-1">
-                                                <DialogTitle className="truncate text-xl font-bold text-neutral-900">
-                                                    {selectedSop.system_name || "Untitled SOP"}
-                                                </DialogTitle>
-                                                <DialogDescription className="text-sm text-neutral-500">
-                                                    {selectedSop.department_name || "No department"}
-                                                </DialogDescription>
-                                            </div>
+            <Dialog
+                open={Boolean(selectedSop)}
+                onOpenChange={(open) => {
+                    if (!open) setSelectedSopId(null);
+                }}
+            >
+                <DialogContent className="max-h-[88vh] w-[95vw] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
+                    {selectedSop && (
+                        <div className="flex max-h-[88vh] flex-col">
+                            <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
+                                <DialogClose className="absolute right-5 top-5 rounded-full p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700">
+                                    <X className="h-4 w-4" />
+                                    <span className="sr-only">Close</span>
+                                </DialogClose>
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="flex min-w-0 gap-3">
+                                        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fef6f4] text-[#DA7756]">
+                                            <FileText className="h-5 w-5" />
                                         </div>
-                                        <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                            <Badge className="rounded-full border-0 bg-[#fef6f4] px-3 py-1 text-[#DA7756] hover:bg-[#fef6f4]">
-                                                {getSopStatusValue(selectedSop.status)}
-                                            </Badge>
-                                            <Badge className="rounded-full border-0 bg-neutral-100 px-3 py-1 capitalize text-neutral-700 hover:bg-neutral-100">
-                                                {formatSopValue(selectedSop.priority)} priority
-                                            </Badge>
+                                        <div className="min-w-0 space-y-1">
+                                            <DialogTitle className="truncate text-xl font-bold text-neutral-900">
+                                                {selectedSop.system_name || "Untitled SOP"}
+                                            </DialogTitle>
+                                            <DialogDescription className="text-sm text-neutral-500">
+                                                {selectedSop.department_name || "No department"}
+                                            </DialogDescription>
                                         </div>
                                     </div>
-                                </DialogHeader>
+                                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                        <Badge className="rounded-full border-0 bg-[#fef6f4] px-3 py-1 text-[#DA7756] hover:bg-[#fef6f4]">
+                                            {getSopStatusValue(selectedSop.status)}
+                                        </Badge>
+                                        <Badge className="rounded-full border-0 bg-neutral-100 px-3 py-1 capitalize text-neutral-700 hover:bg-neutral-100">
+                                            {formatSopValue(selectedSop.priority)} priority
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </DialogHeader>
 
                                 <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
                                     <div className="grid gap-3 sm:grid-cols-3">
@@ -6097,167 +6157,174 @@ const WeeklyReports = () => {
             )}
 
             {showClosureModal && (
-                <MuiDialog
-                    open={showClosureModal}
-                    onClose={() => {
-                        setShowClosureModal(false);
-                        setClosureRemarks("");
-                        setClosureAttachments([]);
-                        setClosureItem(null);
-                    }}
-                    maxWidth="sm"
-                    fullWidth
-                    PaperProps={{
-                        className: "rounded-[16px]",
-                        sx: {
-                            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
-                            maxHeight: "90vh",
-                        },
-                    }}
-                >
-                    <div className="p-6 space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-[#1a1a1a]">
-                                Add Closure Remarks
-                            </h2>
-                            <button
-                                onClick={() => {
-                                    setShowClosureModal(false);
-                                    setClosureRemarks("");
-                                    setClosureAttachments([]);
-                                    setClosureItem(null);
-                                }}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
+            <MuiDialog
+                open={showClosureModal}
+                onClose={() => {
+                    setShowClosureModal(false);
+                    setClosureRemarks("");
+                    setClosureAttachments([]);
+                    setClosureItem(null);
+                }}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    className: "rounded-[16px]",
+                    sx: {
+                        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+                        maxHeight: "90vh",
+                    },
+                }}
+            >
+                <div className="p-6 space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-lg font-bold text-[#1a1a1a]">
+                            Add Closure Remarks
+                        </h2>
+                        <button
+                            onClick={() => {
+                                setShowClosureModal(false);
+                                setClosureRemarks("");
+                                setClosureAttachments([]);
+                                setClosureItem(null);
+                            }}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                    {closureItem && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-3">
+                            <p className="text-xs text-gray-600 font-medium mb-1">Closing:</p>
+                            <p className="text-sm font-bold text-[#1a1a1a]">
+                                {closureItem.title}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1 capitalize">
+                                {closureItem.type} • {closureItem.status.replace(/_/g, " ")}
+                            </p>
                         </div>
-                        {closureItem && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-3">
-                                <p className="text-xs text-gray-600 font-medium mb-1">Closing:</p>
-                                <p className="text-sm font-bold text-[#1a1a1a]">
-                                    {closureItem.title}
+                    )}
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1a1a1a]">
+                            Closure Remarks (Optional)
+                        </label>
+                        <textarea
+                            value={closureRemarks}
+                            onChange={(e) => setClosureRemarks(e.target.value)}
+                            placeholder="How was this resolved? What was done to close it?"
+                            className="w-full h-[120px] p-3 border border-[#e5e7eb] rounded-[10px] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1a1a1a]">
+                            Attach Files (Optional)
+                        </label>
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
+                            <div className="space-y-0.5">
+                                <p className="text-xs font-bold text-green-600">
+                                    {closureAttachments.length}/5
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1 capitalize">
-                                    {closureItem.type} • {closureItem.status.replace(/_/g, " ")}
+                                <p className="text-xs text-gray-600 font-medium">
+                                    Limits: Images 2MB, Others 5MB
                                 </p>
+                            </div>
+                            <input
+                                type="file"
+                                ref={closureFileInputRef}
+                                onChange={handleClosureFileChange}
+                                multiple
+                                className="hidden"
+                            />
+                            <Button
+                                disabled={closureAttachments.length >= 5}
+                                onClick={triggerClosureFileUpload}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 h-9 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none disabled:opacity-50"
+                            >
+                                <Upload size={14} />
+                                File Upload
+                            </Button>
+                        </div>
+                        {closureAttachments.length > 0 && (
+                            <div className="space-y-2 mt-3">
+                                {closureAttachments.map((file) => (
+                                    <div
+                                        key={file.id}
+                                        className="flex items-center justify-between bg-blue-50/80 p-3 rounded-[10px] border border-blue-100 animate-in fade-in duration-300"
+                                    >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <FileText size={16} className="text-blue-500 shrink-0" />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-blue-600 truncate">
+                                                    {file.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">{file.size}</p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none shrink-0"
+                                            onClick={() =>
+                                                setClosureAttachments(
+                                                    closureAttachments.filter((f) => f.id !== file.id)
+                                                )
+                                            }
+                                        >
+                                            <X size={14} className="text-red-500" />
+                                        </Button>
+                                    </div>
+                                ))}
                             </div>
                         )}
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-[#1a1a1a]">
-                                Closure Remarks (Optional)
-                            </label>
-                            <textarea
-                                value={closureRemarks}
-                                onChange={(e) => setClosureRemarks(e.target.value)}
-                                placeholder="How was this resolved? What was done to close it?"
-                                className="w-full h-[120px] p-3 border border-[#e5e7eb] rounded-[10px] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-[#1a1a1a]">
-                                Attach Files (Optional)
-                            </label>
-                            <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
-                                <div className="space-y-0.5">
-                                    <p className="text-xs font-bold text-green-600">
-                                        {closureAttachments.length}/5
-                                    </p>
-                                    <p className="text-xs text-gray-600 font-medium">
-                                        Limits: Images 2MB, Others 5MB
-                                    </p>
-                                </div>
-                                <input
-                                    type="file"
-                                    ref={closureFileInputRef}
-                                    onChange={handleClosureFileChange}
-                                    multiple
-                                    className="hidden"
-                                />
-                                <Button
-                                    disabled={closureAttachments.length >= 5}
-                                    onClick={triggerClosureFileUpload}
-                                    className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 h-9 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none disabled:opacity-50"
-                                >
-                                    <Upload size={14} />
-                                    File Upload
-                                </Button>
-                            </div>
-                            {closureAttachments.length > 0 && (
-                                <div className="space-y-2 mt-3">
-                                    {closureAttachments.map((file) => (
-                                        <div
-                                            key={file.id}
-                                            className="flex items-center justify-between bg-blue-50/80 p-3 rounded-[10px] border border-blue-100 animate-in fade-in duration-300"
-                                        >
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <FileText size={16} className="text-blue-500 shrink-0" />
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-medium text-blue-600 truncate">
-                                                        {file.name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">{file.size}</p>
-                                                </div>
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none shrink-0"
-                                                onClick={() =>
-                                                    setClosureAttachments(
-                                                        closureAttachments.filter((f) => f.id !== file.id)
-                                                    )
-                                                }
-                                            >
-                                                <X size={14} className="text-red-500" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 pt-4 border-t border-gray-100">
-                            <Button
-                                variant="outline"
-                                className="flex-1 h-11 border-gray-300 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50 rounded-[8px]"
-                                onClick={() => {
-                                    setShowClosureModal(false);
-                                    setClosureRemarks("");
-                                    setClosureAttachments([]);
-                                    setClosureItem(null);
-                                }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-[8px] flex items-center justify-center gap-2 shadow-md border-none disabled:opacity-50"
-                                onClick={handleMarkItemClosed}
-                                disabled={isClosureSubmitting}
-                            >
-                                {isClosureSubmitting ? (
-                                    <>
-                                        <Loader2 size={16} className="animate-spin" />
-                                        Closing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle2 size={16} />
-                                        Mark Closed
-                                    </>
-                                )}
-                            </Button>
-                        </div>
                     </div>
-                </MuiDialog>
+                    <div className="flex gap-3 pt-4 border-t border-gray-100">
+                        <Button
+                            variant="outline"
+                            className="flex-1 h-11 border-gray-300 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50 rounded-[8px]"
+                            onClick={() => {
+                                setShowClosureModal(false);
+                                setClosureRemarks("");
+                                setClosureAttachments([]);
+                                setClosureItem(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-[8px] flex items-center justify-center gap-2 shadow-md border-none disabled:opacity-50"
+                            onClick={handleMarkItemClosed}
+                            disabled={isClosureSubmitting}
+                        >
+                            {isClosureSubmitting ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Closing...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 size={16} />
+                                    Mark Closed
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            </MuiDialog>
             )}
 
             {/* Task completion confirmation modal */}
-            {pendingConfirmAction && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                                <AlertCircle size={20} className="text-amber-600" />
+            {pendingConfirmAction && createPortal(
+                <>
+                    <div
+                        onClick={() => setPendingConfirmAction(null)}
+                        style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 9998 }}
+                    />
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6"
+                        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, width: "min(280px, calc(100vw - 32px))", maxHeight: "calc(100vh - 32px)", overflowY: "auto" }}
+                    >
+                        <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                <AlertCircle size={18} className="text-amber-600" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
@@ -6284,7 +6351,8 @@ const WeeklyReports = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </>,
+                document.body
             )}
         </div>
     );

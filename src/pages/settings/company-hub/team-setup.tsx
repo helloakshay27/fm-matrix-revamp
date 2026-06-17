@@ -92,7 +92,7 @@ interface UserStats {
   active: number;
   inactive: number;
   pending: number;
-}
+} 
 
 const TeamSetup: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"active" | "inactive" | "invitations" | "invitation-history" | "email-logs">("active");

@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FBAnalyticsComponents } from '@/components/FBAnalyticsComponents';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface RestaurantOrder {
   id: number;
@@ -117,6 +118,8 @@ const columns: ColumnConfig[] = [
 export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }) => {
   const { id } = useParams()
   const navigate = useNavigate();
+      const { shouldShow } = useDynamicPermissions();
+
   const location = useLocation();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
@@ -560,6 +563,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
   const renderActions = (order: RestaurantOrder) => (
     <div className="flex items-center gap-2">
+      {shouldShow("F&B","show")&&(
       <Button
         variant="ghost"
         size="sm"
@@ -567,7 +571,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         className="p-1 h-8 w-8"
       >
         <Eye className="w-4 h-4" />
-      </Button>
+      </Button>)}
     </div>
   );
 

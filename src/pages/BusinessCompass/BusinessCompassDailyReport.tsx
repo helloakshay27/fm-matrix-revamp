@@ -1011,8 +1011,14 @@ const BusinessCompassDailyReport: React.FC = () => {
     const completed = mergedTasksIssues.filter(
       (item) => item.status === "completed" || item.status === "closed"
     ).length;
+    const isPlayedOrStarted = (item: any) =>
+      item.originalData?.is_started ||
+      item.is_started ||
+      playingTaskIds.has(item.originalData?.id);
     const open = mergedTasksIssues.filter(
-      (item) => item.status === "open" || item.status === "reopen"
+      (item) =>
+        (item.status === "open" || item.status === "reopen") &&
+        !isPlayedOrStarted(item)
     ).length;
     const overdue = mergedTasksIssues.filter(
       (item) => item.status === "overdue" || item.status === "overdued"
@@ -1021,7 +1027,10 @@ const BusinessCompassDailyReport: React.FC = () => {
       (item) => item.status === "on_hold"
     ).length;
     const inProgress = mergedTasksIssues.filter(
-      (item) => item.status === "in_progress"
+      (item) =>
+        item.status === "in_progress" ||
+        (isPlayedOrStarted(item) &&
+          ["open", "pending"].includes(item.status))
     ).length;
     const tasks = mergedTasksIssues.filter(
       (item) => item.type === "task"
@@ -3095,7 +3104,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   }, [startDate, selectedDate, selectedMonth]);
 
   return (
-    <div className="bc-daily-page space-y-6">
+    <div className="bc-daily-page space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Interactive Info Banner Card */}
       {/* {isBannerVisible && (
         <Card
@@ -3364,7 +3373,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <ChevronLeft size={13} />
                       </button>
                       <div
-                        className="flex-1 flex gap-2 sm:gap-3"
+                        className="flex-1 flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar"
                         style={{
                           cursor: isDragging ? "grabbing" : "grab",
                           userSelect: "none",
@@ -3415,7 +3424,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 item.type !== "holiday" &&
                                 handleSelectDate(item)
                               }
-                              className="flex-1 flex flex-col items-center justify-center cursor-pointer rounded-[12px] relative"
+                              className="shrink-0 w-[46px] sm:w-auto sm:flex-1 flex flex-col items-center justify-center cursor-pointer rounded-[12px] relative"
                               style={{
                                 background: cardBg,
                                 border: isSelected
@@ -3649,13 +3658,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                       ref={accomplishmentsSectionRef}
                     >
                       <div className="bc-daily-card-header">
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
                           <CheckCircle2 className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                          <h3 className="text-sm font-bold text-[#1a1a1a]">
+                          <h3 className="min-w-0 text-sm font-bold text-[#1a1a1a]">
                             Today&apos;s Accomplishments
                           </h3>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
                           <Badge variant="outline" className={badgePoints}>
                             {dailyScore.accomplishmentsScore}/20 Pts
                           </Badge>
@@ -3808,7 +3817,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 className="relative animate-in fade-in duration-300"
                               >
                                 <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
-                                  <div className="flex items-center gap-4">
+                                  <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                                     <div
                                       className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
                                       onClick={() => {
@@ -3850,7 +3859,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     >
                                       {item.type}
                                     </span>
-                                    <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
+                                    <span className="flex-1 min-w-[90px] basis-[120px] text-sm font-medium text-gray-400 line-through truncate select-none">
                                       {item.title}
                                     </span>
                                     {item.priority && (
@@ -4011,12 +4020,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                           })}
                         </div>
 
-                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                            <Info size={14} className="text-gray-400" />
+                        <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 items-start gap-2 text-[11px] leading-snug text-gray-500 sm:items-center">
+                            <Info size={14} className="mt-0.5 shrink-0 text-gray-400 sm:mt-0" />
                             <span>Limits: Images 2MB, Others 5 MB</span>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex w-full items-center gap-3 sm:w-auto">
                             <input
                               type="file"
                               ref={fileInputRef}
@@ -4032,7 +4041,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 5
                               }
                               onClick={triggerFileUpload}
-                              className="bc-add-outline-btn disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="bc-add-outline-btn w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                             >
                               <Upload size={14} />
                               Upload File
@@ -4156,13 +4165,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                     {/* Plan Card */}
                     <div className="bc-daily-card" ref={planningSectionRef}>
                       <div className="bc-daily-card-header">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-5 w-5 text-[#DA7756]" />
-                          <h3 className="text-sm font-bold text-[#1a1a1a]">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Calendar className="h-5 w-5 shrink-0 text-[#DA7756]" />
+                          <h3 className="min-w-0 text-sm font-bold text-[#1a1a1a]">
                             Plan for {nextDayLabel || "Tomorrow"}
                           </h3>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
                           <Badge variant="outline" className={badgePoints}>
                             {dailyScore.planningScore}/20 Pts
                           </Badge>
@@ -4816,14 +4825,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                   className="bc-daily-card bc-tasks-card-wrap flex flex-1 flex-col"
                   ref={tasksSectionRef}
                 >
-                  <div className="bc-daily-card-header flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <CheckSquare className="h-5 w-5 text-[#DA7756]" />
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">
+                  <div className="bc-daily-card-header">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <CheckSquare className="h-5 w-5 shrink-0 text-[#DA7756]" />
+                      <h3 className="min-w-0 text-sm font-bold text-[#1a1a1a]">
                         Tasks, Issues & To Do's
                       </h3>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
                       <Badge variant="outline" className={badgePoints}>
                         {dailyScore.tasksIssuesScore}/20 Pts
                       </Badge>
@@ -4944,7 +4953,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {yesterdaySourceIds.size > 0 &&
                           (() => {
                             const yItems = mergedTasksIssues.filter(
-                              (item: any) => yesterdaySourceIds.has(item.id)
+                              (item: any) =>
+                                yesterdaySourceIds.has(item.id) &&
+                                !(
+                                  item.originalData?.is_started ||
+                                  item.is_started ||
+                                  playingTaskIds.has(item.originalData?.id)
+                                )
                             );
                             if (yItems.length === 0) return null;
                             const isCollapsed =
@@ -4989,7 +5004,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         className="flex flex-col rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200"
                                       >
                                         {/* Controls row */}
-                                        <div className="flex items-center gap-2 p-2.5">
+                                        <div className="flex flex-wrap items-center gap-2 p-2.5">
                                           <Checkbox
                                             checked={
                                               selectedTasksIssues[item.id] ||
@@ -5192,7 +5207,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           >
                                             {item.type}
                                           </span>
-                                          <div className="flex-1 min-w-0">
+                                          <div className="flex-1 min-w-[90px] basis-[120px]">
                                             <p
                                               className={cn(
                                                 "text-sm font-medium truncate",
@@ -5234,7 +5249,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                               addedToTomorrowIds.has(item.id)
                                                 ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                             )}
                                             title={
                                               addedToTomorrowIds.has(item.id)
@@ -5464,10 +5479,22 @@ const BusinessCompassDailyReport: React.FC = () => {
                           ] as const
                         ).map((group) => {
                           const items = mergedTasksIssues.filter(
-                            (item: any) =>
-                              (group.statuses as readonly string[]).includes(
-                                item.status
-                              ) && !yesterdaySourceIds.has(item.id)
+                            (item: any) => {
+                              const isPlayedOrStarted =
+                                item.originalData?.is_started ||
+                                item.is_started ||
+                                playingTaskIds.has(item.originalData?.id);
+                              const effectiveStatus =
+                                isPlayedOrStarted &&
+                                !["completed", "closed", "done"].includes(item.status)
+                                  ? "in_progress"
+                                  : item.status;
+                              return (
+                                (group.statuses as readonly string[]).includes(
+                                  effectiveStatus
+                                ) && !(yesterdaySourceIds.has(item.id) && !isPlayedOrStarted)
+                              );
+                            }
                           );
                           if (items.length === 0) return null;
                           const isCollapsed = collapsedGroups.has(group.key);
@@ -5532,7 +5559,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         group.bgItem
                                       )}
                                     >
-                                      <div className="flex items-center gap-2 p-2.5">
+                                      <div className="flex flex-wrap items-center gap-2 p-2.5">
                                         <Checkbox
                                           checked={
                                             selectedTasksIssues[item.id] ||
@@ -5742,7 +5769,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         </span>
 
                                         {/* Title + status */}
-                                        <div className="flex-1 min-w-0">
+                                        <div className="flex-1 min-w-[90px] basis-[120px]">
                                           <p
                                             className={cn(
                                               "text-sm font-medium truncate",
@@ -5788,7 +5815,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                               addedToTomorrowIds.has(item.id)
                                                 ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                             )}
                                             title={
                                               addedToTomorrowIds.has(item.id)
@@ -6030,8 +6057,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </p>
                       </div>
                     ) : (
-                      <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
-                        <table className="bc-tasks-table">
+                      <div className="flex-1 overflow-y-auto overflow-x-auto" ref={scrollContainerRef}>
+                        <table className="bc-tasks-table min-w-[480px]">
                           <thead>
                             <tr>
                               <th>
@@ -6643,7 +6670,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             {isScoreInfoExpanded && (
               <div className="mt-4">
                 <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden shadow-sm">
-                  <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <div className="p-4 sm:p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="grid grid-cols-1 gap-6">
                       {[
                         {
@@ -7740,9 +7767,22 @@ const BusinessCompassDailyReport: React.FC = () => {
         onClose={() => setOpenTaskModal(false)}
         TransitionComponent={Transition}
         maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: { xs: "100vw", md: "50vw" },
+            maxWidth: "none",
+            height: "100vh",
+            maxHeight: "100vh",
+            margin: 0,
+            borderRadius: 0,
+            position: "fixed",
+            right: 0,
+            top: 0,
+          },
+        }}
       >
         <DialogContent
-          className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+          className="fixed right-0 top-0 w-full rounded-none bg-[#fff] text-sm overflow-y-auto"
           style={{
             margin: 0,
             maxHeight: "100vh",
@@ -8322,7 +8362,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         maxWidth={false}
       >
         <DialogContent
-          className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+          className="w-full sm:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
           style={{
             margin: 0,
             maxHeight: "100vh",

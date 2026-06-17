@@ -295,7 +295,7 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[900] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
+        <div className="fixed inset-0 z-[900] grid place-items-center overflow-hidden bg-black/40 px-3 py-4 sm:px-4 sm:py-8">
             <div
                 className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
                 style={{ maxHeight: '88vh' }}
@@ -310,7 +310,7 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
                     </button>
                 </div>
 
-                <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
+                <div className="min-h-0 flex-1 overflow-y-auto p-3 space-y-4 sm:p-5">
                     {loading ? (
                         <div className="py-12 text-center text-sm text-gray-500">
                             <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin text-[#DA7756]" />
@@ -639,7 +639,7 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
                     <div className="flex items-center gap-1">
                         <Button
                             variant="outline"
@@ -656,7 +656,7 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
                                 if (!event.target.value) return;
                                 setCurrentWeek(new Date(`${event.target.value}T00:00:00`));
                             }}
-                            className="h-9 rounded-[8px] border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm outline-none focus:border-[#DA7756]/60 focus:ring-2 focus:ring-[#DA7756]/15"
+                            className="h-9 min-w-0 flex-1 rounded-[8px] border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm outline-none focus:border-[#DA7756]/60 focus:ring-2 focus:ring-[#DA7756]/15 sm:flex-none"
                         />
                         <Button
                             variant="outline"
@@ -672,7 +672,7 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
                         variant="outline"
                         onClick={fetchHistory}
                         disabled={loading}
-                        className="h-9 px-4 !bg-white !border-gray-200 rounded-[8px] !text-gray-700 gap-2 font-bold shadow-sm"
+                        className="h-9 flex-1 px-4 !bg-white !border-gray-200 rounded-[8px] !text-gray-700 gap-2 font-bold shadow-sm sm:flex-none"
                     >
                         <RefreshCw className={`w-4 h-4 !text-gray-700 ${loading ? 'animate-spin' : ''}`} />
                         Refresh

@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectStatuses, createProjectStatus, updateProjectStatus, deleteProjectStatus } from "@/store/slices/projectStatusSlice";
 import { toast } from "sonner";
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 const columns: ColumnConfig[] = [
     {
         key: 'statusName',
@@ -43,7 +43,7 @@ const ProjectStatus = () => {
     const dispatch = useDispatch<AppDispatch>();
     // @ts-ignore - store typing might lag slightly in IDE but slice is updated
     const { projectStatuses, loading } = useSelector((state: RootState) => state.projectStatus);
-
+    const { shouldShow } = useDynamicPermissions();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [statusName, setStatusName] = useState('');
@@ -143,6 +143,7 @@ const ProjectStatus = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
+                {shouldShow("Project Status","update")&&(
                 <Button
                     size="sm"
                     variant="ghost"
@@ -150,7 +151,7 @@ const ProjectStatus = () => {
                     onClick={() => openEditDialog(item)}
                 >
                     <Edit className="w-4 h-4" />
-                </Button>
+                </Button>)}
                 {/* <Button
                     size="sm"
                     variant="ghost"
@@ -200,13 +201,14 @@ const ProjectStatus = () => {
 
     const leftActions = (
         <>
+        {shouldShow("Project Status","create")&&(
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
-            </Button>
+            </Button>)}
         </>
     )
 

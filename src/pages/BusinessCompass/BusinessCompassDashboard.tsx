@@ -1057,15 +1057,15 @@ const BusinessCompassDashboard: React.FC = () => {
                   }}
                 >
                   <div
+                    className="flex-col sm:flex-row sm:items-center sm:justify-between"
                     style={{
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
                       gap: "12px",
                       padding: "12px 16px",
                     }}
                   >
                     <div
+                      className="min-w-0"
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -1086,6 +1086,7 @@ const BusinessCompassDashboard: React.FC = () => {
                     <button
                       onClick={handleGenerateAiSummary}
                       disabled={aiSuggestionsLoading}
+                      className="w-full sm:w-auto"
                       style={{
                         backgroundColor: "#DA7756",
                         color: "#fff",
@@ -1153,7 +1154,7 @@ const BusinessCompassDashboard: React.FC = () => {
                       </div>
 
                       {/* 2×2 cards */}
-                      <div className="grid grid-cols-2 gap-2 px-3 pb-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-3 pb-2">
                         {!aiSuggestionsLoading && aiSuggestions.length > 0 ? (
                           aiSuggestions.map((suggestion) => {
                             const config = getAiSuggestionCategoryStyle(
@@ -1216,15 +1217,15 @@ const BusinessCompassDashboard: React.FC = () => {
                             );
                           })
                         ) : aiSuggestionsLoading ? (
-                          <div className="col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                          <div className="col-span-1 sm:col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
                             Generating suggestions...
                           </div>
                         ) : aiSuggestionsError ? (
-                          <div className="col-span-2 rounded-xl border border-red-100 bg-red-50 px-3 py-4 text-center text-[12px] font-semibold text-red-600">
+                          <div className="col-span-1 sm:col-span-2 rounded-xl border border-red-100 bg-red-50 px-3 py-4 text-center text-[12px] font-semibold text-red-600">
                             {aiSuggestionsError}
                           </div>
                         ) : (
-                          <div className="col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                          <div className="col-span-1 sm:col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
                             No suggestions available
                           </div>
                         )}

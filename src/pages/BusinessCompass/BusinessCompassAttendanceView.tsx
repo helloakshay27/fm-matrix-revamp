@@ -212,10 +212,10 @@ const BusinessCompassAttendanceView = () => {
         {summaryCards.map((card) => (
           <div
             key={card.label}
-            className={`${card.bg} flex min-h-[92px] flex-col items-center justify-center rounded-xl px-5 py-4 text-center`}
+            className={`${card.bg} flex min-h-[92px] flex-col items-center justify-center rounded-xl px-4 py-4 text-center sm:px-5`}
           >
             <p className="text-sm font-medium text-[#444]">{card.label}</p>
-            <p className="mt-1 text-3xl font-semibold leading-none text-black">
+            <p className="mt-1 text-2xl font-semibold leading-none text-black sm:text-3xl">
               {loading ? "..." : card.value}
             </p>
           </div>
@@ -223,7 +223,7 @@ const BusinessCompassAttendanceView = () => {
       </div>
 
       <div>
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:flex-wrap">
           <div>
             <h3 className="text-base font-bold text-[#1a1a1a]">Calendar View</h3>
             <p className="mt-1 text-xs text-gray-500">{monthLabel}</p>
@@ -247,7 +247,8 @@ const BusinessCompassAttendanceView = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-3">
+        <div className="overflow-x-auto">
+        <div className="grid min-w-[420px] grid-cols-7 gap-2 sm:min-w-0 sm:gap-3">
           {WEEKDAYS.map((day) => (
             <div
               key={day}
@@ -275,6 +276,7 @@ const BusinessCompassAttendanceView = () => {
               </div>
             );
           })}
+        </div>
         </div>
       </div>
 

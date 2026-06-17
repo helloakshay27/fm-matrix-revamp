@@ -16,10 +16,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { buildingSchema, type BuildingFormData } from '@/schemas/buildingSchema';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export function BuildingPage() {
   const dispatch = useAppDispatch();
   const { sites, buildings } = useAppSelector((state) => state.location);
+  const { shouldShow } = useDynamicPermissions();
 
   const [search, setSearch] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -376,12 +378,14 @@ export function BuildingPage() {
               </Dialog>
 
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                {shouldShow("Building", "create") && (
                 <DialogTrigger asChild>
                   <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Building
                   </Button>
                 </DialogTrigger>
+                )}
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create New Building</DialogTitle>
@@ -591,9 +595,11 @@ export function BuildingPage() {
                   currentBuildings.map((building, index) => (
                     <TableRow key={building.id}>
                       <TableCell>
+                        {shouldShow("Building", "update") && (
                         <Button variant="ghost" size="sm" onClick={() => openEditDialog(building)}>
                           <Edit className="w-4 h-4 text-[#C72030]" />
                         </Button>
+                        )}
                       </TableCell>
                       <TableCell>{getSiteName(building.site_id)}</TableCell>
                       <TableCell>{building.name}</TableCell>

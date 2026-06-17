@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectRoles, createProjectRole, updateProjectRole, deleteProjectRole } from "@/store/slices/projectRoleSlice";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     {
@@ -35,6 +36,7 @@ const columns: ColumnConfig[] = [
 
 const ProjectRoles = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const { shouldShow } = useDynamicPermissions();
     const { roles, loading } = useSelector((state: RootState) => state.projectRole);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -125,6 +127,7 @@ const ProjectRoles = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
+                {shouldShow("Project Roles","update")&&(
                 <Button
                     size="sm"
                     variant="ghost"
@@ -132,7 +135,7 @@ const ProjectRoles = () => {
                     onClick={() => openEditDialog(item)}
                 >
                     <Edit className="w-4 h-4" />
-                </Button>
+                </Button>)}
                 {/* <Button
                     size="sm"
                     variant="ghost"
@@ -165,13 +168,14 @@ const ProjectRoles = () => {
 
     const leftActions = (
         <>
+        {shouldShow("Project Roles","create")&&(
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
-            </Button>
+            </Button>)}
         </>
     )
 

@@ -22,6 +22,8 @@ import { createVisitPurpose, editVisitPurpose } from '@/services/visitPurposeAPI
 import { createMoveInOutPurpose } from '@/services/moveInOutPurposeAPI';
 import { createWorkType } from '@/services/workTypeAPI';
 import { createVisitorComment } from '@/services/visitorCommentAPI';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
 
 interface VisitingPurposeData {
   id: number;
@@ -63,6 +65,8 @@ interface VisitorCommentData {
 
 export const VisitingPurposePage = () => {
   const navigate = useNavigate();
+   const { shouldShow } = useDynamicPermissions();
+
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
   const [activeTab, setActiveTab] = useState('Visit Purpose');
@@ -953,7 +957,7 @@ export const VisitingPurposePage = () => {
 
             {/* Action Buttons Bar */}
             <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-              {activeTab === 'Visit Purpose' && (
+              {activeTab === 'Visit Purpose' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleAddPurpose}
                   className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -963,7 +967,7 @@ export const VisitingPurposePage = () => {
                 </Button>
               )}
               
-              {activeTab === 'Move In/Out' && (
+              {activeTab === 'Move In/Out' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleMoveInOut}
                   className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -973,7 +977,7 @@ export const VisitingPurposePage = () => {
                 </Button>
               )}
               
-              {activeTab === 'Work Type' && (
+              {activeTab === 'Work Type' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleWorkType}
                   className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -1021,13 +1025,14 @@ export const VisitingPurposePage = () => {
                       getFilteredData().map((item) => (
                         <TableRow key={item.id} className="hover:bg-gray-50">
                           <TableCell className="px-4 py-3">
+                            {shouldShow("Visiting Purpose","update")&&(
                             <button
                               onClick={() => handleEdit(item.id)}
                               className="p-1 hover:bg-gray-100 rounded"
                               title="Edit"
                             >
                               <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                            </button>
+                            </button>)}
                           </TableCell>
                           <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
                           <TableCell className="px-4 py-3 text-center">

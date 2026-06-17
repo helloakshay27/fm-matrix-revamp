@@ -13,9 +13,11 @@ export const ChannelsLayout = () => {
     }, [setCurrentSection]);
 
     return (
-        <div className="bg-[#fafafa] flex">
+        <div className="bg-[#fafafa] flex flex-col md:flex-row min-w-0 max-w-full overflow-x-hidden">
             <ChannelSidebar />
-            <Outlet />
+            <div className="min-w-0 flex-1">
+                <Outlet />
+            </div>
         </div>
     );
 };

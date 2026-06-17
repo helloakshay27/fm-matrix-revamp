@@ -9,6 +9,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockFunctionDialog } from './CreateLockFunctionDialog';
 import { CreateFunctionDialog } from './CreateFunctionDialog';
 import { lockFunctionService, LockFunction as ApiLockFunctionItem } from '@/services/lockFunctionService';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Type definitions for the lock function data
 interface LockFunctionItem {
@@ -152,6 +153,7 @@ const transformLockFunctionData = (apiData: ApiLockFunctionItem[]): LockFunction
 
 export const LockFunctionList = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(() => {
@@ -261,27 +263,30 @@ export const LockFunctionList = () => {
   const renderRow = (lockFunction: LockFunctionItem) => ({
     actions: (
       <div className="flex items-center gap-2">
+        {shouldShow("Lock Function","update")&&(
         <button 
           onClick={() => handleEdit(lockFunction.id)} 
           className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button>)}
+        {shouldShow("Lock Function","show")&&(
         <button 
           onClick={() => handleView(lockFunction.id)} 
           className="p-1 text-green-600 hover:bg-green-50 rounded" 
           title="View"
         >
           <Eye className="w-4 h-4" />
-        </button>
+        </button>)}
+        {shouldShow("Lock Function","destroy")&&(
         <button 
           onClick={() => handleDelete(lockFunction.id)} 
           className="p-1 text-red-600 hover:bg-red-50 rounded" 
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </button>)}
       </div>
     ),
     functionName: (
@@ -471,13 +476,14 @@ export const LockFunctionList = () => {
             exportFileName="lock-function-data"
             leftActions={
               <div className="flex items-center gap-2">
+                {shouldShow("Lock Function","create")&&(
                 <Button 
                   onClick={handleAdd} 
                   className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                 >
                   <Plus className="w-4 h-4" />
                   Add
-                </Button>
+                </Button>)}
                 <Button
                   onClick={handleImportClick}
                   className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"

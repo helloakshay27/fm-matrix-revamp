@@ -189,7 +189,7 @@ const ChannelSidebar = () => {
     }, [newConversationModal]);
 
     return (
-        <div className={`w-64 ${localStorage.getItem('user_role_name') === 'Employee' ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} py-3 border-r border-gray-200 shadow-md space-y-2 relative`}>
+        <div className={`w-full shrink-0 md:w-64 ${localStorage.getItem('user_role_name') === 'Employee' ? "md:h-[calc(100vh-64px)]" : "md:h-[calc(100vh-112px)]"} max-h-[60vh] overflow-y-auto md:max-h-none py-3 border-b md:border-b-0 md:border-r border-gray-200 shadow-md space-y-2 relative`}>
             <div className="w-full px-3" onClick={() => setNewConversationModal(true)}>
                 <Button className="w-full">+ New Chat</Button>
             </div>

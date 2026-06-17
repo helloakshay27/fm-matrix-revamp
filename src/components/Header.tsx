@@ -339,7 +339,7 @@ export const Header = () => {
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
       <div className="flex items-center justify-between h-full px-3 md:px-6">
-        <div className="flex items-center gap-3 md:gap-14">
+        <div className="flex min-w-0 items-center gap-1.5 md:gap-14">
           {/* Hamburger - visible only on mobile */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-[#f6f4ee] transition-colors flex-shrink-0"
@@ -348,7 +348,7 @@ export const Header = () => {
           >
             <Menu className="w-5 h-5 text-[#1a1a1a]" />
           </button>
-          <div className="w-32 md:w-44">
+          <div className="w-24 flex-shrink-0 md:w-44">
             {isOmanSite ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -564,7 +564,7 @@ export const Header = () => {
           {/* Project Dropdown */}
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex flex-shrink-0 items-center gap-1 md:gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1 md:gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <Building2 className="w-4 h-4 flex-shrink-0" />
@@ -576,7 +576,7 @@ export const Header = () => {
                   {selectedCompany?.name || "Select Project"}
                 </span>
               )}
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="hidden w-3 h-3 sm:block" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto">
               {companies.map((company) => (
@@ -607,7 +607,7 @@ export const Header = () => {
                     {selectedSite?.name || "Select Site"}
                   </span>
                 )}
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="hidden w-3 h-3 sm:block" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto">
                 {sites.length > 0 ? (

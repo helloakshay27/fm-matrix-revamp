@@ -560,9 +560,9 @@ export default function Todo() {
       onDragStart={(event) => setActiveDragId(event.active.id.toString())}
       onDragCancel={() => setActiveDragId(null)}
     >
-      <div className="p-6">
+      <div className="p-3 sm:p-6 max-w-full overflow-x-hidden">
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-6 flex-wrap">
+          <div className="flex items-center justify-between gap-3 sm:gap-6 flex-wrap">
             {/* Date Filters - Left Side */}
             <div className="flex items-end gap-4 flex-shrink-0">
               <Button
@@ -577,7 +577,7 @@ export default function Todo() {
             <div className="flex items-center gap-3">
               {
                 taskType === "all" && (
-                  <div className="w-96">
+                  <div className="w-full sm:w-96">
                     <MuiMultiSelect
                       label="Members"
                       options={users
@@ -629,16 +629,16 @@ export default function Todo() {
             </div>
           </div>
 
-          <div className="flex items-stretch gap-2 w-full h-[19.5rem] !mt-1">
+          <div className="flex flex-col md:flex-row items-stretch gap-2 w-full md:h-[19.5rem] !mt-1">
             {/* Eisenhower Matrix */}
-            <div className="w-1/2 h-full">
+            <div className="w-full md:w-1/2 h-[19.5rem] md:h-full">
               <EisenhowerMatrix
                 dashboardData={dashboardData}
                 onQuadrantClick={handlePrioritySelect}
                 selectedPriority={selectedPriority}
               />
             </div>
-            <div className="w-1/2 h-full">
+            <div className="w-full md:w-1/2 h-[22rem] md:h-full">
               <PriorityTodo
                 selectedPriority={selectedPriority || undefined}
                 todos={priorityFilteredTodos}
@@ -818,7 +818,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] max-w-[calc(100vw-2rem)] border border-gray-200">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
           <h2 className="text-lg font-bold text-gray-900">
@@ -876,7 +876,7 @@ const ToggleTodoConfirmModal = ({ isOpen, onClose, onConfirm, isLoading, todo })
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] max-w-[calc(100vw-2rem)] border border-gray-200">
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-lg font-bold text-gray-900">
             {title}
@@ -1225,7 +1225,7 @@ const TodoItem = ({
   return (
     <div
       ref={setNodeRef}
-      className={`relative flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 pt-5 border ${getPriorityBgColor()} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
+      className={`relative flex flex-col gap-2 p-3 pb-7 pt-5 sm:flex-row sm:items-center sm:gap-3 sm:pb-5 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor()} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
     >
       {
         todo.created_by && (
@@ -1236,7 +1236,7 @@ const TodoItem = ({
           </div>
         )
       }
-      <div className="flex items-center ">
+      <div className="flex w-full items-center gap-0.5 sm:w-auto">
         <button
           {...listeners}
           {...attributes}
@@ -1298,10 +1298,10 @@ const TodoItem = ({
         </button>
       </div>
 
-      <div className="flex flex-col flex-1">
+      <div className="flex w-full flex-col min-w-0 sm:flex-1">
         <div className="flex items-center gap-2">
           <span
-            className="text-sm text-foreground cursor-pointer"
+            className="text-sm text-foreground cursor-pointer break-words leading-snug"
           >
             {todo.task_management_id && (
               <span
@@ -1317,7 +1317,7 @@ const TodoItem = ({
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
             <span className="text-xs text-muted-foreground">
               {todo.user}
             </span>
@@ -1333,12 +1333,12 @@ const TodoItem = ({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 pb-2">
+      <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end sm:gap-2 sm:pb-2">
         {/* Time Left and Active Timer for tasks only */}
         {todo.task_management_id && (
-          <div className="flex flex-col items-end text-[12px] min-w-max">
+          <div className="flex min-w-0 flex-col items-start text-[12px] sm:items-end">
             {/* Time Left */}
-            <div className="flex gap-2 items-end">
+            <div className="flex flex-wrap gap-1.5 items-end justify-start sm:justify-end">
               <span className="text-xs text-gray-600 font-medium">
                 Time Left:
               </span>
@@ -1350,7 +1350,7 @@ const TodoItem = ({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3">
+        <div className="ml-auto flex items-center justify-end gap-3">
           {/* Play/Pause buttons for tasks converted from task management */}
           {todo.task_management_id &&
             (isTaskStarted ? (
@@ -1386,7 +1386,7 @@ const TodoItem = ({
                 e.stopPropagation();
                 toggleTodo(todo.id);
               }}
-              className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
+              className="flex-shrink-0 !w-4 !h-4 !min-h-0 !p-0 aspect-square self-center overflow-hidden rounded-[3px] border-2 border-primary flex items-center justify-center leading-none"
             >
               <Check
                 size={16}
@@ -1397,10 +1397,10 @@ const TodoItem = ({
         </div>
 
         {todo.task_management_id && (
-          <div>
+          <div className="min-w-0">
             {/* Active Timer */}
             {isTaskStarted && (
-              <div className="flex gap-2 items-end">
+              <div className="flex flex-wrap gap-2 items-end">
                 <span className="text-xs text-gray-600 font-medium">
                   Started:
                 </span>
@@ -1495,7 +1495,7 @@ const CompletedTodoItem = ({ todo, toggleTodo, setIsDetailsModalOpen, setSelecte
   const isTaskStarted = todo.task_management?.is_started || false;
 
   return (
-    <div className={`relative flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2 pt-5 ${getPriorityBgColor()}`}>
+    <div className={`relative flex flex-col gap-2 p-3 pb-7 pt-5 sm:flex-row sm:items-center sm:gap-3 sm:pb-5 rounded-lg border transition-colors group mb-2 ${getPriorityBgColor()}`}>
       {
         todo.created_by && (
           <div className="absolute top-0 right-3">
@@ -1505,10 +1505,10 @@ const CompletedTodoItem = ({ todo, toggleTodo, setIsDetailsModalOpen, setSelecte
           </div>
         )
       }
-      <div className="flex flex-col flex-1">
+      <div className="flex w-full flex-col min-w-0 sm:flex-1">
         <div className="flex items-center gap-2">
           <span
-            className="text-sm text-foreground cursor-pointer"
+            className="text-sm text-foreground cursor-pointer break-words leading-snug"
           >
             {todo.task_management_id && (
               <span
@@ -1524,7 +1524,7 @@ const CompletedTodoItem = ({ todo, toggleTodo, setIsDetailsModalOpen, setSelecte
           </span>
         </div>
         <div className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
             <span className="text-xs text-muted-foreground">
               {todo.user}
             </span>
@@ -1540,12 +1540,12 @@ const CompletedTodoItem = ({ todo, toggleTodo, setIsDetailsModalOpen, setSelecte
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 pb-2">
+      <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end sm:gap-2 sm:pb-2">
         {/* Time Left and Active Timer for tasks only */}
         {todo.task_management_id && (
-          <div className="flex flex-col items-end text-[12px] min-w-max">
+          <div className="flex min-w-0 flex-col items-start text-[12px] sm:items-end">
             {/* Time Left */}
-            <div className="flex gap-2 items-end">
+            <div className="flex flex-wrap gap-1.5 items-end justify-start sm:justify-end">
               <span className="text-xs text-gray-600 font-medium">
                 Time Left:
               </span>
@@ -1557,20 +1557,20 @@ const CompletedTodoItem = ({ todo, toggleTodo, setIsDetailsModalOpen, setSelecte
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3">
+        <div className="ml-auto flex items-center justify-end gap-3">
           <button
             onClick={() => toggleTodo(todo.id)}
-            className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
+            className="flex-shrink-0 !w-4 !h-4 !min-h-0 !p-0 overflow-hidden !bg-[#c72030] !text-white flex items-center justify-center leading-none hover:opacity-90 transition-all"
           >
             <Check size={15} color="white" />
           </button>
         </div>
 
         {todo.task_management_id && (
-          <div>
+          <div className="min-w-0">
             {/* Active Timer */}
             {isTaskStarted && (
-              <div className="flex gap-2 items-end">
+              <div className="flex flex-wrap gap-2 items-end">
                 <span className="text-xs text-gray-600 font-medium">
                   Started:
                 </span>
