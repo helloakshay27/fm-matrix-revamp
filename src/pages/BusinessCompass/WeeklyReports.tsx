@@ -493,6 +493,14 @@ const getOverdueLabel = (targetDate?: string) => {
     return `${m}m overdue`;
 };
 
+const cleanReportText = (value: unknown) =>
+    String(value ?? "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<\/?[^>]+>/g, "")
+        .trim();
+
 const WeeklyReports = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -564,6 +572,16 @@ const WeeklyReports = () => {
     const [starredWins, setStarredWins] = React.useState<Record<number, boolean>>(
         {}
     );
+
+    const autoAddedTitles = useMemo(() => {
+        const titles = new Set<string>();
+        mergedTasksIssues
+            .filter((item: any) => ["completed", "closed", "done"].includes(item.status))
+            .forEach((item: any) => {
+                titles.add(cleanReportText(item.title || "").toLowerCase());
+            });
+        return titles;
+    }, [mergedTasksIssues]);
 
     const [dayPlans, setDayPlans] = React.useState<
         Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]>
@@ -863,7 +881,7 @@ const WeeklyReports = () => {
                         const json = await res.json();
                         const record = json.task_management || json.issue || json.todo || json;
                         newData[`${source_type}:${source_id}`] = record;
-                    } catch {}
+                    } catch { }
                 })
             );
             if (Object.keys(newData).length > 0) {
@@ -2829,6 +2847,7 @@ const WeeklyReports = () => {
                                 .map((w, index) => ({
                                     title: w,
                                     is_starred: starredWins[index] ?? false,
+                                    date: winDates[index] || new Date().toISOString().slice(0, 10),
                                 }))
                                 .filter(
                                     (item, index) =>
@@ -3142,7 +3161,7 @@ const WeeklyReports = () => {
                             }
                             className="inline-flex h-11 items-center rounded-[10px] border border-[#DA7756] bg-white px-5 text-sm font-semibold text-[#DA7756] transition-colors hover:bg-[#fff6f2]"
                         >
-                            {activeTab === "history" ? "Submit Review" : "Review History"}
+                            {activeTab === "history" ? "Back to Report" : "Review History"}
                         </button>
                     </div>
                 </div>
@@ -3333,347 +3352,330 @@ const WeeklyReports = () => {
 
 
                         <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr]">
-                        {/* Achievements */}
-                        <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
-                            <div
-                                className={cn(
-                                    "flex items-center justify-between",
-                                    sectionHeader
-                                )}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Trophy className="h-5 w-5 text-[#DA7756]" />
-                                    <h3 className="font-bold text-neutral-900">
-                                        Weekly Accomplishments
-                                    </h3>
+                            {/* Achievements */}
+                            <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
+                                <div
+                                    className={cn(
+                                        "flex items-center justify-between",
+                                        sectionHeader
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                        <h3 className="font-bold text-neutral-900">
+                                            Weekly Accomplishments
+                                        </h3>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge className={badgePoints}>
+                                            {weeklyScore.breakdown.achievements}/6 pts
+                                        </Badge>
+                                        <Button
+                                            type="button"
+                                            onClick={handleAddWin}
+                                            className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                        >
+                                            <Plus size={14} />
+                                            Add Item
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Badge className={badgePoints}>
-                                        {weeklyScore.breakdown.achievements}/6 pts
-                                    </Badge>
-                                    <Button
-                                        type="button"
-                                        onClick={handleAddWin}
-                                        className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
-                                    >
-                                        <Plus size={14} />
-                                        Add Item
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="space-y-3 px-5 pb-5 max-h-[360px] overflow-y-auto">
-                                {wins.length === 0 && !mergedTasksIssues.some((item: any) => ["completed", "closed", "done"].includes(item.status)) && (
-                                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fdf8f5] mb-3">
-                                            <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                <div className="space-y-3 px-5 pb-5 max-h-[360px] overflow-y-auto">
+                                    {!wins.some((win) => !autoAddedTitles.has(cleanReportText(win).toLowerCase())) && !mergedTasksIssues.some((item: any) => ["completed", "closed", "done"].includes(item.status)) && (
+                                        <div className="flex flex-col items-center justify-center py-10 text-center">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fdf8f5] mb-3">
+                                                <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                            </div>
+                                            <p className="text-sm font-semibold text-neutral-900">No accomplishments yet</p>
+                                            <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
+                                                Add your weekly wins or complete tasks to see them here.
+                                            </p>
                                         </div>
-                                        <p className="text-sm font-semibold text-neutral-900">No accomplishments yet</p>
-                                        <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
-                                            Add your weekly wins or complete tasks to see them here.
-                                        </p>
-                                    </div>
-                                )}
-                                {wins.map((win, index) => winDates[index] ? null : (
-                                    <div
-                                        key={index}
-                                        className="group relative flex items-start gap-3 rounded-[10px] border border-transparent bg-[#f8e9e5] p-3 shadow-none"
-                                    >
-                                        <Checkbox
-                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                            checked={checkedWins[index] ?? true}
-                                            onCheckedChange={(checked) =>
-                                                setCheckedWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !!checked,
-                                                }))
-                                            }
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setStarredWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !prev[index],
-                                                }))
-                                            }
-                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
-                                        >
-                                            <Star
-                                                className={cn(
-                                                    "h-4 w-4 transition-colors duration-200",
-                                                    starredWins[index]
-                                                        ? "text-yellow-400 fill-yellow-400"
-                                                        : "text-neutral-300 hover:text-yellow-300"
-                                                )}
-                                            />
-                                        </button>
-                                        <AutoSizingTextarea
-                                            value={win}
-                                            onChange={(val: string) => handleWinChange(index, val)}
-                                            placeholder="Describe your win…"
-                                            className={cn(
-                                                "min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0",
-                                                (checkedWins[index] ?? true) && "line-through opacity-60"
-                                            )}
-                                        // className="flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
-                                        />
-                                        <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
-                                            Note
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveWin(index)}
-                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
+                                    )}
 
-                                {(() => {
-                                    const completedItems = mergedTasksIssues.filter((item: any) =>
-                                        ["completed", "closed", "done"].includes(item.status)
-                                    );
-                                    const groups: Record<string, { kind: "item" | "win"; data?: any; winIndex?: number }[]> = {};
-                                    const noDateItems: { kind: "item" | "win"; data?: any; winIndex?: number }[] = [];
-                                    completedItems.forEach((item: any) => {
-                                        const raw = item.originalData?.completed_at || item.originalData?.updated_at;
-                                        if (raw) {
-                                            const key = raw.slice(0, 10);
-                                            if (!groups[key]) groups[key] = [];
-                                            groups[key].push({ kind: "item", data: item });
-                                        } else {
-                                            noDateItems.push({ kind: "item", data: item });
-                                        }
-                                    });
-                                    wins.forEach((_, index) => {
-                                        const date = winDates[index];
-                                        if (date) {
+
+                                    {(() => {
+                                        const completedItems = mergedTasksIssues.filter((item: any) =>
+                                            ["completed", "closed", "done"].includes(item.status)
+                                        );
+                                        const groups: Record<string, { kind: "item" | "win"; data?: any; winIndex?: number }[]> = {};
+                                        const noDateItems: { kind: "item" | "win"; data?: any; winIndex?: number }[] = [];
+                                        completedItems.forEach((item: any) => {
+                                            const raw = item.originalData?.completed_at || item.originalData?.updated_at;
+                                            if (raw) {
+                                                const key = raw.slice(0, 10);
+                                                if (!groups[key]) groups[key] = [];
+                                                groups[key].push({ kind: "item", data: item });
+                                            } else {
+                                                noDateItems.push({ kind: "item", data: item });
+                                            }
+                                        });
+                                        wins.forEach((win, index) => {
+                                            if (autoAddedTitles.has(cleanReportText(win).toLowerCase())) return;
+                                            const date = winDates[index] || new Date().toISOString().slice(0, 10);
                                             if (!groups[date]) groups[date] = [];
                                             groups[date].push({ kind: "win", winIndex: index });
-                                        }
-                                    });
-                                    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-                                    const renderItem = (item: any) => (
-                                        <div
-                                            key={`completed-${item.id}`}
-                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
-                                        >
-                                            <Checkbox
-                                                checked
-                                                onCheckedChange={() => {
-                                                    setPendingConfirmAction({
-                                                        fn: () => reopenTaskIssueTodo(item),
-                                                        label: `reopen this ${item.type} (status will change to open)`,
-                                                    });
-                                                }}
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const itemKey = String(item.id);
-                                                    setStarredCompletedItems((prev) => ({
-                                                        ...prev,
-                                                        [itemKey]: !prev[itemKey],
-                                                    }));
-                                                }}
-                                                className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                        });
+                                        const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+                                        const renderItem = (item: any) => (
+                                            <div
+                                                key={`completed-${item.id}`}
+                                                className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                             >
-                                                <Star
+                                                <Checkbox
+                                                    checked
+                                                    onCheckedChange={() => {
+                                                        setPendingConfirmAction({
+                                                            fn: () => reopenTaskIssueTodo(item),
+                                                            label: `reopen this ${item.type} (status will change to open)`,
+                                                        });
+                                                    }}
+                                                    className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const itemKey = String(item.id);
+                                                        setStarredCompletedItems((prev) => ({
+                                                            ...prev,
+                                                            [itemKey]: !prev[itemKey],
+                                                        }));
+                                                    }}
+                                                    className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                                >
+                                                    <Star
+                                                        className={cn(
+                                                            "h-4 w-4 transition-colors duration-200",
+                                                            starredCompletedItems[String(item.id)]
+                                                                ? "text-yellow-400 fill-yellow-400"
+                                                                : "text-neutral-300 hover:text-yellow-300"
+                                                        )}
+                                                    />
+                                                </button>
+                                                <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                                    <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
+                                                        {item.title}
+                                                    </p>
+                                                    {(() => {
+                                                        const d = item.originalData;
+                                                        const completionDate = fmtDate(d?.completed_at || d?.updated_at);
+                                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                        let issueEffort: string | null = null;
+                                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                            const totalMin = d.issue_allocation_times.reduce(
+                                                                (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                            );
+                                                            if (totalMin > 0) {
+                                                                const h = Math.floor(totalMin / 60);
+                                                                const m = totalMin % 60;
+                                                                issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                            }
+                                                        }
+                                                        const hasInfo = completionDate || effortEst || issueEffort;
+                                                        if (!hasInfo) return null;
+                                                        return (
+                                                            <div className="flex items-center gap-3 flex-wrap">
+                                                                {completionDate && (
+                                                                    <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                                        <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                                                        {completionDate}
+                                                                    </span>
+                                                                )}
+                                                                {effortEst && (
+                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                                        <Clock className="h-2.5 w-2.5 shrink-0" />
+                                                                        Est: {effortEst}
+                                                                    </span>
+                                                                )}
+                                                                {issueEffort && (
+                                                                    <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                                                        <Zap className="h-2.5 w-2.5 shrink-0" />
+                                                                        Effort: {issueEffort}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                                <span className={cn(
+                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 mt-1",
+                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                )}>
+                                                    {item.type}
+                                                </span>
+                                                {item.priority && (
+                                                    <span
+                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
+                                                        style={{
+                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                        }}
+                                                    >
+                                                        {item.priority}
+                                                    </span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (item.type === "todo") {
+                                                            setSelectedTodo(item.originalData);
+                                                            setIsTodoDetailsModalOpen(true);
+                                                        } else {
+                                                            navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                        }
+                                                    }}
+                                                    className="mt-1 p-1 hover:bg-gray-100 rounded-[6px] transition-colors shrink-0"
+                                                    title={`View ${item.type} details`}
+                                                >
+                                                    <Eye className="h-4 w-4 text-[#DA7756]" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (item.type === "task") {
+                                                            setEditTaskData(item.originalData);
+                                                            setIsEditTaskModalOpen(true);
+                                                        } else if (item.type === "issue") {
+                                                            setEditIssueData(item.originalData);
+                                                            setIsEditIssueModalOpen(true);
+                                                        } else if (item.type === "todo") {
+                                                            setEditTodoData(item.originalData);
+                                                            setIsEditTodoModalOpen(true);
+                                                        }
+                                                    }}
+                                                    className="mt-1 p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                                    title={`Edit ${item.type}`}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        );
+                                        const renderWin = (winIndex: number) => (
+                                            <div
+                                                key={`win-${winIndex}`}
+                                                className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                            >
+                                                <Checkbox
+                                                    className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                    checked={checkedWins[winIndex] ?? true}
+                                                    onCheckedChange={(checked) =>
+                                                        setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
+                                                    }
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setStarredWins((prev) => ({ ...prev, [winIndex]: !prev[winIndex] }))
+                                                    }
+                                                    className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                                >
+                                                    <Star
+                                                        className={cn(
+                                                            "h-4 w-4 transition-colors duration-200",
+                                                            starredWins[winIndex]
+                                                                ? "text-yellow-400 fill-yellow-400"
+                                                                : "text-neutral-300 hover:text-yellow-300"
+                                                        )}
+                                                    />
+                                                </button>
+                                                <AutoSizingTextarea
+                                                    value={wins[winIndex]}
+                                                    onChange={(val: string) => handleWinChange(winIndex, val)}
+                                                    placeholder="Describe your win…"
                                                     className={cn(
-                                                        "h-4 w-4 transition-colors duration-200",
-                                                        starredCompletedItems[String(item.id)]
-                                                            ? "text-yellow-400 fill-yellow-400"
-                                                            : "text-neutral-300 hover:text-yellow-300"
+                                                        "flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200",
+                                                        (checkedWins[winIndex] ?? true) && "line-through opacity-60"
                                                     )}
                                                 />
-                                            </button>
-                                            <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
-                                                    {item.title}
-                                                </p>
-                                                {(() => {
-                                                    const d = item.originalData;
-                                                    const completionDate = fmtDate(d?.completed_at || d?.updated_at);
-                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                    let issueEffort: string | null = null;
-                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                                        const totalMin = d.issue_allocation_times.reduce(
-                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                                        );
-                                                        if (totalMin > 0) {
-                                                            const h = Math.floor(totalMin / 60);
-                                                            const m = totalMin % 60;
-                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                                        }
-                                                    }
-                                                    const hasInfo = completionDate || effortEst || issueEffort;
-                                                    if (!hasInfo) return null;
+                                                <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                                    Note
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveWin(winIndex)}
+                                                    className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        );
+                                        return (
+                                            <>
+                                                {sortedKeys.map((dateKey) => {
+                                                    const dt = new Date(dateKey + "T00:00:00");
+                                                    const groupKey = `completed-${dateKey}`;
+                                                    const isCollapsed = collapsedGroups.has(groupKey);
+                                                    const label = `${format(dt, "EEEE")} · ${format(dt, "dd MMM yyyy")}`;
                                                     return (
-                                                        <div className="flex items-center gap-3 flex-wrap">
-                                                            {completionDate && (
-                                                                <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                                    <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                    {completionDate}
+                                                        <div key={dateKey}>
+                                                            <button
+                                                                className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-emerald-50 hover:bg-emerald-100"
+                                                                onClick={() =>
+                                                                    setCollapsedGroups((prev) => {
+                                                                        const next = new Set(prev);
+                                                                        if (next.has(groupKey)) next.delete(groupKey);
+                                                                        else next.add(groupKey);
+                                                                        return next;
+                                                                    })
+                                                                }
+                                                            >
+                                                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-emerald-700">
+                                                                    {label}
                                                                 </span>
-                                                            )}
-                                                            {effortEst && (
-                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                                    <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                    Est: {effortEst}
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                                                    {groups[dateKey].length}
                                                                 </span>
-                                                            )}
-                                                            {issueEffort && (
-                                                                <span className="flex items-center gap-1 text-[10px] text-purple-500">
-                                                                    <Zap className="h-2.5 w-2.5 shrink-0" />
-                                                                    Effort: {issueEffort}
-                                                                </span>
+                                                                <ChevronRight
+                                                                    size={14}
+                                                                    className={cn(
+                                                                        "transition-transform duration-200 ml-1 text-emerald-700",
+                                                                        !isCollapsed && "rotate-90"
+                                                                    )}
+                                                                />
+                                                            </button>
+                                                            {!isCollapsed && (
+                                                                <div className="space-y-3 pl-1">
+                                                                    {groups[dateKey].map((entry) =>
+                                                                        entry.kind === "win"
+                                                                            ? renderWin(entry.winIndex!)
+                                                                            : renderItem(entry.data)
+                                                                    )}
+                                                                </div>
                                                             )}
                                                         </div>
                                                     );
-                                                })()}
-                                            </div>
-                                            <span className={cn(
-                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 mt-1",
-                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                            )}>
-                                                {item.type}
-                                            </span>
-                                            {item.priority && (
-                                                <span
-                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
-                                                    style={{
-                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                                    }}
-                                                >
-                                                    {item.priority}
-                                                </span>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    if (item.type === "todo") {
-                                                        setSelectedTodo(item.originalData);
-                                                        setIsTodoDetailsModalOpen(true);
-                                                    } else {
-                                                        navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
-                                                    }
-                                                }}
-                                                className="mt-1 p-1 hover:bg-gray-100 rounded-[6px] transition-colors shrink-0"
-                                                title={`View ${item.type} details`}
-                                            >
-                                                <Eye className="h-4 w-4 text-[#DA7756]" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (item.type === "task") {
-                                                        setEditTaskData(item.originalData);
-                                                        setIsEditTaskModalOpen(true);
-                                                    } else if (item.type === "issue") {
-                                                        setEditIssueData(item.originalData);
-                                                        setIsEditIssueModalOpen(true);
-                                                    } else if (item.type === "todo") {
-                                                        setEditTodoData(item.originalData);
-                                                        setIsEditTodoModalOpen(true);
-                                                    }
-                                                }}
-                                                className="mt-1 p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                                title={`Edit ${item.type}`}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    );
-                                    const renderWin = (winIndex: number) => (
-                                        <div
-                                            key={`win-${winIndex}`}
-                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
-                                        >
-                                            <Checkbox
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                                checked={checkedWins[winIndex] ?? true}
-                                                onCheckedChange={(checked) =>
-                                                    setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
-                                                }
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setStarredWins((prev) => ({ ...prev, [winIndex]: !prev[winIndex] }))
-                                                }
-                                                className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
-                                            >
-                                                <Star
-                                                    className={cn(
-                                                        "h-4 w-4 transition-colors duration-200",
-                                                        starredWins[winIndex]
-                                                            ? "text-yellow-400 fill-yellow-400"
-                                                            : "text-neutral-300 hover:text-yellow-300"
-                                                    )}
-                                                />
-                                            </button>
-                                            <AutoSizingTextarea
-                                                value={wins[winIndex]}
-                                                onChange={(val: string) => handleWinChange(winIndex, val)}
-                                                placeholder="Describe your win…"
-                                                className={cn(
-                                                    "flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200",
-                                                    (checkedWins[winIndex] ?? true) && "line-through opacity-60"
-                                                )}
-                                            />
-                                            <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
-                                                Note
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveWin(winIndex)}
-                                                className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    );
-                                    return (
-                                        <>
-                                            {sortedKeys.map((dateKey) => {
-                                                const dt = new Date(dateKey + "T00:00:00");
-                                                const groupKey = `completed-${dateKey}`;
-                                                const isCollapsed = collapsedGroups.has(groupKey);
-                                                const label = `${format(dt, "EEEE")} · ${format(dt, "dd MMM yyyy")}`;
-                                                return (
-                                                    <div key={dateKey}>
+                                                })}
+                                                {noDateItems.length > 0 && (
+                                                    <div>
                                                         <button
-                                                            className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-emerald-50 hover:bg-emerald-100"
+                                                            className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-slate-50 hover:bg-slate-100"
                                                             onClick={() =>
                                                                 setCollapsedGroups((prev) => {
                                                                     const next = new Set(prev);
-                                                                    if (next.has(groupKey)) next.delete(groupKey);
-                                                                    else next.add(groupKey);
+                                                                    if (next.has("completed-no-date")) next.delete("completed-no-date");
+                                                                    else next.add("completed-no-date");
                                                                     return next;
                                                                 })
                                                             }
                                                         >
-                                                            <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-emerald-700">
-                                                                {label}
+                                                            <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-slate-600">
+                                                                No Date
                                                             </span>
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                                                                {groups[dateKey].length}
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                                {noDateItems.length}
                                                             </span>
                                                             <ChevronRight
                                                                 size={14}
                                                                 className={cn(
-                                                                    "transition-transform duration-200 ml-1 text-emerald-700",
-                                                                    !isCollapsed && "rotate-90"
+                                                                    "transition-transform duration-200 ml-1 text-slate-600",
+                                                                    !collapsedGroups.has("completed-no-date") && "rotate-90"
                                                                 )}
                                                             />
                                                         </button>
-                                                        {!isCollapsed && (
+                                                        {!collapsedGroups.has("completed-no-date") && (
                                                             <div className="space-y-3 pl-1">
-                                                                {groups[dateKey].map((entry) =>
+                                                                {noDateItems.map((entry) =>
                                                                     entry.kind === "win"
                                                                         ? renderWin(entry.winIndex!)
                                                                         : renderItem(entry.data)
@@ -3681,53 +3683,14 @@ const WeeklyReports = () => {
                                                             </div>
                                                         )}
                                                     </div>
-                                                );
-                                            })}
-                                            {noDateItems.length > 0 && (
-                                                <div>
-                                                    <button
-                                                        className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-slate-50 hover:bg-slate-100"
-                                                        onClick={() =>
-                                                            setCollapsedGroups((prev) => {
-                                                                const next = new Set(prev);
-                                                                if (next.has("completed-no-date")) next.delete("completed-no-date");
-                                                                else next.add("completed-no-date");
-                                                                return next;
-                                                            })
-                                                        }
-                                                    >
-                                                        <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-slate-600">
-                                                            No Date
-                                                        </span>
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                                            {noDateItems.length}
-                                                        </span>
-                                                        <ChevronRight
-                                                            size={14}
-                                                            className={cn(
-                                                                "transition-transform duration-200 ml-1 text-slate-600",
-                                                                !collapsedGroups.has("completed-no-date") && "rotate-90"
-                                                            )}
-                                                        />
-                                                    </button>
-                                                    {!collapsedGroups.has("completed-no-date") && (
-                                                        <div className="space-y-3 pl-1">
-                                                            {noDateItems.map((entry) =>
-                                                                entry.kind === "win"
-                                                                    ? renderWin(entry.winIndex!)
-                                                                    : renderItem(entry.data)
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </>
-                                    );
-                                })()}
+                                                )}
+                                            </>
+                                        );
+                                    })()}
 
-                            </div>
+                                </div>
 
-                            <div className="mt-auto space-y-4 border-t border-neutral-100 px-5 py-4">
+                                <div className="mt-auto space-y-4 border-t border-neutral-100 px-5 py-4">
                                     {selectedFileNames.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {selectedFileNames.map((name, i) => (
@@ -3780,519 +3743,519 @@ const WeeklyReports = () => {
                                             </Button>
                                         </div>
                                     </div>
-                            </div>
-                        </Card>
+                                </div>
+                            </Card>
 
-                        {/* Tasks & Issues */}
-                        <Card ref={tasksIssuesSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
-                            <div className="p-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-3">
-                                            <CheckSquare className="h-6 w-6 text-[#DA7756]" />
-                                            <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                                                Tasks,Issues & To Do's
-                                            </h3>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2 pt-1">
-                                            {/* <Badge
+                            {/* Tasks & Issues */}
+                            <Card ref={tasksIssuesSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
+                                <div className="p-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                                <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                                    Tasks,Issues & To Do's
+                                                </h3>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 pt-1">
+                                                {/* <Badge
                                                 variant="outline"
                                                 className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                                             >
                                                 Completed: {taskIssueCounts.completed}
                                             </Badge> */}
-                                            <Badge
-                                                variant="outline"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={openAllTaskIssueGroups}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === "Enter" || event.key === " ") {
-                                                        event.preventDefault();
-                                                        openAllTaskIssueGroups();
-                                                    }
-                                                }}
-                                                className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
-                                            >
-                                                All: {taskIssueCounts.total}
+                                                <Badge
+                                                    variant="outline"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={openAllTaskIssueGroups}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            openAllTaskIssueGroups();
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
+                                                >
+                                                    All: {taskIssueCounts.total}
+                                                </Badge>
+                                                <Badge
+                                                    variant="outline"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => openOnlyTaskIssueGroup("pending")}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            openOnlyTaskIssueGroup("pending");
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
+                                                >
+                                                    Open: {taskIssueCounts.open}
+                                                </Badge>
+                                                <Badge
+                                                    variant="outline"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => openOnlyTaskIssueGroup("overdue")}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            openOnlyTaskIssueGroup("overdue");
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
+                                                >
+                                                    Overdue: {taskIssueCounts.overdue}
+                                                </Badge>
+                                                <Badge
+                                                    variant="outline"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            openOnlyTaskIssueGroup("in_progress");
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
+                                                >
+                                                    In Progress: {taskIssueCounts.inProgress}
+                                                </Badge>
+                                                <Badge
+                                                    variant="outline"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            openOnlyTaskIssueGroup("on_hold");
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-200"
+                                                >
+                                                    On Hold: {taskIssueCounts.onHold}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <Badge className={badgePoints}>
+                                                {taskIssueCounts.completed}/20 PTS
                                             </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => openOnlyTaskIssueGroup("pending")}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === "Enter" || event.key === " ") {
-                                                        event.preventDefault();
-                                                        openOnlyTaskIssueGroup("pending");
-                                                    }
-                                                }}
-                                                className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
+                                            <Button
+                                                className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                                onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
                                             >
-                                                Open: {taskIssueCounts.open}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => openOnlyTaskIssueGroup("overdue")}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === "Enter" || event.key === " ") {
-                                                        event.preventDefault();
-                                                        openOnlyTaskIssueGroup("overdue");
-                                                    }
-                                                }}
-                                                className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
-                                            >
-                                                Overdue: {taskIssueCounts.overdue}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => openOnlyTaskIssueGroup("in_progress")}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === "Enter" || event.key === " ") {
-                                                        event.preventDefault();
-                                                        openOnlyTaskIssueGroup("in_progress");
-                                                    }
-                                                }}
-                                                className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
-                                            >
-                                                In Progress: {taskIssueCounts.inProgress}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => openOnlyTaskIssueGroup("on_hold")}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === "Enter" || event.key === " ") {
-                                                        event.preventDefault();
-                                                        openOnlyTaskIssueGroup("on_hold");
-                                                    }
-                                                }}
-                                                className="cursor-pointer border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-200"
-                                            >
-                                                On Hold: {taskIssueCounts.onHold}
-                                            </Badge>
+                                                <Plus size={14} />
+                                                Add
+                                            </Button>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <Badge className={badgePoints}>
-                                            {taskIssueCounts.completed}/20 PTS
-                                        </Badge>
-                                        <Button
-                                            className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
-                                            onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
-                                        >
-                                            <Plus size={14} />
-                                            Add
-                                        </Button>
-                                    </div>
                                 </div>
-                            </div>
-                            <CardContent className="px-5 pb-5 pt-0">
-                                {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
+                                <CardContent className="px-5 pb-5 pt-0">
+                                    {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
                                 <p className="text-lg text-neutral-400">
                                     No open tasks or issues.
                                 </p> */}
 
-                                {tasksLoading || issuesLoading || todosLoading ? (
-                                    <div className="flex flex-col items-center justify-center text-center py-10">
-                                        <Loader2
-                                            size={40}
-                                            className="text-[#b91c1c]/30 animate-spin mb-3"
-                                        />
-                                        <p className="text-sm font-bold text-gray-500">
-                                            Loading tasks and issues...
-                                        </p>
-                                    </div>
-                                ) : mergedTasksIssues.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center text-center py-10">
-                                        <div className="flex flex-col items-center gap-3 opacity-30">
-                                            <CheckSquare
+                                    {tasksLoading || issuesLoading || todosLoading ? (
+                                        <div className="flex flex-col items-center justify-center text-center py-10">
+                                            <Loader2
                                                 size={40}
-                                                className="text-[#DA7756]/20"
+                                                className="text-[#b91c1c]/30 animate-spin mb-3"
                                             />
-                                            <p className="text-base font-bold text-gray-400 tracking-tight">
-                                                No open tasks or issues
+                                            <p className="text-sm font-bold text-gray-500">
+                                                Loading tasks and issues...
                                             </p>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="space-y-3 max-h-[320px] overflow-y-auto pr-1"
-                                        ref={scrollContainerRef}
-                                    >
-                                        {(
-                                            [
-                                                {
-                                                    key: "overdue",
-                                                    label: "Overdue",
-                                                    statuses: ["overdue", "overdued"],
-                                                    colorClass: "text-red-700",
-                                                    bgItem: "bg-red-50/60 border-red-200",
-                                                    headerBg: "bg-red-50 hover:bg-red-100",
-                                                    pillBg: "bg-red-100 text-red-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: true,
-                                                },
-                                                {
-                                                    key: "in_progress",
-                                                    label: "In Progress",
-                                                    statuses: ["in_progress", "started"],
-                                                    colorClass: "text-sky-700",
-                                                    bgItem: "bg-sky-50/60 border-sky-200",
-                                                    headerBg: "bg-sky-50 hover:bg-sky-100",
-                                                    pillBg: "bg-sky-100 text-sky-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "pending",
-                                                    label: "Open",
-                                                    statuses: ["open", "pending"],
-                                                    colorClass: "text-slate-600",
-                                                    bgItem: "bg-slate-50/60 border-slate-200",
-                                                    headerBg: "bg-slate-50 hover:bg-slate-100",
-                                                    pillBg: "bg-slate-100 text-slate-600",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "on_hold",
-                                                    label: "On Hold",
-                                                    statuses: ["on_hold"],
-                                                    colorClass: "text-orange-700",
-                                                    bgItem: "bg-orange-50/60 border-orange-200",
-                                                    headerBg: "bg-orange-50 hover:bg-orange-100",
-                                                    pillBg: "bg-orange-100 text-orange-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "reopened",
-                                                    label: "Reopened",
-                                                    statuses: ["reopen", "reopened"],
-                                                    colorClass: "text-purple-700",
-                                                    bgItem: "bg-purple-50/60 border-purple-200",
-                                                    headerBg: "bg-purple-50 hover:bg-purple-100",
-                                                    pillBg: "bg-purple-100 text-purple-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                            ] as const
-                                        ).map((group) => {
-                                            const items = mergedTasksIssues.filter((item: any) =>
-                                                (group.statuses as readonly string[]).includes(item.status)
-                                            );
-                                            if (items.length === 0) return null;
-                                            const isCollapsed = collapsedGroups.has(group.key);
+                                    ) : mergedTasksIssues.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center text-center py-10">
+                                            <div className="flex flex-col items-center gap-3 opacity-30">
+                                                <CheckSquare
+                                                    size={40}
+                                                    className="text-[#DA7756]/20"
+                                                />
+                                                <p className="text-base font-bold text-gray-400 tracking-tight">
+                                                    No open tasks or issues
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="space-y-3 max-h-[320px] overflow-y-auto pr-1"
+                                            ref={scrollContainerRef}
+                                        >
+                                            {(
+                                                [
+                                                    {
+                                                        key: "overdue",
+                                                        label: "Overdue",
+                                                        statuses: ["overdue", "overdued"],
+                                                        colorClass: "text-red-700",
+                                                        bgItem: "bg-red-50/60 border-red-200",
+                                                        headerBg: "bg-red-50 hover:bg-red-100",
+                                                        pillBg: "bg-red-100 text-red-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: true,
+                                                    },
+                                                    {
+                                                        key: "in_progress",
+                                                        label: "In Progress",
+                                                        statuses: ["in_progress", "started"],
+                                                        colorClass: "text-sky-700",
+                                                        bgItem: "bg-sky-50/60 border-sky-200",
+                                                        headerBg: "bg-sky-50 hover:bg-sky-100",
+                                                        pillBg: "bg-sky-100 text-sky-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "pending",
+                                                        label: "Open",
+                                                        statuses: ["open", "pending"],
+                                                        colorClass: "text-slate-600",
+                                                        bgItem: "bg-slate-50/60 border-slate-200",
+                                                        headerBg: "bg-slate-50 hover:bg-slate-100",
+                                                        pillBg: "bg-slate-100 text-slate-600",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "on_hold",
+                                                        label: "On Hold",
+                                                        statuses: ["on_hold"],
+                                                        colorClass: "text-orange-700",
+                                                        bgItem: "bg-orange-50/60 border-orange-200",
+                                                        headerBg: "bg-orange-50 hover:bg-orange-100",
+                                                        pillBg: "bg-orange-100 text-orange-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "reopened",
+                                                        label: "Reopened",
+                                                        statuses: ["reopen", "reopened"],
+                                                        colorClass: "text-purple-700",
+                                                        bgItem: "bg-purple-50/60 border-purple-200",
+                                                        headerBg: "bg-purple-50 hover:bg-purple-100",
+                                                        pillBg: "bg-purple-100 text-purple-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                ] as const
+                                            ).map((group) => {
+                                                const items = mergedTasksIssues.filter((item: any) =>
+                                                    (group.statuses as readonly string[]).includes(item.status)
+                                                );
+                                                if (items.length === 0) return null;
+                                                const isCollapsed = collapsedGroups.has(group.key);
 
-                                            return (
-                                                <div key={group.key}>
-                                                    <button
-                                                        className={cn(
-                                                            "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
-                                                            group.headerBg
-                                                        )}
-                                                        onClick={() => openOnlyTaskIssueGroup(group.key)}
-                                                    >
-                                                        <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
-                                                            {group.label}
-                                                        </span>
-                                                        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
-                                                            {items.length}
-                                                        </span>
-                                                        <ChevronRight
-                                                            size={14}
+                                                return (
+                                                    <div key={group.key}>
+                                                        <button
                                                             className={cn(
-                                                                "transition-transform duration-200 ml-1",
-                                                                group.colorClass,
-                                                                !isCollapsed && "rotate-90"
+                                                                "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
+                                                                group.headerBg
                                                             )}
-                                                        />
-                                                    </button>
+                                                            onClick={() => openOnlyTaskIssueGroup(group.key)}
+                                                        >
+                                                            <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
+                                                                {group.label}
+                                                            </span>
+                                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
+                                                                {items.length}
+                                                            </span>
+                                                            <ChevronRight
+                                                                size={14}
+                                                                className={cn(
+                                                                    "transition-transform duration-200 ml-1",
+                                                                    group.colorClass,
+                                                                    !isCollapsed && "rotate-90"
+                                                                )}
+                                                            />
+                                                        </button>
 
-                                                    {!isCollapsed && (
-                                                        <div className="space-y-1.5 pl-1">
-                                                            {items.map((item: any) => {
-                                                                const d = item.originalData;
-                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                        {!isCollapsed && (
+                                                            <div className="space-y-1.5 pl-1">
+                                                                {items.map((item: any) => {
+                                                                    const d = item.originalData;
+                                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
 
-                                                                let issueEffort: string | null = null;
-                                                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                                                    const totalMin = d.issue_allocation_times.reduce(
-                                                                        (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                                                    );
-                                                                    if (totalMin > 0) {
-                                                                        const h = Math.floor(totalMin / 60);
-                                                                        const m = totalMin % 60;
-                                                                        issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                                    let issueEffort: string | null = null;
+                                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                                        const totalMin = d.issue_allocation_times.reduce(
+                                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                                        );
+                                                                        if (totalMin > 0) {
+                                                                            const h = Math.floor(totalMin / 60);
+                                                                            const m = totalMin % 60;
+                                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                                        }
                                                                     }
-                                                                }
 
-                                                                let timeLeftLabel: string | null = null;
-                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                                                    const now = new Date();
-                                                                    const end = new Date(d.end_date);
-                                                                    end.setHours(23, 59, 59, 999);
-                                                                    const diff = end.getTime() - now.getTime();
-                                                                    if (diff > 0) {
-                                                                        const days = Math.floor(diff / 86400000);
-                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                                                        else timeLeftLabel = `${mins}m left`;
+                                                                    let timeLeftLabel: string | null = null;
+                                                                    if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                                                        const now = new Date();
+                                                                        const end = new Date(d.end_date);
+                                                                        end.setHours(23, 59, 59, 999);
+                                                                        const diff = end.getTime() - now.getTime();
+                                                                        if (diff > 0) {
+                                                                            const days = Math.floor(diff / 86400000);
+                                                                            const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                            const mins = Math.floor((diff % 3600000) / 60000);
+                                                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                            else timeLeftLabel = `${mins}m left`;
+                                                                        }
                                                                     }
-                                                                }
 
-                                                                const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                                                    const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
 
-                                                                return (
-                                                                    <div
-                                                                        key={item.id}
-                                                                        className={cn(
-                                                                            "flex flex-col rounded-[10px] border transition-all group",
-                                                                            group.bgItem
-                                                                        )}
-                                                                    >
-                                                                        {/* Controls row */}
-                                                                        <div className="flex items-center gap-2 p-2.5">
-                                                                            <Checkbox
-                                                                                checked={
-                                                                                    selectedTasksIssues[item.id] ||
-                                                                                    item.status === "completed" ||
-                                                                                    item.status === "closed"
-                                                                                }
-                                                                                disabled={!!completingTaskIssueIds[item.id]}
-                                                                                onCheckedChange={(checked) => {
-                                                                                    if (
-                                                                                        checked &&
-                                                                                        item.status !== "completed" &&
-                                                                                        item.status !== "closed"
-                                                                                    ) {
-                                                                                        setPendingConfirmAction({
-                                                                                            fn: () => handleCompleteTaskIssueTodo(item),
-                                                                                            label: `complete this ${item.type}`,
-                                                                                        });
-                                                                                    } else {
-                                                                                        setSelectedTasksIssues((prev) => ({
-                                                                                            ...prev,
-                                                                                            [item.id]: checked as boolean,
-                                                                                        }));
+                                                                    return (
+                                                                        <div
+                                                                            key={item.id}
+                                                                            className={cn(
+                                                                                "flex flex-col rounded-[10px] border transition-all group",
+                                                                                group.bgItem
+                                                                            )}
+                                                                        >
+                                                                            {/* Controls row */}
+                                                                            <div className="flex items-center gap-2 p-2.5">
+                                                                                <Checkbox
+                                                                                    checked={
+                                                                                        selectedTasksIssues[item.id] ||
+                                                                                        item.status === "completed" ||
+                                                                                        item.status === "closed"
                                                                                     }
-                                                                                }}
-                                                                                className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                                                            />
-                                                                            <button
-                                                                                onClick={() => {
-                                                                                    if (item.type === "todo") {
-                                                                                        setSelectedTodo(item.originalData);
-                                                                                        setIsTodoDetailsModalOpen(true);
-                                                                                        return;
-                                                                                    }
-                                                                                    const detailsUrl =
-                                                                                        item.type === "task"
-                                                                                            ? `/vas/tasks/${item.originalData?.id}`
-                                                                                            : `/vas/issues/${item.originalData?.id}`;
-                                                                                    navigate(detailsUrl);
-                                                                                }}
-                                                                                className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                                                                title={`View ${item.type} details`}
-                                                                            >
-                                                                                <Eye size={14} className="text-[#DA7756]" />
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    if (item.type === "task") {
-                                                                                        setEditTaskData(item.originalData);
-                                                                                        setIsEditTaskModalOpen(true);
-                                                                                    } else if (item.type === "issue") {
-                                                                                        setEditIssueData(item.originalData);
-                                                                                        setIsEditIssueModalOpen(true);
-                                                                                    } else if (item.type === "todo") {
-                                                                                        setEditTodoData(item.originalData);
-                                                                                        setIsEditTodoModalOpen(true);
-                                                                                    }
-                                                                                }}
-                                                                                className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                                                                title={`Edit ${item.type}`}
-                                                                            >
-                                                                                <Pencil size={13} />
-                                                                            </button>
-                                                                            {item.type === "task" &&
-                                                                                item.status !== "completed" &&
-                                                                                item.status !== "closed" && (
-                                                                                    item.originalData?.is_started ? (
+                                                                                    disabled={!!completingTaskIssueIds[item.id]}
+                                                                                    onCheckedChange={(checked) => {
+                                                                                        if (
+                                                                                            checked &&
+                                                                                            item.status !== "completed" &&
+                                                                                            item.status !== "closed"
+                                                                                        ) {
+                                                                                            setPendingConfirmAction({
+                                                                                                fn: () => handleCompleteTaskIssueTodo(item),
+                                                                                                label: `complete this ${item.type}`,
+                                                                                            });
+                                                                                        } else {
+                                                                                            setSelectedTasksIssues((prev) => ({
+                                                                                                ...prev,
+                                                                                                [item.id]: checked as boolean,
+                                                                                            }));
+                                                                                        }
+                                                                                    }}
+                                                                                    className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                                                                />
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        if (item.type === "todo") {
+                                                                                            setSelectedTodo(item.originalData);
+                                                                                            setIsTodoDetailsModalOpen(true);
+                                                                                            return;
+                                                                                        }
+                                                                                        const detailsUrl =
+                                                                                            item.type === "task"
+                                                                                                ? `/vas/tasks/${item.originalData?.id}`
+                                                                                                : `/vas/issues/${item.originalData?.id}`;
+                                                                                        navigate(detailsUrl);
+                                                                                    }}
+                                                                                    className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                                                                    title={`View ${item.type} details`}
+                                                                                >
+                                                                                    <Eye size={14} className="text-[#DA7756]" />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        if (item.type === "task") {
+                                                                                            setEditTaskData(item.originalData);
+                                                                                            setIsEditTaskModalOpen(true);
+                                                                                        } else if (item.type === "issue") {
+                                                                                            setEditIssueData(item.originalData);
+                                                                                            setIsEditIssueModalOpen(true);
+                                                                                        } else if (item.type === "todo") {
+                                                                                            setEditTodoData(item.originalData);
+                                                                                            setIsEditTodoModalOpen(true);
+                                                                                        }
+                                                                                    }}
+                                                                                    className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                                                                    title={`Edit ${item.type}`}
+                                                                                >
+                                                                                    <Pencil size={13} />
+                                                                                </button>
+                                                                                {item.type === "task" &&
+                                                                                    item.status !== "completed" &&
+                                                                                    item.status !== "closed" && (
+                                                                                        item.originalData?.is_started ? (
+                                                                                            <button
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    setPauseTaskId(item.originalData.id);
+                                                                                                    setIsPauseModalOpen(true);
+                                                                                                }}
+                                                                                                disabled={!!updatingPlayPauseIds[item.id]}
+                                                                                                className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
+                                                                                                title="Pause task"
+                                                                                            >
+                                                                                                {updatingPlayPauseIds[item.id] ? (
+                                                                                                    <Loader2 size={14} className="text-red-500 animate-spin" />
+                                                                                                ) : (
+                                                                                                    <Pause size={14} className="text-red-500" />
+                                                                                                )}
+                                                                                            </button>
+                                                                                        ) : (
+                                                                                            <button
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    handlePlayTask(item);
+                                                                                                }}
+                                                                                                disabled={!!updatingPlayPauseIds[item.id]}
+                                                                                                className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
+                                                                                                title="Start task"
+                                                                                            >
+                                                                                                {updatingPlayPauseIds[item.id] ? (
+                                                                                                    <Loader2 size={14} className="text-green-600 animate-spin" />
+                                                                                                ) : (
+                                                                                                    <Play size={14} className="text-green-600" />
+                                                                                                )}
+                                                                                            </button>
+                                                                                        )
+                                                                                    )}
+                                                                                <span className={cn(
+                                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
+                                                                                )}>
+                                                                                    {item.type}
+                                                                                </span>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <p className={cn(
+                                                                                        "text-sm font-medium truncate",
+                                                                                        (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
+                                                                                    )}>
+                                                                                        {item.title}
+                                                                                    </p>
+                                                                                </div>
+                                                                                <span
+                                                                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                                                    style={{
+                                                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                                    }}
+                                                                                >
+                                                                                    {item.priority}
+                                                                                </span>
+                                                                                {group.showAddToNextWeek && (
+                                                                                    addedToNextWeekIds.has(item.id) ? (
                                                                                         <button
-                                                                                            onClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                setPauseTaskId(item.originalData.id);
-                                                                                                setIsPauseModalOpen(true);
-                                                                                            }}
-                                                                                            disabled={!!updatingPlayPauseIds[item.id]}
-                                                                                            className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
-                                                                                            title="Pause task"
+                                                                                            onClick={(e) => { e.stopPropagation(); removeItemFromNextWeek(item); }}
+                                                                                            className="shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                                                                            title="Remove from next week plan"
                                                                                         >
-                                                                                            {updatingPlayPauseIds[item.id] ? (
-                                                                                                <Loader2 size={14} className="text-red-500 animate-spin" />
-                                                                                            ) : (
-                                                                                                <Pause size={14} className="text-red-500" />
-                                                                                            )}
+                                                                                            Added ✓
                                                                                         </button>
                                                                                     ) : (
                                                                                         <button
-                                                                                            onClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                handlePlayTask(item);
-                                                                                            }}
-                                                                                            disabled={!!updatingPlayPauseIds[item.id]}
-                                                                                            className="p-1 hover:bg-white/60 rounded transition disabled:opacity-50 shrink-0"
-                                                                                            title="Start task"
-                                                                                        >
-                                                                                            {updatingPlayPauseIds[item.id] ? (
-                                                                                                <Loader2 size={14} className="text-green-600 animate-spin" />
-                                                                                            ) : (
-                                                                                                <Play size={14} className="text-green-600" />
+                                                                                            onClick={(e) => { e.stopPropagation(); setPlanWeekOpenItemId(planWeekOpenItemId === item.id ? null : item.id); }}
+                                                                                            className={cn(
+                                                                                                "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                                                                                planWeekOpenItemId === item.id
+                                                                                                    ? "bg-[#DA7756] border-[#DA7756] text-white"
+                                                                                                    : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
                                                                                             )}
+                                                                                            title="Add to next week plan"
+                                                                                        >
+                                                                                            + Next Week
                                                                                         </button>
                                                                                     )
                                                                                 )}
-                                                                            <span className={cn(
-                                                                                "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                                                                item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                                            )}>
-                                                                                {item.type}
-                                                                            </span>
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <p className={cn(
-                                                                                    "text-sm font-medium truncate",
-                                                                                    (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
-                                                                                )}>
-                                                                                    {item.title}
-                                                                                </p>
                                                                             </div>
-                                                                            <span
-                                                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                                                                style={{
-                                                                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                                                                }}
-                                                                            >
-                                                                                {item.priority}
-                                                                            </span>
-                                                                            {group.showAddToNextWeek && (
-                                                                                addedToNextWeekIds.has(item.id) ? (
-                                                                                    <button
-                                                                                        onClick={(e) => { e.stopPropagation(); removeItemFromNextWeek(item); }}
-                                                                                        className="shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                                                        title="Remove from next week plan"
-                                                                                    >
-                                                                                        Added ✓
-                                                                                    </button>
-                                                                                ) : (
-                                                                                    <button
-                                                                                        onClick={(e) => { e.stopPropagation(); setPlanWeekOpenItemId(planWeekOpenItemId === item.id ? null : item.id); }}
-                                                                                        className={cn(
-                                                                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                                                                            planWeekOpenItemId === item.id
-                                                                                                ? "bg-[#DA7756] border-[#DA7756] text-white"
-                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
-                                                                                        )}
-                                                                                        title="Add to next week plan"
-                                                                                    >
-                                                                                        + Next Week
-                                                                                    </button>
-                                                                                )
+                                                                            {/* Info row */}
+                                                                            {hasInfo && (
+                                                                                <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                                                                    {endDate && (
+                                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                            <Calendar size={9} className="shrink-0" />
+                                                                                            {endDate}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {overdueLabel && (
+                                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                                                            <AlertCircle size={9} className="shrink-0" />
+                                                                                            {overdueLabel}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {timeLeftLabel && (
+                                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                                                            <Clock size={9} className="shrink-0" />
+                                                                                            {timeLeftLabel}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {effortEst && (
+                                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                                                            <Clock size={9} className="shrink-0" />
+                                                                                            Est: {effortEst}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {issueEffort && (
+                                                                                        <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                                                            <Zap size={9} className="shrink-0" />
+                                                                                            Effort: {issueEffort}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {item.type === "task" && d?.active_time_till_now && (
+                                                                                        <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                                                            <Zap size={9} className="shrink-0" />
+                                                                                            <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+                                                                            {/* Inline day picker */}
+                                                                            {planWeekOpenItemId === item.id && (
+                                                                                <div className="px-3 pb-3 pt-2 flex items-center gap-1.5 flex-wrap border-t border-dashed border-gray-200">
+                                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">
+                                                                                        Pick day:
+                                                                                    </span>
+                                                                                    {upcomingDays.map((day) => (
+                                                                                        <button
+                                                                                            key={day.key}
+                                                                                            onClick={(e) => { e.stopPropagation(); addItemToNextWeek(item, day.key); }}
+                                                                                            className="text-[10px] font-semibold px-2 py-1 rounded-[6px] border border-[#DA7756]/30 bg-white text-[#DA7756] hover:bg-[#DA7756] hover:text-white hover:border-[#DA7756] transition-all whitespace-nowrap"
+                                                                                        >
+                                                                                            {day.short}
+                                                                                        </button>
+                                                                                    ))}
+                                                                                </div>
                                                                             )}
                                                                         </div>
-                                                                        {/* Info row */}
-                                                                        {hasInfo && (
-                                                                            <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
-                                                                                {endDate && (
-                                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                        <Calendar size={9} className="shrink-0" />
-                                                                                        {endDate}
-                                                                                    </span>
-                                                                                )}
-                                                                                {overdueLabel && (
-                                                                                    <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                                                        <AlertCircle size={9} className="shrink-0" />
-                                                                                        {overdueLabel}
-                                                                                    </span>
-                                                                                )}
-                                                                                {timeLeftLabel && (
-                                                                                    <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                                                        <Clock size={9} className="shrink-0" />
-                                                                                        {timeLeftLabel}
-                                                                                    </span>
-                                                                                )}
-                                                                                {effortEst && (
-                                                                                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                        <Clock size={9} className="shrink-0" />
-                                                                                        Est: {effortEst}
-                                                                                    </span>
-                                                                                )}
-                                                                                {issueEffort && (
-                                                                                    <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                                                        <Zap size={9} className="shrink-0" />
-                                                                                        Effort: {issueEffort}
-                                                                                    </span>
-                                                                                )}
-                                                                                {item.type === "task" && d?.active_time_till_now && (
-                                                                                    <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                                                        <Zap size={9} className="shrink-0" />
-                                                                                        <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-                                                                        {/* Inline day picker */}
-                                                                        {planWeekOpenItemId === item.id && (
-                                                                            <div className="px-3 pb-3 pt-2 flex items-center gap-1.5 flex-wrap border-t border-dashed border-gray-200">
-                                                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">
-                                                                                    Pick day:
-                                                                                </span>
-                                                                                {upcomingDays.map((day) => (
-                                                                                    <button
-                                                                                        key={day.key}
-                                                                                        onClick={(e) => { e.stopPropagation(); addItemToNextWeek(item, day.key); }}
-                                                                                        className="text-[10px] font-semibold px-2 py-1 rounded-[6px] border border-[#DA7756]/30 bg-white text-[#DA7756] hover:bg-[#DA7756] hover:text-white hover:border-[#DA7756] transition-all whitespace-nowrap"
-                                                                                    >
-                                                                                        {day.short}
-                                                                                    </button>
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    )}
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                            {isLoadingMore && (
+                                                <div className="flex items-center justify-center py-4">
+                                                    <Loader2
+                                                        size={20}
+                                                        className="text-[#b91c1c]/50 animate-spin mr-2"
+                                                    />
+                                                    <p className="text-xs text-gray-500 font-medium">
+                                                        Loading more...
+                                                    </p>
                                                 </div>
-                                            );
-                                        })}
-                                        {isLoadingMore && (
-                                            <div className="flex items-center justify-center py-4">
-                                                <Loader2
-                                                    size={20}
-                                                    className="text-[#b91c1c]/50 animate-spin mr-2"
-                                                />
-                                                <p className="text-xs text-gray-500 font-medium">
-                                                    Loading more...
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                            )}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
                         </div>
 
                         {/* Plan for coming week */}
@@ -4419,49 +4382,49 @@ const WeeklyReports = () => {
                                                                         />
                                                                     </button>
                                                                     <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (item.type === "task") {
-                                                                                setEditTaskData(item.originalData);
-                                                                                setIsEditTaskModalOpen(true);
-                                                                            } else if (item.type === "issue") {
-                                                                                setEditIssueData(item.originalData);
-                                                                                setIsEditIssueModalOpen(true);
-                                                                            } else if (item.type === "todo") {
-                                                                                setEditTodoData(item.originalData);
-                                                                                setIsEditTodoModalOpen(true);
-                                                                            }
-                                                                        }}
-                                                                        className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                        title={`Edit ${item.type}`}
-                                                                    >
-                                                                        <Pencil className="h-3 w-3" />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (item.type === "todo") {
-                                                                                setSelectedTodo(item.originalData);
-                                                                                setIsTodoDetailsModalOpen(true);
-                                                                            } else {
-                                                                                navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
-                                                                            }
-                                                                        }}
-                                                                        className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                        title={`View ${item.type}`}
-                                                                    >
-                                                                        <Eye className="h-3 w-3" />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => hideNextWeekScheduledItem(item)}
-                                                                        className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
-                                                                    >
-                                                                        <X className="h-3 w-3" />
-                                                                    </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (item.type === "task") {
+                                                                                    setEditTaskData(item.originalData);
+                                                                                    setIsEditTaskModalOpen(true);
+                                                                                } else if (item.type === "issue") {
+                                                                                    setEditIssueData(item.originalData);
+                                                                                    setIsEditIssueModalOpen(true);
+                                                                                } else if (item.type === "todo") {
+                                                                                    setEditTodoData(item.originalData);
+                                                                                    setIsEditTodoModalOpen(true);
+                                                                                }
+                                                                            }}
+                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                            title={`Edit ${item.type}`}
+                                                                        >
+                                                                            <Pencil className="h-3 w-3" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (item.type === "todo") {
+                                                                                    setSelectedTodo(item.originalData);
+                                                                                    setIsTodoDetailsModalOpen(true);
+                                                                                } else {
+                                                                                    navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                                                }
+                                                                            }}
+                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                            title={`View ${item.type}`}
+                                                                        >
+                                                                            <Eye className="h-3 w-3" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => hideNextWeekScheduledItem(item)}
+                                                                            className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        >
+                                                                            <X className="h-3 w-3" />
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                                 <p className="min-w-0 text-xs font-medium leading-5 text-gray-600 [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
@@ -4483,7 +4446,7 @@ const WeeklyReports = () => {
                                                         const matchById = (item: any) =>
                                                             item.type === planObj.source_type &&
                                                             (String(item.originalData?.id) === String(planObj.source_id) ||
-                                                             String(item.id) === String(planObj.source_id));
+                                                                String(item.id) === String(planObj.source_id));
                                                         const sourceItem = planObj.source_type
                                                             ? (nextWeekScheduledItems.find(matchById) || mergedTasksIssues.find(matchById))
                                                             : null;
@@ -4494,118 +4457,118 @@ const WeeklyReports = () => {
                                                         const priority = rawData?.priority || sourceItem?.priority;
                                                         const sourceId = rawData?.id || planObj.source_id;
                                                         return (
-                                                        <div
-                                                            key={planObj.id}
-                                                            id={`plan-${planObj.id}`}
-                                                            draggable
-                                                            className="relative cursor-grab rounded-[10px] border border-[#e6e9ef] bg-white px-2.5 pb-8 pt-2 shadow-sm transition-all active:cursor-grabbing hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
-                                                            onDragStart={(event) =>
-                                                                handlePlanDragStart(event, day.key, index)
-                                                            }
-                                                            onDragOver={(event) => event.preventDefault()}
-                                                            onDrop={(event) => handlePlanDrop(event, day.key, index)}
-                                                        >
-                                                            <div className="absolute right-2 top-2 flex items-center gap-1">
-                                                                <span className={cn(
-                                                                    "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
-                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-700"
-                                                                )}>
-                                                                    {planObj.source_type === "todo" ? "To Do" : planObj.source_type || "Note"}
-                                                                </span>
-                                                                {priority && (
-                                                                    <span
-                                                                        className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
-                                                                        style={{
-                                                                            backgroundColor: priority === "High" ? "#fee2e2" : priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                            color: priority === "High" ? "#991b1b" : priority === "Medium" ? "#92400e" : "#166534",
-                                                                        }}
-                                                                    >
-                                                                        {priority}
+                                                            <div
+                                                                key={planObj.id}
+                                                                id={`plan-${planObj.id}`}
+                                                                draggable
+                                                                className="relative cursor-grab rounded-[10px] border border-[#e6e9ef] bg-white px-2.5 pb-8 pt-2 shadow-sm transition-all active:cursor-grabbing hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
+                                                                onDragStart={(event) =>
+                                                                    handlePlanDragStart(event, day.key, index)
+                                                                }
+                                                                onDragOver={(event) => event.preventDefault()}
+                                                                onDrop={(event) => handlePlanDrop(event, day.key, index)}
+                                                            >
+                                                                <div className="absolute right-2 top-2 flex items-center gap-1">
+                                                                    <span className={cn(
+                                                                        "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
+                                                                        planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-700"
+                                                                    )}>
+                                                                        {planObj.source_type === "todo" ? "To Do" : planObj.source_type || "Note"}
                                                                     </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="mb-2 flex min-w-0 items-center gap-1.5 pr-24">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleTogglePlanStar(day.key, index)}
-                                                                    className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                                                    title={planObj.starred ? "Unstar" : "Star this priority"}
-                                                                >
-                                                                    <Star
-                                                                        strokeWidth={planObj.starred ? 0 : 1.8}
-                                                                        className={cn(
-                                                                            "h-4 w-4 transition-colors duration-200",
-                                                                            planObj.starred
-                                                                                ? "fill-[#f6c343] text-[#f6c343]"
-                                                                                : "fill-transparent text-[#cfd6df] hover:text-[#f6c343]"
-                                                                        )}
-                                                                    />
-                                                                </button>
-                                                                <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
-                                                                    {planObj.source_type && sourceId && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                if (planObj.source_type === "task") {
-                                                                                    setEditTaskData(rawData);
-                                                                                    setIsEditTaskModalOpen(true);
-                                                                                } else if (planObj.source_type === "issue") {
-                                                                                    setEditIssueData(rawData);
-                                                                                    setIsEditIssueModalOpen(true);
-                                                                                } else if (planObj.source_type === "todo") {
-                                                                                    setEditTodoData(rawData);
-                                                                                    setIsEditTodoModalOpen(true);
-                                                                                }
+                                                                    {priority && (
+                                                                        <span
+                                                                            className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                                                                            style={{
+                                                                                backgroundColor: priority === "High" ? "#fee2e2" : priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                                color: priority === "High" ? "#991b1b" : priority === "Medium" ? "#92400e" : "#166534",
                                                                             }}
-                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                            title={`Edit ${planObj.source_type}`}
                                                                         >
-                                                                            <Pencil className="h-3 w-3" />
-                                                                        </button>
+                                                                            {priority}
+                                                                        </span>
                                                                     )}
-                                                                    {planObj.source_type && sourceId && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                if (planObj.source_type === "todo") {
-                                                                                    setSelectedTodo(rawData);
-                                                                                    setIsTodoDetailsModalOpen(true);
-                                                                                } else {
-                                                                                    navigate(planObj.source_type === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
-                                                                                }
-                                                                            }}
-                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                            title={`View ${planObj.source_type}`}
-                                                                        >
-                                                                            <Eye className="h-3 w-3" />
-                                                                        </button>
-                                                                    )}
+                                                                </div>
+                                                                <div className="mb-2 flex min-w-0 items-center gap-1.5 pr-24">
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => handleRemovePlan(day.key, index)}
-                                                                        className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        onClick={() => handleTogglePlanStar(day.key, index)}
+                                                                        className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
                                                                     >
-                                                                        <X className="h-3 w-3" />
+                                                                        <Star
+                                                                            strokeWidth={planObj.starred ? 0 : 1.8}
+                                                                            className={cn(
+                                                                                "h-4 w-4 transition-colors duration-200",
+                                                                                planObj.starred
+                                                                                    ? "fill-[#f6c343] text-[#f6c343]"
+                                                                                    : "fill-transparent text-[#cfd6df] hover:text-[#f6c343]"
+                                                                            )}
+                                                                        />
                                                                     </button>
+                                                                    <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
+                                                                        {planObj.source_type && sourceId && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (planObj.source_type === "task") {
+                                                                                        setEditTaskData(rawData);
+                                                                                        setIsEditTaskModalOpen(true);
+                                                                                    } else if (planObj.source_type === "issue") {
+                                                                                        setEditIssueData(rawData);
+                                                                                        setIsEditIssueModalOpen(true);
+                                                                                    } else if (planObj.source_type === "todo") {
+                                                                                        setEditTodoData(rawData);
+                                                                                        setIsEditTodoModalOpen(true);
+                                                                                    }
+                                                                                }}
+                                                                                className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                                title={`Edit ${planObj.source_type}`}
+                                                                            >
+                                                                                <Pencil className="h-3 w-3" />
+                                                                            </button>
+                                                                        )}
+                                                                        {planObj.source_type && sourceId && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (planObj.source_type === "todo") {
+                                                                                        setSelectedTodo(rawData);
+                                                                                        setIsTodoDetailsModalOpen(true);
+                                                                                    } else {
+                                                                                        navigate(planObj.source_type === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+                                                                                    }
+                                                                                }}
+                                                                                className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                                title={`View ${planObj.source_type}`}
+                                                                            >
+                                                                                <Eye className="h-3 w-3" />
+                                                                            </button>
+                                                                        )}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleRemovePlan(day.key, index)}
+                                                                            className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        >
+                                                                            <X className="h-3 w-3" />
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
+                                                                {planObj.source_type ? (
+                                                                    <p className="min-w-0 text-xs font-medium leading-5 text-gray-700 cursor-not-allowed select-none [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
+                                                                        {planObj.text}
+                                                                    </p>
+                                                                ) : (
+                                                                    <AutoSizingTextarea
+                                                                        value={planObj.text}
+                                                                        onChange={(value: string) =>
+                                                                            handlePlanChange(day.key, index, value)
+                                                                        }
+                                                                        placeholder="Add note..."
+                                                                        className="min-h-[20px] resize-none bg-transparent border-none p-0 text-xs font-medium leading-5 text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
+                                                                    />
+                                                                )}
                                                             </div>
-                                                            {planObj.source_type ? (
-                                                                <p className="min-w-0 text-xs font-medium leading-5 text-gray-700 cursor-not-allowed select-none [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
-                                                                    {planObj.text}
-                                                                </p>
-                                                            ) : (
-                                                                <AutoSizingTextarea
-                                                                    value={planObj.text}
-                                                                    onChange={(value: string) =>
-                                                                        handlePlanChange(day.key, index, value)
-                                                                    }
-                                                                    placeholder="Add note..."
-                                                                    className="min-h-[20px] resize-none bg-transparent border-none p-0 text-xs font-medium leading-5 text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
-                                                                />
-                                                            )}
-                                                        </div>
                                                         );
                                                     })}
                                             </div>
@@ -4765,237 +4728,237 @@ const WeeklyReports = () => {
                         </Card>
 
                         <div className="grid items-stretch gap-4 lg:grid-cols-[1.12fr_0.88fr]">
-                        {/* Remarks */}
-                        <Card
-                            role="region"
-                            aria-label="Remarks"
-                            onMouseDown={handleRemarksAreaActivate}
-                            className={cn(
-                                "flex h-full flex-col overflow-hidden rounded-[16px] border bg-[#f4f2ed] p-4 shadow-none transition-colors duration-200",
-                                remarkVisual.border,
-                                remarkVisual.bg
-                            )}
-                        >
-                            <div className="mb-3 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <MessageSquare
-                                        className="h-4 w-4 shrink-0"
-                                        style={{ color: accentEmphasis }}
-                                    />
-                                    <h3 className="text-sm font-bold text-[#111111]">Remarks</h3>
+                            {/* Remarks */}
+                            <Card
+                                role="region"
+                                aria-label="Remarks"
+                                onMouseDown={handleRemarksAreaActivate}
+                                className={cn(
+                                    "flex h-full flex-col overflow-hidden rounded-[16px] border bg-[#f4f2ed] p-4 shadow-none transition-colors duration-200",
+                                    remarkVisual.border,
+                                    remarkVisual.bg
+                                )}
+                            >
+                                <div className="mb-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <MessageSquare
+                                            className="h-4 w-4 shrink-0"
+                                            style={{ color: accentEmphasis }}
+                                        />
+                                        <h3 className="text-sm font-bold text-[#111111]">Remarks</h3>
+                                    </div>
+                                    <Badge
+                                        className="border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]"
+                                    >
+                                        {weeklyScore.breakdown.remarks}/14 Pts
+                                    </Badge>
                                 </div>
-                                <Badge
-                                    className="border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]"
-                                >
-                                    {weeklyScore.breakdown.remarks}/14 Pts
-                                </Badge>
-                            </div>
-                            <div className="space-y-2.5">
-                                <div className="flex flex-wrap gap-2">
-                                    {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
-                                        (id) => {
-                                            const meta = REMARK_CHIP_META[id];
-                                            const isActive = activeRemarkChip === id;
-                                            return (
-                                                <button
-                                                    key={id}
-                                                    type="button"
-                                                    aria-pressed={isActive}
-                                                    onClick={() => handleRemarkChipClick(id)}
-                                                    className={cn(
-                                                        "inline-flex h-8 items-center rounded-[8px] border px-4 text-[11px] font-medium transition-colors [&>svg]:hidden",
-                                                        "active:scale-[0.98] active:brightness-95",
-                                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
-                                                        isActive ? meta.chipActive : meta.chipInactive
-                                                    )}
-                                                >
-                                                    {id === "breakthrough" && (
-                                                        <Activity
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "breakdown" && (
-                                                        <TrendingUp
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "employeeFeedback" && (
-                                                        <User
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "clientFeedback" && (
-                                                        <Users
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "remark" && (
-                                                        <Smile
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {meta.label}
-                                                </button>
-                                            );
+                                <div className="space-y-2.5">
+                                    <div className="flex flex-wrap gap-2">
+                                        {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
+                                            (id) => {
+                                                const meta = REMARK_CHIP_META[id];
+                                                const isActive = activeRemarkChip === id;
+                                                return (
+                                                    <button
+                                                        key={id}
+                                                        type="button"
+                                                        aria-pressed={isActive}
+                                                        onClick={() => handleRemarkChipClick(id)}
+                                                        className={cn(
+                                                            "inline-flex h-8 items-center rounded-[8px] border px-4 text-[11px] font-medium transition-colors [&>svg]:hidden",
+                                                            "active:scale-[0.98] active:brightness-95",
+                                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
+                                                            isActive ? meta.chipActive : meta.chipInactive
+                                                        )}
+                                                    >
+                                                        {id === "breakthrough" && (
+                                                            <Activity
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "breakdown" && (
+                                                            <TrendingUp
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "employeeFeedback" && (
+                                                            <User
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "clientFeedback" && (
+                                                            <Users
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "remark" && (
+                                                            <Smile
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {meta.label}
+                                                    </button>
+                                                );
+                                            }
+                                        )}
+                                    </div>
+                                    <Textarea
+                                        ref={remarksTextareaRef}
+                                        value={remarksText}
+                                        onChange={(e) => setRemarksText(e.target.value)}
+                                        onFocus={handleRemarksAreaActivate}
+                                        placeholder={
+                                            activeRemarkChip
+                                                ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
+                                                : "Add your remark..."
                                         }
+                                        className="min-h-[86px] resize-none rounded-[10px] border border-neutral-200 bg-white px-4 py-3 text-xs shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddRemark}
+                                        className={cn("ml-auto flex h-7 w-fit rounded-[7px] px-3.5 text-[10px] font-medium", btnOutline)}
+                                    >
+                                        <Plus className="mr-1 h-3 w-3" />
+                                        Add{" "}
+                                        {activeRemarkChip
+                                            ? REMARK_CHIP_META[activeRemarkChip].label
+                                            : "Remark"}
+                                    </Button>
+
+                                    {remarksList.length > 0 && (
+                                        <div className={cn(
+                                            "mt-4 pt-4 space-y-2 border-t border-dashed border-neutral-200 pr-2",
+                                            remarksList.length > 1 ? "max-h-[120px] overflow-y-auto" : ""
+                                        )}>
+                                            {remarksList.map((remark, index) => {
+                                                const isBreakdown = remark.type === "breakdown";
+                                                const isBreakthrough = remark.type === "breakthrough";
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className={cn(
+                                                            "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
+                                                            isBreakdown
+                                                                ? "bg-red-50 border-red-200 text-red-900"
+                                                                : isBreakthrough
+                                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                                                                    : "bg-white border-neutral-200 text-neutral-800"
+                                                        )}
+                                                    >
+                                                        {remark.type === "breakdown" ? (
+                                                            <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
+                                                        ) : remark.type === "breakthrough" ? (
+                                                            <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
+                                                        ) : remark.type === "employeeFeedback" ? (
+                                                            <User className="h-4 w-4 text-blue-500 mt-0.5" />
+                                                        ) : remark.type === "clientFeedback" ? (
+                                                            <Users className="h-4 w-4 text-purple-500 mt-0.5" />
+                                                        ) : remark.type === "remark" ? (
+                                                            <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
+                                                        ) : (
+                                                            <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
+                                                        )}
+                                                        <div className="flex-1 space-y-1">
+                                                            {remark.type && (
+                                                                <p className="text-xs font-bold">
+                                                                    {REMARK_CHIP_META[remark.type as RemarkChipId]
+                                                                        ?.label || remark.type}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-sm whitespace-pre-wrap">
+                                                                {remark.text}
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveRemark(index)}
+                                                            className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                 </div>
-                                <Textarea
-                                    ref={remarksTextareaRef}
-                                    value={remarksText}
-                                    onChange={(e) => setRemarksText(e.target.value)}
-                                    onFocus={handleRemarksAreaActivate}
-                                    placeholder={
-                                        activeRemarkChip
-                                            ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
-                                            : "Add your remark..."
-                                    }
-                                    className="min-h-[86px] resize-none rounded-[10px] border border-neutral-200 bg-white px-4 py-3 text-xs shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                                />
-                                <Button
-                                    type="button"
-                                    onClick={handleAddRemark}
-                                    className={cn("ml-auto flex h-7 w-fit rounded-[7px] px-3.5 text-[10px] font-medium", btnOutline)}
-                                >
-                                    <Plus className="mr-1 h-3 w-3" />
-                                    Add{" "}
-                                    {activeRemarkChip
-                                        ? REMARK_CHIP_META[activeRemarkChip].label
-                                        : "Remark"}
-                                </Button>
+                            </Card>
 
-                                {remarksList.length > 0 && (
-                                    <div className={cn(
-                                        "mt-4 pt-4 space-y-2 border-t border-dashed border-neutral-200 pr-2",
-                                        remarksList.length > 1 ? "max-h-[120px] overflow-y-auto" : ""
-                                    )}>
-                                        {remarksList.map((remark, index) => {
-                                            const isBreakdown = remark.type === "breakdown";
-                                            const isBreakthrough = remark.type === "breakthrough";
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className={cn(
-                                                        "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
-                                                        isBreakdown
-                                                            ? "bg-red-50 border-red-200 text-red-900"
-                                                            : isBreakthrough
-                                                                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                                                                : "bg-white border-neutral-200 text-neutral-800"
-                                                    )}
-                                                >
-                                                    {remark.type === "breakdown" ? (
-                                                        <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
-                                                    ) : remark.type === "breakthrough" ? (
-                                                        <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
-                                                    ) : remark.type === "employeeFeedback" ? (
-                                                        <User className="h-4 w-4 text-blue-500 mt-0.5" />
-                                                    ) : remark.type === "clientFeedback" ? (
-                                                        <Users className="h-4 w-4 text-purple-500 mt-0.5" />
-                                                    ) : remark.type === "remark" ? (
-                                                        <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
-                                                    ) : (
-                                                        <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
-                                                    )}
-                                                    <div className="flex-1 space-y-1">
-                                                        {remark.type && (
-                                                            <p className="text-xs font-bold">
-                                                                {REMARK_CHIP_META[remark.type as RemarkChipId]
-                                                                    ?.label || remark.type}
-                                                            </p>
-                                                        )}
-                                                        <p className="text-sm whitespace-pre-wrap">
-                                                            {remark.text}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveRemark(index)}
-                                                        className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
-
-                        {/* Automated Weekly Score Preview */}
-                        <div className="flex flex-col gap-4">
-                            <Card className={cn("flex flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
-                            <div className="mb-3 flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                    <Target className="h-4 w-4 shrink-0 text-[#111111]" />
-                                    <h4 className="text-sm font-bold leading-none text-[#111111]">
-                                        Live Score Preview
-                                    </h4>
-                                </div>
-                                <Badge className="shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]">
-                                    {formatLiveScore(weeklyScore.total)}/100 Pts
-                                </Badge>
-                            </div>
-
-                            <div className="mb-2.5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                                {liveScoreRows.map((stat) => (
-                                    <div
-                                        key={stat.label}
-                                        className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
-                                    >
-                                        <div className="sr-only">
-                                            {stat.icon}
+                            {/* Automated Weekly Score Preview */}
+                            <div className="flex flex-col gap-4">
+                                <Card className={cn("flex flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <Target className="h-4 w-4 shrink-0 text-[#111111]" />
+                                            <h4 className="text-sm font-bold leading-none text-[#111111]">
+                                                Live Score Preview
+                                            </h4>
                                         </div>
-                                        <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
-                                            {stat.label}
-                                        </p>
-                                        <p
-                                            className="text-[22px] font-bold leading-none text-[#DA7756]"
-                                        >
-                                            {formatLiveScore(stat.score)}/{stat.max}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-
-
-                        </Card>
-
-                            <div className="mb-0 flex items-start gap-2.5 shrink-0 rounded-[12px] border border-[#efcdbf] bg-[#f6e8df] px-3 py-2.5 shadow-none sm:items-center">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#DA7756] text-white">
-                                    <Star className="h-4 w-4 fill-white text-white" />
-                                </div>
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h4 className="text-sm font-bold leading-tight text-[#2f2f2f]">
-                                            Bonus Opportunity!
-                                        </h4>
-                                        <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-black text-white hover:bg-[#DA7756]">
-                                            + 05 pts
+                                        <Badge className="shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]">
+                                            {formatLiveScore(weeklyScore.total)}/100 Pts
                                         </Badge>
                                     </div>
-                                    <p className="mt-0 text-xs leading-tight text-[#6f625c]">
-                                        Submit within the week window to earn bonus points.
-                                    </p>
+
+                                    <div className="mb-2.5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                        {liveScoreRows.map((stat) => (
+                                            <div
+                                                key={stat.label}
+                                                className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
+                                            >
+                                                <div className="sr-only">
+                                                    {stat.icon}
+                                                </div>
+                                                <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
+                                                    {stat.label}
+                                                </p>
+                                                <p
+                                                    className="text-[22px] font-bold leading-none text-[#DA7756]"
+                                                >
+                                                    {formatLiveScore(stat.score)}/{stat.max}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+
+                                </Card>
+
+                                <div className="mb-0 flex items-start gap-2.5 shrink-0 rounded-[12px] border border-[#efcdbf] bg-[#f6e8df] px-3 py-2.5 shadow-none sm:items-center">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#DA7756] text-white">
+                                        <Star className="h-4 w-4 fill-white text-white" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h4 className="text-sm font-bold leading-tight text-[#2f2f2f]">
+                                                Bonus Opportunity!
+                                            </h4>
+                                            <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-black text-white hover:bg-[#DA7756]">
+                                                + 05 pts
+                                            </Badge>
+                                        </div>
+                                        <p className="mt-0 text-xs leading-tight text-[#6f625c]">
+                                            Submit within the week window to earn bonus points.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         </div>
 
                         <button
@@ -5483,12 +5446,12 @@ const WeeklyReports = () => {
                                                                 ? reportData.upcoming_week_plan[0] || {}
                                                                 : reportData.upcoming_week_plan || {}
                                                         ).flat().length === 0 && (
-                                                            <div className="py-6 text-center">
-                                                                <p className="text-sm italic text-neutral-400">
-                                                                    No priorities recorded for next week
-                                                                </p>
-                                                            </div>
-                                                        )}
+                                                                <div className="py-6 text-center">
+                                                                    <p className="text-sm italic text-neutral-400">
+                                                                        No priorities recorded for next week
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -5599,782 +5562,782 @@ const WeeklyReports = () => {
             </div>
 
             {openTaskModal && (
-            <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
-                <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
-                    <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
-                        <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
-                        <hr className="border border-[#E95420] mt-4" />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                        <ProjectTaskCreateModal
-                            isEdit={false}
-                            onCloseModal={() => setOpenTaskModal(false)}
-                            prefillData={{
-                                start_date: planPreFillDate ?? currentDateValue,
-                            }}
-                        />
-                    </div>
-                </MuiDialogContent>
-            </MuiDialog>
+                <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
+                    <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
+                        <div className="sticky top-0 bg-white z-10">
+                            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+                            <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
+                            <hr className="border border-[#E95420] mt-4" />
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            <ProjectTaskCreateModal
+                                isEdit={false}
+                                onCloseModal={() => setOpenTaskModal(false)}
+                                prefillData={{
+                                    start_date: planPreFillDate ?? currentDateValue,
+                                }}
+                            />
+                        </div>
+                    </MuiDialogContent>
+                </MuiDialog>
             )}
 
             {openIssueModal && (
-            <AddIssueModal
-                openDialog={openIssueModal}
-                handleCloseDialog={() => setOpenIssueModal(false)}
-                prefillData={{
-                    start_date: planPreFillDate ?? currentDateValue,
-                }}
-            />
+                <AddIssueModal
+                    openDialog={openIssueModal}
+                    handleCloseDialog={() => setOpenIssueModal(false)}
+                    prefillData={{
+                        start_date: planPreFillDate ?? currentDateValue,
+                    }}
+                />
             )}
 
             {openTodoModal && (
-            <AddToDoModal
-                isModalOpen={openTodoModal}
-                setIsModalOpen={() => {
-                    setOpenTodoModal(false);
-                    setTasksIssuesRefreshKey((key) => key + 1);
-                }}
-                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                prefillData={{
-                    start_date: planPreFillDate ?? currentDateValue,
-                    // target_date: weekEndDateValue,
-                }}
-            />
+                <AddToDoModal
+                    isModalOpen={openTodoModal}
+                    setIsModalOpen={() => {
+                        setOpenTodoModal(false);
+                        setTasksIssuesRefreshKey((key) => key + 1);
+                    }}
+                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                    prefillData={{
+                        start_date: planPreFillDate ?? currentDateValue,
+                        // target_date: weekEndDateValue,
+                    }}
+                />
             )}
 
             {isTodoDetailsModalOpen && (
-            <TodoDetailsModal
-                isModalOpen={isTodoDetailsModalOpen}
-                setIsModalOpen={setIsTodoDetailsModalOpen}
-                todo={selectedTodo}
-                onEditClick={() => {
-                    setIsTodoDetailsModalOpen(false);
-                    setEditTodoData(selectedTodo);
-                    setIsEditTodoModalOpen(true);
-                }}
-            />
+                <TodoDetailsModal
+                    isModalOpen={isTodoDetailsModalOpen}
+                    setIsModalOpen={setIsTodoDetailsModalOpen}
+                    todo={selectedTodo}
+                    onEditClick={() => {
+                        setIsTodoDetailsModalOpen(false);
+                        setEditTodoData(selectedTodo);
+                        setIsEditTodoModalOpen(true);
+                    }}
+                />
             )}
 
             {isEditTaskModalOpen && (
-            <MuiDialog
-                open={isEditTaskModalOpen}
-                onClose={() => {
-                    setIsEditTaskModalOpen(false);
-                    setEditTaskData(null);
-                }}
-                TransitionComponent={Transition}
-                maxWidth={false}
-            >
-                <MuiDialogContent
-                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
-                    sx={{ padding: "0 !important" }}
+                <MuiDialog
+                    open={isEditTaskModalOpen}
+                    onClose={() => {
+                        setIsEditTaskModalOpen(false);
+                        setEditTaskData(null);
+                    }}
+                    TransitionComponent={Transition}
+                    maxWidth={false}
                 >
-                    <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Edit Task</h3>
-                        <X
-                            className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
-                            onClick={() => {
-                                setIsEditTaskModalOpen(false);
-                                setEditTaskData(null);
-                            }}
-                        />
-                        <hr className="border border-[#E95420] mt-4" />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                        <ProjectTaskEditModal
-                            taskId={editTaskData?.id}
-                            onCloseModal={() => {
-                                setIsEditTaskModalOpen(false);
-                                setEditTaskData(null);
-                                setTasksIssuesRefreshKey((key) => key + 1);
-                            }}
-                        />
-                    </div>
-                </MuiDialogContent>
-            </MuiDialog>
+                    <MuiDialogContent
+                        className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                        style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                        sx={{ padding: "0 !important" }}
+                    >
+                        <div className="sticky top-0 bg-white z-10">
+                            <h3 className="text-[14px] font-medium text-center mt-8">Edit Task</h3>
+                            <X
+                                className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+                                onClick={() => {
+                                    setIsEditTaskModalOpen(false);
+                                    setEditTaskData(null);
+                                }}
+                            />
+                            <hr className="border border-[#E95420] mt-4" />
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            <ProjectTaskEditModal
+                                taskId={editTaskData?.id}
+                                onCloseModal={() => {
+                                    setIsEditTaskModalOpen(false);
+                                    setEditTaskData(null);
+                                    setTasksIssuesRefreshKey((key) => key + 1);
+                                }}
+                            />
+                        </div>
+                    </MuiDialogContent>
+                </MuiDialog>
             )}
 
             {isEditIssueModalOpen && (
-            <EditIssueModal
-                openDialog={isEditIssueModalOpen}
-                handleCloseDialog={() => {
-                    setIsEditIssueModalOpen(false);
-                    setEditIssueData(null);
-                }}
-                issueData={editIssueData}
-                onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
-            />
+                <EditIssueModal
+                    openDialog={isEditIssueModalOpen}
+                    handleCloseDialog={() => {
+                        setIsEditIssueModalOpen(false);
+                        setEditIssueData(null);
+                    }}
+                    issueData={editIssueData}
+                    onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                />
             )}
 
             {isEditTodoModalOpen && (
-            <AddToDoModal
-                isModalOpen={isEditTodoModalOpen}
-                setIsModalOpen={() => {
-                    setIsEditTodoModalOpen(false);
-                    setEditTodoData(null);
-                    setTasksIssuesRefreshKey((key) => key + 1);
-                }}
-                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                editingTodo={editTodoData}
-                isEditMode={!!editTodoData}
-                prefillData={editTodoData || {}}
-            />
+                <AddToDoModal
+                    isModalOpen={isEditTodoModalOpen}
+                    setIsModalOpen={() => {
+                        setIsEditTodoModalOpen(false);
+                        setEditTodoData(null);
+                        setTasksIssuesRefreshKey((key) => key + 1);
+                    }}
+                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                    editingTodo={editTodoData}
+                    isEditMode={!!editTodoData}
+                    prefillData={editTodoData || {}}
+                />
             )}
 
             {isOverdueModalOpen && (
-            <OverdueReasonModal
-                isOpen={isOverdueModalOpen}
-                onClose={() => {
-                    setIsOverdueModalOpen(false);
-                    setOverdueItem(null);
-                    setOverdueReason("");
-                }}
-                reason={overdueReason}
-                setReason={setOverdueReason}
-                onSubmit={handleOverdueReasonSubmit}
-                isLoading={isOverdueLoading}
-            />
+                <OverdueReasonModal
+                    isOpen={isOverdueModalOpen}
+                    onClose={() => {
+                        setIsOverdueModalOpen(false);
+                        setOverdueItem(null);
+                        setOverdueReason("");
+                    }}
+                    reason={overdueReason}
+                    setReason={setOverdueReason}
+                    onSubmit={handleOverdueReasonSubmit}
+                    isLoading={isOverdueLoading}
+                />
             )}
 
             {isPauseModalOpen && (
-            <PauseReasonModal
-                isOpen={isPauseModalOpen}
-                onClose={() => {
-                    setIsPauseModalOpen(false);
-                    setPauseTaskId(null);
-                }}
-                onSubmit={handlePauseTaskSubmit}
-                isLoading={isPauseLoading}
-                taskId={pauseTaskId}
-            />
+                <PauseReasonModal
+                    isOpen={isPauseModalOpen}
+                    onClose={() => {
+                        setIsPauseModalOpen(false);
+                        setPauseTaskId(null);
+                    }}
+                    onSubmit={handlePauseTaskSubmit}
+                    isLoading={isPauseLoading}
+                    taskId={pauseTaskId}
+                />
             )}
 
             {selectedSop && (
-            <Dialog
-                open={Boolean(selectedSop)}
-                onOpenChange={(open) => {
-                    if (!open) setSelectedSopId(null);
-                }}
-            >
-                <DialogContent className="max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
-                    {selectedSop && (
-                        <div className="flex max-h-[88vh] flex-col">
-                            <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
-                                <DialogClose className="absolute right-5 top-5 rounded-full p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700">
-                                    <X className="h-4 w-4" />
-                                    <span className="sr-only">Close</span>
-                                </DialogClose>
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                    <div className="flex min-w-0 gap-3">
-                                        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fef6f4] text-[#DA7756]">
-                                            <FileText className="h-5 w-5" />
-                                        </div>
-                                        <div className="min-w-0 space-y-1">
-                                            <DialogTitle className="truncate text-xl font-bold text-neutral-900">
-                                                {selectedSop.system_name || "Untitled SOP"}
-                                            </DialogTitle>
-                                            <DialogDescription className="text-sm text-neutral-500">
-                                                {selectedSop.department_name || "No department"}
-                                            </DialogDescription>
-                                        </div>
-                                    </div>
-                                    <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                        <Badge className="rounded-full border-0 bg-[#fef6f4] px-3 py-1 text-[#DA7756] hover:bg-[#fef6f4]">
-                                            {getSopStatusValue(selectedSop.status)}
-                                        </Badge>
-                                        <Badge className="rounded-full border-0 bg-neutral-100 px-3 py-1 capitalize text-neutral-700 hover:bg-neutral-100">
-                                            {formatSopValue(selectedSop.priority)} priority
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </DialogHeader>
-
-                            <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                                                <Activity className="h-4 w-4" />
+                <Dialog
+                    open={Boolean(selectedSop)}
+                    onOpenChange={(open) => {
+                        if (!open) setSelectedSopId(null);
+                    }}
+                >
+                    <DialogContent className="max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
+                        {selectedSop && (
+                            <div className="flex max-h-[88vh] flex-col">
+                                <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
+                                    <DialogClose className="absolute right-5 top-5 rounded-full p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700">
+                                        <X className="h-4 w-4" />
+                                        <span className="sr-only">Close</span>
+                                    </DialogClose>
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="flex min-w-0 gap-3">
+                                            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fef6f4] text-[#DA7756]">
+                                                <FileText className="h-5 w-5" />
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Health</p>
-                                                <p className="mt-0.5 text-xl font-bold text-neutral-900">
-                                                    {Number(selectedSop.health_score ?? 0)}%
+                                            <div className="min-w-0 space-y-1">
+                                                <DialogTitle className="truncate text-xl font-bold text-neutral-900">
+                                                    {selectedSop.system_name || "Untitled SOP"}
+                                                </DialogTitle>
+                                                <DialogDescription className="text-sm text-neutral-500">
+                                                    {selectedSop.department_name || "No department"}
+                                                </DialogDescription>
+                                            </div>
+                                        </div>
+                                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                            <Badge className="rounded-full border-0 bg-[#fef6f4] px-3 py-1 text-[#DA7756] hover:bg-[#fef6f4]">
+                                                {getSopStatusValue(selectedSop.status)}
+                                            </Badge>
+                                            <Badge className="rounded-full border-0 bg-neutral-100 px-3 py-1 capitalize text-neutral-700 hover:bg-neutral-100">
+                                                {formatSopValue(selectedSop.priority)} priority
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </DialogHeader>
+
+                                <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                                    <Activity className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Health</p>
+                                                    <p className="mt-0.5 text-xl font-bold text-neutral-900">
+                                                        {Number(selectedSop.health_score ?? 0)}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                                    <Users className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Department</p>
+                                                    <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                        {formatSopValue(selectedSop.department_name)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                                                    <User className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Assignee</p>
+                                                    <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                        {formatSopValue(selectedSop.assignee_name)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                        <p className="text-xs font-semibold uppercase text-neutral-500">Description</p>
+                                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-800">
+                                            {formatSopValue(selectedSop.description)}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        {[
+                                            ["Created By", selectedSop.created_by_name],
+                                            ["Updated By", selectedSop.updated_by_name],
+                                            ["Created At", formatSopDate(selectedSop.created_at)],
+                                            ["Updated At", formatSopDate(selectedSop.updated_at)],
+                                        ].map(([label, value]) => (
+                                            <div
+                                                key={label}
+                                                className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm"
+                                            >
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    {label}
+                                                </p>
+                                                <p className="mt-1 break-words text-sm font-semibold text-neutral-900">
+                                                    {formatSopValue(value)}
                                                 </p>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
+
                                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                                <Users className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Department</p>
-                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
-                                                    {formatSopValue(selectedSop.department_name)}
-                                                </p>
-                                            </div>
-                                        </div>
+                                        <p className="text-xs font-semibold uppercase text-neutral-500">
+                                            Documentation URL
+                                        </p>
+                                        {selectedSop.documentation_url ? (
+                                            <a
+                                                href={selectedSop.documentation_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-2 block break-all text-sm font-semibold text-[#DA7756] hover:underline"
+                                            >
+                                                {selectedSop.documentation_url}
+                                            </a>
+                                        ) : (
+                                            <p className="mt-2 text-sm text-neutral-600">Not available</p>
+                                        )}
                                     </div>
+
                                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                                                <User className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Assignee</p>
-                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
-                                                    {formatSopValue(selectedSop.assignee_name)}
-                                                </p>
-                                            </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-xs font-semibold uppercase text-neutral-500">KPIs</p>
+                                            <Badge className="rounded-full border-0 bg-neutral-100 text-neutral-700 hover:bg-neutral-100">
+                                                {Array.isArray(selectedSop.kpis) ? selectedSop.kpis.length : 0}
+                                            </Badge>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase text-neutral-500">Description</p>
-                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-800">
-                                        {formatSopValue(selectedSop.description)}
-                                    </p>
-                                </div>
-
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {[
-                                        ["Created By", selectedSop.created_by_name],
-                                        ["Updated By", selectedSop.updated_by_name],
-                                        ["Created At", formatSopDate(selectedSop.created_at)],
-                                        ["Updated At", formatSopDate(selectedSop.updated_at)],
-                                    ].map(([label, value]) => (
-                                        <div
-                                            key={label}
-                                            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm"
-                                        >
-                                            <p className="text-xs font-semibold uppercase text-neutral-500">
-                                                {label}
-                                            </p>
-                                            <p className="mt-1 break-words text-sm font-semibold text-neutral-900">
-                                                {formatSopValue(value)}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase text-neutral-500">
-                                        Documentation URL
-                                    </p>
-                                    {selectedSop.documentation_url ? (
-                                        <a
-                                            href={selectedSop.documentation_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="mt-2 block break-all text-sm font-semibold text-[#DA7756] hover:underline"
-                                        >
-                                            {selectedSop.documentation_url}
-                                        </a>
-                                    ) : (
-                                        <p className="mt-2 text-sm text-neutral-600">Not available</p>
-                                    )}
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <p className="text-xs font-semibold uppercase text-neutral-500">KPIs</p>
-                                        <Badge className="rounded-full border-0 bg-neutral-100 text-neutral-700 hover:bg-neutral-100">
-                                            {Array.isArray(selectedSop.kpis) ? selectedSop.kpis.length : 0}
-                                        </Badge>
-                                    </div>
-                                    {Array.isArray(selectedSop.kpis) && selectedSop.kpis.length > 0 ? (
-                                        <div className="mt-3 space-y-2">
-                                            {selectedSop.kpis.map((kpi: any) => (
-                                                <div
-                                                    key={kpi.id ?? `${kpi.kpi_id}-${kpi.position}`}
-                                                    className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
-                                                >
-                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                                        <div className="min-w-0">
-                                                            <p className="text-sm font-bold text-neutral-900">
-                                                                {formatSopValue(kpi.kpi_name)}
-                                                            </p>
-                                                            <p className="text-xs text-neutral-500">
-                                                                {formatSopValue(kpi.kpi_category)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-neutral-600">
-                                                            <span className="rounded-full bg-white px-2.5 py-1 capitalize text-neutral-700">
-                                                                {formatSopValue(kpi.kpi_frequency)}
-                                                            </span>
+                                        {Array.isArray(selectedSop.kpis) && selectedSop.kpis.length > 0 ? (
+                                            <div className="mt-3 space-y-2">
+                                                {selectedSop.kpis.map((kpi: any) => (
+                                                    <div
+                                                        key={kpi.id ?? `${kpi.kpi_id}-${kpi.position}`}
+                                                        className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
+                                                    >
+                                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-bold text-neutral-900">
+                                                                    {formatSopValue(kpi.kpi_name)}
+                                                                </p>
+                                                                <p className="text-xs text-neutral-500">
+                                                                    {formatSopValue(kpi.kpi_category)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2 text-xs font-semibold text-neutral-600">
+                                                                <span className="rounded-full bg-white px-2.5 py-1 capitalize text-neutral-700">
+                                                                    {formatSopValue(kpi.kpi_frequency)}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="mt-3 text-sm text-neutral-600">No KPIs linked.</p>
-                                    )}
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="mt-3 text-sm text-neutral-600">No KPIs linked.</p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <DialogFooter className="border-t border-neutral-200 bg-white px-6 py-4">
-                                <Button
-                                    type="button"
-                                    className={cn("h-10 rounded-lg px-5", btnPrimary)}
-                                    onClick={() => setSelectedSopId(null)}
-                                >
-                                    Close
-                                </Button>
-                            </DialogFooter>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+                                <DialogFooter className="border-t border-neutral-200 bg-white px-6 py-4">
+                                    <Button
+                                        type="button"
+                                        className={cn("h-10 rounded-lg px-5", btnPrimary)}
+                                        onClick={() => setSelectedSopId(null)}
+                                    >
+                                        Close
+                                    </Button>
+                                </DialogFooter>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
             )}
 
             {taskIssueMenuAnchor && (
-            <Menu
-                anchorEl={taskIssueMenuAnchor}
-                open={Boolean(taskIssueMenuAnchor)}
-                onClose={() => setTaskIssueMenuAnchor(null)}
-                disableScrollLock
-                slotProps={{
-                    paper: {
-                        sx: {
+                <Menu
+                    anchorEl={taskIssueMenuAnchor}
+                    open={Boolean(taskIssueMenuAnchor)}
+                    onClose={() => setTaskIssueMenuAnchor(null)}
+                    disableScrollLock
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                borderRadius: "12px",
+                                boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                                minWidth: "240px",
+                                overflow: "visible",
+                                maxHeight: "none",
+                                mt: 1,
+                            },
+                        },
+                        list: {
+                            sx: {
+                                py: 0.5,
+                                overflow: "visible",
+                                maxHeight: "none",
+                            },
+                        },
+                    }}
+                    sx={{
+                        "& .MuiPaper-root": {
                             borderRadius: "12px",
                             boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
                             minWidth: "240px",
                             overflow: "visible",
-                            maxHeight: "none",
-                            mt: 1,
-                        },
-                    },
-                    list: {
-                        sx: {
-                            py: 0.5,
-                            overflow: "visible",
-                            maxHeight: "none",
-                        },
-                    },
-                }}
-                sx={{
-                    "& .MuiPaper-root": {
-                        borderRadius: "12px",
-                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "240px",
-                        overflow: "visible",
-                        maxHeight: "none !important",
-                        "&::before": {
-                            content: '""',
-                            display: "block",
-                            position: "absolute",
-                            top: -8,
-                            right: 20,
-                            width: 12,
-                            height: 12,
-                            backgroundColor: "#ffffff",
-                            transform: "translateY(-50%) rotate(45deg)",
-                            zIndex: 0,
-                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
-                        },
-                    },
-                }}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenTaskModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "6px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
+                            maxHeight: "none !important",
+                            "&::before": {
+                                content: '""',
+                                display: "block",
+                                position: "absolute",
+                                top: -8,
+                                right: 20,
+                                width: 12,
+                                height: 12,
+                                backgroundColor: "#ffffff",
+                                transform: "translateY(-50%) rotate(45deg)",
+                                zIndex: 0,
+                                boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                            },
                         },
                     }}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <CheckSquare size={18} className="text-blue-600" />
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenTaskModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "6px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <CheckSquare size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Create a new task
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Create a new task
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenIssueModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 6px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef2f2",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-red-50 rounded-lg">
+                                <AlertCircle size={18} className="text-red-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Report a problem
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenIssueModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 6px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef2f2",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-red-50 rounded-lg">
-                            <AlertCircle size={18} className="text-red-600" />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenTodoModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fffbeb",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-amber-50 rounded-lg">
+                                <ListTodo size={18} className="text-amber-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Add a quick follow-up
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Report a problem
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenTodoModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fffbeb",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-amber-50 rounded-lg">
-                            <ListTodo size={18} className="text-amber-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Add a quick follow-up
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-            </Menu>
+                    </MenuItem>
+                </Menu>
             )}
 
             {/* Day plan dropdown menu */}
             {dayPlanMenuAnchor && (
-            <Menu
-                anchorEl={dayPlanMenuAnchor?.el}
-                open={Boolean(dayPlanMenuAnchor)}
-                onClose={() => setDayPlanMenuAnchor(null)}
-                sx={{
-                    "& .MuiPaper-root": {
-                        borderRadius: "12px",
-                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "220px",
-                        overflow: "visible",
-                        "&::before": {
-                            content: '""',
-                            display: "block",
-                            position: "absolute",
-                            top: -8,
-                            right: 20,
-                            width: 12,
-                            height: 12,
-                            backgroundColor: "#ffffff",
-                            transform: "translateY(-50%) rotate(45deg)",
-                            zIndex: 0,
-                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
-                        },
-                    },
-                }}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
-                        setDayPlanMenuAnchor(null);
-                    }}
+                <Menu
+                    anchorEl={dayPlanMenuAnchor?.el}
+                    open={Boolean(dayPlanMenuAnchor)}
+                    onClose={() => setDayPlanMenuAnchor(null)}
                     sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "8px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
+                        "& .MuiPaper-root": {
+                            borderRadius: "12px",
+                            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                            minWidth: "220px",
+                            overflow: "visible",
+                            "&::before": {
+                                content: '""',
+                                display: "block",
+                                position: "absolute",
+                                top: -8,
+                                right: 20,
+                                width: 12,
+                                height: 12,
+                                backgroundColor: "#ffffff",
+                                transform: "translateY(-50%) rotate(45deg)",
+                                zIndex: 0,
+                                boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                            },
                         },
                     }}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <Plus size={18} className="text-blue-600" />
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "8px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <Plus size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Note</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Note</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenTaskModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <CheckSquare size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenTaskModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <CheckSquare size={18} className="text-blue-600" />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenIssueModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef2f2",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-red-50 rounded-lg">
+                                <AlertCircle size={18} className="text-red-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenTodoModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 8px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef9f0",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-amber-50 rounded-lg">
+                                <ListTodo size={18} className="text-amber-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenIssueModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef2f2",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-red-50 rounded-lg">
-                            <AlertCircle size={18} className="text-red-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenTodoModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 8px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef9f0",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-amber-50 rounded-lg">
-                            <ListTodo size={18} className="text-amber-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-            </Menu>
+                    </MenuItem>
+                </Menu>
             )}
 
             {showClosureModal && (
-            <MuiDialog
-                open={showClosureModal}
-                onClose={() => {
-                    setShowClosureModal(false);
-                    setClosureRemarks("");
-                    setClosureAttachments([]);
-                    setClosureItem(null);
-                }}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                    className: "rounded-[16px]",
-                    sx: {
-                        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
-                        maxHeight: "90vh",
-                    },
-                }}
-            >
-                <div className="p-6 space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-[#1a1a1a]">
-                            Add Closure Remarks
-                        </h2>
-                        <button
-                            onClick={() => {
-                                setShowClosureModal(false);
-                                setClosureRemarks("");
-                                setClosureAttachments([]);
-                                setClosureItem(null);
-                            }}
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
-                    {closureItem && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-3">
-                            <p className="text-xs text-gray-600 font-medium mb-1">Closing:</p>
-                            <p className="text-sm font-bold text-[#1a1a1a]">
-                                {closureItem.title}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1 capitalize">
-                                {closureItem.type} • {closureItem.status.replace(/_/g, " ")}
-                            </p>
-                        </div>
-                    )}
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1a1a1a]">
-                            Closure Remarks (Optional)
-                        </label>
-                        <textarea
-                            value={closureRemarks}
-                            onChange={(e) => setClosureRemarks(e.target.value)}
-                            placeholder="How was this resolved? What was done to close it?"
-                            className="w-full h-[120px] p-3 border border-[#e5e7eb] rounded-[10px] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1a1a1a]">
-                            Attach Files (Optional)
-                        </label>
-                        <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
-                            <div className="space-y-0.5">
-                                <p className="text-xs font-bold text-green-600">
-                                    {closureAttachments.length}/5
-                                </p>
-                                <p className="text-xs text-gray-600 font-medium">
-                                    Limits: Images 2MB, Others 5MB
-                                </p>
-                            </div>
-                            <input
-                                type="file"
-                                ref={closureFileInputRef}
-                                onChange={handleClosureFileChange}
-                                multiple
-                                className="hidden"
-                            />
-                            <Button
-                                disabled={closureAttachments.length >= 5}
-                                onClick={triggerClosureFileUpload}
-                                className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 h-9 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none disabled:opacity-50"
+                <MuiDialog
+                    open={showClosureModal}
+                    onClose={() => {
+                        setShowClosureModal(false);
+                        setClosureRemarks("");
+                        setClosureAttachments([]);
+                        setClosureItem(null);
+                    }}
+                    maxWidth="sm"
+                    fullWidth
+                    PaperProps={{
+                        className: "rounded-[16px]",
+                        sx: {
+                            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+                            maxHeight: "90vh",
+                        },
+                    }}
+                >
+                    <div className="p-6 space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-[#1a1a1a]">
+                                Add Closure Remarks
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    setShowClosureModal(false);
+                                    setClosureRemarks("");
+                                    setClosureAttachments([]);
+                                    setClosureItem(null);
+                                }}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
-                                <Upload size={14} />
-                                File Upload
-                            </Button>
+                                <X size={20} />
+                            </button>
                         </div>
-                        {closureAttachments.length > 0 && (
-                            <div className="space-y-2 mt-3">
-                                {closureAttachments.map((file) => (
-                                    <div
-                                        key={file.id}
-                                        className="flex items-center justify-between bg-blue-50/80 p-3 rounded-[10px] border border-blue-100 animate-in fade-in duration-300"
-                                    >
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <FileText size={16} className="text-blue-500 shrink-0" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium text-blue-600 truncate">
-                                                    {file.name}
-                                                </p>
-                                                <p className="text-xs text-gray-500">{file.size}</p>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none shrink-0"
-                                            onClick={() =>
-                                                setClosureAttachments(
-                                                    closureAttachments.filter((f) => f.id !== file.id)
-                                                )
-                                            }
-                                        >
-                                            <X size={14} className="text-red-500" />
-                                        </Button>
-                                    </div>
-                                ))}
+                        {closureItem && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-3">
+                                <p className="text-xs text-gray-600 font-medium mb-1">Closing:</p>
+                                <p className="text-sm font-bold text-[#1a1a1a]">
+                                    {closureItem.title}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1 capitalize">
+                                    {closureItem.type} • {closureItem.status.replace(/_/g, " ")}
+                                </p>
                             </div>
                         )}
-                    </div>
-                    <div className="flex gap-3 pt-4 border-t border-gray-100">
-                        <Button
-                            variant="outline"
-                            className="flex-1 h-11 border-gray-300 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50 rounded-[8px]"
-                            onClick={() => {
-                                setShowClosureModal(false);
-                                setClosureRemarks("");
-                                setClosureAttachments([]);
-                                setClosureItem(null);
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-[8px] flex items-center justify-center gap-2 shadow-md border-none disabled:opacity-50"
-                            onClick={handleMarkItemClosed}
-                            disabled={isClosureSubmitting}
-                        >
-                            {isClosureSubmitting ? (
-                                <>
-                                    <Loader2 size={16} className="animate-spin" />
-                                    Closing...
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCircle2 size={16} />
-                                    Mark Closed
-                                </>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-[#1a1a1a]">
+                                Closure Remarks (Optional)
+                            </label>
+                            <textarea
+                                value={closureRemarks}
+                                onChange={(e) => setClosureRemarks(e.target.value)}
+                                placeholder="How was this resolved? What was done to close it?"
+                                className="w-full h-[120px] p-3 border border-[#e5e7eb] rounded-[10px] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-[#1a1a1a]">
+                                Attach Files (Optional)
+                            </label>
+                            <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
+                                <div className="space-y-0.5">
+                                    <p className="text-xs font-bold text-green-600">
+                                        {closureAttachments.length}/5
+                                    </p>
+                                    <p className="text-xs text-gray-600 font-medium">
+                                        Limits: Images 2MB, Others 5MB
+                                    </p>
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={closureFileInputRef}
+                                    onChange={handleClosureFileChange}
+                                    multiple
+                                    className="hidden"
+                                />
+                                <Button
+                                    disabled={closureAttachments.length >= 5}
+                                    onClick={triggerClosureFileUpload}
+                                    className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 h-9 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none disabled:opacity-50"
+                                >
+                                    <Upload size={14} />
+                                    File Upload
+                                </Button>
+                            </div>
+                            {closureAttachments.length > 0 && (
+                                <div className="space-y-2 mt-3">
+                                    {closureAttachments.map((file) => (
+                                        <div
+                                            key={file.id}
+                                            className="flex items-center justify-between bg-blue-50/80 p-3 rounded-[10px] border border-blue-100 animate-in fade-in duration-300"
+                                        >
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <FileText size={16} className="text-blue-500 shrink-0" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-medium text-blue-600 truncate">
+                                                        {file.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">{file.size}</p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none shrink-0"
+                                                onClick={() =>
+                                                    setClosureAttachments(
+                                                        closureAttachments.filter((f) => f.id !== file.id)
+                                                    )
+                                                }
+                                            >
+                                                <X size={14} className="text-red-500" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
-                        </Button>
+                        </div>
+                        <div className="flex gap-3 pt-4 border-t border-gray-100">
+                            <Button
+                                variant="outline"
+                                className="flex-1 h-11 border-gray-300 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50 rounded-[8px]"
+                                onClick={() => {
+                                    setShowClosureModal(false);
+                                    setClosureRemarks("");
+                                    setClosureAttachments([]);
+                                    setClosureItem(null);
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-[8px] flex items-center justify-center gap-2 shadow-md border-none disabled:opacity-50"
+                                onClick={handleMarkItemClosed}
+                                disabled={isClosureSubmitting}
+                            >
+                                {isClosureSubmitting ? (
+                                    <>
+                                        <Loader2 size={16} className="animate-spin" />
+                                        Closing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 size={16} />
+                                        Mark Closed
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </MuiDialog>
+                </MuiDialog>
             )}
 
             {/* Task completion confirmation modal */}

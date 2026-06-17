@@ -2974,6 +2974,93 @@ const BusinessCompassDailyReport: React.FC = () => {
     addAccomplishment,
   ]);
 
+  const dailyAiSuggestions = useMemo(() => {
+    const accRate = livePreviewMetrics.accPct || 59;
+    const neededAccomplishments = Math.max(1, Math.ceil((75 - accRate) / 20));
+    const planCount = planningItems.filter(
+      (p) => cleanReportText(p.text) !== ""
+    ).length;
+
+    return [
+      {
+        tone: "red",
+        title: `${taskIssueCounts.overdue || 3} Overdue Tasks`,
+        actionLabel: "View Tasks",
+        description:
+          "Overdue items from yesterday need attention. Reschedule or complete them to avoid further delays.",
+        Icon: AlertCircle,
+        action: () => {
+          setTaskStatusFilter("overdue");
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        tone: "green",
+        title: "Boost Accomplishments",
+        actionLabel: "Add Tasks",
+        description: `Your rate is ${accRate}% today - completing ${neededAccomplishments} more logged tasks will push you past the 75% target.`,
+        Icon: TrendingUp,
+        action: () => {
+          accomplishmentsSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+          });
+          addAccomplishment();
+        },
+      },
+      {
+        tone: "orange",
+        title: "Fill Your Daily Plan",
+        actionLabel: "Open Plan",
+        description: `${planCount}/6 planning items completed. Set strategic priorities now before the day ends.`,
+        Icon: Clock,
+        action: () => {
+          planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        tone: "purple",
+        title: "Assign Task Timings",
+        actionLabel: "Set Timing",
+        description: `${livePreviewMetrics.timing} timing slots set. Adding time estimates improves your score and planning accuracy.`,
+        Icon: Target,
+        action: () => {
+          tasksSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+    ];
+  }, [
+    livePreviewMetrics,
+    planningItems,
+    taskIssueCounts.overdue,
+    addAccomplishment,
+  ]);
+
+  const dailyAiToneStyles: Record<
+    string,
+    { icon: string; action: string; iconBg: string }
+  > = {
+    red: {
+      icon: "text-[#ef4444]",
+      action: "text-[#ef6b62]",
+      iconBg: "bg-[#fff1f0]",
+    },
+    green: {
+      icon: "text-[#29b881]",
+      action: "text-[#23c989]",
+      iconBg: "bg-[#eefbf5]",
+    },
+    orange: {
+      icon: "text-[#f59e0b]",
+      action: "text-[#f28a4b]",
+      iconBg: "bg-[#fff6eb]",
+    },
+    purple: {
+      icon: "text-[#7567d9]",
+      action: "text-[#9586e8]",
+      iconBg: "bg-[#f3f1ff]",
+    },
+  };
+
   const filteredTasksForTable = useMemo(() => {
     const statusMap = {
       open: ["open", "pending", "reopen", "reopened"],
@@ -3138,6 +3225,101 @@ const BusinessCompassDailyReport: React.FC = () => {
           </button>
         </div>
 
+
+        {activeTab === "submit" && (
+          <>
+            <style>{`
+              @keyframes aiSuggestionColorMove {
+                0%   { background-position: 0% 50%; }
+                50%  { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+              @keyframes aiSuggestionBorderFlow {
+                0%, 100% { border-color: rgba(218, 119, 86, 0.55); }
+                33%      { border-color: rgba(129, 106, 229, 0.55); }
+                66%      { border-color: rgba(49, 130, 206, 0.55); }
+              }
+              .daily-ai-suggestions-card {
+                background-image: linear-gradient(120deg, #ffffff 0%, #fff4ef 22%, #f2ecff 45%, #ebf4ff 68%, #ffffff 100%);
+                background-size: 220% 220%;
+                animation: aiSuggestionColorMove 7s ease-in-out infinite, aiSuggestionBorderFlow 6s ease-in-out infinite;
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .daily-ai-suggestions-card { animation: none; }
+              }
+            `}</style>
+            <div
+              className="daily-ai-suggestions-card overflow-hidden rounded-[16px] border border-[#e9ddf6]"
+              style={{
+                boxShadow:
+                  "-10px 12px 24px rgba(218,119,86,0.16), 8px 10px 24px rgba(129,106,229,0.13)",
+              }}
+            >
+              <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] bg-[#DA7756] text-white">
+                    <Sparkles size={12} />
+                  </span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="whitespace-nowrap text-[12px] font-bold leading-none text-[#1f1f1f]">
+                      AI Suggestions
+                    </span>
+                    <span className="truncate text-[10px] font-medium text-[#57545f]">
+                      - Focus areas to improve your daily report
+                    </span>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full bg-[#e8e3ff] px-3 py-1 text-[9px] font-bold leading-none text-[#6b5eca]">
+                  4 insights
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
+                {dailyAiSuggestions.map((suggestion) => {
+                  const tone = dailyAiToneStyles[suggestion.tone];
+                  const SuggestionIcon = suggestion.Icon;
+
+                  return (
+                    <div
+                      key={suggestion.title}
+                      className="min-h-[90px] rounded-[10px] border border-[#eceef4] bg-white px-3 py-3.5"
+                    >
+                      <div className="mb-1.5 flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                              tone.iconBg,
+                              tone.icon
+                            )}
+                          >
+                            <SuggestionIcon size={10} />
+                          </span>
+                          <span className="truncate text-[10px] font-bold leading-none text-[#2f2c34]">
+                            {suggestion.title}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={suggestion.action}
+                          className={cn(
+                            "shrink-0 text-[9px] font-medium leading-none hover:underline",
+                            tone.action
+                          )}
+                        >
+                          {suggestion.actionLabel} &gt;
+                        </button>
+                      </div>
+                      <p className="line-clamp-2 text-[10px] font-medium leading-[1.35] text-[#706d78]">
+                        {suggestion.description}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -3735,7 +3917,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   </div>
                                   {(() => {
                                     const d = item.originalData;
-                                    const endDate = fmtDate(startDate);
+                                    const dueDate = fmtDate(
+                                      d?.target_date ||
+                                      d?.due_date ||
+                                      d?.end_date
+                                    );
+                                    const completedDate = fmtDate(startDate);
                                     const effortEst = fmtHours(
                                       d?.total_allocated_hours ||
                                       d?.estimated_hour
@@ -3766,19 +3953,28 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       }
                                     }
                                     const hasInfo =
-                                      endDate || effortEst || issueEffort;
+                                      completedDate || dueDate || effortEst || issueEffort || (item.type === "task" && d?.active_time_till_now);
                                     if (!hasInfo) return null;
                                     return (
                                       <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                        {endDate && (
+                                        {completedDate && (
                                           <span className="flex items-center gap-1 text-[10px] text-gray-400">
                                             <CalendarIcon
                                               size={9}
                                               className="shrink-0"
                                             />
-                                            {endDate}
+                                            {completedDate}
                                           </span>
                                         )}
+                                        {/* {dueDate && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <CalendarIcon
+                                              size={9}
+                                              className="shrink-0"
+                                            />
+                                            Due: {dueDate}
+                                          </span>
+                                        )} */}
                                         {effortEst && (
                                           <span className="flex items-center gap-1 text-[10px] text-gray-400">
                                             <Clock
@@ -3789,12 +3985,21 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           </span>
                                         )}
                                         {issueEffort && (
-                                          <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                          <span className="flex items-center gap-1 text-[10px] text-purple-600">
                                             <Zap
                                               size={9}
                                               className="shrink-0"
                                             />
                                             Effort: {issueEffort}
+                                          </span>
+                                        )}
+                                        {item.type === "task" && d?.active_time_till_now && (
+                                          <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                            <Zap size={9} className="shrink-0" />
+                                            <ActiveTimer
+                                              activeTimeTillNow={d.active_time_till_now}
+                                              isStarted={d.is_started}
+                                            />
                                           </span>
                                         )}
                                       </div>
@@ -4224,11 +4429,36 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                   timeLeftLabel = `${mins}m left`;
                                               }
                                             }
+                                            let issueEffort: string | null = null;
+                                            if (
+                                              item.source_type === "issue" &&
+                                              Array.isArray(d?.issue_allocation_times) &&
+                                              d.issue_allocation_times.length > 0
+                                            ) {
+                                              const totalMin =
+                                                d.issue_allocation_times.reduce(
+                                                  (sum: number, t: any) =>
+                                                    sum + t.hours * 60 + t.minutes,
+                                                  0
+                                                );
+                                              if (totalMin > 0) {
+                                                const h = Math.floor(totalMin / 60);
+                                                const m = totalMin % 60;
+                                                issueEffort =
+                                                  h > 0 && m > 0
+                                                    ? `${h}h ${m}m`
+                                                    : h > 0
+                                                      ? `${h}h`
+                                                      : `${m}m`;
+                                              }
+                                            }
                                             const hasInfo =
                                               endDate ||
                                               effortEst ||
                                               overdueLabel ||
-                                              timeLeftLabel;
+                                              timeLeftLabel ||
+                                              issueEffort ||
+                                              (item.source_type === "task" && d?.active_time_till_now);
                                             if (!hasInfo) return null;
                                             return (
                                               <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
@@ -4266,6 +4496,24 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                       className="shrink-0"
                                                     />
                                                     Est: {effortEst}
+                                                  </span>
+                                                )}
+                                                {issueEffort && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                    <Zap
+                                                      size={9}
+                                                      className="shrink-0"
+                                                    />
+                                                    Effort: {issueEffort}
+                                                  </span>
+                                                )}
+                                                {item.source_type === "task" && d?.active_time_till_now && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                    <Zap size={9} className="shrink-0" />
+                                                    <ActiveTimer
+                                                      activeTimeTillNow={d.active_time_till_now}
+                                                      isStarted={d.is_started}
+                                                    />
                                                   </span>
                                                 )}
                                               </div>
@@ -5763,48 +6011,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                   </div>
 
                   <div className="bc-daily-card-body p-0 flex-1 flex flex-col">
-                    {isAiPopupOpen && (
-                      <div className="bc-ai-inline-popup">
-                        <div className="bc-ai-inline-tabs">
-                          <button
-                            type="button"
-                            className={cn("bc-ai-popup-tab", aiPopupTab === "accomplishments" && "bc-ai-popup-tab-active")}
-                            onClick={() => setAiPopupTab("accomplishments")}
-                          >
-                            Fill my accomplishments
-                          </button>
-                          <button
-                            type="button"
-                            className={cn("bc-ai-popup-tab", aiPopupTab === "plan" && "bc-ai-popup-tab-active")}
-                            onClick={() => setAiPopupTab("plan")}
-                          >
-                            Plan for next day
-                          </button>
-                        </div>
-                        <div className="bc-ai-popup-input-wrap">
-                          <textarea
-                            value={aiPromptText}
-                            onChange={(e) => setAiPromptText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                setIsAiPopupOpen(false);
-                                setAiPromptText("");
-                                if (aiPopupTab === "accomplishments") {
-                                  accomplishmentsSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-                                  addAccomplishment();
-                                } else {
-                                  planningSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-                                }
-                              }
-                            }}
-                            placeholder="Ask anything..."
-                            className="bc-ai-popup-input"
-                            autoFocus
-                          />
-                        </div>
-                      </div>
-                    )}
                     {tasksLoading || issuesLoading ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
                         <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
@@ -7087,28 +7293,25 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         className="relative group animate-in fade-in duration-200"
                                       >
                                         <div className="flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all border-[#DA7756]/10 bg-[#DA7756]/10">
-                                          <div className="flex items-center gap-4">
-                                            <span className={cn(
-                                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                              sourceType === "task"
-                                                ? "bg-[#DA7756] text-white"
-                                                : sourceType === "issue"
-                                                  ? "bg-violet-100 text-violet-700"
-                                                  : sourceType === "todo"
-                                                    ? "bg-yellow-100 text-yellow-700"
-                                                    : "bg-gray-500 text-white"
-                                            )}>
-                                              {sourceType ?? "Note"}
-                                            </span>
-                                            <span className="flex-1 text-sm font-medium text-gray-400 truncate">
-                                              {itemText}
-                                            </span>
+                                          <div className="flex items-center gap-2">
+                                            {/* <div className="h-6 w-6 rounded-[6px] flex items-center justify-center shrink-0 bg-[#DA7756] border-2 border-[#DA7756]">
+                                              <Check size={14} className="text-white" />
+                                            </div>
+                                            <Star
+                                              size={18}
+                                              className={cn(
+                                                "shrink-0",
+                                                (ach.star || ach.is_starred)
+                                                  ? "text-[#eab308] fill-[#eab308]"
+                                                  : "text-[#DA7756]/70"
+                                              )}
+                                            /> */}
                                             {(sourceType || sourceId) && (
-                                              <div className="flex items-center gap-1 shrink-0">
+                                              <>
                                                 <button
                                                   type="button"
                                                   onClick={() => handleViewReportItem(ach)}
-                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
                                                   title={`View ${sourceType || "item"} details`}
                                                 >
                                                   <Eye size={14} className="text-[#DA7756]" />
@@ -7116,22 +7319,111 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                 <button
                                                   type="button"
                                                   onClick={() => handleEditReportItem(ach)}
-                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
+                                                  className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
                                                   title={`Edit ${sourceType || "item"}`}
                                                 >
-                                                  <Pencil size={13} className="text-gray-500 hover:text-[#DA7756]" />
+                                                  <Pencil size={13} />
                                                 </button>
-                                              </div>
+                                              </>
+                                            )}
+                                            <span className={cn(
+                                              "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                              sourceType === "task"
+                                                ? "bg-[#DA7756] text-white"
+                                                : sourceType === "issue"
+                                                  ? "bg-violet-600 text-white"
+                                                  : sourceType === "todo"
+                                                    ? "bg-amber-500 text-white"
+                                                    : "bg-gray-500 text-white"
+                                            )}>
+                                              {sourceType ?? "Note"}
+                                            </span>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-gray-400 line-through truncate select-none">
+                                                {itemText}
+                                              </p>
+                                            </div>
+                                            {ach.originalData?.priority && (
+                                              <span
+                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                style={{
+                                                  backgroundColor:
+                                                    ach.originalData.priority === "High"
+                                                      ? "#fee2e2"
+                                                      : ach.originalData.priority === "Medium"
+                                                        ? "#fef3c7"
+                                                        : "#dcfce7",
+                                                  color:
+                                                    ach.originalData.priority === "High"
+                                                      ? "#991b1b"
+                                                      : ach.originalData.priority === "Medium"
+                                                        ? "#92400e"
+                                                        : "#166534",
+                                                }}
+                                              >
+                                                {ach.originalData.priority}
+                                              </span>
                                             )}
                                           </div>
-                                          {/* {itemDate && (
-                                            <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                <CalendarIcon size={9} className="shrink-0" />
-                                                {itemDate}
-                                              </span>
-                                            </div>
-                                          )} */}
+                                          {(() => {
+                                            const d = ach.originalData;
+                                            const completedDate = fmtDate(report.start_date);
+                                            const dueDate = d ? fmtDate(d?.target_date || d?.due_date || d?.end_date) : null;
+                                            const effortEst = d ? fmtHours(d?.total_allocated_hours || d?.estimated_hour) : null;
+                                            let issueEffort: string | null = null;
+                                            if (
+                                              sourceType === "issue" &&
+                                              d &&
+                                              Array.isArray(d?.issue_allocation_times) &&
+                                              d.issue_allocation_times.length > 0
+                                            ) {
+                                              const totalMin = d.issue_allocation_times.reduce(
+                                                (sum: number, t: any) => sum + t.hours * 60 + t.minutes, 0
+                                              );
+                                              if (totalMin > 0) {
+                                                const h = Math.floor(totalMin / 60);
+                                                const m = totalMin % 60;
+                                                issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                              }
+                                            }
+                                            return (
+                                              <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                                {completedDate && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                    <CalendarIcon size={9} className="shrink-0" />
+                                                    {completedDate}
+                                                  </span>
+                                                )}
+                                                {dueDate && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <CalendarIcon size={9} className="shrink-0" />
+                                                    Due: {dueDate}
+                                                  </span>
+                                                )}
+                                                {effortEst && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                    <Clock size={9} className="shrink-0" />
+                                                    Est: {effortEst}
+                                                  </span>
+                                                )}
+                                                {issueEffort && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                    <Zap size={9} className="shrink-0" />
+                                                    Effort: {issueEffort}
+                                                  </span>
+                                                )}
+                                                {sourceType === "task" && d?.active_time_till_now && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                    <Zap size={9} className="shrink-0" />
+                                                    <ActiveTimer
+                                                      activeTimeTillNow={d.active_time_till_now}
+                                                      isStarted={d.is_started}
+                                                    />
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
                                         </div>
                                       </div>
                                     );
@@ -7180,6 +7472,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       task.originalData?.estimated_hour
                                     );
 
+                                    const livePriority =
+                                      task.originalData?.priority;
+
                                     return (
                                       <div
                                         key={idx}
@@ -7187,6 +7482,35 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       >
                                         <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] hover:border-[#DA7756]/30 transition-all">
                                           <div className="flex min-w-0 items-center gap-2">
+                                            {/* <Star
+                                              size={18}
+                                              className={cn(
+                                                "shrink-0",
+                                                task.is_starred
+                                                  ? "text-[#eab308] fill-[#eab308]"
+                                                  : "text-gray-300"
+                                              )}
+                                            /> */}
+                                            {(sourceType || sourceId) && (
+                                              <>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleViewReportItem(task)}
+                                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                                  title={`View ${sourceType || "item"} details`}
+                                                >
+                                                  <Eye size={14} className="text-amber-600" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleEditReportItem(task)}
+                                                  className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                                  title={`Edit ${sourceType || "item"}`}
+                                                >
+                                                  <Pencil size={13} />
+                                                </button>
+                                              </>
+                                            )}
                                             <span className={cn(
                                               "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
                                               sourceType === "task"
@@ -7199,44 +7523,111 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             )}>
                                               {sourceType ?? "Note"}
                                             </span>
-                                            <span className="min-w-0 flex-1 text-sm font-medium text-gray-700 truncate">
-                                              {itemText}
-                                            </span>
-                                            {(sourceType || sourceId) && (
-                                              <div className="flex items-center gap-1 shrink-0">
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleViewReportItem(task)}
-                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
-                                                  title={`View ${sourceType || "item"} details`}
-                                                >
-                                                  <Eye size={14} className="text-[#DA7756]" />
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleEditReportItem(task)}
-                                                  className="p-1 hover:bg-[#f3f4f6] rounded-[6px] transition-colors"
-                                                  title={`Edit ${sourceType || "item"}`}
-                                                >
-                                                  <Pencil size={13} className="text-gray-500 hover:text-[#DA7756]" />
-                                                </button>
-                                              </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-gray-700 truncate">
+                                                {itemText}
+                                              </p>
+                                            </div>
+                                            {livePriority && (
+                                              <span
+                                                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                style={{
+                                                  backgroundColor:
+                                                    livePriority === "High"
+                                                      ? "#fee2e2"
+                                                      : livePriority === "Medium"
+                                                        ? "#fef3c7"
+                                                        : "#dcfce7",
+                                                  color:
+                                                    livePriority === "High"
+                                                      ? "#991b1b"
+                                                      : livePriority === "Medium"
+                                                        ? "#92400e"
+                                                        : "#166534",
+                                                }}
+                                              >
+                                                {livePriority}
+                                              </span>
                                             )}
                                           </div>
-                                          {/* {(itemDate || estimatedHours) && (
-                                            <div className="mt-2 flex flex-wrap items-center gap-2 pl-6 text-[11px] text-gray-500">
-                                              {itemDate && (
-                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
-                                                  {itemDate}
-                                                </span>
-                                              )}
-                                              {estimatedHours && (
-                                                <span className="rounded-full bg-[#f3f4f6] px-2 py-1 uppercase tracking-wide font-semibold">
-                                                  {estimatedHours}
-                                                </span>
-                                              )}
-                                            </div>
-                                          )} */}
+                                          {(() => {
+                                            const d = task.originalData;
+                                            const overdueLabel = d ? getOverdueLabel(d?.target_date || d?.due_date || d?.end_date) : null;
+                                            let timeLeftLabel: string | null = null;
+                                            if (sourceType === "issue" && d?.end_date && !overdueLabel) {
+                                              const now = new Date();
+                                              const end = new Date(d.end_date);
+                                              end.setHours(23, 59, 59, 999);
+                                              const diff = end.getTime() - now.getTime();
+                                              if (diff > 0) {
+                                                const days = Math.floor(diff / 86400000);
+                                                const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                const mins = Math.floor((diff % 3600000) / 60000);
+                                                timeLeftLabel = days > 0 ? `${days}d ${hrs}h left` : hrs > 0 ? `${hrs}h ${mins}m left` : `${mins}m left`;
+                                              }
+                                            }
+                                            let issueEffort: string | null = null;
+                                            if (
+                                              sourceType === "issue" &&
+                                              d &&
+                                              Array.isArray(d?.issue_allocation_times) &&
+                                              d.issue_allocation_times.length > 0
+                                            ) {
+                                              const totalMin = d.issue_allocation_times.reduce(
+                                                (sum: number, t: any) => sum + t.hours * 60 + t.minutes, 0
+                                              );
+                                              if (totalMin > 0) {
+                                                const h = Math.floor(totalMin / 60);
+                                                const m = totalMin % 60;
+                                                issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                              }
+                                            }
+                                            const hasInfo = itemDate || estimatedHours || overdueLabel || timeLeftLabel || issueEffort || (sourceType === "task" && d?.active_time_till_now);
+                                            if (!hasInfo) return null;
+                                            return (
+                                              <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
+                                                {itemDate && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                    <CalendarIcon size={9} className="shrink-0" />
+                                                    {itemDate}
+                                                  </span>
+                                                )}
+                                                {overdueLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                    <AlertCircle size={9} className="shrink-0" />
+                                                    {overdueLabel}
+                                                  </span>
+                                                )}
+                                                {timeLeftLabel && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                    <Clock size={9} className="shrink-0" />
+                                                    {timeLeftLabel}
+                                                  </span>
+                                                )}
+                                                {estimatedHours && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                    <Clock size={9} className="shrink-0" />
+                                                    Est: {estimatedHours}
+                                                  </span>
+                                                )}
+                                                {issueEffort && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                    <Zap size={9} className="shrink-0" />
+                                                    Effort: {issueEffort}
+                                                  </span>
+                                                )}
+                                                {sourceType === "task" && d?.active_time_till_now && (
+                                                  <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                    <Zap size={9} className="shrink-0" />
+                                                    <ActiveTimer
+                                                      activeTimeTillNow={d.active_time_till_now}
+                                                      isStarted={d.is_started}
+                                                    />
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
                                         </div>
                                       </div>
                                     );
@@ -8193,15 +8584,69 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       {activeTab === "submit" &&
         createPortal(
-          <button
-            type="button"
-            className="bc-ai-fab"
-            title="AI Suggestions"
-            aria-label="AI Suggestions"
-            onClick={() => setIsAiPopupOpen((open) => !open)}
-          >
-            <AiSparkleIcon className="bc-ai-fab-icon" />
-          </button>,
+          <>
+            {isAiPopupOpen && (
+              <div className="bc-ai-glass-modal">
+                <div className="bc-ai-glass-tabs">
+                  <button
+                    type="button"
+                    className={cn(
+                      "bc-ai-glass-tab",
+                      aiPopupTab === "accomplishments" && "bc-ai-glass-tab-active"
+                    )}
+                    onClick={() => setAiPopupTab("accomplishments")}
+                  >
+                    Fill my accomplishments
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "bc-ai-glass-tab",
+                      aiPopupTab === "plan" && "bc-ai-glass-tab-active"
+                    )}
+                    onClick={() => setAiPopupTab("plan")}
+                  >
+                    Plan for next day
+                  </button>
+                </div>
+                <div className="bc-ai-glass-input-wrap">
+                  <textarea
+                    value={aiPromptText}
+                    onChange={(e) => setAiPromptText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        setIsAiPopupOpen(false);
+                        setAiPromptText("");
+                        if (aiPopupTab === "accomplishments") {
+                          accomplishmentsSectionRef.current?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                          addAccomplishment();
+                        } else {
+                          planningSectionRef.current?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                        }
+                      }
+                    }}
+                    placeholder="Ask anything..."
+                    className="bc-ai-glass-input"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              className="bc-ai-fab"
+              title="AI Suggestions"
+              aria-label="AI Suggestions"
+              onClick={() => setIsAiPopupOpen((open) => !open)}
+            >
+              <AiSparkleIcon className="bc-ai-fab-icon" />
+            </button>
+          </>,
           document.body
         )}
     </div>
