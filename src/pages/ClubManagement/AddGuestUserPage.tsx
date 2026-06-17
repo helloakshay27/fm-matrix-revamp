@@ -569,14 +569,14 @@ export const AddGuestUserPage: React.FC = () => {
         <Button
           onClick={handleSubmit}
           style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 px-8 py-3 text-base font-medium rounded-lg"
+          className="text-white hover:bg-[#C72030]/90 px-8 py-3 text-base font-medium"
         >
           Submit
         </Button>
         <Button
           variant="outline"
           onClick={handleCancel}
-          className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-8 py-3 text-base font-medium rounded-lg"
+          className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-8 py-3 text-base font-medium"
         >
           Cancel
         </Button>
