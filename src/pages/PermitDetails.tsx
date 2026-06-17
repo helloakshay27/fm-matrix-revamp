@@ -1454,7 +1454,7 @@ export const PermitDetails = () => {
                 </button>
                 {!permitData.all_buttons_hidden && (
                     <div className="flex items-center gap-4">
-                        {!isFromPendingApprovals && permitData.show_edit_button && (
+                        {/* {!isFromPendingApprovals && permitData.show_edit_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1464,7 +1464,7 @@ export const PermitDetails = () => {
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
                             </Button>
-                        )}
+                        )} */}
                         {!isFromPendingApprovals && (permitData.show_extend_permit_approved_button || permitData.show_extend_button) && (
                             <Button
                                 variant="outline"
