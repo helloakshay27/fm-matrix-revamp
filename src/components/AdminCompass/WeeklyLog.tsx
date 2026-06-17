@@ -116,7 +116,7 @@ const SearchableSelect = ({
     }, []);
 
     return (
-        <div ref={ref} className="relative w-[150px]" style={{ zIndex: open ? 50 : 1 }}>
+        <div ref={ref} className="relative w-full sm:w-[150px]" style={{ zIndex: open ? 50 : 1 }}>
             <input
                 type="text"
                 value={open ? query : selected?.label || ''}
@@ -739,7 +739,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: exter
 
             {/* ── Header + Filter bar ── */}
             <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                <div className="flex items-center gap-3 min-w-fit">
+                <div className="flex items-center gap-3 min-w-0">
                     <div className="rounded-xl border border-[#DA7756]/15 bg-[#FAECE7] p-2">
                         <FileText className="w-5 h-5 text-[#DA7756]" />
                     </div>
@@ -750,7 +750,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: exter
 
                 <div className="flex-1 flex flex-wrap items-center gap-2 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-3">
                     {/* Search */}
-                    <div className="relative flex-1 min-w-[180px]">
+                    <div className="relative min-w-0 w-full flex-1 sm:min-w-[180px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#DA7756]/50" />
                         <Input
                             placeholder="Search by user, email..."
@@ -770,7 +770,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: exter
 
                     {/* Meeting */}
                     <Select value={meetingId} onValueChange={setMeetingId}>
-                        <SelectTrigger className="w-[150px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
+                        <SelectTrigger className="w-full h-8 rounded-xl border border-[#DA7756]/25 bg-white sm:w-[150px]">
                             <SelectValue placeholder="Meeting" />
                         </SelectTrigger>
                         <SelectContent side="bottom" align="start" avoidCollisions={false} className="max-h-60 overflow-y-auto">
@@ -784,7 +784,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: exter
 
                     {/* Week */}
                     <Select value={selectedWeek} onValueChange={setSelectedWeek}>
-                        <SelectTrigger className="w-[175px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
+                        <SelectTrigger className="w-full h-8 rounded-xl border border-[#DA7756]/25 bg-white sm:w-[175px]">
                             <SelectValue placeholder="Select Week" />
                         </SelectTrigger>
                         <SelectContent side="bottom" align="start" avoidCollisions={false} className="max-h-60 overflow-y-auto">
@@ -922,8 +922,8 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: exter
             )}
 
             {!groupByDept && (
-            <div className="max-w-full overflow-x-hidden rounded-2xl border border-[#DA7756]/18 shadow-sm bg-white">
-                <Table className="w-full table-fixed">
+            <div className="max-w-full overflow-x-auto rounded-2xl border border-[#DA7756]/18 shadow-sm bg-white">
+                <Table className="w-full min-w-[900px] table-fixed">
                     <TableHeader className="bg-[#fef6f4]">
                         <TableRow className="hover:bg-transparent border-none h-12">
                             {['Week Of', 'User', 'Score', 'Department', 'Rating', 'Status', 'Submitted At'].map(col => (

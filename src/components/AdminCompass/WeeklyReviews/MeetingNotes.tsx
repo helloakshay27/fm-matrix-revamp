@@ -54,7 +54,7 @@ export const MeetingNotes = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)]">
+            <div className="flex flex-col gap-3 bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)] sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                         type="checkbox"
@@ -72,7 +72,7 @@ export const MeetingNotes = ({
                         size="sm"
                         disabled={saveDisabled}
                         title={!isSubmittedMeeting && !hasSelection ? 'Select at least one member to save the meeting' : undefined}
-                        className="inline-flex items-center gap-2 px-5 h-9 text-sm bg-[#CE7A5A] hover:bg-[#BC6B4A] text-white rounded-xl font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex h-9 w-full items-center gap-2 px-5 text-sm bg-[#CE7A5A] hover:bg-[#BC6B4A] text-white rounded-xl font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                         onClick={onSaveMeeting}
                     >
                         {saveMeetingLoading ? (
