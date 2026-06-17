@@ -649,12 +649,22 @@ const TaskForm = ({
           name="taskTitle"
           placeholder="Enter Task Title"
           value={formData.taskTitle}
-          onChange={(value) => setFormData({ ...formData, taskTitle: value })}
+          onChange={(value) => {
+            if (value.length <= 200) {
+              setFormData({ ...formData, taskTitle: value });
+            }
+          }}
           disabled={isReadOnly}
           variant="outlined"
           size="small"
           sx={fieldStyles}
+          inputProps={{ maxLength: 200 }}
         />
+        <div className="flex justify-end mt-1">
+          <span className="text-xs text-gray-500">
+            {formData.taskTitle?.length || 0}/200
+          </span>
+        </div>
       </div>
 
       <div className="mb-1">
@@ -950,6 +960,7 @@ const TaskForm = ({
               selectedDate={endDate}
               taskHoursData={calendarTaskHours}
               ref={endDateRef}
+              minDate={startDate}
               maxDate={endDate}
               shift={shift}
               isDateDisabled={isDateDisabledByRoster}
@@ -1358,13 +1369,13 @@ const ProjectTaskCreateModal = ({
       setUsers(
         shouldAddPrefilledUser
           ? [
-              ...validUsers,
-              {
-                id: prefilledResponsiblePerson.id,
-                name: prefilledResponsiblePerson.name,
-                full_name: prefilledResponsiblePerson.name,
-              },
-            ]
+            ...validUsers,
+            {
+              id: prefilledResponsiblePerson.id,
+              name: prefilledResponsiblePerson.name,
+              full_name: prefilledResponsiblePerson.name,
+            },
+          ]
           : validUsers
       );
     } catch (error) {
