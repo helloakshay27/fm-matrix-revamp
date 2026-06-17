@@ -3434,8 +3434,7 @@ const WeeklyReports = () => {
                                             const date = winDates[index] || new Date().toISOString().slice(0, 10);
                                             if (!groups[date]) groups[date] = [];
                                             groups[date].push({ kind: "win", winIndex: index });
-                                        }
-                                    });
+                                        });
                                     const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
                                     const renderItem = (item: any) => (
                                         <div
