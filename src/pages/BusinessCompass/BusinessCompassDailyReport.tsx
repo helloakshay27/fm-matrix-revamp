@@ -1011,8 +1011,14 @@ const BusinessCompassDailyReport: React.FC = () => {
     const completed = mergedTasksIssues.filter(
       (item) => item.status === "completed" || item.status === "closed"
     ).length;
+    const isPlayedOrStarted = (item: any) =>
+      item.originalData?.is_started ||
+      item.is_started ||
+      playingTaskIds.has(item.originalData?.id);
     const open = mergedTasksIssues.filter(
-      (item) => item.status === "open" || item.status === "reopen"
+      (item) =>
+        (item.status === "open" || item.status === "reopen") &&
+        !isPlayedOrStarted(item)
     ).length;
     const overdue = mergedTasksIssues.filter(
       (item) => item.status === "overdue" || item.status === "overdued"
@@ -1021,7 +1027,10 @@ const BusinessCompassDailyReport: React.FC = () => {
       (item) => item.status === "on_hold"
     ).length;
     const inProgress = mergedTasksIssues.filter(
-      (item) => item.status === "in_progress"
+      (item) =>
+        item.status === "in_progress" ||
+        (isPlayedOrStarted(item) &&
+          ["open", "pending"].includes(item.status))
     ).length;
     const tasks = mergedTasksIssues.filter(
       (item) => item.type === "task"
@@ -4944,7 +4953,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {yesterdaySourceIds.size > 0 &&
                           (() => {
                             const yItems = mergedTasksIssues.filter(
-                              (item: any) => yesterdaySourceIds.has(item.id)
+                              (item: any) =>
+                                yesterdaySourceIds.has(item.id) &&
+                                !(
+                                  item.originalData?.is_started ||
+                                  item.is_started ||
+                                  playingTaskIds.has(item.originalData?.id)
+                                )
                             );
                             if (yItems.length === 0) return null;
                             const isCollapsed =
@@ -5464,10 +5479,22 @@ const BusinessCompassDailyReport: React.FC = () => {
                           ] as const
                         ).map((group) => {
                           const items = mergedTasksIssues.filter(
-                            (item: any) =>
-                              (group.statuses as readonly string[]).includes(
-                                item.status
-                              ) && !yesterdaySourceIds.has(item.id)
+                            (item: any) => {
+                              const isPlayedOrStarted =
+                                item.originalData?.is_started ||
+                                item.is_started ||
+                                playingTaskIds.has(item.originalData?.id);
+                              const effectiveStatus =
+                                isPlayedOrStarted &&
+                                ["open", "pending"].includes(item.status)
+                                  ? "in_progress"
+                                  : item.status;
+                              return (
+                                (group.statuses as readonly string[]).includes(
+                                  effectiveStatus
+                                ) && !(yesterdaySourceIds.has(item.id) && !isPlayedOrStarted)
+                              );
+                            }
                           );
                           if (items.length === 0) return null;
                           const isCollapsed = collapsedGroups.has(group.key);
