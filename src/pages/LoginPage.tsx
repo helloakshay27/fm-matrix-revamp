@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import ReCAPTCHA from "react-google-recaptcha";
 import posthog from "posthog-js";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
@@ -420,7 +420,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
 
-      // Identify user in PostHog
       posthog.identify(response.id?.toString(), {
         email: response.email,
         name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
