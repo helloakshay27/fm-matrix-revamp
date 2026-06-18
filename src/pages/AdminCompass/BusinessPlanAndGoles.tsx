@@ -10,7 +10,6 @@ import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { toast as sonnerToast } from "sonner";
-import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import GoalsPage from "./AdminCompassComponent/goalsPage";
 
 // ── Design Tokens ──
@@ -458,16 +457,27 @@ const normalizeImageUrl = (url: string): string => {
   return url;
 };
 
+const EMPTY_OVERVIEW_MEDIA: OverviewMedia = { images: [], videos: [] };
+
 const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   const url = `${BASE_URL}/business_compass/overview_media`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
+
+  // Endpoint may not be deployed on every environment (e.g. live). A 404 — or a
+  // non-JSON (HTML) error page — should not break the page: overview media is
+  // optional, so treat it as "no media" instead of surfacing a raw error.
+  const looksLikeHtml = /^\s*<(?:!doctype|html)/i.test(rawText);
+  if (res.status === 404 || (!res.ok && looksLikeHtml)) {
+    return EMPTY_OVERVIEW_MEDIA;
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
   let json: any;
   try {
     json = JSON.parse(rawText);
   } catch {
-    json = {};
+    // Successful but non-JSON response — nothing usable, degrade gracefully.
+    return EMPTY_OVERVIEW_MEDIA;
   }
   const parseMediaArray = (
     arr: any[],
@@ -775,18 +785,10 @@ const InlineImageSlider = ({
     () => new Set()
   );
 
-  // Zoom and pan state
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
   useEffect(() => {
     if (current >= images.length && images.length > 0)
       setCurrent(images.length - 1);
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
-  }, [images.length, current, fullscreen]);
+  }, [images.length, current]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -809,28 +811,6 @@ const InlineImageSlider = ({
   const hasImageFailed = failedImageUrls.has(currentImageUrl);
   const driveOpenUrl = getGoogleDriveOpenUrl(currentImageUrl);
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
-    if (scale <= 1) return;
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLImageElement>) => {
-    if (!isDragging) return;
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLImageElement>) => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    e.currentTarget.releasePointerCapture(e.pointerId);
-  };
-
   const sliderBox = (
     <div
       style={{
@@ -838,28 +818,11 @@ const InlineImageSlider = ({
         width: "100%",
         borderRadius: fullscreen ? 0 : 16,
         overflow: "hidden",
-        background: "#000",
+        background: "#f3f4f6",
         paddingTop: fullscreen ? undefined : "48%",
         height: fullscreen ? "100%" : undefined,
       }}
     >
-      {/* Blurred Background to fill empty space elegantly */}
-      {!hasImageFailed && (
-        <div
-          style={{
-            position: "absolute",
-            inset: -20,
-            backgroundImage: `url(${currentImageUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            filter: "blur(20px)",
-            opacity: 0.5,
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-      )}
-
       {hasImageFailed ? (
         <div
           style={{
@@ -877,7 +840,6 @@ const InlineImageSlider = ({
             background: "#f3f4f6",
             color: C.textMain,
             fontFamily: "'Poppins', sans-serif",
-            zIndex: 1,
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 700 }}>
@@ -912,23 +874,14 @@ const InlineImageSlider = ({
           src={currentImageUrl}
           alt={`slide-${current}`}
           referrerPolicy="no-referrer"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
           style={{
             width: "100%",
             height: "100%",
-            objectFit: "contain" as const,
+            objectFit: "cover" as const,
             position: fullscreen ? "static" : "absolute",
             top: fullscreen ? undefined : 0,
             left: fullscreen ? undefined : 0,
             display: "block",
-            transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-            cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default",
-            transition: isDragging ? "none" : "transform 0.2s ease-out",
-            zIndex: 2,
-            touchAction: "none"
           }}
           onLoad={() => {
             setFailedImageUrls((prevFailed) => {
@@ -957,67 +910,6 @@ const InlineImageSlider = ({
           zIndex: 10,
         }}
       >
-        <button
-          onClick={() => setScale((s) => Math.min(s + 0.5, 4))}
-          title="Zoom In"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.20)",
-            border: "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            color: "#fff",
-            fontSize: 18,
-            fontWeight: "bold",
-            transition: "background .15s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
-          }
-        >
-          +
-        </button>
-        <button
-          onClick={() => {
-            if (scale > 1.5) {
-              setScale((s) => s - 0.5);
-            } else {
-              setScale(1);
-              setPosition({ x: 0, y: 0 });
-            }
-          }}
-          title="Zoom Out"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.20)",
-            border: "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            color: "#fff",
-            fontSize: 18,
-            fontWeight: "bold",
-            transition: "background .15s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
-          }
-        >
-          -
-        </button>
         <button
           onClick={() => setFullscreen((f) => !f)}
           title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
@@ -1762,241 +1654,11 @@ const ThemeStyle = () => (
     .bp-tab-active { background: #DA7756 !important; color: #fff !important; box-shadow: 0 10px 20px rgba(218,119,86,0.20); }
     .bp-tab-inactive { background: transparent !important; color: #6b7280 !important; }
     .bp-tab-inactive:hover { background: #fffaf8 !important; color: #DA7756 !important; }
-    @media (max-width: 640px) {
-      .bp-wrap {
-        padding: 12px !important;
-        row-gap: 14px !important;
-        overflow-x: hidden !important;
-      }
-      .bp-page-header {
-        padding: 12px !important;
-        border-radius: 14px !important;
-        gap: 12px !important;
-        margin-bottom: 12px !important;
-      }
-      .bp-page-actions {
-        width: 100% !important;
-        gap: 12px !important;
-        justify-content: flex-end !important;
-      }
-      .bp-page-actions button {
-        min-height: 34px;
-      }
-      .bp-main-tabs {
-        padding: 4px !important;
-        gap: 3px !important;
-        margin-bottom: 14px !important;
-        width: 100% !important;
-      }
-      .bp-main-tab {
-        flex: 1 0 auto;
-        padding: 6px 12px !important;
-        font-size: 11px !important;
-        min-height: 30px;
-      }
-      .bp-media-tabs {
-        border-radius: 12px !important;
-        padding: 4px !important;
-      }
-      .bp-media-tab {
-        padding: 6px 8px !important;
-        font-size: 11px !important;
-        min-height: 30px;
-        border-radius: 10px !important;
-      }
-      .bp-strategic-stack {
-        row-gap: 14px !important;
-      }
-      .bp-strategic-card,
-      .bp-essentials-panel,
-      .bp-vision-ai-card {
-        border-radius: 14px !important;
-      }
-      .bp-strategic-header {
-        padding: 10px 12px !important;
-        gap: 10px !important;
-      }
-      .bp-strategic-header-icon {
-        width: 34px !important;
-        height: 34px !important;
-        border-radius: 11px !important;
-      }
-      .bp-strategic-title {
-        font-size: 12px !important;
-        letter-spacing: 0.08em !important;
-      }
-      .bp-strategic-actions {
-        gap: 6px !important;
-      }
-      .bp-add-content {
-        padding: 10px 10px 12px !important;
-      }
-      .bp-essentials-header {
-        padding: 10px 12px !important;
-        gap: 10px !important;
-      }
-      .bp-essentials-header > div:first-child {
-        min-width: 0 !important;
-      }
-      .bp-essentials-header p {
-        line-height: 1.35 !important;
-      }
-      .bp-essentials-count {
-        padding: 4px 8px !important;
-        font-size: 10px !important;
-      }
-      .bp-essentials-grid {
-        gap: 10px !important;
-        padding: 10px !important;
-      }
-      .bp-essential-card {
-        min-height: 0 !important;
-        padding: 12px !important;
-        border-radius: 14px !important;
-        box-shadow: 0 6px 14px rgba(26,26,26,0.035) !important;
-      }
-      .bp-essential-card:hover {
-        transform: none !important;
-      }
-      .bp-essential-card-head {
-        margin-bottom: 10px !important;
-        gap: 8px !important;
-      }
-      .bp-essential-card-head h3 {
-        font-size: 13px !important;
-      }
-      .bp-essential-icon {
-        width: 32px !important;
-        height: 32px !important;
-        border-radius: 10px !important;
-      }
-      .bp-empty-add {
-        padding: 16px 10px !important;
-        border-radius: 14px !important;
-      }
-      .bp-empty-add-icon {
-        width: 30px !important;
-        height: 30px !important;
-        margin-bottom: 6px !important;
-      }
-      .bp-empty-add span {
-        font-size: 12px !important;
-      }
-      .bp-vision-controls {
-        gap: 8px !important;
-      }
-      .bp-vision-controls input,
-      .bp-vision-controls button {
-        width: 100% !important;
-        min-height: 38px !important;
-        font-size: 12px !important;
-      }
-      .bp-vision-ai-card {
-        padding: 12px !important;
-      }
-      .bp-vision-ai-head {
-        align-items: flex-start !important;
-      }
-      .bp-vision-ai-head p {
-        line-height: 1.35 !important;
-      }
-      .bp-vision-ai-actions {
-        gap: 8px !important;
-      }
-      .bp-vision-ai-actions button {
-        min-height: 40px !important;
-        padding: 9px 10px !important;
-        font-size: 12px !important;
-        border-radius: 12px !important;
-      }
-      .bp-wrap .bh-wrap,
-      .bp-wrap .cn-wrap,
-      .bp-wrap .kp-wrap {
-        padding: 12px !important;
-        border-radius: 14px !important;
-        margin-bottom: 14px !important;
-        overflow-x: hidden !important;
-      }
-      .bp-wrap .swot-shell {
-        border-radius: 14px !important;
-        margin-bottom: 14px !important;
-      }
-      .bp-wrap .swot-section-header {
-        padding: 10px 12px !important;
-        gap: 10px !important;
-      }
-      .bp-wrap .swot-body {
-        padding: 12px !important;
-      }
-      .bp-wrap .swot-icon-box {
-        width: 32px !important;
-        height: 32px !important;
-        border-radius: 10px !important;
-      }
-      .bp-wrap .swot-kicker,
-      .bp-wrap .ac-heading {
-        font-size: 15px !important;
-        line-height: 1.25 !important;
-      }
-      .bp-wrap .bh-card,
-      .bp-wrap .swot-quadrant-card,
-      .bp-wrap .cn-kpi-card,
-      .bp-wrap .kp-process-card {
-        padding: 12px !important;
-        border-radius: 12px !important;
-      }
-      .bp-wrap .bh-card:hover,
-      .bp-wrap .swot-card-lift:hover,
-      .bp-wrap .swot-quadrant-card:hover,
-      .bp-wrap .kp-process-card:hover {
-        transform: none !important;
-      }
-      .bp-wrap .cn-wrap div[style*="repeat(3,1fr)"],
-      .bp-wrap .cn-wrap div[style*="repeat(2,1fr)"],
-      .bp-wrap .kp-wrap div[style*="repeat(3,1fr)"],
-      .bp-wrap .kp-wrap div[style*="repeat(2,1fr)"] {
-        grid-template-columns: 1fr !important;
-      }
-      .bp-wrap .swot-soft-action {
-        width: 100% !important;
-        padding: 8px 10px !important;
-        font-size: 11px !important;
-      }
-      .bp-wrap .swot-tooltip,
-      .bp-wrap .kp-tooltip {
-        display: none !important;
-      }
-      .bh-modal-portal,
-      .swot-modal-portal,
-      .cn-overlay,
-      .kp-overlay,
-      .st-modal-portal {
-        padding: 10px !important;
-        align-items: flex-start !important;
-      }
-      .bh-modal-box,
-      .bh-goal-modal-box,
-      .swot-modal-box,
-      .cn-modal,
-      .kp-modal,
-      .st-modal-box {
-        border-radius: 14px !important;
-        max-height: calc(100vh - 20px) !important;
-      }
-      .bh-modal-hd,
-      .bh-modal-body,
-      .bh-modal-ft,
-      .cn-modal-body,
-      .kp-modal-body {
-        padding: 12px !important;
-      }
-    }
     .bp-panel { border-radius: 20px; border: 1px solid #e8e3de; background: #ffffff; box-shadow: 0 10px 24px rgba(26,26,26,0.05); }
     .bp-section-band { border-radius: 20px; border: 1px solid #e8e3de; background: rgba(255,255,255,0.72); box-shadow: 0 10px 24px rgba(26,26,26,0.04); }
     .bp-soft-card { border-radius: 18px; border: 1px solid #e8e3de; background: #ffffff; box-shadow: 0 10px 24px rgba(26,26,26,0.05); }
     .bp-icon-tile { border: 1px solid rgba(218,119,86,0.22); background: #fdf9f7; color: #DA7756; }
     .drag-over { border: 2px dashed ${C.primary} !important; opacity: 0.5; }
-    .bp-heading { color: ${C.textMain}; font-weight: 600; }
     .bp-heading-coral { color: #DA7756 !important; }
     @keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
   `}</style>
@@ -2044,58 +1706,45 @@ interface KPI {
   name: string;
 }
 
-type AiBuilderStage = "discovery" | "questions" | "building" | "plan";
+type AiBuilderStage = "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
-  {
-    key: "purpose",
-    label: "Q1: Why does your company exist?",
-    placeholder: "Describe the purpose of your business, the problem you solve, who you serve, and the impact you aim to create"
-  },
+  { key: "purpose", label: "Q1: Why does your company exist?" },
   {
     key: "core_values",
     label: "Q2: What 4-5 values or behaviours best represent your team or culture?",
-    placeholder: "List the values and behaviours that guide how your team works, makes decisions, collaborates, and serves customers"
   },
   {
     key: "brand_promises",
     label: "Q3: What are the USPs that make you stand out?",
-    placeholder: "Describe what makes your business unique, including your strengths, expertise, customer experience, innovation, quality, pricing, or competitive advantages."
   },
   {
     key: "bhag",
     label: "Q4: What bold outcome do you want to achieve in the next 10-15 years?",
-    placeholder: "Describe the impact, market position, customer reach, business growth, and long-term outcomes you want to achieve in the next 10–15 years"
   },
   {
     key: "three_year_vision",
     label: "Q5: What do you want to achieve in the next 3-5 years?",
-    placeholder: "Describe the key business outcomes you want to achieve in the next 3–5 years, including growth, profitability, customers, expansion, products, operations, and team development."
   },
   {
     key: "annual_goals",
     label: "Q6: What are your main business goals for this financial year?",
-    placeholder: "Describe your key priorities and measurable goals for this financial year, including revenue, customers, operations, team, products, or strategic initiatives"
   },
   {
     key: "target_markets",
     label: "Q7: Which customer segments or geographies will you focus on this year?",
-    placeholder: "Describe the customers, industries, or regions you will focus on, including their needs, challenges, expectations, and growth potential"
   },
   {
     key: "key_initiatives",
     label: "Q8: What 3 key actions or projects will help you achieve this year's goals?",
-    placeholder: "Describe the key initiatives or projects you will execute this year, their expected outcomes, business impact, and how they support your goals"
   },
   {
     key: "key_metrics",
     label: "Q9: What are the key numbers or metrics you should regularly track to ensure success?",
-    placeholder: "Describe the key financial, customer, operational, employee, and growth metrics you will track to measure success"
   },
   {
     key: "people_process",
     label: "Q10: What improvements do you need in your people or processes to succeed?",
-    placeholder: "Describe the improvements needed in your people, leadership, skills, processes, systems, technology, data, or operations to achieve your goals."
   },
 ] as const;
 
@@ -2126,26 +1775,41 @@ const TOOLTIP_CONTENT: Record<
 // ─────────────────────────────────
 //  CoreValuesInlineCard
 // ─────────────────────────────────
-const getInitials = (text: string): string => {
-  return text.trim().charAt(0).toUpperCase();
-};
-
 const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
   values,
 }) => {
   const safeValues = values || [];
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid grid-cols-1 gap-2.5">
       {safeValues.map((v, idx) => (
-        <div key={v.id ?? idx} className="group/avatar relative">
-          <div className="flex h-12 w-12 cursor-default items-center justify-center rounded-full bg-[#fff0ea] text-[18px] font-extrabold text-[#DA7756] ring-2 ring-[#f3d8ce] transition-all duration-200 hover:bg-[#DA7756] hover:text-white hover:ring-[#DA7756]">
-            {getInitials(v.value)}
-          </div>
-          <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#1a1a1a] px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/avatar:opacity-100">
+        <div
+          key={v.id ?? idx}
+          className="group/value flex items-center gap-3 rounded-[15px] border border-[#efe5df] bg-gradient-to-r from-white to-[#fff8f4] px-3.5 py-3 shadow-[0_8px_18px_rgba(218,119,86,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#f0cfc2] hover:shadow-[0_12px_24px_rgba(218,119,86,0.12)]"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#fff0ea] text-[12px] font-extrabold text-[#DA7756] ring-1 ring-[#f3d8ce] transition-all duration-200 group-hover/value:bg-[#DA7756] group-hover/value:text-white">
+            {idx + 1}
+          </span>
+
+          <span className="min-w-0 flex-1 text-[13px] font-extrabold leading-5 text-[#1a1a1a]">
             {v.value}
-            <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
-          </div>
+          </span>
+
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.4}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 12.75 9 17.25 19.5 6.75"
+              />
+            </svg>
+          </span>
         </div>
       ))}
     </div>
@@ -2158,50 +1822,11 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
 const BusinessPlanAndGoles = () => {
   const [activeMainTab, setActiveMainTab] = useState("strategic");
   const [showAddContent, setShowAddContent] = useState(true);
-  const [addContentTab, setAddContentTab] = useState("Business Plan");
+  const [addContentTab, setAddContentTab] = useState("images");
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
-  const [showGenerateVisionBoardConfirm, setShowGenerateVisionBoardConfirm] = useState(false);
   const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
   const [aiBuilderStage, setAiBuilderStage] =
-    useState<AiBuilderStage>("discovery");
-
-  const [aiCompanyName, setAiCompanyName] = useState("");
-  const [aiCompanyWebsite, setAiCompanyWebsite] = useState("");
-  const [aiIndustryCategory, setAiIndustryCategory] = useState("");
-  const [aiIndustryOther, setAiIndustryOther] = useState("");
-  const [aiBusinessStage, setAiBusinessStage] = useState("");
-  const [aiYearsInOperation, setAiYearsInOperation] = useState("");
-  const [aiTeamSize, setAiTeamSize] = useState("");
-  const [aiAnnualRevenue, setAiAnnualRevenue] = useState("");
-  const [aiGeographicReach, setAiGeographicReach] = useState<string[]>([]);
-  const [aiMarketPosition, setAiMarketPosition] = useState("");
-
-  const getDiscoveryContext = useCallback(() => {
-    const parts = [];
-    if (aiCompanyName) parts.push(`Company Name: ${aiCompanyName}`);
-    else parts.push(`Company: ${getSelectedOrgName()}`);
-    if (aiCompanyWebsite) parts.push(`Website: ${aiCompanyWebsite}`);
-    const industry = aiIndustryCategory === "Other" ? aiIndustryOther : aiIndustryCategory;
-    if (industry) parts.push(`Industry: ${industry}`);
-    if (aiBusinessStage) parts.push(`Stage: ${aiBusinessStage}`);
-    if (aiYearsInOperation) parts.push(`Years in Operation: ${aiYearsInOperation}`);
-    if (aiTeamSize) parts.push(`Team Size: ${aiTeamSize}`);
-    if (aiAnnualRevenue) parts.push(`Annual Revenue: ${aiAnnualRevenue}`);
-    if (aiGeographicReach.length > 0) parts.push(`Geographic Reach: ${aiGeographicReach.join(", ")}`);
-    if (aiMarketPosition) parts.push(`Market Position: ${aiMarketPosition}`);
-    return parts.join("\n");
-  }, [
-    aiCompanyName,
-    aiCompanyWebsite,
-    aiIndustryCategory,
-    aiIndustryOther,
-    aiBusinessStage,
-    aiYearsInOperation,
-    aiTeamSize,
-    aiAnnualRevenue,
-    aiGeographicReach,
-    aiMarketPosition,
-  ]);
+    useState<AiBuilderStage>("questions");
   const [aiQuestionIndex, setAiQuestionIndex] = useState(0);
   const [aiAnswers, setAiAnswers] = useState<string[]>(
     AI_PLAN_FIELDS.map(() => "")
@@ -2214,8 +1839,6 @@ const BusinessPlanAndGoles = () => {
   const [aiBuilderError, setAiBuilderError] = useState<string | null>(null);
   const aiPlanAbortRef = useRef<AbortController | null>(null);
   const aiPlanCancelledRef = useRef(false);
-  const [isSuggestingAi, setIsSuggestingAi] = useState(false);
-  const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
 
   // Info hover state for main header
   const [isInfoHovered, setIsInfoHovered] = useState(false);
@@ -2673,68 +2296,14 @@ const BusinessPlanAndGoles = () => {
   };
 
   // ── AI Prompt Copy Handlers ──
-  const handleAiSuggest = async () => {
-    setIsSuggestingAi(true);
-    try {
-      const rawLabel = AI_PLAN_FIELDS[aiQuestionIndex].label;
-      const cleanPrompt = rawLabel.replace(/^Q\d+:\s*/, "");
-      const currentDraft = aiAnswers[aiQuestionIndex]?.trim();
-
-      const previous_answers = AI_PLAN_FIELDS.slice(0, aiQuestionIndex)
-        .map((field, idx) => ({
-          question: field.label.replace(/^Q\d+:\s*/, ""),
-          answer: aiAnswers[idx]
-        }))
-        .filter(item => item.answer.trim() !== "");
-
-      const finalPrompt = currentDraft
-        ? `Question: ${cleanPrompt}\n\nPlease enhance and professionally re-write the following draft answer:\n${currentDraft}`
-        : cleanPrompt;
-
-      const payload = {
-        prompt: finalPrompt,
-        feature: "business_plan_wizard",
-        context: getDiscoveryContext(),
-        previous_answers: previous_answers
-      };
-
-      const res = await fetch(`${BASE_URL}/ai_assist/suggest`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      if (json.success && json.suggestion) {
-        updateAiAnswer(json.suggestion);
-        toast.success("AI suggestion applied!");
-      } else {
-        throw new Error(json.message || "Failed to get suggestion");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to fetch AI suggestion.");
-    } finally {
-      setIsSuggestingAi(false);
-    }
-  };
-
   const resetAiBuilder = () => {
-    setAiBuilderStage("discovery");
+    setAiBuilderStage("questions");
     setAiQuestionIndex(0);
     setAiAnswers(AI_PLAN_FIELDS.map(() => ""));
     setGeneratedAiPlan("");
     setGeneratedAiPlanPayload(null);
     setAiPlanJobId("");
     setAiBuilderError(null);
-    setAiCompanyName("");
-    setAiCompanyWebsite("");
-    setAiIndustryCategory("");
-    setAiIndustryOther("");
-    setAiBusinessStage("");
-    setAiYearsInOperation("");
-    setAiTeamSize("");
-    setAiAnnualRevenue("");
-    setAiGeographicReach([]);
-    setAiMarketPosition("");
   };
 
   const openAiBuilder = () => {
@@ -2761,7 +2330,6 @@ const BusinessPlanAndGoles = () => {
   };
 
   const createAiPlanPayload = () => ({
-    business_context: getDiscoveryContext(),
     purpose: aiAnswers[0]?.trim() || "",
     core_values: aiAnswers[1]?.trim() || "",
     brand_promises: aiAnswers[2]?.trim() || "",
@@ -3345,150 +2913,24 @@ const BusinessPlanAndGoles = () => {
   ) => {
     setIsCopyingAiPrompt(type);
     try {
+      const plan = await buildFullPlanText();
+      let prompt = "";
       if (type === "overview") {
-        const headers = getAuthHeaders();
-
-        // Fetch KPIs
-        let kpis: any[] = [];
-        try {
-          const res = await fetch(`${BASE_URL}/kpis`, { headers });
-          const json = await res.json();
-          kpis = Array.isArray(json?.data?.kpis)
-            ? json.data.kpis
-            : Array.isArray(json?.data)
-              ? json.data
-              : Array.isArray(json)
-                ? json
-                : [];
-        } catch (e) {
-          console.error("KPI fetch error", e);
-        }
-
-        // Fetch SWOT
-        let swotData = { strengths: [], weaknesses: [], opportunities: [], threats: [] };
-        try {
-          const res = await fetch(
-            `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
-            { headers }
-          );
-          const json = await res.json();
-          swotData = {
-            strengths: json?.grouped_data?.business_plan_strengths?.values || [],
-            weaknesses: json?.grouped_data?.business_plan_weaknesses?.values || [],
-            opportunities: json?.grouped_data?.business_plan_opportunities?.values || [],
-            threats: json?.grouped_data?.business_plan_threats?.values || [],
-          };
-        } catch (e) {
-          console.error("SWOT fetch error", e);
-        }
-
-        const savedPlan = generatedAiPlanPayload || {};
-        const kpiCriticalNumbers = kpis.map((k: any) => ({
-          name: k.name || k.title || "",
-          target: String(k.target ?? k.target_value ?? ""),
-          current: String(k.current ?? k.current_value ?? ""),
-        }));
-
-        const payload = {
-          purpose: purposeText || "",
-          core_values: coreValues.map((v) => v.value),
-          core_values_explanation: savedPlan.core_values_explanation || "",
-          brand_promises: brandPromises.map((p) => p.text),
-          brand_promise_kpis: brandPromises.flatMap((p) => p.kpis || []),
-          bhag_selected: savedPlan.bhag_selected || "",
-          bhag_initiatives: Array.isArray(savedPlan.bhag_initiatives) ? savedPlan.bhag_initiatives : [],
-          three_year_goals: savedPlan.three_year_goals || "",
-          three_year_initiatives: Array.isArray(savedPlan.three_year_initiatives) ? savedPlan.three_year_initiatives : [],
-          one_year_goals: savedPlan.one_year_goals || "",
-          one_year_initiatives: Array.isArray(savedPlan.one_year_initiatives) ? savedPlan.one_year_initiatives : [],
-          quarterly_goals: savedPlan.quarterly_goals || "",
-          quarterly_theme: savedPlan.quarterly_theme || "",
-          quarterly_initiatives: Array.isArray(savedPlan.quarterly_initiatives) ? savedPlan.quarterly_initiatives : [],
-          quarterly_rewards: Array.isArray(savedPlan.quarterly_rewards) ? savedPlan.quarterly_rewards : [],
-          target_segments: savedPlan.target_segments || "",
-          people_drivers:
-            savedPlan.people_drivers && typeof savedPlan.people_drivers === "object" && !Array.isArray(savedPlan.people_drivers)
-              ? savedPlan.people_drivers
-              : {},
-          process_drivers: Array.isArray(savedPlan.process_drivers) ? savedPlan.process_drivers : [],
-          critical_numbers: Array.isArray(savedPlan.critical_numbers) && savedPlan.critical_numbers.length > 0
-            ? savedPlan.critical_numbers
-            : kpiCriticalNumbers,
-          strengths: swotData.strengths,
-          weaknesses: swotData.weaknesses,
-          opportunities: swotData.opportunities,
-          threats: swotData.threats,
-        };
-
-        const res = await fetch(`${BASE_URL}/extra_fields/generate_ai_plan_image`, {
-          method: "POST",
-          headers: {
-            ...headers,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        let json;
-        try {
-          json = await res.json();
-        } catch (e) {
-          json = {};
-        }
-
-        if (!res.ok || json?.success === false) {
-          throw new Error(json?.message || json?.error || "Failed to generate AI image");
-        }
-
-        // Attempt to find the newly generated image URL in the response
-        const newImageUrl =
-          json?.image_url ||
-          json?.url ||
-          json?.data?.image_url ||
-          json?.data?.url ||
-          (typeof json?.data === 'string' && json.data.startsWith('http') ? json.data : null);
-
-        if (newImageUrl && typeof newImageUrl === 'string') {
-          try {
-            const latestMedia = await fetchOverviewMediaFromApi().catch(() => null);
-            const existingImages = latestMedia?.images || overviewImages || [];
-            const existingUrls = existingImages.map((item: any) => item.url);
-
-            if (!existingUrls.includes(newImageUrl)) {
-              // Add the new image URL and save
-              const updated = Array.from(new Set([...existingUrls, newImageUrl]));
-              await saveOverviewImagesApi(updated);
-              await refreshOverviewMediaWithFallback({ fallbackImages: updated });
-            }
-          } catch (e) {
-            console.error("Failed to auto-save AI image to board", e);
-            await loadOverviewMedia();
-          }
-        } else {
-          // Fallback if URL wasn't found in a predictable field
-          console.log("AI Image generation response:", json);
-          await loadOverviewMedia();
-        }
-
-        toast.success("AI Image generated successfully!");
-      } else {
-        const plan = await buildFullPlanText();
-        let prompt = "";
-        if (type === "detailed") {
-          prompt = `Create an interesting and impactful DETAILED infographic with all key metrics, goals, SWOT and KPIs for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
-        } else if (type === "script") {
-          prompt = `Create an engaging video script for explaining my business plan to my team in an impactful way\n\n${plan}`;
-        }
-        await navigator.clipboard.writeText(prompt);
-        toast.success(
-          type === "script"
-            ? "Video script prompt copied! Paste in Gemini or ChatGPT."
-            : "Infographic prompt copied! Paste in Gemini or ChatGPT."
-        );
+        prompt = `Create an interesting and impactful infographic using less text for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
+      } else if (type === "detailed") {
+        prompt = `Create an interesting and impactful DETAILED infographic with all key metrics, goals, SWOT and KPIs for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
+      } else if (type === "script") {
+        prompt = `Create an engaging video script for explaining my business plan to my team in an impactful way\n\n${plan}`;
       }
+      await navigator.clipboard.writeText(prompt);
+      toast.success(
+        type === "script"
+          ? "Video script prompt copied! Paste in Gemini or ChatGPT."
+          : "Infographic prompt copied! Paste in Gemini or ChatGPT."
+      );
     } catch (err) {
       console.error("AI prompt copy failed", err);
-      toast.error("Failed to process request.");
+      toast.error("Failed to copy prompt.");
     } finally {
       setIsCopyingAiPrompt(null);
     }
@@ -3991,7 +3433,7 @@ const BusinessPlanAndGoles = () => {
   const emptyAddBtn = (onClick: () => void, label: string) => (
     <button
       onClick={onClick}
-      className="bp-empty-add flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed transition-all"
+      className="flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed transition-all"
       style={{ borderColor: C.primaryBord, background: C.primaryTint }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = C.primary;
@@ -4003,7 +3445,7 @@ const BusinessPlanAndGoles = () => {
       }}
     >
       <div
-        className="bp-empty-add-icon w-9 h-9 rounded-full flex items-center justify-center mb-2"
+        className="w-9 h-9 rounded-full flex items-center justify-center mb-2"
         style={{ background: "rgba(218,119,86,0.18)" }}
       >
         <PlusIcon />
@@ -4022,7 +3464,7 @@ const BusinessPlanAndGoles = () => {
       <ThemeStyle />
       {/* ── Page Header ── */}
       <div
-        className="bp-page-header bg-white border rounded-[16px] px-5 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm mb-4"
+        className="bg-white border rounded-[16px] px-5 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm mb-4"
         style={{ borderColor: C.primaryBord }}
       >
         <div className="flex flex-col gap-1.5">
@@ -4041,7 +3483,7 @@ const BusinessPlanAndGoles = () => {
             </p>
           </div>
           <h1
-            className="bp-heading text-[20px] font-bold tracking-tight leading-tight"
+            className="text-[20px] font-bold tracking-tight leading-tight"
             style={{ color: C.primary, fontFamily: C.font }}
           >
             Business Plan
@@ -4054,7 +3496,7 @@ const BusinessPlanAndGoles = () => {
           </p>
         </div>
 
-        <div className="bp-page-actions flex items-center gap-5 shrink-0">
+        <div className="flex items-center gap-5 shrink-0">
           {/* Copy icon */}
           <button
             onClick={handleCopyPlan}
@@ -4143,7 +3585,7 @@ const BusinessPlanAndGoles = () => {
 
       {/* ── Tab Bar ── */}
       <div
-        className="bp-main-tabs bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm mb-6 border"
+        className="bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm mb-6 border"
         style={{ borderColor: "#f3f4f6" }}
       >
         {tabs.map((tab) => {
@@ -4155,7 +3597,7 @@ const BusinessPlanAndGoles = () => {
             <button
               key={tab.key}
               onClick={() => setActiveMainTab(tab.key)}
-              className={`bp-main-tab py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
+              className={`py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
               style={{
                 background: isActive ? C.primary : "transparent",
                 color: isActive ? "#fff" : "#7b8393"
@@ -4171,24 +3613,27 @@ const BusinessPlanAndGoles = () => {
 
       {/* ══ STRATEGIC PLAN ══ */}
       {activeMainTab === "strategic" && (
-        <div className="bp-strategic-stack space-y-6">
+        <div className="space-y-6">
           {/* Our Business Plan + Media Section */}
-          <div className="bp-strategic-card overflow-hidden rounded-[20px] border border-[#e8e3de] bg-white shadow-[0_10px_24px_rgba(26,26,26,0.05)]">
+          <div className="overflow-hidden rounded-[20px] border border-[#e8e3de] bg-white shadow-[0_10px_24px_rgba(26,26,26,0.05)]">
             {/* Compact Header */}
-            <div className="bp-strategic-header flex items-center justify-between gap-4 border-b border-[#eee3dd] bg-white px-4 py-3">
+            <div className="flex items-center justify-between gap-4 border-b border-[#eee3dd] bg-white px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="bp-strategic-header-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7]">
                   <EyeIcon color="#ff6b4a" />
                 </div>
 
                 <div className="min-w-0">
-                  <span className="bp-strategic-title block text-[13px] font-extrabold uppercase tracking-[0.14em] text-[#070707]">
+                  <span className="block text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#070707]">
                     Our Business Plan
                   </span>
+                  <p className="mt-0.5 text-[10px] font-semibold text-[#6b7280]">
+                    Add images and explainer videos
+                  </p>
                 </div>
               </div>
 
-              <div className="bp-strategic-actions flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <div className="relative">
                   <BtnIcon
                     title="Info"
@@ -4312,21 +3757,21 @@ const BusinessPlanAndGoles = () => {
 
             {/* Image / Video Content - attached to header without gap */}
             {showAddContent && (
-              <div className="bp-add-content px-4 pb-4 pt-3">
-                <div className="bp-media-tabs mb-4 flex rounded-2xl border border-[#eee3dd] bg-[#f7f1ed] p-1">
-                  {["Business Plan", "VisionBoard"].map((t) => {
+              <div className="px-4 pb-4 pt-3">
+                <div className="mb-4 flex rounded-2xl border border-[#eee3dd] bg-[#f7f1ed] p-1">
+                  {["images", "video"].map((t) => {
                     const isActive = addContentTab === t;
 
                     return (
                       <button
                         key={t}
                         onClick={() => setAddContentTab(t)}
-                        className={`bp-media-tab flex-1 rounded-xl px-4 py-2 text-[13px] font-extrabold capitalize transition-all duration-200 ${isActive
-                          ? "bg-[#DA7756] text-white shadow-[0_8px_16px_rgba(218,119,86,0.22)]"
-                          : "text-[#6b7280] hover:bg-white hover:text-[#DA7756]"
+                        className={`flex-1 rounded-xl px-4 py-2 text-[13px] font-extrabold capitalize transition-all duration-200 ${isActive
+                            ? "bg-[#DA7756] text-white shadow-[0_8px_16px_rgba(218,119,86,0.22)]"
+                            : "text-[#6b7280] hover:bg-white hover:text-[#DA7756]"
                           }`}
                       >
-                        {t === "Business Plan" ? "Business Plan" : "VisionBoard"}
+                        {t === "images" ? "Images" : "Explainer Video"}
                       </button>
                     );
                   })}
@@ -4348,371 +3793,9 @@ const BusinessPlanAndGoles = () => {
                   </div>
                 )}
 
-                {addContentTab === "Business Plan" && (
+                {addContentTab === "images" && (
                   <div>
-                    {/* ── Strategic Essentials ── */}
-                    <div className="bp-essentials-panel rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
-                      <div className="bp-essentials-header flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ebe6] px-4 py-3 sm:px-5">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7] text-[#ff6b4a]">
-                            <svg
-                              className="h-[18px] w-[18px]"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                              />
-                            </svg>
-                          </div>
-
-                          <div>
-                            <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#070707]">
-                              Strategic Essentials
-                            </p>
-                            <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
-                              Values, purpose and promises that define your strategy.
-                            </p>
-                          </div>
-                        </div>
-
-                        <span className="bp-essentials-count rounded-full border border-[#eee3dd] bg-[#fafafa] px-3 py-1 text-[11px] font-extrabold text-[#6b7280]">
-                          3 essentials
-                        </span>
-                      </div>
-
-                      <div className="bp-essentials-grid grid grid-cols-1 gap-3 p-4 md:grid-cols-3 sm:p-5">
-                        {/* Core Values */}
-                        <div className="bp-essential-card group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                          <div className="bp-essential-card-head mb-4 flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="bp-essential-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                  strokeWidth={2}
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M4.5 12.75 9 17.25 19.5 6.75"
-                                  />
-                                </svg>
-                              </div>
-
-                              <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
-                                Core Values
-                                <span
-                                  onMouseEnter={(e) => handleCardInfoEnter(e, "core")}
-                                  onMouseLeave={() => setActiveCardInfo(null)}
-                                  className="cursor-help"
-                                >
-                                  <InfoIcon />
-                                </span>
-                              </h3>
-                            </div>
-
-                            <button
-                              onClick={() => openTopModal("core")}
-                              className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
-                              title="Edit core values"
-                            >
-                              <EditIcon />
-                            </button>
-                          </div>
-
-                          {isFetchingCore ? (
-                            <div className="flex flex-wrap gap-2">
-                              {[1, 2, 3, 4].map((n) => (
-                                <Shimmer key={n} w="80px" h={28} />
-                              ))}
-                            </div>
-                          ) : coreFetchError ? (
-                            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
-                              ⚠ {coreFetchError}{" "}
-                              <button onClick={loadCoreValues} className="underline">
-                                Retry
-                              </button>
-                            </div>
-                          ) : (coreValues || []).length === 0 && !coreVideoUrl ? (
-                            <div className="flex flex-col gap-3">
-                              {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
-                            </div>
-                          ) : (
-                            <div className="flex h-full flex-col">
-                              {coreVideoUrl && <VideoPreview url={coreVideoUrl} />}
-                              {(coreValues || []).length === 0 ? (
-                                <div>
-                                  {emptyAddBtn(
-                                    () => openTopModal("core"),
-                                    "Add Core Values"
-                                  )}
-                                </div>
-                              ) : (
-                                <div>
-                                  <CoreValuesInlineCard values={coreValues} />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Purpose */}
-                        <div className="bp-essential-card group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                          <div className="bp-essential-card-head mb-4 flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="bp-essential-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                  strokeWidth={2}
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                                  />
-                                </svg>
-                              </div>
-
-                              <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
-                                Purpose
-                                <span
-                                  onMouseEnter={(e) => handleCardInfoEnter(e, "purpose")}
-                                  onMouseLeave={() => setActiveCardInfo(null)}
-                                  className="cursor-help"
-                                >
-                                  <InfoIcon />
-                                </span>
-                              </h3>
-                            </div>
-
-                            <button
-                              onClick={() => openTopModal("purpose")}
-                              className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
-                              title="Edit purpose"
-                            >
-                              <EditIcon />
-                            </button>
-                          </div>
-
-                          {isFetchingPurpose ? (
-                            <div className="space-y-2">
-                              {[1, 2, 3].map((n) => (
-                                <Shimmer key={n} w={n === 3 ? "50%" : "95%"} h={12} />
-                              ))}
-                            </div>
-                          ) : purposeFetchError ? (
-                            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
-                              ⚠ {purposeFetchError}{" "}
-                              <button onClick={loadPurpose} className="underline">
-                                Retry
-                              </button>
-                            </div>
-                          ) : !purposeText && !purposeVideoUrl ? (
-                            emptyAddBtn(() => openTopModal("purpose"), "Add Purpose")
-                          ) : (
-                            <div className="flex h-full flex-col">
-                              {purposeVideoUrl && <VideoPreview url={purposeVideoUrl} />}
-                              {purposeText ? (
-                                <p className="rounded-2xl bg-white p-3 text-[13px] font-semibold leading-relaxed text-[#DA7756] ring-1 ring-[#f0ebe6]">
-                                  {purposeText}
-                                </p>
-                              ) : (
-                                <div>
-                                  {emptyAddBtn(
-                                    () => openTopModal("purpose"),
-                                    "Add Purpose"
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Brand Promises */}
-                        <div className="bp-essential-card group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                          <div className="bp-essential-card-head mb-4 flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="bp-essential-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                  strokeWidth={2}
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.125 2.04 2.948-.415a.75.75 0 0 1 .816.816l-.415 2.948 2.04 2.125a.75.75 0 0 1 0 1.04l-2.04 2.125.415 2.948a.75.75 0 0 1-.816.816l-2.948-.415-2.125 2.04a.75.75 0 0 1-1.04 0l-2.125-2.04-2.948.415a.75.75 0 0 1-.816-.816l.415-2.948-2.04-2.125a.75.75 0 0 1 0-1.04l2.04-2.125-.415-2.948a.75.75 0 0 1 .816-.816l2.948.415 2.125-2.04Z"
-                                  />
-                                </svg>
-                              </div>
-
-                              <h3 className="bp-heading flex items-center gap-1.5 text-[14px] font-semibold">
-                                Brand Promises
-                                <span
-                                  onMouseEnter={(e) => handleCardInfoEnter(e, "brand")}
-                                  onMouseLeave={() => setActiveCardInfo(null)}
-                                  className="cursor-help"
-                                >
-                                  <InfoIcon />
-                                </span>
-                              </h3>
-                            </div>
-
-                            <button
-                              onClick={() => openTopModal("brand")}
-                              className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
-                              title="Edit brand promises"
-                            >
-                              <EditIcon />
-                            </button>
-                          </div>
-
-                          {isFetchingBrand ? (
-                            <div className="space-y-2">
-                              {[1, 2, 3].map((n) => (
-                                <Shimmer key={n} w={n === 3 ? "60%" : "90%"} h={14} />
-                              ))}
-                            </div>
-                          ) : brandFetchError ? (
-                            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
-                              ⚠ {brandFetchError}{" "}
-                              <button onClick={loadBrandPromises} className="underline">
-                                Retry
-                              </button>
-                            </div>
-                          ) : (brandPromises || []).length === 0 && !brandVideoUrl ? (
-                            emptyAddBtn(() => openTopModal("brand"), "Add Promise")
-                          ) : (
-                            <div className="flex h-full flex-col">
-                              {brandVideoUrl && <VideoPreview url={brandVideoUrl} />}
-                              {(brandPromises || []).length === 0 ? (
-                                <div>
-                                  {emptyAddBtn(
-                                    () => openTopModal("brand"),
-                                    "Add Promise"
-                                  )}
-                                </div>
-                              ) : (
-                                <ul className="space-y-2.5 text-[12px] text-[#6b7280]">
-                                  {(brandPromises || []).map((p, idx) => (
-                                    <li
-                                      key={p.id ?? idx}
-                                      className="flex items-start rounded-2xl bg-white p-3 ring-1 ring-[#f0ebe6]"
-                                    >
-                                      <span className="mr-2 mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6b4a]" />
-                                      <div>
-                                        <div
-                                          dangerouslySetInnerHTML={{
-                                            __html: (p.text || "").replace(
-                                              /([^-]+)/,
-                                              `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`
-                                            ),
-                                          }}
-                                        />
-                                        {p.kpis && p.kpis.length > 0 ? (
-                                          <p className="mt-0.5 text-[11px] text-gray-400">
-                                            {p.kpis.join(", ")}
-                                          </p>
-                                        ) : (
-                                          <p className="mt-0.5 text-[11px] italic text-gray-400">
-                                            No KPIs linked
-                                          </p>
-                                        )}
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Render Active Tooltip for 3 Cards */}
-                    {activeCardInfo &&
-                      ReactDOM.createPortal(
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: cardInfoCoords.top,
-                            left: cardInfoCoords.left,
-                            transform: cardInfoCoords.transform,
-                            zIndex: 99999,
-                            background: "#16102b",
-                            color: "#fff",
-                            borderRadius: 12,
-                            boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                            padding: "16px",
-                            width: 300,
-                            textAlign: "center",
-                            fontFamily: "'Poppins', sans-serif",
-                            pointerEvents: "none",
-                          }}
-                        >
-                          <h4
-                            style={{
-                              margin: "0 0 10px 0",
-                              fontSize: 13,
-                              fontWeight: 800,
-                            }}
-                          >
-                            {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
-                              ? TOOLTIP_CONTENT[activeCardInfo].title
-                              : ""}
-                          </h4>
-                          <p
-                            style={{
-                              margin: "0 0 10px 0",
-                              fontSize: 12,
-                              lineHeight: 1.5,
-                              color: "#d1d5db",
-                            }}
-                          >
-                            {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
-                              ? TOOLTIP_CONTENT[activeCardInfo].desc
-                              : ""}
-                          </p>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: 11,
-                              fontStyle: "italic",
-                              color: "#d1d5db",
-                            }}
-                          >
-                            {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
-                              ? TOOLTIP_CONTENT[activeCardInfo].example
-                              : ""}
-                          </p>
-                        </div>,
-                        document.body
-                      )}
-
-                    {/* Sub-sections */}
-                    <BhagSection />
-                    <GoalsPage />
-                    <SWOTAnalysis />
-                    <CriticalNumbers />
-                    <KeyProcessesSection />
-                  </div>
-                )}
-
-                {addContentTab === "VisionBoard" && (
-                  <div>
-                    <div className="bp-vision-controls mb-3 flex gap-2 max-sm:flex-col">
+                    <div className="mb-3 flex gap-2 max-sm:flex-col">
                       <input
                         ref={overviewImageUploadRef}
                         type="file"
@@ -4774,8 +3857,8 @@ const BusinessPlanAndGoles = () => {
                       />
                     )}
 
-                    <div className="bp-vision-ai-card mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
-                      <div className="bp-vision-ai-head mb-3 flex items-center justify-between gap-3">
+                    <div className="mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DA7756]">
                             Generate with AI
@@ -4790,9 +3873,9 @@ const BusinessPlanAndGoles = () => {
                         </span>
                       </div>
 
-                      <div className="bp-vision-ai-actions grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <button
-                          onClick={() => setShowGenerateVisionBoardConfirm(true)}
+                          onClick={() => handleCopyAiPrompt("overview")}
                           disabled={isCopyingAiPrompt === "overview"}
                           className="group relative inline-flex min-h-[46px] items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#efd8cf] bg-gradient-to-br from-white to-[#fff3ed] px-4 py-3 text-[13px] font-extrabold text-[#c9673f] shadow-[0_10px_20px_rgba(218,119,86,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DA7756]/50 hover:shadow-[0_14px_26px_rgba(218,119,86,0.16)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
@@ -4800,12 +3883,12 @@ const BusinessPlanAndGoles = () => {
                           <span className="relative z-10 flex items-center gap-2">
                             {isCopyingAiPrompt === "overview" ? (
                               <>
-                                <LoaderIcon /> Generating...
+                                <LoaderIcon /> Copying...
                               </>
                             ) : (
                               <>
                                 <span>✨</span>
-                                <span>Generate Vision Board</span>
+                                <span>Create Image Overview</span>
                               </>
                             )}
                           </span>
@@ -4835,12 +3918,469 @@ const BusinessPlanAndGoles = () => {
                   </div>
                 )}
 
+                {addContentTab === "video" && (
+                  <div>
+                    <div className="mb-2 flex gap-2 max-sm:flex-col">
+                      <input
+                        ref={overviewVideoUploadRef}
+                        type="file"
+                        accept="video/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleUploadOverviewVideos}
+                      />
 
+                      <input
+                        type="text"
+                        value={newVideoUrl}
+                        onChange={(e) => setNewVideoUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
+                        placeholder="Paste YouTube, Drive, or direct video URL..."
+                        className="min-h-[40px] flex-1 rounded-xl border border-[#e5e7eb] bg-[#fffaf8] px-3 py-2 text-[13px] font-semibold text-[#1a1a1a] outline-none transition-all placeholder:text-[#a3a3a3] placeholder:font-medium focus:border-[#DA7756] focus:ring-4 focus:ring-[#DA7756]/15 disabled:opacity-60"
+                        disabled={isSavingVideos}
+                      />
+
+                      <button
+                        onClick={handleAddVideo}
+                        disabled={isSavingVideos || !newVideoUrl.trim()}
+                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-[#fdf9f7] px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fff3ed] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSavingVideos ? <LoaderIcon /> : "+ Add"}
+                      </button>
+
+                      <button
+                        onClick={() => overviewVideoUploadRef.current?.click()}
+                        disabled={isSavingVideos}
+                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-white px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fdf9f7] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSavingVideos ? <LoaderIcon /> : "Upload"}
+                      </button>
+                    </div>
+
+                    <p className="mb-4 text-[11px] font-bold text-[#6b7280]">
+                      {(overviewVideos || []).length}/12 videos added
+                    </p>
+
+                    {isFetchingMedia ? (
+                      <div className="mb-5 h-[260px] w-full animate-pulse rounded-2xl bg-[#e5e1d8]" />
+                    ) : (overviewVideos || []).length === 0 ? (
+                      <div className="mb-5 flex flex-col items-center rounded-[18px] border-2 border-dashed border-[#eadfd8] bg-gradient-to-br from-[#fffaf8] to-white px-5 py-8 text-center">
+                        <VideoPlaceholder />
+                        <p className="text-[13px] font-extrabold text-[#1a1a1a]">
+                          No explainer videos added yet
+                        </p>
+                        <p className="mt-1 max-w-[360px] text-[11px] font-semibold leading-5 text-[#6b7280]">
+                          Add a YouTube, Google Drive, or direct video link for
+                          your business plan.
+                        </p>
+                      </div>
+                    ) : (
+                      <InlineVideoPlayer
+                        videos={(overviewVideos || []).map((item) => item.url)}
+                        onDelete={handleDeleteVideo}
+                        isSaving={isSavingVideos}
+                      />
+                    )}
+
+                    <div className="mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DA7756]">
+                            Generate with AI
+                          </p>
+                          <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
+                            Copy a video script prompt from your business plan
+                          </p>
+                        </div>
+
+                        <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#c9673f] shadow-sm">
+                          Script
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleCopyAiPrompt("script")}
+                        disabled={isCopyingAiPrompt === "script"}
+                        className="group relative inline-flex min-h-[46px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#efd8cf] bg-gradient-to-br from-white to-[#fff3ed] px-4 py-3 text-[13px] font-extrabold text-[#c9673f] shadow-[0_10px_20px_rgba(218,119,86,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DA7756]/50 hover:shadow-[0_14px_26px_rgba(218,119,86,0.16)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/80 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+                        <span className="relative z-10 flex items-center gap-2">
+                          {isCopyingAiPrompt === "script" ? (
+                            <>
+                              <LoaderIcon /> Copying...
+                            </>
+                          ) : (
+                            <>
+                              <span>📄</span>
+                              <span>Create Video Script</span>
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
+          {/* ── Strategic Essentials ── */}
+          <div className="rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ebe6] px-4 py-3 sm:px-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7] text-[#ff6b4a]">
+                  <svg
+                    className="h-[18px] w-[18px]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                </div>
 
+                <div>
+                  <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#070707]">
+                    Strategic Essentials
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
+                    Values, purpose and promises that define your strategy.
+                  </p>
+                </div>
+              </div>
+
+              <span className="rounded-full border border-[#eee3dd] bg-[#fafafa] px-3 py-1 text-[11px] font-extrabold text-[#6b7280]">
+                3 essentials
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 sm:p-5">
+              {/* Core Values */}
+              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 12.75 9 17.25 19.5 6.75"
+                        />
+                      </svg>
+                    </div>
+
+                    <h3 className="flex items-center gap-1.5 text-[14px] font-extrabold text-[#1a1a1a]">
+                      Core Values
+                      <span
+                        onMouseEnter={(e) => handleCardInfoEnter(e, "core")}
+                        onMouseLeave={() => setActiveCardInfo(null)}
+                        className="cursor-help"
+                      >
+                        <InfoIcon />
+                      </span>
+                    </h3>
+                  </div>
+
+                  <button
+                    onClick={() => openTopModal("core")}
+                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                    title="Edit core values"
+                  >
+                    <EditIcon />
+                  </button>
+                </div>
+
+                {isFetchingCore ? (
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4].map((n) => (
+                      <Shimmer key={n} w="80px" h={28} />
+                    ))}
+                  </div>
+                ) : coreFetchError ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                    ⚠ {coreFetchError}{" "}
+                    <button onClick={loadCoreValues} className="underline">
+                      Retry
+                    </button>
+                  </div>
+                ) : (coreValues || []).length === 0 && !coreVideoUrl ? (
+                  <div className="flex flex-col gap-3">
+                    {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
+                  </div>
+                ) : (
+                  <div className="flex h-full flex-col">
+                    {coreVideoUrl && <VideoPreview url={coreVideoUrl} />}
+                    {(coreValues || []).length === 0 ? (
+                      <div>
+                        {emptyAddBtn(
+                          () => openTopModal("core"),
+                          "Add Core Values"
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <CoreValuesInlineCard values={coreValues} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Purpose */}
+              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
+                      </svg>
+                    </div>
+
+                    <h3 className="flex items-center gap-1.5 text-[14px] font-extrabold text-[#1a1a1a]">
+                      Purpose
+                      <span
+                        onMouseEnter={(e) => handleCardInfoEnter(e, "purpose")}
+                        onMouseLeave={() => setActiveCardInfo(null)}
+                        className="cursor-help"
+                      >
+                        <InfoIcon />
+                      </span>
+                    </h3>
+                  </div>
+
+                  <button
+                    onClick={() => openTopModal("purpose")}
+                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                    title="Edit purpose"
+                  >
+                    <EditIcon />
+                  </button>
+                </div>
+
+                {isFetchingPurpose ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((n) => (
+                      <Shimmer key={n} w={n === 3 ? "50%" : "95%"} h={12} />
+                    ))}
+                  </div>
+                ) : purposeFetchError ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                    ⚠ {purposeFetchError}{" "}
+                    <button onClick={loadPurpose} className="underline">
+                      Retry
+                    </button>
+                  </div>
+                ) : !purposeText && !purposeVideoUrl ? (
+                  emptyAddBtn(() => openTopModal("purpose"), "Add Purpose")
+                ) : (
+                  <div className="flex h-full flex-col">
+                    {purposeVideoUrl && <VideoPreview url={purposeVideoUrl} />}
+                    {purposeText ? (
+                      <p className="rounded-2xl bg-white p-3 text-[13px] font-semibold leading-relaxed text-[#DA7756] ring-1 ring-[#f0ebe6]">
+                        {purposeText}
+                      </p>
+                    ) : (
+                      <div>
+                        {emptyAddBtn(
+                          () => openTopModal("purpose"),
+                          "Add Purpose"
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Brand Promises */}
+              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.125 2.04 2.948-.415a.75.75 0 0 1 .816.816l-.415 2.948 2.04 2.125a.75.75 0 0 1 0 1.04l-2.04 2.125.415 2.948a.75.75 0 0 1-.816.816l-2.948-.415-2.125 2.04a.75.75 0 0 1-1.04 0l-2.125-2.04-2.948.415a.75.75 0 0 1-.816-.816l.415-2.948-2.04-2.125a.75.75 0 0 1 0-1.04l2.04-2.125-.415-2.948a.75.75 0 0 1 .816-.816l2.948.415 2.125-2.04Z"
+                        />
+                      </svg>
+                    </div>
+
+                    <h3 className="flex items-center gap-1.5 text-[14px] font-extrabold text-[#1a1a1a]">
+                      Brand Promises
+                      <span
+                        onMouseEnter={(e) => handleCardInfoEnter(e, "brand")}
+                        onMouseLeave={() => setActiveCardInfo(null)}
+                        className="cursor-help"
+                      >
+                        <InfoIcon />
+                      </span>
+                    </h3>
+                  </div>
+
+                  <button
+                    onClick={() => openTopModal("brand")}
+                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                    title="Edit brand promises"
+                  >
+                    <EditIcon />
+                  </button>
+                </div>
+
+                {isFetchingBrand ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((n) => (
+                      <Shimmer key={n} w={n === 3 ? "60%" : "90%"} h={14} />
+                    ))}
+                  </div>
+                ) : brandFetchError ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                    ⚠ {brandFetchError}{" "}
+                    <button onClick={loadBrandPromises} className="underline">
+                      Retry
+                    </button>
+                  </div>
+                ) : (brandPromises || []).length === 0 && !brandVideoUrl ? (
+                  emptyAddBtn(() => openTopModal("brand"), "Add Promise")
+                ) : (
+                  <div className="flex h-full flex-col">
+                    {brandVideoUrl && <VideoPreview url={brandVideoUrl} />}
+                    {(brandPromises || []).length === 0 ? (
+                      <div>
+                        {emptyAddBtn(
+                          () => openTopModal("brand"),
+                          "Add Promise"
+                        )}
+                      </div>
+                    ) : (
+                      <ul className="space-y-2.5 text-[12px] text-[#6b7280]">
+                        {(brandPromises || []).map((p, idx) => (
+                          <li
+                            key={p.id ?? idx}
+                            className="flex items-start rounded-2xl bg-white p-3 ring-1 ring-[#f0ebe6]"
+                          >
+                            <span className="mr-2 mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6b4a]" />
+                            <div>
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: (p.text || "").replace(
+                                    /([^-]+)/,
+                                    `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`
+                                  ),
+                                }}
+                              />
+                              {p.kpis && p.kpis.length > 0 ? (
+                                <p className="mt-0.5 text-[11px] text-gray-400">
+                                  {p.kpis.join(", ")}
+                                </p>
+                              ) : (
+                                <p className="mt-0.5 text-[11px] italic text-gray-400">
+                                  No KPIs linked
+                                </p>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Render Active Tooltip for 3 Cards */}
+          {activeCardInfo &&
+            ReactDOM.createPortal(
+              <div
+                style={{
+                  position: "absolute",
+                  top: cardInfoCoords.top,
+                  left: cardInfoCoords.left,
+                  transform: cardInfoCoords.transform,
+                  zIndex: 99999,
+                  background: "#16102b",
+                  color: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                  padding: "16px",
+                  width: 300,
+                  textAlign: "center",
+                  fontFamily: "'Poppins', sans-serif",
+                  pointerEvents: "none",
+                }}
+              >
+                <h4
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 13,
+                    fontWeight: 800,
+                  }}
+                >
+                  {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
+                    ? TOOLTIP_CONTENT[activeCardInfo].title
+                    : ""}
+                </h4>
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: "#d1d5db",
+                  }}
+                >
+                  {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
+                    ? TOOLTIP_CONTENT[activeCardInfo].desc
+                    : ""}
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 11,
+                    fontStyle: "italic",
+                    color: "#d1d5db",
+                  }}
+                >
+                  {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo]
+                    ? TOOLTIP_CONTENT[activeCardInfo].example
+                    : ""}
+                </p>
+              </div>,
+              document.body
+            )}
+
+          {/* Sub-sections */}
+          <BhagSection />
+          <GoalsPage />
+          <CriticalNumbers />
+          <KeyProcessesSection />
+          <SWOTAnalysis />
         </div>
       )}
 
@@ -4861,7 +4401,7 @@ const BusinessPlanAndGoles = () => {
                   AI Plan Builder
                 </div>
                 <h2
-                  className="bp-heading mt-1 text-[20px] font-semibold"
+                  className="mt-1 text-[20px] font-semibold"
                   style={{ color: C.textMain }}
                 >
                   Create Business Plan with A.I
@@ -4885,159 +4425,6 @@ const BusinessPlanAndGoles = () => {
             </div>
 
             <div className="p-6 flex-1 overflow-y-auto bp-scroll">
-              {aiBuilderStage === "discovery" && (
-                <div className="space-y-5">
-                  <div className="mb-2">
-                    <h3 className="bp-heading text-lg font-bold" style={{ color: C.textMain }}>
-                      Tell Us About Your Business
-                    </h3>
-                    <p className="text-sm font-semibold" style={{ color: C.textMuted }}>
-                      Provide your business details. The AI will use this to generate and enhance your business plan.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Company Name <span className="text-red-500">*</span></label>
-                      <input
-                        type="text"
-                        value={aiCompanyName}
-                        onChange={(e) => setAiCompanyName(e.target.value)}
-                        placeholder="Example: ABC Technologies Pvt. Ltd."
-                        className="bp-input w-full"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Company Website</label>
-                      <input
-                        type="url"
-                        value={aiCompanyWebsite}
-                        onChange={(e) => setAiCompanyWebsite(e.target.value)}
-                        placeholder="https://www.abc.com"
-                        className="bp-input w-full"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Industry Category <span className="text-red-500">*</span></label>
-                      <select
-                        value={aiIndustryCategory}
-                        onChange={(e) => setAiIndustryCategory(e.target.value)}
-                        className="bp-select w-full"
-                      >
-                        <option value="">Select Industry</option>
-                        {["Manufacturing", "SaaS", "Retail", "Healthcare", "Education", "Construction", "Logistics", "Financial Services", "Hospitality", "Consulting", "Other"].map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {aiIndustryCategory === "Other" && (
-                      <div>
-                        <label className="mb-1 block text-[13px] font-bold text-gray-700">Please specify your industry <span className="text-red-500">*</span></label>
-                        <input
-                          type="text"
-                          value={aiIndustryOther}
-                          onChange={(e) => setAiIndustryOther(e.target.value)}
-                          className="bp-input w-full"
-                        />
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Business Stage <span className="text-red-500">*</span></label>
-                      <select
-                        value={aiBusinessStage}
-                        onChange={(e) => setAiBusinessStage(e.target.value)}
-                        className="bp-select w-full"
-                      >
-                        <option value="">Select Stage</option>
-                        {["Startup", "Early Stage", "Small Business", "Growth Stage", "Mid-Sized Company", "Enterprise"].map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Years in Operation <span className="text-red-500">*</span></label>
-                      <select
-                        value={aiYearsInOperation}
-                        onChange={(e) => setAiYearsInOperation(e.target.value)}
-                        className="bp-select w-full"
-                      >
-                        <option value="">Select Years</option>
-                        {["Less than 1 Year", "1–3 Years", "3–5 Years", "5–10 Years", "10+ Years"].map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Team Size <span className="text-red-500">*</span></label>
-                      <select
-                        value={aiTeamSize}
-                        onChange={(e) => setAiTeamSize(e.target.value)}
-                        className="bp-select w-full"
-                      >
-                        <option value="">Select Size</option>
-                        {["1–10", "11–50", "51–200", "201–500", "500+"].map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Annual Revenue Range <span className="text-red-500">*</span></label>
-                      <select
-                        value={aiAnnualRevenue}
-                        onChange={(e) => setAiAnnualRevenue(e.target.value)}
-                        className="bp-select w-full"
-                      >
-                        <option value="">Select Revenue</option>
-                        {["Pre-Revenue", "Less than ₹50 Lakhs", "₹50 Lakhs – ₹5 Crores", "₹5 Crores – ₹50 Crores", "₹50 Crores – ₹500 Crores", "₹500 Crores+"].map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="mb-2 block text-[13px] font-bold text-gray-700">Current Geographic Reach <span className="text-red-500">*</span></label>
-                      <div className="flex flex-wrap gap-4">
-                        {["Local", "Regional", "National", "International"].map(opt => (
-                          <label key={opt} className="flex items-center gap-2 text-sm text-gray-700 font-semibold cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={aiGeographicReach.includes(opt)}
-                              onChange={(e) => {
-                                if (e.target.checked) setAiGeographicReach([...aiGeographicReach, opt]);
-                                else setAiGeographicReach(aiGeographicReach.filter(v => v !== opt));
-                              }}
-                              className="rounded border-gray-300 text-[#DA7756] focus:ring-[#DA7756]"
-                            />
-                            {opt}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="mb-1 block text-[13px] font-bold text-gray-700">Market Position <span className="text-red-500">*</span></label>
-                      <select
-                        value={aiMarketPosition}
-                        onChange={(e) => setAiMarketPosition(e.target.value)}
-                        className="bp-select w-full"
-                      >
-                        <option value="">Select Position</option>
-                        {["Just Starting Out", "Small Local Business", "Growing Business", "Established Business", "Industry Leader"].map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {aiBuilderStage === "questions" && (
                 <div className="space-y-5">
                   <div>
@@ -5076,35 +4463,11 @@ const BusinessPlanAndGoles = () => {
                     <textarea
                       value={aiAnswers[aiQuestionIndex]}
                       onChange={(e) => updateAiAnswer(e.target.value)}
-                      className="bp-input resize-y text-[12px]"
+                      className="bp-input resize-y"
                       style={{ minHeight: 150 }}
-                      placeholder={AI_PLAN_FIELDS[aiQuestionIndex].placeholder}
+                      placeholder="Type your answer here..."
                       autoFocus
                     />
-                    {aiAnswers[aiQuestionIndex]?.trim() && (
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          onClick={handleAiSuggest}
-                          disabled={isSuggestingAi}
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-150 active:scale-[0.97] border"
-                          style={{
-                            background: C.primaryTint,
-                            borderColor: C.primaryBord,
-                            color: C.primaryHov,
-                            fontFamily: C.font,
-                            opacity: isSuggestingAi ? 0.6 : 1,
-                          }}
-                        >
-                          {isSuggestingAi ? (
-                            <>
-                              <LoaderIcon /> Re-writing...
-                            </>
-                          ) : (
-                            "✨ Re-write with AI"
-                          )}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -5117,7 +4480,7 @@ const BusinessPlanAndGoles = () => {
                   >
                     <LoaderIcon className="w-8 h-8" />
                   </div>
-                  <h3 className="bp-heading text-xl font-semibold" style={{ color: C.textMain }}>
+                  <h3 className="text-xl font-semibold" style={{ color: C.textMain }}>
                     Building your AI plan
                   </h3>
                   <p
@@ -5135,7 +4498,7 @@ const BusinessPlanAndGoles = () => {
                   style={{ borderColor: C.primaryBord }}
                 >
                   <h3
-                    className="bp-heading text-base font-semibold"
+                    className="text-base font-semibold"
                     style={{ color: C.textMain }}
                   >
                     Generated Business Plan
@@ -5306,26 +4669,6 @@ const BusinessPlanAndGoles = () => {
                             )}
                           </div>
                         )}
-                      {(["strengths", "weaknesses", "opportunities", "threats"] as const).some(
-                        (key) => Array.isArray(aiPlanDisplay[key]) && aiPlanDisplay[key].length > 0
-                      ) &&
-                        renderAiPlanSection(
-                          "SWOT",
-                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            {(["strengths", "weaknesses", "opportunities", "threats"] as const).map(
-                              (key) =>
-                                Array.isArray(aiPlanDisplay[key]) &&
-                                aiPlanDisplay[key].length > 0 && (
-                                  <div key={key}>
-                                    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
-                                      {key}
-                                    </p>
-                                    {renderAiPlanStringList(aiPlanDisplay[key])}
-                                  </div>
-                                )
-                            )}
-                          </div>
-                        )}
 
                       {Array.isArray(aiPlanDisplay.critical_numbers) &&
                         aiPlanDisplay.critical_numbers.length > 0 &&
@@ -5352,7 +4695,26 @@ const BusinessPlanAndGoles = () => {
                           </div>
                         )}
 
-
+                      {(["strengths", "weaknesses", "opportunities", "threats"] as const).some(
+                        (key) => Array.isArray(aiPlanDisplay[key]) && aiPlanDisplay[key].length > 0
+                      ) &&
+                        renderAiPlanSection(
+                          "SWOT",
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            {(["strengths", "weaknesses", "opportunities", "threats"] as const).map(
+                              (key) =>
+                                Array.isArray(aiPlanDisplay[key]) &&
+                                aiPlanDisplay[key].length > 0 && (
+                                  <div key={key}>
+                                    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                      {key}
+                                    </p>
+                                    {renderAiPlanStringList(aiPlanDisplay[key])}
+                                  </div>
+                                )
+                            )}
+                          </div>
+                        )}
                     </div>
                   ) : (
                     <pre
@@ -5374,77 +4736,16 @@ const BusinessPlanAndGoles = () => {
               className="flex flex-wrap items-center justify-between gap-3 border-t p-5"
               style={{ background: C.cardBg, borderColor: C.primaryBord }}
             >
-              {aiBuilderStage === "discovery" ? (
-                <>
-                  <BtnOutline onClick={closeAiBuilder}>Cancel</BtnOutline>
-                  <button
-                    disabled={isSubmittingProfile}
-                    onClick={async () => {
-                      if (!aiCompanyName || !aiIndustryCategory || !aiBusinessStage || !aiYearsInOperation || !aiTeamSize || !aiAnnualRevenue || aiGeographicReach.length === 0 || !aiMarketPosition) {
-                        toast.error("Please fill all required fields before proceeding.");
-                        return;
-                      }
-                      if (aiIndustryCategory === "Other" && !aiIndustryOther) {
-                        toast.error("Please specify your industry.");
-                        return;
-                      }
-                      if (aiCompanyWebsite) {
-                        try {
-                          new URL(aiCompanyWebsite);
-                        } catch (_) {
-                          toast.error("Please enter a valid Company Website URL.");
-                          return;
-                        }
-                      }
-                      setIsSubmittingProfile(true);
-                      try {
-                        const baseUrl = (API_CONFIG.BASE_URL || "").replace(/\/$/, "");
-                        const res = await fetch(`${baseUrl}/ai_assist/business_profile`, {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: getAuthHeader(),
-                          },
-                          body: JSON.stringify({
-                            company_name: aiCompanyName,
-                            company_website: aiCompanyWebsite,
-                            industry_category: aiIndustryCategory === "Other" ? aiIndustryOther : aiIndustryCategory,
-                            business_stage: aiBusinessStage,
-                            years_in_operation: aiYearsInOperation,
-                            team_size: aiTeamSize,
-                            annual_revenue_range: aiAnnualRevenue,
-                            geographic_reach: aiGeographicReach.join(", "),
-                            market_position: aiMarketPosition,
-                          }),
-                        });
-                        if (!res.ok) {
-                          const errText = await res.text().catch(() => "");
-                          throw new Error(errText || `Request failed (${res.status})`);
-                        }
-                      } catch (err: any) {
-                        toast.error(err?.message || "Failed to submit business profile.");
-                        setIsSubmittingProfile(false);
-                        return;
-                      }
-                      setIsSubmittingProfile(false);
-                      setAiBuilderStage("questions");
-                    }}
-                    className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed"
-                    style={{ background: "#1a1a1a", fontFamily: C.font }}
-                  >
-                    {isSubmittingProfile ? "Saving..." : "Next"}
-                  </button>
-                </>
-              ) : aiBuilderStage === "questions" ? (
+              {aiBuilderStage === "questions" ? (
                 <>
                   <BtnOutline
                     onClick={() =>
                       aiQuestionIndex === 0
-                        ? setAiBuilderStage("discovery")
+                        ? closeAiBuilder()
                         : setAiQuestionIndex((idx) => idx - 1)
                     }
                   >
-                    Back
+                    {aiQuestionIndex === 0 ? "Cancel" : "Back"}
                   </BtnOutline>
                   <button
                     onClick={goToNextAiQuestion}
@@ -5508,7 +4809,7 @@ const BusinessPlanAndGoles = () => {
                   }}
                 />
                 <h2
-                  className="bp-heading font-bold text-[17px] m-0"
+                  className="font-bold text-[17px] m-0"
                   style={{ color: C.textMain }}
                 >
                   Edit{" "}
@@ -5866,75 +5167,6 @@ const BusinessPlanAndGoles = () => {
                 {isSavingAny && <LoaderIcon />}
                 {isSavingAny ? "Saving..." : "Save Changes"}
               </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* Generate Vision Board Confirmation */}
-      {showGenerateVisionBoardConfirm && (
-        <Modal onClose={() => setShowGenerateVisionBoardConfirm(false)}>
-          <div className="bp-modal-box" style={{ maxWidth: 480 }}>
-            <div className="p-6 text-center">
-              <div
-                className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-                style={{ background: C.primaryBg, color: C.primary }}
-              >
-                <svg
-                  className="h-8 w-8"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h2
-                className="mb-2 text-xl font-bold"
-                style={{ color: C.textMain }}
-              >
-                Generate AI Image
-              </h2>
-              <p
-                className="mb-6 text-[13px] font-semibold leading-relaxed"
-                style={{ color: C.textMuted }}
-              >
-                An existing Business Plan has been found.<br />
-                The AI image will be generated using the current Business Plan.<br /><br />
-                Would you like to continue with the current plan or update the plan before generating the image?
-              </p>
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => {
-                    setShowGenerateVisionBoardConfirm(false);
-                    handleCopyAiPrompt("overview");
-                  }}
-                  className="w-full rounded-xl py-3 text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                  style={{ background: C.primary }}
-                >
-                  Generate Image Using Current Plan
-                </button>
-                <button
-                  onClick={() => {
-                    setShowGenerateVisionBoardConfirm(false);
-                    setAddContentTab("Business Plan");
-                    // openAiBuilder();
-                  }}
-                  className="w-full rounded-xl border py-3 text-[13px] font-bold transition-all hover:bg-gray-50 active:scale-[0.98]"
-                  style={{ borderColor: C.primaryBord, color: C.textMain }}
-                >
-                  Review / Edit Business Plan
-                </button>
-                {/* <button
-                >
-                  Cancel
-                </button> */}
-              </div>
             </div>
           </div>
         </Modal>
