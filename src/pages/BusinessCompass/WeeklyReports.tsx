@@ -6302,7 +6302,7 @@ const WeeklyReports = () => {
                             ) : (
                                 <>
                                     <CheckCircle2 size={16} />
-                                    Mark Closed
+                                    Mark Closed 
                                 </>
                             )}
                         </Button>
