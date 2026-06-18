@@ -104,6 +104,18 @@ const formatFrequency = (repeatEvery: string, interval: number): string => {
   return `Every ${unit}`;
 };
 
+const resolveApiConfig = (propBaseUrl?: string, propToken?: string) => {
+  const baseUrl = propBaseUrl || localStorage.getItem('baseUrl');
+  const token = propToken || localStorage.getItem('token');
+
+  if (!baseUrl || !token) {
+    throw new Error("Missing API configuration. Please ensure baseUrl and token are provided.");
+  }
+
+  const apiUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+  return { apiUrl, token };
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, token: propToken }) => {
   const { id } = useParams<{ id: string }>();
@@ -130,19 +142,10 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
       setLoading(true);
       setError(null);
       try {
-        // Get baseUrl and token from props or localStorage
-        const baseUrl = propBaseUrl || localStorage.getItem('baseUrl');
-        const token = propToken || localStorage.getItem('token');
-
-        if (!baseUrl || !token) {
-          throw new Error("Missing API configuration. Please ensure baseUrl and token are provided.");
-        }
-
-        // Format API URL - add https:// if not already present
-        const apiUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const { apiUrl, token } = resolveApiConfig(propBaseUrl, propToken);
 
         const response = await fetch(
-          `${apiUrl}/recurring_expenses/${id}`,
+          `${apiUrl}/recurring_expenses/${id}.json`,
           {
             method: "GET",
             headers: {
@@ -185,24 +188,26 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
     if (!id) return;
     setIsUpdating(true);
     try {
-      const baseUrl = propBaseUrl || localStorage.getItem('baseUrl');
-      const token = propToken || localStorage.getItem('token');
-      const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      const { apiUrl, token } = resolveApiConfig(propBaseUrl, propToken);
 
-      const response = await fetch(
-        `${apiUrl}/recurring_expenses/${id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ recurring_expense: { active } }),
-        }
-      );
+      // Determine the endpoint based on the action
+      const endpoint = active
+        ? `${apiUrl}/recurring_expenses/${id}/resume.json`
+        : `${apiUrl}/recurring_expenses/${id}/toggle_active.json`;
+
+      const response = await fetch(endpoint, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to update recurring expense");
+        const errBody = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errBody || response.statusText}`
+        );
       }
 
       const updatedData: RecurringExpenseAPI = await response.json();
@@ -212,7 +217,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
       toast.success(statusMsg);
     } catch (err: any) {
       console.error("Failed to update recurring expense:", err);
-      toast.error("Failed to update recurring expense status");
+      toast.error(err.message || "Failed to update recurring expense status");
     } finally {
       setIsUpdating(false);
     }
@@ -237,14 +242,13 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
       return;
     }
 
+    handleMenuClose();
     setIsUpdating(true);
     try {
-      const baseUrl = propBaseUrl || localStorage.getItem('baseUrl');
-      const token = propToken || localStorage.getItem('token');
-      const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      const { apiUrl, token } = resolveApiConfig(propBaseUrl, propToken);
 
       const response = await fetch(
-        `${apiUrl}/recurring_expenses/${id}`,
+        `${apiUrl}/recurring_expenses/${id}.json`,
         {
           method: "DELETE",
           headers: {
@@ -255,14 +259,17 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
       );
 
       if (!response.ok) {
-        throw new Error("Failed to delete recurring expense");
+        const errBody = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errBody || response.statusText}`
+        );
       }
 
       toast.success("Recurring expense deleted successfully");
       navigate("/accounting/recurring-expenses");
     } catch (err: any) {
       console.error("Failed to delete recurring expense:", err);
-      toast.error("Failed to delete recurring expense");
+      toast.error(err.message || "Failed to delete recurring expense");
     } finally {
       setIsUpdating(false);
     }

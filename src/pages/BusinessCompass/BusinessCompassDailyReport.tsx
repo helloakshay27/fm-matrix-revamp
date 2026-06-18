@@ -4955,6 +4955,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                             const yItems = mergedTasksIssues.filter(
                               (item: any) =>
                                 yesterdaySourceIds.has(item.id) &&
+                                item.status !== "completed" &&
+                                item.status !== "closed" &&
                                 !(
                                   item.originalData?.is_started ||
                                   item.is_started ||
@@ -5486,7 +5488,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 playingTaskIds.has(item.originalData?.id);
                               const effectiveStatus =
                                 isPlayedOrStarted &&
-                                !["completed", "closed", "done"].includes(item.status)
+                                  !["completed", "closed", "done"].includes(item.status)
                                   ? "in_progress"
                                   : item.status;
                               return (
@@ -7421,12 +7423,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                     {completedDate}
                                                   </span>
                                                 )}
-                                                {dueDate && (
+                                                {/* {dueDate && (
                                                   <span className="flex items-center gap-1 text-[10px] text-gray-500">
                                                     <CalendarIcon size={9} className="shrink-0" />
                                                     Due: {dueDate}
                                                   </span>
-                                                )}
+                                                )} */}
                                                 {effortEst && (
                                                   <span className="flex items-center gap-1 text-[10px] text-gray-400">
                                                     <Clock size={9} className="shrink-0" />
