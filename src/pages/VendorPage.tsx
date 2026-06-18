@@ -481,11 +481,11 @@ export const VendorPage = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
@@ -541,10 +541,10 @@ export const VendorPage = () => {
     setCurrentPage(page);
     fetchVendors(page, searchTerm);
   };
-  
+
   const handleAddVendor = () => navigate('/maintenance/vendor/add');
   const handleViewVendor = (id: number) => navigate(`/maintenance/vendor/view/${id}`);
-  
+
   const handleImport = () => {
     setShowImportModal(true);
   };
@@ -554,7 +554,7 @@ export const VendorPage = () => {
     if (file) {
       const validTypes = ['.xlsx', '.xls', '.csv'];
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      
+
       if (validTypes.includes(fileExtension)) {
         setSelectedFile(file);
       } else {
@@ -577,7 +577,7 @@ export const VendorPage = () => {
 
     try {
       toast.loading('Importing suppliers...', { id: 'import-loading' });
-      
+
       const response = await fetch(getFullUrl('/pms/assets/supplier_import.json'), {
         method: 'POST',
         body: formData,
@@ -592,9 +592,9 @@ export const VendorPage = () => {
 
       const result = await response.json();
       toast.dismiss('import-loading');
-      
+
       console.log('Import API Response:', result);
-      
+
       // Check for different possible success indicators
       if (result.success === true || result.status === 'success' || response.status === 200) {
         toast.success(result.message || 'Suppliers imported successfully!');
@@ -617,14 +617,14 @@ export const VendorPage = () => {
   const handleDownloadSample = () => {
     // Create a temporary anchor element to trigger download
     const link = document.createElement('a');
-    link.href = getFullUrl('/assets/supplier.xlsx');
+    link.href = getFullUrl('/supplier.xlsx');
     link.download = 'supplier_sample_format.xlsx';
     link.style.display = 'none';
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     toast.success('Sample format downloaded successfully');
   };
 
@@ -639,7 +639,7 @@ export const VendorPage = () => {
       const file = files[0];
       const validTypes = ['.xlsx', '.xls', '.csv'];
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      
+
       if (validTypes.includes(fileExtension)) {
         setSelectedFile(file);
       } else {
@@ -678,7 +678,7 @@ export const VendorPage = () => {
   };
   const handleClearSelection = () => { setShowActionPanel(false); };
   console.log("vendors:---", vendors);
-  
+
   const columns = [
     { key: 'actions', label: 'Action', sortable: false },
     { key: 'id', label: 'ID', sortable: true },
@@ -691,7 +691,7 @@ export const VendorPage = () => {
     // { key: 'signed_on_contract', label: 'Signed On Contract', sortable: true },
     { key: 'kyc_end_in_days', label: 'KYC End In Days', sortable: true },
   ];
-console.log("vendors:-",vendors);
+  console.log("vendors:-", vendors);
 
   const renderCell = (item: Vendor, columnKey: string) => {
     switch (columnKey) {
@@ -857,11 +857,11 @@ console.log("vendors:-",vendors);
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
-      <Button 
+      <Button
         onClick={() => setShowActionPanel((prev) => !prev)}
         className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
       </Button>
     </div>
@@ -877,46 +877,46 @@ console.log("vendors:-",vendors);
         />
       )}
 
-        <>
-          <EnhancedTable
-            data={vendors}
-            columns={columns}
-            renderCell={renderCell}
-            pagination={false}
-            enableExport={true}
-            handleExport={handleExport}
-            exportFileName="vendors"
-            storageKey="vendors-table"
-            enableGlobalSearch={true}
-            onGlobalSearch={handleGlobalSearch}
-            searchPlaceholder="Search vendors (company, code, GST, PAN, email, mobile)..."
-            leftActions={renderCustomActions()}
-            loading={isSearching || loading}
-            loadingMessage={isSearching ? "Searching vendors..." : "Loading vendors..."}
-          />
+      <>
+        <EnhancedTable
+          data={vendors}
+          columns={columns}
+          renderCell={renderCell}
+          pagination={false}
+          enableExport={true}
+          handleExport={handleExport}
+          exportFileName="vendors"
+          storageKey="vendors-table"
+          enableGlobalSearch={true}
+          onGlobalSearch={handleGlobalSearch}
+          searchPlaceholder="Search vendors (company, code, GST, PAN, email, mobile)..."
+          leftActions={renderCustomActions()}
+          loading={isSearching || loading}
+          loadingMessage={isSearching ? "Searching vendors..." : "Loading vendors..."}
+        />
 
-          {!searchTerm && totalPages > 1 && (
-            <div className="mt-6 flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                      className={currentPage === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  {renderPaginationItems()}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                      className={currentPage === totalPages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </>
+        {!searchTerm && totalPages > 1 && (
+          <div className="mt-6 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {renderPaginationItems()}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+      </>
     </div>
   );
 
@@ -937,7 +937,7 @@ console.log("vendors:-",vendors);
             </Button>
           </DialogHeader>
           <div className="space-y-6">
-            <div 
+            <div
               className="border-2 border-dashed border-red-700 rounded-lg p-8 text-center"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
@@ -964,14 +964,14 @@ console.log("vendors:-",vendors);
               )}
             </div>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleDownloadSample}
                 className="text-red-700 border-red-700 hover:bg-red-50"
               >
                 Download Sample Format
               </Button>
-              <Button 
+              <Button
                 onClick={handleImportSubmit}
                 disabled={!selectedFile || isImporting}
                 className="bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"

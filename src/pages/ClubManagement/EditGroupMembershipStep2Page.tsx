@@ -200,6 +200,7 @@ export const EditGroupMembershipStep2Page = () => {
     const [loadingClubMembers, setLoadingClubMembers] = useState(false);
     const [flatOptions, setFlatOptions] = useState<{ id: number; name: string }[]>([]);
     const [flatsLoading, setFlatsLoading] = useState(false);
+    const [planUserLimit, setPlanUserLimit] = useState<number>(99);
 
     useEffect(() => {
         loadClubMembers();
@@ -225,6 +226,26 @@ export const EditGroupMembershipStep2Page = () => {
         }
     };
 
+    const loadPlanUserLimit = async (planId: number) => {
+        try {
+            const baseUrl = API_CONFIG.BASE_URL;
+            const token = API_CONFIG.TOKEN;
+            const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/membership_plans.json`);
+            url.searchParams.append('access_token', token || '');
+            url.searchParams.append('q[active_eq]', 'true');
+            const response = await fetch(url.toString());
+            if (!response.ok) return;
+            const data = await response.json();
+            const plans: any[] = data.plans || [];
+            const plan = plans.find(p => p.id === planId);
+            if (plan) {
+                setPlanUserLimit(parseInt(plan.user_limit || '99') || 99);
+            }
+        } catch {
+            // keep default limit
+        }
+    };
+
     const loadMemberData = async () => {
         if (!id) return;
         setLoading(true);
@@ -236,6 +257,11 @@ export const EditGroupMembershipStep2Page = () => {
             const response = await fetch(url.toString());
             if (!response.ok) throw new Error();
             const data = await response.json();
+
+            // Fetch plan user limit from the allocation's plan
+            if (data.membership_plan_id) {
+                loadPlanUserLimit(data.membership_plan_id);
+            }
 
             const membersArray = data.club_members || data.members || [];
             if (Array.isArray(membersArray) && membersArray.length > 0) {
@@ -398,9 +424,11 @@ export const EditGroupMembershipStep2Page = () => {
         });
     };
 
-    const userLimit = 99;
-
     const handleAddMember = () => {
+        if (members.length >= planUserLimit) {
+            toast.error(`Maximum ${planUserLimit} members allowed for this plan`);
+            return;
+        }
         const newMember = createEmptyMember(Math.random().toString(36).substr(2, 9));
         setMembers(prev => [...prev, newMember]);
         toast.success(`Member ${members.length + 1} added`);
@@ -617,8 +645,9 @@ export const EditGroupMembershipStep2Page = () => {
                                     onClick={handleAddMember}
                                     size="sm"
                                     className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                    disabled={members.length >= planUserLimit}
                                 >
-                                    <span className="mr-1">+</span> Add Member ({members.length})
+                                    <span className="mr-1">+</span> Add Member ({members.length}/{planUserLimit})
                                 </Button>
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   User,
   Mail,
@@ -301,11 +301,11 @@ type UserAiConfig = {
   is_active?: boolean;
   message?: string;
   provider?:
-    | string
-    | {
-        id?: string;
-        display_name?: string;
-      };
+  | string
+  | {
+    id?: string;
+    display_name?: string;
+  };
   provider_id?: string;
   model?: string | AiModel;
   model_name?: string;
@@ -449,9 +449,8 @@ const buildUserAiConfigPath = (
   }
 
   const query = params.toString();
-  return `/user_ai_config/user/${encodeURIComponent(userId)}${
-    query ? `?${query}` : ""
-  }`;
+  return `/user_ai_config/user/${encodeURIComponent(userId)}${query ? `?${query}` : ""
+    }`;
 };
 
 const AI_PROVIDER_LINKS = [
@@ -1116,7 +1115,7 @@ const BusinessCompassProfile = () => {
         setAiModels(models);
         setSelectedAiModel((current) =>
           current &&
-          models.some((model: AiModel) => model.model_name === current)
+            models.some((model: AiModel) => model.model_name === current)
             ? current
             : ""
         );
@@ -1304,7 +1303,7 @@ const BusinessCompassProfile = () => {
         window.open(cleanUrl, "_blank", "noopener,noreferrer");
         toast.info(
           data?.message ||
-            "Open the URL, authorize, then paste the code back here"
+          "Open the URL, authorize, then paste the code back here"
         );
       } else {
         throw new Error("No authorization URL received");
@@ -1380,8 +1379,8 @@ const BusinessCompassProfile = () => {
         } else {
           toast.error(
             data?.message ||
-              data?.error ||
-              "Exchange failed. Get a fresh code and try again."
+            data?.error ||
+            "Exchange failed. Get a fresh code and try again."
           );
         }
         setOauthCode("");
@@ -1455,11 +1454,11 @@ const BusinessCompassProfile = () => {
       setUserAiConfig((prev) =>
         prev
           ? {
-              ...prev,
-              ...data.config,
-              is_active: newActive,
-              configured: newActive,
-            }
+            ...prev,
+            ...data.config,
+            is_active: newActive,
+            configured: newActive,
+          }
           : prev
       );
       toast.success(
@@ -1901,7 +1900,7 @@ const BusinessCompassProfile = () => {
   const completionPct = Math.round(
     (completionFields.filter((f) => f?.trim()).length /
       completionFields.length) *
-      100
+    100
   );
 
   /* ─────────────────────────────────────────────────────────────────────
@@ -1916,14 +1915,14 @@ const BusinessCompassProfile = () => {
         </h1>
 
         {/* ══ Main two-column layout ══════════════════════════════════════ */}
-        <div className="flex flex-col lg:flex-row gap-5 mb-5">
+        <div className="flex min-w-0 flex-col gap-5 mb-5 lg:flex-row">
           {/* ── LEFT: main profile content ── */}
           <div className="flex-1 min-w-0 flex flex-col gap-4">
             {/* ─ Profile Header Card ─ */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 {/* Avatar */}
-                <div className="relative flex-shrink-0 group">
+                <div className="relative mx-auto flex-shrink-0 group sm:mx-0">
                   {profileImage && !removeProfileImage ? (
                     <>
                       <img
@@ -1970,10 +1969,10 @@ const BusinessCompassProfile = () => {
                 </div>
 
                 {/* Name + Designation + Edit + Details row */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h2 className="text-[16px] sm:text-[19px] font-bold text-[#1a1a1a] leading-tight">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+                    <div className="min-w-0 text-center sm:text-left">
+                      <h2 className="text-[16px] sm:text-[19px] font-bold text-[#1a1a1a] leading-tight break-words">
                         {formData.displayName}
                       </h2>
                       <p className="text-[12px] sm:text-[13px] text-gray-500 mt-0.5">
@@ -1985,22 +1984,22 @@ const BusinessCompassProfile = () => {
                       <button
                         onClick={() => setIsEditing(true)}
                         disabled={isProfileLoading}
-                        className="flex-shrink-0 border border-[#DA7756] text-[#DA7756] text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#fef6f4] transition-colors whitespace-nowrap"
+                        className="w-full flex-shrink-0 border border-[#DA7756] text-[#DA7756] text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-[12px] hover:bg-[#fef6f4] transition-colors whitespace-nowrap sm:w-auto"
                       >
                         Edit Profile
                       </button>
                     ) : (
-                      <div className="flex gap-2 flex-shrink-0">
+                      <div className="flex w-full flex-shrink-0 gap-2 sm:w-auto">
                         <button
                           onClick={handleSave}
                           disabled={isSaving || isProfileLoading}
-                          className="bg-[#DA7756] text-white text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-[#c9673f] transition-colors disabled:opacity-60 whitespace-nowrap"
+                          className="flex-1 bg-[#DA7756] text-white text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-[12px] hover:bg-[#c9673f] transition-colors disabled:opacity-60 whitespace-nowrap sm:flex-none"
                         >
                           {isSaving ? "Saving…" : "Save"}
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="border border-gray-300 text-gray-500 text-[12px] font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                          className="flex-1 border border-gray-300 text-gray-500 text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-[12px] hover:bg-gray-50 transition-colors sm:flex-none"
                         >
                           Cancel
                         </button>
@@ -2009,7 +2008,7 @@ const BusinessCompassProfile = () => {
                   </div>
 
                   {/* Location / Position / Work / Status */}
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3">
+                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-2">
                     {[
                       {
                         label: "Location",
@@ -2031,7 +2030,7 @@ const BusinessCompassProfile = () => {
                         <p className="text-[9px] sm:text-[10px] text-gray-400 leading-none mb-0.5">
                           {label}
                         </p>
-                        <p className="text-[12px] sm:text-[13px] font-semibold text-[#1a1a1a]">
+                        <p className="break-words text-[12px] sm:text-[13px] font-semibold text-[#1a1a1a]">
                           {value}
                         </p>
                       </div>
@@ -2088,11 +2087,11 @@ const BusinessCompassProfile = () => {
             </div>
 
             {/* Tab bar */}
-            <div className="bg-white rounded-xl border border-gray-100 p-1.5 flex items-center gap-1 w-fit shadow-sm flex-wrap">
+            <div className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border border-gray-100 bg-white p-1.5 shadow-sm sm:w-fit sm:flex-wrap sm:overflow-visible">
               {(
                 [
                   "basic",
-                  // "face_enroll",
+                  "face_enroll",
                   // "assets",
                   "attendance",
                   // "my_roster",
@@ -2112,7 +2111,7 @@ const BusinessCompassProfile = () => {
                     key={id}
                     onClick={() => setActiveTab(id)}
                     className={cn(
-                      "px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[12px] sm:text-[13px] font-semibold transition-colors",
+                      "shrink-0 px-3 sm:px-5 py-1.5 sm:py-2 rounded-[8px] text-[12px] sm:text-[13px] font-semibold transition-colors",
                       activeTab === id
                         ? "bg-[#DA7756] text-white"
                         : "text-gray-500 hover:text-gray-700"
@@ -2177,9 +2176,9 @@ const BusinessCompassProfile = () => {
                           Job position
                         </span>
                       </div>
-                      <p className="text-[13px] font-semibold text-[#1a1a1a]">
-                        {formData.jobTitle || "Not provided"}
-                      </p>
+                        <p className="break-words text-[13px] font-semibold text-[#1a1a1a]">
+                          {formData.jobTitle || "Not provided"}
+                        </p>
                     </div>
                   </div>
                 </div>
@@ -2251,7 +2250,7 @@ const BusinessCompassProfile = () => {
                             <AdvancedDatePicker
                               value={
                                 formData[
-                                  field as keyof typeof formData
+                                field as keyof typeof formData
                                 ] as string
                               }
                               onChange={(v) => handleInputChange(field, v)}
@@ -2262,7 +2261,7 @@ const BusinessCompassProfile = () => {
                               className="h-8 text-[12px] border-gray-200"
                               value={
                                 formData[
-                                  field as keyof typeof formData
+                                field as keyof typeof formData
                                 ] as string
                               }
                               onChange={(e) =>
@@ -2272,7 +2271,7 @@ const BusinessCompassProfile = () => {
                             />
                           )
                         ) : (
-                          <p className="text-[13px] font-semibold text-[#1a1a1a]">
+                          <p className="break-words text-[13px] font-semibold text-[#1a1a1a]">
                             {(formData[
                               field as keyof typeof formData
                             ] as string) || "Not provided"}
@@ -2296,7 +2295,7 @@ const BusinessCompassProfile = () => {
                       Department
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      <span className="bg-white text-gray-600 text-[12px] font-medium px-4 py-2 rounded-lg border border-gray-200">
+                      <span className="max-w-full break-words bg-white text-gray-600 text-[12px] font-medium px-4 py-2 rounded-lg border border-gray-200">
                         {formData.departmentName || "Not provided"}
                       </span>
                       <span className="bg-white text-teal-600 text-[12px] font-medium px-4 py-2 rounded-lg border border-teal-100">
@@ -2315,7 +2314,7 @@ const BusinessCompassProfile = () => {
                       />
                       Emergency Recovery
                     </h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                           <User size={9} className="text-gray-400" /> Trusted
@@ -2334,7 +2333,7 @@ const BusinessCompassProfile = () => {
                             placeholder="Name"
                           />
                         ) : (
-                          <p className="text-[13px] font-semibold text-[#1a1a1a]">
+                          <p className="break-words text-[13px] font-semibold text-[#1a1a1a]">
                             {formData.emergencyContactName || "Not provided"}
                           </p>
                         )}
@@ -2357,7 +2356,7 @@ const BusinessCompassProfile = () => {
                             placeholder="Number"
                           />
                         ) : (
-                          <p className="text-[13px] font-semibold text-[#1a1a1a]">
+                          <p className="break-words text-[13px] font-semibold text-[#1a1a1a]">
                             {formData.emergencyContactNumber || "Not provided"}
                           </p>
                         )}
@@ -2625,7 +2624,7 @@ const BusinessCompassProfile = () => {
           </div>
 
           {/* ── RIGHT: Sidebar ── */}
-          <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-4">
+          <div className="w-full min-w-0 flex-shrink-0 flex flex-col gap-4 lg:w-[280px]">
             {/* My Objectives (KPI) — Swiper carousel, no arrows */}
             <div className="bg-[#F6F4EE] rounded-2xl p-4 sm:p-5">
               <h3 className="flex items-center gap-2 text-[13px] sm:text-[14px] font-bold text-[#1a1a1a] mb-3 sm:mb-4">
@@ -2648,23 +2647,23 @@ const BusinessCompassProfile = () => {
                     userKpis.length > 0
                       ? userKpis
                       : ([
-                          {
-                            id: "p1",
-                            frequency: "Daily",
-                            name: "Courtesy call",
-                            currentValue: 0,
-                            target: 2,
-                            unit: "calls",
-                          },
-                          {
-                            id: "p2",
-                            frequency: "Daily",
-                            name: "Courtesy call",
-                            currentValue: 0,
-                            target: 2,
-                            unit: "calls",
-                          },
-                        ] as typeof userKpis);
+                        {
+                          id: "p1",
+                          frequency: "Daily",
+                          name: "Courtesy call",
+                          currentValue: 0,
+                          target: 2,
+                          unit: "calls",
+                        },
+                        {
+                          id: "p2",
+                          frequency: "Daily",
+                          name: "Courtesy call",
+                          currentValue: 0,
+                          target: 2,
+                          unit: "calls",
+                        },
+                      ] as typeof userKpis);
 
                   const pairs: (typeof userKpis)[] = [];
                   for (let i = 0; i < pool.length; i += 2) {
@@ -2687,16 +2686,16 @@ const BusinessCompassProfile = () => {
                     >
                       {pairs.map((pair, slideIdx) => (
                         <SwiperSlide key={slideIdx}>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-2">
                             {pair.map((kpi) => (
                               <div
                                 key={kpi.id}
-                                className="bg-white rounded-xl border border-gray-100 p-3"
+                                className="min-w-0 bg-white rounded-xl border border-gray-100 p-3"
                               >
                                 <p className="text-[9px] sm:text-[10px] text-gray-400 font-medium mb-0.5">
                                   {kpi.frequency || "Daily"}
                                 </p>
-                                <p className="text-[11px] sm:text-[12px] font-semibold text-[#1a1a1a] leading-tight line-clamp-2 mb-2">
+                                <p className="break-words text-[11px] sm:text-[12px] font-semibold text-[#1a1a1a] leading-tight line-clamp-2 mb-2">
                                   {kpi.name}
                                 </p>
                                 <div className="border-t border-gray-100 pt-2">
@@ -2772,7 +2771,7 @@ const BusinessCompassProfile = () => {
                             size={13}
                             className="text-gray-400 flex-shrink-0"
                           />
-                          <span className="text-[12px] font-medium text-gray-700 truncate">
+                          <span className="min-w-0 text-[12px] font-medium text-gray-700 truncate">
                             {doc.title}
                           </span>
                           {doc.url && (
@@ -2809,17 +2808,17 @@ const BusinessCompassProfile = () => {
         {activeTab === "basic" && (
           <div className="space-y-5">
             <Card className="rounded-[16px] border border-blue-100 bg-white shadow-sm ring-1 ring-blue-50">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-blue-700">
-                  <Bot size={20} className="text-blue-500" />
-                  AI Configuration
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-2">
+                <CardTitle className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg font-bold text-blue-700">
+                  <Bot size={20} className="shrink-0 text-blue-500" />
+                  <span className="min-w-0 break-words">AI Configuration</span>
                   <AiProviderLinksDropdown />
                 </CardTitle>
-                <div className="flex items-center gap-3">
+                <div className="flex w-full items-center gap-3 sm:w-auto">
                   <Badge
                     variant="outline"
                     className={cn(
-                      "px-3 h-6 rounded-full font-bold",
+                      "h-6 rounded-full px-3 font-bold",
                       userAiConfig?.configured
                         ? "bg-green-50 text-green-700 border-green-200"
                         : "bg-amber-50 text-amber-700 border-amber-200"
@@ -2835,12 +2834,12 @@ const BusinessCompassProfile = () => {
               </CardHeader>
               <CardContent className="py-4 space-y-5">
                 {/* ── Tab Buttons ── */}
-                <div className="flex gap-2 border-b border-gray-100 pb-1">
+                <div className="flex flex-wrap gap-2 border-b border-gray-100 pb-1">
                   <button
                     type="button"
                     onClick={() => setAiConfigTab("api_key")}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
+                      "flex flex-1 items-center justify-center gap-2 px-3 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors sm:flex-none sm:px-4 sm:text-sm",
                       aiConfigTab === "api_key"
                         ? "border-blue-600 text-blue-700 bg-blue-50"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
@@ -2868,7 +2867,7 @@ const BusinessCompassProfile = () => {
                       }
                     }}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors",
+                      "flex flex-1 items-center justify-center gap-2 px-3 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors sm:flex-none sm:px-4 sm:text-sm",
                       aiConfigTab === "auth_connect"
                         ? "border-[#c96442] text-[#c96442] bg-[#c96442]/5"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
@@ -2964,7 +2963,7 @@ const BusinessCompassProfile = () => {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
                           User AI Config
                         </p>
-                        <p className="mt-2 text-sm font-bold text-gray-800">
+                        <p className="mt-2 break-words text-sm font-bold text-gray-800">
                           {userAiConfig?.user_name || formData.displayName}
                         </p>
                         {aiConfigProviderDisplayName && (
@@ -3021,7 +3020,7 @@ const BusinessCompassProfile = () => {
                         }
                         onCheckedChange={setIncludeOrganizationInAiConfig}
                       />
-                      <div className="flex flex-col justify-end gap-3 sm:flex-row">
+                      <div className="flex w-full flex-col justify-end gap-3 sm:w-auto sm:flex-row">
                         <Button
                           variant="outline"
                           onClick={handleDeleteAiApiKey}
@@ -3031,7 +3030,7 @@ const BusinessCompassProfile = () => {
                             !selectedAiProvider ||
                             !aiApiKey.trim()
                           }
-                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+                          className="h-10 w-full border-red-200 px-6 font-bold text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 sm:w-auto"
                         >
                           {isAiConfigDeleting ? (
                             <Loader2 size={16} className="mr-2 animate-spin" />
@@ -3055,7 +3054,7 @@ const BusinessCompassProfile = () => {
                             !selectedAiModel ||
                             !aiApiKey.trim()
                           }
-                          className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm"
+                          className="h-10 w-full bg-[#2563EB] px-6 font-bold text-white shadow-sm hover:bg-blue-700 sm:w-auto"
                         >
                           {isAiConfigSaving ? (
                             <Loader2 size={16} className="mr-2 animate-spin" />
@@ -3138,7 +3137,7 @@ const BusinessCompassProfile = () => {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
                           User AI Config
                         </p>
-                        <p className="mt-2 text-sm font-bold text-gray-800">
+                        <p className="mt-2 break-words text-sm font-bold text-gray-800">
                           {userAiConfig?.user_name || formData.displayName}
                         </p>
                         {aiConfigProviderDisplayName && (
@@ -3167,8 +3166,8 @@ const BusinessCompassProfile = () => {
 
                     <div className="border-t border-gray-100 pt-4" />
 
-                    <div className="rounded-xl border border-[#c96442]/20 bg-[#c96442]/5 p-5">
-                      <div className="flex items-center gap-3 mb-3">
+                    <div className="rounded-xl border border-[#c96442]/20 bg-[#c96442]/5 p-4 sm:p-5">
+                      <div className="mb-3 flex items-start gap-3 sm:items-center">
                         <div className="w-5 h-5 rounded-full bg-[#c96442] text-white flex items-center justify-center text-[10px] font-black shrink-0">
                           1
                         </div>
@@ -3181,11 +3180,11 @@ const BusinessCompassProfile = () => {
                               "none";
                           }}
                         />
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-bold text-[#c96442]">
                             Claude by Anthropic
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="break-words text-xs text-gray-500">
                             Connect your account via OAuth
                           </p>
                         </div>
@@ -3215,7 +3214,7 @@ const BusinessCompassProfile = () => {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-green-100 bg-green-50/50 p-5 space-y-4">
+                    <div className="rounded-xl border border-green-100 bg-green-50/50 p-4 sm:p-5 space-y-4">
                       <div className="space-y-2">
                         <p className="text-xs text-gray-500 font-medium">
                           Copy the full code from Claude Platform and paste it
@@ -3225,7 +3224,7 @@ const BusinessCompassProfile = () => {
                           value={oauthCode}
                           onChange={(e) => setOauthCode(e.target.value)}
                           placeholder="e.g. nsRdj0lCU38CQ9BH...#FRhkNKp68rilbIW..."
-                          className="min-h-[80px] bg-white text-sm font-mono border-green-200 focus-visible:border-green-400"
+                          className="min-h-[80px] bg-white text-xs sm:text-sm font-mono border-green-200 focus-visible:border-green-400"
                           disabled={isOAuthExchanging}
                         />
                       </div>
@@ -3247,7 +3246,7 @@ const BusinessCompassProfile = () => {
                             !oauthCode.trim() ||
                             !selectedAiModel
                           }
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-10 shadow-sm disabled:opacity-60 sm:flex-1"
+                          className="h-10 w-full bg-green-600 font-bold text-white shadow-sm hover:bg-green-700 disabled:opacity-60 sm:flex-1"
                         >
                           {isOAuthExchanging ? (
                             <Loader2 size={15} className="mr-2 animate-spin" />
@@ -3277,7 +3276,7 @@ const BusinessCompassProfile = () => {
                           variant="outline"
                           onClick={handleDeleteAiApiKey}
                           disabled={isAiConfigDeleting}
-                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+                          className="h-10 w-full border-red-200 px-6 font-bold text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 sm:w-auto"
                         >
                           {isAiConfigDeleting ? (
                             <Loader2 size={16} className="mr-2 animate-spin" />

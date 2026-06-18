@@ -17,6 +17,7 @@ import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },
@@ -106,6 +107,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 const BookingListDashboard = () => {
   const navigate = useNavigate();
+   const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -629,15 +631,18 @@ const BookingListDashboard = () => {
 
   const renderActions = (item: BookingData) => (
     <>
+    {shouldShow("Bookings","show")&&(
       <Button
         variant="ghost"
         size="sm"
         onClick={() => handleView(item.id)}
       >
         <Eye className="w-4 h-4" />
-      </Button>
-      {
+      </Button>)}
+      { 
+      shouldShow("Bookings","update") &&
         item.facilityType === "Request" && item.bookingStatus === 'Pending' && (
+          
           <Button
             variant="ghost"
             size="sm"
@@ -647,6 +652,7 @@ const BookingListDashboard = () => {
           </Button>
         )
       }
+      
     </>
   );
 
@@ -731,13 +737,14 @@ const BookingListDashboard = () => {
         emptyMessage={loading || isPageLoading ? 'Loading bookings...' : 'No bookings found'}
         leftActions={
           <div className="flex flex-wrap gap-2">
+            {shouldShow("Bookings","create")&&(
             <Button
               className="fm-button-fix fm-button-brand px-4 py-2"
               onClick={() => setShowActionPanel(true)}
             >
               <Plus className="w-4 h-4" />
               Action
-            </Button>
+            </Button>)}
           </div>
         }
       />

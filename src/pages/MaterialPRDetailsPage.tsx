@@ -51,6 +51,7 @@ import { approvePO, rejectPO } from "@/store/slices/purchaseOrderSlice";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Interfaces
 interface BillingAddress {
@@ -224,6 +225,7 @@ const formatIndian = (val: string | number | null | undefined): string => {
 export const MaterialPRDetailsPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions()
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -942,7 +944,7 @@ export const MaterialPRDetailsPage = () => {
                   </Button>
                 )}
                 {
-                  (buttonCondition.canEditAll) && (
+                  shouldShow("Material PR", "update") && (buttonCondition.canEditAll) && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -957,14 +959,19 @@ export const MaterialPRDetailsPage = () => {
                 {
                   !shouldShowButtons && (
                     <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Clone
-                      </Button>
+                      {
+                        shouldShow("Material PR", "create") && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Clone
+                          </Button>
+                        )
+                      }
+
                       <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                         {
                           printing ? (

@@ -126,6 +126,7 @@ interface VisitorData {
   pass_days?: string[];
   pass_valid?: boolean;
   visitor_host_name?: string;
+  visited_to_host_name?: string;
   visitor_host_mobile?: string;
   visitor_host_email?: string;
   building_name?: string;
@@ -677,12 +678,13 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
-                    {hasData(visitorData.visitor_host_name) && (
+                    {(hasData(visitorData.visitor_host_name) || hasData(visitorData.visited_to_host_name)) && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Person To Meet</span>
+                        <span className="text-gray-500 min-w-[140px]">Host Name</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{visitorData.visitor_host_name}</span>
-                        {/* <span className="text-gray-900 font-medium">{visitorData?.person_to_meet_name ?? visitorData?.visited_to_host_name ?? visitorData?.visitor_host_name ?? "-"}</span> */}
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.visitor_host_name || visitorData.visited_to_host_name}
+                        </span>
                       </div>
                     )}
 

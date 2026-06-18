@@ -19,11 +19,13 @@ import {
 } from '@/components/ui/pagination';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define your API base URL here or import it from your config/environment
 const API_BASE_URL = API_CONFIG.BASE_URL;
 
 export const GatePassOutwardsDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [outwardData, setOutwardData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,12 +241,14 @@ useEffect(() => {
     sNo: entry.sNo,
     actions: (
       <div className="flex gap-2 justify-center" style={{ maxWidth: '80px' }}>
-        <div title="View details">
-          <Eye
-            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
-            onClick={() => handleViewDetails(entry.id)}
-          />
-        </div>
+        {shouldShow("Outwards", "show") && (
+          <div title="View details">
+            <Eye
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+              onClick={() => handleViewDetails(entry.id)}
+            />
+          </div>
+        )}
         <div title={entry.isFlagged ? 'Remove Flag' : 'Flag'}>
           <Flag
             className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
@@ -285,26 +289,23 @@ useEffect(() => {
   });
 
   const selectionActions = [
-    { label: 'Add', icon: Plus, onClick: handleAddOutward },
+    ...(shouldShow("outwards", "create") ? [{ label: 'Add', icon: Plus, onClick: handleAddOutward }] : []),
     // { label: 'Import', icon: Filter, onClick: () => setIsFilterModalOpen(true) },
   ];
 
   const renderActionButton = () => (
-    // <Button
-    //   onClick={() => setShowActionPanel((prev) => !prev)}
-    //   className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-    // >
-    //   <Plus className="w-4 h-4 mr-2" />
-    //   Action
-    // </Button>
-    <Button
-      size="sm"
-      className="fm-button-fix fm-button-brand px-8 py-2"
-      onClick={() => setShowActionPanel((prev) => !prev)}
-    >
-      <Plus className="w-4 h-4 mr-2" />
-      Action
-    </Button>
+    <>
+      {shouldShow("Outwards", "create") && (
+        <Button
+          size="sm"
+          className="fm-button-fix fm-button-brand px-8 py-2"
+          onClick={() => setShowActionPanel((prev) => !prev)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Action
+        </Button>
+      )}
+    </>
   );
 
   // Export handler for outward gate pass

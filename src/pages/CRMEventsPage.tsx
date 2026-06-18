@@ -12,8 +12,10 @@ import { fetchEvents, updateEvent } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
 import { Switch as MuiSwitch } from '@mui/material';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const CRMEventsPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -474,6 +476,7 @@ const [pagination, setPagination] = useState(() => {
   // Render actions
   const renderActions = (item) => (
     <div className="flex">
+      {shouldShow("Events", "show") && (
       <Button
         variant="ghost"
         size="icon"
@@ -481,6 +484,8 @@ const [pagination, setPagination] = useState(() => {
       >
         <Eye className="h-4 w-4" />
       </Button>
+      )}
+      {shouldShow("Events", "update") && (
       <Button
         variant="ghost"
         size="icon"
@@ -488,6 +493,7 @@ const [pagination, setPagination] = useState(() => {
       >
         <Edit className="h-4 w-4" />
       </Button>
+      )}
     </div>
   );
 
@@ -550,6 +556,7 @@ const [pagination, setPagination] = useState(() => {
         loading={loading}
         leftActions={
           <div className="flex flex-wrap gap-2">
+            {shouldShow("Events", "create") && (
             <Button
               variant="ghost"
               className="fm-button-fix fm-button-brand px-4 py-2"
@@ -558,6 +565,7 @@ const [pagination, setPagination] = useState(() => {
               <Plus className="w-4 h-4" />
               Add
             </Button>
+            )}
           </div>
         }
         onFilterClick={handleOpenFilterModal}

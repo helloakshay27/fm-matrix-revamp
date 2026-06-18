@@ -82,6 +82,8 @@ import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
 import type { Asset as TableAsset } from '@/hooks/useAssets';
 import { DataArray } from '@mui/icons-material';
 import { buildReturnToPath } from '@/utils/listBackNavigation';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -139,6 +141,8 @@ const SortableChartItem = ({
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
+  
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const user = getUser();
@@ -691,7 +695,7 @@ export const AssetDashboard = () => {
     }));
 
   const handleAddAsset = () => {
-    navigate('/maintenance/asset/add');
+    navigate('/maintenance/asset/add');    
   };
 
   const handleAddSchedule = () => {

@@ -7,21 +7,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Plus, X, Edit, Check, ChevronLeft, ChevronRight, Download, Upload, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  createWing, 
+import {
+  fetchBuildings,
+  fetchWings,
+  createWing,
   updateWing
 } from '@/store/slices/locationSlice';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { wingSchema, type WingFormData } from '@/schemas/wingSchema';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export function WingPage() {
   const dispatch = useAppDispatch();
   const { buildings, wings } = useAppSelector((state) => state.location);
-  
+  const { shouldShow } = useDynamicPermissions();
+
   const [search, setSearch] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -33,7 +35,7 @@ export function WingPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [selectedQrCode, setSelectedQrCode] = useState<string>('');
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
@@ -69,7 +71,7 @@ export function WingPage() {
   const filteredWings = useMemo(() => {
     return wings.data.filter((wing) => {
       const matchesSearch = wing.name.toLowerCase().includes(search.toLowerCase()) ||
-                           wing.building?.name?.toLowerCase().includes(search.toLowerCase());
+        wing.building?.name?.toLowerCase().includes(search.toLowerCase());
       const matchesBuilding = selectedBuildingFilter === 'all' || wing.building_id === selectedBuildingFilter;
       return matchesSearch && matchesBuilding;
     });
@@ -87,8 +89,8 @@ export function WingPage() {
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const templateUrl = `https://${baseUrl}/assets/wing.xlsx`;
-      
+      const templateUrl = `https://${baseUrl}/wing.xlsx`;
+
       const response = await fetch(templateUrl, {
         method: 'GET',
         headers: {
@@ -122,12 +124,12 @@ export function WingPage() {
     try {
       const formData = new FormData();
       formData.append('pms_wing[file]', importFile);
-      
+
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
       const apiUrl = `https://${baseUrl}/pms/account_setups/wing_import.json?token=${token}`;
-      
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
@@ -160,7 +162,7 @@ export function WingPage() {
         'application/vnd.ms-excel',
         'text/csv'
       ];
-      
+
       if (validTypes.includes(file.type) || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
         setImportFile(file);
       } else {
@@ -203,7 +205,7 @@ export function WingPage() {
 
   const handleEditWing = async (data: WingFormData) => {
     if (!editingWing) return;
-    
+
     try {
       await dispatch(updateWing({
         id: editingWing.id,
@@ -269,7 +271,7 @@ export function WingPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">WINGS</h1>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -316,8 +318,8 @@ export function WingPage() {
                       )}
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
@@ -328,7 +330,7 @@ export function WingPage() {
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         onClick={handleImportWings}
                         disabled={!importFile || isImporting}
                       >
@@ -341,89 +343,91 @@ export function WingPage() {
               </Dialog>
 
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogTrigger asChild>
-                  <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Wing
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader className="flex flex-row items-center justify-between pb-0">
-                  <DialogTitle className="flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Add Wing
-                  </DialogTitle>
-                  <button
-                    onClick={() => setShowCreateDialog(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </DialogHeader>
-                <Form {...createForm}>
-                  <form onSubmit={createForm.handleSubmit(handleCreateWing)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 py-4">
-                      <FormField
-                        control={createForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Wing Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter wing name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={createForm.control}
-                        name="building_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Select Building</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                {shouldShow("Wing", "create") && (
+                  <DialogTrigger asChild>
+                    <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Wing
+                    </Button>
+                  </DialogTrigger>
+                )}
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader className="flex flex-row items-center justify-between pb-0">
+                    <DialogTitle className="flex items-center gap-2">
+                      <Plus className="w-5 h-5" />
+                      Add Wing
+                    </DialogTitle>
+                    <button
+                      onClick={() => setShowCreateDialog(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </DialogHeader>
+                  <Form {...createForm}>
+                    <form onSubmit={createForm.handleSubmit(handleCreateWing)} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 py-4">
+                        <FormField
+                          control={createForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Wing Name</FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select Building" />
-                                </SelectTrigger>
+                                <Input placeholder="Enter wing name" {...field} />
                               </FormControl>
-                              <SelectContent>
-                                {buildings.data.map((building) => (
-                                  <SelectItem key={building.id} value={building.id.toString()}>
-                                    {building.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end gap-2 pt-4">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={resetCreateForm}
-                        className="border-gray-300"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createForm.formState.isSubmitting}
-                        className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
-                      >
-                        Submit
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={createForm.control}
+                          name="building_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Select Building</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select Building" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {buildings.data.map((building) => (
+                                    <SelectItem key={building.id} value={building.id.toString()}>
+                                      {building.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={resetCreateForm}
+                          className="border-gray-300"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={createForm.formState.isSubmitting}
+                          className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
+                        >
+                          Submit
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -432,7 +436,7 @@ export function WingPage() {
             <div className="text-sm text-muted-foreground">
               Total: {totalItems} wings
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Search:</span>
               <Input
@@ -473,16 +477,18 @@ export function WingPage() {
                   currentWings.map((wing) => (
                     <TableRow key={wing.id}>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(wing)}>
-                          <Edit className="w-4 h-4 text-[#C72030]" />
-                        </Button>
+                        {shouldShow("Wing", "update") && (
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(wing)}>
+                            <Edit className="w-4 h-4 text-[#C72030]" />
+                          </Button>
+                        )}
                       </TableCell>
                       <TableCell>{wing.building?.name || 'N/A'}</TableCell>
                       <TableCell>{wing.name}</TableCell>
                       <TableCell>
                         {wing.qr_code_url ? (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setSelectedQrCode(wing.qr_code_url);
@@ -532,7 +538,7 @@ export function WingPage() {
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                
+
                 <div className="flex items-center space-x-1">
                   {/* Show first page */}
                   {currentPage > 3 && (
@@ -548,7 +554,7 @@ export function WingPage() {
                       {currentPage > 4 && <span className="px-2">...</span>}
                     </>
                   )}
-                  
+
                   {/* Show pages around current page */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
@@ -563,7 +569,7 @@ export function WingPage() {
                         {page}
                       </Button>
                     ))}
-                  
+
                   {/* Show last page */}
                   {currentPage < totalPages - 2 && (
                     <>
@@ -579,7 +585,7 @@ export function WingPage() {
                     </>
                   )}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -621,7 +627,7 @@ export function WingPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={editForm.control}
                       name="building_id"
@@ -646,7 +652,7 @@ export function WingPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="col-span-2">
                       <FormField
                         control={editForm.control}
@@ -669,10 +675,10 @@ export function WingPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end pt-4">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={editForm.formState.isSubmitting}
                       className="bg-purple-600 hover:bg-purple-700 text-white px-8"
                     >
@@ -694,9 +700,9 @@ export function WingPage() {
                 {selectedQrCode ? (
                   <>
                     <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
-                      <img 
-                        src={selectedQrCode} 
-                        alt="Wing QR Code" 
+                      <img
+                        src={selectedQrCode}
+                        alt="Wing QR Code"
                         className="w-64 h-64 object-contain"
                       />
                     </div>

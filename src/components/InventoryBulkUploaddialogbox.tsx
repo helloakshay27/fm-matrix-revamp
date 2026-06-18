@@ -97,7 +97,7 @@ export const InventoryBulkUploadDialog: React.FC<Props> = ({
                         return `Row ${rowNum}: ${msg}`;
                     })
                     .join('\n');
-                
+
                 toast.error('Import completed with errors', {
                     description: errorMessages,
                     duration: 10000,
@@ -121,7 +121,7 @@ export const InventoryBulkUploadDialog: React.FC<Props> = ({
     const handleDownloadSample = () => {
         // Mirror the Rails ERB anchor: <a href="/assets/services.xlsx" download="services.xlsx" target="_blank" class="btn purple-btn2 btn-sm">...
         const baseUrl = localStorage.getItem('baseUrl');
-        const href = baseUrl ? `https://${baseUrl}/assets/inventory.xlsx` : '/assets/inventory.xlsx';
+        const href = baseUrl ? `https://${baseUrl}/inventory.xlsx` : '/inventory.xlsx';
         const link = document.createElement('a');
         link.href = href;
         link.setAttribute('download', 'inventory.xlsx');

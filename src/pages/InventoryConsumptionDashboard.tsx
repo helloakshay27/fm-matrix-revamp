@@ -10,11 +10,14 @@ import bio from '@/assets/bio.png';
 
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
+
   const dispatch = useDispatch<AppDispatch>();
 
   const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
@@ -178,7 +181,7 @@ const InventoryConsumptionDashboard = () => {
     const endDate = format(end);
     return { start: startDate, end: endDate };
   };
-
+ 
   // Define table columns for expanded view (API response)
   const expandedColumns: ColumnConfig[] = [
     { key: 'action', label: 'Action', sortable: false, draggable: false, defaultVisible: true },
@@ -195,9 +198,10 @@ const InventoryConsumptionDashboard = () => {
     if (columnKey === 'action') {
       return (
         <div className="flex gap-2 justify-center items-center">
+          {shouldShow("Inventory Consumption","show")&& (
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
             <Eye className="w-4 h-4 text-gray-600" />
-          </Button>
+          </Button>)}
           {item.green_product && (
             <img
               src={bio}

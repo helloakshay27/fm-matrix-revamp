@@ -168,7 +168,7 @@ export const VendorClubDashboard = () => {
   const handleDownloadSample = () => {
     // Create a temporary anchor element to trigger download
     const link = document.createElement('a');
-    link.href = getFullUrl('/assets/supplier.xlsx');
+    link.href = getFullUrl('/supplier.xlsx');
     link.download = 'supplier_sample_format.xlsx';
     link.style.display = 'none';
 

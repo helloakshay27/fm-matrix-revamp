@@ -29,6 +29,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { BroadcastFilterModal } from "@/components/BroadcastFilterModal";
 import { Switch } from "@/components/ui/switch";
 
@@ -85,6 +86,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export const BroadcastDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -588,6 +590,7 @@ useEffect(() => {
           fill={item.is_important ? "#DA7756" : "none"}
         />
       </Button>
+      {shouldShow("Broadcast", "show") && (
       <Button
         variant="ghost"
         size="icon"
@@ -596,6 +599,8 @@ useEffect(() => {
       >
         <Eye className="w-4 h-4" />
       </Button>
+      )}
+      {shouldShow("Broadcast", "update") && (
       <Button
         variant="ghost"
         size="icon"
@@ -604,6 +609,7 @@ useEffect(() => {
       >
         <Edit className="w-4 h-4" />
       </Button>
+      )}
     </div>
   );
 
@@ -654,6 +660,7 @@ useEffect(() => {
         pageSize={10}
         onFilterClick={() => setIsFilterModalOpen(true)}
         leftActions={
+          shouldShow("Broadcast", "create") ? (
           <Button
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
             onClick={handleAdd}
@@ -661,6 +668,7 @@ useEffect(() => {
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
+          ) : null
         }
       />
 

@@ -530,7 +530,7 @@ const TaskForm = ({
   };
 
   return (
-    <div className="p-4 bg-white relative">
+    <div className="relative bg-white p-3 sm:p-4">
       {!isReadOnly && hasSavedTasks && (
         <DeleteOutlinedIcon
           onClick={() => {
@@ -559,7 +559,7 @@ const TaskForm = ({
         !Array.isArray(milestone) &&
         project.title &&
         milestone.title ? (
-        <div className="flex items-center justify-between gap-3 mb-4 mt-4">
+        <div className="mb-4 mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="w-full">
             <TextField
               fullWidth
@@ -586,7 +586,7 @@ const TaskForm = ({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
             <FormControl fullWidth variant="outlined">
               <InputLabel shrink>Project</InputLabel>
@@ -649,12 +649,22 @@ const TaskForm = ({
           name="taskTitle"
           placeholder="Enter Task Title"
           value={formData.taskTitle}
-          onChange={(value) => setFormData({ ...formData, taskTitle: value })}
+          onChange={(value) => {
+            if (value.length <= 200) {
+              setFormData({ ...formData, taskTitle: value });
+            }
+          }}
           disabled={isReadOnly}
           variant="outlined"
           size="small"
           sx={fieldStyles}
+          inputProps={{ maxLength: 200 }}
         />
+        <div className="flex justify-end mt-1">
+          <span className="text-xs text-gray-500">
+            {formData.taskTitle?.length || 0}/200
+          </span>
+        </div>
       </div>
 
       <div className="mb-1">
@@ -688,19 +698,21 @@ const TaskForm = ({
             </IconButton>
           )}
         </div>
-        <div
-          ref={quillRef}
-          style={{
-            border: "1px solid rgba(0, 0, 0, 0.23)",
-            borderRadius: "4px",
-            minHeight: "150px",
-            opacity: isReadOnly ? 0.5 : 1,
-            pointerEvents: isReadOnly ? "none" : "auto",
-          }}
-        />
+        <div className="bc-description-toolbar-compact">
+          <div
+            ref={quillRef}
+            style={{
+              border: "1px solid rgba(0, 0, 0, 0.23)",
+              borderRadius: "4px",
+              minHeight: "150px",
+              opacity: isReadOnly ? 0.5 : 1,
+              pointerEvents: isReadOnly ? "none" : "auto",
+            }}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3 mt-6">
+      <div className="mb-3 mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
         <div>
           <FormControl fullWidth variant="outlined">
             <InputLabel shrink>
@@ -787,10 +799,10 @@ const TaskForm = ({
         label="Recurring Task"
       />
 
-      <div className="grid grid-cols-2 gap-3 my-3">
+      <div className="my-3 grid grid-cols-1 gap-3 md:grid-cols-2">
         <div>
           <label className="block text-xs text-gray-700 mb-1">
-            Target Date<span className="text-red-500">*</span>
+            Target Date{!formData.isRecurring && <span className="text-red-500">*</span>}
           </label>
           <button
             type="button"
@@ -950,6 +962,7 @@ const TaskForm = ({
               selectedDate={endDate}
               taskHoursData={calendarTaskHours}
               ref={endDateRef}
+              minDate={startDate}
               maxDate={endDate}
               shift={shift}
               isDateDisabled={isDateDisabledByRoster}
@@ -1358,13 +1371,13 @@ const ProjectTaskCreateModal = ({
       setUsers(
         shouldAddPrefilledUser
           ? [
-              ...validUsers,
-              {
-                id: prefilledResponsiblePerson.id,
-                name: prefilledResponsiblePerson.name,
-                full_name: prefilledResponsiblePerson.name,
-              },
-            ]
+            ...validUsers,
+            {
+              id: prefilledResponsiblePerson.id,
+              name: prefilledResponsiblePerson.name,
+              full_name: prefilledResponsiblePerson.name,
+            },
+          ]
           : validUsers
       );
     } catch (error) {
@@ -1477,8 +1490,10 @@ const ProjectTaskCreateModal = ({
       );
     });
     formDatatoSend.append("task_management[expected_start_date]", formatedStartDate);
-    formDatatoSend.append("task_management[target_date]", formatedEndDate);
-    formDatatoSend.append("task_management[allocation_date]", formatedEndDate);
+    if (endDate) {
+      formDatatoSend.append("task_management[target_date]", formatedEndDate);
+      formDatatoSend.append("task_management[allocation_date]", formatedEndDate);
+    }
     formDatatoSend.append("task_management[project_management_id]", id || formData.project);
     formDatatoSend.append("task_management[milestone_id]", mid || formData.milestone);
     formDatatoSend.append("task_management[active]", "true");
@@ -1584,15 +1599,33 @@ const ProjectTaskCreateModal = ({
       return;
     }
 
-    if (
-      !formData.taskTitle ||
-      !formData.responsiblePerson ||
-      !formData.priority ||
-      !formData.observer.length ||
-      !formData.tags.length
-    ) {
+    if (!formData.taskTitle?.trim()) {
       toast.dismiss();
-      toast.error("Please fill all required fields.");
+      toast.error("Task title is required.");
+      return;
+    }
+
+    if (!formData.responsiblePerson) {
+      toast.dismiss();
+      toast.error("Responsible person is required.");
+      return;
+    }
+
+    if (!formData.priority) {
+      toast.dismiss();
+      toast.error("Priority is required.");
+      return;
+    }
+
+    if (!formData.observer?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one observer.");
+      return;
+    }
+
+    if (!formData.tags?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one tag.");
       return;
     }
 
@@ -1643,17 +1676,42 @@ const ProjectTaskCreateModal = ({
       return;
     }
 
-    if (
-      !isDelete &&
-      (!formData.taskTitle ||
-        !formData.responsiblePerson ||
-        !formData.priority ||
-        !formData.observer.length ||
-        !formData.tags.length)
-    ) {
-      toast.dismiss();
-      toast.error("Please fill all required fields.");
-      return;
+    if (!isDelete) {
+      if (!formData.taskTitle?.trim()) {
+        toast.dismiss();
+        toast.error("Task title is required.");
+        return;
+      }
+
+      if (!formData.responsiblePerson) {
+        toast.dismiss();
+        toast.error("Responsible person is required.");
+        return;
+      }
+
+      if (!formData.priority) {
+        toast.dismiss();
+        toast.error("Priority is required.");
+        return;
+      }
+
+      if (!formData.observer?.length) {
+        toast.dismiss();
+        toast.error("Please select at least one observer.");
+        return;
+      }
+
+      if (!formData.tags?.length) {
+        toast.dismiss();
+        toast.error("Please select at least one tag.");
+        return;
+      }
+
+      if (!formData.isRecurring && !endDate) {
+        toast.dismiss();
+        toast.error("Target date is required.");
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -1860,6 +1918,53 @@ const ProjectTaskCreateModal = ({
 
         .ql-toolbar button.ql-active {
           color: #01569E;
+        }
+
+        @media (max-width: 640px) {
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            overflow-x: auto !important;
+            padding: 3px 4px !important;
+          }
+
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-formats {
+            display: inline-flex !important;
+            flex-shrink: 0 !important;
+            margin-right: 3px !important;
+          }
+
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow button {
+            width: 16px !important;
+            height: 16px !important;
+            padding: 1px !important;
+          }
+
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow button svg {
+            width: 10px !important;
+            height: 10px !important;
+          }
+
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker {
+            height: 16px !important;
+            font-size: 9px !important;
+          }
+
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker.ql-header {
+            width: 62px !important;
+          }
+
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label {
+            padding-left: 3px !important;
+            padding-right: 10px !important;
+            line-height: 16px !important;
+          }
+
+          .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label svg {
+            width: 10px !important;
+            height: 10px !important;
+          }
         }
       `}</style>
       <AddTagModal

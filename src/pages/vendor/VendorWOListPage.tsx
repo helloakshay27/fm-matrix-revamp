@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, RefreshCw } from "lucide-react";
+import { Eye, RefreshCw, Settings, Banknote, CreditCard, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { VendorWOFilterDialog } from "@/components/VendorWOFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -56,6 +56,12 @@ export const VendorWOListPage = () => {
     poNumber: "",
     supplierName: "",
   });
+  const [stats, setStats] = useState({
+    totalCount: 0,
+    totalAmount: 0,
+    totalPaidAmount: 0,
+    totalPendingAmount: 0,
+  });
   const [pagination, setPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
@@ -66,6 +72,14 @@ export const VendorWOListPage = () => {
   });
 
   const applyResponse = (response: any) => {
+    const cards = response?.cards || {};
+    setStats({
+      totalCount: cards.total || cards.total_wo || 0,
+      totalAmount: cards.total_amount || 0,
+      totalPaidAmount: cards.total_paid_amount || cards.paid_amount || 0,
+      totalPendingAmount: cards.total_pending_amount || cards.pending_amount || 0,
+    });
+
     const items = response?.work_orders || response?.data || [];
     const formatted = items.map((item: any) => ({
       id: item.id,
@@ -76,8 +90,8 @@ export const VendorWOListPage = () => {
       approvalStatus: item.all_level_approved
         ? "Approved"
         : item.all_level_approved === false
-        ? "Rejected"
-        : "Pending",
+          ? "Rejected"
+          : "Pending",
       paymentTenure: item.payment_tenure ?? "-",
       advanceAmount: item.advance_amount ?? "-",
       totalAmount: item.total_amount ?? "-",
@@ -106,7 +120,7 @@ export const VendorWOListPage = () => {
       if (filterData.supplier_name) params.append("supplier_name", filterData.supplier_name);
 
       const response = await fetch(
-        `https://${baseUrl}/pms/work_orders.json?${params.toString()}`,
+        `https://${baseUrl}/pms/work_orders/work_order_list.json?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed to fetch vendor WO data");
@@ -247,6 +261,50 @@ export const VendorWOListPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Settings className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">{stats.totalCount}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total no. of WO</p>
+          </div>
+        </div>
+
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Banknote className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalAmount).toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Value Amount</p>
+          </div>
+        </div>
+
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <CreditCard className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalPaidAmount).toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Paid Amount</p>
+          </div>
+        </div>
+
+        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
+            <Clock className="w-6 h-6 text-[#D92818]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalPendingAmount).toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Pending Amount</p>
+          </div>
+        </div>
+      </div>
+
+
       <EnhancedTable
         data={woList}
         columns={columns}

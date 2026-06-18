@@ -11,6 +11,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Type definitions for the shift data
 interface ShiftItem {
@@ -172,6 +173,8 @@ const mockShiftData: ShiftItem[] = [
 
 export const ShiftDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -302,13 +305,14 @@ export const ShiftDashboard = () => {
   const renderRow = (shift: ShiftItem) => ({
     actions: (
       <div className="flex items-center gap-2">
+        {shouldShow("Shift","update")&&(
         <button 
           onClick={() => handleEdit(shift.id)} 
           className="p-1 text-black hover:bg-gray-100 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button>)}
       </div>
     ),
     timings: (
@@ -389,6 +393,7 @@ export const ShiftDashboard = () => {
             enableExport={false}
             exportFileName="shift-data"
             leftActions={
+              shouldShow("Shift","create") &&(
               <Button 
                 onClick={handleAdd} 
                 className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
@@ -396,6 +401,7 @@ export const ShiftDashboard = () => {
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
+              )
             }
             pagination={false} // Disable built-in pagination since we're adding custom
             loading={loading}

@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
 import {
   useIssues,
   useUpdateIssue,
@@ -210,14 +215,26 @@ const ISSUSE_STATUS = [
   { value: "overdue", label: "Overdued" },
 ];
 
-const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelectedSprintId, onSubmit, isLoading }: any) => {
+const AddToSprintModal = ({
+  isOpen,
+  onClose,
+  sprints,
+  selectedSprintId,
+  setSelectedSprintId,
+  onSubmit,
+  isLoading,
+}: any) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">Add to Sprint</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] px-4">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          Add to Sprint
+        </h2>
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Sprint</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Sprint
+          </label>
           <Select
             value={selectedSprintId}
             onChange={(e) => setSelectedSprintId(e.target.value as string)}
@@ -226,7 +243,9 @@ const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelec
             size="small"
             variant="outlined"
           >
-            <MenuItem value=""><em>Select a sprint</em></MenuItem>
+            <MenuItem value="">
+              <em>Select a sprint</em>
+            </MenuItem>
             {sprints.map((sprint: any) => (
               <MenuItem key={sprint.id} value={String(sprint.id)}>
                 {sprint.name || sprint.title}
@@ -251,29 +270,44 @@ const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelec
   );
 };
 
-const IssuePauseModal = ({ isOpen, onClose, onSubmit, onEndIssue, isLoading, issueId }: any) => {
-  const [reason, setReason] = useState('');
+const IssuePauseModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  onEndIssue,
+  isLoading,
+  issueId,
+}: any) => {
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
-    if (!isOpen) setReason('');
+    if (!isOpen) setReason("");
   }, [isOpen]);
 
   const handlePause = () => {
-    if (!reason.trim()) { toast.error('Please enter a reason for pausing'); return; }
+    if (!reason.trim()) {
+      toast.error("Please enter a reason for pausing");
+      return;
+    }
     onSubmit(reason, issueId);
   };
 
   const handleEnd = () => {
-    if (!reason.trim()) { toast.error('Please enter a reason for ending'); return; }
+    if (!reason.trim()) {
+      toast.error("Please enter a reason for ending");
+      return;
+    }
     onEndIssue(reason, issueId);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause/End</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          Reason for Pause/End
+        </h2>
         <div className="mb-6">
           <textarea
             value={reason}
@@ -284,14 +318,24 @@ const IssuePauseModal = ({ isOpen, onClose, onSubmit, onEndIssue, isLoading, iss
             disabled={isLoading}
           />
         </div>
-        <div className="flex gap-3 justify-between">
-          <Button onClick={handleEnd} disabled={isLoading} className="px-4 py-2 !bg-red-600 !text-white rounded-md disabled:opacity-50">
-            {isLoading ? 'Submitting...' : 'End Issue'}
+        <div className="flex gap-3 justify-between flex-wrap">
+          <Button
+            onClick={handleEnd}
+            disabled={isLoading}
+            className="px-4 py-2 !bg-red-600 !text-white rounded-md disabled:opacity-50"
+          >
+            {isLoading ? "Submitting..." : "End Issue"}
           </Button>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
-            <Button onClick={handlePause} disabled={isLoading} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
-              {isLoading ? 'Submitting...' : 'Pause Issue'}
+            <Button variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePause}
+              disabled={isLoading}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            >
+              {isLoading ? "Submitting..." : "Pause Issue"}
             </Button>
           </div>
         </div>
@@ -336,15 +380,14 @@ const IssuesListPage = ({
    * Deletes params if value is null/undefined/empty string
    */
   const updateQueryParams = useCallback(
-    (updates: Record<string, string | number | boolean | null | undefined>, replace = false) => {
+    (
+      updates: Record<string, string | number | boolean | null | undefined>,
+      replace = false
+    ) => {
       const params = new URLSearchParams(searchParams);
 
       Object.entries(updates).forEach(([key, value]) => {
-        if (
-          value === undefined ||
-          value === null ||
-          value === ""
-        ) {
+        if (value === undefined || value === null || value === "") {
           params.delete(key);
         } else {
           params.set(key, String(value));
@@ -381,8 +424,12 @@ const IssuesListPage = ({
 
   // Responsible Person Change Modal State
   const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
-  const [responsibleTaskId, setResponsibleTaskId] = useState<string | null>(null);
-  const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<string | null>(null);
+  const [responsibleTaskId, setResponsibleTaskId] = useState<string | null>(
+    null
+  );
+  const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<
+    string | null
+  >(null);
   const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
 
   // Row selection state
@@ -400,19 +447,19 @@ const IssuesListPage = ({
     return savedOrder
       ? JSON.parse(savedOrder)
       : [
-        "id",
-        "project_name",
-        "milestone_name",
-        "task_name",
-        "sub_task_name",
-        "title",
-        "issue_type",
-        "priority",
-        "status",
-        "assigned_to",
-        "start_date",
-        "due_date",
-      ];
+          "id",
+          "project_name",
+          "milestone_name",
+          "task_name",
+          "sub_task_name",
+          "title",
+          "issue_type",
+          "priority",
+          "status",
+          "assigned_to",
+          "start_date",
+          "due_date",
+        ];
   });
 
   // Kanban/List view state - initialized from URL, fallback to localStorage
@@ -451,7 +498,9 @@ const IssuesListPage = ({
   // Build filter string based on current state
   let filterString = "";
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const myIssuesFilter = user.id ? `q[responsible_person_id_eq]=${user.id.toString()}` : "";
+  const myIssuesFilter = user.id
+    ? `q[responsible_person_id_eq]=${user.id.toString()}`
+    : "";
 
   if (appliedFilters !== "") {
     // If custom filters are applied, combine with myIssues filter if enabled
@@ -577,9 +626,7 @@ const IssuesListPage = ({
           },
         }
       );
-      const projectsList =
-        response.data ||
-        [];
+      const projectsList = response.data || [];
       setProjects(projectsList);
     } catch (error) {
       console.log("Error fetching projects:", error);
@@ -693,7 +740,10 @@ const IssuesListPage = ({
   const fetchSprintsList = useCallback(async () => {
     try {
       const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
-      const list = result?.sprints || result?.data?.sprints || (Array.isArray(result) ? result : []);
+      const list =
+        result?.sprints ||
+        result?.data?.sprints ||
+        (Array.isArray(result) ? result : []);
       setSprints(list);
     } catch (error) {
       console.error("Failed to fetch sprints:", error);
@@ -707,21 +757,27 @@ const IssuesListPage = ({
     }
     setIsAddingToSprint(true);
     try {
-      const result = await dispatch(updateSprint({
-        token,
-        baseUrl,
-        id: selectedSprintId,
-        data: { sprint: { issue_ids: selectedItems.map(Number) } },
-      })).unwrap();
+      const result = await dispatch(
+        updateSprint({
+          token,
+          baseUrl,
+          id: selectedSprintId,
+          data: { sprint: { issue_ids: selectedItems.map(Number) } },
+        })
+      ).unwrap();
 
       const existingTaskIds: number[] = result?.existing_task_ids || [];
       const existingIssueIds: number[] = result?.existing_issue_ids || [];
 
       if (existingTaskIds.length > 0) {
-        toast.error(`Tasks with IDs ${existingTaskIds.join(", ")} are already added to this sprint`);
+        toast.error(
+          `Tasks with IDs ${existingTaskIds.join(", ")} are already added to this sprint`
+        );
       }
       if (existingIssueIds.length > 0) {
-        toast.error(`Issues with IDs ${existingIssueIds.join(", ")} are already added to this sprint`);
+        toast.error(
+          `Issues with IDs ${existingIssueIds.join(", ")} are already added to this sprint`
+        );
       }
       if (existingTaskIds.length === 0 && existingIssueIds.length === 0) {
         toast.success("Issues added to sprint successfully");
@@ -775,7 +831,9 @@ const IssuesListPage = ({
 
   const handleIssueUpdate = async (issueId: string, assignedToId: string) => {
     // Find the current assigned person for this issue
-    const currentIssue = displayIssues?.find((issue: any) => String(issue.id) === String(issueId));
+    const currentIssue = displayIssues?.find(
+      (issue: any) => String(issue.id) === String(issueId)
+    );
     const currentAssignedTo = currentIssue?.responsible_person_id;
 
     // If changing the responsible person, show modal
@@ -800,7 +858,11 @@ const IssuesListPage = ({
     }
   };
 
-  const handleResponsiblePersonChange = async (reason: string, issueId: string, newPersonId: string) => {
+  const handleResponsiblePersonChange = async (
+    reason: string,
+    issueId: string,
+    newPersonId: string
+  ) => {
     setIsResponsibleLoading(true);
     try {
       await updateMutation.mutateAsync({
@@ -959,28 +1021,31 @@ const IssuesListPage = ({
 
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "actions") {
-      return <div className="flex items-center justify-center gap-2">
-        {shouldShow("employee_project_issues", "show") && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="p-1"
-            onClick={() => {
-              if (location.pathname.startsWith("/business-compass/issues")) {
-                navigate(`/business-compass/issues/${item.id}`);
-              } else {
-                navigate(`/vas/issues/${item.id}`);
-              }
-            }}
-            title="View Issue Details"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
+      return (
+        <div className="flex items-center justify-center gap-2">
+          {shouldShow("employee_project_issues", "show") && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="p-1"
+              onClick={() => {
+                if (location.pathname.startsWith("/business-compass/issues")) {
+                  navigate(`/business-compass/issues/${item.id}`);
+                } else {
+                  navigate(`/vas/issues/${item.id}`);
+                }
+              }}
+              title="View Issue Details"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      );
     }
     if (columnKey === "title") {
-      const isCompleted = item.status === "completed" || item.status === "closed";
+      const isCompleted =
+        item.status === "completed" || item.status === "closed";
       const isStarted = item.is_started;
       return (
         <div className="flex flex-col gap-2">
@@ -995,10 +1060,13 @@ const IssuesListPage = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            {!isCompleted && (
-              isStarted ? (
+            {!isCompleted &&
+              (isStarted ? (
                 <button
-                  onClick={() => { setPauseIssueId(Number(item.id)); setIsPauseModalOpen(true); }}
+                  onClick={() => {
+                    setPauseIssueId(Number(item.id));
+                    setIsPauseModalOpen(true);
+                  }}
                   className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
                   title="Pause issue"
                 >
@@ -1012,8 +1080,7 @@ const IssuesListPage = ({
                 >
                   <Play size={13} className="text-green-500" />
                 </button>
-              )
-            )}
+              ))}
           </div>
           <div className="flex flex-wrap gap-2">
             {item.milestone_name && (
@@ -1036,7 +1103,12 @@ const IssuesListPage = ({
       );
     }
     if (columnKey === "started_time") {
-      return <ActiveTimer activeTimeTillNow={item?.active_time_till_now} isStarted={item?.is_started} />;
+      return (
+        <ActiveTimer
+          activeTimeTillNow={item?.active_time_till_now}
+          isStarted={item?.is_started}
+        />
+      );
     }
     if (columnKey === "priority") {
       return item[columnKey];
@@ -1191,67 +1263,70 @@ const IssuesListPage = ({
   const leftActions = (
     <>
       {shouldShow("employee_project_issues", "create") && (
-        // <Button
-        //     className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        //     onClick={handleOpenDialog}
-        // >
-        //     <Plus className="w-4 h-4 mr-2" />
-        //     Add
-        // </Button>
         <Button
-          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          className="bg-[#C72030] hover:bg-[#A01020] text-white px-2 sm:px-4"
           onClick={() => setShowActionPanel(true)}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Action
+          <Plus className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Action</span>
         </Button>
       )}
-
-      <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
-        <span className="text-gray-700 font-medium text-sm">Total Issues:</span>
-        <span className="text-lg font-bold text-[#C72030]">
-          {pagination?.total_count || 0}
-        </span>
-      </div>
     </>
   );
 
   const rightActions = (
-    <div className="flex items-center gap-1 mr-4">
-      <span className="text-gray-700 font-medium text-sm">My Issues</span>
-      <Switch
-        checked={!showMyIssuesOnly}
-        onChange={() => setShowMyIssuesOnly(!showMyIssuesOnly)}
-        sx={{
-          "& .MuiSwitch-switchBase.Mui-checked": {
-            color: "#C72030",
-          },
-          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-            backgroundColor: "#C72030",
-          },
-        }}
-      />
-      <span className="text-gray-700 font-medium text-sm">All Issues</span>
+    <div className="flex flex-wrap items-center gap-1">
+      {/* Total Issues count */}
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200">
+        <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+          Total:
+        </span>
+        <span className="text-sm font-bold text-[#C72030]">
+          {pagination?.total_count || 0}
+        </span>
+      </div>
+
+      {/* My / All toggle */}
+      <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-1">
+        <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+          My
+        </span>
+        <Switch
+          checked={!showMyIssuesOnly}
+          onChange={() => setShowMyIssuesOnly(!showMyIssuesOnly)}
+          sx={{
+            "& .MuiSwitch-switchBase.Mui-checked": { color: "#C72030" },
+            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+              backgroundColor: "#C72030",
+            },
+            transform: "scale(0.8)",
+            margin: "-4px",
+          }}
+        />
+        <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+          All
+        </span>
+      </div>
 
       {/* View Toggle */}
-      <div className="relative ml-2" ref={viewDropdownRef}>
+      <div className="relative" ref={viewDropdownRef}>
         <button
           onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}
-          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+          className="flex items-center gap-1 px-2 py-1.5 text-gray-700 hover:bg-gray-100 rounded"
         >
-          <span className="text-[#C72030] font-medium flex items-center gap-2">
+          <span className="text-[#C72030] font-medium flex items-center gap-1">
             {selectedView === "Kanban" ? (
-              <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+              <ChartNoAxesColumn className="w-3.5 h-3.5 rotate-180 text-[#C72030]" />
             ) : (
-              <List className="w-4 h-4 text-[#C72030]" />
+              <List className="w-3.5 h-3.5 text-[#C72030]" />
             )}
-            {selectedView}
+            <span className="hidden sm:inline text-xs">{selectedView}</span>
           </span>
-          <ChevronDown className="w-4 h-4 text-gray-600" />
+          <ChevronDown className="w-3 h-3 text-gray-600" />
         </button>
 
         {isViewDropdownOpen && (
-          <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+          <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[150px]">
             <div className="py-2">
               <button
                 onClick={() => {
@@ -1357,63 +1432,63 @@ const IssuesListPage = ({
 
   if (selectedView === "Kanban") {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+      <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2 flex-wrap">
             {shouldShow("employee_project_issues", "create") && (
               <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                className="bg-[#C72030] hover:bg-[#A01020] text-white px-2 sm:px-4"
                 onClick={() => setShowActionPanel(true)}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Action
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Action</span>
               </Button>
             )}
-            <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
-              <span className="text-gray-700 font-medium text-sm">
-                Total Issues:
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200">
+              <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                Total:
               </span>
-              <span className="text-lg font-bold text-[#C72030]">
+              <span className="text-sm font-bold text-[#C72030]">
                 {pagination?.total_count || 0}
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <span className="text-gray-700 font-medium text-sm">
-                My Issues
+          <div className="flex flex-wrap items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-1">
+              <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                My
               </span>
               <Switch
                 checked={!showMyIssuesOnly}
                 onChange={() => setShowMyIssuesOnly(!showMyIssuesOnly)}
                 sx={{
-                  "& .MuiSwitch-switchBase.Mui-checked": {
-                    color: "#C72030",
-                  },
+                  "& .MuiSwitch-switchBase.Mui-checked": { color: "#C72030" },
                   "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
                     backgroundColor: "#C72030",
                   },
+                  transform: "scale(0.8)",
+                  margin: "-4px",
                 }}
               />
-              <span className="text-gray-700 font-medium text-sm">
-                All Issues
+              <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                All
               </span>
             </div>
 
             <div className="relative" ref={viewDropdownRef}>
               <button
                 onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                className="flex items-center gap-1 px-2 py-1.5 text-gray-700 hover:bg-gray-100 rounded"
               >
-                <span className="text-[#C72030] font-medium flex items-center gap-2">
-                  <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
-                  Kanban
+                <span className="text-[#C72030] font-medium flex items-center gap-1">
+                  <ChartNoAxesColumn className="w-3.5 h-3.5 rotate-180 text-[#C72030]" />
+                  <span className="hidden sm:inline text-xs">Kanban</span>
                 </span>
-                <ChevronDown className="w-4 h-4 text-gray-600" />
+                <ChevronDown className="w-3 h-3 text-gray-600" />
               </button>
 
               {isViewDropdownOpen && (
-                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[150px]">
                   <div className="py-2">
                     <button
                       onClick={() => {
@@ -1505,29 +1580,31 @@ const IssuesListPage = ({
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <EnhancedTable
-        data={issues}
-        columns={columns}
-        // renderActions={renderActions}
-        searchValue={tempSearchQuery}
-        onSearchChange={(searchTerm) => handleSearchChange(searchTerm)}
-        renderCell={renderCell}
-        loading={isFetching}
-        leftActions={leftActions}
-        onFilterClick={() => setIsFilterModalOpen(true)}
-        rightActions={rightActions}
-        emptyMessage={
-          issues.length === 0 && !isFetching
-            ? "No issues found. Create one to get started."
-            : ""
-        }
-        selectable={true}
-        selectedItems={selectedItems}
-        onSelectAll={handleSelectAll}
-        onSelectItem={handleSelectItem}
-        getItemId={(item: any) => String(item.id)}
-      />
+    <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
+      <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+        <EnhancedTable
+          data={issues}
+          columns={columns}
+          // renderActions={renderActions}
+          searchValue={tempSearchQuery}
+          onSearchChange={(searchTerm) => handleSearchChange(searchTerm)}
+          renderCell={renderCell}
+          loading={isFetching}
+          leftActions={leftActions}
+          onFilterClick={() => setIsFilterModalOpen(true)}
+          rightActions={rightActions}
+          emptyMessage={
+            issues.length === 0 && !isFetching
+              ? "No issues found. Create one to get started."
+              : ""
+          }
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          getItemId={(item: any) => String(item.id)}
+        />
+      </div>
 
       {showActionPanel && (
         <SelectionPanel
@@ -1538,17 +1615,20 @@ const IssuesListPage = ({
       )}
 
       {selectedItems.length > 0 && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] w-[90vw] sm:w-auto selection-panel">
           <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
             <div className="text-[#C72030] font-bold text-lg"></div>
           </div>
-          <div className="flex items-center justify-between gap-4 px-6 flex-1">
+          <div className="flex items-center justify-between gap-4 px-4 sm:px-6 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-[#1a1a1a]">Action</span>
             </div>
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => { fetchSprintsList(); setIsAddToSprintModalOpen(true); }}
+                onClick={() => {
+                  fetchSprintsList();
+                  setIsAddToSprintModalOpen(true);
+                }}
                 variant="ghost"
                 size="sm"
                 className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
@@ -1571,7 +1651,10 @@ const IssuesListPage = ({
 
       <AddToSprintModal
         isOpen={isAddToSprintModalOpen}
-        onClose={() => { setIsAddToSprintModalOpen(false); setSelectedSprintId(""); }}
+        onClose={() => {
+          setIsAddToSprintModalOpen(false);
+          setSelectedSprintId("");
+        }}
         sprints={sprints}
         selectedSprintId={selectedSprintId}
         setSelectedSprintId={setSelectedSprintId}
@@ -1698,7 +1781,7 @@ const IssuesListPage = ({
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-4 sm:mt-6 overflow-x-auto pb-2">
         <Pagination>
           <PaginationContent>
             <PaginationItem>
@@ -1718,15 +1801,12 @@ const IssuesListPage = ({
               <PaginationNext
                 onClick={() =>
                   handlePageChange(
-                    Math.min(
-                      pagination.total_pages,
-                      pagination.current_page
-                    )
+                    Math.min(pagination.total_pages, pagination.current_page)
                   )
                 }
                 className={
                   pagination.current_page === pagination.total_pages ||
-                    isFetching
+                  isFetching
                     ? "pointer-events-none opacity-50"
                     : "cursor-pointer"
                 }
@@ -1740,7 +1820,10 @@ const IssuesListPage = ({
       {isPauseModalOpen && (
         <IssuePauseModal
           isOpen={isPauseModalOpen}
-          onClose={() => { setIsPauseModalOpen(false); setPauseIssueId(null); }}
+          onClose={() => {
+            setIsPauseModalOpen(false);
+            setPauseIssueId(null);
+          }}
           onSubmit={handlePauseIssueSubmit}
           onEndIssue={handleEndIssueSubmit}
           isLoading={isPauseLoading}
@@ -1758,7 +1841,11 @@ const IssuesListPage = ({
         }}
         onSubmit={(reason) => {
           if (responsibleTaskId && pendingResponsiblePersonId) {
-            handleResponsiblePersonChange(reason, responsibleTaskId, pendingResponsiblePersonId);
+            handleResponsiblePersonChange(
+              reason,
+              responsibleTaskId,
+              pendingResponsiblePersonId
+            );
           }
         }}
         isLoading={isResponsibleLoading}
@@ -1771,18 +1858,26 @@ const IssuesListPage = ({
 };
 
 // Responsible Person Change Modal Component
-const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, pendingResponsiblePersonId = null, users = [] }: any) => {
-  const [reason, setReason] = useState('');
+const ResponsiblePersonReasonModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  taskId,
+  pendingResponsiblePersonId = null,
+  users = [],
+}: any) => {
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     if (!isOpen) {
-      setReason('');
+      setReason("");
     }
   }, [isOpen]);
 
   const handleSubmit = () => {
     if (!reason.trim()) {
-      toast.error('Please enter a reason for changing the responsible person');
+      toast.error("Please enter a reason for changing the responsible person");
       return;
     }
     if (taskId && pendingResponsiblePersonId) {
@@ -1793,9 +1888,11 @@ const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, ta
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          Reason for Responsible Person Change
+        </h2>
 
         <div className="mb-6">
           <textarea
@@ -1809,11 +1906,7 @@ const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, ta
         </div>
 
         <div className="flex gap-3 justify-end">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button
@@ -1821,12 +1914,12 @@ const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, ta
             disabled={isLoading}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            {isLoading ? 'Submitting...' : 'Change Responsible Person'}
+            {isLoading ? "Submitting..." : "Change Responsible Person"}
           </Button>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default IssuesListPage;
