@@ -131,7 +131,7 @@ const DailyMeeting = () => {
       ) : (
         <div
           style={{
-            display: "flex",
+            display: "inline-flex",
             gap: "4px",
             overflowX: "auto",
             WebkitOverflowScrolling:
@@ -144,7 +144,9 @@ const DailyMeeting = () => {
             borderRadius: "9999px",
             border: "1px solid #e5e7eb",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-            alignSelf: "stretch",
+            alignSelf: "flex-start",
+            width: "fit-content",
+            maxWidth: "100%",
           }}
         >
           {tabs.map((name) => {

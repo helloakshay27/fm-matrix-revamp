@@ -19,8 +19,11 @@ import {
   Circle,
   Star,
   Eye,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
@@ -296,6 +299,161 @@ const normalizeReportData = (rd: any) => {
     absent_reason: rd.absent_reason ?? null,
     kpis: rd.kpis && typeof rd.kpis === "object" ? rd.kpis : {},
   };
+};
+
+const fmtItemDate = (d?: string): string | null => {
+  if (!d) return null;
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  return `${String(dt.getDate()).padStart(2, "0")}/${String(
+    dt.getMonth() + 1
+  ).padStart(2, "0")}/${dt.getFullYear()}`;
+};
+
+const fmtItemHours = (h?: number): string | null => {
+  if (!h) return null;
+  if (h < 1) return `${Math.round(h * 60)}m`;
+  const wh = Math.floor(h);
+  const m = Math.round((h - wh) * 60);
+  return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
+};
+
+const getItemOverdueLabel = (targetDate?: string): string | null => {
+  if (!targetDate) return null;
+  const end = new Date(targetDate);
+  if (isNaN(end.getTime())) return null;
+  end.setHours(23, 59, 59, 999);
+  const diff = end.getTime() - new Date().getTime();
+  if (diff > 0) return null;
+  const abs = Math.abs(diff);
+  const d = Math.floor(abs / 86400000);
+  const h = Math.floor((abs % 86400000) / 3600000);
+  const m = Math.floor((abs % 3600000) / 60000);
+  if (d > 0) return `${d}d ${h}h overdue`;
+  if (h > 0) return `${h}h ${m}m overdue`;
+  return `${m}m overdue`;
+};
+
+// Cache for item details fetched on-demand by source_id (keyed by `${type}:${id}`)
+const itemDetailCache: Record<string, any> = {};
+const itemDetailInflight: Record<string, Promise<any> | undefined> = {};
+
+const fetchItemDetail = async (
+  type: string,
+  id: any
+): Promise<any | null> => {
+  if (!type || id === undefined || id === null) return null;
+  const key = `${type}:${id}`;
+  if (key in itemDetailCache) return itemDetailCache[key];
+  if (itemDetailInflight[key]) return itemDetailInflight[key];
+
+  let url: string | null = null;
+  if (type === "task") url = `${getBaseUrl()}/task_managements/${id}.json`;
+  else if (type === "todo") url = `${getBaseUrl()}/todos/${id}.json`;
+  else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
+  if (!url) return null;
+
+  const p = (async () => {
+    try {
+      const res = await fetch(url as string, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        itemDetailCache[key] = null;
+        return null;
+      }
+      const json = await res.json();
+      const data =
+        json?.task ||
+        json?.todo ||
+        json?.issue ||
+        json?.data?.task ||
+        json?.data?.todo ||
+        json?.data?.issue ||
+        json?.data ||
+        json;
+      itemDetailCache[key] = data || null;
+      return itemDetailCache[key];
+    } catch {
+      itemDetailCache[key] = null;
+      return null;
+    } finally {
+      itemDetailInflight[key] = undefined;
+    }
+  })();
+  itemDetailInflight[key] = p;
+  return p;
+};
+
+// Render target date + overdue + estimated effort + effective (active) time for a report item
+export const ReportItemMeta = ({ item }: { item: any }) => {
+  const sourceType = (
+    item?.source_type ||
+    item?.sourceType ||
+    item?.type ||
+    ""
+  ).toLowerCase();
+  const sourceId = item?.source_id ?? item?.sourceId ?? item?.id;
+  const [fetched, setFetched] = useState<any>(null);
+
+  // When the item lacks embedded details, fetch them by source_id
+  useEffect(() => {
+    let active = true;
+    if (
+      !item?.originalData &&
+      sourceId &&
+      ["task", "todo", "issue"].includes(sourceType)
+    ) {
+      fetchItemDetail(sourceType, sourceId).then((data) => {
+        if (active && data) setFetched(data);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [item?.originalData, sourceId, sourceType]);
+
+  const d = item?.originalData || fetched;
+  const status = (item?.status || d?.status || "").toLowerCase();
+  const isDone = ["completed", "closed", "done"].includes(status);
+  const targetRaw =
+    d?.target_date || d?.due_date || d?.end_date || item?.target_date;
+  const dueDate = fmtItemDate(targetRaw);
+  const overdueLabel = isDone ? null : getItemOverdueLabel(targetRaw);
+  const effortEst = fmtItemHours(d?.total_allocated_hours || d?.estimated_hour);
+  const hasActiveTime = sourceType === "task" && d?.active_time_till_now;
+
+  if (!dueDate && !overdueLabel && !effortEst && !hasActiveTime) return null;
+
+  return (
+    <div className="flex items-center gap-3 px-3 pb-2 -mt-1 flex-wrap">
+      {dueDate && (
+        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <Calendar className="w-3 h-3 shrink-0" />
+          {dueDate}
+        </span>
+      )}
+      {overdueLabel && (
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+          <AlertTriangle className="w-3 h-3 shrink-0" />
+          {overdueLabel}
+        </span>
+      )}
+      {effortEst && (
+        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <Clock className="w-3 h-3 shrink-0" />
+          Est: {effortEst}
+        </span>
+      )}
+      {hasActiveTime && (
+        <span className="flex items-center gap-1 text-[10px] text-green-600">
+          <Zap className="w-3 h-3 shrink-0" />
+          <ActiveTimer
+            activeTimeTillNow={d.active_time_till_now}
+            isStarted={d.is_started}
+          />
+        </span>
+      )}
+    </div>
+  );
 };
 
 const getItemTitle = (item: any): string => {
@@ -2533,6 +2691,7 @@ const DailyTab = ({
                                                   </button>
                                                 )}
                                               </div>
+                                              <ReportItemMeta item={item} />
                                             </li>
                                           );
                                         }
@@ -2788,24 +2947,8 @@ const DailyTab = ({
                                                           </button>
                                                         )}
                                                       </div>
-                                                      {/* Date row */}
-                                                      {dueDate && (
-                                                        <div className="flex items-center gap-1 px-3 pb-2 -mt-1">
-                                                          <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
-                                                          <span className="text-[10px] text-gray-500">
-                                                            {new Date(
-                                                              dueDate
-                                                            ).toLocaleDateString(
-                                                              "en-GB",
-                                                              {
-                                                                day: "2-digit",
-                                                                month: "short",
-                                                                year: "numeric",
-                                                              }
-                                                            )}
-                                                          </span>
-                                                        </div>
-                                                      )}
+                                                      {/* Target date · overdue · Est · Effective time */}
+                                                      <ReportItemMeta item={viewItem} />
                                                     </li>
                                                   );
                                                 }
@@ -2881,6 +3024,7 @@ const DailyTab = ({
                                                   </button>
                                                 )}
                                               </div>
+                                              <ReportItemMeta item={item} />
                                             </li>
                                           );
                                         }
