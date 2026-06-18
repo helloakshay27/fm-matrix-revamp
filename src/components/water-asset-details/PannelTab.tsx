@@ -26,6 +26,7 @@ interface SelectionPanelProps {
   onClearSelection?: () => void;
   loading?: boolean;
   mobileSheet?: boolean;
+  permissionKey?: string;
 }
 
 export const SelectionPanel: React.FC<SelectionPanelProps> = ({
@@ -36,6 +37,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   onClearSelection,
   loading,
   mobileSheet = true,
+  permissionKey,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const { shouldShow } = useDynamicPermissions();
@@ -54,7 +56,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   }, [onClearSelection]);
 
   const defaultActions: SelectionAction[] = [
-    ...(onAdd && permissionKey && shouldShow(permissionKey, "create") ? [{ label: "Add", icon: Plus, onClick: onAdd }] : []),
+    ...(onAdd && (!permissionKey || shouldShow(permissionKey, "create")) ? [{ label: "Add", icon: Plus, onClick: onAdd }] : []),
     ...(onImport ? [{ label: "Import", icon: Upload, onClick: onImport }] : []),
     ...actions,
   ];

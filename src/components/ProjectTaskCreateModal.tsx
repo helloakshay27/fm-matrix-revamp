@@ -802,7 +802,7 @@ const TaskForm = ({
       <div className="my-3 grid grid-cols-1 gap-3 md:grid-cols-2">
         <div>
           <label className="block text-xs text-gray-700 mb-1">
-            Target Date<span className="text-red-500">*</span>
+            Target Date{!formData.isRecurring && <span className="text-red-500">*</span>}
           </label>
           <button
             type="button"
@@ -1490,8 +1490,10 @@ const ProjectTaskCreateModal = ({
       );
     });
     formDatatoSend.append("task_management[expected_start_date]", formatedStartDate);
-    formDatatoSend.append("task_management[target_date]", formatedEndDate);
-    formDatatoSend.append("task_management[allocation_date]", formatedEndDate);
+    if (endDate) {
+      formDatatoSend.append("task_management[target_date]", formatedEndDate);
+      formDatatoSend.append("task_management[allocation_date]", formatedEndDate);
+    }
     formDatatoSend.append("task_management[project_management_id]", id || formData.project);
     formDatatoSend.append("task_management[milestone_id]", mid || formData.milestone);
     formDatatoSend.append("task_management[active]", "true");
@@ -1597,15 +1599,33 @@ const ProjectTaskCreateModal = ({
       return;
     }
 
-    if (
-      !formData.taskTitle ||
-      !formData.responsiblePerson ||
-      !formData.priority ||
-      !formData.observer.length ||
-      !formData.tags.length
-    ) {
+    if (!formData.taskTitle?.trim()) {
       toast.dismiss();
-      toast.error("Please fill all required fields.");
+      toast.error("Task title is required.");
+      return;
+    }
+
+    if (!formData.responsiblePerson) {
+      toast.dismiss();
+      toast.error("Responsible person is required.");
+      return;
+    }
+
+    if (!formData.priority) {
+      toast.dismiss();
+      toast.error("Priority is required.");
+      return;
+    }
+
+    if (!formData.observer?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one observer.");
+      return;
+    }
+
+    if (!formData.tags?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one tag.");
       return;
     }
 
@@ -1656,17 +1676,42 @@ const ProjectTaskCreateModal = ({
       return;
     }
 
-    if (
-      !isDelete &&
-      (!formData.taskTitle ||
-        !formData.responsiblePerson ||
-        !formData.priority ||
-        !formData.observer.length ||
-        !formData.tags.length)
-    ) {
-      toast.dismiss();
-      toast.error("Please fill all required fields.");
-      return;
+    if (!isDelete) {
+      if (!formData.taskTitle?.trim()) {
+        toast.dismiss();
+        toast.error("Task title is required.");
+        return;
+      }
+
+      if (!formData.responsiblePerson) {
+        toast.dismiss();
+        toast.error("Responsible person is required.");
+        return;
+      }
+
+      if (!formData.priority) {
+        toast.dismiss();
+        toast.error("Priority is required.");
+        return;
+      }
+
+      if (!formData.observer?.length) {
+        toast.dismiss();
+        toast.error("Please select at least one observer.");
+        return;
+      }
+
+      if (!formData.tags?.length) {
+        toast.dismiss();
+        toast.error("Please select at least one tag.");
+        return;
+      }
+
+      if (!formData.isRecurring && !endDate) {
+        toast.dismiss();
+        toast.error("Target date is required.");
+        return;
+      }
     }
 
     setIsSubmitting(true);

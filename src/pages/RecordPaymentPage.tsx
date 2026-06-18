@@ -199,6 +199,9 @@ export const RecordPaymentPage: React.FC = () => {
   const [paymentNumber, setPaymentNumber] = useState("15");
 
   const [receivedFullAmount, setReceivedFullAmount] = useState(false);
+  const [outstandingAmount, setOutstandingAmount] = useState<number | null>(null);
+  const [useOutstandingAsReceived, setUseOutstandingAsReceived] = useState(false);
+  const [showDistributePopup, setShowDistributePopup] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [ledgers, setLedgers] = useState<Ledger[]>([]);
   const [invoiceRows, setInvoiceRows] = useState<InvoicePaymentRow[]>([]);
@@ -299,6 +302,8 @@ export const RecordPaymentPage: React.FC = () => {
   useEffect(() => {
     if (!selectedCustomerId) {
       setInvoiceRows([]);
+      setUseOutstandingAsReceived(false);
+      setShowDistributePopup(false);
       return;
     }
 
@@ -326,17 +331,12 @@ export const RecordPaymentPage: React.FC = () => {
         const today = format(new Date(), "yyyy-MM-dd");
         const rows = data.map((inv) => ({
           ...inv,
-          // prefer an existing saved date if API returns it
           paymentReceivedOn: inv.payment_received_on || today,
           withholdingTax: "",
-          payment: inv.balance_due?.toString() ?? "",
+          payment: "",
         }));
         setInvoiceRows(rows);
-        const total = rows.reduce(
-          (s, r) => s + (parseFloat(r.payment) || 0),
-          0
-        );
-        setAmountReceived(total.toFixed(2));
+        setAmountReceived("");
       })
       .catch((err) => {
         console.error("Invoice fetch error", err);
@@ -344,6 +344,28 @@ export const RecordPaymentPage: React.FC = () => {
         setInvoiceRows([]);
       })
       .finally(() => setInvoicesLoading(false));
+  }, [selectedCustomerId]);
+
+  // Fetch outstanding receivable amount when customer changes
+  useEffect(() => {
+    if (!selectedCustomerId || !baseUrl || !token) {
+      setOutstandingAmount(null);
+      setUseOutstandingAsReceived(false);
+      return;
+    }
+    axios
+      .get(`https://${baseUrl}/lock_account_customers/${selectedCustomerId}.json`, {
+        headers: authHeaders,
+      })
+      .then((res) => {
+        const detail = res.data?.data || res.data;
+        setOutstandingAmount(
+          typeof detail?.outstanding_receivable_amount === "number"
+            ? detail.outstanding_receivable_amount
+            : null
+        );
+      })
+      .catch(() => setOutstandingAmount(null));
   }, [selectedCustomerId]);
 
   const selectedCustomer =
@@ -356,6 +378,11 @@ export const RecordPaymentPage: React.FC = () => {
 
   const totalPayment = invoiceRows.reduce(
     (sum, r) => sum + (parseFloat(r.payment) || 0),
+    0
+  );
+
+  const totalBalanceDue = invoiceRows.reduce(
+    (sum, r) => sum + (r.balance_due || 0),
     0
   );
 
@@ -381,6 +408,17 @@ export const RecordPaymentPage: React.FC = () => {
   ) => {
     setInvoiceRows((rows) =>
       rows.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+    );
+  };
+
+  const distributeAmountToInvoices = (amount: number) => {
+    let remaining = amount;
+    setInvoiceRows((rows) =>
+      rows.map((row) => {
+        const pay = Math.min(remaining, row.balance_due || 0);
+        remaining = Math.max(0, remaining - pay);
+        return { ...row, payment: pay.toFixed(2) };
+      })
     );
   };
 
@@ -1061,6 +1099,7 @@ export const RecordPaymentPage: React.FC = () => {
                     fullWidth
                     type="number"
                     value={amountReceived}
+                    disabled={receivedFullAmount || useOutstandingAsReceived}
                     onChange={(e) => {
                       const val = parseFloat(e.target.value);
                       if (val < 0) {
@@ -1068,6 +1107,18 @@ export const RecordPaymentPage: React.FC = () => {
                         setAmountReceived('0');
                       } else {
                         setAmountReceived(e.target.value);
+                      }
+                    }}
+                    onBlur={() => {
+                      const val = parseFloat(amountReceived);
+                      if (
+                        !isNaN(val) &&
+                        val > 0 &&
+                        invoiceRows.length > 0 &&
+                        !receivedFullAmount &&
+                        !useOutstandingAsReceived
+                      ) {
+                        setShowDistributePopup(true);
                       }
                     }}
                     placeholder="0.00"
@@ -1079,15 +1130,68 @@ export const RecordPaymentPage: React.FC = () => {
                       ),
                     }}
                   />
+                  {showDistributePopup && (
+                    <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-10">
+                      <p className="text-sm text-gray-700 mb-3">
+                        Would you like this amount to be reflected in the Payment field?
+                      </p>
+                      <div className="flex gap-2">
+                        <MuiButton
+                          variant="contained"
+                          size="small"
+                          onClick={() => {
+                            distributeAmountToInvoices(parseFloat(amountReceived) || 0);
+                            setShowDistributePopup(false);
+                          }}
+                          sx={{
+                            bgcolor: "#404b69",
+                            "&:hover": { bgcolor: "#353f5a" },
+                            textTransform: "none",
+                            px: 3,
+                          }}
+                        >
+                          Yes
+                        </MuiButton>
+                        <MuiButton
+                          variant="outlined"
+                          size="small"
+                          onClick={() => setShowDistributePopup(false)}
+                          sx={{
+                            textTransform: "none",
+                            borderColor: "#d1d5db",
+                            color: "#374151",
+                            px: 3,
+                          }}
+                        >
+                          No
+                        </MuiButton>
+                      </div>
+                    </div>
+                  )}
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={receivedFullAmount}
                         onChange={(e) => {
                           setReceivedFullAmount(e.target.checked);
-                          if (!e.target.checked) {
+                          if (e.target.checked) {
+                            setUseOutstandingAsReceived(false);
+                            setShowDistributePopup(false);
+                            const filled = invoiceRows.map((r) => ({
+                              ...r,
+                              payment: r.balance_due?.toFixed(2) ?? "0",
+                            }));
+                            setInvoiceRows(filled);
+                            const total = filled.reduce(
+                              (s, r) => s + (parseFloat(r.payment) || 0),
+                              0
+                            );
+                            setAmountReceived(total.toFixed(2));
+                          } else {
                             setAmountReceived("");
-                            setInvoiceRows([]);
+                            setInvoiceRows((rows) =>
+                              rows.map((r) => ({ ...r, payment: "" }))
+                            );
                           }
                         }}
                         size="small"
@@ -1096,16 +1200,47 @@ export const RecordPaymentPage: React.FC = () => {
                     label={
                       <span className="text-sm text-gray-600">
                         Received full amount
-                        {invoiceRows.length > 0 && (
+                        {invoiceRows.length > 0 && totalBalanceDue > 0 && (
                           <span className="text-gray-500">
                             {" "}
-                            (₹{totalPayment.toFixed(2)})
+                            (₹{totalBalanceDue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                           </span>
                         )}
                       </span>
                     }
                     className="mt-1"
                   />
+                  {outstandingAmount !== null && outstandingAmount > 0 && (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={useOutstandingAsReceived}
+                          onChange={(e) => {
+                            setUseOutstandingAsReceived(e.target.checked);
+                            if (e.target.checked) {
+                              setReceivedFullAmount(false);
+                              setAmountReceived(outstandingAmount.toFixed(2));
+                            } else {
+                              setAmountReceived("");
+                            }
+                          }}
+                          size="small"
+                        />
+                      }
+                      label={
+                        <span className="text-sm text-gray-600">
+                          Amount Receivable{" "}
+                          <span className="text-gray-500">
+                            (₹{outstandingAmount.toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })})
+                          </span>
+                        </span>
+                      }
+                      className="mt-1"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -1499,6 +1634,38 @@ export const RecordPaymentPage: React.FC = () => {
                   </table>
                 </div>
               )}
+
+              {/* Inline Payment Summary — shown when invoices are loaded */}
+              {invoiceRows.length > 0 && (
+                <div className="flex justify-end mt-4">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-4 min-w-[320px] space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Amount Received :</span>
+                      <span className="text-sm font-medium">
+                        {(parseFloat(amountReceived) || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Amount used for Payments :</span>
+                      <span className="text-sm font-medium">
+                        {totalPayment.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Amount Refunded :</span>
+                      <span className="text-sm font-medium">0.00</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="text-sm text-red-500 font-medium flex items-center gap-1">
+                        ▲ Amount in Excess:
+                      </span>
+                      <span className="text-sm font-semibold">
+                        ₹ {Math.max(0, (parseFloat(amountReceived) || 0) - totalPayment).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </Section>
 
@@ -1604,44 +1771,6 @@ export const RecordPaymentPage: React.FC = () => {
             </div>
           </Section>
 
-          {/* Payment Summary Section */}
-          <Section
-            title="Payment Summary"
-            icon={<DollarSign className="w-5 h-5" />}
-          >
-            <div className="max-w-md space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Amount Received</span>
-                <span className="text-sm font-medium">
-                  ₹ {amountReceived || "0.00"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Amount used for Payments
-                </span>
-                <span className="text-sm font-medium">
-                  ₹ {totalPayment.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Amount Refunded</span>
-                <span className="text-sm font-medium">₹ 0.00</span>
-              </div>
-              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                <span className="text-sm text-red-500 font-medium">
-                  ⚠ Amount in Excess
-                </span>
-                <span className="text-sm font-semibold">
-                  ₹{" "}
-                  {Math.max(
-                    0,
-                    (parseFloat(amountReceived) || 0) - totalPayment
-                  ).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </Section>
         </div>
       )}
 
