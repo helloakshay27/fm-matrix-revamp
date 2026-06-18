@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, Menu, X } from "lucide-react";
+import { clearAuth } from "@/utils/auth";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,18 +23,8 @@ export const PWAHeader = () => {
   const userEmail = localStorage.getItem("email") || "";
 
   const handleLogout = () => {
-    // Clear all localStorage items
-    localStorage.removeItem("token");
-    localStorage.removeItem("baseUrl");
-    localStorage.removeItem("firstname");
-    localStorage.removeItem("lastname");
-    localStorage.removeItem("email");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("userId");
-
+    clearAuth();
     toast.success("Logged out successfully");
-
-    // Redirect to login page with fm_admin_login parameter
     navigate("/login-page?fm_admin_login", { replace: true });
   };
 
