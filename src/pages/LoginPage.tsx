@@ -412,7 +412,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
+        is_vendor: response.is_vendor,
+        supplier_id: response.supplier_id,
       });
+      // Store vendor/supplier ID for vendor portal routing
+      if (response.supplier_id) {
+        localStorage.setItem("vendor_id", response.supplier_id.toString());
+      }
       saveToken(response.access_token);
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
@@ -444,6 +450,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/ops-console/settings/account/user-list-otp", {
             replace: true,
           });
+          return;
+        }
+
+        // PRIORITY 1: Vendor user - redirect to vendor portal
+        if (response.is_vendor && response.supplier_id) {
+          navigate(`/vendor/supplier-details/${response.supplier_id}`, { replace: true });
           return;
         }
 
@@ -682,14 +694,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           />
 
           {/* CAPTCHA */}
-          <div className="flex justify-center mb-4">
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || ""}
-              onChange={(token) => setCaptchaToken(token)}
-              onExpired={() => setCaptchaToken(null)}
-            />
-          </div>
+          {import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY && (
+            <div className="flex justify-center mb-4">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY}
+                onChange={(token) => setCaptchaToken(token)}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
 
           <div className="text-center text-sm text-gray-300 mb-4">
             By clicking Log in you are accepting our{" "}
