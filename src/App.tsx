@@ -564,9 +564,6 @@ const VendorPOListPage = lazy(() => import("./pages/vendor/VendorPOListPage").th
 const VendorGRNListPage = lazy(() => import("./pages/vendor/VendorGRNListPage").then(m => ({ default: m.VendorGRNListPage })));
 const VendorWOListPage = lazy(() => import("./pages/vendor/VendorWOListPage").then(m => ({ default: m.VendorWOListPage })));
 const VendorInvoiceListPage = lazy(() => import("./pages/vendor/VendorInvoiceListPage").then(m => ({ default: m.VendorInvoiceListPage })));
-const SupplierDetails = lazy(() => import("./pages/vendor/SupplierDetails"));
-const VendorOtherBillsPage = lazy(() => import("./pages/vendor/VendorOtherBillsPage").then(m => ({ default: m.VendorOtherBillsPage })));
-const VendorPermitsPage = lazy(() => import("./pages/vendor/VendorPermitsPage").then(m => ({ default: m.VendorPermitsPage })));
 
 // Import WBS page
 const WBSElementDashboard = lazy(() => import("./pages/WBSElementDashboard").then(m => ({ default: m.WBSElementDashboard })));
@@ -1215,13 +1212,10 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
-// import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
-import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
-// import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -2209,7 +2203,7 @@ function App() {
                                 index
                                 element={
                                   <div
-                                    className={`flex justify-center items-center text-center px-4 ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-full md:w-[calc(100vw-32rem)]`}
+                                    className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                                   >
                                     Select a Chat/Group to view messages
                                   </div>
@@ -2289,7 +2283,7 @@ function App() {
                                 index
                                 element={
                                   <div
-                                    className={`flex justify-center items-center text-center px-4 ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-full md:w-[calc(100vw-32rem)]`}
+                                    className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                                   >
                                     Select a Chat/Group to view messages
                                   </div>
@@ -2347,10 +2341,6 @@ function App() {
                             <Route
                               path="/admin-compass/systems-sops"
                               element={<SystemAndSOP />}
-                            />
-                            <Route
-                              path="/admin-compass/team-setup"
-                              element={<TeamSetup />}
                             />
                             <Route
                               path="/admin-compass/disc-report"
@@ -2516,10 +2506,6 @@ function App() {
                             <Route
                               path="/accounting/payments-made/:id"
                               element={<PaymentMadeDetailsPage />}
-                            />
-                             <Route
-                              path="/accounting/payments-made/edit/:id"
-                              element={<EditPaymentPage/>}
                             />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
@@ -4380,14 +4366,10 @@ function App() {
                             />
 
                             {/* Vendor Module Routes */}
-                            <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                             <Route path="/vendor/po" element={<VendorPOListPage />} />
                             <Route path="/vendor/grn" element={<VendorGRNListPage />} />
                             <Route path="/vendor/wo" element={<VendorWOListPage />} />
                             <Route path="/vendor/invoice" element={<VendorInvoiceListPage />} />
-                            <Route path="/vendor/supplier-details/:id" element={<SupplierDetails />} />
-                            <Route path="/vendor/other-bills" element={<VendorOtherBillsPage />} />
-                            <Route path="/vendor/permits" element={<VendorPermitsPage />} />
 
                             <Route path="/finance/po" element={<PODashboard />} />
                             <Route
@@ -5827,6 +5809,10 @@ function App() {
                             <Route
                               path="/settings/company-hub/announcements"
                               element={<AnnouncementsSetup />}
+                            />
+                            <Route
+                              path="/settings/company-hub/team-setup"
+                              element={<TeamSetup />}
                             />
                             <Route
                               path="/settings/company-hub/face-authentication"

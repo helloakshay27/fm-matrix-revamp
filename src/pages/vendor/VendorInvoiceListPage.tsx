@@ -100,7 +100,7 @@ export const VendorInvoiceListPage = () => {
       if (filterData.approval_status) params.append("approval_status", filterData.approval_status);
 
       const response = await fetch(
-        `https://${baseUrl}/pms/work_order_invoices/work_order_invoice_list.json?${params.toString()}`,
+        `https://${baseUrl}/pms/work_order_invoices.json?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed to fetch vendor invoice data");
