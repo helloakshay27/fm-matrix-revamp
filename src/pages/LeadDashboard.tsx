@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Mock data for leads
 const mockLeads = [
@@ -98,6 +99,7 @@ const getStatusColor = (status: string) => {
 };
 
 export const LeadDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -161,6 +163,7 @@ export const LeadDashboard = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
             <div className="flex items-center gap-2">
+              {shouldShow("Lead", "create") && (
               <Button
                 onClick={handleAddLead}
                 className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
@@ -168,6 +171,7 @@ export const LeadDashboard = () => {
                 <Plus className="w-4 h-4" />
                 Add Lead
               </Button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -237,6 +241,7 @@ export const LeadDashboard = () => {
                     <TableCell>{lead.expectedCloseDate}</TableCell>
                     <TableCell>{lead.assignedTo}</TableCell>
                     <TableCell className="text-right">
+                      {shouldShow("Lead", "show") && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -244,6 +249,7 @@ export const LeadDashboard = () => {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
