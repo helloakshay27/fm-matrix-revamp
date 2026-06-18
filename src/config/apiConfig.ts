@@ -163,7 +163,7 @@ export const API_CONFIG = {
     // Update custom form endpoint
     UPDATE_CUSTOM_FORM: "/pms/custom_forms", // Base path, will append /:id
     // Checklist sample format download
-    CHECKLIST_SAMPLE_FORMAT: "/assets/checklist.xlsx",
+    CHECKLIST_SAMPLE_FORMAT: "/checklist.xlsx",
     // Bulk upload for custom forms
     CUSTOM_FORMS_BULK_UPLOAD: "/pms/custom_forms/bulk_upload.json",
     PATROLLING_IMPORT_CHECKPOINTS: "/patrolling/import_checkpoints.json",
@@ -223,7 +223,7 @@ export const API_CONFIG = {
     // Asset measurement import endpoint
     ASSET_MEASUREMENT_IMPORT: "/pms/assets/import",
     // Asset measurement sample download endpoint
-    ASSET_MEASUREMENT_SAMPLE: "/assets/measurement.xlsx",
+    ASSET_MEASUREMENT_SAMPLE: "/measurement.xlsx",
     // Parking categories endpoint
     PARKING_CATEGORIES: "/pms/admin/parking_categories.json",
     // Update parking category endpoint (append /{id}.json)
@@ -255,7 +255,7 @@ export const API_CONFIG = {
     CREATE_VISITOR_COMMENT: "/visitor_comments.json",
     EDIT_VISITOR_COMMENT: "/visitor_comments",
     PARKING_CONFIGURATIONS_SEARCH: "/pms/admin/parking_configurations.json",
-    PARKING_CONFIG_SAMPLE_FORMAT: "/assets/parking_configuration.xlsx",
+    PARKING_CONFIG_SAMPLE_FORMAT: "/parking_configuration.xlsx",
     // Parking configuration bulk import
     PARKING_CONFIG_IMPORT: "/pms/admin/parking_configurations/import.json",
     // Parking bookings list endpoint
