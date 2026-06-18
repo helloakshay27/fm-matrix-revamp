@@ -1762,6 +1762,235 @@ const ThemeStyle = () => (
     .bp-tab-active { background: #DA7756 !important; color: #fff !important; box-shadow: 0 10px 20px rgba(218,119,86,0.20); }
     .bp-tab-inactive { background: transparent !important; color: #6b7280 !important; }
     .bp-tab-inactive:hover { background: #fffaf8 !important; color: #DA7756 !important; }
+    @media (max-width: 640px) {
+      .bp-wrap {
+        padding: 12px !important;
+        row-gap: 14px !important;
+        overflow-x: hidden !important;
+      }
+      .bp-page-header {
+        padding: 12px !important;
+        border-radius: 14px !important;
+        gap: 12px !important;
+        margin-bottom: 12px !important;
+      }
+      .bp-page-actions {
+        width: 100% !important;
+        gap: 12px !important;
+        justify-content: flex-end !important;
+      }
+      .bp-page-actions button {
+        min-height: 34px;
+      }
+      .bp-main-tabs {
+        padding: 4px !important;
+        gap: 3px !important;
+        margin-bottom: 14px !important;
+        width: 100% !important;
+      }
+      .bp-main-tab {
+        flex: 1 0 auto;
+        padding: 6px 12px !important;
+        font-size: 11px !important;
+        min-height: 30px;
+      }
+      .bp-media-tabs {
+        border-radius: 12px !important;
+        padding: 4px !important;
+      }
+      .bp-media-tab {
+        padding: 6px 8px !important;
+        font-size: 11px !important;
+        min-height: 30px;
+        border-radius: 10px !important;
+      }
+      .bp-strategic-stack {
+        row-gap: 14px !important;
+      }
+      .bp-strategic-card,
+      .bp-essentials-panel,
+      .bp-vision-ai-card {
+        border-radius: 14px !important;
+      }
+      .bp-strategic-header {
+        padding: 10px 12px !important;
+        gap: 10px !important;
+      }
+      .bp-strategic-header-icon {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 11px !important;
+      }
+      .bp-strategic-title {
+        font-size: 12px !important;
+        letter-spacing: 0.08em !important;
+      }
+      .bp-strategic-actions {
+        gap: 6px !important;
+      }
+      .bp-add-content {
+        padding: 10px 10px 12px !important;
+      }
+      .bp-essentials-header {
+        padding: 10px 12px !important;
+        gap: 10px !important;
+      }
+      .bp-essentials-header > div:first-child {
+        min-width: 0 !important;
+      }
+      .bp-essentials-header p {
+        line-height: 1.35 !important;
+      }
+      .bp-essentials-count {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+      }
+      .bp-essentials-grid {
+        gap: 10px !important;
+        padding: 10px !important;
+      }
+      .bp-essential-card {
+        min-height: 0 !important;
+        padding: 12px !important;
+        border-radius: 14px !important;
+        box-shadow: 0 6px 14px rgba(26,26,26,0.035) !important;
+      }
+      .bp-essential-card:hover {
+        transform: none !important;
+      }
+      .bp-essential-card-head {
+        margin-bottom: 10px !important;
+        gap: 8px !important;
+      }
+      .bp-essential-card-head h3 {
+        font-size: 13px !important;
+      }
+      .bp-essential-icon {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 10px !important;
+      }
+      .bp-empty-add {
+        padding: 16px 10px !important;
+        border-radius: 14px !important;
+      }
+      .bp-empty-add-icon {
+        width: 30px !important;
+        height: 30px !important;
+        margin-bottom: 6px !important;
+      }
+      .bp-empty-add span {
+        font-size: 12px !important;
+      }
+      .bp-vision-controls {
+        gap: 8px !important;
+      }
+      .bp-vision-controls input,
+      .bp-vision-controls button {
+        width: 100% !important;
+        min-height: 38px !important;
+        font-size: 12px !important;
+      }
+      .bp-vision-ai-card {
+        padding: 12px !important;
+      }
+      .bp-vision-ai-head {
+        align-items: flex-start !important;
+      }
+      .bp-vision-ai-head p {
+        line-height: 1.35 !important;
+      }
+      .bp-vision-ai-actions {
+        gap: 8px !important;
+      }
+      .bp-vision-ai-actions button {
+        min-height: 40px !important;
+        padding: 9px 10px !important;
+        font-size: 12px !important;
+        border-radius: 12px !important;
+      }
+      .bp-wrap .bh-wrap,
+      .bp-wrap .cn-wrap,
+      .bp-wrap .kp-wrap {
+        padding: 12px !important;
+        border-radius: 14px !important;
+        margin-bottom: 14px !important;
+        overflow-x: hidden !important;
+      }
+      .bp-wrap .swot-shell {
+        border-radius: 14px !important;
+        margin-bottom: 14px !important;
+      }
+      .bp-wrap .swot-section-header {
+        padding: 10px 12px !important;
+        gap: 10px !important;
+      }
+      .bp-wrap .swot-body {
+        padding: 12px !important;
+      }
+      .bp-wrap .swot-icon-box {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 10px !important;
+      }
+      .bp-wrap .swot-kicker,
+      .bp-wrap .ac-heading {
+        font-size: 15px !important;
+        line-height: 1.25 !important;
+      }
+      .bp-wrap .bh-card,
+      .bp-wrap .swot-quadrant-card,
+      .bp-wrap .cn-kpi-card,
+      .bp-wrap .kp-process-card {
+        padding: 12px !important;
+        border-radius: 12px !important;
+      }
+      .bp-wrap .bh-card:hover,
+      .bp-wrap .swot-card-lift:hover,
+      .bp-wrap .swot-quadrant-card:hover,
+      .bp-wrap .kp-process-card:hover {
+        transform: none !important;
+      }
+      .bp-wrap .cn-wrap div[style*="repeat(3,1fr)"],
+      .bp-wrap .cn-wrap div[style*="repeat(2,1fr)"],
+      .bp-wrap .kp-wrap div[style*="repeat(3,1fr)"],
+      .bp-wrap .kp-wrap div[style*="repeat(2,1fr)"] {
+        grid-template-columns: 1fr !important;
+      }
+      .bp-wrap .swot-soft-action {
+        width: 100% !important;
+        padding: 8px 10px !important;
+        font-size: 11px !important;
+      }
+      .bp-wrap .swot-tooltip,
+      .bp-wrap .kp-tooltip {
+        display: none !important;
+      }
+      .bh-modal-portal,
+      .swot-modal-portal,
+      .cn-overlay,
+      .kp-overlay,
+      .st-modal-portal {
+        padding: 10px !important;
+        align-items: flex-start !important;
+      }
+      .bh-modal-box,
+      .bh-goal-modal-box,
+      .swot-modal-box,
+      .cn-modal,
+      .kp-modal,
+      .st-modal-box {
+        border-radius: 14px !important;
+        max-height: calc(100vh - 20px) !important;
+      }
+      .bh-modal-hd,
+      .bh-modal-body,
+      .bh-modal-ft,
+      .cn-modal-body,
+      .kp-modal-body {
+        padding: 12px !important;
+      }
+    }
     .bp-panel { border-radius: 20px; border: 1px solid #e8e3de; background: #ffffff; box-shadow: 0 10px 24px rgba(26,26,26,0.05); }
     .bp-section-band { border-radius: 20px; border: 1px solid #e8e3de; background: rgba(255,255,255,0.72); box-shadow: 0 10px 24px rgba(26,26,26,0.04); }
     .bp-soft-card { border-radius: 18px; border: 1px solid #e8e3de; background: #ffffff; box-shadow: 0 10px 24px rgba(26,26,26,0.05); }
@@ -3762,7 +3991,7 @@ const BusinessPlanAndGoles = () => {
   const emptyAddBtn = (onClick: () => void, label: string) => (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed transition-all"
+      className="bp-empty-add flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed transition-all"
       style={{ borderColor: C.primaryBord, background: C.primaryTint }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = C.primary;
@@ -3774,7 +4003,7 @@ const BusinessPlanAndGoles = () => {
       }}
     >
       <div
-        className="w-9 h-9 rounded-full flex items-center justify-center mb-2"
+        className="bp-empty-add-icon w-9 h-9 rounded-full flex items-center justify-center mb-2"
         style={{ background: "rgba(218,119,86,0.18)" }}
       >
         <PlusIcon />
@@ -3793,7 +4022,7 @@ const BusinessPlanAndGoles = () => {
       <ThemeStyle />
       {/* ── Page Header ── */}
       <div
-        className="bg-white border rounded-[16px] px-5 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm mb-4"
+        className="bp-page-header bg-white border rounded-[16px] px-5 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm mb-4"
         style={{ borderColor: C.primaryBord }}
       >
         <div className="flex flex-col gap-1.5">
@@ -3825,7 +4054,7 @@ const BusinessPlanAndGoles = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-5 shrink-0">
+        <div className="bp-page-actions flex items-center gap-5 shrink-0">
           {/* Copy icon */}
           <button
             onClick={handleCopyPlan}
@@ -3914,7 +4143,7 @@ const BusinessPlanAndGoles = () => {
 
       {/* ── Tab Bar ── */}
       <div
-        className="bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm mb-6 border"
+        className="bp-main-tabs bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm mb-6 border"
         style={{ borderColor: "#f3f4f6" }}
       >
         {tabs.map((tab) => {
@@ -3926,7 +4155,7 @@ const BusinessPlanAndGoles = () => {
             <button
               key={tab.key}
               onClick={() => setActiveMainTab(tab.key)}
-              className={`py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
+              className={`bp-main-tab py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
               style={{
                 background: isActive ? C.primary : "transparent",
                 color: isActive ? "#fff" : "#7b8393"
@@ -3942,24 +4171,24 @@ const BusinessPlanAndGoles = () => {
 
       {/* ══ STRATEGIC PLAN ══ */}
       {activeMainTab === "strategic" && (
-        <div className="space-y-6">
+        <div className="bp-strategic-stack space-y-6">
           {/* Our Business Plan + Media Section */}
-          <div className="overflow-hidden rounded-[20px] border border-[#e8e3de] bg-white shadow-[0_10px_24px_rgba(26,26,26,0.05)]">
+          <div className="bp-strategic-card overflow-hidden rounded-[20px] border border-[#e8e3de] bg-white shadow-[0_10px_24px_rgba(26,26,26,0.05)]">
             {/* Compact Header */}
-            <div className="flex items-center justify-between gap-4 border-b border-[#eee3dd] bg-white px-4 py-3">
+            <div className="bp-strategic-header flex items-center justify-between gap-4 border-b border-[#eee3dd] bg-white px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7]">
+                <div className="bp-strategic-header-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7]">
                   <EyeIcon color="#ff6b4a" />
                 </div>
 
                 <div className="min-w-0">
-                  <span className="block text-[13px] font-extrabold uppercase tracking-[0.14em] text-[#070707]">
+                  <span className="bp-strategic-title block text-[13px] font-extrabold uppercase tracking-[0.14em] text-[#070707]">
                     Our Business Plan
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="bp-strategic-actions flex items-center gap-2">
                 <div className="relative">
                   <BtnIcon
                     title="Info"
@@ -4083,8 +4312,8 @@ const BusinessPlanAndGoles = () => {
 
             {/* Image / Video Content - attached to header without gap */}
             {showAddContent && (
-              <div className="px-4 pb-4 pt-3">
-                <div className="mb-4 flex rounded-2xl border border-[#eee3dd] bg-[#f7f1ed] p-1">
+              <div className="bp-add-content px-4 pb-4 pt-3">
+                <div className="bp-media-tabs mb-4 flex rounded-2xl border border-[#eee3dd] bg-[#f7f1ed] p-1">
                   {["Business Plan", "VisionBoard"].map((t) => {
                     const isActive = addContentTab === t;
 
@@ -4092,7 +4321,7 @@ const BusinessPlanAndGoles = () => {
                       <button
                         key={t}
                         onClick={() => setAddContentTab(t)}
-                        className={`flex-1 rounded-xl px-4 py-2 text-[13px] font-extrabold capitalize transition-all duration-200 ${isActive
+                        className={`bp-media-tab flex-1 rounded-xl px-4 py-2 text-[13px] font-extrabold capitalize transition-all duration-200 ${isActive
                           ? "bg-[#DA7756] text-white shadow-[0_8px_16px_rgba(218,119,86,0.22)]"
                           : "text-[#6b7280] hover:bg-white hover:text-[#DA7756]"
                           }`}
@@ -4122,8 +4351,8 @@ const BusinessPlanAndGoles = () => {
                 {addContentTab === "Business Plan" && (
                   <div>
                     {/* ── Strategic Essentials ── */}
-                    <div className="rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ebe6] px-4 py-3 sm:px-5">
+                    <div className="bp-essentials-panel rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
+                      <div className="bp-essentials-header flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ebe6] px-4 py-3 sm:px-5">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7] text-[#ff6b4a]">
                             <svg
@@ -4151,17 +4380,17 @@ const BusinessPlanAndGoles = () => {
                           </div>
                         </div>
 
-                        <span className="rounded-full border border-[#eee3dd] bg-[#fafafa] px-3 py-1 text-[11px] font-extrabold text-[#6b7280]">
+                        <span className="bp-essentials-count rounded-full border border-[#eee3dd] bg-[#fafafa] px-3 py-1 text-[11px] font-extrabold text-[#6b7280]">
                           3 essentials
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 sm:p-5">
+                      <div className="bp-essentials-grid grid grid-cols-1 gap-3 p-4 md:grid-cols-3 sm:p-5">
                         {/* Core Values */}
-                        <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                          <div className="mb-4 flex items-start justify-between gap-3">
+                        <div className="bp-essential-card group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                          <div className="bp-essential-card-head mb-4 flex items-start justify-between gap-3">
                             <div className="flex items-center gap-2.5">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                              <div className="bp-essential-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
                                 <svg
                                   className="h-4 w-4"
                                   fill="none"
@@ -4235,10 +4464,10 @@ const BusinessPlanAndGoles = () => {
                         </div>
 
                         {/* Purpose */}
-                        <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                          <div className="mb-4 flex items-start justify-between gap-3">
+                        <div className="bp-essential-card group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                          <div className="bp-essential-card-head mb-4 flex items-start justify-between gap-3">
                             <div className="flex items-center gap-2.5">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                              <div className="bp-essential-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
                                 <svg
                                   className="h-4 w-4"
                                   fill="none"
@@ -4310,10 +4539,10 @@ const BusinessPlanAndGoles = () => {
                         </div>
 
                         {/* Brand Promises */}
-                        <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
-                          <div className="mb-4 flex items-start justify-between gap-3">
+                        <div className="bp-essential-card group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                          <div className="bp-essential-card-head mb-4 flex items-start justify-between gap-3">
                             <div className="flex items-center gap-2.5">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                              <div className="bp-essential-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
                                 <svg
                                   className="h-4 w-4"
                                   fill="none"
@@ -4483,7 +4712,7 @@ const BusinessPlanAndGoles = () => {
 
                 {addContentTab === "VisionBoard" && (
                   <div>
-                    <div className="mb-3 flex gap-2 max-sm:flex-col">
+                    <div className="bp-vision-controls mb-3 flex gap-2 max-sm:flex-col">
                       <input
                         ref={overviewImageUploadRef}
                         type="file"
@@ -4545,8 +4774,8 @@ const BusinessPlanAndGoles = () => {
                       />
                     )}
 
-                    <div className="mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
-                      <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="bp-vision-ai-card mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
+                      <div className="bp-vision-ai-head mb-3 flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DA7756]">
                             Generate with AI
@@ -4561,7 +4790,7 @@ const BusinessPlanAndGoles = () => {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="bp-vision-ai-actions grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <button
                           onClick={() => setShowGenerateVisionBoardConfirm(true)}
                           disabled={isCopyingAiPrompt === "overview"}

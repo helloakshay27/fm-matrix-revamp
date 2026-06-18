@@ -10,7 +10,7 @@ export const ChecklistGroupsPage = () => {
       subGroupApiEndpoint="/pms/checklist_sub_groups.json"
       groupType="checklist"
       importApiEndpoint="/pms/custom_forms/import_questions.json"
-      downloadSampleUrl="/assets/import_master_checklist.xlsx"
+      downloadSampleUrl="/import_master_checklist.xlsx"
       permissionKey="Checklist Group & Sub Group"
     />
   );

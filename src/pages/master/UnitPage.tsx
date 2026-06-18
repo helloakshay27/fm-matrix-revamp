@@ -8,13 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Square, Plus, X, ChevronLeft, ChevronRight, Check, Download, Upload, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  fetchAreas, 
+import {
+  fetchBuildings,
+  fetchWings,
+  fetchAreas,
   fetchFloors,
   fetchAllUnits,
-  createUnit, 
+  createUnit,
   updateUnit
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
@@ -22,10 +22,10 @@ import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const UnitPage = () => {
   const dispatch = useAppDispatch();
-  const { 
-    buildings, 
-    wings, 
-    areas, 
+  const {
+    buildings,
+    wings,
+    areas,
     floors,
     units
   } = useAppSelector((state) => state.location);
@@ -39,7 +39,7 @@ export const UnitPage = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
@@ -101,8 +101,8 @@ export const UnitPage = () => {
       console.log('Fetching wings, areas, and floors for building:', newUnit.building);
       dispatch(fetchWings(parseInt(newUnit.building)));
       dispatch(fetchAreas({ buildingId: parseInt(newUnit.building), wingId: newUnit.wing ? parseInt(newUnit.wing) : undefined }));
-      dispatch(fetchFloors({ 
-        buildingId: parseInt(newUnit.building), 
+      dispatch(fetchFloors({
+        buildingId: parseInt(newUnit.building),
         wingId: newUnit.wing ? parseInt(newUnit.wing) : undefined,
         areaId: newUnit.area ? parseInt(newUnit.area) : undefined
       }));
@@ -115,8 +115,8 @@ export const UnitPage = () => {
       console.log('Fetching wings, areas, and floors for building in edit:', editUnit.building);
       dispatch(fetchWings(parseInt(editUnit.building)));
       dispatch(fetchAreas({ buildingId: parseInt(editUnit.building), wingId: editUnit.wing ? parseInt(editUnit.wing) : undefined }));
-      dispatch(fetchFloors({ 
-        buildingId: parseInt(editUnit.building), 
+      dispatch(fetchFloors({
+        buildingId: parseInt(editUnit.building),
         wingId: editUnit.wing ? parseInt(editUnit.wing) : undefined,
         areaId: editUnit.area ? parseInt(editUnit.area) : undefined
       }));
@@ -162,8 +162,8 @@ export const UnitPage = () => {
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const templateUrl = `https://${baseUrl}/assets/unit.xlsx`;
-      
+      const templateUrl = `https://${baseUrl}/unit.xlsx`;
+
       const response = await fetch(templateUrl, {
         method: 'GET',
         headers: {
@@ -197,12 +197,12 @@ export const UnitPage = () => {
     try {
       const formData = new FormData();
       formData.append('pms_unit[file]', importFile);
-      
+
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
       const apiUrl = `https://${baseUrl}/pms/account_setups/unit_import.json?token=${token}`;
-      
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
@@ -235,7 +235,7 @@ export const UnitPage = () => {
         'application/vnd.ms-excel',
         'text/csv'
       ];
-      
+
       if (validTypes.includes(file.type) || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
         setImportFile(file);
       } else {
@@ -254,7 +254,7 @@ export const UnitPage = () => {
       toast.error('Please enter unit name');
       return;
     }
-    
+
     try {
       await dispatch(createUnit({
         unit_name: newUnit.unitName,
@@ -302,24 +302,24 @@ export const UnitPage = () => {
       areaSize: unit.area?.toString() || '',
       active: unit.active
     });
-    
+
     // Load all dependencies immediately when editing starts
     if (unit.building_id) {
       dispatch(fetchWings(unit.building_id));
       dispatch(fetchAreas({ buildingId: unit.building_id, wingId: unit.wing_id || undefined }));
-      dispatch(fetchFloors({ 
-        buildingId: unit.building_id, 
-        wingId: unit.wing_id || undefined, 
+      dispatch(fetchFloors({
+        buildingId: unit.building_id,
+        wingId: unit.wing_id || undefined,
         areaId: unit.area_id || undefined
       }));
     }
-    
+
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateUnit = async () => {
     if (!editingUnit) return;
-    
+
     if (!editUnit.building) {
       toast.error('Please select a building');
       return;
@@ -328,7 +328,7 @@ export const UnitPage = () => {
       toast.error('Please enter unit name');
       return;
     }
-    
+
     const payload = {
       unit_name: editUnit.unitName,
       building_id: parseInt(editUnit.building),
@@ -338,10 +338,10 @@ export const UnitPage = () => {
       area: parseInt(editUnit.areaSize) || 0,
       active: editUnit.active
     };
-    
+
     console.log('🚀 Update Unit Payload:', payload);
     console.log('📝 Current editUnit state:', editUnit);
-    
+
     try {
       await dispatch(updateUnit({
         id: editingUnit.id,
@@ -365,7 +365,7 @@ export const UnitPage = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">UNIT</h1>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -412,8 +412,8 @@ export const UnitPage = () => {
                       )}
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
@@ -424,7 +424,7 @@ export const UnitPage = () => {
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         onClick={handleImportUnits}
                         disabled={!importFile || isImporting}
                       >
@@ -438,148 +438,148 @@ export const UnitPage = () => {
 
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 {shouldShow("Unit", "create") && (
-                <DialogTrigger asChild>
-                  <Button 
-                    className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Unit
-                  </Button>
-                </DialogTrigger>
+                  <DialogTrigger asChild>
+                    <Button
+                      className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Unit
+                    </Button>
+                  </DialogTrigger>
                 )}
-              <DialogContent className="max-w-2xl">
-                <DialogHeader className="flex flex-row items-center justify-between pb-0">
-                  <DialogTitle className="flex items-center gap-2">
-                    <Square className="w-5 h-5" />
-                    Add Unit
-                  </DialogTitle>
-                  <button
-                    onClick={() => setIsAddDialogOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </DialogHeader>
-                <div className="grid grid-cols-2 gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Select Building</Label>
-                    <Select 
-                      value={newUnit.building} 
-                      onValueChange={(value) => {
-                        const updatedNewUnit = { ...newUnit, building: value, wing: '', area: '', floor: '' };
-                        setNewUnit(updatedNewUnit);
-                        if (value) {
-                          dispatch(fetchWings(parseInt(value)));
-                          dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
-                          dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
-                        }
-                      }}
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader className="flex flex-row items-center justify-between pb-0">
+                    <DialogTitle className="flex items-center gap-2">
+                      <Square className="w-5 h-5" />
+                      Add Unit
+                    </DialogTitle>
+                    <button
+                      onClick={() => setIsAddDialogOpen(false)}
+                      className="text-gray-400 hover:text-gray-600"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Building" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {buildings.data.map((building) => (
-                          <SelectItem key={building.id} value={building.id.toString()}>
-                            {building.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Select Wing</Label>
-                    <Select 
-                      value={newUnit.wing} 
-                      onValueChange={(value) => {
-                        const updatedNewUnit = { ...newUnit, wing: value, area: '', floor: '' };
-                        setNewUnit(updatedNewUnit);
-                        if (updatedNewUnit.building) {
-                          dispatch(fetchAreas({ buildingId: parseInt(updatedNewUnit.building), wingId: value ? parseInt(value) : undefined }));
-                          dispatch(fetchFloors({ 
-                            buildingId: parseInt(updatedNewUnit.building), 
-                            wingId: value ? parseInt(value) : undefined,
-                            areaId: undefined
-                          }));
-                        }
-                      }}
-                      disabled={!newUnit.building}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Wing" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {wings.data.map((wing) => (
-                          <SelectItem key={wing.id} value={wing.id.toString()}>
-                            {wing.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Select Area</Label>
-                    <Select 
-                      value={newUnit.area} 
-                      onValueChange={(value) => {
-                        const updatedNewUnit = { ...newUnit, area: value, floor: '' };
-                        setNewUnit(updatedNewUnit);
-                        if (updatedNewUnit.building) {
-                          dispatch(fetchFloors({ 
-                            buildingId: parseInt(updatedNewUnit.building), 
-                            wingId: updatedNewUnit.wing ? parseInt(updatedNewUnit.wing) : undefined,
-                            areaId: value ? parseInt(value) : undefined
-                          }));
-                        }
-                      }}
-                      disabled={!newUnit.building}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Area" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {areas.data.map((area) => (
-                          <SelectItem key={area.id} value={area.id.toString()}>
-                            {area.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Select Floor</Label>
-                    <Select 
-                      value={newUnit.floor} 
-                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, floor: value }))}
-                      disabled={!newUnit.building}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Floor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {floors.data.map((floor) => (
-                          <SelectItem key={floor.id} value={floor.id.toString()}>
-                            {floor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="unitName">Unit Name</Label>
-                    <Input
-                      id="unitName"
-                      value={newUnit.unitName}
-                      onChange={(e) => setNewUnit(prev => ({ ...prev, unitName: e.target.value }))}
-                      placeholder="Enter Unit Name"
-                    />
-                  </div>
-                  
-                  {/* <div className="space-y-2">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </DialogHeader>
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Select Building</Label>
+                      <Select
+                        value={newUnit.building}
+                        onValueChange={(value) => {
+                          const updatedNewUnit = { ...newUnit, building: value, wing: '', area: '', floor: '' };
+                          setNewUnit(updatedNewUnit);
+                          if (value) {
+                            dispatch(fetchWings(parseInt(value)));
+                            dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
+                            dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Building" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {buildings.data.map((building) => (
+                            <SelectItem key={building.id} value={building.id.toString()}>
+                              {building.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Select Wing</Label>
+                      <Select
+                        value={newUnit.wing}
+                        onValueChange={(value) => {
+                          const updatedNewUnit = { ...newUnit, wing: value, area: '', floor: '' };
+                          setNewUnit(updatedNewUnit);
+                          if (updatedNewUnit.building) {
+                            dispatch(fetchAreas({ buildingId: parseInt(updatedNewUnit.building), wingId: value ? parseInt(value) : undefined }));
+                            dispatch(fetchFloors({
+                              buildingId: parseInt(updatedNewUnit.building),
+                              wingId: value ? parseInt(value) : undefined,
+                              areaId: undefined
+                            }));
+                          }
+                        }}
+                        disabled={!newUnit.building}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Wing" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {wings.data.map((wing) => (
+                            <SelectItem key={wing.id} value={wing.id.toString()}>
+                              {wing.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Select Area</Label>
+                      <Select
+                        value={newUnit.area}
+                        onValueChange={(value) => {
+                          const updatedNewUnit = { ...newUnit, area: value, floor: '' };
+                          setNewUnit(updatedNewUnit);
+                          if (updatedNewUnit.building) {
+                            dispatch(fetchFloors({
+                              buildingId: parseInt(updatedNewUnit.building),
+                              wingId: updatedNewUnit.wing ? parseInt(updatedNewUnit.wing) : undefined,
+                              areaId: value ? parseInt(value) : undefined
+                            }));
+                          }
+                        }}
+                        disabled={!newUnit.building}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Area" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {areas.data.map((area) => (
+                            <SelectItem key={area.id} value={area.id.toString()}>
+                              {area.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Select Floor</Label>
+                      <Select
+                        value={newUnit.floor}
+                        onValueChange={(value) => setNewUnit(prev => ({ ...prev, floor: value }))}
+                        disabled={!newUnit.building}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Floor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {floors.data.map((floor) => (
+                            <SelectItem key={floor.id} value={floor.id.toString()}>
+                              {floor.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="unitName">Unit Name</Label>
+                      <Input
+                        id="unitName"
+                        value={newUnit.unitName}
+                        onChange={(e) => setNewUnit(prev => ({ ...prev, unitName: e.target.value }))}
+                        placeholder="Enter Unit Name"
+                      />
+                    </div>
+
+                    {/* <div className="space-y-2">
                     <Label htmlFor="areaSize">Area (Sq.Mtr)</Label>
                     <Input
                       id="areaSize"
@@ -588,25 +588,25 @@ export const UnitPage = () => {
                       placeholder="Enter Area"
                     />
                   </div> */}
-                </div>
-                
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setIsAddDialogOpen(false);
-                      setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
-                    }}
-                    className="border-gray-300"
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddUnit} className="bg-[#C72030] hover:bg-[#B01E2E] text-white">
-                    Submit
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddDialogOpen(false);
+                        setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
+                      }}
+                      className="border-gray-300"
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddUnit} className="bg-[#C72030] hover:bg-[#B01E2E] text-white">
+                      Submit
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -615,7 +615,7 @@ export const UnitPage = () => {
             <div className="text-sm text-muted-foreground">
               Total: {totalItems} units
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Search:</span>
               <Input
@@ -663,13 +663,13 @@ export const UnitPage = () => {
                 ) : (
                   currentUnits.map((unit) => (
                     <TableRow key={unit.id}>
-                       <TableCell>
+                      <TableCell>
                         {shouldShow("Unit", "update") && (
-                        <Button variant="ghost" size="sm" onClick={() => handleEditUnit(unit)}>
-                          <Edit className="w-4 h-4 text-[#C72030]" />
-                        </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleEditUnit(unit)}>
+                            <Edit className="w-4 h-4 text-[#C72030]" />
+                          </Button>
                         )}
-                       </TableCell>
+                      </TableCell>
                       <TableCell>
                         <button onClick={() => toggleActiveStatus(unit.id)} className="cursor-pointer">
                           {unit.active ? (
@@ -711,7 +711,7 @@ export const UnitPage = () => {
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                
+
                 <div className="flex items-center space-x-1">
                   {/* Show first page */}
                   {currentPage > 3 && (
@@ -727,7 +727,7 @@ export const UnitPage = () => {
                       {currentPage > 4 && <span className="px-2">...</span>}
                     </>
                   )}
-                  
+
                   {/* Show pages around current page */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
@@ -742,7 +742,7 @@ export const UnitPage = () => {
                         {page}
                       </Button>
                     ))}
-                  
+
                   {/* Show last page */}
                   {currentPage < totalPages - 2 && (
                     <>
@@ -758,7 +758,7 @@ export const UnitPage = () => {
                     </>
                   )}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -788,8 +788,8 @@ export const UnitPage = () => {
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
                 <Label>Select Building</Label>
-                <Select 
-                  value={editUnit.building} 
+                <Select
+                  value={editUnit.building}
                   onValueChange={(value) => {
                     const updatedEditUnit = { ...editUnit, building: value, wing: '', area: '', floor: '' };
                     setEditUnit(updatedEditUnit);
@@ -812,18 +812,18 @@ export const UnitPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Select Wing</Label>
-                <Select 
-                  value={editUnit.wing} 
+                <Select
+                  value={editUnit.wing}
                   onValueChange={(value) => {
                     const updatedEditUnit = { ...editUnit, wing: value, area: '', floor: '' };
                     setEditUnit(updatedEditUnit);
                     if (updatedEditUnit.building) {
                       dispatch(fetchAreas({ buildingId: parseInt(updatedEditUnit.building), wingId: value ? parseInt(value) : undefined }));
-                      dispatch(fetchFloors({ 
-                        buildingId: parseInt(updatedEditUnit.building), 
+                      dispatch(fetchFloors({
+                        buildingId: parseInt(updatedEditUnit.building),
                         wingId: value ? parseInt(value) : undefined,
                         areaId: undefined
                       }));
@@ -843,17 +843,17 @@ export const UnitPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Select Area</Label>
-                <Select 
-                  value={editUnit.area} 
+                <Select
+                  value={editUnit.area}
                   onValueChange={(value) => {
                     const updatedEditUnit = { ...editUnit, area: value, floor: '' };
                     setEditUnit(updatedEditUnit);
                     if (updatedEditUnit.building) {
-                      dispatch(fetchFloors({ 
-                        buildingId: parseInt(updatedEditUnit.building), 
+                      dispatch(fetchFloors({
+                        buildingId: parseInt(updatedEditUnit.building),
                         wingId: updatedEditUnit.wing ? parseInt(updatedEditUnit.wing) : undefined,
                         areaId: value ? parseInt(value) : undefined
                       }));
@@ -873,11 +873,11 @@ export const UnitPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Select Floor</Label>
-                <Select 
-                  value={editUnit.floor} 
+                <Select
+                  value={editUnit.floor}
                   onValueChange={(value) => setEditUnit(prev => ({ ...prev, floor: value }))}
                   disabled={!editUnit.building}
                 >
@@ -893,7 +893,7 @@ export const UnitPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="editUnitName">Unit Name</Label>
                 <Input
@@ -903,7 +903,7 @@ export const UnitPage = () => {
                   placeholder="Enter Unit Name"
                 />
               </div>
-              
+
               {/* <div className="space-y-2">
                 <Label htmlFor="editAreaSize">Area (Sq.Mtr)</Label>
                 <Input
@@ -913,11 +913,11 @@ export const UnitPage = () => {
                   placeholder="Enter Area"
                 />
               </div> */}
-              
+
               <div className="space-y-2 col-span-2">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="editActive" 
+                  <Checkbox
+                    id="editActive"
                     checked={editUnit.active}
                     onCheckedChange={(checked) => setEditUnit(prev => ({ ...prev, active: checked as boolean }))}
                   />
@@ -927,10 +927,10 @@ export const UnitPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end pt-4">
-              <Button 
-                onClick={handleUpdateUnit} 
+              <Button
+                onClick={handleUpdateUnit}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8"
                 disabled={!editUnit.unitName.trim() || !editUnit.building}
               >
