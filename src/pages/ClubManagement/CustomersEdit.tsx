@@ -1369,33 +1369,35 @@ const CustomersEdit = () => {
                     lock_account_ledger_id: data.lock_account_ledger_id || "",
                 }));
 
-                if (data.billing_address) {
+                const billingAddr = data.billing_addresses?.[0] || data.billing_address || null;
+                if (billingAddr) {
                     setBilling({
-                        attention: data.billing_address.attention || "",
-                        country: data.billing_address.country || "",
-                        street1: data.billing_address.address || "",
-                        street2: data.billing_address.address_line_two || "",
-                        city: data.billing_address.city || "",
-                        state: data.billing_address.state || "",
-                        pincode: data.billing_address.pin_code || "",
-                        phone: data.billing_address.telephone_number || "",
-                        fax: data.billing_address.fax_number || "",
+                        attention: billingAddr.attention || "",
+                        country: billingAddr.country || "",
+                        street1: billingAddr.address || "",
+                        street2: billingAddr.address_line_two || "",
+                        city: billingAddr.city || "",
+                        state: billingAddr.state || "",
+                        pincode: billingAddr.pin_code || "",
+                        phone: billingAddr.telephone_number || "",
+                        fax: billingAddr.fax_number || "",
                     });
                 }
 
-                if (data.shipping_address) {
+                const shippingAddr = data.shipping_addresses?.[0] || data.shipping_address || null;
+                if (shippingAddr) {
                     setShipping({
-                        attention: data.shipping_address.attention || "",
-                        country: data.shipping_address.country || "",
-                        street1: data.shipping_address.address || "",
-                        street2: data.shipping_address.address_line_two || "",
-                        city: data.shipping_address.city || "",
-                        state: data.shipping_address.state || "",
-                        pincode: data.shipping_address.pin_code || "",
-                        phone: data.shipping_address.telephone_number || "",
-                        fax: data.shipping_address.fax_number || "",
-                        mobile: data.shipping_address.mobile || "",
-                        email: data.shipping_address.email || "",
+                        attention: shippingAddr.attention || "",
+                        country: shippingAddr.country || "",
+                        street1: shippingAddr.address || "",
+                        street2: shippingAddr.address_line_two || "",
+                        city: shippingAddr.city || "",
+                        state: shippingAddr.state || "",
+                        pincode: shippingAddr.pin_code || "",
+                        phone: shippingAddr.telephone_number || "",
+                        fax: shippingAddr.fax_number || "",
+                        mobile: shippingAddr.mobile || "",
+                        email: shippingAddr.email || "",
                     });
                 }
 
@@ -1422,8 +1424,8 @@ const CustomersEdit = () => {
                 }
 
                 setEditIds({
-                    billingId: data.billing_address?.id || null,
-                    shippingId: data.shipping_address?.id || null,
+                    billingId: (data.billing_addresses?.[0] || data.billing_address)?.id || null,
+                    shippingId: (data.shipping_addresses?.[0] || data.shipping_address)?.id || null,
                     primaryGstDetailId: data.primary_gst_detail?.id || null,
                 });
                 

@@ -1,7 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "WebFetch(domain:posthog.com)"
-    ]
+    "allow": ["WebFetch(domain:posthog.com)", "Bash(npm uninstall *)"]
   }
 }
