@@ -1215,13 +1215,13 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
-import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
+// import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
 import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
-import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
+// import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
