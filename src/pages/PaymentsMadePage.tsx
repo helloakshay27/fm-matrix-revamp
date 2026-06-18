@@ -14,7 +14,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { API_CONFIG } from "@/config/apiConfig";
-import { Eye, Edit, } from "lucide-react";
+import { Eye, Edit, Trash2 } from "lucide-react";
 // API shape returned by lock_payments.json
 interface LockPayment {
   id: number;
@@ -184,7 +184,51 @@ export const PaymentsMadePage: React.FC = () => {
     setSelectedPaymentIds([]);
     sonnerToast.success("Payments deleted successfully");
   };
+
+  const handleDeletePayment = async (payment: Payment) => {
+    if (!window.confirm(`Are you sure you want to delete payment ${payment.payment_number}?`)) {
+      return;
+    }
+
+    setDeletingId(payment.id);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl") || API_CONFIG.BASE_URL;
+      const token = localStorage.getItem("token") || API_CONFIG.TOKEN;
+
+      if (!baseUrl || !token) {
+        sonnerToast.error("Missing authentication or base URL");
+        setDeletingId(null);
+        return;
+      }
+
+      const apiUrl = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+
+      const response = await fetch(`${apiUrl}/lock_payments/${payment.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errBody || response.statusText}`
+        );
+      }
+
+      sonnerToast.success("Payment deleted successfully");
+      fetchPayments(currentPage);
+    } catch (error: any) {
+      console.error("Failed to delete payment:", error);
+      sonnerToast.error(error.message || "Failed to delete payment");
+    } finally {
+      setDeletingId(null);
+    }
+  };
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [appliedFilters, setAppliedFilters] = useState<PaymentFilters>({});
 
@@ -401,6 +445,7 @@ export const PaymentsMadePage: React.FC = () => {
           onClick={() =>
             navigate(`/accounting/payments-made/${payment.id}`)
           }
+          title="View Details"
         >
           <Eye className="h-4 w-4 text-blue-600" />
         </Button>
@@ -411,6 +456,15 @@ export const PaymentsMadePage: React.FC = () => {
           title="Edit"
         >
           <Edit className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => handleDeletePayment(payment)}
+          disabled={deletingId === payment.id || loading}
+          className="p-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
         </button>
       </>
     ),
