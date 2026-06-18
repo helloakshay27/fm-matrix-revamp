@@ -4955,6 +4955,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                             const yItems = mergedTasksIssues.filter(
                               (item: any) =>
                                 yesterdaySourceIds.has(item.id) &&
+                                item.status !== "completed" &&
+                                item.status !== "closed" &&
                                 !(
                                   item.originalData?.is_started ||
                                   item.is_started ||
