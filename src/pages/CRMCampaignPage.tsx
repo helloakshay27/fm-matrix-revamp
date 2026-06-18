@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Filter, Search, RefreshCw, Grid, MoreVertical, Eye } from 'lucide-react';
 import { CampaignFilterModal } from '@/components/CampaignFilterModal';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Sample data based on the image
 const leadsData = [
@@ -94,6 +95,7 @@ const leadsData = [
 ];
 
 export const CRMCampaignPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -157,12 +159,14 @@ export const CRMCampaignPage = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
+            {shouldShow("Campaign", "create") && (
             <Button 
               onClick={() => navigate('/crm/campaign/add')}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
             >
              + Add
             </Button>
+            )}
             <Button 
               variant="outline" 
               onClick={() => setIsFilterModalOpen(true)}
@@ -234,6 +238,7 @@ export const CRMCampaignPage = () => {
                 </TableCell>
                 {visibleColumns.actions && (
                   <TableCell>
+                    {shouldShow("Campaign", "show") && (
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -242,6 +247,7 @@ export const CRMCampaignPage = () => {
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
+                    )}
                   </TableCell>
                 )}
                 {visibleColumns.id && <TableCell className="font-medium text-blue-600">{lead.id}</TableCell>}
