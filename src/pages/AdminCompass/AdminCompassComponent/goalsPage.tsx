@@ -229,6 +229,90 @@ const ThemeStyle = () => (
     .st-error-banner { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; border-radius:12px; padding:10px 14px; font-size:13px; font-weight:500; }
     .st-skeleton { background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%); background-size:200% 100%; animation:st-shimmer 1.4s infinite; border-radius:8px; }
     @keyframes st-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @media (max-width:640px) {
+      .goals-page-wrap {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+      .goal-shell {
+        border-radius: 16px;
+      }
+      .goal-header {
+        padding: 10px 12px;
+        align-items: flex-start;
+      }
+      .goal-header-left {
+        gap: 9px;
+      }
+      .goal-icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 11px;
+      }
+      .goal-kicker {
+        font-size: 10px;
+        line-height: 1.35;
+        letter-spacing: .08em;
+      }
+      .goal-body {
+        padding: 14px 12px 16px;
+      }
+      .goal-section-row {
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .goal-section-title {
+        min-width: 0;
+        font-size: 10px;
+        letter-spacing: .08em;
+        line-height: 1.35;
+      }
+      .goal-count-pill {
+        flex-shrink: 0;
+      }
+      .goal-strategic-card {
+        padding: 12px;
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px;
+      }
+      .goal-strategic-card .goal-actions {
+        align-self: flex-end;
+      }
+      .goal-card {
+        padding: 12px;
+      }
+      .goal-actions {
+        opacity: 1;
+        transform: none;
+      }
+      .goal-add-btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .st-modal-portal {
+        padding: 0;
+        align-items: stretch;
+      }
+      .st-modal-box {
+        min-height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+      }
+      .st-modal-box .grid {
+        grid-template-columns: 1fr !important;
+      }
+      .st-modal-box .p-6 {
+        padding: 14px !important;
+      }
+      .st-modal-box .p-5 {
+        padding: 12px !important;
+      }
+      .st-modal-box .px-6 {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+      }
+    }
   `}</style>
 );
 
