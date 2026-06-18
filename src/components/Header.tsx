@@ -362,11 +362,11 @@ export const Header = () => {
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
-      <div className="flex h-full items-center justify-between gap-1 px-2 sm:gap-2 sm:px-3 md:px-6">
+      <div className="flex h-full items-center justify-between gap-1 pl-0 pr-2 sm:gap-2 sm:px-3 md:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2 lg:gap-6 xl:gap-14">
           {/* Hamburger - visible only on mobile */}
           <button
-            className="md:hidden flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg hover:bg-[#f6f4ee] transition-colors"
+            className="md:hidden flex h-16 w-10 flex-shrink-0 items-center justify-center rounded-r-lg hover:bg-[#f6f4ee] transition-colors"
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             aria-label="Toggle sidebar"
             aria-expanded={isMobileSidebarOpen}
@@ -770,12 +770,12 @@ export const Header = () => {
           >
             <DropdownMenuTrigger asChild>
               <button
-                className="relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-[#f6f4ee] sm:h-10 sm:w-10"
+                className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-white transition-colors hover:bg-[#f6f4ee] sm:h-10 sm:w-10"
                 aria-label="Notifications"
               >
-                <Bell className="w-5 h-5 text-[#1a1a1a]" />
+                <Bell className="w-5 h-5 text-[#DA7756]" />
                 {notificationCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
+                  <Badge className="absolute -top-1 -right-1 bg-[#DA7756] text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
                     {notificationCount}
                   </Badge>
                 )}
