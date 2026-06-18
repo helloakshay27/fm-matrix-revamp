@@ -150,8 +150,8 @@ export const AreaPage = () => {
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const templateUrl = `https://${baseUrl}/assets/area.xlsx`;
-      
+      const templateUrl = `https://${baseUrl}/area.xlsx`;
+
       const response = await fetch(templateUrl, {
         method: 'GET',
         headers: {
@@ -185,12 +185,12 @@ export const AreaPage = () => {
     try {
       const formData = new FormData();
       formData.append('pms_area[file]', importFile);
-      
+
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
       const apiUrl = `https://${baseUrl}/pms/account_setups/area_import.json?token=${token}`;
-      
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
@@ -223,7 +223,7 @@ export const AreaPage = () => {
         'application/vnd.ms-excel',
         'text/csv'
       ];
-      
+
       if (validTypes.includes(file.type) || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
         setImportFile(file);
       } else {
@@ -239,12 +239,12 @@ export const AreaPage = () => {
     setBuildingId(area.building_id?.toString() || '');
     setWingId(area.wing_id?.toString() || '');
     setActive(area.active);
-    
+
     // Load wings for the selected building immediately when editing starts
     if (area.building_id) {
       fetchWings(area.building_id);
     }
-    
+
     setIsEditModalOpen(true);
   };
 
@@ -319,7 +319,7 @@ export const AreaPage = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">AREA</h1>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -366,8 +366,8 @@ export const AreaPage = () => {
                       )}
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
@@ -378,7 +378,7 @@ export const AreaPage = () => {
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         onClick={handleImportAreas}
                         disabled={!importFile || isImportingFile}
                       >
@@ -391,13 +391,13 @@ export const AreaPage = () => {
               </Dialog>
 
               {shouldShow("Area", "create") && (
-              <Button
-                onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Area
-              </Button>
+                <Button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Area
+                </Button>
               )}
             </div>
           </div>
@@ -407,7 +407,7 @@ export const AreaPage = () => {
             <div className="text-sm text-muted-foreground">
               Total: {totalItems} areas
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Search:</span>
               <Input
@@ -450,9 +450,9 @@ export const AreaPage = () => {
                     <TableRow key={area.id}>
                       <TableCell>
                         {shouldShow("Area", "update") && (
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(area)}>
-                          <Edit className="w-4 h-4 text-[#C72030]" />
-                        </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(area)}>
+                            <Edit className="w-4 h-4 text-[#C72030]" />
+                          </Button>
                         )}
                       </TableCell>
                       <TableCell className="font-medium">{area.name}</TableCell>
@@ -460,8 +460,8 @@ export const AreaPage = () => {
                       <TableCell>{area.wing?.name || 'N/A'}</TableCell>
                       <TableCell>
                         {area.qr_code_url ? (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setSelectedQrCode(area.qr_code_url);
@@ -573,7 +573,7 @@ export const AreaPage = () => {
           )}
         </div>
 
-  
+
 
         {/* Edit Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -590,18 +590,18 @@ export const AreaPage = () => {
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Area Name</Label>
-                <Input 
-                  id="name" 
-                  value={name} 
+                <Input
+                  id="name"
+                  value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter Area Name"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="building">Select Building</Label>
-                <Select 
-                  value={buildingId} 
+                <Select
+                  value={buildingId}
                   onValueChange={(value) => {
                     setBuildingId(value);
                     setWingId(''); // Reset wing when building changes
@@ -622,11 +622,11 @@ export const AreaPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="wing">Select Wing</Label>
-                <Select 
-                  value={wingId} 
+                <Select
+                  value={wingId}
                   onValueChange={setWingId}
                   disabled={!buildingId}
                 >
@@ -642,25 +642,25 @@ export const AreaPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="active">Status</Label>
                 <div className="flex items-center space-x-2">
-                  <Switch 
-                    id="active" 
-                    checked={active} 
-                    onCheckedChange={setActive} 
+                  <Switch
+                    id="active"
+                    checked={active}
+                    onCheckedChange={setActive}
                   />
                   <span className="text-sm">{active ? 'Active' : 'Inactive'}</span>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end pt-4">
-              <Button 
-                onClick={handleUpdateArea} 
+              <Button
+                onClick={handleUpdateArea}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8"
-                disabled={!name.trim() || !buildingId }
+                disabled={!name.trim() || !buildingId}
               >
                 Submit
               </Button>
@@ -685,9 +685,9 @@ export const AreaPage = () => {
               {selectedQrCode ? (
                 <>
                   <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
-                    <img 
-                      src={selectedQrCode} 
-                      alt="Area QR Code" 
+                    <img
+                      src={selectedQrCode}
+                      alt="Area QR Code"
                       className="w-64 h-64 object-contain"
                     />
                   </div>

@@ -7,13 +7,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  fetchAreas, 
+import {
+  fetchBuildings,
+  fetchWings,
+  fetchAreas,
   fetchFloors,
   fetchAllFloors,
-  createFloor, 
+  createFloor,
   updateFloor
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
@@ -21,13 +21,13 @@ import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export function FloorPage() {
   const dispatch = useAppDispatch();
-  const { 
-    buildings, 
-    wings, 
-    areas, 
+  const {
+    buildings,
+    wings,
+    areas,
     floors
   } = useAppSelector((state) => state.location);
-  
+
   const { shouldShow } = useDynamicPermissions();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -47,10 +47,10 @@ export function FloorPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [selectedQrCode, setSelectedQrCode] = useState<string>('');
-  
+
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
@@ -148,7 +148,7 @@ export function FloorPage() {
     setEditSelectedWing(floor.wing_id);
     setEditSelectedArea(floor.area_id);
     setShowEditDialog(true);
-    
+
     // Fetch wings and areas immediately when editing starts
     if (floor.building_id) {
       dispatch(fetchWings(floor.building_id));
@@ -183,8 +183,8 @@ export function FloorPage() {
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const templateUrl = `https://${baseUrl}/assets/floor.xlsx`;
-      
+      const templateUrl = `https://${baseUrl}/floor.xlsx`;
+
       const response = await fetch(templateUrl, {
         method: 'GET',
         headers: {
@@ -218,12 +218,12 @@ export function FloorPage() {
     try {
       const formData = new FormData();
       formData.append('pms_floor[file]', importFile);
-      
+
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
       const apiUrl = `https://${baseUrl}/pms/account_setups/floor_import.json?token=${token}`;
-      
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
@@ -256,7 +256,7 @@ export function FloorPage() {
         'application/vnd.ms-excel',
         'text/csv'
       ];
-      
+
       if (validTypes.includes(file.type) || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
         setImportFile(file);
       } else {
@@ -280,7 +280,7 @@ export function FloorPage() {
           active: !floor.active
         }
       }));
-      
+
       toast.success('Floor status updated successfully');
       dispatch(fetchAllFloors());
     } catch (error) {
@@ -295,7 +295,7 @@ export function FloorPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">FLOORS</h1>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -342,8 +342,8 @@ export function FloorPage() {
                       )}
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
@@ -354,7 +354,7 @@ export function FloorPage() {
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         onClick={handleImportFloors}
                         disabled={!importFile || isImporting}
                       >
@@ -367,13 +367,13 @@ export function FloorPage() {
               </Dialog>
 
               {shouldShow("Floor", "create") && (
-              <Button 
-                onClick={() => setShowAddDialog(true)} 
-                className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Floor
-              </Button>
+                <Button
+                  onClick={() => setShowAddDialog(true)}
+                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Floor
+                </Button>
               )}
             </div>
           </div>
@@ -423,9 +423,9 @@ export function FloorPage() {
                     <TableRow key={floor.id}>
                       <TableCell>
                         {shouldShow("Floor", "update") && (
-                        <Button variant="ghost" size="sm" onClick={() => handleEditFloor(floor)}>
-                          <Edit className="w-4 h-4 text-[#C72030]" />
-                        </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleEditFloor(floor)}>
+                            <Edit className="w-4 h-4 text-[#C72030]" />
+                          </Button>
                         )}
                       </TableCell>
                       <TableCell>{floor.building?.name || 'N/A'}</TableCell>
@@ -434,8 +434,8 @@ export function FloorPage() {
                       <TableCell>{floor.name}</TableCell>
                       <TableCell>
                         {floor.qr_code_url ? (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setSelectedQrCode(floor.qr_code_url);
@@ -485,7 +485,7 @@ export function FloorPage() {
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                
+
                 <div className="flex items-center space-x-1">
                   {/* Show first page */}
                   {currentPage > 3 && (
@@ -501,7 +501,7 @@ export function FloorPage() {
                       {currentPage > 4 && <span className="px-2">...</span>}
                     </>
                   )}
-                  
+
                   {/* Show pages around current page */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
@@ -516,7 +516,7 @@ export function FloorPage() {
                         {page}
                       </Button>
                     ))}
-                  
+
                   {/* Show last page */}
                   {currentPage < totalPages - 2 && (
                     <>
@@ -532,7 +532,7 @@ export function FloorPage() {
                     </>
                   )}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -546,272 +546,272 @@ export function FloorPage() {
             </div>
           )}
 
-      {/* Add Floor Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
-          <DialogHeader className="flex flex-row items-center justify-between pb-0">
-            <DialogTitle>ADD FLOOR</DialogTitle>
-            <button
-              onClick={() => setShowAddDialog(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Select Building</label>
-              <Select 
-                value={newFloorBuilding?.toString() || ''} 
-                onValueChange={(value) => setNewFloorBuilding(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select building" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildings.data.map((building) => (
-                    <SelectItem key={building.id} value={building.id.toString()}>
-                      {building.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Select Wing</label>
-              <Select 
-                value={newFloorWing?.toString() || ''} 
-                onValueChange={(value) => setNewFloorWing(parseInt(value))}
-                disabled={!newFloorBuilding}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select wing" />
-                </SelectTrigger>
-                <SelectContent>
-                  {wings.data.map((wing) => (
-                    <SelectItem key={wing.id} value={wing.id.toString()}>
-                      {wing.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Select Area</label>
-              <Select 
-                value={newFloorArea?.toString() || ''} 
-                onValueChange={(value) => setNewFloorArea(parseInt(value))}
-                disabled={!newFloorBuilding}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areas.data.map((area) => (
-                    <SelectItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Enter Floor Name</label>
-              <Input
-                value={newFloorName}
-                onChange={(e) => setNewFloorName(e.target.value)}
-                placeholder="Enter floor name"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  setShowAddDialog(false);
-                  setNewFloorName('');
-                  setNewFloorBuilding(null);
-                  setNewFloorWing(null);
-                  setNewFloorArea(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAddFloor} 
-                disabled={!newFloorName.trim() || !newFloorBuilding}
-                className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
-              >
-                Submit
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Floor Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <DialogHeader className="flex flex-row items-center justify-between pb-0">
-            <DialogTitle>Edit Floor</DialogTitle>
-            <button
-              onClick={() => setShowEditDialog(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Building</label>
-              <Select 
-                value={editFloorBuilding?.toString() || ''} 
-                onValueChange={(value) => {
-                  const buildingId = parseInt(value);
-                  console.log('🏢 Building changed in edit:', {
-                    newBuildingId: buildingId,
-                    previousBuilding: editFloorBuilding,
-                    previousWing: editSelectedWing,
-                    previousArea: editSelectedArea
-                  });
-                  setEditFloorBuilding(buildingId);
-                  setEditSelectedWing(null);
-                  setEditSelectedArea(null);
-                  console.log('📡 Fetching wings and areas for building:', buildingId);
-                  // Fetch wings and areas for new building immediately
-                  dispatch(fetchWings(buildingId));
-                  dispatch(fetchAreas({ buildingId, wingId: undefined }));
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select building" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildings.data.map((building) => (
-                    <SelectItem key={building.id} value={building.id.toString()}>
-                      {building.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Wing</label>
-              <Select 
-                value={editSelectedWing?.toString() || ''} 
-                onValueChange={(value) => {
-                  const wingId = parseInt(value);
-                  setEditSelectedWing(wingId);
-                  setEditSelectedArea(null);
-                  // Fetch areas for selected building and wing
-                  if (editFloorBuilding) {
-                    dispatch(fetchAreas({ buildingId: editFloorBuilding, wingId }));
-                  }
-                }}
-                disabled={!editFloorBuilding}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Wing" />
-                </SelectTrigger>
-                <SelectContent>
-                  {wings.data.map((wing) => (
-                    <SelectItem key={wing.id} value={wing.id.toString()}>
-                      {wing.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Area</label>
-              <Select 
-                value={editSelectedArea?.toString() || ''} 
-                onValueChange={(value) => setEditSelectedArea(parseInt(value))}
-                disabled={!editFloorBuilding}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areas.data.map((area) => (
-                    <SelectItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Floor Name</label>
-              <Input
-                value={editFloorName}
-                onChange={(e) => setEditFloorName(e.target.value)}
-                placeholder="Enter floor name"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="active" 
-                checked={editFloorActive}
-                onCheckedChange={(checked) => setEditFloorActive(checked as boolean)}
-              />
-              <label htmlFor="active" className="text-sm font-medium">
-                Active
-              </label>
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleUpdateFloor} 
-                disabled={!editFloorName.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Update Floor
-              </Button>
-              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* QR Code Modal */}
-      <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Floor QR Code</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center space-y-4 py-4">
-            {selectedQrCode ? (
-              <>
-                <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
-                  <img 
-                    src={selectedQrCode} 
-                    alt="Floor QR Code" 
-                    className="w-64 h-64 object-contain"
+          {/* Add Floor Dialog */}
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogContent>
+              <DialogHeader className="flex flex-row items-center justify-between pb-0">
+                <DialogTitle>ADD FLOOR</DialogTitle>
+                <button
+                  onClick={() => setShowAddDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Select Building</label>
+                  <Select
+                    value={newFloorBuilding?.toString() || ''}
+                    onValueChange={(value) => setNewFloorBuilding(parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select building" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {buildings.data.map((building) => (
+                        <SelectItem key={building.id} value={building.id.toString()}>
+                          {building.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Select Wing</label>
+                  <Select
+                    value={newFloorWing?.toString() || ''}
+                    onValueChange={(value) => setNewFloorWing(parseInt(value))}
+                    disabled={!newFloorBuilding}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select wing" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {wings.data.map((wing) => (
+                        <SelectItem key={wing.id} value={wing.id.toString()}>
+                          {wing.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Select Area</label>
+                  <Select
+                    value={newFloorArea?.toString() || ''}
+                    onValueChange={(value) => setNewFloorArea(parseInt(value))}
+                    disabled={!newFloorBuilding}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {areas.data.map((area) => (
+                        <SelectItem key={area.id} value={area.id.toString()}>
+                          {area.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Enter Floor Name</label>
+                  <Input
+                    value={newFloorName}
+                    onChange={(e) => setNewFloorName(e.target.value)}
+                    placeholder="Enter floor name"
                   />
                 </div>
-                <Button
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = selectedQrCode;
-                    link.download = `floor-qr-code-${Date.now()}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    toast.success('QR Code downloaded successfully');
-                  }}
-                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddDialog(false);
+                      setNewFloorName('');
+                      setNewFloorBuilding(null);
+                      setNewFloorWing(null);
+                      setNewFloorArea(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddFloor}
+                    disabled={!newFloorName.trim() || !newFloorBuilding}
+                    className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Floor Dialog */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent>
+              <DialogHeader className="flex flex-row items-center justify-between pb-0">
+                <DialogTitle>Edit Floor</DialogTitle>
+                <button
+                  onClick={() => setShowEditDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download QR Code
-                </Button>
-              </>
-            ) : (
-              <p className="text-gray-500">No QR code available</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+                  <X className="h-4 w-4" />
+                </button>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Building</label>
+                  <Select
+                    value={editFloorBuilding?.toString() || ''}
+                    onValueChange={(value) => {
+                      const buildingId = parseInt(value);
+                      console.log('🏢 Building changed in edit:', {
+                        newBuildingId: buildingId,
+                        previousBuilding: editFloorBuilding,
+                        previousWing: editSelectedWing,
+                        previousArea: editSelectedArea
+                      });
+                      setEditFloorBuilding(buildingId);
+                      setEditSelectedWing(null);
+                      setEditSelectedArea(null);
+                      console.log('📡 Fetching wings and areas for building:', buildingId);
+                      // Fetch wings and areas for new building immediately
+                      dispatch(fetchWings(buildingId));
+                      dispatch(fetchAreas({ buildingId, wingId: undefined }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select building" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {buildings.data.map((building) => (
+                        <SelectItem key={building.id} value={building.id.toString()}>
+                          {building.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Wing</label>
+                  <Select
+                    value={editSelectedWing?.toString() || ''}
+                    onValueChange={(value) => {
+                      const wingId = parseInt(value);
+                      setEditSelectedWing(wingId);
+                      setEditSelectedArea(null);
+                      // Fetch areas for selected building and wing
+                      if (editFloorBuilding) {
+                        dispatch(fetchAreas({ buildingId: editFloorBuilding, wingId }));
+                      }
+                    }}
+                    disabled={!editFloorBuilding}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Wing" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {wings.data.map((wing) => (
+                        <SelectItem key={wing.id} value={wing.id.toString()}>
+                          {wing.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Area</label>
+                  <Select
+                    value={editSelectedArea?.toString() || ''}
+                    onValueChange={(value) => setEditSelectedArea(parseInt(value))}
+                    disabled={!editFloorBuilding}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {areas.data.map((area) => (
+                        <SelectItem key={area.id} value={area.id.toString()}>
+                          {area.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Floor Name</label>
+                  <Input
+                    value={editFloorName}
+                    onChange={(e) => setEditFloorName(e.target.value)}
+                    placeholder="Enter floor name"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="active"
+                    checked={editFloorActive}
+                    onCheckedChange={(checked) => setEditFloorActive(checked as boolean)}
+                  />
+                  <label htmlFor="active" className="text-sm font-medium">
+                    Active
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleUpdateFloor}
+                    disabled={!editFloorName.trim()}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Update Floor
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* QR Code Modal */}
+          <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Floor QR Code</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center space-y-4 py-4">
+                {selectedQrCode ? (
+                  <>
+                    <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                      <img
+                        src={selectedQrCode}
+                        alt="Floor QR Code"
+                        className="w-64 h-64 object-contain"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = selectedQrCode;
+                        link.download = `floor-qr-code-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast.success('QR Code downloaded successfully');
+                      }}
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download QR Code
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-gray-500">No QR code available</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

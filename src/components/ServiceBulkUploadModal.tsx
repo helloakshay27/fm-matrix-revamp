@@ -89,19 +89,19 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
   };
 
   const handleDownloadSample = () => {
-  // Mirror the Rails ERB anchor: <a href="/assets/services.xlsx" download="services.xlsx" target="_blank" class="btn purple-btn2 btn-sm">...
-  const baseUrl = localStorage.getItem('baseUrl');
-  const href = baseUrl ? `https://${baseUrl}/assets/services.xlsx` : '/assets/services.xlsx';
+    // Mirror the Rails ERB anchor: <a href="/assets/services.xlsx" download="services.xlsx" target="_blank" class="btn purple-btn2 btn-sm">...
+    const baseUrl = localStorage.getItem('baseUrl');
+    const href = baseUrl ? `https://${baseUrl}/services.xlsx` : '/services.xlsx';
 
-  const link = document.createElement('a');
-  link.href = href;
-  link.setAttribute('download', 'services.xlsx');
-  link.setAttribute('target', '_blank');
-  link.setAttribute('rel', 'noopener noreferrer');
-  link.className = 'btn purple-btn2 btn-sm';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    const link = document.createElement('a');
+    link.href = href;
+    link.setAttribute('download', 'services.xlsx');
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener noreferrer');
+    link.className = 'btn purple-btn2 btn-sm';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
