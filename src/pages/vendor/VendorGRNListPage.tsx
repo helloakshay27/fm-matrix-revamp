@@ -84,13 +84,13 @@ export const VendorGRNListPage = () => {
       totalPendingAmount: cards.total_pending_amount || cards.pending_amount || 0,
     });
 
-    const items = response?.grn_records || response?.data || [];
+    const items = response?.grns || response?.data || [];
     const formatted = items.map((item: any) => ({
       id: item.id,
       grnNumber: item.grn_number || "-",
       inventory: item.inventory || "-",
       supplier: item.supplier_name || "-",
-      invoiceNumber: item.invoice_number || "-",
+      invoiceNumber: item.invoice_no || "-",
       referenceNumber: item.reference_number || "-",
       poNumber: item.po_number || "-",
       approvalStatus: item.approved_status || "Pending",

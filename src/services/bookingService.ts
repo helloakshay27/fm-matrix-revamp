@@ -18,6 +18,7 @@ export interface FacilityBookingResponse {
   created_at: string;
   company_name: string;
   source: string;
+  amount_full?: string | number;
 }
 
 export interface BookingData {
@@ -32,6 +33,7 @@ export interface BookingData {
   bookingStatus: 'Confirmed' | 'Pending' | 'Cancelled';
   createdOn: string;
   source: string;
+  charges?: string | number;
 }
 
 export interface FacilityBookingsResponse {
@@ -76,7 +78,8 @@ const transformBookingData = (apiData: FacilityBookingResponse): BookingData => 
     scheduledTime: safeValue(apiData.show_schedule_24_hour),
     bookingStatus: (apiData.current_status as 'Confirmed' | 'Pending' | 'Cancelled') || 'Pending',
     createdOn: formatDate(apiData.created_at),
-    source: safeValue(apiData.source)
+    source: safeValue(apiData.source),
+    charges: apiData.amount_full ?? '-',
   };
 };
 
