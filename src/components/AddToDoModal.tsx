@@ -30,6 +30,10 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);
     const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+    const prefilledResponsiblePerson = prefillData?.responsible_person;
+    const prefilledResponsiblePersonId = prefilledResponsiblePerson?.id;
+    const prefilledResponsiblePersonName = prefilledResponsiblePerson?.name;
+    const defaultResponsiblePerson = prefilledResponsiblePersonId ?? userId ?? '';
     const [selectedResponsiblePerson, setSelectedResponsiblePerson] = useState(userId || '');
     const [priority, setPriority] = useState('');
     const [isEditorReady, setIsEditorReady] = useState(false);
@@ -76,13 +80,13 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                 setTitle('');
                 setDescription('');
                 setDate(null);
-                setSelectedResponsiblePerson(userId || '');
+                setSelectedResponsiblePerson(defaultResponsiblePerson);
                 setPriority('');
             }
 
             setIsEditorReady(true);
         }
-    }, [isModalOpen, isEditMode, editingTodo, userId]);
+    }, [isModalOpen, isEditMode, editingTodo, defaultResponsiblePerson]);
 
     useEffect(() => {
         if (!isModalOpen || !isEditorReady || !quillRef.current) return;
@@ -142,7 +146,21 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                         name: user.name || user.full_name || "Unknown",
                         department_name: user.department_name,
                     }));
-                setUsers(validUsers);
+                const shouldAddPrefilledUser =
+                    prefilledResponsiblePersonId &&
+                    !validUsers.some((user: any) => user.id === prefilledResponsiblePersonId);
+                setUsers(
+                    shouldAddPrefilledUser
+                        ? [
+                            ...validUsers,
+                            {
+                                id: prefilledResponsiblePersonId,
+                                name: prefilledResponsiblePersonName,
+                                department_name: "",
+                            },
+                        ]
+                        : validUsers
+                );
             } catch (error) {
                 console.log("Error fetching users:", error);
             }
@@ -151,7 +169,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
         if (isModalOpen) {
             fetchUsers();
         }
-    }, [isModalOpen, baseURL, token]);
+    }, [isModalOpen, baseURL, token, prefilledResponsiblePersonId, prefilledResponsiblePersonName]);
 
     const closeModal = () => {
         setIsModalOpen();
@@ -307,14 +325,16 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                                     </IconButton>
                                 )}
                             </div>
-                            <div
-                                ref={quillRef}
-                                style={{
-                                    border: "1px solid rgba(0, 0, 0, 0.23)",
-                                    borderRadius: "4px",
-                                    minHeight: "200px",
-                                }}
-                            />
+                            <div className="bc-description-toolbar-compact">
+                                <div
+                                    ref={quillRef}
+                                    style={{
+                                        border: "1px solid rgba(0, 0, 0, 0.23)",
+                                        borderRadius: "4px",
+                                        minHeight: "200px",
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <TextField
@@ -375,6 +395,48 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                         </div>
                     </div>
                 </form>
+                <style>{`
+                    @media (max-width: 640px) {
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow {
+                            padding: 3px 4px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-formats {
+                            margin-right: 3px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow button {
+                            width: 16px !important;
+                            height: 16px !important;
+                            padding: 1px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow button svg {
+                            width: 10px !important;
+                            height: 10px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker {
+                            height: 16px !important;
+                            font-size: 9px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker.ql-header {
+                            width: 62px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label {
+                            padding-left: 3px !important;
+                            padding-right: 10px !important;
+                            line-height: 16px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label svg {
+                            width: 10px !important;
+                            height: 10px !important;
+                        }
+                    }
+                `}</style>
             </DialogContent>
         </Dialog>
     );

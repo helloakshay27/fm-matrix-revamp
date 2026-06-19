@@ -36,7 +36,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 interface Holiday {
   id: string;
   holidayName: string;
@@ -130,6 +130,8 @@ const columns: ColumnConfig[] = [
 
 export const HolidayCalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const { shouldShow } = useDynamicPermissions();
+
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -692,13 +694,14 @@ export const HolidayCalendarPage = () => {
   const renderRow = (holiday: Holiday) => ({
     actions: (
       <div className="flex items-center gap-2">
+        {shouldShow("Holiday Calendar","update")&&(
         <button
           onClick={() => handleEdit(holiday.id)}
           className="p-1 text-black-600 hover:bg-green-50 rounded"
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button>)}
       </div>
     ),
     holidayName: (
@@ -804,11 +807,13 @@ export const HolidayCalendarPage = () => {
             }
             setIsAddDialogOpen(open);
           }}>
+            {shouldShow("Holiday Calendar","create")&&(
             <DialogTrigger asChild>
+          
               <Button className='fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold'>
                 <Plus className="w-4 h-4 mr-2" /> Add Holiday
               </Button>
-            </DialogTrigger>
+            </DialogTrigger>)}
             <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="add-holiday-dialog-description">
               <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <DialogTitle className="text-lg font-semibold text-gray-900">ADD HOLIDAY</DialogTitle>

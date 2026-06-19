@@ -16,10 +16,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { buildingSchema, type BuildingFormData } from '@/schemas/buildingSchema';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export function BuildingPage() {
   const dispatch = useAppDispatch();
   const { sites, buildings } = useAppSelector((state) => state.location);
+  const { shouldShow } = useDynamicPermissions();
 
   const [search, setSearch] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -202,10 +204,10 @@ export function BuildingPage() {
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const templateUrl = `https://${baseUrl}/assets/building.xlsx`;
-      
+      const templateUrl = `https://${baseUrl}/building.xlsx`;
+
       toast.info('Downloading template...');
-      
+
       const response = await fetch(templateUrl, {
         method: 'GET',
         headers: {
@@ -227,7 +229,7 @@ export function BuildingPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Template downloaded successfully');
     } catch (error: any) {
       console.error('Error downloading template:', error);
@@ -250,9 +252,9 @@ export function BuildingPage() {
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
       const apiUrl = `https://${baseUrl}/pms/account_setups/building_import.json?token=${token}`;
-      
+
       toast.info('Starting import...');
-      
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
@@ -286,7 +288,7 @@ export function BuildingPage() {
         'application/vnd.ms-excel',
         'text/csv'
       ];
-      
+
       if (allowedTypes.includes(file.type)) {
         setImportFile(file);
       } else {
@@ -311,7 +313,7 @@ export function BuildingPage() {
                 className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
-              
+
                 Download Sample Format
               </Button>
 
@@ -351,8 +353,8 @@ export function BuildingPage() {
                       )}
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
@@ -363,7 +365,7 @@ export function BuildingPage() {
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         onClick={handleImportBuildings}
                         disabled={!importFile || isImporting}
                       >
@@ -376,175 +378,177 @@ export function BuildingPage() {
               </Dialog>
 
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogTrigger asChild>
-                  <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Building
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Create New Building</DialogTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-4 top-4"
-                    onClick={() => setShowCreateDialog(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </DialogHeader>
-                <Form {...createForm}>
-                  <form onSubmit={createForm.handleSubmit(handleCreateBuilding)} className="space-y-4">
-                    <FormField
-                      control={createForm.control}
-                      name="site_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Select Site</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select site" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {sites?.data && Array.isArray(sites.data) && sites.data.map((site) => (
-                                <SelectItem key={site.id} value={site.id.toString()}>
-                                  {site.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={createForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Building Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter building name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={createForm.control}
-                      name="other_detail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Other Details</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter additional details" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Checkboxes in a row */}
-                    <div className="grid grid-cols-4 gap-4">
+                {shouldShow("Building", "create") && (
+                  <DialogTrigger asChild>
+                    <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Building
+                    </Button>
+                  </DialogTrigger>
+                )}
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Create New Building</DialogTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-4 top-4"
+                      onClick={() => setShowCreateDialog(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </DialogHeader>
+                  <Form {...createForm}>
+                    <form onSubmit={createForm.handleSubmit(handleCreateBuilding)} className="space-y-4">
                       <FormField
                         control={createForm.control}
-                        name="has_wing"
+                        name="site_id"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Wing</FormLabel>
-                            </div>
+                          <FormItem>
+                            <FormLabel>Select Site</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select site" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {sites?.data && Array.isArray(sites.data) && sites.data.map((site) => (
+                                  <SelectItem key={site.id} value={site.id.toString()}>
+                                    {site.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
 
                       <FormField
                         control={createForm.control}
-                        name="has_area"
+                        name="name"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormItem>
+                            <FormLabel>Building Name</FormLabel>
                             <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
+                              <Input placeholder="Enter building name" {...field} />
                             </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Area</FormLabel>
-                            </div>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
 
                       <FormField
                         control={createForm.control}
-                        name="has_floor"
+                        name="other_detail"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormItem>
+                            <FormLabel>Other Details</FormLabel>
                             <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
+                              <Input placeholder="Enter additional details" {...field} />
                             </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Floor</FormLabel>
-                            </div>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <FormField
-                        control={createForm.control}
-                        name="has_room"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Room</FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                      {/* Checkboxes in a row */}
+                      <div className="grid grid-cols-4 gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="has_wing"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Wing</FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
 
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={resetCreateForm}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={createForm.formState.isSubmitting}>
-                        {createForm.formState.isSubmitting && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        Create Building
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                        <FormField
+                          control={createForm.control}
+                          name="has_area"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Area</FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={createForm.control}
+                          name="has_floor"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Floor</FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={createForm.control}
+                          name="has_room"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Room</FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="flex justify-end space-x-2">
+                        <Button type="button" variant="outline" onClick={resetCreateForm}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                          {createForm.formState.isSubmitting && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          Create Building
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
           {/* Controls */}
           <div className="flex items-center justify-end mb-4">
-         
+
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Search:</span>
@@ -591,9 +595,11 @@ export function BuildingPage() {
                   currentBuildings.map((building, index) => (
                     <TableRow key={building.id}>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(building)}>
-                          <Edit className="w-4 h-4 text-[#C72030]" />
-                        </Button>
+                        {shouldShow("Building", "update") && (
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(building)}>
+                            <Edit className="w-4 h-4 text-[#C72030]" />
+                          </Button>
+                        )}
                       </TableCell>
                       <TableCell>{getSiteName(building.site_id)}</TableCell>
                       <TableCell>{building.name}</TableCell>
@@ -652,8 +658,8 @@ export function BuildingPage() {
                       </TableCell>
                       <TableCell>
                         {building.qr_code_url ? (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setSelectedQrCode(building.qr_code_url);
@@ -955,9 +961,9 @@ export function BuildingPage() {
                 {selectedQrCode ? (
                   <>
                     <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
-                      <img 
-                        src={selectedQrCode} 
-                        alt="Building QR Code" 
+                      <img
+                        src={selectedQrCode}
+                        alt="Building QR Code"
                         className="w-64 h-64 object-contain"
                       />
                     </div>

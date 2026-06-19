@@ -435,7 +435,7 @@ export const AddEventPage = () => {
               </div>
               <span className="font-semibold text-lg text-gray-800">Event Detail</span>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
               <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
               <Switch
@@ -443,7 +443,7 @@ export const AddEventPage = () => {
                 onCheckedChange={setIsActive}
                 className="data-[state=checked]:bg-green-500"
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="p-6 bg-white">

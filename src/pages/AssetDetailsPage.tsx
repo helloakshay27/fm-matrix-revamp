@@ -23,8 +23,10 @@ import { OwnerCostTab } from "@/components/asset-details/OwnerCostTab";
 
 import { RepairReplaceModal } from "@/components/RepairReplaceModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
+import { BreakdownModal } from "@/components/BreakdownModal";
 import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
+import { getReturnToFromState } from "@/utils/listBackNavigation";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -42,6 +44,7 @@ export const AssetDetailsPage = () => {
   const [isInUse, setIsInUse] = useState(true);
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false);
   const [showEnable, setShowEnable] = useState(false);
   const [activeTab, setActiveTab] = useState("asset-info");
   const [isPrintingQR, setIsPrintingQR] = useState(false);
@@ -96,7 +99,10 @@ export const AssetDetailsPage = () => {
 
   console.log(showEnable);
 
-  const handleBack = () => navigate("/maintenance/asset");
+  const handleBack = () => {
+    const returnTo = getReturnToFromState(location.state);
+    navigate(returnTo ?? "/maintenance/asset");
+  };
 
   const handleEditDetails = () => {
     // Navigate to the appropriate edit page based on asset type
@@ -200,6 +206,7 @@ export const AssetDetailsPage = () => {
                   status={assetData.status || "-"}
                   assetId={assetData.id}
                   onStatusUpdate={refreshAssetData}
+                  onBreakdownSelect={() => setIsBreakdownModalOpen(true)}
                 />
               </div>
             </div>
@@ -414,6 +421,13 @@ export const AssetDetailsPage = () => {
         serviceName={assetData.name}
         site={assetData.building?.name || "NA"}
         handleDownloadQR={handlePrintQRCode}
+      />
+
+      <BreakdownModal
+        isOpen={isBreakdownModalOpen}
+        assetId={assetData.id}
+        onClose={() => setIsBreakdownModalOpen(false)}
+        onSuccess={refreshAssetData}
       />
     </div>
   );

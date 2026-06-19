@@ -368,7 +368,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus } from "lucide-react";
+import { Eye, Plus, Trash2 } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
@@ -477,6 +477,11 @@ export const PurchaseOrderListPage: React.FC = () => {
     show: false,
     errors: [],
   });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; id: number | null }>({
+    show: false,
+    id: null,
+  });
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -652,6 +657,60 @@ export const PurchaseOrderListPage: React.FC = () => {
       "Failed to mark purchase orders as unreceived"
     );
 
+  const handleDeleteClick = (id: number) => {
+    setDeleteConfirm({ show: true, id });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirm.id === null) return;
+
+    setDeleting(true);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+
+      if (!baseUrl || !token) {
+        sonnerToast.error("Missing configuration. Please login again.");
+        setDeleteConfirm({ show: false, id: null });
+        setDeleting(false);
+        return;
+      }
+
+      const apiUrl = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+
+      const response = await fetch(
+        `${apiUrl}/pms/purchase_orders/${deleteConfirm.id}.json`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : undefined,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errBody || response.statusText}`
+        );
+      }
+
+      sonnerToast.success("Record deleted successfully.");
+      setDeleteConfirm({ show: false, id: null });
+      fetchPurchaseOrderData(currentPage, perPage, debouncedSearchQuery);
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      sonnerToast.error(error.message || "Failed to delete record.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirm({ show: false, id: null });
+  };
+
   const renderRow = (order: PurchaseOrder) => ({
     actions: (
       <div className="flex items-center gap-2">
@@ -674,6 +733,13 @@ export const PurchaseOrderListPage: React.FC = () => {
           title="View"
         >
           <Eye className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => handleDeleteClick(order.id)}
+          className="p-1 text-red-600 hover:bg-red-50 rounded"
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
     ),
@@ -742,10 +808,11 @@ export const PurchaseOrderListPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Button
               onClick={() => navigate("/accounting/purchase-order/create")}
-              className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+              // className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+              className='fm-button-fix fm-button-brand px-4 py-2P'
             >
               <Plus className="h-4 w-4" />
-              New
+              Add
             </Button>
 
             {selectedRows.length > 0 &&
@@ -836,6 +903,37 @@ export const PurchaseOrderListPage: React.FC = () => {
                 onClick={() => setErrorModal({ show: false, errors: [] })}
               >
                 OK
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="px-5 py-4 border-b">
+              <h2 className="text-base font-semibold text-gray-800">Confirm Delete</h2>
+            </div>
+            <div className="px-5 py-6">
+              <p className="text-sm text-gray-700">
+                Are you sure you want to delete this record?
+              </p>
+            </div>
+            <div className="px-5 py-3 border-t flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCancelDelete}
+                disabled={deleting}
+              >
+                No
+              </Button>
+              <Button
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Yes"}
               </Button>
             </div>
           </div>

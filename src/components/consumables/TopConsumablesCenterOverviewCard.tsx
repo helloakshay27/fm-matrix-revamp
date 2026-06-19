@@ -39,17 +39,11 @@ const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data, onDownload })
   }, [rows, headers]);
 
   return (
-    <div className="bg-white border rounded-lg shadow p-4">
-      <div className="flex items-center justify-between gap-4 mb-3 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
+    <div className="bg-white rounded-xl p-5">
+      <div className="flex items-center justify-between gap-4 mb-4">
         <h3
-          className="flex-1"
-          style={{
-            fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
-            fontWeight: 600,
-            fontSize: '16px',
-            lineHeight: '100%',
-            letterSpacing: '0%'
-          }}
+          className="font-semibold text-base"
+          style={{ fontFamily: 'Work Sans, sans-serif' }}
         >
           Top Consumables – Centre-wise Overview
         </h3>
@@ -75,30 +69,51 @@ const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data, onDownload })
       {headers.length === 0 ? (
         <div className="text-sm text-gray-500">No data</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border text-xs text-center">
-            <thead>
-              <tr className="bg-[#ded9cd] text-[#b62527]">
-                <th className="border p-2 text-left">Site</th>
-                {headers.map((h) => (
-                  <th key={h} className="border p-2 whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {tableData.map((row) => (
-                <tr key={row.site}>
-                  <td className="border p-2 text-left font-medium">{row.site}</td>
-                  {row.values.map((v, idx) => (
-                    <td key={`${row.site}-${idx}`} className="border p-2 text-right tabular-nums">
-                      {v.toLocaleString('en-IN')}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <div className="rounded-xl overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm whitespace-nowrap">
+                  <thead>
+                    <tr>
+                      {['Site', ...headers].map((h) => (
+                        <th
+                          key={h}
+                          className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
+                          style={{ backgroundColor: '#D97655' }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableData.map((row, i) => (
+                      <tr key={row.site} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                        <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 whitespace-nowrap">
+                          {row.site}
+                        </td>
+                        {row.values.map((v, idx) => (
+                          <td
+                            key={`${row.site}-${idx}`}
+                            className="px-4 py-3 text-left border-b border-gray-100 tabular-nums"
+                          >
+                            <span className="font-semibold text-xs text-gray-800">
+                              {v.toLocaleString('en-IN')}
+                            </span>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                    {tableData.length === 0 && (
+                      <tr>
+                        <td colSpan={headers.length + 1} className="px-4 py-6 text-center text-gray-400 text-sm">
+                          No data available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
       )}
       
       {/* Note section */}

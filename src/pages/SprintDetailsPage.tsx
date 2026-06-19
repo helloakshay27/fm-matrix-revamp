@@ -442,7 +442,7 @@ const mapApiTasks = (api: ApiSprint): Task[] => {
   });
 };
 
-const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
+const SprintTaskList = ({ sprintId, initialMemberId }: { sprintId: string; initialMemberId?: number }) => {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
   const navigate = useNavigate();
@@ -469,6 +469,7 @@ const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [tempSearchQuery, setTempSearchQuery] = useState("");
   const debounceTimerTask = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRenderTask = useRef(true);
   const [dropdowns, setDropdowns] = useState({
     status: false, workflowStatus: false, responsiblePerson: false,
     createdBy: false, project: false, tags: false,
@@ -498,8 +499,25 @@ const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
   }, [sprintId, baseUrl, token]);
 
   useEffect(() => {
-    if (sprintId) fetchTasks(activeFilters, 1, searchQuery);
+    if (!sprintId) return;
+    if (initialMemberId != null) {
+      const params = { "q[responsible_person_id_in][]": [initialMemberId] };
+      setSelectedResponsible([initialMemberId]);
+      setActiveFilters(params);
+      fetchTasks(params, 1, "");
+    } else {
+      fetchTasks({}, 1, "");
+    }
   }, [fetchTasks]);
+
+  useEffect(() => {
+    if (isFirstRenderTask.current) { isFirstRenderTask.current = false; return; }
+    if (initialMemberId == null) return;
+    const params = { "q[responsible_person_id_in][]": [initialMemberId] };
+    setSelectedResponsible([initialMemberId]);
+    setActiveFilters(params);
+    fetchTasks(params, 1, "");
+  }, [initialMemberId]);
 
   useEffect(() => {
     if (debounceTimerTask.current) clearTimeout(debounceTimerTask.current);
@@ -1148,6 +1166,12 @@ const SprintTaskList = ({ sprintId }: { sprintId: string }) => {
         searchValue={tempSearchQuery}
         onSearchChange={(val: string) => setTempSearchQuery(val)}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        leftActions={
+          <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
+            <span className="text-gray-700 font-medium text-sm">Total Tasks:</span>
+            <span className="text-lg font-bold text-[#C72030]">{paginationData?.total_count || 0}</span>
+          </div>
+        }
       />
 
       {/* Pagination */}
@@ -1533,7 +1557,7 @@ const mapSprintIssueData = (issue: any) => ({
   active_time_till_now: issue.active_time_till_now || null,
 });
 
-const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
+const SprintIssueList = ({ sprintId, initialMemberId }: { sprintId: string; initialMemberId?: number }) => {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
   const navigate = useNavigate();
@@ -1552,6 +1576,7 @@ const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
   const [issueSearchQuery, setIssueSearchQuery] = useState("");
   const [issueTempSearch, setIssueTempSearch] = useState("");
   const debounceTimerIssue = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRenderIssue = useRef(true);
 
   const fetchIssues = useCallback(async (filters = "", page = 1, search = "") => {
     setLoadingIssues(true);
@@ -1573,8 +1598,23 @@ const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
   }, [sprintId, baseUrl, token]);
 
   useEffect(() => {
-    if (sprintId) fetchIssues("", 1, issueSearchQuery);
+    if (!sprintId) return;
+    if (initialMemberId != null) {
+      const filterString = `q[responsible_person_id_in][]=${initialMemberId}`;
+      setAppliedFilters(filterString);
+      fetchIssues(filterString, 1, "");
+    } else {
+      fetchIssues("", 1, "");
+    }
   }, [fetchIssues]);
+
+  useEffect(() => {
+    if (isFirstRenderIssue.current) { isFirstRenderIssue.current = false; return; }
+    if (initialMemberId == null) return;
+    const filterString = `q[responsible_person_id_in][]=${initialMemberId}`;
+    setAppliedFilters(filterString);
+    fetchIssues(filterString, 1, "");
+  }, [initialMemberId]);
 
   useEffect(() => {
     if (debounceTimerIssue.current) clearTimeout(debounceTimerIssue.current);
@@ -1774,6 +1814,12 @@ const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
         searchValue={issueTempSearch}
         onSearchChange={(val: string) => setIssueTempSearch(val)}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        leftActions={
+          <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
+            <span className="text-gray-700 font-medium text-sm">Total Issues:</span>
+            <span className="text-lg font-bold text-[#C72030]">{paginationData?.total_count || 0}</span>
+          </div>
+        }
       />
 
       {/* Pagination */}
@@ -1845,14 +1891,163 @@ const SprintIssueList = ({ sprintId }: { sprintId: string }) => {
   );
 };
 
+/**
+ * Parses activity type based on log_of and changed_attr
+ */
+interface ActivityType {
+  type: "SPRINT_CREATED" | "TASK_ADDED" | "TASK_REMOVED" | "FIELD_UPDATED";
+  message: string;
+}
+
+const parseActivityType = (log: any): ActivityType => {
+  const { log_of, changed_attr } = log;
+
+  if (!changed_attr || Object.keys(changed_attr).length === 0) {
+    return {
+      type: "FIELD_UPDATED",
+      message: "Record updated",
+    };
+  }
+
+  // Sprint Created - check if log_of is "Sprint"
+  if (log_of === "Sprint") {
+    return {
+      type: "SPRINT_CREATED",
+      message: "Sprint created",
+    };
+  }
+
+  // SprintTask - check if task was added or removed
+  if (log_of === "SprintTask") {
+    const taskIdAttr = changed_attr.task_id;
+
+    if (Array.isArray(taskIdAttr) && taskIdAttr.length >= 2) {
+      const [oldVal, newVal] = taskIdAttr;
+
+      // Task added to sprint (null/nil -> value)
+      if ((oldVal === null || oldVal === "nil") && newVal != null) {
+        return {
+          type: "TASK_ADDED",
+          message: "Task added to sprint",
+        };
+      }
+
+      // Task removed from sprint (value -> null/nil)
+      if (oldVal != null && (newVal === null || newVal === "nil")) {
+        return {
+          type: "TASK_REMOVED",
+          message: "Task removed from sprint",
+        };
+      }
+    }
+  }
+
+  // Default: field updated
+  return {
+    type: "FIELD_UPDATED",
+    message: "Record updated",
+  };
+};
+
+/**
+ * Check if activity represents a creation event (for grouping)
+ */
+const isActivityCreation = (activityType: ActivityType): boolean => {
+  return (
+    activityType.type === "SPRINT_CREATED" ||
+    activityType.type === "TASK_ADDED"
+  );
+};
+
+/**
+ * Check if two dates are within a specified time window
+ */
+const isWithinTimeWindow = (
+  date1: Date,
+  date2: Date,
+  windowMs: number = 5000
+): boolean => {
+  return Math.abs(date1.getTime() - date2.getTime()) <= windowMs;
+};
+
+/**
+ * Group consecutive task additions for bulk display
+ */
+const groupTaskAdditions = (logs: any[]) => {
+  const grouped: Array<{
+    type: "single" | "grouped";
+    logs: any[];
+    groupLabel?: string;
+  }> = [];
+
+  let i = 0;
+  while (i < logs.length) {
+    const log = logs[i];
+    const actType = parseActivityType(log);
+
+    // Only group TASK_ADDED activities
+    if (actType.type === "TASK_ADDED") {
+      const taskAddGroup = [log];
+      const baseUserId = log.changed_by;
+      const baseSprintId = log.sprint_id;
+      const baseTimestamp = new Date(log.created_at);
+
+      // Look ahead for consecutive task additions from the same user, sprint, within time window
+      let j = i + 1;
+      while (j < logs.length) {
+        const nextLog = logs[j];
+        const nextType = parseActivityType(nextLog);
+
+        if (
+          nextType.type === "TASK_ADDED" &&
+          nextLog.changed_by === baseUserId &&
+          nextLog.sprint_id === baseSprintId &&
+          isWithinTimeWindow(new Date(nextLog.created_at), baseTimestamp)
+        ) {
+          taskAddGroup.push(nextLog);
+          j++;
+        } else {
+          break;
+        }
+      }
+
+      // If multiple task additions, group them
+      if (taskAddGroup.length > 1) {
+        grouped.push({
+          type: "grouped",
+          logs: taskAddGroup,
+          groupLabel: `added ${taskAddGroup.length} tasks to Sprint`,
+        });
+        i = j;
+      } else {
+        grouped.push({
+          type: "single",
+          logs: [log],
+        });
+        i++;
+      }
+    } else {
+      grouped.push({
+        type: "single",
+        logs: [log],
+      });
+      i++;
+    }
+  }
+
+  return grouped;
+};
+
 const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
   const [logs, setLogs] = useState<any[]>([]);
   const [userMapping, setUserMapping] = useState<Record<string, string>>({});
+  const [logsLoading, setLogsLoading] = useState(true);
 
   useEffect(() => {
     const fetchLogs = async () => {
+      setLogsLoading(true);
       try {
         const response = await axios.get(
           `https://${baseUrl}/sprints/${sprintId}/sprint_activity_log.json`,
@@ -1861,6 +2056,8 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
         setLogs(response.data || []);
       } catch (e) {
         console.error("Error fetching sprint activity log:", e);
+      } finally {
+        setLogsLoading(false);
       }
     };
     if (sprintId) fetchLogs();
@@ -1919,6 +2116,7 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
     "resource_type",
     "created_by_id",
     "sprint_id",
+    "task_id",
   ]);
 
   const FIELD_LABELS: Record<string, string> = {
@@ -1955,7 +2153,6 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
 
   const parseChanges = (changed_attr: Record<string, any> | null) => {
     if (!changed_attr || Object.keys(changed_attr).length === 0) return null;
-    if ("id" in changed_attr) return { isCreation: true, fields: [] };
 
     const fields = Object.entries(changed_attr)
       .filter(([key]) => !SKIP_FIELDS.has(key))
@@ -1988,8 +2185,17 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
         };
       });
 
-    return { isCreation: false, fields };
+    return { fields };
   };
+
+  if (logsLoading) {
+    return (
+      <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+        <Loader2 size={20} className="animate-spin" />
+        <span className="text-sm">Loading activity logs…</span>
+      </div>
+    );
+  }
 
   if (!logs.length) {
     return (
@@ -2004,23 +2210,31 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
 
+  const groupedActivities = groupTaskAdditions([...sorted].reverse());
+
   return (
     <div className="overflow-x-auto w-full bg-gray-50 rounded-xl shadow-inner mt-3 p-6">
       <div className="flex items-start min-w-max">
-        {[...sorted].reverse().map((log: any, index: number) => {
-          const changes = parseChanges(log.changed_attr);
-          const initials = getInitialsLocal(log.changed_by || "");
-          const isLast = index === sorted.length - 1;
+        {groupedActivities.map((group, groupIndex) => {
+          const isLastGroup = groupIndex === groupedActivities.length - 1;
+          const representativeLog =
+            group.type === "grouped" ? group.logs[0] : group.logs[0];
+          const activityType = parseActivityType(representativeLog);
+          const isCreation = isActivityCreation(activityType);
+          const initials = getInitialsLocal(
+            representativeLog.changed_by || ""
+          );
+          const changes = parseChanges(representativeLog.changed_attr);
 
           return (
-            <Fragment key={log.id}>
+            <Fragment key={`group-${groupIndex}`}>
               <div className="flex flex-col items-center">
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 shadow-md ring-2 ring-white z-10"
                   style={{
-                    background: changes?.isCreation ? "#16a34a" : "#E95420",
+                    background: isCreation ? "#16a34a" : "#E95420",
                   }}
-                  title={log.changed_by || "System"}
+                  title={representativeLog.changed_by || "System"}
                 >
                   {initials}
                 </div>
@@ -2030,21 +2244,26 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
                 <div className="w-[215px] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="px-3 pt-2.5 pb-2 border-b border-gray-100">
                     <p className="text-[11px] font-semibold text-gray-800 truncate leading-snug">
-                      {log.changed_by || "System"}
+                      {representativeLog.changed_by || "System"}
                     </p>
                     <p className="text-[9px] text-gray-400 mt-0.5">
-                      {formatTimestamp(log.created_at)}
+                      {formatTimestamp(representativeLog.created_at)}
                     </p>
                   </div>
 
                   <div className="px-3 py-2.5 space-y-2.5">
-                    {!changes ||
-                      (!changes.isCreation && changes.fields.length === 0) ? (
-                      <p className="text-[10px] text-gray-400 italic">
-                        {log.log_type?.replace("Sprint", "").trim() ||
-                          "Updated sprint"}
-                      </p>
-                    ) : changes.isCreation ? (
+                    {/* Grouped Activity */}
+                    {group.type === "grouped" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-500 text-base leading-none">
+                          ✦
+                        </span>
+                        <span className="text-[11px] font-semibold text-green-700">
+                          {representativeLog.changed_by}{" "}
+                          {group.groupLabel}
+                        </span>
+                      </div>
+                    ) : activityType.type === "SPRINT_CREATED" ? (
                       <div className="flex items-center gap-2">
                         <span className="text-green-500 text-base leading-none">
                           ✦
@@ -2053,8 +2272,31 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
                           Sprint Created
                         </span>
                       </div>
+                    ) : activityType.type === "TASK_ADDED" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-500 text-base leading-none">
+                          ✦
+                        </span>
+                        <span className="text-[11px] font-semibold text-green-700">
+                          Task Added To Sprint
+                        </span>
+                      </div>
+                    ) : activityType.type === "TASK_REMOVED" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-500 text-base leading-none">
+                          ✕
+                        </span>
+                        <span className="text-[11px] font-semibold text-red-700">
+                          Task Removed From Sprint
+                        </span>
+                      </div>
+                    ) : !changes || changes.fields.length === 0 ? (
+                      <p className="text-[10px] text-gray-400 italic">
+                        {representativeLog.log_type?.replace("Sprint", "").trim() ||
+                          "Updated sprint"}
+                      </p>
                     ) : (
-                      changes.fields.map((field) => (
+                      changes.fields.map((field: any) => (
                         <div key={field.key}>
                           <p className="text-[8px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
                             {field.label}
@@ -2107,10 +2349,13 @@ const SprintActivityLog = ({ sprintId }: { sprintId: string }) => {
                 </div>
               </div>
 
-              {!isLast && (
+              {!isLastGroup && (
                 <div className="flex flex-col items-center flex-shrink-0 min-w-[80px] px-1">
                   <span className="text-[9px] text-gray-400 whitespace-nowrap text-center mt-1 mb-1 leading-none">
-                    {calcDuration(log.created_at, sorted[index + 1].created_at)}
+                    {calcDuration(
+                      representativeLog.created_at,
+                      groupedActivities[groupIndex + 1].logs[0].created_at
+                    )}
                   </span>
                   <div className="relative w-full flex items-center">
                     <div className="rotate-180 w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-gray-400 flex-shrink-0" />
@@ -2149,6 +2394,8 @@ export const SprintDetailsPage = () => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Open");
+  const [memberTaskFilter, setMemberTaskFilter] = useState<number | undefined>(undefined);
+  const [memberIssueFilter, setMemberIssueFilter] = useState<number | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<
     "tasks" | "issues" | "activity_log"
   >("tasks");
@@ -2440,7 +2687,7 @@ export const SprintDetailsPage = () => {
                       Priority :
                     </div>
                     <div className="text-left text-[14px]">
-                      {sprintDetails.priority || "-"}
+                      {sprintDetails.priority?.charAt(0)?.toUpperCase() + sprintDetails.priority?.slice(1) || "-"}
                     </div>
                   </div>
                 </div>
@@ -2537,10 +2784,10 @@ export const SprintDetailsPage = () => {
               {/* Tab content */}
               <div className="mt-4 overflow-x-auto">
                 {activeTab === "tasks" && (
-                  <SprintTaskList sprintId={String(id)} />
+                  <SprintTaskList sprintId={String(id)} initialMemberId={memberTaskFilter} />
                 )}
                 {activeTab === "issues" && (
-                  <SprintIssueList sprintId={String(id)} />
+                  <SprintIssueList sprintId={String(id)} initialMemberId={memberIssueFilter} />
                 )}
                 {activeTab === "activity_log" && (
                   <SprintActivityLog sprintId={String(id)} />
@@ -2753,13 +3000,29 @@ export const SprintDetailsPage = () => {
                               : "#ef4444";
                         return (
                           <>
-                            <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberIssueFilter(undefined);
+                                setMemberTaskFilter(m.member_id);
+                                setActiveTab("tasks");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.total_tasks}
                               </span>
                             </td>
-                            <td className="px-3 py-3 text-center border-r border-slate-100">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberIssueFilter(undefined);
+                                setMemberTaskFilter(m.member_id);
+                                setActiveTab("tasks");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.completed_tasks}
                               </span>
                             </td>
@@ -2795,13 +3058,29 @@ export const SprintDetailsPage = () => {
                               : "#ef4444";
                         return (
                           <>
-                            <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberTaskFilter(undefined);
+                                setMemberIssueFilter(m.member_id);
+                                setActiveTab("issues");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.total_issues}
                               </span>
                             </td>
-                            <td className="px-3 py-3 text-center border-r border-slate-100">
-                              <span className="text-[13px] font-medium text-gray-700">
+                            <td
+                              className="px-3 py-3 text-center border-r border-slate-100 cursor-pointer hover:bg-blue-50"
+                              onClick={() => {
+                                setIsMembersOpen(false);
+                                setMemberTaskFilter(undefined);
+                                setMemberIssueFilter(m.member_id);
+                                setActiveTab("issues");
+                              }}
+                            >
+                              <span className="text-[13px] font-medium text-blue-600">
                                 {m.completed_issues}
                               </span>
                             </td>

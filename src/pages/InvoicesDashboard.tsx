@@ -7,8 +7,10 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { getInvoinces } from '@/store/slices/invoicesSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const columns: ColumnConfig[] = [
   {
@@ -183,22 +185,29 @@ const columns: ColumnConfig[] = [
 
 export const InvoicesDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem("token");
 
   const { loading } = useAppSelector(state => state.getInvoinces)
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    invoiceNumber: urlParams.get("invoiceNumber") || "",
+    invoiceDate: urlParams.get("invoiceDate") || "",
+    supplierName: urlParams.get("supplierName") || "",
+  };
+
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({
-    invoiceNumber: '',
-    invoiceDate: '',
-    supplierName: '',
-  });
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
   });
@@ -207,12 +216,18 @@ export const InvoicesDashboard = () => {
   const fetchData = async (page: number = 1) => {
     try {
       const response = await dispatch(getInvoinces({ baseUrl, token, page })).unwrap();
+      // setInvoicesData(response.work_order_invoices);
+      // setPagination({
+      //   current_page: response.pagination.current_page,
+      //   total_count: response.pagination.total_count,
+      //   total_pages: response.pagination.total_pages
+      // })
       setInvoicesData(response.work_order_invoices);
-      setPagination({
-        current_page: response.pagination.current_page,
+      setPagination((prev) => ({
+        ...prev,
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages
-      })
+      }));
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -220,8 +235,20 @@ export const InvoicesDashboard = () => {
   }
 
   useEffect(() => {
-    fetchData();
-  }, [])
+    fetchData(urlPage);
+  }, []);
+
+  // Update URL whenever pagination, filters or search changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchTerm) params.set("search", searchTerm);
+    if (appliedFilters.invoiceNumber) params.set("invoiceNumber", appliedFilters.invoiceNumber);
+    if (appliedFilters.invoiceDate) params.set("invoiceDate", appliedFilters.invoiceDate);
+    if (appliedFilters.supplierName) params.set("supplierName", appliedFilters.supplierName);
+
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchTerm, appliedFilters, navigate]);
 
   const handleFilterApply = (filters: typeof appliedFilters) => {
     setAppliedFilters(filters);
@@ -245,14 +272,18 @@ export const InvoicesDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-3">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/invoices/${item.id}`)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
+      {shouldShow("Invoices", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => navigate(`/finance/invoices/${item.id}`, {
+            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+          })}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
     </div>
   );
 
@@ -274,18 +305,11 @@ export const InvoicesDashboard = () => {
     }
   };
 
-  const handlePageChange = async (page: number) => {
+  const handlePageChange = (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
-
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData(page);
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
+    setPagination((prev) => ({ ...prev, current_page: page }));
   };
 
   const renderPaginationItems = () => {

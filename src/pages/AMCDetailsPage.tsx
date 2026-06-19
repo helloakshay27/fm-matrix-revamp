@@ -27,7 +27,7 @@ import {
   Settings,
   Plus,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AddVisitModal } from "@/components/AddVisitModal";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAMCDetails } from "@/store/slices/amcDetailsSlice";
@@ -41,6 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye } from "lucide-react";
 import { AMCAnalyticsTab } from "@/components/amc-details/AMCAnalyticsTab";
 import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreviewTab";
+import { getReturnToFromState } from "@/utils/listBackNavigation";
 
 interface AMCDetailsData {
   id: number;
@@ -125,6 +126,7 @@ interface TicketRecord {
 
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const {
@@ -434,6 +436,11 @@ export const AMCDetailsPage = () => {
     setShowAddVisitModal(false);
   };
 
+  const handleBackToList = () => {
+    const returnTo = getReturnToFromState(location.state);
+    navigate(returnTo ?? "/maintenance/amc");
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -446,7 +453,7 @@ export const AMCDetailsPage = () => {
           Back to AMC List
         </Button> */}
         <button
-          onClick={() => navigate("/maintenance/amc")}
+          onClick={handleBackToList}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -678,20 +685,22 @@ export const AMCDetailsPage = () => {
                     </div>
                     SUPPLIER INFORMATION
                   </CardTitle>
-                  <Button
-                    className="px-4 py-2 font-medium text-[#C72030] border border-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
+                  {/* <Button
+                    className="px-4 py-2 font-medium t border rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
                     style={{
                       backgroundColor: "#F6F4EE",
-                      color: "#C72030",
+                      color: '#C72030',
                       border: "1px solid #C72030",
                       borderRadius: "4px",
                       padding: "8px 16px",
                       fontSize: "14px",
                       fontWeight: 500,
                     }}
+
+
                   >
                     View Supplier
-                  </Button>
+                  </Button> */}
                 </div>
               </CardHeader>
               <CardContent
@@ -1218,9 +1227,8 @@ export const AMCDetailsPage = () => {
                           return (
                             <div
                               key={card.label}
-                              className={`p-4 rounded-lg cursor-pointer ${
-                                occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
-                              }`}
+                              className={`p-4 rounded-lg cursor-pointer ${occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
+                                }`}
                               style={{ backgroundColor: "#F6F4EE" }}
                               onClick={() => {
                                 setOccurrenceStatusFilter(card.label);
@@ -1438,13 +1446,12 @@ export const AMCDetailsPage = () => {
                             <TableCell>
                               {t.status ? (
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    t.status.toLowerCase() === "open"
-                                      ? "bg-gray-200 text-gray-900"
-                                      : t.status.toLowerCase() === "pending"
-                                        ? "bg-[#C72030] text-white"
-                                        : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${t.status.toLowerCase() === "open"
+                                    ? "bg-gray-200 text-gray-900"
+                                    : t.status.toLowerCase() === "pending"
+                                      ? "bg-[#C72030] text-white"
+                                      : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {t.status}
                                 </span>
@@ -1458,8 +1465,8 @@ export const AMCDetailsPage = () => {
                             <TableCell className="text-gray-900">
                               {t.created_at
                                 ? new Date(t.created_at).toLocaleDateString(
-                                    "en-GB"
-                                  )
+                                  "en-GB"
+                                )
                                 : "—"}
                             </TableCell>
                           </TableRow>
@@ -1503,14 +1510,14 @@ export const AMCDetailsPage = () => {
                     <TableHeader>
                       <TableRow className="bg-[#EDEAE3]">
                         <TableHead className="w-10" />
-                        <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Visit </TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
                         {/* <TableHead className="font-semibold text-[#1a1a1a]">Asset Period</TableHead> */}
                         <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Asset/service Covered</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1527,9 +1534,8 @@ export const AMCDetailsPage = () => {
                           return (
                             <TableRow
                               key={visit.id}
-                              className={`border-b border-gray-200 transition-colors ${
-                                isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"
-                              }`}
+                              className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"
+                                }`}
                             >
                               <TableCell className="w-10">
                                 <input
@@ -1552,11 +1558,11 @@ export const AMCDetailsPage = () => {
                               <TableCell className="text-gray-900">
                                 {(visit as any).actual_visit_date
                                   ? (() => {
-                                      const raw = (visit as any).actual_visit_date as string;
-                                      if (raw.includes("/")) return raw;
-                                      const d = new Date(raw);
-                                      return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
-                                    })()
+                                    const raw = (visit as any).actual_visit_date as string;
+                                    if (raw.includes("/")) return raw;
+                                    const d = new Date(raw);
+                                    return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                                  })()
                                   : "—"}
                               </TableCell>
                               {/* <TableCell className="text-gray-900">
@@ -1571,13 +1577,12 @@ export const AMCDetailsPage = () => {
                               <TableCell>
                                 {(visit as any).status ? (
                                   <span
-                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
-                                      (visit as any).status.toLowerCase() === "completed"
-                                        ? "bg-green-100 text-green-800"
-                                        : (visit as any).status.toLowerCase() === "cancelled"
-                                          ? "bg-red-100 text-red-800"
-                                          : "bg-gray-100 text-gray-700"
-                                    }`}
+                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${(visit as any).status.toLowerCase() === "completed"
+                                      ? "bg-green-100 text-green-800"
+                                      : (visit as any).status.toLowerCase() === "cancelled"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-700"
+                                      }`}
                                   >
                                     {((visit as any).status as string).toUpperCase()}
                                   </span>
@@ -1975,11 +1980,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>{" "}
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === "active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {asset.asset_status?.replace("_", " ") || "—"}
                                 </span>
@@ -2196,11 +2200,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    (service as any).status === "Active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${(service as any).status === "Active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {(service as any).status || "—"}
                                 </span>
@@ -2265,11 +2268,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === "active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {asset.asset_status?.replace("_", " ") || "—"}
                                 </span>

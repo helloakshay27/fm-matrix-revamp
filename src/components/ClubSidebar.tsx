@@ -51,6 +51,7 @@ type SidebarItem = {
   subItems?: SidebarItem[];
   color?: string;
   blank?: boolean;
+  additionalRoutes?: string[];
 };
 
 const modulesByPackage = {
@@ -59,6 +60,7 @@ const modulesByPackage = {
       name: "Memberships",
       icon: Star,
       href: "/club-management/membership/groups",
+      additionalRoutes: ["/club-management/group-membership"],
     },
     {
       name: "User Management",
@@ -93,14 +95,14 @@ const modulesByPackage = {
       href: "/club-management/amenities-booking-club",
     },
     {
-      name: "Broadcast",
+      name: "Notices",
       icon: Bell,
-      href: "/club-management/broadcast",
+      href: "/pulse/notices",
     },
     {
-      name: "Event",
+      name: "Events",
       icon: Calendar,
-      href: "/club-management/events",
+      href: "/pulse/events",
     },
     {
       name: "Payments",
@@ -111,6 +113,11 @@ const modulesByPackage = {
       name: "Vendor",
       icon: Truck,
       href: "/maintenance/vendor",
+    },
+    {
+      name: "Community",
+      icon: Users,
+      href: "/pulse/community",
     },
     // {
     //   name: "Invoices",
@@ -142,21 +149,38 @@ const modulesByPackage = {
       name: "Amenities Setup",
       icon: Gem,
       href: "/settings/vas/booking-club/setup",
+      additionalRoutes: [
+        "/settings/vas/booking-club/setup/add",
+        "/settings/vas/booking-club/setup/details",
+        "/settings/vas/booking-club/setup/edit",
+      ],
     },
     {
       name: "Membership Plan Setup",
       icon: ClipboardList,
       href: "/settings/vas/membership-plan/setup",
+      additionalRoutes: [
+        "/settings/vas/membership-plan/setup/add",
+        "/settings/vas/membership-plan/setup/edit",
+        "/settings/vas/membership-plan/setup/details",
+      ],
     },
     {
       name: "Accessories Setup",
       icon: Boxes,
       href: "/settings/accessories",
+      additionalRoutes: ["/settings/accessories"],
     },
     {
       name: "Payment Plan Setup",
       icon: CreditCard,
       href: "/settings/payment-plan/setup",
+      additionalRoutes: [
+        "/settings/payment-plan/add",
+        "/settings/payment-plan/edit",
+        "/settings/payment-plan/details",
+        "/settings/payment-management",
+      ],
     },
     {
       name: "Templates",
@@ -284,7 +308,7 @@ const modulesByPackage = {
       name: "Purchases",
       icon: Truck,
       subItems: [
-        { name: "Vendor", href: "/maintenance/vendor" },
+        { name: "Vendor", href: "/accounting/vendor" },
         { name: "Expense", href: "/accounting/expense" },
         { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
         { name: "Purchase Order", href: "/accounting/purchase-order" },
@@ -447,10 +471,10 @@ const modulesByPackage = {
               name: "Sales by Item",
               href: "/accounting/reports/sales-by-item",
             },
-            // {
-            //   name: "Sales by Sales Person",
-            //   href: "/accounting/reports/sales-by-sales-person",
-            // },
+            {
+              name: "Sales by Sales Person",
+              href: "/accounting/reports/sales-by-sales-person",
+            },
             {
               name: "Sales Summary",
               href: "/accounting/reports/sales-summary",
@@ -840,7 +864,6 @@ const modulesByPackage = {
     {
       name: "Location Master",
       icon: MapPin,
-      href: "/master/location",
       subItems: [
         {
           name: "Account",
@@ -967,6 +990,41 @@ export const ClubSidebar: React.FC = () => {
     isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const lastNavigatedSection = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    // Collect every href defined in the given module list (recursive)
+    const collectHrefs = (items: SidebarItem[]): string[] =>
+      items.flatMap((item) => [
+        ...(item.href ? [item.href] : []),
+        ...(item.additionalRoutes ?? []),
+        ...(item.subItems ? collectHrefs(item.subItems) : []),
+      ]);
+
+    const sectionModules =
+      modulesByPackage[currentSection as keyof typeof modulesByPackage] || [];
+    const sectionHrefs = collectHrefs(sectionModules);
+
+    const currentPath = location.pathname;
+    const belongsToSection = sectionHrefs.some(
+      (href) => currentPath === href || currentPath.startsWith(href + "/")
+    );
+
+    // Only navigate if we're on a route that doesn't belong to the new section
+    // and we haven't already navigated for this section switch (prevents loops)
+    if (!belongsToSection && lastNavigatedSection.current !== currentSection) {
+      const defaultHref = sectionModules.find((item) => item.href)?.href;
+      if (defaultHref) {
+        lastNavigatedSection.current = currentSection;
+        setExpandedItems([]);
+        navigate(defaultHref);
+      }
+    }
+
+    if (belongsToSection) {
+      lastNavigatedSection.current = null;
+    }
+  }, [currentSection, location.pathname, navigate]);
 
   const toggleExpand = (name: string) => {
     setExpandedItems((prev) =>
@@ -1077,7 +1135,10 @@ export const ClubSidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(key);
-    const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
+    const isActive = item.href
+      ? isActiveRoute(item.href, "prefix") ||
+        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      : false;
 
     if (hasSubItems) {
       return (
@@ -1123,9 +1184,8 @@ export const ClubSidebar: React.FC = () => {
       <button
         key={key}
         onClick={() => handleNavigation(item.href)}
-        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${
-          item.color || "text-[#1a1a1a]"
-        }`}
+        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
+          }`}
       >
         {isActive && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
@@ -1147,7 +1207,10 @@ export const ClubSidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(item.name);
-    const active = item.href ? isActiveRoute(item.href, "prefix") : false;
+    const active = item.href
+      ? isActiveRoute(item.href, "prefix") ||
+        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      : false;
 
     if (isStaticItem) {
       return (
@@ -1176,11 +1239,10 @@ export const ClubSidebar: React.FC = () => {
               handleNavigation(item.href, item.blank);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-            active || isExpanded
-              ? "bg-[#f0e8dc] shadow-inner"
-              : "hover:bg-[#DBC2A9]"
-          }`}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
+            ? "bg-[#f0e8dc] shadow-inner"
+            : "hover:bg-[#DBC2A9]"
+            }`}
           title={item.name}
         >
           {(active || isExpanded) && (
@@ -1209,11 +1271,9 @@ export const ClubSidebar: React.FC = () => {
 
   return (
     <div
-      className={`${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${
-        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } md:translate-x-0`}
+      className={`${isSidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1258,7 +1318,7 @@ export const ClubSidebar: React.FC = () => {
 
         <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
           <h3
-            className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
+            className={`text-sm font-medium text-[#C72030] uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
           >
             {isSidebarCollapsed ? "" : currentSection || "Club Management"}
           </h3>
@@ -1267,8 +1327,8 @@ export const ClubSidebar: React.FC = () => {
         <nav className="space-y-2">
           {isSidebarCollapsed
             ? currentModules.map((item) => (
-                <CollapsedMenuItem key={item.name} item={item} level={0} />
-              ))
+              <CollapsedMenuItem key={item.name} item={item} level={0} />
+            ))
             : currentModules.map((item) => renderMenuItem(item))}
         </nav>
       </div>

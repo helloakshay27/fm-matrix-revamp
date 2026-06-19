@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { ServicePRFilterDialog } from "@/components/ServicePRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -31,6 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -123,24 +125,36 @@ const columns: ColumnConfig[] = [
 export const ServicePRDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions()
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
-
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const bgRefreshingRef = useRef(false);
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    referenceNumber: urlParams.get("referenceNumber") || "",
+    prNumber: urlParams.get("prNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+    approvalStatus: urlParams.get("approvalStatus") || "Select",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [servicePR, setServicePR] = useState([]);
-  const [filters, setFilters] = useState({
-    referenceNumber: "",
-    prNumber: "",
-    supplierName: "",
-    approvalStatus: "Select",
-  });
+  const [filters, setFilters] = useState(initialFilters);
+  // const [pagination, setPagination] = useState({
+  //   current_page: 1,
+  //   total_count: 0,
+  //   total_pages: 0,
+  // });
+
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
   });
@@ -150,11 +164,11 @@ export const ServicePRDashboard = () => {
 
   const applyResponse = (response: any) => {
     setServicePR(response.work_orders);
-    setPagination({
-      current_page: response.current_page,
+    setPagination((prev) => ({
+      ...prev,
       total_count: response.total_count,
       total_pages: response.total_pages,
-    });
+    }));
   };
 
   const fetchData = async (filterParams: Record<string, any> = {}) => {
@@ -203,8 +217,28 @@ export const ServicePRDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData({
+      page: urlPage,
+      search: initialSearch,
+      reference_number: initialFilters.referenceNumber,
+      external_id: initialFilters.prNumber,
+      supplier_name: initialFilters.supplierName,
+      approval_status: initialFilters.approvalStatus !== "Select" ? initialFilters.approvalStatus : "",
+    });
   }, []);
+
+  // Update URL whenever pagination, filters or search changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
+    if (filters.prNumber) params.set("prNumber", filters.prNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.approvalStatus && filters.approvalStatus !== "Select") params.set("approvalStatus", filters.approvalStatus);
+
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   // Invalidate cache and re-fetch when site changes while page is open
   useEffect(() => {
@@ -344,25 +378,34 @@ export const ServicePRDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/service-pr/details/${item.id}`);
-        }}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      {item.can_edit && (
+      {
+        shouldShow("Service PR", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/finance/service-pr/details/${item.id}`, {
+                state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+              });
+            }}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {shouldShow("Service PR", "update") && item.can_edit && (
         <Button
           size="sm"
           variant="ghost"
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/finance/service-pr/edit/${item.id}`);
+            navigate(`/finance/service-pr/edit/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
           }}
         >
           <Edit className="w-4 h-4" />
@@ -378,13 +421,18 @@ export const ServicePRDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      <Button
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
-        onClick={() => navigate("/finance/service-pr/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("Service PR", "create") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
+            onClick={() => navigate("/finance/service-pr/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
+
     </div>
   );
 
@@ -410,6 +458,8 @@ export const ServicePRDashboard = () => {
     ) {
       return;
     }
+
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));

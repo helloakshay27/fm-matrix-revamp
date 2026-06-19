@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Wallet, RefreshCw, IndianRupee } from 'lucide-react'
+import { Wallet, RefreshCw, IndianRupee, Filter } from 'lucide-react'
 import { EnhancedTable } from './enhanced-table/EnhancedTable'
 import { ColumnConfig } from '@/hooks/useEnhancedTable'
 import axios from 'axios'
 import { toast } from 'sonner'
 
 interface Transaction {
-    id: string
+    id: string | number
     description: string
     amount: number
     type: 'debit' | 'credit'
     date: string
     status: 'completed' | 'pending' | 'failed'
+    transactionPoints?: number
+    point_type?: string
+    transactionType?: string
+    payment_mode?: string
 }
 
 const transactionColumns: ColumnConfig[] = [
@@ -62,6 +66,7 @@ const ProfileWallet = () => {
     const [isWalletExist, setIsWalletExist] = useState(true)
     const [isLoading, setIsLoading] = useState(true)
     const [isRefreshing, setIsRefreshing] = useState(false)
+    const [transactionFilter, setTransactionFilter] = useState<'all' | 'credit' | 'debit'>('all')
 
     const fetchWalleteDetails = async () => {
         try {
@@ -159,6 +164,11 @@ const ProfileWallet = () => {
         }
     }
 
+    const filteredTransactions = transactions.filter((transaction) => {
+        if (transactionFilter === 'all') return true
+        return (transaction.transactionType || transaction.type || '').toLowerCase() === transactionFilter
+    })
+
     return (
         <>
             {
@@ -195,17 +205,38 @@ const ProfileWallet = () => {
 
                         {/* Transactions Section */}
                         <div className="">
-                            <div className="flex items-center justify-between mb-3">
-                                <h2 className="text-2xl font-bold text-gray-800">Transaction History</h2>
-                                <span className="text-sm text-gray-500">
+                            <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <span className="inline-flex h-9 items-center rounded-2xl bg-[#d8d1ff] px-4 text-sm font-medium text-[#111827]">
                                     {transactions.length} {transactions.length === 1 ? 'transaction' : 'transactions'}
                                 </span>
+
+                                {(['all', 'credit', 'debit'] as const).map((filter) => (
+                                    <button
+                                        key={filter}
+                                        type="button"
+                                        onClick={() => setTransactionFilter(filter)}
+                                        className={`inline-flex h-9 min-w-[58px] items-center justify-center rounded-2xl px-4 text-sm font-medium transition-colors ${transactionFilter === filter
+                                            ? 'bg-[#DA7756] text-white'
+                                            : 'bg-white text-gray-500 hover:text-gray-700'
+                                            }`}
+                                    >
+                                        {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                    </button>
+                                ))}
+
+                                <button
+                                    type="button"
+                                    className="inline-flex h-9 items-center gap-2 rounded-2xl border border-[#DA7756] bg-white px-4 text-sm font-medium text-[#DA7756] transition-colors hover:bg-[#fff6f2]"
+                                >
+                                    <Filter className="h-4 w-4" />
+                                    Filter
+                                </button>
                             </div>
 
                             {/* Transactions Table */}
                             {transactions.length > 0 ? (
                                 <EnhancedTable
-                                    data={transactions}
+                                    data={filteredTransactions}
                                     columns={transactionColumns}
                                     renderCell={renderCell}
                                     hideTableSearch={true}
@@ -215,7 +246,9 @@ const ProfileWallet = () => {
                                 />
                             ) : (
                                 <div className="bg-white rounded-lg p-12 text-center">
-                                    <p className="text-gray-500 text-sm">No transactions yet</p>
+                                    <p className="text-gray-500 text-sm">
+                                        {isLoading ? 'Loading transactions...' : 'No transactions yet'}
+                                    </p>
                                 </div>
                             )}
                         </div>

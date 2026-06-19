@@ -17,7 +17,7 @@ import {
   MessageSquare,
   Megaphone,
   Trophy,
-  Brain,
+  Gauge,
   HelpCircle,
   Bug,
   FileText,
@@ -27,10 +27,10 @@ import {
 
 // Module-based navigation structures for Business Compass
 const businessCompassNavigation: Record<string, any> = {
-  "My Profile": {
-    icon: User,
-    href: "/business-compass/profile",
-  },
+  // "My Profile": {
+  //   icon: User,
+  //   href: "/business-compass/profile",
+  // },
   Dashboard: {
     icon: User,
     href: "/business-compass/dashboard",
@@ -76,7 +76,7 @@ const businessCompassNavigation: Record<string, any> = {
     href: "/business-compass/leaderboard",
   },
   DISC: {
-    icon: Brain,
+    icon: Gauge,
     href: "/business-compass/disc-personality-assessment",
   },
   "Help Center": {

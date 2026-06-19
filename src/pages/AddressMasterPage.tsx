@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { Edit, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const columns: ColumnConfig[] = [
   {
@@ -75,6 +76,7 @@ const columns: ColumnConfig[] = [
 ]
 
 export const AddressMasterPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
@@ -97,6 +99,7 @@ export const AddressMasterPage = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
+      {shouldShow("Address Master", "update") && (
       <Button
         size="sm"
         variant="ghost"
@@ -107,6 +110,7 @@ export const AddressMasterPage = () => {
       >
         <Edit className="w-4 h-4" />
       </Button>
+      )}
     </div>
   );
 
@@ -121,13 +125,17 @@ export const AddressMasterPage = () => {
   };
 
   const leftActions = (
-    <Button
-      className="bg-[#C72030] hover:bg-[#A01020] text-white"
-      onClick={() => navigate("/master/address/add")}
-    >
-      <Plus className="w-4 h-4 mr-2" />
-      Add
-    </Button>
+    <>
+      {shouldShow("Address Master", "create") && (
+      <Button
+        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        onClick={() => navigate("/master/address/add")}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+      )}
+    </>
   );
 
   return (

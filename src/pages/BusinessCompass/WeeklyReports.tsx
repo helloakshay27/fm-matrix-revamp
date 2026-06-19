@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
     Calendar,
     Info,
@@ -8,7 +9,6 @@ import {
     Plus,
     Upload,
     CheckSquare,
-    AlertTriangle,
     X,
     Star,
     Target,
@@ -19,8 +19,6 @@ import {
     Smile,
     Users,
     User,
-    ChevronUp,
-    ChevronDown,
     ChevronRight,
     BarChart3,
     Edit,
@@ -34,6 +32,7 @@ import {
     ListTodo,
     Play,
     Pause,
+    Sparkles,
 } from "lucide-react";
 import {
     addDays,
@@ -49,12 +48,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
     Select,
     SelectContent,
@@ -115,11 +108,12 @@ const AutoSizingTextarea = ({
     const adjust = React.useCallback(() => {
         const el = textareaRef.current;
         if (!el) return;
-        const scrollH = el.scrollHeight;
-        const currentH = el.offsetHeight;
-        if (scrollH > currentH) {
-            el.style.height = `${scrollH}px`;
-        }
+
+        // Reset height first
+        el.style.height = "auto";
+
+        // Set to content height
+        el.style.height = `${el.scrollHeight}px`;
     }, []);
 
     React.useEffect(() => {
@@ -138,22 +132,48 @@ const AutoSizingTextarea = ({
             placeholder={placeholder}
             className={cn("overflow-hidden outline-none w-full", className)}
             rows={1}
-            style={{ minHeight: "40px", resize: "vertical" }}
+            style={{ resize: "vertical" }}
         />
     );
 };
 
 const accentEmphasis = "#DA7756";
 const cardChrome =
-    "overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm";
+    "overflow-hidden rounded-[18px] border border-[#e8e2d8] bg-[#f4f2ed] shadow-none";
 const sectionHeader =
-    "border-b border-neutral-200/40 bg-white/60 px-4 py-4 sm:px-5";
+    "px-4 pt-4 pb-3 sm:px-5";
 const btnPrimary =
     "bg-[#DA7756] font-semibold text-white shadow-sm transition-colors hover:bg-[#c9673f]";
 const btnOutline =
-    "border border-[#DA7756]/25 bg-white text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45";
+    "border border-[#DA7756] bg-white text-[#DA7756] shadow-none transition-colors hover:bg-[#fff6f2] hover:border-[#DA7756]";
 const badgePoints =
-    "border-0 bg-[#DA7756] px-3 py-1 text-xs text-white hover:bg-[#DA7756]";
+    "shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[11px] font-bold text-[#343066] hover:bg-[#ddd8ff]";
+
+const weeklyAiSuggestionStyles = `
+@keyframes aiSuggestionColorMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes aiSuggestionBorderFlow {
+  0%, 100% { border-color: rgba(218, 119, 86, 0.55); }
+  33%      { border-color: rgba(129, 106, 229, 0.55); }
+  66%      { border-color: rgba(49, 130, 206, 0.55); }
+}
+
+.weekly-ai-suggestions-card {
+  background-image: linear-gradient(120deg, #ffffff 0%, #fff4ef 22%, #f2ecff 45%, #ebf4ff 68%, #ffffff 100%);
+  background-size: 220% 220%;
+  animation: aiSuggestionColorMove 7s ease-in-out infinite, aiSuggestionBorderFlow 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weekly-ai-suggestions-card {
+    animation: none;
+  }
+}
+`;
 
 type RemarkChipId =
     | "breakthrough"
@@ -164,8 +184,10 @@ type RemarkChipId =
 
 interface WeeklyReportDraft {
     wins?: string[];
+    winDates?: Record<number, string>;
     checkedWins?: Record<number, boolean>;
     starredWins?: Record<number, boolean>;
+    starredCompletedItems?: Record<string, boolean>;
     dayPlans?: Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string }[]>;
     remarksText?: string;
     remarksList?: { type: RemarkChipId | null; text: string }[];
@@ -245,20 +267,42 @@ const normalizeToString = (w: any): string => {
     return String(w ?? "");
 };
 
-const normalizeWinKey = (win: unknown): string =>
-    normalizeToString(win).trim().replace(/\s+/g, " ").toLowerCase();
-
-const getTitleOrValue = (item: unknown) => {
-    if (
-        item &&
-        typeof item === "object" &&
-        "title" in item &&
-        typeof item.title === "string"
-    ) {
-        return item.title;
+const getWeeklyHistoryItemText = (item: any): string => {
+    if (typeof item === "string") return item;
+    if (item && typeof item === "object") {
+        return String(item.title || item.text || item.name || item.description || "");
     }
-    return item;
+    return String(item ?? "");
 };
+
+const getWeeklyHistoryItemType = (item: any): "task" | "issue" | "todo" | "notes" => {
+    if (!item || typeof item === "string") return "notes";
+
+    const rawType = String(
+        item.source_type ||
+        item.sourceType ||
+        item.type ||
+        item.originalData?.source_type ||
+        item.originalData?.type ||
+        ""
+    ).toLowerCase();
+
+    const rawId = String(item.id || item.source_id || "").toLowerCase();
+
+    if (rawType.includes("task") || rawId.startsWith("task-") || rawId.startsWith("nw-task-")) return "task";
+    if (rawType.includes("issue") || rawId.startsWith("issue-") || rawId.startsWith("nw-issue-")) return "issue";
+    if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-") || rawId.startsWith("nw-todo-")) return "todo";
+
+    return "notes";
+};
+
+const weeklyHistoryTypeBadgeMeta = {
+    task: { label: "Task", className: "border-[#f4c7b8] bg-[#fff3ee] text-[#b85f43]" },
+    issue: { label: "Issue", className: "border-[#d9d5ff] bg-[#f4f2ff] text-[#5b57a6]" },
+    todo: { label: "To Do", className: "border-[#ead9b8] bg-[#fff8ea] text-[#8a6426]" },
+    notes: { label: "Notes", className: "border-[#e2e5ea] bg-[#f8fafc] text-[#64748b]" },
+} as const;
+
 
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
 
@@ -274,6 +318,25 @@ const getSopStatusValue = (status: any) => {
     return "To Start";
 };
 
+const getValidWeeklyPlanItems = (
+    plans: Record<string, { text?: string; starred?: boolean }[]>
+) =>
+    Object.values(plans).flatMap((tasks) =>
+        (tasks || []).filter((item) => {
+            if (!item || typeof item !== "object") return false;
+            return typeof item.text === "string" && item.text.trim() !== "";
+        })
+    );
+
+const calculateWeeklyPlanningScore = (
+    plans: Record<string, { text?: string; starred?: boolean }[]>
+) => {
+    const validPlanItems = getValidWeeklyPlanItems(plans);
+    const starredPlanItems = validPlanItems.filter((item) => item.starred).length;
+
+    return Math.min(validPlanItems.length * 1 + starredPlanItems * 1, 20);
+};
+
 const formatSopValue = (value: any) => {
     if (value === null || value === undefined || value === "") return "Not available";
     return String(value);
@@ -285,6 +348,16 @@ const formatSopDate = (value: any) => {
     if (Number.isNaN(date.getTime())) return "Not available";
     return format(date, "dd MMM yyyy, hh:mm a");
 };
+
+const taskIssueGroupKeys = [
+    "overdue",
+    "in_progress",
+    "pending",
+    "on_hold",
+    "reopened",
+] as const;
+type TaskIssueGroupKey = (typeof taskIssueGroupKeys)[number];
+const taskIssueGroupKeySet = new Set<string>(taskIssueGroupKeys);
 
 const roundScore = (score: number) => Number(score.toFixed(2));
 
@@ -311,6 +384,14 @@ const getOverdueLabel = (targetDate?: string) => {
     return `${m}m overdue`;
 };
 
+const cleanReportText = (value: unknown) =>
+    String(value ?? "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<\/?[^>]+>/g, "")
+        .trim();
+
 const WeeklyReports = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -327,11 +408,15 @@ const WeeklyReports = () => {
         [key: string]: boolean;
     }>({});
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const tasksIssuesSectionRef = useRef<HTMLDivElement>(null);
+    const accomplishmentsSectionRef = useRef<HTMLDivElement>(null);
+    const planSectionRef = useRef<HTMLDivElement>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
     const [planWeekOpenItemId, setPlanWeekOpenItemId] = useState<string | null>(null);
     const [nextWeekScheduledItems, setNextWeekScheduledItems] = useState<any[]>([]);
     const [nextWeekScheduledLoading, setNextWeekScheduledLoading] = useState(false);
+    const [hiddenNextWeekScheduledIds, setHiddenNextWeekScheduledIds] = useState<Set<string>>(new Set());
     const [starredCompletedItems, setStarredCompletedItems] = useState<Record<string, boolean>>({});
     const [showClosureModal, setShowClosureModal] = useState(false);
     const [closureItem, setClosureItem] = useState<any>(null);
@@ -361,6 +446,7 @@ const WeeklyReports = () => {
     const [tasksLoading, setTasksLoading] = useState(false);
     const [issuesLoading, setIssuesLoading] = useState(false);
     const [todosData, setTodosData] = useState<any[]>([]);
+    const [fetchedSourceData, setFetchedSourceData] = useState<Record<string, any>>({});
     const [todosLoading, setTodosLoading] = useState(false);
     const [kpis, setKpis] = useState<any[]>([]);
     const [kpiLoading, setKpiLoading] = useState(false);
@@ -370,12 +456,23 @@ const WeeklyReports = () => {
     }>({});
     const [dailyKpiSummary, setDailyKpiSummary] = useState<any>(null);
     const [wins, setWins] = React.useState<string[]>([]);
+    const [winDates, setWinDates] = React.useState<Record<number, string>>({});
     const [checkedWins, setCheckedWins] = React.useState<Record<number, boolean>>(
         {}
     );
     const [starredWins, setStarredWins] = React.useState<Record<number, boolean>>(
         {}
     );
+
+    const autoAddedTitles = useMemo(() => {
+        const titles = new Set<string>();
+        mergedTasksIssues
+            .filter((item: any) => ["completed", "closed", "done"].includes(item.status))
+            .forEach((item: any) => {
+                titles.add(cleanReportText(item.title || "").toLowerCase());
+            });
+        return titles;
+    }, [mergedTasksIssues]);
 
     const [dayPlans, setDayPlans] = React.useState<
         Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]>
@@ -389,6 +486,11 @@ const WeeklyReports = () => {
         React.useState<RemarkChipId | null>(null);
     const [remarksInteracted, setRemarksInteracted] = React.useState(false);
     const remarksTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const draggedPlanRef = React.useRef<
+        | { kind: "plan"; day: string; index: number }
+        | { kind: "scheduled"; day: string; item: any; starred: boolean }
+        | null
+    >(null);
     const [openTaskModal, setOpenTaskModal] = useState(false);
     const [openIssueModal, setOpenIssueModal] = useState(false);
     const [openTodoModal, setOpenTodoModal] = useState(false);
@@ -408,13 +510,6 @@ const WeeklyReports = () => {
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
     const [editingId, setEditingId] = React.useState<number | null>(null);
-    const [showDailyWinsDialog, setShowDailyWinsDialog] = React.useState(false);
-    const [dailyReports, setDailyReports] = React.useState<any[]>([]);
-    const [isLoadingDailyReports, setIsLoadingDailyReports] =
-        React.useState(false);
-    const [selectedDailyWins, setSelectedDailyWins] = React.useState<string[]>(
-        []
-    );
     const [uploadedFilesCount, setUploadedFilesCount] = React.useState(0);
     const [selectedFileNames, setSelectedFileNames] = React.useState<string[]>(
         []
@@ -431,6 +526,7 @@ const WeeklyReports = () => {
         Record<number, boolean>
     >({});
     const [selectedSopId, setSelectedSopId] = React.useState<number | null>(null);
+    const [isScoreBreakdownOpen, setIsScoreBreakdownOpen] = React.useState(false);
     const refDate = React.useMemo(() => new Date(), []);
 
     useEffect(() => {
@@ -523,10 +619,14 @@ const WeeklyReports = () => {
     const applyStoredDraft = React.useCallback((draft: WeeklyReportDraft | null) => {
         if (!draft) return;
         if (Array.isArray(draft.wins)) setWins(draft.wins);
+        if (draft.winDates && typeof draft.winDates === "object")
+            setWinDates(draft.winDates);
         if (draft.checkedWins && typeof draft.checkedWins === "object")
             setCheckedWins(draft.checkedWins);
         if (draft.starredWins && typeof draft.starredWins === "object")
             setStarredWins(draft.starredWins);
+        if (draft.starredCompletedItems && typeof draft.starredCompletedItems === "object")
+            setStarredCompletedItems(draft.starredCompletedItems);
         if (draft.dayPlans && typeof draft.dayPlans === "object")
             setDayPlans(draft.dayPlans);
         if (typeof draft.remarksText === "string")
@@ -562,7 +662,62 @@ const WeeklyReports = () => {
         setCurrentIssuesPage(1);
         setMergedTasksIssues([]);
         setTodosData([]);
+        setFetchedSourceData({});
     }, [weekEnd, userId]);
+
+    // Fetch source record details (task/issue/todo) for day-plan items that have a source_id
+    // but no originalData and cannot be resolved from the already-loaded lists.
+    useEffect(() => {
+        if (!normalizedBaseUrl || !token) return;
+
+        const allItems = [...nextWeekScheduledItems, ...mergedTasksIssues];
+        const isAlreadyLoaded = (source_type: string, source_id: any) =>
+            allItems.some(
+                (item) =>
+                    item.type === source_type &&
+                    (String(item.originalData?.id) === String(source_id) ||
+                        String(item.id) === String(source_id))
+            );
+
+        const toFetch: { source_id: any; source_type: string }[] = [];
+        Object.values(dayPlans).flat().forEach((planObj) => {
+            if (planObj.source_id == null || !planObj.source_type || planObj.originalData) return;
+            const key = `${planObj.source_type}:${planObj.source_id}`;
+            if (!fetchedSourceData[key] && !isAlreadyLoaded(planObj.source_type, planObj.source_id)) {
+                toFetch.push({ source_id: planObj.source_id, source_type: planObj.source_type });
+            }
+        });
+
+        if (toFetch.length === 0) return;
+
+        const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
+        const urlFor = (source_type: string, source_id: any) => {
+            if (source_type === "task") return `${normalizedBaseUrl}/task_managements/${source_id}.json`;
+            if (source_type === "issue") return `${normalizedBaseUrl}/issues/${source_id}.json`;
+            if (source_type === "todo") return `${normalizedBaseUrl}/todos/${source_id}.json`;
+            return null;
+        };
+
+        (async () => {
+            const newData: Record<string, any> = {};
+            await Promise.allSettled(
+                toFetch.map(async ({ source_id, source_type }) => {
+                    const url = urlFor(source_type, source_id);
+                    if (!url) return;
+                    try {
+                        const res = await fetch(url, { headers });
+                        if (!res.ok) return;
+                        const json = await res.json();
+                        const record = json.task_management || json.issue || json.todo || json;
+                        newData[`${source_type}:${source_id}`] = record;
+                    } catch { }
+                })
+            );
+            if (Object.keys(newData).length > 0) {
+                setFetchedSourceData((prev) => ({ ...prev, ...newData }));
+            }
+        })();
+    }, [dayPlans, nextWeekScheduledItems, mergedTasksIssues, normalizedBaseUrl, token]);
 
     useEffect(() => {
         const fetchWeeklyTasks = async () => {
@@ -1043,7 +1198,13 @@ const WeeklyReports = () => {
         else dailyKpiScore = 0;
 
         // 3. Starred Achievements (Max 6 points)
-        const starredCount = Object.values(starredWins).filter(Boolean).length;
+        const starredWinCount = wins.filter((win, index) => {
+            const hasText = typeof win === "string" && win.trim() !== "";
+            return hasText && checkedWins[index] && starredWins[index];
+        }).length;
+        const starredCount =
+            starredWinCount +
+            Object.values(starredCompletedItems).filter(Boolean).length;
         const achievementsScore = Math.min(starredCount * 2, 6);
 
         // 4. Tasks & Issues (Max 10 points)
@@ -1071,17 +1232,7 @@ const WeeklyReports = () => {
         sopScore = roundScore(sopScore);
 
         // 6. Items Planned for Coming Week (Max 20 points)
-        const totalPlanned = Object.values(dayPlans).reduce((acc, tasks) => {
-            return (
-                acc +
-                tasks.filter((t) => {
-                    if (!t || typeof t !== "object") return false;
-                    const text = (t as any)?.text;
-                    return typeof text === "string" && text.trim() !== "";
-                }).length
-            );
-        }, 0);
-        const planningScore = Math.min(totalPlanned, 20);
+        const planningScore = calculateWeeklyPlanningScore(dayPlans);
 
         // 7. Remarks Logged (Max 14 points)
         let remarksScore = 0;
@@ -1124,7 +1275,7 @@ const WeeklyReports = () => {
                 remarks: remarksScore,
             },
         };
-    }, [kpis, kpiEntries, dailyKpiSummary, starredWins, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
+    }, [kpis, kpiEntries, dailyKpiSummary, wins, checkedWins, starredWins, starredCompletedItems, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
 
     const closureFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1547,10 +1698,6 @@ const WeeklyReports = () => {
         }
     };
 
-    const monthTitle = format(weekStart, "MMM yyyy");
-    const weekRangeLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}`;
-    const weekNumLabel = String(getISOWeek(weekStart));
-    const submitRangeLabel = `${format(weekStart, "d MMM")} - ${format(weekEnd, "d MMM")}`;
     const currentDateValue = format(new Date(), "yyyy-MM-dd");
     const weekEndDateValue = format(weekEnd, "yyyy-MM-dd");
 
@@ -1568,66 +1715,19 @@ const WeeklyReports = () => {
     const lastWeekNum = String(getISOWeek(prevWeekStart));
     const lastWeekLabel = `${format(prevWeekStart, "MMM d")} - ${format(prevWeekEnd, "MMM d")}`;
 
-    const importPrevWeekStart = React.useMemo(
-        () => subDays(weekStart, 7),
-        [weekStart]
-    );
-    const importPrevWeekEnd = React.useMemo(() => subDays(weekEnd, 7), [weekEnd]);
-    const existingWinKeys = React.useMemo(
-        () =>
-            new Set(
-                wins
-                    .map(normalizeWinKey)
-                    .filter(Boolean)
-            ),
-        [wins]
-    );
-    const availableDailyReports = React.useMemo(
-        () =>
-            dailyReports
-                .map((report) => {
-                    const rawDate = report.start_date || report.created_at;
-                    const reportDate = rawDate ? new Date(rawDate) : null;
-                    if (!reportDate || isNaN(reportDate.getTime())) return null;
-
-                    const rawWins =
-                        report.report_data?.achievements ||
-                        report.report_data?.accomplishments?.items?.map(
-                            getTitleOrValue
-                        ) ||
-                        (Array.isArray(report.report_data?.accomplishments)
-                            ? report.report_data.accomplishments.map(
-                                getTitleOrValue
-                            )
-                            : []) ||
-                        [];
-                    const reportWins = rawWins
-                        .map(normalizeToString)
-                        .map((win: string) => win.trim())
-                        .filter(
-                            (win: string) =>
-                                win && !existingWinKeys.has(normalizeWinKey(win))
-                        );
-
-                    return reportWins.length > 0
-                        ? { id: report.id, reportDate, wins: reportWins }
-                        : null;
-                })
-                .filter(Boolean),
-        [dailyReports, existingWinKeys]
-    );
-
     const upcomingDays = React.useMemo(() => {
         const start = new Date(weekEnd);
         start.setDate(start.getDate() + 1);
         const labels: {
             key: string;
             short: string;
+            labelTop: string;
+            labelBottom: string;
             date: string;
             color: string;
             canAdd: boolean;
         }[] = [];
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 6; i++) {
             const d = new Date(start);
             d.setDate(start.getDate() + i);
             const key = format(d, "EEE d MMM");
@@ -1638,12 +1738,13 @@ const WeeklyReports = () => {
                 "bg-[#f6f4ee]",
                 "bg-white/80",
                 "bg-[#f6f4ee]",
-                "bg-white/80",
             ];
-            const canAdd = i < 5;
+            const canAdd = true;
             labels.push({
                 key,
                 short: format(d, "EEE d MMM"),
+                labelTop: format(d, "EEE d"),
+                labelBottom: format(d, "MMM"),
                 date: format(d, "yyyy-MM-dd"),
                 color: colors[i] ?? "bg-slate-50",
                 canAdd,
@@ -1665,6 +1766,7 @@ const WeeklyReports = () => {
     const nextWeekScheduledByDay = useMemo(() => {
         const grouped: Record<string, any[]> = {};
         nextWeekScheduledItems.forEach((item) => {
+            if (hiddenNextWeekScheduledIds.has(item.id)) return;
             const dateStr = item.date ? item.date.slice(0, 10) : null;
             const dayKey = dateStr ? nextWeekDateToKey[dateStr] : null;
             const key = dayKey ?? upcomingDays[0]?.key;
@@ -1673,7 +1775,11 @@ const WeeklyReports = () => {
             grouped[key].push(item);
         });
         return grouped;
-    }, [nextWeekScheduledItems, nextWeekDateToKey, upcomingDays]);
+    }, [hiddenNextWeekScheduledIds, nextWeekDateToKey, nextWeekScheduledItems, upcomingDays]);
+
+    useEffect(() => {
+        setHiddenNextWeekScheduledIds(new Set());
+    }, [weekStart]);
 
     useEffect(() => {
         const fetchSystemSops = async () => {
@@ -1842,7 +1948,7 @@ const WeeklyReports = () => {
 
                 const newDayPlans: Record<
                     string,
-                    { id: string; text: string; starred?: boolean }[]
+                    { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]
                 > = {};
                 Object.entries(dayKeyedObject).forEach(([dayKey, dayTasks]) => {
                     const dayAbbr = dayMapping[dayKey.toLowerCase()];
@@ -1862,6 +1968,8 @@ const WeeklyReports = () => {
                                     id: t.id || crypto.randomUUID(),
                                     text: t.text || t.title || "",
                                     starred: t.starred || t.is_starred || false,
+                                    ...(t.source_id != null && { source_id: t.source_id }),
+                                    ...(t.source_type && { source_type: t.source_type }),
                                 };
                             });
                         }
@@ -1910,6 +2018,38 @@ const WeeklyReports = () => {
                 populateForm(existing);
             }
             applyStoredDraft(getStoredDraft());
+
+            // Patch: the draft overwrites dayPlans and loses source_id/source_type.
+            // Re-apply them from the API response using the plan item's id as the key.
+            if (existing?.report_data?.upcoming_week_plan) {
+                const apiPlansObj = Array.isArray(existing.report_data.upcoming_week_plan)
+                    ? (existing.report_data.upcoming_week_plan[0] ?? {})
+                    : existing.report_data.upcoming_week_plan;
+                const apiPlanById = new Map<string, { source_id?: any; source_type?: string }>();
+                Object.values(apiPlansObj).forEach((dayTasks: any) => {
+                    if (!Array.isArray(dayTasks)) return;
+                    dayTasks.forEach((t: any) => {
+                        if (t?.id && (t.source_id != null || t.source_type)) {
+                            apiPlanById.set(t.id, { source_id: t.source_id, source_type: t.source_type });
+                        }
+                    });
+                });
+                if (apiPlanById.size > 0) {
+                    setDayPlans((prev) => {
+                        const patched: typeof prev = {};
+                        for (const [dayKey, tasks] of Object.entries(prev)) {
+                            patched[dayKey] = tasks.map((task) => {
+                                const apiData = apiPlanById.get(task.id);
+                                if (apiData && (!task.source_type || task.source_id == null)) {
+                                    return { ...task, ...apiData };
+                                }
+                                return task;
+                            });
+                        }
+                        return patched;
+                    });
+                }
+            }
         } catch (error) {
             console.error("Failed to fetch weekly reports history:", error);
             applyStoredDraft(getStoredDraft());
@@ -1934,8 +2074,10 @@ const WeeklyReports = () => {
         if (!canPersistDraftRef.current) return;
         const draft: WeeklyReportDraft = {
             wins,
+            winDates,
             checkedWins,
             starredWins,
+            starredCompletedItems,
             dayPlans,
             remarksText,
             remarksList,
@@ -1950,8 +2092,10 @@ const WeeklyReports = () => {
         localStorage.setItem(weekDraftKey, JSON.stringify(draft));
     }, [
         wins,
+        winDates,
         checkedWins,
         starredWins,
+        starredCompletedItems,
         dayPlans,
         remarksText,
         remarksList,
@@ -1968,7 +2112,9 @@ const WeeklyReports = () => {
 
     const handleAddWin = () => {
         const newIndex = wins.length;
+        const todayKey = new Date().toISOString().slice(0, 10);
         setWins([...wins, ""]);
+        setWinDates((prev) => ({ ...prev, [newIndex]: todayKey }));
         setCheckedWins((prev) => ({ ...prev, [newIndex]: true }));
     };
 
@@ -1976,11 +2122,17 @@ const WeeklyReports = () => {
         const newWins = wins.filter((_, i) => i !== index);
         setWins(newWins);
         const newChecked: Record<number, boolean> = {};
+        const newWinDates: Record<number, string> = {};
+        const newStarred: Record<number, boolean> = {};
         newWins.forEach((_, i) => {
             const oldIndex = i < index ? i : i + 1;
             newChecked[i] = checkedWins[oldIndex] ?? true;
+            if (winDates[oldIndex] !== undefined) newWinDates[i] = winDates[oldIndex];
+            if (starredWins[oldIndex] !== undefined) newStarred[i] = starredWins[oldIndex];
         });
         setCheckedWins(newChecked);
+        setWinDates(newWinDates);
+        setStarredWins(newStarred);
     };
 
     const handleWinChange = (index: number, value: string) => {
@@ -2087,110 +2239,6 @@ const WeeklyReports = () => {
         }
     };
 
-    // --- MODIFIED: Remove carried forward achievements from the current list ---
-    const handleCarryForward = () => {
-        const indicesToCarry: number[] = [];
-        const uncheckedWins = wins.filter((win, i) => {
-            if (!checkedWins[i] && win.trim() !== "") {
-                indicesToCarry.push(i);
-                return true;
-            }
-            return false;
-        });
-
-        if (uncheckedWins.length === 0) {
-            toast.info("No uncompleted achievements to carry forward");
-            return;
-        }
-        if (history.length === 0) {
-            toast.error("No previous reports found to carry forward");
-            return;
-        }
-
-        const latest = history.find((item) => item.id !== editingId);
-        if (latest) {
-            const firstDay = upcomingDays.find((d) => d.canAdd)?.key;
-            if (firstDay) {
-                setDayPlans((prev) => ({
-                    ...prev,
-                    [firstDay]: [
-                        ...(prev[firstDay] || []),
-                        ...uncheckedWins.map((win) => ({
-                            id: crypto.randomUUID(),
-                            text: win,
-                        })),
-                    ],
-                }));
-
-                // Remove the carried forward items from 'wins'
-                const remainingWins: string[] = [];
-                const newCheckedWins: Record<number, boolean> = {};
-                const newStarredWins: Record<number, boolean> = {};
-
-                let newIdx = 0;
-                wins.forEach((win, i) => {
-                    if (!indicesToCarry.includes(i)) {
-                        remainingWins.push(win);
-                        newCheckedWins[newIdx] = checkedWins[i] ?? false;
-                        newStarredWins[newIdx] = starredWins[i] ?? false;
-                        newIdx++;
-                    }
-                });
-
-                setWins(remainingWins);
-                setCheckedWins(newCheckedWins);
-                setStarredWins(newStarredWins);
-
-                toast.success(
-                    `Carried forward ${uncheckedWins.length} uncompleted achievement(s) and removed from list`
-                );
-            }
-        }
-    };
-
-    const handleImportDailyWins = async () => {
-        setIsLoadingDailyReports(true);
-        setSelectedDailyWins([]);
-        setShowDailyWinsDialog(true);
-        try {
-            const response = await apiClient.get(
-                `${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=daily`
-            );
-            const allDaily = response.data || [];
-
-            const prevStartStr = format(importPrevWeekStart, "yyyy-MM-dd");
-            const prevEndStr = format(importPrevWeekEnd, "yyyy-MM-dd");
-
-            const filtered = allDaily.filter((report: any) => {
-                const raw = report.start_date || report.created_at;
-                if (!raw) return false;
-                const reportDateStr =
-                    typeof raw === "string"
-                        ? raw.split("T")[0]
-                        : format(new Date(raw), "yyyy-MM-dd");
-                return reportDateStr >= prevStartStr && reportDateStr <= prevEndStr;
-            });
-
-            setDailyReports(filtered);
-        } catch (error) {
-            console.error("Failed to fetch daily reports:", error);
-            toast.error("Failed to load daily reports");
-        } finally {
-            setIsLoadingDailyReports(false);
-        }
-    };
-
-    const confirmImportDailyWins = () => {
-        if (selectedDailyWins.length === 0) {
-            toast.info("No wins selected");
-            return;
-        }
-        setWins((prev) => [...prev, ...selectedDailyWins]);
-        toast.success(`Imported ${selectedDailyWins.length} daily wins`);
-        setShowDailyWinsDialog(false);
-        setSelectedDailyWins([]);
-    };
-
     const handleAddPlan = (day: string) => {
         setDayPlans((prev) => ({
             ...prev,
@@ -2209,6 +2257,7 @@ const WeeklyReports = () => {
                     starred: false,
                     source_id: item.originalData?.id ?? item.id,
                     source_type: item.type,
+                    originalData: item.originalData ?? null,
                 },
             ],
         }));
@@ -2231,7 +2280,21 @@ const WeeklyReports = () => {
         return ids;
     }, [mergedTasksIssues, dayPlans]);
 
-    const addItemToNextWeek = (item: any, dayKey?: string) => {
+    const planMatchesSourceItem = (
+        plan: { text: string; source_id?: any; source_type?: string },
+        item: any
+    ) => {
+        const sourceId = item.originalData?.id ?? item.id;
+        const titleLower = (item.title || "").toLowerCase().trim();
+        return (
+            (plan.source_id != null &&
+                plan.source_id === sourceId &&
+                (!plan.source_type || plan.source_type === item.type)) ||
+            plan.text.toLowerCase().trim() === titleLower
+        );
+    };
+
+    const addItemToNextWeek = (item: any, dayKey?: string, starred = false) => {
         const text = (item.title || "").trim();
         if (!text) return;
         const targetDay = dayKey ?? upcomingDays[0]?.key;
@@ -2251,7 +2314,7 @@ const WeeklyReports = () => {
                     {
                         id: crypto.randomUUID(),
                         text,
-                        starred: false,
+                        starred,
                         source_id: item.originalData?.id ?? item.id,
                         source_type: item.type,
                         originalData: item.originalData ?? null,
@@ -2260,6 +2323,48 @@ const WeeklyReports = () => {
             }));
         }
         setPlanWeekOpenItemId(null);
+    };
+
+    const toggleScheduledItemPlanStar = (item: any, dayKey: string) => {
+        const text = (item.title || "").trim();
+        if (!text) return;
+
+        setDayPlans((prev) => {
+            let found = false;
+            const updated: typeof prev = {};
+
+            for (const [key, tasks] of Object.entries(prev)) {
+                updated[key] = tasks.map((task) => {
+                    if (!found && planMatchesSourceItem(task, item)) {
+                        found = true;
+                        return { ...task, starred: !task.starred };
+                    }
+                    return task;
+                });
+            }
+
+            if (!found) {
+                updated[dayKey] = [
+                    {
+                        id: crypto.randomUUID(),
+                        text,
+                        starred: true,
+                        source_id: item.originalData?.id ?? item.id,
+                        source_type: item.type,
+                        originalData: item.originalData ?? null,
+                    },
+                    ...(updated[dayKey] || []),
+                ];
+            }
+
+            return updated;
+        });
+        setPlanWeekOpenItemId(null);
+    };
+
+    const hideNextWeekScheduledItem = (item: any) => {
+        setHiddenNextWeekScheduledIds((prev) => new Set([...prev, item.id]));
+        removeItemFromNextWeek(item);
     };
 
     const removeItemFromNextWeek = (item: any) => {
@@ -2367,6 +2472,87 @@ const WeeklyReports = () => {
         }
     };
 
+    const handlePlanDragStart = (
+        event: React.DragEvent<HTMLElement>,
+        day: string,
+        index: number
+    ) => {
+        draggedPlanRef.current = { kind: "plan", day, index };
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", `${day}:${index}`);
+    };
+
+    const handleScheduledPlanDragStart = (
+        event: React.DragEvent<HTMLElement>,
+        item: any,
+        day: string,
+        starred: boolean
+    ) => {
+        draggedPlanRef.current = { kind: "scheduled", day, item, starred };
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", `${day}:${item.id}`);
+    };
+
+    const handlePlanDrop = (
+        event: React.DragEvent<HTMLElement>,
+        targetDay: string,
+        targetIndex: number
+    ) => {
+        event.preventDefault();
+        const source = draggedPlanRef.current;
+        draggedPlanRef.current = null;
+        if (!source) return;
+
+        if (source.kind === "scheduled") {
+            const text = (source.item.title || "").trim();
+            if (!text) return;
+
+            setDayPlans((prev) => {
+                const updated: typeof prev = {};
+                for (const [dayKey, tasks] of Object.entries(prev)) {
+                    updated[dayKey] = tasks.filter(
+                        (task) => !planMatchesSourceItem(task, source.item)
+                    );
+                }
+
+                const targetPlans = [...(updated[targetDay] || [])];
+                targetPlans.splice(targetIndex, 0, {
+                    id: crypto.randomUUID(),
+                    text,
+                    starred: source.starred,
+                    source_id: source.item.originalData?.id ?? source.item.id,
+                    source_type: source.item.type,
+                    originalData: source.item.originalData ?? null,
+                });
+
+                return { ...updated, [targetDay]: targetPlans };
+            });
+            setHiddenNextWeekScheduledIds((prev) => new Set([...prev, source.item.id]));
+            return;
+        }
+
+        setDayPlans((prev) => {
+            const sourcePlans = [...(prev[source.day] || [])];
+            const [moved] = sourcePlans.splice(source.index, 1);
+            if (!moved) return prev;
+
+            if (source.day === targetDay) {
+                const nextIndex =
+                    source.index < targetIndex ? Math.max(targetIndex - 1, 0) : targetIndex;
+                sourcePlans.splice(nextIndex, 0, moved);
+                return { ...prev, [source.day]: sourcePlans };
+            }
+
+            const targetPlans = [...(prev[targetDay] || [])];
+            targetPlans.splice(targetIndex, 0, moved);
+            return {
+                ...prev,
+                [source.day]: sourcePlans,
+                [targetDay]: targetPlans,
+            };
+        });
+    };
+
     const handleRemarkChipClick = (id: RemarkChipId) => {
         setActiveRemarkChip((prev) => (prev === id ? null : id));
         setRemarksInteracted(true);
@@ -2439,6 +2625,38 @@ const WeeklyReports = () => {
                 }
             });
 
+            const mondayPlanKey = upcomingDays[0]?.key;
+            const uncompletedWins = wins
+                .map((win, index) => ({ text: win.trim(), index }))
+                .filter(({ text, index }) => text !== "" && checkedWins[index] === false);
+            const effectiveDayPlans = { ...dayPlans };
+
+            if (mondayPlanKey && uncompletedWins.length > 0) {
+                const existingMondayPlans = effectiveDayPlans[mondayPlanKey] || [];
+                const existingPlanText = new Set(
+                    existingMondayPlans
+                        .map((plan) => plan.text.trim().toLowerCase())
+                        .filter(Boolean)
+                );
+                const carriedMondayPlans = uncompletedWins
+                    .filter(({ text }) => !existingPlanText.has(text.toLowerCase()))
+                    .map(({ text }) => ({
+                        id: crypto.randomUUID(),
+                        text,
+                    }));
+
+                effectiveDayPlans[mondayPlanKey] = [
+                    ...existingMondayPlans,
+                    ...carriedMondayPlans,
+                ];
+            }
+
+            const finalPlanningScore = calculateWeeklyPlanningScore(effectiveDayPlans);
+            const finalTotalScore = Math.min(
+                weeklyScore.total - weeklyScore.breakdown.planning + finalPlanningScore,
+                100
+            );
+
             const payload = {
                 user_journal: {
                     user_id: currentUser.id,
@@ -2458,22 +2676,26 @@ const WeeklyReports = () => {
                                 .map((w, index) => ({
                                     title: w,
                                     is_starred: starredWins[index] ?? false,
+                                    date: winDates[index] || new Date().toISOString().slice(0, 10),
                                 }))
-                                .filter((item) => item.title.trim() !== ""),
+                                .filter(
+                                    (item, index) =>
+                                        item.title.trim() !== "" && checkedWins[index] !== false
+                                ),
                             ...mergedTasksIssues
                                 .filter((item) =>
                                     ["completed", "closed", "done"].includes(item.status)
                                 )
                                 .map((item) => ({
                                     title: item.title,
-                                    is_starred: starredCompletedItems[item.id] ?? false,
+                                    is_starred: starredCompletedItems[String(item.id)] ?? false,
                                     source_type: item.type,
                                     source_id: item.originalData?.id ?? item.id,
                                 })),
                         ],
                         upcoming_week_plan: [{
                             ...Object.fromEntries(
-                                Object.entries(dayPlans).map(([dayKey, tasks]) => {
+                                Object.entries(effectiveDayPlans).map(([dayKey, tasks]) => {
                                     const dayMatch = dayKey.match(/^(\w{3})/);
                                     const dayAbbr = dayMatch ? dayMatch[1].toLowerCase() : dayKey.slice(0, 3).toLowerCase();
                                     const planForDate = upcomingDays.find(d => d.key === dayKey)?.date ?? null;
@@ -2483,6 +2705,7 @@ const WeeklyReports = () => {
                                             id: t.id,
                                             text: t.text,
                                             starred: t.starred ?? false,
+                                            is_starred: t.starred ?? false,
                                             source_id: t.source_id ?? null,
                                             source_type: t.source_type ?? null,
                                             plan_for_date: planForDate,
@@ -2510,7 +2733,7 @@ const WeeklyReports = () => {
                             planned_value: plannedEntries[kpi.kpi_id] || "",
                             notes: kpi.kpi_name,
                         })),
-                        total_score: Math.round(weeklyScore.total),
+                        total_score: Math.round(finalTotalScore),
                         remarks: formattedRemarks,
                         remark_type: activeRemarkChip,
                         score_override: true,
@@ -2520,7 +2743,7 @@ const WeeklyReports = () => {
                             starred_achievements: weeklyScore.breakdown.achievements,
                             tasks_issues: weeklyScore.breakdown.tasks,
                             sop_health: weeklyScore.breakdown.sop,
-                            planning: weeklyScore.breakdown.planning,
+                            planning: finalPlanningScore,
                             remarks: weeklyScore.breakdown.remarks,
                         },
                     },
@@ -2575,21 +2798,270 @@ const WeeklyReports = () => {
         [populateForm]
     );
 
+    const overdueSuggestionItems = mergedTasksIssues.filter((item: any) => {
+        const normalizedStatus = String(item?.status || "").toLowerCase();
+        if (item?.type !== "task") return false;
+        if (["completed", "closed", "done"].includes(normalizedStatus)) return false;
+
+        const targetDate =
+            item?.originalData?.target_date ||
+            item?.originalData?.due_date ||
+            item?.originalData?.end_date;
+        return (
+            normalizedStatus === "overdue" ||
+            normalizedStatus === "overdued" ||
+            isDateOverdue(targetDate)
+        );
+    });
+
+    const formatLiveScore = (value: number) => String(roundScore(value));
+    const liveScoreRows = [
+        {
+            label: "Weekly KPI",
+            score: weeklyScore.breakdown.weeklyKpi,
+            max: 20,
+            icon: <BarChart3 className="h-3 w-3" />,
+            calculation:
+                "Average weekly KPI achievement converted directly into 20 points.",
+        },
+        {
+            label: "Achievements",
+            score: weeklyScore.breakdown.achievements,
+            max: 6,
+            icon: <Trophy className="h-3 w-3" />,
+            calculation:
+                "2 points for each completed starred achievement, capped at 3 items.",
+        },
+        {
+            label: "Tasks",
+            score: weeklyScore.breakdown.tasks,
+            max: 10,
+            icon: <CheckSquare className="h-3 w-3" />,
+            calculation:
+                "Completed items add +2 each; open items can reduce up to -3; overdue items can reduce up to -5.",
+        },
+        {
+            label: "SOPs",
+            score: weeklyScore.breakdown.sop,
+            max: 20,
+            icon: <Zap className="h-3 w-3" />,
+            calculation:
+                "SOP health contributes up to 10 points and SOP status contributes up to 10 points.",
+        },
+        {
+            label: "Planning",
+            score: weeklyScore.breakdown.planning,
+            max: 20,
+            icon: <Target className="h-3 w-3" />,
+            calculation:
+                "1 point per valid next-week plan item, plus 1 point per starred item, capped at 20.",
+        },
+        {
+            label: "Remarks",
+            score: weeklyScore.breakdown.remarks,
+            max: 14,
+            icon: <MessageSquare className="h-3 w-3" />,
+            calculation:
+                "Breakthrough, breakdown, client feedback, and employee feedback add 3 points; normal remarks add 1 point.",
+        },
+    ];
+
+    const scrollToTasksIssuesSection = () => {
+        setCollapsedGroups((prev) => {
+            const next = new Set(prev);
+            next.delete("overdue");
+            return next;
+        });
+        tasksIssuesSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+    };
+
+    const openOnlyTaskIssueGroup = (activeKey: TaskIssueGroupKey) => {
+        setCollapsedGroups((prev) => {
+            const next = new Set(
+                [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+            );
+            taskIssueGroupKeys.forEach((key) => {
+                if (key !== activeKey) next.add(key);
+            });
+            return next;
+        });
+    };
+
+    const openAllTaskIssueGroups = () => {
+        setCollapsedGroups((prev) => {
+            return new Set(
+                [...prev].filter((key) => !taskIssueGroupKeySet.has(key))
+            );
+        });
+    };
+
+    const scrollToAccomplishmentsSection = () => {
+        accomplishmentsSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+    };
+
+    const scrollToPlanSection = () => {
+        planSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+    };
+
+    const weeklyAiSuggestions = [
+        {
+            tone: "red",
+            title: `${overdueSuggestionItems.length || 3} Overdue Tasks`,
+            actionLabel: "View Tasks",
+            description:
+                "Overdue items from last week need attention. Reschedule or complete them to avoid further delays.",
+            Icon: AlertCircle,
+            action: scrollToTasksIssuesSection,
+        },
+        {
+            tone: "green",
+            title: "Boost Accomplishments",
+            actionLabel: "Add Tasks",
+            description:
+                "Your rate is 55% today - completing 2 more logged tasks will push you past the 75% target.",
+            Icon: TrendingUp,
+            action: scrollToAccomplishmentsSection,
+        },
+        {
+            tone: "orange",
+            title: "Fill Your Daily Plan",
+            actionLabel: "Open Plan",
+            description:
+                "0/6 planning items completed. Set strategic priorities now before the day ends.",
+            Icon: Clock,
+            action: scrollToPlanSection,
+        },
+        {
+            tone: "purple",
+            title: "Assign Task Timings",
+            actionLabel: "Set Timing",
+            description:
+                "0/4 timing slots set. Adding time estimates improves your score and planning accuracy.",
+            Icon: Clock,
+            action: scrollToPlanSection,
+        },
+    ];
+
+    const weeklyAiToneStyles: Record<
+        string,
+        { icon: string; action: string; iconBg: string }
+    > = {
+        red: {
+            icon: "text-[#ef4444]",
+            action: "text-[#ef6b62]",
+            iconBg: "bg-[#fff1f0]",
+        },
+        green: {
+            icon: "text-[#29b881]",
+            action: "text-[#23c989]",
+            iconBg: "bg-[#eefbf5]",
+        },
+        orange: {
+            icon: "text-[#f59e0b]",
+            action: "text-[#f28a4b]",
+            iconBg: "bg-[#fff6eb]",
+        },
+        purple: {
+            icon: "text-[#7567d9]",
+            action: "text-[#9586e8]",
+            iconBg: "bg-[#f3f1ff]",
+        },
+    };
+
     return (
-        <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
-            <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
-            <div className="mx-auto max-w-7xl space-y-6 font-poppins text-[#1a1a1a]">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-                        Weekly Report
-                    </h1>
-                    <p className="mt-1 text-sm text-neutral-500 sm:text-base">
-                        Track your weekly KPI performance and insights
-                    </p>
+        <div className="bc-daily-page w-full max-w-full overflow-x-hidden">
+            <style>{weeklyAiSuggestionStyles}</style>
+            {addTaskOpen && (
+                <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
+            )}
+            <div className="space-y-5 px-4 py-4 sm:px-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl sm:text-[30px] font-bold leading-tight tracking-tight text-[#111111]">
+                            Weekly Report
+                        </h1>
+                        <p className="mt-2 text-sm text-[#72717a]">
+                            Track your weekly KPI performance and insights
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedWeekOffset(-1);
+                                const startStr = format(prevWeekStart, "yyyy-MM-dd");
+                                const existing = history.find(
+                                    (i: any) => i.start_date === startStr
+                                );
+                                if (existing) populateForm(existing);
+                                else {
+                                    setEditingId(null);
+                                    setWins([]);
+                                    setCheckedWins({});
+                                    setDayPlans({});
+                                    setRemarksList([]);
+                                    setRemarksText("");
+                                }
+                            }}
+                            className={cn(
+                                "inline-flex h-11 items-center rounded-[10px] border px-5 text-sm font-semibold transition-colors",
+                                selectedWeekOffset === -1
+                                    ? "border-[#DA7756] bg-[#DA7756] text-white"
+                                    : "border-[#DA7756] bg-white text-[#DA7756] hover:bg-[#fff6f2]"
+                            )}
+                        >
+                            W{lastWeekNum} {lastWeekLabel}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedWeekOffset(0);
+                                const startStr = format(currentWeekStart, "yyyy-MM-dd");
+                                const existing = history.find(
+                                    (i: any) => i.start_date === startStr
+                                );
+                                if (existing) populateForm(existing);
+                                else {
+                                    setEditingId(null);
+                                    setWins([]);
+                                    setCheckedWins({});
+                                    setDayPlans({});
+                                    setRemarksList([]);
+                                    setRemarksText("");
+                                }
+                            }}
+                            className={cn(
+                                "inline-flex h-11 items-center rounded-[10px] border px-5 text-sm font-semibold transition-colors",
+                                selectedWeekOffset === 0
+                                    ? "border-[#DA7756] bg-[#DA7756] text-white"
+                                    : "border-[#DA7756] bg-white text-[#DA7756] hover:bg-[#fff6f2]"
+                            )}
+                        >
+                            W{currentWeekNum} {currentWeekLabel}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setActiveTab(activeTab === "history" ? "submit" : "history")
+                            }
+                            className="inline-flex h-11 items-center rounded-[10px] border border-[#DA7756] bg-white px-5 text-sm font-semibold text-[#DA7756] transition-colors hover:bg-[#fff6f2]"
+                        >
+                            {activeTab === "history" ? "Back to Report" : "Review History"}
+                        </button>
+                    </div>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="inline-flex h-auto w-full justify-start rounded-2xl bg-[#DA7756] p-1 sm:w-auto">
+                    <TabsList className="sr-only">
                         <TabsTrigger
                             value="submit"
                             className="rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm data-[state=inactive]:text-white/80"
@@ -2604,83 +3076,80 @@ const WeeklyReports = () => {
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="submit" className="mt-6 space-y-6">
-                        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-5">
-                            <div className="mb-3 flex items-center gap-2">
-                                <Calendar className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                                <span className="text-lg font-semibold text-neutral-900">
-                                    {monthTitle}
+                    <TabsContent value="submit" className="mb-0 mt-0 space-y-5 pb-0 [&>*:last-child]:mb-0">
+                        <div
+                            className="weekly-ai-suggestions-card overflow-hidden rounded-[16px] border border-[#e9ddf6]"
+                            style={{
+                                boxShadow:
+                                    "-10px 12px 24px rgba(218,119,86,0.16), 8px 10px 24px rgba(129,106,229,0.13)",
+                            }}
+                        >
+                            <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] bg-[#DA7756] text-white">
+                                        <Sparkles size={12} />
+                                    </span>
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <span className="whitespace-nowrap text-[12px] font-bold leading-none text-[#1f1f1f]">
+                                            AI Suggestions
+                                        </span>
+                                        <span className="truncate text-[10px] font-medium text-[#57545f]">
+                                            - Focus areas to improve your weekly report
+                                        </span>
+                                    </div>
+                                </div>
+                                <span className="shrink-0 rounded-full bg-[#e8e3ff] px-3 py-1 text-[9px] font-bold leading-none text-[#6b5eca]">
+                                    4 insights
                                 </span>
                             </div>
-                            <div className="mb-4 rounded-xl bg-[#DA7756] px-4 py-3 text-center text-sm font-semibold text-white shadow-sm">
-                                Filling Report For Week #{weekNumLabel}, {weekRangeLabel}
-                            </div>
-                            <div className="flex flex-wrap gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedWeekOffset(-1);
-                                        const startStr = format(prevWeekStart, "yyyy-MM-dd");
-                                        const existing = history.find(
-                                            (i: any) => i.start_date === startStr
-                                        );
-                                        if (existing) populateForm(existing);
-                                        else {
-                                            setEditingId(null);
-                                            setWins([]);
-                                            setCheckedWins({});
-                                            setDayPlans({});
-                                            setRemarksList([]);
-                                            setRemarksText("");
-                                        }
-                                    }}
-                                    className={cn(
-                                        "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold border transition-all",
-                                        selectedWeekOffset === -1
-                                            ? "bg-[#DA7756] border-[#DA7756] text-white shadow-sm"
-                                            : "bg-white/80 border-[#DA7756]/30 text-neutral-700 hover:bg-[#fef6f4] hover:border-[#DA7756]/50"
-                                    )}
-                                >
-                                    W{lastWeekNum} {lastWeekLabel}
-                                </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedWeekOffset(0);
-                                        const startStr = format(currentWeekStart, "yyyy-MM-dd");
-                                        const existing = history.find(
-                                            (i: any) => i.start_date === startStr
-                                        );
-                                        if (existing) populateForm(existing);
-                                        else {
-                                            setEditingId(null);
-                                            setWins([]);
-                                            setCheckedWins({});
-                                            setDayPlans({});
-                                            setRemarksList([]);
-                                            setRemarksText("");
-                                        }
-                                    }}
-                                    className={cn(
-                                        "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold border transition-all",
-                                        selectedWeekOffset === 0
-                                            ? "bg-[#DA7756] border-[#DA7756] text-white shadow-sm"
-                                            : "bg-white/80 border-[#DA7756]/30 text-neutral-700 hover:bg-[#fef6f4] hover:border-[#DA7756]/50"
-                                    )}
-                                >
-                                    W{currentWeekNum} {currentWeekLabel}
-                                    {selectedWeekOffset === 0 && (
-                                        <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
-                                            Current
-                                        </span>
-                                    )}
-                                </button>
+                            <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
+                                {weeklyAiSuggestions.map((suggestion) => {
+                                    const tone = weeklyAiToneStyles[suggestion.tone];
+                                    const SuggestionIcon = suggestion.Icon;
+
+                                    return (
+                                        <div
+                                            key={suggestion.title}
+                                            className="min-h-[90px] rounded-[10px] border border-[#eceef4] bg-white px-3 py-3.5"
+                                        >
+                                            <div className="mb-1.5 flex items-center justify-between gap-2">
+                                                <div className="flex min-w-0 items-center gap-1.5">
+                                                    <span
+                                                        className={cn(
+                                                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                                                            tone.iconBg,
+                                                            tone.icon
+                                                        )}
+                                                    >
+                                                        <SuggestionIcon size={10} />
+                                                    </span>
+                                                    <span className="truncate text-[10px] font-bold leading-none text-[#2f2c34]">
+                                                        {suggestion.title}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={suggestion.action}
+                                                    className={cn(
+                                                        "shrink-0 text-[9px] font-medium leading-none hover:underline",
+                                                        tone.action
+                                                    )}
+                                                >
+                                                    {suggestion.actionLabel} &gt;
+                                                </button>
+                                            </div>
+                                            <p className="line-clamp-2 text-[10px] font-medium leading-[1.35] text-[#706d78]">
+                                                {suggestion.description}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        </Card>
+                        </div>
 
                         {/* Past Weeks KPIs */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
+                        <Card ref={planSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
                             <div
                                 className={cn(
                                     "flex items-center justify-between",
@@ -2691,13 +3160,12 @@ const WeeklyReports = () => {
                                     <div className="flex items-center gap-2">
                                         <TrendingUp className="h-5 w-5 text-[#DA7756]" />
                                         <h3 className="font-bold text-neutral-900">
-                                            Past Weeks KPIs
+                                            Past Week KPIs
                                         </h3>
                                         <Info className="h-4 w-4 text-neutral-400 cursor-help" />
                                     </div>
                                     <p className="text-xs text-neutral-600 flex items-center gap-1">
-                                        <span>💡</span> Enter actual values for this week and plan
-                                        for next week. Track your key metrics.
+                                        Define KPIs for this week and plan for next week. Track key metrics.
                                     </p>
                                 </div>
                                 <Badge className={badgePoints}>
@@ -2705,8 +3173,8 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
 
-                            <div className="overflow-x-auto border-t border-neutral-100">
-                                <table className="w-full text-left border-collapse">
+                            <div className="w-full max-w-full overflow-x-auto border-t border-neutral-100">
+                                <table className="w-full min-w-[640px] text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-neutral-100">
                                             <th className="px-6 py-4 text-xs font-bold text-neutral-500 uppercase tracking-wider min-w-[200px] whitespace-nowrap">
@@ -2844,146 +3312,134 @@ const WeeklyReports = () => {
                             </div>
                         </Card>
 
-                        {/* Daily KPI Achievement */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
-                            <div
-                                className={cn(
-                                    "flex items-start justify-between",
-                                    sectionHeader
-                                )}
-                            >
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <Activity className="h-5 w-5 text-[#DA7756]" />
-                                        <h3 className="font-bold text-neutral-900">
-                                            Daily KPI Summary - Week of{" "}
-                                            {dailyKpiSummary?.week_start
-                                                ? format(new Date(dailyKpiSummary.week_start), "MMM d")
-                                                : "..."}
-                                        </h3>
-                                    </div>
-                                    <p className="text-xs text-neutral-600">
-                                        Average achievement across daily KPIs submitted this week.
-                                    </p>
-                                </div>
-                                <Badge className={badgePoints}>
-                                    {weeklyScore.breakdown.dailyKpi}/10 pts
-                                </Badge>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-neutral-100 bg-slate-50/50">
-                                            <th className="px-4 py-3 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-                                                KPI
-                                            </th>
-                                            {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
-                                                <th
-                                                    key={i}
-                                                    className="px-2 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase"
-                                                >
-                                                    {day}
-                                                </th>
-                                            ))}
-                                            <th className="px-4 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase bg-slate-100/50">
-                                                Target
-                                            </th>
-                                            <th className="px-4 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase bg-slate-100/50">
-                                                Actual
-                                            </th>
-                                            <th className="px-4 py-3 text-center text-[11px] font-bold text-neutral-500 uppercase bg-slate-100/50">
-                                                Ach %
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-neutral-100">
-                                        {dailyKpiSummary?.kpis?.map((kpi: any) => (
-                                            <tr key={kpi.kpi_id} className="hover:bg-neutral-50/30">
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-neutral-900">
-                                                            {kpi.kpi_name}
-                                                        </span>
-                                                        <span className="text-[10px] text-neutral-400 font-medium bg-neutral-100 w-fit px-1.5 py-0.5 rounded mt-1">
-                                                            {kpi.unit}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map(
-                                                    (day) => (
-                                                        <td
-                                                            key={day}
-                                                            className="px-2 py-3 text-center text-xs text-neutral-500 font-medium"
-                                                        >
-                                                            {kpi.daily_values?.[day] ?? "-"}
-                                                        </td>
-                                                    )
-                                                )}
-                                                <td className="px-4 py-3 text-center text-xs font-bold text-neutral-900 bg-slate-50/30">
-                                                    {kpi.target_value}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-xs font-bold text-neutral-900 bg-slate-50/30">
-                                                    {kpi.actual_value}
-                                                </td>
-                                                <td className="px-4 py-3 text-center bg-slate-50/30">
-                                                    <span
-                                                        className={cn(
-                                                            "inline-flex items-center justify-center px-2 py-1 rounded-[5px] text-[10px] font-bold text-white min-w-[35px]",
-                                                            parseFloat(kpi.achievement_percentage) >= 100
-                                                                ? "bg-green-600"
-                                                                : parseFloat(kpi.achievement_percentage) >= 70
-                                                                    ? "bg-amber-500"
-                                                                    : "bg-red-600"
-                                                        )}
-                                                    >
-                                                        {Math.round(kpi.achievement_percentage)}%
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {!dailyKpiSummary?.kpis?.length && (
-                                            <tr>
-                                                <td
-                                                    colSpan={11}
-                                                    className="px-6 py-10 text-center text-sm text-neutral-400 italic"
-                                                >
-                                                    Daily KPI data will be fetched automatically from
-                                                    submitted reports.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </Card>
 
+
+                        <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr]">
                         {/* Achievements */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
+                        <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
                             <div
                                 className={cn(
-                                    "flex items-center justify-between",
+                                    "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
                                     sectionHeader
                                 )}
                             >
-                                <div className="flex items-center gap-2">
-                                    <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <Trophy className="h-5 w-5 shrink-0 text-[#DA7756]" />
                                     <h3 className="font-bold text-neutral-900">
-                                        Your Achievements
+                                        Weekly Accomplishments
                                     </h3>
                                 </div>
-                                <Badge className={badgePoints}>
-                                    {weeklyScore.breakdown.achievements}/6 pts
-                                </Badge>
+                                <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
+                                    <Badge className={badgePoints}>
+                                        {weeklyScore.breakdown.achievements}/6 pts
+                                    </Badge>
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddWin}
+                                        className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                    >
+                                        <Plus size={14} />
+                                        Add Item
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="space-y-4 p-6">
-                                {mergedTasksIssues
-                                    .filter((item: any) =>
-                                        ["completed", "closed", "done"].includes(item.status)
-                                    )
-                                    .map((item: any) => (
+                            <div className="space-y-3 px-5 pb-5 max-h-[360px] overflow-y-auto">
+                                {wins.length === 0 && !mergedTasksIssues.some((item: any) => ["completed", "closed", "done"].includes(item.status)) && (
+                                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fdf8f5] mb-3">
+                                            <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                        </div>
+                                        <p className="text-sm font-semibold text-neutral-900">No accomplishments yet</p>
+                                        <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
+                                            Add your weekly wins or complete tasks to see them here.
+                                        </p>
+                                    </div>
+                                )}
+                                {wins.map((win, index) => winDates[index] ? null : (
+                                    <div
+                                        key={index}
+                                        className="group relative flex items-start gap-3 rounded-[10px] border border-transparent bg-[#f8e9e5] p-3 shadow-none"
+                                    >
+                                        <Checkbox
+                                            style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                            className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                            checked={checkedWins[index] ?? true}
+                                            onCheckedChange={(checked) =>
+                                                setCheckedWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !!checked,
+                                                }))
+                                            }
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setStarredWins((prev) => ({
+                                                    ...prev,
+                                                    [index]: !prev[index],
+                                                }))
+                                            }
+                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                        >
+                                            <Star
+                                                className={cn(
+                                                    "h-4 w-4 transition-colors duration-200",
+                                                    starredWins[index]
+                                                        ? "text-yellow-400 fill-yellow-400"
+                                                        : "text-neutral-300 hover:text-yellow-300"
+                                                )}
+                                            />
+                                        </button>
+                                        <AutoSizingTextarea
+                                            value={win}
+                                            onChange={(val: string) => handleWinChange(index, val)}
+                                            placeholder="Describe your win…"
+                                            className={cn(
+                                                "min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0",
+                                                (checkedWins[index] ?? true) && "line-through opacity-60"
+                                            )}
+                                        // className="flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
+                                        />
+                                        <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                            Note
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveWin(index)}
+                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+
+                                    {(() => {
+                                        const completedItems = mergedTasksIssues.filter((item: any) =>
+                                            ["completed", "closed", "done"].includes(item.status)
+                                        );
+                                        const groups: Record<string, { kind: "item" | "win"; data?: any; winIndex?: number }[]> = {};
+                                        const noDateItems: { kind: "item" | "win"; data?: any; winIndex?: number }[] = [];
+                                        completedItems.forEach((item: any) => {
+                                            const raw = item.originalData?.completed_at || item.originalData?.updated_at;
+                                            if (raw) {
+                                                const key = raw.slice(0, 10);
+                                                if (!groups[key]) groups[key] = [];
+                                                groups[key].push({ kind: "item", data: item });
+                                            } else {
+                                                noDateItems.push({ kind: "item", data: item });
+                                            }
+                                        });
+                                        wins.forEach((win, index) => {
+                                            if (autoAddedTitles.has(cleanReportText(win).toLowerCase())) return;
+                                            const date = winDates[index] || new Date().toISOString().slice(0, 10);
+                                            if (!groups[date]) groups[date] = [];
+                                            groups[date].push({ kind: "win", winIndex: index });
+                                        });
+                                    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+                                    const renderItem = (item: any) => (
                                         <div
                                             key={`completed-${item.id}`}
-                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                            className="group relative flex flex-wrap items-start gap-2 sm:gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-3 sm:p-4 shadow-sm"
                                         >
                                             <Checkbox
                                                 checked
@@ -2993,34 +3449,36 @@ const WeeklyReports = () => {
                                                         label: `reopen this ${item.type} (status will change to open)`,
                                                     });
                                                 }}
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() =>
+                                                onClick={() => {
+                                                    const itemKey = String(item.id);
                                                     setStarredCompletedItems((prev) => ({
                                                         ...prev,
-                                                        [item.id]: !prev[item.id],
-                                                    }))
-                                                }
+                                                        [itemKey]: !prev[itemKey],
+                                                    }));
+                                                }}
                                                 className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
                                             >
                                                 <Star
                                                     className={cn(
                                                         "h-4 w-4 transition-colors duration-200",
-                                                        starredCompletedItems[item.id]
+                                                        starredCompletedItems[String(item.id)]
                                                             ? "text-yellow-400 fill-yellow-400"
                                                             : "text-neutral-300 hover:text-yellow-300"
                                                     )}
                                                 />
                                             </button>
-                                            <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
+                                            <div className="flex-1 flex flex-col gap-1 min-w-[150px] basis-[160px]">
+                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60 break-words">
                                                     {item.title}
                                                 </p>
                                                 {(() => {
                                                     const d = item.originalData;
-                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                    const completionDate = fmtDate(d?.completed_at || d?.updated_at);
                                                     const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
                                                     let issueEffort: string | null = null;
                                                     if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
@@ -3033,14 +3491,14 @@ const WeeklyReports = () => {
                                                             issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
                                                         }
                                                     }
-                                                    const hasInfo = endDate || effortEst || issueEffort;
+                                                    const hasInfo = completionDate || effortEst || issueEffort;
                                                     if (!hasInfo) return null;
                                                     return (
                                                         <div className="flex items-center gap-3 flex-wrap">
-                                                            {endDate && (
-                                                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                            {completionDate && (
+                                                                <span className="flex items-center gap-1 text-[10px] text-green-600">
                                                                     <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                    {endDate}
+                                                                    {completionDate}
                                                                 </span>
                                                             )}
                                                             {effortEst && (
@@ -3112,118 +3570,148 @@ const WeeklyReports = () => {
                                                 <Pencil className="h-4 w-4" />
                                             </button>
                                         </div>
-                                    ))}
-                                {wins.map((win, index) => (
-                                    <div
-                                        key={index}
-                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
-                                    >
-                                        <Checkbox
-                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                            checked={checkedWins[index] ?? true}
-                                            onCheckedChange={(checked) =>
-                                                setCheckedWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !!checked,
-                                                }))
-                                            }
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setStarredWins((prev) => ({
-                                                    ...prev,
-                                                    [index]: !prev[index],
-                                                }))
-                                            }
-                                            className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                    );
+                                    const renderWin = (winIndex: number) => (
+                                        <div
+                                            key={`win-${winIndex}`}
+                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                         >
-                                            <Star
+                                            <Checkbox
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                checked={checkedWins[winIndex] ?? true}
+                                                onCheckedChange={(checked) =>
+                                                    setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setStarredWins((prev) => ({ ...prev, [winIndex]: !prev[winIndex] }))
+                                                }
+                                                className="mt-1 shrink-0 focus:outline-none transition-transform duration-150 active:scale-110"
+                                            >
+                                                <Star
+                                                    className={cn(
+                                                        "h-4 w-4 transition-colors duration-200",
+                                                        starredWins[winIndex]
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-neutral-300 hover:text-yellow-300"
+                                                    )}
+                                                />
+                                            </button>
+                                            <AutoSizingTextarea
+                                                value={wins[winIndex]}
+                                                onChange={(val: string) => handleWinChange(winIndex, val)}
+                                                placeholder="Describe your win…"
                                                 className={cn(
-                                                    "h-4 w-4 transition-colors duration-200",
-                                                    starredWins[index]
-                                                        ? "text-yellow-400 fill-yellow-400"
-                                                        : "text-neutral-300 hover:text-yellow-300"
+                                                    "flex-1 rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200",
+                                                    (checkedWins[winIndex] ?? true) && "line-through opacity-60"
                                                 )}
                                             />
-                                        </button>
-                                        <Textarea
-                                            value={win}
-                                            onChange={(e) => handleWinChange(index, e.target.value)}
-                                            placeholder="Describe your win…"
-                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveWin(index)}
-                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
+                                            <span className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                                Note
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveWin(winIndex)}
+                                                className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    );
+                                    return (
+                                        <>
+                                            {sortedKeys.map((dateKey) => {
+                                                const dt = new Date(dateKey + "T00:00:00");
+                                                const groupKey = `completed-${dateKey}`;
+                                                const isCollapsed = collapsedGroups.has(groupKey);
+                                                const label = `${format(dt, "EEEE")} · ${format(dt, "dd MMM yyyy")}`;
+                                                return (
+                                                    <div key={dateKey}>
+                                                        <button
+                                                            className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-emerald-50 hover:bg-emerald-100"
+                                                            onClick={() =>
+                                                                setCollapsedGroups((prev) => {
+                                                                    const next = new Set(prev);
+                                                                    if (next.has(groupKey)) next.delete(groupKey);
+                                                                    else next.add(groupKey);
+                                                                    return next;
+                                                                })
+                                                            }
+                                                        >
+                                                            <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-emerald-700">
+                                                                {label}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                                                {groups[dateKey].length}
+                                                            </span>
+                                                            <ChevronRight
+                                                                size={14}
+                                                                className={cn(
+                                                                    "transition-transform duration-200 ml-1 text-emerald-700",
+                                                                    !isCollapsed && "rotate-90"
+                                                                )}
+                                                            />
+                                                        </button>
+                                                        {!isCollapsed && (
+                                                            <div className="space-y-3 pl-1">
+                                                                {groups[dateKey].map((entry) =>
+                                                                    entry.kind === "win"
+                                                                        ? renderWin(entry.winIndex!)
+                                                                        : renderItem(entry.data)
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                            {noDateItems.length > 0 && (
+                                                <div>
+                                                    <button
+                                                        className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-slate-50 hover:bg-slate-100"
+                                                        onClick={() =>
+                                                            setCollapsedGroups((prev) => {
+                                                                const next = new Set(prev);
+                                                                if (next.has("completed-no-date")) next.delete("completed-no-date");
+                                                                else next.add("completed-no-date");
+                                                                return next;
+                                                            })
+                                                        }
+                                                    >
+                                                        <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-slate-600">
+                                                            No Date
+                                                        </span>
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                            {noDateItems.length}
+                                                        </span>
+                                                        <ChevronRight
+                                                            size={14}
+                                                            className={cn(
+                                                                "transition-transform duration-200 ml-1 text-slate-600",
+                                                                !collapsedGroups.has("completed-no-date") && "rotate-90"
+                                                            )}
+                                                        />
+                                                    </button>
+                                                    {!collapsedGroups.has("completed-no-date") && (
+                                                        <div className="space-y-3 pl-1">
+                                                            {noDateItems.map((entry) =>
+                                                                entry.kind === "win"
+                                                                    ? renderWin(entry.winIndex!)
+                                                                    : renderItem(entry.data)
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
 
-                                <div className="flex flex-col gap-3 sm:flex-row w-full">
-                                    <button
-                                        type="button"
-                                        onClick={handleImportDailyWins}
-                                        className="h-[46px] flex-1 rounded-[10px] border border-dashed border-[#93c5fd] bg-transparent text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
-                                    >
-                                        <Plus className="h-4 w-4 text-slate-400" />
-                                        Import Daily Wins (last week&apos;s)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleAddWin}
-                                        className="h-[46px] flex-1 rounded-[10px] bg-[#f5ebe8] text-[13px] font-bold text-[#881337] transition-colors hover:bg-[#eaddd7] flex items-center justify-center gap-2 shadow-none border-none"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                        Add Win
-                                    </button>
                                 </div>
 
-                                {wins.length > 0 &&
-                                    wins.some((w, i) => !checkedWins[i] && w.trim() !== "") && (
-                                        <Button
-                                            type="button"
-                                            onClick={handleCarryForward}
-                                            className={cn(
-                                                "h-12 w-full rounded-xl bg-[#e65100] hover:bg-[#d84315] text-white font-bold tracking-wide"
-                                            )}
-                                        >
-                                            Carry Forward Uncompleted
-                                        </Button>
-                                    )}
-                                <div className="space-y-4 pt-4 border-t border-neutral-100">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
-                                            <Info className="h-3.5 w-3.5 text-emerald-600" />
-                                            <span>Limits: Images 2MB, Others 5MB</span>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-[10px] font-bold text-neutral-400">
-                                                {uploadedFilesCount}/5
-                                            </span>
-                                            <input
-                                                ref={achievementFileInputRef}
-                                                type="file"
-                                                className="sr-only"
-                                                id="weekly-achievement-files"
-                                                multiple
-                                                accept="image/*,.pdf,.doc,.docx,application/pdf"
-                                                onChange={handleAchievementFiles}
-                                            />
-                                            <Button
-                                                type="button"
-                                                onClick={() => achievementFileInputRef.current?.click()}
-                                                className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-6 flex items-center gap-2 text-xs"
-                                            >
-                                                <Upload className="h-3.5 w-3.5" />
-                                                File Upload
-                                            </Button>
-                                        </div>
-                                    </div>
-
+                                <div className="mt-auto space-y-4 border-t border-neutral-100 px-5 py-4">
                                     {selectedFileNames.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {selectedFileNames.map((name, i) => (
@@ -3247,19 +3735,47 @@ const WeeklyReports = () => {
                                             ))}
                                         </div>
                                     )}
+
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
+                                            <Info className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                            <span>Limits: Images 2MB, Others 5MB</span>
+                                        </div>
+                                        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
+                                            <span className="text-[10px] font-bold text-neutral-400">
+                                                {uploadedFilesCount}/5
+                                            </span>
+                                            <input
+                                                ref={achievementFileInputRef}
+                                                type="file"
+                                                className="sr-only"
+                                                id="weekly-achievement-files"
+                                                multiple
+                                                accept="image/*,.pdf,.doc,.docx,application/pdf"
+                                                onChange={handleAchievementFiles}
+                                            />
+                                            <Button
+                                                type="button"
+                                                onClick={() => achievementFileInputRef.current?.click()}
+                                                className={cn("h-10 rounded-[10px] px-4 text-xs font-semibold", btnOutline)}
+                                            >
+                                                <Upload className="h-3.5 w-3.5" />
+                                                Upload File
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </Card>
+                            </Card>
 
                         {/* Tasks & Issues */}
-                        <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-[#fff] shadow-sm mt-6">
-                            <div className="bg-white p-4 border-b border-[#b91c1c]/10">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <div className="space-y-2">
+                        <Card ref={tasksIssuesSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
+                            <div className="p-4">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0 space-y-2">
                                         <div className="flex items-center gap-3">
-                                            <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                            <CheckSquare className="h-6 w-6 shrink-0 text-[#DA7756]" />
                                             <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                                                Tasks, Issues & Todos
+                                                Tasks,Issues & To Do's
                                             </h3>
                                         </div>
                                         <div className="flex flex-wrap gap-2 pt-1">
@@ -3271,36 +3787,87 @@ const WeeklyReports = () => {
                                             </Badge> */}
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={openAllTaskIssueGroups}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openAllTaskIssueGroups();
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-[#fef6f4] px-3 py-1 text-[10px] font-bold text-[#DA7756] transition-colors hover:bg-[#fde9e1]"
+                                            >
+                                                All: {taskIssueCounts.total}
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("pending")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("pending");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 transition-colors hover:bg-sky-200"
                                             >
                                                 Open: {taskIssueCounts.open}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("overdue")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("overdue");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 transition-colors hover:bg-red-200"
                                             >
                                                 Overdue: {taskIssueCounts.overdue}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("in_progress")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("in_progress");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 transition-colors hover:bg-amber-200"
                                             >
                                                 In Progress: {taskIssueCounts.inProgress}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
-                                                className="border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openOnlyTaskIssueGroup("on_hold")}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        openOnlyTaskIssueGroup("on_hold");
+                                                    }
+                                                }}
+                                                className="cursor-pointer border-0 bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-800 transition-colors hover:bg-gray-200"
                                             >
                                                 On Hold: {taskIssueCounts.onHold}
                                             </Badge>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
                                         <Badge className={badgePoints}>
                                             {taskIssueCounts.completed}/20 PTS
                                         </Badge>
                                         <Button
-                                            className="rounded-[8px] shadow-lg font-semibold text-sm"
+                                            className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
                                             onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
                                         >
                                             <Plus size={14} />
@@ -3309,173 +3876,166 @@ const WeeklyReports = () => {
                                     </div>
                                 </div>
                             </div>
-                            <CardContent className="p-6">
+                            <CardContent className="px-5 pb-5 pt-0">
                                 {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
                                 <p className="text-lg text-neutral-400">
                                     No open tasks or issues.
                                 </p> */}
 
-                                {tasksLoading || issuesLoading || todosLoading ? (
-                                    <div className="flex flex-col items-center justify-center text-center py-10">
-                                        <Loader2
-                                            size={40}
-                                            className="text-[#b91c1c]/30 animate-spin mb-3"
-                                        />
-                                        <p className="text-sm font-bold text-gray-500">
-                                            Loading tasks and issues...
-                                        </p>
-                                    </div>
-                                ) : mergedTasksIssues.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center text-center py-10">
-                                        <div className="flex flex-col items-center gap-3 opacity-30">
-                                            <CheckSquare
+                                    {tasksLoading || issuesLoading || todosLoading ? (
+                                        <div className="flex flex-col items-center justify-center text-center py-10">
+                                            <Loader2
                                                 size={40}
-                                                className="text-[#DA7756]/20"
+                                                className="text-[#b91c1c]/30 animate-spin mb-3"
                                             />
-                                            <p className="text-base font-bold text-gray-400 tracking-tight">
-                                                No open tasks or issues
+                                            <p className="text-sm font-bold text-gray-500">
+                                                Loading tasks and issues...
                                             </p>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="space-y-3 max-h-[400px] overflow-y-auto pr-1"
-                                        ref={scrollContainerRef}
-                                    >
-                                        {(
-                                            [
-                                                {
-                                                    key: "overdue",
-                                                    label: "Overdue",
-                                                    statuses: ["overdue", "overdued"],
-                                                    colorClass: "text-red-700",
-                                                    bgItem: "bg-red-50/60 border-red-200",
-                                                    headerBg: "bg-red-50 hover:bg-red-100",
-                                                    pillBg: "bg-red-100 text-red-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: true,
-                                                },
-                                                {
-                                                    key: "in_progress",
-                                                    label: "In Progress",
-                                                    statuses: ["in_progress", "started"],
-                                                    colorClass: "text-sky-700",
-                                                    bgItem: "bg-sky-50/60 border-sky-200",
-                                                    headerBg: "bg-sky-50 hover:bg-sky-100",
-                                                    pillBg: "bg-sky-100 text-sky-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "pending",
-                                                    label: "Open",
-                                                    statuses: ["open", "pending"],
-                                                    colorClass: "text-slate-600",
-                                                    bgItem: "bg-slate-50/60 border-slate-200",
-                                                    headerBg: "bg-slate-50 hover:bg-slate-100",
-                                                    pillBg: "bg-slate-100 text-slate-600",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "on_hold",
-                                                    label: "On Hold",
-                                                    statuses: ["on_hold"],
-                                                    colorClass: "text-orange-700",
-                                                    bgItem: "bg-orange-50/60 border-orange-200",
-                                                    headerBg: "bg-orange-50 hover:bg-orange-100",
-                                                    pillBg: "bg-orange-100 text-orange-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "reopened",
-                                                    label: "Reopened",
-                                                    statuses: ["reopen", "reopened"],
-                                                    colorClass: "text-purple-700",
-                                                    bgItem: "bg-purple-50/60 border-purple-200",
-                                                    headerBg: "bg-purple-50 hover:bg-purple-100",
-                                                    pillBg: "bg-purple-100 text-purple-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                            ] as const
-                                        ).map((group) => {
-                                            const items = mergedTasksIssues.filter((item: any) =>
-                                                (group.statuses as readonly string[]).includes(item.status)
-                                            );
-                                            if (items.length === 0) return null;
-                                            const isCollapsed = collapsedGroups.has(group.key);
+                                    ) : mergedTasksIssues.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center text-center py-10">
+                                            <div className="flex flex-col items-center gap-3 opacity-30">
+                                                <CheckSquare
+                                                    size={40}
+                                                    className="text-[#DA7756]/20"
+                                                />
+                                                <p className="text-base font-bold text-gray-400 tracking-tight">
+                                                    No open tasks or issues
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="space-y-3 max-h-[320px] overflow-y-auto pr-1"
+                                            ref={scrollContainerRef}
+                                        >
+                                            {(
+                                                [
+                                                    {
+                                                        key: "overdue",
+                                                        label: "Overdue",
+                                                        statuses: ["overdue", "overdued"],
+                                                        colorClass: "text-red-700",
+                                                        bgItem: "bg-red-50/60 border-red-200",
+                                                        headerBg: "bg-red-50 hover:bg-red-100",
+                                                        pillBg: "bg-red-100 text-red-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: true,
+                                                    },
+                                                    {
+                                                        key: "in_progress",
+                                                        label: "In Progress",
+                                                        statuses: ["in_progress", "started"],
+                                                        colorClass: "text-sky-700",
+                                                        bgItem: "bg-sky-50/60 border-sky-200",
+                                                        headerBg: "bg-sky-50 hover:bg-sky-100",
+                                                        pillBg: "bg-sky-100 text-sky-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "pending",
+                                                        label: "Open",
+                                                        statuses: ["open", "pending"],
+                                                        colorClass: "text-slate-600",
+                                                        bgItem: "bg-slate-50/60 border-slate-200",
+                                                        headerBg: "bg-slate-50 hover:bg-slate-100",
+                                                        pillBg: "bg-slate-100 text-slate-600",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "on_hold",
+                                                        label: "On Hold",
+                                                        statuses: ["on_hold"],
+                                                        colorClass: "text-orange-700",
+                                                        bgItem: "bg-orange-50/60 border-orange-200",
+                                                        headerBg: "bg-orange-50 hover:bg-orange-100",
+                                                        pillBg: "bg-orange-100 text-orange-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "reopened",
+                                                        label: "Reopened",
+                                                        statuses: ["reopen", "reopened"],
+                                                        colorClass: "text-purple-700",
+                                                        bgItem: "bg-purple-50/60 border-purple-200",
+                                                        headerBg: "bg-purple-50 hover:bg-purple-100",
+                                                        pillBg: "bg-purple-100 text-purple-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                ] as const
+                                            ).map((group) => {
+                                                const items = mergedTasksIssues.filter((item: any) =>
+                                                    (group.statuses as readonly string[]).includes(item.status)
+                                                );
+                                                if (items.length === 0) return null;
+                                                const isCollapsed = collapsedGroups.has(group.key);
 
-                                            return (
-                                                <div key={group.key}>
-                                                    <button
-                                                        className={cn(
-                                                            "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
-                                                            group.headerBg
-                                                        )}
-                                                        onClick={() =>
-                                                            setCollapsedGroups((prev) => {
-                                                                const next = new Set(prev);
-                                                                if (next.has(group.key)) next.delete(group.key);
-                                                                else next.add(group.key);
-                                                                return next;
-                                                            })
-                                                        }
-                                                    >
-                                                        <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
-                                                            {group.label}
-                                                        </span>
-                                                        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
-                                                            {items.length}
-                                                        </span>
-                                                        <ChevronRight
-                                                            size={14}
+                                                return (
+                                                    <div key={group.key}>
+                                                        <button
                                                             className={cn(
-                                                                "transition-transform duration-200 ml-1",
-                                                                group.colorClass,
-                                                                !isCollapsed && "rotate-90"
+                                                                "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
+                                                                group.headerBg
                                                             )}
-                                                        />
-                                                    </button>
+                                                            onClick={() => openOnlyTaskIssueGroup(group.key)}
+                                                        >
+                                                            <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
+                                                                {group.label}
+                                                            </span>
+                                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
+                                                                {items.length}
+                                                            </span>
+                                                            <ChevronRight
+                                                                size={14}
+                                                                className={cn(
+                                                                    "transition-transform duration-200 ml-1",
+                                                                    group.colorClass,
+                                                                    !isCollapsed && "rotate-90"
+                                                                )}
+                                                            />
+                                                        </button>
 
-                                                    {!isCollapsed && (
-                                                        <div className="space-y-1.5 pl-1">
-                                                            {items.map((item: any) => {
-                                                                const d = item.originalData;
-                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                        {!isCollapsed && (
+                                                            <div className="space-y-1.5 pl-1">
+                                                                {items.map((item: any) => {
+                                                                    const d = item.originalData;
+                                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
 
-                                                                let issueEffort: string | null = null;
-                                                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                                                    const totalMin = d.issue_allocation_times.reduce(
-                                                                        (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                                                    );
-                                                                    if (totalMin > 0) {
-                                                                        const h = Math.floor(totalMin / 60);
-                                                                        const m = totalMin % 60;
-                                                                        issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                                    let issueEffort: string | null = null;
+                                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                                        const totalMin = d.issue_allocation_times.reduce(
+                                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                                        );
+                                                                        if (totalMin > 0) {
+                                                                            const h = Math.floor(totalMin / 60);
+                                                                            const m = totalMin % 60;
+                                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                                        }
                                                                     }
-                                                                }
 
-                                                                let timeLeftLabel: string | null = null;
-                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                                                    const now = new Date();
-                                                                    const end = new Date(d.end_date);
-                                                                    end.setHours(23, 59, 59, 999);
-                                                                    const diff = end.getTime() - now.getTime();
-                                                                    if (diff > 0) {
-                                                                        const days = Math.floor(diff / 86400000);
-                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                                                        else timeLeftLabel = `${mins}m left`;
+                                                                    let timeLeftLabel: string | null = null;
+                                                                    if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                                                        const now = new Date();
+                                                                        const end = new Date(d.end_date);
+                                                                        end.setHours(23, 59, 59, 999);
+                                                                        const diff = end.getTime() - now.getTime();
+                                                                        if (diff > 0) {
+                                                                            const days = Math.floor(diff / 86400000);
+                                                                            const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                            const mins = Math.floor((diff % 3600000) / 60000);
+                                                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                            else timeLeftLabel = `${mins}m left`;
+                                                                        }
                                                                     }
-                                                                }
 
-                                                                const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                                                    const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
 
                                                                 return (
                                                                     <div
@@ -3486,7 +4046,7 @@ const WeeklyReports = () => {
                                                                         )}
                                                                     >
                                                                         {/* Controls row */}
-                                                                        <div className="flex items-center gap-2 p-2.5">
+                                                                        <div className="flex flex-wrap items-center gap-2 p-2.5">
                                                                             <Checkbox
                                                                                 checked={
                                                                                     selectedTasksIssues[item.id] ||
@@ -3511,7 +4071,8 @@ const WeeklyReports = () => {
                                                                                         }));
                                                                                     }
                                                                                 }}
-                                                                                className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                                                className="self-center rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
                                                                             />
                                                                             <button
                                                                                 onClick={() => {
@@ -3565,9 +4126,9 @@ const WeeklyReports = () => {
                                                                                             title="Pause task"
                                                                                         >
                                                                                             {updatingPlayPauseIds[item.id] ? (
-                                                                                                <Loader2 size={14} className="text-orange-500 animate-spin" />
+                                                                                                <Loader2 size={14} className="text-red-500 animate-spin" />
                                                                                             ) : (
-                                                                                                <Pause size={14} className="text-orange-500" />
+                                                                                                <Pause size={14} className="text-red-500" />
                                                                                             )}
                                                                                         </button>
                                                                                     ) : (
@@ -3581,9 +4142,9 @@ const WeeklyReports = () => {
                                                                                             title="Start task"
                                                                                         >
                                                                                             {updatingPlayPauseIds[item.id] ? (
-                                                                                                <Loader2 size={14} className="text-green-500 animate-spin" />
+                                                                                                <Loader2 size={14} className="text-green-600 animate-spin" />
                                                                                             ) : (
-                                                                                                <Play size={14} className="text-green-500" />
+                                                                                                <Play size={14} className="text-green-600" />
                                                                                             )}
                                                                                         </button>
                                                                                     )
@@ -3594,7 +4155,7 @@ const WeeklyReports = () => {
                                                                             )}>
                                                                                 {item.type}
                                                                             </span>
-                                                                            <div className="flex-1 min-w-0">
+                                                                            <div className="flex-1 min-w-[90px] basis-[120px]">
                                                                                 <p className={cn(
                                                                                     "text-sm font-medium truncate",
                                                                                     (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
@@ -3627,7 +4188,7 @@ const WeeklyReports = () => {
                                                                                             "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                                                                             planWeekOpenItemId === item.id
                                                                                                 ? "bg-[#DA7756] border-[#DA7756] text-white"
-                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                                                                         )}
                                                                                         title="Add to next week plan"
                                                                                     >
@@ -3717,16 +4278,338 @@ const WeeklyReports = () => {
                                 )}
                             </CardContent>
                         </Card>
-
-                        {/* Deep work */}
-                        <div className="flex items-start gap-3 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm">
-                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]" />
-                            <p className="text-sm text-neutral-800">
-                                <span className="font-bold">Deep Work Blocks:</span> Protect
-                                your &quot;Prime Time&quot;! Have you blocked 90-min chunks for
-                                high-level analysis?
-                            </p>
                         </div>
+
+                        {/* Plan for coming week */}
+                        <Card className={cn("overflow-hidden", cardChrome)}>
+                            <div className="p-5 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Calendar className="h-5 w-5 text-[#DA7756]" />
+                                    <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                        Plan for Coming Week
+                                    </h3>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Badge className={badgePoints}>
+                                        {weeklyScore.breakdown.planning}/20 PTS
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="max-h-[360px] overflow-y-auto px-5 pb-5 pr-4">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                                    {upcomingDays.map((day) => (
+                                        <div
+                                            key={day.key}
+                                            className="flex min-h-[230px] min-w-0 flex-col rounded-[10px] bg-white p-4"
+                                            onDragOver={(event) => event.preventDefault()}
+                                            onDrop={(event) =>
+                                                handlePlanDrop(
+                                                    event,
+                                                    day.key,
+                                                    dayPlans[day.key]?.length ?? 0
+                                                )
+                                            }
+                                        >
+                                            <div
+                                                className={cn(
+                                                    "flex items-center justify-between",
+                                                    day.canAdd
+                                                        ? "text-[#111111]"
+                                                        : "text-gray-400"
+                                                )}
+                                            >
+                                                <span
+                                                    className={cn(
+                                                        "flex min-w-0 flex-col text-sm font-semibold normal-case leading-tight tracking-normal",
+                                                        day.canAdd ? "text-[#111111]" : "text-gray-400"
+                                                    )}
+                                                >
+                                                    <span className="whitespace-nowrap">{day.labelTop}</span>
+                                                    <span className="whitespace-nowrap">{day.labelBottom}</span>
+                                                </span>
+                                                {day.canAdd ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
+                                                        className="inline-flex items-center gap-1 rounded-[8px] px-2 py-1 text-xs font-medium text-[#8b95a6] transition-colors hover:bg-[#f6f4ee] hover:text-[#DA7756]"
+                                                    >
+                                                        <Plus className="h-3 w-3" /> Add
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-[10px] text-neutral-400">—</span>
+                                                )}
+                                            </div>
+                                            <div
+                                                className="mt-3 flex-1 space-y-2"
+                                                onDragOver={(event) => event.preventDefault()}
+                                                onDrop={(event) =>
+                                                    handlePlanDrop(
+                                                        event,
+                                                        day.key,
+                                                        dayPlans[day.key]?.length ?? 0
+                                                    )
+                                                }
+                                            >
+                                                {/* Next week scheduled items — read-only, not in payload */}
+                                                {nextWeekScheduledLoading && !nextWeekScheduledItems.length ? (
+                                                    <div className="flex items-center gap-2 py-3 text-gray-300">
+                                                        <Loader2 size={13} className="animate-spin shrink-0" />
+                                                        <span className="text-xs font-medium">Fetching upcoming assignments...</span>
+                                                    </div>
+                                                ) : (
+                                                    nextWeekScheduledByDay[day.key]?.map((item: any) => {
+                                                        const plannedItem = Object.values(dayPlans)
+                                                            .flat()
+                                                            .find((plan) => planMatchesSourceItem(plan, item));
+
+                                                        return (
+                                                            <div
+                                                                key={item.id}
+                                                                draggable
+                                                                className="relative cursor-grab rounded-[10px] border border-[#e6e9ef] bg-white px-3 pb-8 pt-3 shadow-sm transition-all active:cursor-grabbing hover:border-[#DA7756]/25 hover:bg-[#fafafa]"
+                                                                onDragStart={(event) =>
+                                                                    handleScheduledPlanDragStart(
+                                                                        event,
+                                                                        item,
+                                                                        day.key,
+                                                                        !!plannedItem?.starred
+                                                                    )
+                                                                }
+                                                                onDragOver={(event) => event.preventDefault()}
+                                                                onDrop={(event) => handlePlanDrop(event, day.key, 0)}
+                                                            >
+                                                                <div className="absolute right-2 top-2 flex items-center gap-1">
+                                                                    <span className={cn(
+                                                                        "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
+                                                                        item.type === "task" ? "bg-[#DA7756]/10 text-[#9e4f36]" : item.type === "issue" ? "bg-violet-100 text-violet-700" : "bg-yellow-100 text-yellow-700"
+                                                                    )}>
+                                                                        {item.type === "todo" ? "To Do" : item.type}
+                                                                    </span>
+                                                                    {item.priority && (
+                                                                        <span
+                                                                            className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                                                                            style={{
+                                                                                backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                                color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                            }}
+                                                                        >
+                                                                            {item.priority}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="mb-2 flex min-w-0 items-center gap-1.5 pr-24">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => toggleScheduledItemPlanStar(item, day.key)}
+                                                                        className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                                        title={plannedItem?.starred ? "Unstar" : "Star this priority"}
+                                                                    >
+                                                                        <Star
+                                                                            strokeWidth={plannedItem?.starred ? 0 : 1.8}
+                                                                            className={cn(
+                                                                                "h-4 w-4 transition-colors duration-200",
+                                                                                plannedItem?.starred
+                                                                                    ? "fill-[#f6c343] text-[#f6c343]"
+                                                                                    : "fill-transparent text-[#cfd6df] hover:text-[#f6c343]"
+                                                                            )}
+                                                                        />
+                                                                    </button>
+                                                                    <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (item.type === "task") {
+                                                                                    setEditTaskData(item.originalData);
+                                                                                    setIsEditTaskModalOpen(true);
+                                                                                } else if (item.type === "issue") {
+                                                                                    setEditIssueData(item.originalData);
+                                                                                    setIsEditIssueModalOpen(true);
+                                                                                } else if (item.type === "todo") {
+                                                                                    setEditTodoData(item.originalData);
+                                                                                    setIsEditTodoModalOpen(true);
+                                                                                }
+                                                                            }}
+                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                            title={`Edit ${item.type}`}
+                                                                        >
+                                                                            <Pencil className="h-3 w-3" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (item.type === "todo") {
+                                                                                    setSelectedTodo(item.originalData);
+                                                                                    setIsTodoDetailsModalOpen(true);
+                                                                                } else {
+                                                                                    navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                                                }
+                                                                            }}
+                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                            title={`View ${item.type}`}
+                                                                        >
+                                                                            <Eye className="h-3 w-3" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => hideNextWeekScheduledItem(item)}
+                                                                            className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        >
+                                                                            <X className="h-3 w-3" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <p className="min-w-0 text-xs font-medium leading-5 text-gray-600 [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
+                                                                    {item.title}
+                                                                </p>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                                {dayPlans[day.key]
+                                                    ?.map((planObj, index) => ({ planObj, index }))
+                                                    .filter(
+                                                        ({ planObj }) =>
+                                                            !nextWeekScheduledByDay[day.key]?.some((item: any) =>
+                                                                planMatchesSourceItem(planObj, item)
+                                                            )
+                                                    )
+                                                    .map(({ planObj, index }) => {
+                                                        const matchById = (item: any) =>
+                                                            item.type === planObj.source_type &&
+                                                            (String(item.originalData?.id) === String(planObj.source_id) ||
+                                                                String(item.id) === String(planObj.source_id));
+                                                        const sourceItem = planObj.source_type
+                                                            ? (nextWeekScheduledItems.find(matchById) || mergedTasksIssues.find(matchById))
+                                                            : null;
+                                                        const fetchedRecord = planObj.source_type && planObj.source_id != null
+                                                            ? fetchedSourceData[`${planObj.source_type}:${planObj.source_id}`]
+                                                            : null;
+                                                        const rawData = planObj.originalData || sourceItem?.originalData || fetchedRecord;
+                                                        const priority = rawData?.priority || sourceItem?.priority;
+                                                        const sourceId = rawData?.id || planObj.source_id;
+                                                        return (
+                                                            <div
+                                                                key={planObj.id}
+                                                                id={`plan-${planObj.id}`}
+                                                                draggable
+                                                                className="relative cursor-grab rounded-[10px] border border-[#e6e9ef] bg-white px-2.5 pb-8 pt-2 shadow-sm transition-all active:cursor-grabbing hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
+                                                                onDragStart={(event) =>
+                                                                    handlePlanDragStart(event, day.key, index)
+                                                                }
+                                                                onDragOver={(event) => event.preventDefault()}
+                                                                onDrop={(event) => handlePlanDrop(event, day.key, index)}
+                                                            >
+                                                                <div className="absolute right-2 top-2 flex items-center gap-1">
+                                                                    <span className={cn(
+                                                                        "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
+                                                                        planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-700"
+                                                                    )}>
+                                                                        {planObj.source_type === "todo" ? "To Do" : planObj.source_type || "Note"}
+                                                                    </span>
+                                                                    {priority && (
+                                                                        <span
+                                                                            className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                                                                            style={{
+                                                                                backgroundColor: priority === "High" ? "#fee2e2" : priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                                color: priority === "High" ? "#991b1b" : priority === "Medium" ? "#92400e" : "#166534",
+                                                                            }}
+                                                                        >
+                                                                            {priority}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="mb-2 flex min-w-0 items-center gap-1.5 pr-24">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleTogglePlanStar(day.key, index)}
+                                                                        className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
+                                                                    >
+                                                                        <Star
+                                                                            strokeWidth={planObj.starred ? 0 : 1.8}
+                                                                            className={cn(
+                                                                                "h-4 w-4 transition-colors duration-200",
+                                                                                planObj.starred
+                                                                                    ? "fill-[#f6c343] text-[#f6c343]"
+                                                                                    : "fill-transparent text-[#cfd6df] hover:text-[#f6c343]"
+                                                                            )}
+                                                                        />
+                                                                    </button>
+                                                                    <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
+                                                                        {planObj.source_type && sourceId && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (planObj.source_type === "task") {
+                                                                                        setEditTaskData(rawData);
+                                                                                        setIsEditTaskModalOpen(true);
+                                                                                    } else if (planObj.source_type === "issue") {
+                                                                                        setEditIssueData(rawData);
+                                                                                        setIsEditIssueModalOpen(true);
+                                                                                    } else if (planObj.source_type === "todo") {
+                                                                                        setEditTodoData(rawData);
+                                                                                        setIsEditTodoModalOpen(true);
+                                                                                    }
+                                                                                }}
+                                                                                className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                                title={`Edit ${planObj.source_type}`}
+                                                                            >
+                                                                                <Pencil className="h-3 w-3" />
+                                                                            </button>
+                                                                        )}
+                                                                        {planObj.source_type && sourceId && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (planObj.source_type === "todo") {
+                                                                                        setSelectedTodo(rawData);
+                                                                                        setIsTodoDetailsModalOpen(true);
+                                                                                    } else {
+                                                                                        navigate(planObj.source_type === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+                                                                                    }
+                                                                                }}
+                                                                                className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                                title={`View ${planObj.source_type}`}
+                                                                            >
+                                                                                <Eye className="h-3 w-3" />
+                                                                            </button>
+                                                                        )}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleRemovePlan(day.key, index)}
+                                                                            className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        >
+                                                                            <X className="h-3 w-3" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                {planObj.source_type ? (
+                                                                    <p className="min-w-0 text-xs font-medium leading-5 text-gray-700 cursor-not-allowed select-none [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
+                                                                        {planObj.text}
+                                                                    </p>
+                                                                ) : (
+                                                                    <AutoSizingTextarea
+                                                                        value={planObj.text}
+                                                                        onChange={(value: string) =>
+                                                                            handlePlanChange(day.key, index, value)
+                                                                        }
+                                                                        placeholder="Add note..."
+                                                                        className="min-h-[20px] resize-none bg-transparent border-none p-0 text-xs font-medium leading-5 text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
 
                         {/* SOPs Health & Status */}
                         <Card className={cn("overflow-hidden", cardChrome)}>
@@ -3877,751 +4760,249 @@ const WeeklyReports = () => {
                             </div>
                         </Card>
 
-                        {/* Plan for coming week */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
-                            <div
+                        <div className="grid items-stretch gap-4 lg:grid-cols-[1.12fr_0.88fr]">
+                            {/* Remarks */}
+                            <Card
+                                role="region"
+                                aria-label="Remarks"
+                                onMouseDown={handleRemarksAreaActivate}
                                 className={cn(
-                                    "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between",
-                                    sectionHeader
+                                    "flex h-full flex-col overflow-hidden rounded-[16px] border bg-[#f4f2ed] p-4 shadow-none transition-colors duration-200",
+                                    remarkVisual.border,
+                                    remarkVisual.bg
                                 )}
                             >
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Target className="h-5 w-5 text-[#DA7756]" />
-                                    <h3 className="font-bold text-neutral-900">
-                                        Plan for Coming Week
-                                    </h3>
-                                    <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700">
-                                        Optional
+                                <div className="mb-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <MessageSquare
+                                            className="h-4 w-4 shrink-0"
+                                            style={{ color: accentEmphasis }}
+                                        />
+                                        <h3 className="text-sm font-bold text-[#111111]">Remarks</h3>
+                                    </div>
+                                    <Badge
+                                        className="border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]"
+                                    >
+                                        {weeklyScore.breakdown.remarks}/14 Pts
                                     </Badge>
-                                    <Info className="h-4 w-4 cursor-help text-neutral-400" />
                                 </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Badge className={badgePoints}>
-                                        {weeklyScore.breakdown.planning}/20 pts
-                                    </Badge>
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-4 p-4">
-                                {upcomingDays.map((day) => (
-                                    <div key={day.key} className="flex flex-col gap-2">
-                                        <div
-                                            className={cn(
-                                                "flex items-center justify-between rounded-xl border border-[#DA7756]/15 p-3",
-                                                day.color
-                                            )}
-                                        >
-                                            <span
-                                                className={cn(
-                                                    "text-sm font-bold",
-                                                    day.canAdd ? "text-[#DA7756]" : "text-neutral-400"
-                                                )}
-                                            >
-                                                {day.short}
-                                            </span>
-                                            {day.canAdd ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => setDayPlanMenuAnchor({ el: e.currentTarget, dayKey: day.key, date: day.date })}
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2.5 py-1.5 text-xs font-bold text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45"
-                                                >
-                                                    <Plus className="h-3 w-3" /> Add
-                                                </button>
-                                            ) : (
-                                                <span className="text-[10px] text-neutral-400">—</span>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            {/* Next week scheduled items — read-only, not in payload */}
-                                            {nextWeekScheduledLoading && !nextWeekScheduledItems.length ? (
-                                                <div className="flex items-center gap-2 ml-2 py-2">
-                                                    <Loader2 size={12} className="animate-spin text-gray-400" />
-                                                    <span className="text-[11px] text-gray-400">Loading scheduled...</span>
-                                                </div>
-                                            ) : (
-                                                nextWeekScheduledByDay[day.key]?.map((item: any) => (
-                                                    <div
-                                                        key={item.id}
-                                                        className="relative ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm transition-all duration-200 hover:border-[#DA7756]/30 hover:shadow-md"
-                                                    >
-                                                        <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={cn(
-                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                    item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                                )}>
-                                                                    {item.type}
-                                                                </span>
-                                                                {item.priority && (
-                                                                    <span
-                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
-                                                                        style={{
-                                                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                                                        }}
-                                                                    >
-                                                                        {item.priority}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
-                                                                {item.title}
-                                                            </p>
-                                                            {(() => {
-                                                                const d = item.originalData;
-                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                                                let timeLeftLabel: string | null = null;
-                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                                                    const now = new Date();
-                                                                    const end = new Date(d.end_date);
-                                                                    end.setHours(23, 59, 59, 999);
-                                                                    const diff = end.getTime() - now.getTime();
-                                                                    if (diff > 0) {
-                                                                        const days = Math.floor(diff / 86400000);
-                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                                                        else timeLeftLabel = `${mins}m left`;
-                                                                    }
-                                                                }
-                                                                const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                                                if (!hasInfo) return null;
-                                                                return (
-                                                                    <div className="flex items-center gap-3 flex-wrap">
-                                                                        {endDate && (
-                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                                {endDate}
-                                                                            </span>
-                                                                        )}
-                                                                        {overdueLabel && (
-                                                                            <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                                                <AlertCircle className="h-2.5 w-2.5 shrink-0" />
-                                                                                {overdueLabel}
-                                                                            </span>
-                                                                        )}
-                                                                        {timeLeftLabel && (
-                                                                            <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                                {timeLeftLabel}
-                                                                            </span>
-                                                                        )}
-                                                                        {effortEst && (
-                                                                            <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                                <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                                Est: {effortEst}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })()}
-                                                        </div>
-                                                        <div className="flex flex-col gap-1 relative z-20">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    if (item.type === "todo") {
-                                                                        setSelectedTodo(item.originalData);
-                                                                        setIsTodoDetailsModalOpen(true);
-                                                                    } else {
-                                                                        navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
-                                                                    }
-                                                                }}
-                                                                className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                title={`View ${item.type}`}
-                                                            >
-                                                                <Eye className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                            {dayPlans[day.key]?.map((planObj, index) => (
-                                                <div
-                                                    key={planObj.id}
-                                                    id={`plan-${planObj.id}`}
-                                                    className="relative ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm transition-all duration-200 hover:border-[#DA7756]/30 hover:shadow-md"
-                                                >
+                                <div className="space-y-2.5">
+                                    <div className="flex flex-wrap gap-2">
+                                        {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
+                                            (id) => {
+                                                const meta = REMARK_CHIP_META[id];
+                                                const isActive = activeRemarkChip === id;
+                                                return (
                                                     <button
+                                                        key={id}
                                                         type="button"
-                                                        onClick={() => handleTogglePlanStar(day.key, index)}
-                                                        className="mt-1 shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
-                                                    >
-                                                        <Star
-                                                            className={cn(
-                                                                "h-4 w-4 transition-colors duration-200",
-                                                                planObj.starred
-                                                                    ? "text-yellow-400 fill-yellow-400 drop-shadow-sm"
-                                                                    : "text-neutral-300 hover:text-yellow-300"
-                                                            )}
-                                                        />
-                                                    </button>
-                                                    <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                                                        {planObj.source_type && (
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={cn(
-                                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white"
-                                                                )}>
-                                                                    {planObj.source_type}
-                                                                </span>
-                                                                {planObj.originalData?.priority && (
-                                                                    <span
-                                                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
-                                                                        style={{
-                                                                            backgroundColor: planObj.originalData.priority === "High" ? "#fee2e2" : planObj.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                            color: planObj.originalData.priority === "High" ? "#991b1b" : planObj.originalData.priority === "Medium" ? "#92400e" : "#166534",
-                                                                        }}
-                                                                    >
-                                                                        {planObj.originalData.priority}
-                                                                    </span>
-                                                                )}
-                                                            </div>
+                                                        aria-pressed={isActive}
+                                                        onClick={() => handleRemarkChipClick(id)}
+                                                        className={cn(
+                                                            "inline-flex h-8 items-center rounded-[8px] border px-4 text-[11px] font-medium transition-colors [&>svg]:hidden",
+                                                            "active:scale-[0.98] active:brightness-95",
+                                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
+                                                            isActive ? meta.chipActive : meta.chipInactive
                                                         )}
-                                                        {planObj.source_type ? (
-                                                            <p className="rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-500 cursor-not-allowed select-none">
-                                                                {planObj.text}
-                                                            </p>
-                                                        ) : (
-                                                            <AutoSizingTextarea
-                                                                value={planObj.text}
-                                                                onChange={(val: string) =>
-                                                                    handlePlanChange(day.key, index, val)
-                                                                }
-                                                                placeholder="What's your strategic priority?"
-                                                                className="rounded-md border border-neutral-200 bg-neutral-50/50 px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-[#DA7756]/50 focus:bg-white focus:ring-1 focus:ring-[#DA7756]/20 transition-all duration-200"
+                                                    >
+                                                        {id === "breakthrough" && (
+                                                            <Activity
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
                                                             />
                                                         )}
-                                                        {planObj.originalData && (() => {
-                                                            const d = planObj.originalData;
-                                                            const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                                            const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                            const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                                                            let timeLeftLabel: string | null = null;
-                                                            if (planObj.source_type === "issue" && d?.end_date && !overdueLabel) {
-                                                                const now = new Date();
-                                                                const end = new Date(d.end_date);
-                                                                end.setHours(23, 59, 59, 999);
-                                                                const diff = end.getTime() - now.getTime();
-                                                                if (diff > 0) {
-                                                                    const days = Math.floor(diff / 86400000);
-                                                                    const hrs = Math.floor((diff % 86400000) / 3600000);
-                                                                    const mins = Math.floor((diff % 3600000) / 60000);
-                                                                    if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                                                    else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                                                    else timeLeftLabel = `${mins}m left`;
-                                                                }
-                                                            }
-                                                            const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
-                                                            if (!hasInfo) return null;
-                                                            return (
-                                                                <div className="flex items-center gap-3 flex-wrap">
-                                                                    {endDate && (
-                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                            <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                                                            {endDate}
-                                                                        </span>
-                                                                    )}
-                                                                    {overdueLabel && (
-                                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                                            <AlertCircle className="h-2.5 w-2.5 shrink-0" />
-                                                                            {overdueLabel}
-                                                                        </span>
-                                                                    )}
-                                                                    {timeLeftLabel && (
-                                                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                            {timeLeftLabel}
-                                                                        </span>
-                                                                    )}
-                                                                    {effortEst && (
-                                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                                            <Clock className="h-2.5 w-2.5 shrink-0" />
-                                                                            Est: {effortEst}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                    <div className="flex flex-col gap-1 relative z-20">
+                                                        {id === "breakdown" && (
+                                                            <TrendingUp
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "employeeFeedback" && (
+                                                            <User
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "clientFeedback" && (
+                                                            <Users
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "remark" && (
+                                                            <Smile
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {meta.label}
+                                                    </button>
+                                                );
+                                            }
+                                        )}
+                                    </div>
+                                    <Textarea
+                                        ref={remarksTextareaRef}
+                                        value={remarksText}
+                                        onChange={(e) => setRemarksText(e.target.value)}
+                                        onFocus={handleRemarksAreaActivate}
+                                        placeholder={
+                                            activeRemarkChip
+                                                ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
+                                                : "Add your remark..."
+                                        }
+                                        className="min-h-[86px] resize-none rounded-[10px] border border-neutral-200 bg-white px-4 py-3 text-xs shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddRemark}
+                                        className={cn("ml-auto flex h-7 w-fit rounded-[7px] px-3.5 text-[10px] font-medium", btnOutline)}
+                                    >
+                                        <Plus className="mr-1 h-3 w-3" />
+                                        Add{" "}
+                                        {activeRemarkChip
+                                            ? REMARK_CHIP_META[activeRemarkChip].label
+                                            : "Remark"}
+                                    </Button>
+
+                                    {remarksList.length > 0 && (
+                                        <div className={cn(
+                                            "mt-4 pt-4 space-y-2 border-t border-dashed border-neutral-200 pr-2",
+                                            remarksList.length > 1 ? "max-h-[120px] overflow-y-auto" : ""
+                                        )}>
+                                            {remarksList.map((remark, index) => {
+                                                const isBreakdown = remark.type === "breakdown";
+                                                const isBreakthrough = remark.type === "breakthrough";
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className={cn(
+                                                            "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
+                                                            isBreakdown
+                                                                ? "bg-red-50 border-red-200 text-red-900"
+                                                                : isBreakthrough
+                                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                                                                    : "bg-white border-neutral-200 text-neutral-800"
+                                                        )}
+                                                    >
+                                                        {remark.type === "breakdown" ? (
+                                                            <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
+                                                        ) : remark.type === "breakthrough" ? (
+                                                            <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
+                                                        ) : remark.type === "employeeFeedback" ? (
+                                                            <User className="h-4 w-4 text-blue-500 mt-0.5" />
+                                                        ) : remark.type === "clientFeedback" ? (
+                                                            <Users className="h-4 w-4 text-purple-500 mt-0.5" />
+                                                        ) : remark.type === "remark" ? (
+                                                            <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
+                                                        ) : (
+                                                            <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
+                                                        )}
+                                                        <div className="flex-1 space-y-1">
+                                                            {remark.type && (
+                                                                <p className="text-xs font-bold">
+                                                                    {REMARK_CHIP_META[remark.type as RemarkChipId]
+                                                                        ?.label || remark.type}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-sm whitespace-pre-wrap">
+                                                                {remark.text}
+                                                            </p>
+                                                        </div>
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleRemovePlan(day.key, index)}
-                                                            className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756]"
+                                                            onClick={() => handleRemoveRemark(index)}
+                                                            className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
                                                         >
                                                             <X className="h-4 w-4" />
                                                         </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleMovePlan(day.key, index, "up")}
-                                                            disabled={index === 0 || !!planObj.source_type}
-                                                            className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            <ChevronUp className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleMovePlan(day.key, index, "down")}
-                                                            disabled={index === (dayPlans[day.key]?.length ?? 0) - 1 || !!planObj.source_type}
-                                                            className="rounded-md p-1 text-[#DA7756]/45 hover:bg-[#fef6f4] hover:text-[#DA7756] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            <ChevronDown className="h-4 w-4" />
-                                                        </button>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-
-                        {/* Remarks */}
-                        <Card
-                            role="region"
-                            aria-label="Remarks"
-                            onMouseDown={handleRemarksAreaActivate}
-                            className={cn(
-                                "overflow-hidden rounded-2xl border-2 bg-white p-6 shadow-sm transition-colors duration-200",
-                                remarkVisual.border,
-                                remarkVisual.bg
-                            )}
-                        >
-                            <div className="mb-4 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <MessageSquare
-                                        className="h-5 w-5 shrink-0"
-                                        style={{ color: accentEmphasis }}
-                                    />
-                                    <h3 className="font-bold text-neutral-900">Remarks</h3>
-                                </div>
-                                <Badge
-                                    className="border-0 px-3 py-1 text-xs font-bold text-white"
-                                    style={{ backgroundColor: accentEmphasis }}
-                                >
-                                    {weeklyScore.breakdown.remarks}/14 pts
-                                </Badge>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex flex-wrap gap-2">
-                                    {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
-                                        (id) => {
-                                            const meta = REMARK_CHIP_META[id];
-                                            const isActive = activeRemarkChip === id;
-                                            return (
-                                                <button
-                                                    key={id}
-                                                    type="button"
-                                                    aria-pressed={isActive}
-                                                    onClick={() => handleRemarkChipClick(id)}
-                                                    className={cn(
-                                                        "inline-flex h-9 items-center rounded-lg border px-3 text-[11px] font-bold transition-colors",
-                                                        "active:scale-[0.98] active:brightness-95",
-                                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
-                                                        isActive ? meta.chipActive : meta.chipInactive
-                                                    )}
-                                                >
-                                                    {id === "breakthrough" && (
-                                                        <Activity
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "breakdown" && (
-                                                        <TrendingUp
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "employeeFeedback" && (
-                                                        <User
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "clientFeedback" && (
-                                                        <Users
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "remark" && (
-                                                        <Smile
-                                                            className={cn(
-                                                                "mr-1.5 h-3.5 w-3.5 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {meta.label}
-                                                </button>
-                                            );
-                                        }
                                     )}
                                 </div>
-                                <Textarea
-                                    ref={remarksTextareaRef}
-                                    value={remarksText}
-                                    onChange={(e) => setRemarksText(e.target.value)}
-                                    onFocus={handleRemarksAreaActivate}
-                                    placeholder={
-                                        activeRemarkChip
-                                            ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
-                                            : "Enter at least one breakthrough, one breakdown, one remark and one client feedback…"
-                                    }
-                                    className="min-h-[120px] rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-inner outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                                />
-                                <Button
-                                    type="button"
-                                    onClick={handleAddRemark}
-                                    className="h-10 w-full rounded-xl bg-[#2563eb] text-white font-semibold hover:bg-[#1d4ed8] transition-colors"
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add{" "}
-                                    {activeRemarkChip
-                                        ? REMARK_CHIP_META[activeRemarkChip].label
-                                        : "Remark"}
-                                </Button>
+                            </Card>
 
-                                {remarksList.length > 0 && (
-                                    <div className="mt-6 space-y-3 border-t border-dashed border-neutral-200 pt-6">
-                                        {remarksList.map((remark, index) => {
-                                            const isBreakdown = remark.type === "breakdown";
-                                            const isBreakthrough = remark.type === "breakthrough";
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className={cn(
-                                                        "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
-                                                        isBreakdown
-                                                            ? "bg-red-50 border-red-200 text-red-900"
-                                                            : isBreakthrough
-                                                                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                                                                : "bg-white border-neutral-200 text-neutral-800"
-                                                    )}
+                            {/* Automated Weekly Score Preview */}
+                            <div className="flex flex-col gap-4">
+                                <Card className={cn("flex flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <Target className="h-4 w-4 shrink-0 text-[#111111]" />
+                                            <h4 className="text-sm font-bold leading-none text-[#111111]">
+                                                Live Score Preview
+                                            </h4>
+                                        </div>
+                                        <Badge className="shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]">
+                                            {formatLiveScore(weeklyScore.total)}/100 Pts
+                                        </Badge>
+                                    </div>
+
+                                    <div className="mb-2.5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                        {liveScoreRows.map((stat) => (
+                                            <div
+                                                key={stat.label}
+                                                className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
+                                            >
+                                                <div className="sr-only">
+                                                    {stat.icon}
+                                                </div>
+                                                <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
+                                                    {stat.label}
+                                                </p>
+                                                <p
+                                                    className="text-[22px] font-bold leading-none text-[#DA7756]"
                                                 >
-                                                    {remark.type === "breakdown" ? (
-                                                        <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
-                                                    ) : remark.type === "breakthrough" ? (
-                                                        <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
-                                                    ) : remark.type === "employeeFeedback" ? (
-                                                        <User className="h-4 w-4 text-blue-500 mt-0.5" />
-                                                    ) : remark.type === "clientFeedback" ? (
-                                                        <Users className="h-4 w-4 text-purple-500 mt-0.5" />
-                                                    ) : remark.type === "remark" ? (
-                                                        <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
-                                                    ) : (
-                                                        <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
-                                                    )}
-                                                    <div className="flex-1 space-y-1">
-                                                        {remark.type && (
-                                                            <p className="text-xs font-bold">
-                                                                {REMARK_CHIP_META[remark.type as RemarkChipId]
-                                                                    ?.label || remark.type}
-                                                            </p>
-                                                        )}
-                                                        <p className="text-sm whitespace-pre-wrap">
-                                                            {remark.text}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveRemark(index)}
-                                                        className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
+                                                    {formatLiveScore(stat.score)}/{stat.max}
+                                                </p>
+                                            </div>
+                                        ))}
                                     </div>
-                                )}
-                            </div>
-                        </Card>
 
-                        {/* Automated Weekly Score Preview */}
-                        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-5 shadow-sm">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Zap className="h-5 w-5 text-[#DA7756]" />
-                                    <h4 className="text-base font-bold text-neutral-900">
-                                        Automated Weekly Score Preview
-                                    </h4>
+
+                                </Card>
+
+                                <div className="mb-0 flex items-start gap-2.5 shrink-0 rounded-[12px] border border-[#efcdbf] bg-[#f6e8df] px-3 py-2.5 shadow-none sm:items-center">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#DA7756] text-white">
+                                        <Star className="h-4 w-4 fill-white text-white" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h4 className="text-sm font-bold leading-tight text-[#2f2f2f]">
+                                                Bonus Opportunity!
+                                            </h4>
+                                            <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-black text-white hover:bg-[#DA7756]">
+                                                + 05 pts
+                                            </Badge>
+                                        </div>
+                                        <p className="mt-0 text-xs leading-tight text-[#6f625c]">
+                                            Submit within the week window to earn bonus points.
+                                        </p>
+                                    </div>
                                 </div>
-                                <span className="text-2xl font-black text-[#DA7756]">
-                                    {Math.round(weeklyScore.total)}/100
-                                </span>
                             </div>
-
-                            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-                                {[
-                                    {
-                                        label: "Weekly KPI",
-                                        score: `${weeklyScore.breakdown.weeklyKpi}/20`,
-                                        icon: <BarChart3 className="h-3 w-3" />,
-                                    },
-                                    {
-                                        label: "Daily KPI",
-                                        score: `${weeklyScore.breakdown.dailyKpi}/10`,
-                                        icon: <Activity className="h-3 w-3" />,
-                                    },
-                                    {
-                                        label: "Achievements",
-                                        score: `${weeklyScore.breakdown.achievements}/6`,
-                                        icon: <Trophy className="h-3 w-3" />,
-                                    },
-                                    {
-                                        label: "Tasks",
-                                        score: `${weeklyScore.breakdown.tasks}/10`,
-                                        icon: <CheckSquare className="h-3 w-3" />,
-                                    },
-                                    {
-                                        label: "SOPs",
-                                        score: `${weeklyScore.breakdown.sop}/20`,
-                                        icon: <Zap className="h-3 w-3" />,
-                                    },
-                                    {
-                                        label: "Planning",
-                                        score: `${weeklyScore.breakdown.planning}/20`,
-                                        icon: <Target className="h-3 w-3" />,
-                                    },
-                                    {
-                                        label: "Remarks",
-                                        score: `${weeklyScore.breakdown.remarks}/14`,
-                                        icon: <MessageSquare className="h-3 w-3" />,
-                                    },
-                                ].map((stat) => (
-                                    <div
-                                        key={stat.label}
-                                        className="rounded-xl border border-[#DA7756]/10 bg-white p-3 shadow-sm flex flex-col items-center text-center"
-                                    >
-                                        <div className="mb-1 text-[#DA7756] opacity-60">
-                                            {stat.icon}
-                                        </div>
-                                        <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">
-                                            {stat.label}
-                                        </p>
-                                        <p className="text-xs font-black text-neutral-900">
-                                            {stat.score}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="details" className="border-none">
-                                    <AccordionTrigger className="py-2 text-xs font-bold text-neutral-700 hover:no-underline justify-center gap-2">
-                                        Detailed Score Calculation Breakdown
-                                        <span className="text-[10px] font-normal text-neutral-400">
-                                            (Click to view criteria)
-                                        </span>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="mt-2 rounded-xl bg-white/60 border border-[#DA7756]/5 p-4 text-[11px] text-neutral-600 space-y-4 shadow-inner">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-4">
-                                                <div className="space-y-1.5">
-                                                    <p className="font-black text-neutral-800 flex items-center gap-2">
-                                                        <div className="h-1.5 w-1.5 rounded-full bg-[#DA7756]" />
-                                                        1. Weekly KPI Achievement (Max 20 pts)
-                                                    </p>
-                                                    <p className="text-[10px] text-neutral-500 italic mb-1">
-                                                        Based on average achievement across all weekly KPIs.
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>≥100%</span>
-                                                            <span className="font-bold text-[#DA7756]">
-                                                                20 pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>90-99%</span>
-                                                            <span className="font-bold text-[#DA7756]">
-                                                                14 pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>70-89%</span>
-                                                            <span className="font-bold text-[#DA7756]">
-                                                                6 pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>&lt;70%</span>
-                                                            <span className="font-bold text-neutral-400">
-                                                                0 pts
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <p className="font-black text-neutral-800 flex items-center gap-2">
-                                                        <div className="h-1.5 w-1.5 rounded-full bg-[#DA7756]" />
-                                                        2. Daily KPI Achievement (Max 10 pts)
-                                                    </p>
-                                                    <p className="text-[10px] text-neutral-500 italic mb-1">
-                                                        Average achievement across all daily KPIs submitted.
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>≥100%</span>
-                                                            <span className="font-bold text-[#DA7756]">
-                                                                10 pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>90-99%</span>
-                                                            <span className="font-bold text-[#DA7756]">
-                                                                7 pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>70-89%</span>
-                                                            <span className="font-bold text-[#DA7756]">
-                                                                4 pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100 flex justify-between">
-                                                            <span>&lt;70%</span>
-                                                            <span className="font-bold text-neutral-400">
-                                                                0 pts
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <p className="font-black text-neutral-800 flex items-center gap-2">
-                                                        <div className="h-1.5 w-1.5 rounded-full bg-[#DA7756]" />
-                                                        3. Starred Achievements (Max 6 pts)
-                                                    </p>
-                                                    <div className="bg-white/80 p-2 rounded border border-neutral-100">
-                                                        <p>
-                                                            2 points per starred achievement. Star your top 3
-                                                            impactful wins.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-4">
-                                                <div className="space-y-1.5">
-                                                    <p className="font-black text-neutral-800 flex items-center gap-2">
-                                                        <div className="h-1.5 w-1.5 rounded-full bg-[#DA7756]" />
-                                                        4. Tasks & Issues (Max 10 pts)
-                                                    </p>
-                                                    <div className="bg-white/80 p-3 rounded border border-neutral-100 grid grid-cols-1 gap-1.5">
-                                                        <div className="flex justify-between">
-                                                            <span>Closed tasks/issues:</span>
-                                                            <span className="font-bold text-emerald-600">
-                                                                +2 pts each
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span>Open tasks/issues:</span>
-                                                            <span className="font-bold text-orange-600">
-                                                                -0.5 pts each (max -3)
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span>Overdue tasks/issues:</span>
-                                                            <span className="font-bold text-red-600">
-                                                                -2 pts each (max -5)
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <p className="font-black text-neutral-800 flex items-center gap-2">
-                                                        <div className="h-1.5 w-1.5 rounded-full bg-[#DA7756]" />
-                                                        5. SOPs Health & Status (Max 20 pts)
-                                                    </p>
-                                                    <div className="bg-white/80 p-3 rounded border border-neutral-100 space-y-2">
-                                                        <div className="flex justify-between">
-                                                            <span>Health Score (0-100):</span>
-                                                            <span className="font-bold text-[#DA7756]">
-                                                                0-10 pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-2 pt-1 border-t border-neutral-50 mt-1">
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-100"
-                                                            >
-                                                                Running: +5
-                                                            </Badge>
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="text-[9px] bg-red-50 text-red-700 border-red-100"
-                                                            >
-                                                                Broken: -5
-                                                            </Badge>
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="text-[9px] bg-orange-50 text-orange-700 border-orange-100"
-                                                            >
-                                                                To Start: -2
-                                                            </Badge>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <div className="space-y-1.5">
-                                                        <p className="font-black text-neutral-800 flex items-center gap-2">
-                                                            <div className="h-1.5 w-1.5 rounded-full bg-[#DA7756]" />
-                                                            6. Planning (20 pts)
-                                                        </p>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100">
-                                                            <p>1 pt per unique priority item (Max 20).</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-1.5">
-                                                        <p className="font-black text-neutral-800 flex items-center gap-2">
-                                                            <div className="h-1.5 w-1.5 rounded-full bg-[#DA7756]" />
-                                                            7. Remarks (14 pts)
-                                                        </p>
-                                                        <div className="bg-white/80 p-2 rounded border border-neutral-100">
-                                                            <p>
-                                                                Insights & feedback (+3 pts each), others (+1
-                                                                pt).
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                        </Card>
+                        </div>
 
                         <button
                             type="button"
                             disabled={isSubmitting}
                             onClick={handleSubmit}
                             className={cn(
-                                "h-14 w-full rounded-[14px] text-[18px] font-black text-white shadow-sm border-none flex items-center justify-center gap-2 transition-all duration-200",
+                                "h-16 w-full rounded-[10px] bg-[#DA7756] text-base font-semibold !text-white shadow-none border-none flex items-center justify-center gap-3 transition-all duration-200 hover:bg-[#c9673f] [&_*]:!text-white",
                                 isSubmitting
                                     ? "opacity-60 cursor-not-allowed"
-                                    : "cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:translate-y-0 active:shadow-sm",
-                                editingId
-                                    ? "bg-[#2563eb] hover:bg-[#1d4ed8]"
-                                    : "bg-[#16a34a] hover:bg-[#15803d]"
+                                    : "cursor-pointer active:translate-y-0"
                             )}
                         >
                             {isSubmitting ? (
@@ -4632,44 +5013,72 @@ const WeeklyReports = () => {
                             ) : (
                                 <>
                                     <Send className="h-5 w-5" />
-                                    <span>
-                                        {editingId
-                                            ? `Update Weekly Report (${submitRangeLabel})`
-                                            : `Submit Weekly Report (${submitRangeLabel})`}
-                                    </span>
+                                    <span>{editingId ? "Update Weekly Report" : "Submit Weekly Report"}</span>
                                 </>
                             )}
                         </button>
 
-                        <div className="flex flex-col gap-3 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex items-start gap-3">
-                                <div className="rounded-lg bg-[#DA7756] p-2 shadow-sm">
-                                    <Star className="h-4 w-4 fill-white text-white" />
-                                </div>
-                                <div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-sm font-bold text-neutral-900">
-                                            Bonus Opportunity!
-                                        </span>
-                                        <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-bold text-white hover:bg-[#DA7756]">
-                                            + 05 pts
-                                        </Badge>
-                                    </div>
-                                    <p className="mt-1 text-xs text-neutral-600">
-                                        Submit within the week window to earn bonus points.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p className="text-center text-xs text-neutral-500">
+                        <div className="mt-4 mb-6 w-full overflow-hidden rounded-[14px] border border-[#f1dcd4] bg-[#fffafa] shadow-none">
                             <button
                                 type="button"
-                                className="underline decoration-dotted underline-offset-2 hover:text-[#DA7756]"
+                                onClick={() => setIsScoreBreakdownOpen((open) => !open)}
+                                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#fff7f4]"
                             >
-                                How is the Automated Weekly Score Calculated?
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                    <Info className="h-4 w-4 shrink-0 text-[#DA7756]" />
+                                    <p className="min-w-0 text-[15px] font-medium leading-tight text-[#2f3847]">
+                                        How is the Automated Weekly score calculated?{" "}
+                                        <span className="font-medium text-[#DA7756]">
+                                            Expand to know more
+                                        </span>
+                                    </p>
+                                </div>
+                                <ChevronRight
+                                    size={16}
+                                    className={cn(
+                                        "shrink-0 text-[#9aa3af] transition-transform duration-200",
+                                        isScoreBreakdownOpen && "rotate-90"
+                                    )}
+                                />
                             </button>
-                        </p>
+
+                            {isScoreBreakdownOpen && (
+                                <div className="border-t border-[#f1dcd4] bg-white px-4 py-3">
+                                    <div className="overflow-hidden rounded-[10px] border border-[#eadfd7] bg-white text-[11px] shadow-none">
+                                        <div className="hidden grid-cols-[1fr_0.55fr_0.55fr_2fr] gap-3 bg-[#f8efe9] px-3 py-2 text-[10px] font-medium uppercase text-[#8b6f62] sm:grid">
+                                            <span>Section</span>
+                                            <span>Score</span>
+                                            <span>Max</span>
+                                            <span>Calculation</span>
+                                        </div>
+                                        {liveScoreRows.map((row) => (
+                                            <div
+                                                key={row.label}
+                                                className="grid grid-cols-1 gap-1 border-t border-[#f0e7e1] px-3 py-2.5 sm:grid-cols-[1fr_0.55fr_0.55fr_2fr] sm:gap-3"
+                                            >
+                                                <div className="flex items-center justify-between gap-3 sm:block">
+                                                    <span className="font-medium text-[#111111]">
+                                                        {row.label}
+                                                    </span>
+                                                    <span className="font-medium text-[#DA7756] sm:hidden">
+                                                        {formatLiveScore(row.score)}/{row.max}
+                                                    </span>
+                                                </div>
+                                                <span className="hidden font-medium text-[#DA7756] sm:block">
+                                                    {formatLiveScore(row.score)}/{row.max}
+                                                </span>
+                                                <span className="text-[10px] font-medium uppercase text-[#8b6f62] sm:text-[11px] sm:text-[#6f625c]">
+                                                    {row.max} pts
+                                                </span>
+                                                <p className="leading-relaxed text-[#6f625c]">
+                                                    {row.calculation}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="history" className="mt-6 space-y-6">
@@ -4738,11 +5147,14 @@ const WeeklyReports = () => {
 
                                 const rawAchievements =
                                     reportData.achievements ||
-                                    reportData.accomplishments?.items?.map((i: any) => i.title) ||
-                                    reportData.accomplishments?.map((i: any) => i.title) ||
+                                    reportData.accomplishments?.items ||
+                                    reportData.accomplishments ||
                                     [];
-                                const achievements: string[] =
-                                    rawAchievements.map(normalizeToString);
+                                const achievements = Array.isArray(rawAchievements)
+                                    ? rawAchievements.filter((achievement: any) =>
+                                        getWeeklyHistoryItemText(achievement).trim() !== ""
+                                    )
+                                    : [];
 
                                 const rawTasks =
                                     reportData.upcoming_week_plan ||
@@ -4769,31 +5181,27 @@ const WeeklyReports = () => {
 
                                 const stats = [
                                     {
-                                        label: "Weekly KPIs:",
+                                        label: "Weekly KPI",
                                         value: `${reportData.sections?.weekly_kpi_achievement || 0}/20`,
                                     },
                                     {
-                                        label: "Daily KPIs:",
-                                        value: `${reportData.sections?.daily_kpi_achievement || 0}/10`,
-                                    },
-                                    {
-                                        label: "Starred Wins:",
+                                        label: "Achievements",
                                         value: `${reportData.sections?.starred_achievements || 0}/6`,
                                     },
                                     {
-                                        label: "Tasks/Issues:",
+                                        label: "Tasks",
                                         value: `${reportData.sections?.tasks_issues || 0}/10`,
                                     },
                                     {
-                                        label: "Planned:",
+                                        label: "Planning",
                                         value: `${reportData.sections?.planning || 0}/20`,
                                     },
                                     {
-                                        label: "Remarks:",
+                                        label: "Remarks",
                                         value: `${reportData.sections?.remarks || 0}/14`,
                                     },
                                     {
-                                        label: "SOPs:",
+                                        label: "SOPs",
                                         value: `${reportData.sections?.sop_health || 0}/20`,
                                     },
                                 ];
@@ -4851,56 +5259,31 @@ const WeeklyReports = () => {
                                 };
 
                                 return (
-                                    <Card
-                                        key={item.id}
-                                        className="overflow-hidden border border-[#DA7756]/20 bg-white shadow-md rounded-2xl"
-                                    >
-                                        <div className="bg-[#f8fafc] border-b border-neutral-100 p-6">
-                                            <div className="flex flex-col lg:flex-row justify-between gap-6">
-                                                <div className="space-y-1 mt-6">
-                                                    <h3 className="text-base font-bold text-neutral-900">
-                                                        Wk# {weekNum}, {weekLabel}
-                                                    </h3>
-                                                    <p className="text-sm text-slate-500">
+                                    <Card key={item.id} className={cn("overflow-hidden", cardChrome)}>
+                                        <div className={cn("border-b border-[#e8e2d8]", sectionHeader)}>
+                                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="h-5 w-5 text-[#DA7756]" />
+                                                        <h3 className="text-base font-bold text-[#111111]">
+                                                            Wk# {weekNum}, {weekLabel}
+                                                        </h3>
+                                                    </div>
+                                                    <p className="text-sm text-[#72717a]">
                                                         {currentUser
                                                             ? `${currentUser.firstname} ${currentUser.lastname}`
                                                             : "User Report"}
                                                     </p>
                                                 </div>
 
-                                                <div className="flex flex-col items-end gap-2 shrink-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <div className="flex items-center gap-1.5 rounded-[6px] bg-[#dc2626] px-3 py-1 text-[13px] font-bold text-white shadow-sm">
-                                                            <Star className="h-[14px] w-[14px]" />
-                                                            <span>{reportData.total_score || 0}/100</span>
-                                                        </div>
-                                                        <div className="rounded-[6px] border border-slate-200 bg-white px-3 py-1 text-[13px] font-bold text-slate-800 shadow-sm">
-                                                            0.0%
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="w-[220px] rounded-[10px] border border-slate-200 bg-white p-4 shadow-sm">
-                                                        <div className="flex flex-col gap-[7px]">
-                                                            {stats.map((s, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    className="flex items-center justify-between text-[13px]"
-                                                                >
-                                                                    <span className="text-slate-500">
-                                                                        {s.label}
-                                                                    </span>
-                                                                    <span className="font-bold text-slate-800">
-                                                                        {s.value}
-                                                                    </span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <Badge className="border-0 bg-[#DA7756] px-3 py-1.5 text-sm font-black text-white hover:bg-[#DA7756]">
+                                                        {reportData.total_score || 0}/100
+                                                    </Badge>
                                                     <Button
                                                         variant="outline"
                                                         onClick={() => handleViewDetails(item)}
-                                                        className="mt-1 flex h-9 items-center gap-2 rounded-lg border-slate-200 bg-white px-5 text-[14px] font-semibold text-[#2563eb] shadow-sm hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all duration-200"
+                                                        className={cn("h-9 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
                                                     >
                                                         <Edit className="h-4 w-4" />
                                                         Edit
@@ -4909,31 +5292,68 @@ const WeeklyReports = () => {
                                             </div>
                                         </div>
 
-                                        <div className="p-6">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                {/* Top Wins */}
-                                                <div className="rounded-xl border border-emerald-500/20 bg-white overflow-hidden flex flex-col">
-                                                    <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-center gap-2">
-                                                        <Trophy className="h-5 w-5 text-emerald-500" />
-                                                        <h4 className="font-bold text-sm text-emerald-600">
-                                                            Top Wins
-                                                        </h4>
+                                        <div className="space-y-5 p-4 sm:p-5">
+                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                                {stats.map((s) => (
+                                                    <div
+                                                        key={s.label}
+                                                        className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
+                                                    >
+                                                        <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
+                                                            {s.label}
+                                                        </p>
+                                                        <p
+                                                            className="text-[22px] font-bold leading-none text-[#DA7756]"
+                                                        >
+                                                            {s.value}
+                                                        </p>
                                                     </div>
-                                                    <div className="p-4 space-y-3 flex-1 min-h-[200px]">
+                                                ))}
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                                {/* Top Wins */}
+                                                <div className="flex min-h-[220px] flex-col overflow-hidden rounded-[14px] border border-[#e8e2d8] bg-white">
+                                                    <div className="flex items-center justify-between gap-3 border-b border-[#f0e7e1] px-4 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                                            <h4 className="text-sm font-bold text-[#111111]">
+                                                                Top Wins
+                                                            </h4>
+                                                        </div>
+                                                        <Badge className={badgePoints}>
+                                                            {achievements.length}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="flex-1 space-y-3 p-4">
                                                         {achievements.length > 0 ? (
-                                                            achievements.map((w: string, i: number) => (
-                                                                <div
-                                                                    key={i}
-                                                                    className="flex items-start gap-2.5 text-sm text-neutral-700 font-medium"
-                                                                >
-                                                                    <div className="mt-1 h-4 w-4 rounded-full border-2 border-emerald-500 flex items-center justify-center">
-                                                                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                            achievements.map((w: any, i: number) => {
+                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(w)];
+                                                                return (
+                                                                    <div
+                                                                        key={i}
+                                                                        className="flex items-start justify-between gap-3 rounded-[10px] bg-[#f8e9e5] p-3 text-sm font-medium text-neutral-700"
+                                                                    >
+                                                                        <div className="flex min-w-0 items-start gap-2.5">
+                                                                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#DA7756]" />
+                                                                            <span className="min-w-0 break-words">
+                                                                                {getWeeklyHistoryItemText(w)}
+                                                                            </span>
+                                                                        </div>
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={cn(
+                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                typeMeta.className
+                                                                            )}
+                                                                        >
+                                                                            {typeMeta.label}
+                                                                        </Badge>
                                                                     </div>
-                                                                    <span>{w}</span>
-                                                                </div>
-                                                            ))
+                                                                );
+                                                            })
                                                         ) : (
-                                                            <p className="text-sm text-neutral-400 italic">
+                                                            <p className="text-sm italic text-neutral-400">
                                                                 No wins recorded
                                                             </p>
                                                         )}
@@ -4941,54 +5361,52 @@ const WeeklyReports = () => {
                                                 </div>
 
                                                 {/* Next Week's Priorities */}
-                                                <div className="rounded-xl border border-blue-200 bg-white overflow-hidden shadow-sm">
-                                                    <div className="bg-white border-b border-neutral-50 px-4 py-4 flex items-center gap-2.5">
-                                                        <div className="flex items-center justify-center h-6 w-6 rounded-full border-2 border-[#2563eb] bg-white">
-                                                            <div className="h-2.5 w-2.5 rounded-full border-2 border-[#2563eb]" />
+                                                <div className="min-h-[220px] overflow-hidden rounded-[14px] border border-[#e8e2d8] bg-white">
+                                                    <div className="flex items-center justify-between gap-3 border-b border-[#f0e7e1] px-4 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <ListTodo className="h-5 w-5 text-[#DA7756]" />
+                                                            <h4 className="text-sm font-bold text-[#111111]">
+                                                                Next Week's Priorities
+                                                            </h4>
                                                         </div>
-                                                        <h4 className="font-bold text-sm text-[#2563eb] tracking-tight">
-                                                            Next Week's Priorities
-                                                        </h4>
                                                     </div>
-                                                    <div className="p-4 space-y-5">
-                                                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                                                    <div className="space-y-4 p-4">
+                                                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                                                             (day) => {
                                                                 const dayTasks = getTasksForDay(day);
                                                                 if (dayTasks.length === 0) return null;
-                                                                const style = dayStyles[day];
 
                                                                 return (
-                                                                    <div key={day} className="space-y-3">
-                                                                        <div
-                                                                            className={cn(
-                                                                                "px-4 py-1.5 rounded-[6px] text-[13px] font-bold w-full",
-                                                                                style.bg,
-                                                                                style.text
-                                                                            )}
-                                                                        >
+                                                                    <div key={day} className="space-y-2">
+                                                                        <div className="w-full rounded-[7px] bg-[#fef6f4] px-3 py-1.5 text-[12px] font-black text-[#DA7756]">
                                                                             {day}
                                                                         </div>
-                                                                        <div className="pl-1 space-y-2">
-                                                                            {dayTasks.map(
-                                                                                (t: any, i: number) => (
+                                                                        <div className="space-y-2 pl-1">
+                                                                            {dayTasks.map((t: any, i: number) => {
+                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(t)];
+                                                                                return (
                                                                                     <div
                                                                                         key={i}
-                                                                                        className="flex items-start gap-3 text-[14px] text-slate-700 font-medium leading-relaxed"
+                                                                                        className="flex items-start justify-between gap-3 text-[14px] font-medium leading-relaxed text-[#4f4a4a]"
                                                                                     >
-                                                                                        <div
+                                                                                        <div className="flex min-w-0 items-start gap-3">
+                                                                                            <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#DA7756]" />
+                                                                                            <span className="min-w-0 break-words">
+                                                                                                {getWeeklyHistoryItemText(t)}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <Badge
+                                                                                            variant="outline"
                                                                                             className={cn(
-                                                                                                "h-2 w-2 rounded-full mt-2 shrink-0",
-                                                                                                style.dot
+                                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                                typeMeta.className
                                                                                             )}
-                                                                                        />
-                                                                                        <span>
-                                                                                            {typeof t === "string"
-                                                                                                ? t
-                                                                                                : t.text || t.title}
-                                                                                        </span>
+                                                                                        >
+                                                                                            {typeMeta.label}
+                                                                                        </Badge>
                                                                                     </div>
-                                                                                )
-                                                                            )}
+                                                                                );
+                                                                            })}
                                                                         </div>
                                                                     </div>
                                                                 );
@@ -5000,7 +5418,7 @@ const WeeklyReports = () => {
                                                                 : reportData.upcoming_week_plan || {}
                                                         ).flat().length === 0 && (
                                                                 <div className="py-6 text-center">
-                                                                    <p className="text-sm text-neutral-400 italic">
+                                                                    <p className="text-sm italic text-neutral-400">
                                                                         No priorities recorded for next week
                                                                     </p>
                                                                 </div>
@@ -5009,46 +5427,14 @@ const WeeklyReports = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Tasks & Issues */}
-                                            <div className="mt-6 space-y-4">
-                                                <div className="flex items-center gap-2 text-orange-600">
-                                                    <AlertTriangle className="h-5 w-5" />
-                                                    <h4 className="font-bold text-sm">Tasks & Issues</h4>
-                                                </div>
-                                                {reportData.tasks_issues?.length > 0 ? (
-                                                    reportData.tasks_issues.map((ti: any, i: number) => (
-                                                        <div
-                                                            key={i}
-                                                            className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 flex items-center justify-between text-xs"
-                                                        >
-                                                            <div className="flex items-center gap-4">
-                                                                <X className="h-4 w-4 text-neutral-400" />
-                                                                <span className="font-bold text-neutral-800">
-                                                                    {ti.title}
-                                                                </span>
-                                                                <div className="flex gap-2">
-                                                                    <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">
-                                                                        Task
-                                                                    </Badge>
-                                                                    <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">
-                                                                        {ti.status || "open"}
-                                                                    </Badge>
-                                                                </div>
-                                                            </div>
-                                                            <Badge className="bg-[#b45309] hover:bg-[#b45309] text-white text-[10px] font-bold uppercase h-6 px-3">
-                                                                {ti.priority || "medium"}
-                                                            </Badge>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 text-sm text-neutral-500 italic">
-                                                        No issues recorded
-                                                    </div>
-                                                )}
-                                            </div>
-
                                             {/* Remarks History */}
-                                            <div className="mt-6 pt-6 border-t border-neutral-100 space-y-4">
+                                            <div className="space-y-4 rounded-[14px] border border-[#e8e2d8] bg-white p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <MessageSquare className="h-5 w-5 text-[#DA7756]" />
+                                                    <h4 className="text-sm font-bold text-[#111111]">
+                                                        Remarks
+                                                    </h4>
+                                                </div>
                                                 {Object.entries(groupedRemarks).map(([type, items]) => {
                                                     if (!items || items.length === 0) return null;
 
@@ -5083,34 +5469,43 @@ const WeeklyReports = () => {
                                                     }
 
                                                     return (
-                                                        <div key={type} className="space-y-2">
+                                                        <div
+                                                            key={type}
+                                                            className="space-y-2 rounded-[10px] border border-[#f0e7e1] bg-[#fef6f4]/70 p-3"
+                                                        >
                                                             <div className={cn("flex items-center gap-2", textColor)}>
                                                                 <div className={iconColor}>{icon}</div>
                                                                 <h4 className="text-sm font-bold">{label}</h4>
                                                             </div>
-                                                            <ul className="space-y-1 pl-6">
+                                                            <div className="space-y-2">
                                                                 {items.map((text, i) => (
-                                                                    <li key={i} className="text-sm text-neutral-700 list-disc">
-                                                                        {isOther && (
-                                                                            <span className="font-bold uppercase text-[10px] text-neutral-500 mr-2">
-                                                                                REMARK:
-                                                                            </span>
-                                                                        )}
-                                                                        {text}
-                                                                    </li>
+                                                                    <div
+                                                                        key={i}
+                                                                        className="flex items-start gap-2.5 rounded-[8px] bg-white px-3 py-2 text-sm text-neutral-700"
+                                                                    >
+                                                                        <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#DA7756]" />
+                                                                        <span>
+                                                                            {isOther && (
+                                                                                <span className="mr-2 text-[10px] font-bold uppercase text-neutral-500">
+                                                                                    Remark:
+                                                                                </span>
+                                                                            )}
+                                                                            {text}
+                                                                        </span>
+                                                                    </div>
                                                                 ))}
-                                                            </ul>
+                                                            </div>
                                                         </div>
                                                     );
                                                 })}
 
                                                 {Object.keys(groupedRemarks).length === 0 && (
-                                                    <div className="space-y-2">
+                                                    <div className="rounded-[10px] border border-[#f0e7e1] bg-[#fef6f4]/70 p-3">
                                                         <div className="flex items-center gap-2 text-neutral-500">
                                                             <MessageSquare className="h-4 w-4" />
                                                             <h4 className="text-sm font-bold">Other Comments</h4>
                                                         </div>
-                                                        <p className="text-sm text-neutral-400 italic pl-6">
+                                                        <p className="mt-2 text-sm italic text-neutral-400">
                                                             No overall comments
                                                         </p>
                                                     </div>
@@ -5137,91 +5532,9 @@ const WeeklyReports = () => {
                 </Tabs>
             </div>
 
-            {/* Import Daily Wins Dialog */}
-            <Dialog open={showDailyWinsDialog} onOpenChange={setShowDailyWinsDialog}>
-                <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden font-poppins">
-                    <DialogHeader className="p-6 pb-2">
-                        <DialogTitle className="text-xl font-bold text-neutral-900">
-                            Select Daily Wins from Past Week
-                        </DialogTitle>
-                        <p className="text-sm text-neutral-500 mt-1">
-                            Choose accomplishments from your daily reports (
-                            {format(importPrevWeekStart, "MMM d")} to{" "}
-                            {format(importPrevWeekEnd, "MMM d")}) to add to this week&apos;s
-                            achievements.
-                        </p>
-                    </DialogHeader>
-
-                    <div className="max-h-[400px] overflow-y-auto p-6 pt-2 space-y-6">
-                        {isLoadingDailyReports ? (
-                            <div className="space-y-4 py-4">
-                                <Skeleton className="h-6 w-1/3" />
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                        ) : availableDailyReports.length > 0 ? (
-                            availableDailyReports.map((entry) => (
-                                <div key={entry.id} className="space-y-3">
-                                    <h4 className="text-sm font-bold text-neutral-700">
-                                        {format(entry.reportDate, "EEE, MMM d")}
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {entry.wins.map((win: string, i: number) => (
-                                            <div key={i} className="flex items-center gap-3 p-1">
-                                                <Checkbox
-                                                    id={`win-${entry.id}-${i}`}
-                                                    checked={selectedDailyWins.includes(win)}
-                                                    onCheckedChange={(checked) => {
-                                                        if (checked) {
-                                                            setSelectedDailyWins((prev) => [...prev, win]);
-                                                        } else {
-                                                            setSelectedDailyWins((prev) =>
-                                                                prev.filter((w) => w !== win)
-                                                            );
-                                                        }
-                                                    }}
-                                                    className="rounded border-neutral-300"
-                                                />
-                                                <label
-                                                    htmlFor={`win-${entry.id}-${i}`}
-                                                    className="text-sm text-neutral-700 cursor-pointer"
-                                                >
-                                                    {win}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="h-px bg-neutral-100 mt-4 mx-[-24px]" />
-                                </div>
-                            ))
-                        ) : (
-                            <div className="py-8 text-center text-neutral-500 text-sm italic">
-                                No daily wins available to import for the past week.
-                            </div>
-                        )}
-                    </div>
-
-                    <DialogFooter className="p-6 pt-2 gap-3 sm:justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowDailyWinsDialog(false)}
-                            className="rounded-xl border-neutral-200 text-neutral-700 font-bold px-6"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={confirmImportDailyWins}
-                            disabled={selectedDailyWins.length === 0}
-                            className="rounded-xl bg-neutral-400 hover:bg-neutral-500 text-white font-bold px-6"
-                        >
-                            Add Selected
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
+            {openTaskModal && (
             <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
-                <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
+                <MuiDialogContent className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
                     <div className="sticky top-0 bg-white z-10">
                         <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
                         <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
@@ -5238,39 +5551,47 @@ const WeeklyReports = () => {
                     </div>
                 </MuiDialogContent>
             </MuiDialog>
+            )}
 
-            <AddIssueModal
-                openDialog={openIssueModal}
-                handleCloseDialog={() => setOpenIssueModal(false)}
-                prefillData={{
-                    start_date: planPreFillDate ?? currentDateValue,
-                }}
-            />
+            {openIssueModal && (
+                <AddIssueModal
+                    openDialog={openIssueModal}
+                    handleCloseDialog={() => setOpenIssueModal(false)}
+                    prefillData={{
+                        start_date: planPreFillDate ?? currentDateValue,
+                    }}
+                />
+            )}
 
-            <AddToDoModal
-                isModalOpen={openTodoModal}
-                setIsModalOpen={() => {
-                    setOpenTodoModal(false);
-                    setTasksIssuesRefreshKey((key) => key + 1);
-                }}
-                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                prefillData={{
-                    start_date: planPreFillDate ?? currentDateValue,
-                    // target_date: weekEndDateValue,
-                }}
-            />
+            {openTodoModal && (
+                <AddToDoModal
+                    isModalOpen={openTodoModal}
+                    setIsModalOpen={() => {
+                        setOpenTodoModal(false);
+                        setTasksIssuesRefreshKey((key) => key + 1);
+                    }}
+                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                    prefillData={{
+                        start_date: planPreFillDate ?? currentDateValue,
+                        // target_date: weekEndDateValue,
+                    }}
+                />
+            )}
 
-            <TodoDetailsModal
-                isModalOpen={isTodoDetailsModalOpen}
-                setIsModalOpen={setIsTodoDetailsModalOpen}
-                todo={selectedTodo}
-                onEditClick={() => {
-                    setIsTodoDetailsModalOpen(false);
-                    setEditTodoData(selectedTodo);
-                    setIsEditTodoModalOpen(true);
-                }}
-            />
+            {isTodoDetailsModalOpen && (
+                <TodoDetailsModal
+                    isModalOpen={isTodoDetailsModalOpen}
+                    setIsModalOpen={setIsTodoDetailsModalOpen}
+                    todo={selectedTodo}
+                    onEditClick={() => {
+                        setIsTodoDetailsModalOpen(false);
+                        setEditTodoData(selectedTodo);
+                        setIsEditTodoModalOpen(true);
+                    }}
+                />
+            )}
 
+            {isEditTaskModalOpen && (
             <MuiDialog
                 open={isEditTaskModalOpen}
                 onClose={() => {
@@ -5281,7 +5602,7 @@ const WeeklyReports = () => {
                 maxWidth={false}
             >
                 <MuiDialogContent
-                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
                     style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
                     sx={{ padding: "0 !important" }}
                 >
@@ -5308,61 +5629,71 @@ const WeeklyReports = () => {
                     </div>
                 </MuiDialogContent>
             </MuiDialog>
+            )}
 
-            <EditIssueModal
-                openDialog={isEditIssueModalOpen}
-                handleCloseDialog={() => {
-                    setIsEditIssueModalOpen(false);
-                    setEditIssueData(null);
-                }}
-                issueData={editIssueData}
-                onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
-            />
+            {isEditIssueModalOpen && (
+                <EditIssueModal
+                    openDialog={isEditIssueModalOpen}
+                    handleCloseDialog={() => {
+                        setIsEditIssueModalOpen(false);
+                        setEditIssueData(null);
+                    }}
+                    issueData={editIssueData}
+                    onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                />
+            )}
 
-            <AddToDoModal
-                isModalOpen={isEditTodoModalOpen}
-                setIsModalOpen={() => {
-                    setIsEditTodoModalOpen(false);
-                    setEditTodoData(null);
-                    setTasksIssuesRefreshKey((key) => key + 1);
-                }}
-                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                editingTodo={editTodoData}
-                isEditMode={!!editTodoData}
-                prefillData={editTodoData || {}}
-            />
+            {isEditTodoModalOpen && (
+                <AddToDoModal
+                    isModalOpen={isEditTodoModalOpen}
+                    setIsModalOpen={() => {
+                        setIsEditTodoModalOpen(false);
+                        setEditTodoData(null);
+                        setTasksIssuesRefreshKey((key) => key + 1);
+                    }}
+                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                    editingTodo={editTodoData}
+                    isEditMode={!!editTodoData}
+                    prefillData={editTodoData || {}}
+                />
+            )}
 
-            <OverdueReasonModal
-                isOpen={isOverdueModalOpen}
-                onClose={() => {
-                    setIsOverdueModalOpen(false);
-                    setOverdueItem(null);
-                    setOverdueReason("");
-                }}
-                reason={overdueReason}
-                setReason={setOverdueReason}
-                onSubmit={handleOverdueReasonSubmit}
-                isLoading={isOverdueLoading}
-            />
+            {isOverdueModalOpen && (
+                <OverdueReasonModal
+                    isOpen={isOverdueModalOpen}
+                    onClose={() => {
+                        setIsOverdueModalOpen(false);
+                        setOverdueItem(null);
+                        setOverdueReason("");
+                    }}
+                    reason={overdueReason}
+                    setReason={setOverdueReason}
+                    onSubmit={handleOverdueReasonSubmit}
+                    isLoading={isOverdueLoading}
+                />
+            )}
 
-            <PauseReasonModal
-                isOpen={isPauseModalOpen}
-                onClose={() => {
-                    setIsPauseModalOpen(false);
-                    setPauseTaskId(null);
-                }}
-                onSubmit={handlePauseTaskSubmit}
-                isLoading={isPauseLoading}
-                taskId={pauseTaskId}
-            />
+            {isPauseModalOpen && (
+                <PauseReasonModal
+                    isOpen={isPauseModalOpen}
+                    onClose={() => {
+                        setIsPauseModalOpen(false);
+                        setPauseTaskId(null);
+                    }}
+                    onSubmit={handlePauseTaskSubmit}
+                    isLoading={isPauseLoading}
+                    taskId={pauseTaskId}
+                />
+            )}
 
+            {selectedSop && (
             <Dialog
                 open={Boolean(selectedSop)}
                 onOpenChange={(open) => {
                     if (!open) setSelectedSopId(null);
                 }}
             >
-                <DialogContent className="max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
+                <DialogContent className="max-h-[88vh] w-[95vw] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
                     {selectedSop && (
                         <div className="flex max-h-[88vh] flex-col">
                             <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
@@ -5395,431 +5726,437 @@ const WeeklyReports = () => {
                                 </div>
                             </DialogHeader>
 
-                            <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                                                <Activity className="h-4 w-4" />
+                                <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                                    <Activity className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Health</p>
+                                                    <p className="mt-0.5 text-xl font-bold text-neutral-900">
+                                                        {Number(selectedSop.health_score ?? 0)}%
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Health</p>
-                                                <p className="mt-0.5 text-xl font-bold text-neutral-900">
-                                                    {Number(selectedSop.health_score ?? 0)}%
+                                        </div>
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                                    <Users className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Department</p>
+                                                    <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                        {formatSopValue(selectedSop.department_name)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                                                    <User className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Assignee</p>
+                                                    <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                        {formatSopValue(selectedSop.assignee_name)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                        <p className="text-xs font-semibold uppercase text-neutral-500">Description</p>
+                                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-800">
+                                            {formatSopValue(selectedSop.description)}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        {[
+                                            ["Created By", selectedSop.created_by_name],
+                                            ["Updated By", selectedSop.updated_by_name],
+                                            ["Created At", formatSopDate(selectedSop.created_at)],
+                                            ["Updated At", formatSopDate(selectedSop.updated_at)],
+                                        ].map(([label, value]) => (
+                                            <div
+                                                key={label}
+                                                className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm"
+                                            >
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    {label}
+                                                </p>
+                                                <p className="mt-1 break-words text-sm font-semibold text-neutral-900">
+                                                    {formatSopValue(value)}
                                                 </p>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
+
                                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                                <Users className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Department</p>
-                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
-                                                    {formatSopValue(selectedSop.department_name)}
-                                                </p>
-                                            </div>
-                                        </div>
+                                        <p className="text-xs font-semibold uppercase text-neutral-500">
+                                            Documentation URL
+                                        </p>
+                                        {selectedSop.documentation_url ? (
+                                            <a
+                                                href={selectedSop.documentation_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-2 block break-all text-sm font-semibold text-[#DA7756] hover:underline"
+                                            >
+                                                {selectedSop.documentation_url}
+                                            </a>
+                                        ) : (
+                                            <p className="mt-2 text-sm text-neutral-600">Not available</p>
+                                        )}
                                     </div>
+
                                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                                                <User className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Assignee</p>
-                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
-                                                    {formatSopValue(selectedSop.assignee_name)}
-                                                </p>
-                                            </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-xs font-semibold uppercase text-neutral-500">KPIs</p>
+                                            <Badge className="rounded-full border-0 bg-neutral-100 text-neutral-700 hover:bg-neutral-100">
+                                                {Array.isArray(selectedSop.kpis) ? selectedSop.kpis.length : 0}
+                                            </Badge>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase text-neutral-500">Description</p>
-                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-800">
-                                        {formatSopValue(selectedSop.description)}
-                                    </p>
-                                </div>
-
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {[
-                                        ["Created By", selectedSop.created_by_name],
-                                        ["Updated By", selectedSop.updated_by_name],
-                                        ["Created At", formatSopDate(selectedSop.created_at)],
-                                        ["Updated At", formatSopDate(selectedSop.updated_at)],
-                                    ].map(([label, value]) => (
-                                        <div
-                                            key={label}
-                                            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm"
-                                        >
-                                            <p className="text-xs font-semibold uppercase text-neutral-500">
-                                                {label}
-                                            </p>
-                                            <p className="mt-1 break-words text-sm font-semibold text-neutral-900">
-                                                {formatSopValue(value)}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase text-neutral-500">
-                                        Documentation URL
-                                    </p>
-                                    {selectedSop.documentation_url ? (
-                                        <a
-                                            href={selectedSop.documentation_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="mt-2 block break-all text-sm font-semibold text-[#DA7756] hover:underline"
-                                        >
-                                            {selectedSop.documentation_url}
-                                        </a>
-                                    ) : (
-                                        <p className="mt-2 text-sm text-neutral-600">Not available</p>
-                                    )}
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <p className="text-xs font-semibold uppercase text-neutral-500">KPIs</p>
-                                        <Badge className="rounded-full border-0 bg-neutral-100 text-neutral-700 hover:bg-neutral-100">
-                                            {Array.isArray(selectedSop.kpis) ? selectedSop.kpis.length : 0}
-                                        </Badge>
-                                    </div>
-                                    {Array.isArray(selectedSop.kpis) && selectedSop.kpis.length > 0 ? (
-                                        <div className="mt-3 space-y-2">
-                                            {selectedSop.kpis.map((kpi: any) => (
-                                                <div
-                                                    key={kpi.id ?? `${kpi.kpi_id}-${kpi.position}`}
-                                                    className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
-                                                >
-                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                                        <div className="min-w-0">
-                                                            <p className="text-sm font-bold text-neutral-900">
-                                                                {formatSopValue(kpi.kpi_name)}
-                                                            </p>
-                                                            <p className="text-xs text-neutral-500">
-                                                                {formatSopValue(kpi.kpi_category)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-neutral-600">
-                                                            <span className="rounded-full bg-white px-2.5 py-1 capitalize text-neutral-700">
-                                                                {formatSopValue(kpi.kpi_frequency)}
-                                                            </span>
+                                        {Array.isArray(selectedSop.kpis) && selectedSop.kpis.length > 0 ? (
+                                            <div className="mt-3 space-y-2">
+                                                {selectedSop.kpis.map((kpi: any) => (
+                                                    <div
+                                                        key={kpi.id ?? `${kpi.kpi_id}-${kpi.position}`}
+                                                        className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
+                                                    >
+                                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-bold text-neutral-900">
+                                                                    {formatSopValue(kpi.kpi_name)}
+                                                                </p>
+                                                                <p className="text-xs text-neutral-500">
+                                                                    {formatSopValue(kpi.kpi_category)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2 text-xs font-semibold text-neutral-600">
+                                                                <span className="rounded-full bg-white px-2.5 py-1 capitalize text-neutral-700">
+                                                                    {formatSopValue(kpi.kpi_frequency)}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="mt-3 text-sm text-neutral-600">No KPIs linked.</p>
-                                    )}
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="mt-3 text-sm text-neutral-600">No KPIs linked.</p>
+                                        )}
+                                    </div>
                                 </div>
+
+                                <DialogFooter className="border-t border-neutral-200 bg-white px-6 py-4">
+                                    <Button
+                                        type="button"
+                                        className={cn("h-10 rounded-lg px-5", btnPrimary)}
+                                        onClick={() => setSelectedSopId(null)}
+                                    >
+                                        Close
+                                    </Button>
+                                </DialogFooter>
                             </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
+            )}
 
-                            <DialogFooter className="border-t border-neutral-200 bg-white px-6 py-4">
-                                <Button
-                                    type="button"
-                                    className={cn("h-10 rounded-lg px-5", btnPrimary)}
-                                    onClick={() => setSelectedSopId(null)}
-                                >
-                                    Close
-                                </Button>
-                            </DialogFooter>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            <Menu
-                anchorEl={taskIssueMenuAnchor}
-                open={Boolean(taskIssueMenuAnchor)}
-                onClose={() => setTaskIssueMenuAnchor(null)}
-                disableScrollLock
-                slotProps={{
-                    paper: {
-                        sx: {
+            {taskIssueMenuAnchor && (
+                <Menu
+                    anchorEl={taskIssueMenuAnchor}
+                    open={Boolean(taskIssueMenuAnchor)}
+                    onClose={() => setTaskIssueMenuAnchor(null)}
+                    disableScrollLock
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                borderRadius: "12px",
+                                boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                                minWidth: "240px",
+                                overflow: "visible",
+                                maxHeight: "none",
+                                mt: 1,
+                            },
+                        },
+                        list: {
+                            sx: {
+                                py: 0.5,
+                                overflow: "visible",
+                                maxHeight: "none",
+                            },
+                        },
+                    }}
+                    sx={{
+                        "& .MuiPaper-root": {
                             borderRadius: "12px",
                             boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
                             minWidth: "240px",
                             overflow: "visible",
-                            maxHeight: "none",
-                            mt: 1,
-                        },
-                    },
-                    list: {
-                        sx: {
-                            py: 0.5,
-                            overflow: "visible",
-                            maxHeight: "none",
-                        },
-                    },
-                }}
-                sx={{
-                    "& .MuiPaper-root": {
-                        borderRadius: "12px",
-                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "240px",
-                        overflow: "visible",
-                        maxHeight: "none !important",
-                        "&::before": {
-                            content: '""',
-                            display: "block",
-                            position: "absolute",
-                            top: -8,
-                            right: 20,
-                            width: 12,
-                            height: 12,
-                            backgroundColor: "#ffffff",
-                            transform: "translateY(-50%) rotate(45deg)",
-                            zIndex: 0,
-                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
-                        },
-                    },
-                }}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenTaskModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "6px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
+                            maxHeight: "none !important",
+                            "&::before": {
+                                content: '""',
+                                display: "block",
+                                position: "absolute",
+                                top: -8,
+                                right: 20,
+                                width: 12,
+                                height: 12,
+                                backgroundColor: "#ffffff",
+                                transform: "translateY(-50%) rotate(45deg)",
+                                zIndex: 0,
+                                boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                            },
                         },
                     }}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <CheckSquare size={18} className="text-blue-600" />
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenTaskModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "6px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <CheckSquare size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Create a new task
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Create a new task
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenIssueModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 6px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef2f2",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-red-50 rounded-lg">
+                                <AlertCircle size={18} className="text-red-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Report a problem
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenIssueModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 6px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef2f2",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-red-50 rounded-lg">
-                            <AlertCircle size={18} className="text-red-600" />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenTodoModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fffbeb",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-amber-50 rounded-lg">
+                                <ListTodo size={18} className="text-amber-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Add a quick follow-up
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Report a problem
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenTodoModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fffbeb",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-amber-50 rounded-lg">
-                            <ListTodo size={18} className="text-amber-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Add a quick follow-up
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-            </Menu>
+                    </MenuItem>
+                </Menu>
+            )}
 
             {/* Day plan dropdown menu */}
-            <Menu
-                anchorEl={dayPlanMenuAnchor?.el}
-                open={Boolean(dayPlanMenuAnchor)}
-                onClose={() => setDayPlanMenuAnchor(null)}
-                sx={{
-                    "& .MuiPaper-root": {
-                        borderRadius: "12px",
-                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "220px",
-                        overflow: "visible",
-                        "&::before": {
-                            content: '""',
-                            display: "block",
-                            position: "absolute",
-                            top: -8,
-                            right: 20,
-                            width: 12,
-                            height: 12,
-                            backgroundColor: "#ffffff",
-                            transform: "translateY(-50%) rotate(45deg)",
-                            zIndex: 0,
-                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
-                        },
-                    },
-                }}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
-                        setDayPlanMenuAnchor(null);
-                    }}
+            {dayPlanMenuAnchor && (
+                <Menu
+                    anchorEl={dayPlanMenuAnchor?.el}
+                    open={Boolean(dayPlanMenuAnchor)}
+                    onClose={() => setDayPlanMenuAnchor(null)}
                     sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "8px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
+                        "& .MuiPaper-root": {
+                            borderRadius: "12px",
+                            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                            minWidth: "220px",
+                            overflow: "visible",
+                            "&::before": {
+                                content: '""',
+                                display: "block",
+                                position: "absolute",
+                                top: -8,
+                                right: 20,
+                                width: 12,
+                                height: 12,
+                                backgroundColor: "#ffffff",
+                                transform: "translateY(-50%) rotate(45deg)",
+                                zIndex: 0,
+                                boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                            },
                         },
                     }}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <Plus size={18} className="text-blue-600" />
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "8px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <Plus size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Note</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Item</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenTaskModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <CheckSquare size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenTaskModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <CheckSquare size={18} className="text-blue-600" />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenIssueModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef2f2",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-red-50 rounded-lg">
+                                <AlertCircle size={18} className="text-red-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenTodoModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 8px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef9f0",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-amber-50 rounded-lg">
+                                <ListTodo size={18} className="text-amber-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenIssueModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef2f2",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-red-50 rounded-lg">
-                            <AlertCircle size={18} className="text-red-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenTodoModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 8px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef9f0",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-amber-50 rounded-lg">
-                            <ListTodo size={18} className="text-amber-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-            </Menu>
+                    </MenuItem>
+                </Menu>
+            )}
 
+            {showClosureModal && (
             <MuiDialog
                 open={showClosureModal}
                 onClose={() => {
@@ -5881,7 +6218,7 @@ const WeeklyReports = () => {
                         <label className="text-sm font-bold text-[#1a1a1a]">
                             Attach Files (Optional)
                         </label>
-                        <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
                             <div className="space-y-0.5">
                                 <p className="text-xs font-bold text-green-600">
                                     {closureAttachments.length}/5
@@ -5965,21 +6302,29 @@ const WeeklyReports = () => {
                             ) : (
                                 <>
                                     <CheckCircle2 size={16} />
-                                    Mark Closed
+                                    Mark Closed 
                                 </>
                             )}
                         </Button>
                     </div>
                 </div>
             </MuiDialog>
+            )}
 
             {/* Task completion confirmation modal */}
-            {pendingConfirmAction && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                                <AlertCircle size={20} className="text-amber-600" />
+            {pendingConfirmAction && createPortal(
+                <>
+                    <div
+                        onClick={() => setPendingConfirmAction(null)}
+                        style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 9998 }}
+                    />
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6"
+                        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, width: "min(280px, calc(100vw - 32px))", maxHeight: "calc(100vh - 32px)", overflowY: "auto" }}
+                    >
+                        <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                <AlertCircle size={18} className="text-amber-600" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
@@ -6006,7 +6351,8 @@ const WeeklyReports = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </>,
+                document.body
             )}
         </div>
     );

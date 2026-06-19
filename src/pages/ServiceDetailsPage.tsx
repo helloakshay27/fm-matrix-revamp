@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import qrCodePlaceholder from '@/assets/qr-code-placeholder.png';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -9,7 +8,8 @@ import {
   Download,
   Paperclip,
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { getReturnToFromState } from '@/utils/listBackNavigation';
 import { AssociateServiceModal } from '@/components/AssociateServiceModal';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchServiceDetails } from '@/store/slices/serviceDetailsSlice';
@@ -47,6 +47,7 @@ interface AssetNode {
 
 export const ServiceDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const { toast } = useToast();
@@ -251,7 +252,10 @@ export const ServiceDetailsPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <button
-            onClick={() => navigate('/maintenance/service')}
+            onClick={() => {
+              const returnTo = getReturnToFromState(location.state);
+              navigate(returnTo ?? '/maintenance/service');
+            }}
             className="flex items-center gap-1 hover:text-gray-800 mb-4 text-base"
           >
             <ArrowLeft className="w-4 h-4" />

@@ -6,6 +6,7 @@ interface MeetingNotesProps {
     markAllAttended: boolean;
     isSubmittedMeeting?: boolean;
     saveMeetingLoading?: boolean;
+    hasSelection?: boolean;
     onMeetingNotesChange: (value: string) => void;
     onMarkAllAttendedChange: (value: boolean) => void;
     onSaveMeeting: () => void;
@@ -17,11 +18,14 @@ export const MeetingNotes = ({
     markAllAttended,
     isSubmittedMeeting = false,
     saveMeetingLoading = false,
+    hasSelection = true,
     onMeetingNotesChange,
     onMarkAllAttendedChange,
     onSaveMeeting,
     onClearNotes,
 }: MeetingNotesProps) => {
+    // For a fresh meeting at least one member must be ticked before saving.
+    const saveDisabled = saveMeetingLoading || (!isSubmittedMeeting && !hasSelection);
     return (
         <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm">
             {/* Header */}
@@ -50,7 +54,7 @@ export const MeetingNotes = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)]">
+            <div className="flex flex-col gap-3 bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)] sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                         type="checkbox"
@@ -66,17 +70,21 @@ export const MeetingNotes = ({
                 <div className="flex items-center gap-2">
                     <Button
                         size="sm"
-                        disabled={saveMeetingLoading}
-                        className="px-6 py-2 h-8 text-xs bg-[#CE7A5A] hover:bg-[#BC6B4A] text-white rounded-2xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                        disabled={saveDisabled}
+                        title={!isSubmittedMeeting && !hasSelection ? 'Select at least one member to save the meeting' : undefined}
+                        className="inline-flex h-9 w-full items-center gap-2 px-5 text-sm bg-[#CE7A5A] hover:bg-[#BC6B4A] text-white rounded-xl font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                         onClick={onSaveMeeting}
                     >
                         {saveMeetingLoading ? (
-                            <div className="flex items-center gap-2">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
                                 <span>Saving...</span>
-                            </div>
+                            </>
                         ) : (
-                            isSubmittedMeeting ? 'Update Notes' : 'Save Meeting'
+                            <>
+                                <Send className="w-4 h-4" />
+                                {isSubmittedMeeting ? 'Update Notes' : 'Save Meeting'}
+                            </>
                         )}
                     </Button>
                 </div>

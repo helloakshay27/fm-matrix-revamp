@@ -1,29 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { Recycle, Building, Trash2, MapPin, ArrowLeft } from 'lucide-react';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  fetchAreas, 
-  fetchVendors, 
-  fetchCommodities, 
-  fetchCategories, 
+import { TextField } from '@mui/material';
+import { Recycle, ArrowLeft } from 'lucide-react';
+import { FormSearchSelect } from '@/components/FormSearchSelect';
+import {
+  fetchBuildings,
+  fetchWings,
+  fetchAreas,
+  fetchCommodities,
+  fetchCategories,
   fetchOperationalLandlords,
   fetchWasteGenerationById,
   updateWasteGeneration,
   Building as BuildingType,
   Wing,
   Area,
-  Vendor,
   Commodity,
   Category,
   OperationalLandlord,
   WasteGeneration,
   UpdateWasteGenerationPayload
 } from '@/services/wasteGenerationAPI';
+import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { toast } from 'sonner';
 
 // Field styles for Material-UI components
@@ -42,8 +42,17 @@ const fieldStyles = {
     "& .MuiInputLabel-asterisk": {
       color: "#C72030 !important",
     },
+    "&.Mui-required .MuiInputLabel-asterisk": {
+      color: "#C72030 !important",
+    },
   },
   "& .MuiFormLabel-asterisk": {
+    color: "#C72030 !important",
+  },
+  "& .MuiInputLabel-asterisk": {
+    color: "#C72030 !important",
+  },
+  "& .MuiFormLabel-root .MuiFormLabel-asterisk": {
     color: "#C72030 !important",
   },
 };
@@ -52,7 +61,7 @@ const EditWasteGenerationPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast: reactToast } = useToast();
-  
+
   const [initialLoading, setInitialLoading] = useState(true);
   const [formData, setFormData] = useState({
     building: '',
@@ -66,7 +75,7 @@ const EditWasteGenerationPage = () => {
     agencyName: '',
     generatedUnit: '',
     recycledUnit: '0',
-    uom: '',
+    uom: 'KG',
     typeOfWaste: ''
   });
 
@@ -74,17 +83,14 @@ const EditWasteGenerationPage = () => {
   const [buildings, setBuildings] = useState<BuildingType[]>([]);
   const [wings, setWings] = useState<Wing[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [operationalLandlords, setOperationalLandlords] = useState<OperationalLandlord[]>([]);
-  const [wasteData, setWasteData] = useState<WasteGeneration | null>(null);
 
   // Loading states
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
-  const [loadingVendors, setLoadingVendors] = useState(false);
   const [loadingCommodities, setLoadingCommodities] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingOperationalLandlords, setLoadingOperationalLandlords] = useState(false);
@@ -94,22 +100,18 @@ const EditWasteGenerationPage = () => {
   useEffect(() => {
     const fetchExistingData = async () => {
       if (!id) return;
-      
+
       try {
         setInitialLoading(true);
-        console.log('Fetching waste generation data for edit, ID:', id);
-        
+
         const existingData = await fetchWasteGenerationById(parseInt(id));
-        setWasteData(existingData);
-        
-        // Format date to YYYY-MM-DD for input
+
         const formatDate = (dateString: string) => {
           if (!dateString) return '';
           const date = new Date(dateString);
           return date.toISOString().split('T')[0];
         };
 
-        // Populate form with existing data
         setFormData({
           building: existingData.building_id?.toString() || '',
           wing: existingData.wing_id?.toString() || '',
@@ -122,10 +124,10 @@ const EditWasteGenerationPage = () => {
           agencyName: existingData.agency_name || '',
           generatedUnit: existingData.waste_unit?.toString() || '',
           recycledUnit: existingData.recycled_unit?.toString() || '0',
-          uom: 'KG', // Not available in current API response
-          typeOfWaste: '' // Not available in current API response
+          uom: 'KG',
+          typeOfWaste: ''
         });
-        
+
       } catch (error) {
         console.error('Error fetching waste generation data:', error);
         toast.error('Failed to load waste generation data');
@@ -141,7 +143,6 @@ const EditWasteGenerationPage = () => {
   // Fetch all dropdowns data on component mount
   useEffect(() => {
     const fetchAllDropdowns = async () => {
-      // Fetch buildings
       setLoadingBuildings(true);
       try {
         const buildingsData = await fetchBuildings();
@@ -154,24 +155,9 @@ const EditWasteGenerationPage = () => {
         setLoadingBuildings(false);
       }
 
-      // Fetch vendors
-      setLoadingVendors(true);
-      try {
-        const vendorsData = await fetchVendors();
-        setVendors(Array.isArray(vendorsData) ? vendorsData : []);
-      } catch (error) {
-        console.error('Error fetching vendors:', error);
-        setVendors([]);
-        // Don't show error for vendors as they are optional
-      } finally {
-        setLoadingVendors(false);
-      }
-
-      // Fetch commodities
       setLoadingCommodities(true);
       try {
         const commoditiesData = await fetchCommodities();
-        console.log('Commodities data received:', commoditiesData);
         setCommodities(Array.isArray(commoditiesData) ? commoditiesData : []);
       } catch (error) {
         console.error('Error fetching commodities:', error);
@@ -181,11 +167,9 @@ const EditWasteGenerationPage = () => {
         setLoadingCommodities(false);
       }
 
-      // Fetch categories
       setLoadingCategories(true);
       try {
         const categoriesData = await fetchCategories();
-        console.log('Categories data received:', categoriesData);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -195,11 +179,9 @@ const EditWasteGenerationPage = () => {
         setLoadingCategories(false);
       }
 
-      // Fetch operational landlords
       setLoadingOperationalLandlords(true);
       try {
         const operationalLandlordsData = await fetchOperationalLandlords();
-        console.log('Operational landlords data received:', operationalLandlordsData);
         setOperationalLandlords(Array.isArray(operationalLandlordsData) ? operationalLandlordsData : []);
       } catch (error) {
         console.error('Error fetching operational landlords:', error);
@@ -264,6 +246,13 @@ const EditWasteGenerationPage = () => {
   }, [formData.wing]);
 
   const handleInputChange = (field: string, value: string) => {
+    if (
+      (field === "generatedUnit" || field === "recycledUnit") &&
+      Number(value) < 0
+    ) {
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -272,13 +261,57 @@ const EditWasteGenerationPage = () => {
 
   const handleUpdate = async () => {
     if (!id) return;
-    
-    if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
-      reactToast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
+
+    if (!formData.building) {
+      toast.error("Validation Error: Building is required.");
+      return;
+    }
+
+    if (!formData.date) {
+      toast.error("Validation Error: Date is required.");
+      return;
+    }
+
+    if (!formData.vendor) {
+      toast.error("Validation Error: Vendor is required.");
+      return;
+    }
+
+    if (!formData.commodity) {
+      toast.error("Validation Error: Commodity is required.");
+      return;
+    }
+
+    if (!formData.category) {
+      toast.error("Validation Error: Category is required.");
+      return;
+    }
+
+    if (!formData.operationalName) {
+      toast.error("Validation Error: Operational Name of Landlord/Tenant is required.");
+      return;
+    }
+
+    if (!formData.generatedUnit) {
+      toast.error("Validation Error: Generated Unit is required.");
+      return;
+    }
+
+    if (parseFloat(formData.generatedUnit) <= 0) {
+      toast.error("Validation Error: Generated Unit must be greater than 0.");
+      return;
+    }
+
+    if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
+      toast.error("Validation Error: Recycled Unit cannot be negative.");
+      return;
+    }
+
+    if (
+      parseFloat(formData.recycledUnit || "0") >
+      parseFloat(formData.generatedUnit)
+    ) {
+      toast.error("Validation Error: Recycled Unit cannot be greater than Generated Unit.");
       return;
     }
 
@@ -302,25 +335,14 @@ const EditWasteGenerationPage = () => {
         }
       };
 
-      console.log('Update payload:', payload);
+      await updateWasteGeneration(parseInt(id), payload);
 
-      const result = await updateWasteGeneration(parseInt(id), payload);
-      
-      console.log('Update response:', result);
-      
       toast.success('Waste generation updated successfully!');
-      
-      // Navigate back to details page
       navigate(`/maintenance/waste/generation/${id}`);
-      
+
     } catch (error) {
       console.error('Error updating waste generation:', error);
       toast.error('Failed to update waste generation');
-      reactToast({
-        title: "Error",
-        description: "Failed to update waste generation. Please try again.",
-        variant: "destructive"
-      });
     } finally {
       setSubmitting(false);
     }
@@ -330,9 +352,42 @@ const EditWasteGenerationPage = () => {
     navigate(`/maintenance/waste/generation/${id}`);
   };
 
-  const handleCancel = () => {
-    navigate(`/maintenance/waste/generation/${id}`);
-  };
+  const buildingOptions = useMemo(
+    () => buildings.map((b) => ({ value: b.id.toString(), label: b.name })),
+    [buildings]
+  );
+  const wingOptions = useMemo(
+    () => wings.map((w) => ({ value: w.id.toString(), label: w.name })),
+    [wings]
+  );
+  const areaOptions = useMemo(
+    () => areas.map((a) => ({ value: a.id.toString(), label: a.name })),
+    [areas]
+  );
+  const commodityOptions = useMemo(
+    () =>
+      commodities.map((c) => ({
+        value: c.id.toString(),
+        label: c.category_name,
+      })),
+    [commodities]
+  );
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((c) => ({
+        value: c.id.toString(),
+        label: c.category_name,
+      })),
+    [categories]
+  );
+  const operationalLandlordOptions = useMemo(
+    () =>
+      operationalLandlords.map((l) => ({
+        value: l.id.toString(),
+        label: l.category_name,
+      })),
+    [operationalLandlords]
+  );
 
   if (initialLoading) {
     return (
@@ -347,20 +402,21 @@ const EditWasteGenerationPage = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="font-bold text-[#1a1a1a]">Back to Details</span>
-          </button>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">EDIT WASTE GENERATION</h1>
+      <div className="flex items-center gap-4 mb-8">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">EDIT WASTE GENERATION</h1>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }} className="space-y-6">
+      <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }}>
         {/* Waste Generation Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
                 <Recycle size={16} color="#C72030" />
@@ -368,94 +424,47 @@ const EditWasteGenerationPage = () => {
               WASTE GENERATION DETAILS
             </h2>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-10">
             {/* Location Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // required
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Building <span className="text-red-500">*</span></InputLabel>
-                <MuiSelect
-                  value={formData.building}
-                  onChange={(e) => handleInputChange('building', e.target.value)}
-                  label="Building*"
-                  notched
-                  displayEmpty
-                  disabled={loadingBuildings}
-                >
-                  <MenuItem value="">
-                    {loadingBuildings ? 'Loading buildings...' : 'Select Building'}
-                  </MenuItem>
-                  {Array.isArray(buildings) && buildings.map((building) => (
-                    <MenuItem key={building.id} value={building.id.toString()}>
-                      {building.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Wing</InputLabel>
-                <MuiSelect
-                  value={formData.wing}
-                  onChange={(e) => handleInputChange('wing', e.target.value)}
-                  label="Wing"
-                  notched
-                  displayEmpty
-                  disabled={loadingWings || !formData.building}
-                >
-                  <MenuItem value="">
-                    {loadingWings ? 'Loading wings...' : 
-                     !formData.building ? 'Select Building First' : 
-                     'Select Wing (Optional)'}
-                  </MenuItem>
-                  {Array.isArray(wings) && wings.map((wing) => (
-                    <MenuItem key={wing.id} value={wing.id.toString()}>
-                      {wing.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Area</InputLabel>
-                <MuiSelect
-                  value={formData.area}
-                  onChange={(e) => handleInputChange('area', e.target.value)}
-                  label="Area"
-                  notched
-                  displayEmpty
-                  disabled={loadingAreas || !formData.wing}
-                >
-                  <MenuItem value="">
-                    {loadingAreas ? 'Loading areas...' : 
-                     !formData.wing ? 'Select Wing First' : 
-                     'Select Area (Optional)'}
-                  </MenuItem>
-                  {Array.isArray(areas) && areas.map((area) => (
-                    <MenuItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
+              <FormSearchSelect
+                label={<>Building <span className="text-red-500">*</span></>}
+                value={formData.building}
+                onChange={(v) => handleInputChange('building', v)}
+                options={buildingOptions}
+                placeholder="Select Building"
+                isLoading={loadingBuildings}
+                disabled={loadingBuildings}
+              />
+
+              <FormSearchSelect
+                label="Wing"
+                value={formData.wing}
+                onChange={(v) => handleInputChange('wing', v)}
+                options={wingOptions}
+                placeholder={
+                  !formData.building
+                    ? 'Select Building First'
+                    : 'Select Wing (Optional)'
+                }
+                isLoading={loadingWings}
+                disabled={loadingWings || !formData.building}
+              />
+
+              <FormSearchSelect
+                label="Area"
+                value={formData.area}
+                onChange={(v) => handleInputChange('area', v)}
+                options={areaOptions}
+                placeholder={
+                  !formData.wing ? 'Select Wing First' : 'Select Area (Optional)'
+                }
+                isLoading={loadingAreas}
+                disabled={loadingAreas || !formData.wing}
+              />
+
               <TextField
-                label="Date*"
+                label={<span>Date <span className="text-red-500">*</span></span>}
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
@@ -466,152 +475,70 @@ const EditWasteGenerationPage = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                sx={fieldStyles}
               />
             </div>
 
             {/* Waste Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // required
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Vendor <span className="text-red-500">*</span></InputLabel>
-                <MuiSelect
-                  value={formData.vendor}
-                  onChange={(e) => handleInputChange('vendor', e.target.value)}
-                  label="Vendor*"
-                  notched
-                  displayEmpty
-                  disabled={loadingVendors}
-                >
-                  <MenuItem value="">
-                    {loadingVendors ? 'Loading vendors...' : 'Select Vendor'}
-                  </MenuItem>
-                  {Array.isArray(vendors) && vendors.map((vendor) => (
-                    <MenuItem key={vendor.id} value={vendor.id.toString()}>
-                      {vendor.company_name || vendor.full_name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // required
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Commodity <span className="text-red-500">*</span></InputLabel>
-                <MuiSelect
-                  value={formData.commodity}
-                  onChange={(e) => handleInputChange('commodity', e.target.value)}
-                  label="Commodity*"
-                  notched
-                  displayEmpty
-                  disabled={loadingCommodities}
-                >
-                  <MenuItem value="">
-                    {loadingCommodities ? 'Loading commodities...' : 'Select Commodity'}
-                  </MenuItem>
-                  {Array.isArray(commodities) && commodities.map((commodity) => (
-                    <MenuItem key={commodity.id} value={commodity.id.toString()}>
-                      {commodity.category_name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // required
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Category <span className="text-red-500">*</span></InputLabel>
-                <MuiSelect
-                  value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  label="Category*"
-                  notched
-                  displayEmpty
-                  disabled={loadingCategories}
-                >
-                  <MenuItem value="">
-                    {loadingCategories ? 'Loading categories...' : 'Select Category'}
-                  </MenuItem>
-                  {Array.isArray(categories) && categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id.toString()}>
-                      {category.category_name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
+              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
+              <SupplierSearchSelect
+                value={formData.vendor}
+                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
+                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
+                size="schedule"
+                error={false}
+              />
+
+              <FormSearchSelect
+                label={<>Commodity <span className="text-red-500">*</span></>}
+                value={formData.commodity}
+                onChange={(v) => handleInputChange('commodity', v)}
+                options={commodityOptions}
+                placeholder="Select Commodity"
+                isLoading={loadingCommodities}
+                disabled={loadingCommodities}
+              />
+
+              <FormSearchSelect
+                label={<>Category <span className="text-red-500">*</span></>}
+                value={formData.category}
+                onChange={(v) => handleInputChange('category', v)}
+                options={categoryOptions}
+                placeholder="Select Category"
+                isLoading={loadingCategories}
+                disabled={loadingCategories}
+              />
+
               <TextField
                 fullWidth
-                label="UoM"
+                label="UOM"
                 variant="outlined"
                 value={formData.uom}
                 onChange={(e) => handleInputChange('uom', e.target.value)}
-                placeholder="Enter UoM"
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                placeholder="Enter UOM"
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </div>
 
-            {/* Additional Waste Details */}
-            <div className="">
-              
-              
-              {/* <TextField
-                fullWidth
-                label="Type of Waste"
-                variant="outlined"
-                value={formData.typeOfWaste}
-                onChange={(e) => handleInputChange('typeOfWaste', e.target.value)}
-                placeholder="Enter type of waste"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-                InputLabelProps={{ shrink: true }}
-              /> */}
-            </div>
-
             {/* Organization Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <FormControl
-                fullWidth
-                variant="outlined"
-                // required
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-              >
-                <InputLabel shrink>Operational Name of Landlord/ Tenant <span className="text-red-500">*</span></InputLabel>
-                <MuiSelect
-                  value={formData.operationalName}
-                  onChange={(e) => handleInputChange('operationalName', e.target.value)}
-                  label="Operational Name of Landlord/ Tenant*"
-                  notched
-                  displayEmpty
-                  disabled={loadingOperationalLandlords}
-                >
-                  <MenuItem value="">
-                    {loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}
-                  </MenuItem>
-                  {Array.isArray(operationalLandlords) && operationalLandlords.map((landlord) => (
-                    <MenuItem key={landlord.id} value={landlord.id.toString()}>
-                      {landlord.category_name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
+              <FormSearchSelect
+                label={
+                  <>
+                    <span className="text-red-500">*</span> Operational Name of
+                    Landlord/ Tenant
+                  </>
+                }
+                value={formData.operationalName}
+                onChange={(v) => handleInputChange('operationalName', v)}
+                options={operationalLandlordOptions}
+                placeholder="Select Operational Name"
+                isLoading={loadingOperationalLandlords}
+                disabled={loadingOperationalLandlords}
+              />
+
               <TextField
                 label="Agency Name"
                 placeholder="Enter Agency Name"
@@ -624,33 +551,26 @@ const EditWasteGenerationPage = () => {
                     shrink: true,
                   },
                 }}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
                 sx={fieldStyles}
               />
-              
+
               <TextField
-                // label="Generated Unit"
                 label={<span>Generated Unit <span className="text-red-500">*</span></span>}
                 type="number"
                 placeholder="Enter Unit"
                 value={formData.generatedUnit}
                 onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
                 fullWidth
-                // required
                 variant="outlined"
+                inputProps={{ min: "0" }}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
                 sx={fieldStyles}
               />
-              
+
               <TextField
                 label="Recycled Unit"
                 type="number"
@@ -659,38 +579,38 @@ const EditWasteGenerationPage = () => {
                 onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
                 fullWidth
                 variant="outlined"
+                inputProps={{ min: "0" }}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
                 sx={fieldStyles}
               />
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Button 
-            type="submit"
-            disabled={submitting}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? 'Updating...' : 'Update'}
-          </Button>
-          <Button 
-            type="button"
-            variant="outline"
-            onClick={handleBack}
-            disabled={submitting}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 disabled:opacity-50"
-          >
-            Back
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-4 justify-center px-6 py-6 border-t border-gray-200">
+            <Button
+              type="submit"
+              disabled={submitting}
+              style={{ backgroundColor: '#C72030', color: '#ffffff' }}
+              className="hover:bg-[#A01B26] px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+            >
+              {submitting ? 'Updating...' : 'Update'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBack}
+              disabled={submitting}
+              style={{ borderColor: '#d1d5db', color: '#374151' }}
+              className="hover:bg-gray-50 px-8 py-2 disabled:opacity-50 rounded-md"
+            >
+              Back
+            </Button>
+          </div>
         </div>
       </form>
     </div>

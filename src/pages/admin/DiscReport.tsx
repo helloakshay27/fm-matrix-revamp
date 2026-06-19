@@ -1655,7 +1655,10 @@ function LearnTabContent() {
           </div>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-1 rounded-xl border p-1.5" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
+        <div
+          className="mb-5 flex flex-wrap gap-1 rounded-xl border p-1.5"
+          style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}
+        >
           {LEARN_SUB_TABS.map((st) => (
             <button
               key={st.key}
@@ -1785,7 +1788,10 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm text-neutral-800" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
+      <div
+        className="mt-4 flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm text-neutral-800"
+        style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}
+      >
         <User className="h-4 w-4 shrink-0 text-[#DA7756]" strokeWidth={2} />
         <span>
           <span className="font-semibold tabular-nums">
@@ -1847,7 +1853,10 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border px-3 py-2.5" style={{ borderColor: BP.primaryBord, background: BP.primaryTint }}>
+      <div
+        className="mt-4 rounded-xl border px-3 py-2.5"
+        style={{ borderColor: BP.primaryBord, background: BP.primaryTint }}
+      >
         <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
           Department Head
         </p>
@@ -2288,8 +2297,8 @@ const DiscReport = () => {
 
         {/* ── Tab Bar — matches BusinessPlan pill style ── */}
         <div
-          className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto shadow-sm"
-          style={{ background: BP.primary }}
+          className="bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm border"
+          style={{ borderColor: "#f3f4f6" }}
         >
           {(["dashboard", "teams", "learn"] as DiscTab[]).map((t) => {
             const Icon =
@@ -2304,11 +2313,10 @@ const DiscReport = () => {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className="flex items-center gap-2 py-2 px-5 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap"
+                className="flex items-center gap-2 py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap"
                 style={{
-                  background: isActive ? "#fff" : "transparent",
-                  color: isActive ? BP.primary : "rgba(255,255,255,0.85)",
-                  boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
+                  background: isActive ? BP.primary : "transparent",
+                  color: isActive ? "#fff" : "#7b8393",
                 }}
               >
                 <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />

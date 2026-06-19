@@ -8,6 +8,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
+import axios from "axios";
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -18,12 +19,12 @@ interface SalesOrder {
   expected_shipment_date: string;
   amount: number;
   status:
-    | "draft"
-    | "confirmed"
-    | "shipped"
-    | "delivered"
-    | "cancelled"
-    | "closed";
+  | "draft"
+  | "confirmed"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "closed";
   payment_terms: string;
   reference_number: string;
   sales_person_name: string;
@@ -31,6 +32,17 @@ interface SalesOrder {
   created_at: string;
   updated_at: string;
 }
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ApiResponse {
   success: boolean;
@@ -117,6 +129,13 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
+  {
+    key: "active",
+    label: "Active/Inactive",
+    sortable: false,
+    hideable: true,
+    draggable: false,
+  },
 ];
 
 export const RecurringInvoicesListPage: React.FC = () => {
@@ -136,6 +155,9 @@ export const RecurringInvoicesListPage: React.FC = () => {
     has_next_page: false,
     has_prev_page: false,
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Fetch sales order data from API
   // const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
@@ -368,6 +390,23 @@ export const RecurringInvoicesListPage: React.FC = () => {
         >
           <Eye className="w-4 h-4" />
         </button>
+        <button
+          onClick={() => handleEdit(order.id)}
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => {
+            setSelectedDeleteId(order.id);
+            setDeleteDialogOpen(true);
+          }}
+          className="p-1 text-red-600 hover:text-red-700 hover:bg-gray-100 rounded"
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
       </div>
     ),
     order_number: (
@@ -385,13 +424,13 @@ export const RecurringInvoicesListPage: React.FC = () => {
       <span className="text-sm text-gray-600">
         {order?.recurring_detail?.start_date
           ? new Date(order.recurring_detail.start_date).toLocaleDateString(
-              "en-GB",
-              {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              }
-            )
+            "en-GB",
+            {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }
+          )
           : "-"}
       </span>
     ),
@@ -399,13 +438,13 @@ export const RecurringInvoicesListPage: React.FC = () => {
       <span className="text-sm text-gray-600">
         {order?.recurring_detail?.end_date
           ? new Date(order.recurring_detail.end_date).toLocaleDateString(
-              "en-GB",
-              {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              }
-            )
+            "en-GB",
+            {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }
+          )
           : "-"}
       </span>
     ),
@@ -429,6 +468,30 @@ export const RecurringInvoicesListPage: React.FC = () => {
         {getStatusBadge(order.status)}
       </div>
     ),
+    active: (() => {
+      const isActive = !!order.active;
+      return (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleToggleStatus(order)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+              }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"
+                }`}
+            />
+          </button>
+
+          <span
+            className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
+              }`}
+          >
+          </span>
+        </div>
+      );
+    })()
   });
 
   const handleView = (id: number) => {
@@ -436,20 +499,66 @@ export const RecurringInvoicesListPage: React.FC = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/accounting/sales-order/edit/${id}`);
+    navigate(`/accounting/recurring-invoices/edit/${id}`);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this sales order?")) {
-      toast.success("Sales order deleted successfully!", {
+  const handleDelete = async () => {
+    if (!selectedDeleteId) return;
+    setDeleteLoading(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
+      await axios.delete(
+        `https://${baseUrl}/lock_account_invoices/${selectedDeleteId}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          }
+        }
+      );
+      toast.success("Recurring invoice deleted successfully!", {
         duration: 3000,
       });
+      setDeleteDialogOpen(false);
+      setSelectedDeleteId(null);
       fetchSalesOrderData(
         currentPage,
         perPage,
         debouncedSearchQuery,
         appliedFilters
       );
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete recurring invoice");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (order: SalesOrder) => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const url = `https://${baseUrl}/lock_account_invoices/${order.id}/toggle_active.json`;
+
+      const response = await axios.patch(
+        url,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      toast.success(response?.data?.message || "Status updated successfully");
+      fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    } catch (error) {
+      console.error("Toggle status error:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -473,7 +582,8 @@ export const RecurringInvoicesListPage: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            // className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className='fm-button-fix fm-button-brand px-4 py-2P'
             onClick={() => navigate("/accounting/recurring-invoices/create")}
           >
             <Plus className="w-4 h-4 mr-2" /> Add
@@ -492,6 +602,43 @@ export const RecurringInvoicesListPage: React.FC = () => {
           onPerPageChange={handlePerPageChange}
         />
       )}
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Recurring Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this recurring invoice? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleteLoading}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                border: "none",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#b91c1c";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc2626";
+              }}
+            >
+              {deleteLoading ? "Deleting..." : "OK"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

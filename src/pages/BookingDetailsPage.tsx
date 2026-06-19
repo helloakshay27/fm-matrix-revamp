@@ -217,6 +217,13 @@ export const BookingDetailsPage = () => {
                   {bookings?.startdate.split(" ")[0]}
                 </span>
               </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Amount</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.amount_full ?? "-"}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-4">

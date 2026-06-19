@@ -190,7 +190,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
 
         const url = getFullUrl('/parking_dashboard/parking_summary');
         const options = getAuthenticatedFetchOptions();
-        
+
         const params = new URLSearchParams({
           start_date: startDateStr,
           end_date: endDateStr,
@@ -201,7 +201,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
   const fullUrl = `${url}?${params.toString()}`;
 
         const response = await fetch(fullUrl, options);
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch parking summary: ${response.statusText}`);
         }
@@ -264,7 +264,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
 
       const url = getFullUrl('/parking_dashboard/parking_summary');
       const options = getAuthenticatedFetchOptions();
-      
+
       const params = new URLSearchParams({
         start_date: startDateStr,
         end_date: endDateStr,
@@ -274,7 +274,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
 
       const fullUrl = `${url}?${params.toString()}`;
       const response = await fetch(fullUrl, options);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch parking summary: ${response.statusText}`);
       }
@@ -327,7 +327,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
   // Also pull previous/yoy category splits for 2W/4W if present
   const prevTwo = apiData?.yoy_period?.two_wheeler || apiData?.previous_period?.two_wheeler;
   const prevFour = apiData?.yoy_period?.four_wheeler || apiData?.previous_period?.four_wheeler;
-    
+
     switch (key) {
       case "total_slots":
         {
@@ -400,8 +400,8 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
       case "utilization":
         return {
           total: data.utilization || 0,
-          twoWheeler: data.two_wheeler?.total && data.two_wheeler?.occupied 
-            ? Math.round((data.two_wheeler.occupied / data.two_wheeler.total) * 100) 
+          twoWheeler: data.two_wheeler?.total && data.two_wheeler?.occupied
+            ? Math.round((data.two_wheeler.occupied / data.two_wheeler.total) * 100)
             : 0,
           fourWheeler: data.four_wheeler?.total && data.four_wheeler?.occupied
             ? Math.round((data.four_wheeler.occupied / data.four_wheeler.total) * 100)
@@ -512,7 +512,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
 
             // Calculate percentage change vs last year
             const percentageChange = value.lastYear !== undefined && value.lastYear !== null && value.total !== undefined && value.total !== null
-              ? value.lastYear !== 0 
+              ? value.lastYear !== 0
                 ? ((value.total - value.lastYear) / value.lastYear * 100).toFixed(1)
                 : value.total !== 0 ? '100.0' : null
               : null;
@@ -545,9 +545,6 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
                     </div>
                   </div>
 
-                  {/* Display main metric value next to the icon/label */}
-                  
-
                   {/* Sub-metrics for 2W and 4W */}
                   {metric.subMetrics && (
                     <div className={`flex items-center gap-2 text-xs ${textColor} opacity-90 pt-1`}>
@@ -562,20 +559,6 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
                       </div>
                     </div>
                   )}
-
-                  {/* Last year comparison - always show if data exists */}
-                  {/* {value.lastYear !== undefined && value.lastYear !== null && (
-                    <div className={`text-xs ${textColor} opacity-90 pt-1`}>
-                      {`${getCompareLabel(startDate, endDate)}: `}{metric.key === "utilization" ? `${value.lastYear}%` : value.lastYear}
-                    </div>
-                  )} */}
-
-                  {/* Previous period split to clarify where comparison came from */}
-                  {/* {value.prevTwoWheeler !== undefined && value.prevFourWheeler !== undefined && (
-                    <div className={`text-[10px] ${textColor} opacity-70 pt-0.5`}>
-                      Prev 2W: {metric.key === 'utilization' ? `${value.prevTwoWheeler}%` : value.prevTwoWheeler} <span className="opacity-50">|</span> Prev 4W: {metric.key === 'utilization' ? `${value.prevFourWheeler}%` : value.prevFourWheeler}
-                    </div>
-                  )} */}
 
                   {/* Percentage change indicator - always show if calculable */}
                   {percentageChange !== null && (

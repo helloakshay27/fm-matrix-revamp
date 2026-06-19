@@ -626,7 +626,7 @@ export const ProjectsDashboard = () => {
       // Use baseClient for mobile flow (when baseUrl not available)
       const response = baseUrl
         ? await axios.get(
-          `https://${baseUrl}/assets/project_import.xlsx`,
+          `https://${baseUrl}/project_import.xlsx`,
           {
             responseType: 'blob',
             headers: {
@@ -635,7 +635,7 @@ export const ProjectsDashboard = () => {
           }
         )
         : await baseClient.get(
-          `/assets/project_import.xlsx`,
+          `/project_import.xlsx`,
           {
             responseType: 'blob',
             headers: {

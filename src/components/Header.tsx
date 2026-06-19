@@ -336,19 +336,44 @@ export const Header = () => {
 
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
+  const canShowMsafeForSelectedCompany =
+    selectedCompany?.id !== 294 || selectedCompany?.id === 145;
+  const canShowViMSafeDashboard =
+    isViSite && canShowMsafeForSelectedCompany && !isWebSite;
+  const canShowExternalMSafeDashboard =
+    !isViSite &&
+    canShowMsafeForSelectedCompany &&
+    (!isWebSite || selectedCompany?.id === 145);
+  const hasHeaderDashboardActions =
+    !isRestrictedUser &&
+    (!isViSite || canShowViMSafeDashboard || canShowExternalMSafeDashboard);
+
+  const handleMSafeDashboard = () => {
+    if (isViSite || selectedCompany?.id === 145) {
+      navigate("/msafedashboard");
+      return;
+    }
+
+    window.open("https://web.gophygital.work/msafedashboard", "_blank");
+  };
+
+  const logoClassName =
+    "max-h-10 w-auto max-w-full object-contain sm:max-h-12 md:max-h-[60px]";
+
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
-      <div className="flex items-center justify-between h-full px-3 md:px-6">
-        <div className="flex items-center gap-3 md:gap-14">
+      <div className="flex h-full items-center justify-between gap-1 pl-0 pr-2 sm:gap-2 sm:px-3 md:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2 lg:gap-6 xl:gap-14">
           {/* Hamburger - visible only on mobile */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-[#f6f4ee] transition-colors flex-shrink-0"
+            className="md:hidden flex h-16 w-10 flex-shrink-0 items-center justify-center rounded-r-lg hover:bg-[#f6f4ee] transition-colors"
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             aria-label="Toggle sidebar"
+            aria-expanded={isMobileSidebarOpen}
           >
             <Menu className="w-5 h-5 text-[#1a1a1a]" />
           </button>
-          <div className="w-32 md:w-44">
+          <div className="flex h-full w-16 flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44">
             {isOmanSite ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -357,6 +382,7 @@ export const Header = () => {
                 height={60}
                 viewBox="0 0 325 274"
                 fill="none"
+                className={logoClassName}
               >
                 <rect
                   width={325}
@@ -392,6 +418,7 @@ export const Header = () => {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 xmlnsXlink="http://www.w3.org/1999/xlink"
+                className={logoClassName}
               >
                 <path
                   d="M65.8883 31.5589L59.819 16.6455H61.6721L65.8883 27.6271L70.0848 16.6455H71.9281L65.8883 31.5589ZM72.9969 17.7044C72.9969 17.3972 73.1047 17.1357 73.3204 16.92C73.5427 16.6978 73.8107 16.5867 74.1244 16.5867C74.4317 16.5867 74.6931 16.6978 74.9088 16.92C75.1311 17.1423 75.2422 17.4103 75.2422 17.724C75.2422 18.0313 75.1344 18.2927 74.9186 18.5084C74.7029 18.7242 74.4382 18.832 74.1244 18.832C73.8107 18.832 73.5427 18.7242 73.3204 18.5084C73.1047 18.2927 72.9969 18.0247 72.9969 17.7044ZM73.3597 31V22.0284H74.9088V31H73.3597ZM121.375 21.7049L124.061 28.1467L126.473 22.0284H128.199L124.208 31.5589L121.257 24.6758L118.306 31.5589L114.305 22.0284H116.011L118.404 28.1467L121.13 21.7049H121.375ZM130.68 26.5387C130.68 27.4865 130.997 28.2906 131.631 28.9508C132.265 29.6044 133.033 29.9313 133.935 29.9313C134.83 29.9313 135.592 29.6044 136.219 28.9508C136.847 28.2906 137.161 27.4865 137.161 26.5387C137.161 25.5909 136.847 24.7902 136.219 24.1365C135.592 23.4763 134.83 23.1462 133.935 23.1462C133.026 23.1462 132.255 23.4763 131.621 24.1365C130.993 24.7902 130.68 25.5909 130.68 26.5387ZM129.052 26.5387C129.052 25.8785 129.173 25.2575 129.415 24.6758C129.657 24.0875 130.01 23.5645 130.474 23.107C130.938 22.6494 131.464 22.303 132.052 22.0677C132.641 21.8258 133.268 21.7049 133.935 21.7049C134.589 21.7049 135.206 21.8258 135.788 22.0677C136.376 22.3095 136.909 22.6625 137.386 23.1266C137.85 23.5776 138.203 24.0973 138.445 24.6856C138.687 25.2673 138.808 25.8851 138.808 26.5387C138.808 27.1924 138.687 27.8101 138.445 28.3919C138.203 28.9671 137.85 29.4802 137.386 29.9313C136.909 30.4019 136.373 30.7614 135.778 31.0098C135.19 31.2582 134.575 31.3824 133.935 31.3824C133.275 31.3824 132.647 31.2582 132.052 31.0098C131.464 30.7679 130.938 30.4182 130.474 29.9607C130.01 29.49 129.657 28.9671 129.415 28.3919C129.173 27.8166 129.052 27.1989 129.052 26.5387ZM141.23 31V22.0284H142.593V23.8914C143.004 23.1135 143.442 22.5579 143.907 22.2245C144.371 21.8912 144.936 21.7245 145.603 21.7245C145.786 21.7245 145.962 21.7408 146.132 21.7735C146.302 21.7997 146.472 21.8421 146.642 21.901L146.132 23.2835C145.956 23.2246 145.789 23.1822 145.632 23.156C145.475 23.1233 145.325 23.107 145.181 23.107C144.371 23.107 143.763 23.4011 143.357 23.9894C142.952 24.5712 142.75 25.4504 142.75 26.627V31H141.23ZM148.289 31V15.8023H149.829V26.0975L154.153 22.0284H156.202L151.721 26.1367L156.604 31H154.457L149.829 26.2642V31H148.289ZM157.222 29.49L158.536 28.6076C158.784 29.0848 159.098 29.4443 159.477 29.6861C159.856 29.9215 160.304 30.0391 160.82 30.0391C161.323 30.0391 161.729 29.9149 162.036 29.6665C162.35 29.4181 162.507 29.0913 162.507 28.686C162.507 28.3723 162.399 28.1108 162.183 27.9016C161.974 27.6924 161.611 27.4996 161.095 27.3231L160.84 27.2349C158.657 26.4832 157.565 25.5419 157.565 24.411C157.565 23.6136 157.859 22.9632 158.447 22.4599C159.036 21.9565 159.8 21.7049 160.742 21.7049C161.52 21.7049 162.186 21.8617 162.742 22.1755C163.298 22.4827 163.696 22.9207 163.938 23.4894L162.693 24.2542C162.51 23.8424 162.239 23.5253 161.879 23.3031C161.526 23.0808 161.114 22.9697 160.644 22.9697C160.193 22.9697 159.823 23.0972 159.536 23.3521C159.255 23.6005 159.114 23.9208 159.114 24.313C159.114 24.8621 159.709 25.3229 160.899 25.6955C161.121 25.7674 161.297 25.823 161.428 25.8622C162.402 26.1759 163.079 26.5355 163.458 26.9407C163.843 27.3395 164.036 27.8689 164.036 28.5291C164.036 29.3789 163.732 30.0685 163.124 30.598C162.523 31.1209 161.735 31.3824 160.761 31.3824C159.925 31.3824 159.212 31.2255 158.624 30.9118C158.042 30.598 157.575 30.1241 157.222 29.49ZM167.831 26.5387C167.831 27.5454 168.109 28.3527 168.664 28.9606C169.22 29.5685 169.955 29.8724 170.87 29.8724C171.766 29.8724 172.468 29.5946 172.978 29.039C173.495 28.4834 173.753 27.7121 173.753 26.725C173.753 25.6203 173.495 24.7542 172.978 24.1267C172.468 23.4992 171.756 23.1854 170.841 23.1854C169.906 23.1854 169.171 23.4828 168.635 24.0777C168.099 24.6725 167.831 25.4929 167.831 26.5387ZM166.35 35.373V22.0284H167.811V23.7149C168.158 23.0678 168.615 22.571 169.184 22.2245C169.753 21.8781 170.387 21.7049 171.086 21.7049C172.38 21.7049 173.42 22.1461 174.204 23.0285C174.988 23.911 175.381 25.0811 175.381 26.5387C175.381 28.0226 174.995 29.2024 174.224 30.0783C173.459 30.9477 172.433 31.3824 171.145 31.3824C170.406 31.3824 169.762 31.2157 169.213 30.8823C168.664 30.5424 168.216 30.0391 167.87 29.3724V35.373H166.35ZM184.705 26.5976C184.705 25.5844 184.427 24.7706 183.872 24.1561C183.323 23.5351 182.604 23.2246 181.715 23.2246C180.793 23.2246 180.074 23.509 179.557 24.0777C179.041 24.6464 178.783 25.4406 178.783 26.4603C178.783 27.5454 179.041 28.3821 179.557 28.9704C180.08 29.5587 180.819 29.8528 181.773 29.8528C182.689 29.8528 183.404 29.5685 183.921 28.9998C184.444 28.4246 184.705 27.6238 184.705 26.5976ZM186.195 22.0284V31H184.705V29.3724C184.346 30.026 183.885 30.5261 183.323 30.8725C182.767 31.2124 182.143 31.3824 181.45 31.3824C180.162 31.3824 179.123 30.9412 178.332 30.0587C177.547 29.1697 177.155 27.9964 177.155 26.5387C177.155 25.0614 177.538 23.8881 178.302 23.0187C179.067 22.1428 180.09 21.7049 181.371 21.7049C182.123 21.7049 182.774 21.8748 183.323 22.2147C183.878 22.5481 184.326 23.0482 184.666 23.7149V22.0284H186.195ZM196.157 28.8723V30.6568C195.752 30.8987 195.295 31.0784 194.785 31.1961C194.281 31.3203 193.736 31.3824 193.147 31.3824C191.761 31.3824 190.644 30.9444 189.794 30.0685C188.951 29.1861 188.529 28.0291 188.529 26.5976C188.529 25.1595 188.967 23.9862 189.843 23.0776C190.719 22.1624 191.84 21.7049 193.206 21.7049C193.703 21.7049 194.187 21.7572 194.657 21.8617C195.134 21.9663 195.582 22.1199 196 22.3226V23.9698C195.608 23.7149 195.203 23.5221 194.785 23.3913C194.366 23.2541 193.941 23.1854 193.51 23.1854C192.503 23.1854 191.696 23.5025 191.088 24.1365C190.48 24.764 190.176 25.6007 190.176 26.6466C190.176 27.5683 190.48 28.3396 191.088 28.9606C191.703 29.5815 192.471 29.892 193.392 29.892C193.856 29.892 194.311 29.8103 194.755 29.6469C195.2 29.4835 195.667 29.2253 196.157 28.8723ZM204.658 25.4994C204.606 24.7085 204.341 24.1006 203.864 23.6757C203.393 23.2443 202.746 23.0285 201.923 23.0285C201.178 23.0285 200.557 23.2541 200.06 23.7051C199.563 24.1496 199.275 24.7477 199.197 25.4994H204.658ZM206.306 26.7446H199.197V26.8819C199.197 27.8428 199.471 28.6207 200.021 29.2155C200.57 29.8038 201.285 30.0979 202.168 30.0979C202.769 30.0979 203.312 29.9378 203.795 29.6175C204.279 29.2907 204.707 28.8004 205.08 28.1467L206.247 28.9311C205.796 29.7417 205.22 30.3529 204.521 30.7647C203.822 31.1765 203.011 31.3824 202.089 31.3824C200.723 31.3824 199.619 30.9314 198.775 30.0293C197.932 29.1272 197.51 27.9441 197.51 26.4799C197.51 25.0745 197.929 23.9241 198.765 23.0285C199.602 22.133 200.677 21.6853 201.991 21.6853C203.318 21.6853 204.367 22.1101 205.139 22.9599C205.917 23.8097 206.306 24.9699 206.306 26.4407V26.7446Z"
@@ -430,7 +457,7 @@ export const Header = () => {
               </svg>
             ) : selectedCompany?.id == 294 ? (
               <img
-                className="w-[130px] h-auto"
+                className={logoClassName}
                 src="https://lockated-public.s3.ap-south-1.amazonaws.com/attachfiles/documents/12954122/original/zycus.jpeg"
                 alt=""
               />
@@ -438,13 +465,13 @@ export const Header = () => {
               <img
                 src={recessLogo}
                 alt="Recess Logo"
-                style={{ height: 60, width: "auto", objectFit: "contain" }}
+                className={logoClassName}
               />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"
                 alt="Pulse Logo"
-                style={{ height: 60, width: "auto", objectFit: "contain" }}
+                className={logoClassName}
               />
             ) : (
               <svg
@@ -453,6 +480,7 @@ export const Header = () => {
                 viewBox="0 0 173 31"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
+                className={logoClassName}
               >
                 <g clip-path="url(#clip0_6_1770)">
                   <path
@@ -484,8 +512,8 @@ export const Header = () => {
           </div>
 
           {/* Dashboard Button */}
-          {/* {!isRestrictedUser && (
-            <div className="hidden md:flex items-center gap-2">
+          {!isRestrictedUser && (
+            <div className="hidden xl:flex items-center gap-2">
               {!isViSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
@@ -507,7 +535,7 @@ export const Header = () => {
                 </button>
               )}
 
-              {isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+              {/* {isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
                 <button
                   onClick={() => navigate("/msafedashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -517,16 +545,34 @@ export const Header = () => {
                 </button>
               )}
 
-              {!isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && (!isWebSite || selectedCompany?.id === 145) && (
+              {!isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
                 <button
                   onClick={() =>
-                    selectedCompany?.id === 145
-                      ? navigate("/msafedashboard")
-                      : window.open(
-                        "https://web.gophygital.work/msafedashboard",
-                        "_blank"
-                      )
+                    window.open(
+                      "https://web.gophygital.work/msafedashboard",
+                      "_blank"
+                    )
                   }
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )} */}
+
+              {canShowViMSafeDashboard && (
+                <button
+                  onClick={handleMSafeDashboard}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )}
+
+              {canShowExternalMSafeDashboard && (
+                <button
+                  onClick={handleMSafeDashboard}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Home className="w-4 h-4" />
@@ -534,7 +580,7 @@ export const Header = () => {
                 </button>
               )}
             </div>
-          )} */}
+          )}
 
           {isPulseSite && (
             <button
@@ -549,21 +595,27 @@ export const Header = () => {
           {/* Project Dropdown */}
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-0.5 sm:gap-1 md:gap-2 lg:gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1 md:gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <DropdownMenuTrigger
+              className="flex h-9 w-9 items-center justify-center gap-1 rounded-lg text-[#1a1a1a] transition-colors hover:bg-[#f6f4ee] hover:text-[#C72030] md:h-10 md:w-auto md:px-2 lg:gap-2"
+              aria-label="Select project"
+            >
               <Building2 className="w-4 h-4 flex-shrink-0" />
 
               {projectLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <span className="hidden md:inline text-sm font-medium max-w-[120px] truncate">
+                <span className="hidden lg:inline text-sm font-medium max-w-[120px] truncate">
                   {selectedCompany?.name || "Select Project"}
                 </span>
               )}
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="hidden w-3 h-3 lg:block" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto">
+            <DropdownMenuContent
+              align="end"
+              className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto sm:!w-56"
+            >
               {companies.map((company) => (
                 <DropdownMenuItem
                   key={company.id}
@@ -583,18 +635,24 @@ export const Header = () => {
           {/* Site Dropdown (hidden for VI and localhost) */}
           {!isViSite && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 md:gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+              <DropdownMenuTrigger
+                className="flex h-9 w-9 items-center justify-center gap-1 rounded-lg text-[#1a1a1a] transition-colors hover:bg-[#f6f4ee] hover:text-[#C72030] md:h-10 md:w-auto md:px-2 lg:gap-2"
+                aria-label="Select site"
+              >
                 <MapPin className="w-4 h-4 flex-shrink-0" />
                 {siteLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <span className="hidden md:inline text-sm font-medium max-w-[120px] truncate">
+                  <span className="hidden lg:inline text-sm font-medium max-w-[120px] truncate">
                     {selectedSite?.name || "Select Site"}
                   </span>
                 )}
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="hidden w-3 h-3 lg:block" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto">
+              <DropdownMenuContent
+                align="end"
+                className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto sm:!w-56"
+              >
                 {sites.length > 0 ? (
                   sites.map((site) => (
                     <DropdownMenuItem
@@ -673,16 +731,61 @@ export const Header = () => {
             </div>
           )}
 
+          {hasHeaderDashboardActions && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#1a1a1a] transition-colors hover:bg-[#f6f4ee] hover:text-[#C72030] sm:h-10 sm:w-10 xl:hidden"
+                aria-label="Dashboard shortcuts"
+                title="Dashboard shortcuts"
+              >
+                <ChartArea className="w-5 h-5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg sm:!w-64"
+              >
+                {!isViSite && (
+                  <DropdownMenuItem
+                    onClick={() => (window.location.href = "/dashboard")}
+                  >
+                    <ChartArea className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                )}
+                {!isViSite && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      (window.location.href = "/dashboard-executive")
+                    }
+                  >
+                    <ChartAreaIcon className="w-4 h-4 mr-2" />
+                    Executive Dashboard
+                  </DropdownMenuItem>
+                )}
+                {(canShowViMSafeDashboard ||
+                  canShowExternalMSafeDashboard) && (
+                    <DropdownMenuItem onClick={handleMSafeDashboard}>
+                      <Home className="w-4 h-4 mr-2" />
+                      MSafe Dashboard
+                    </DropdownMenuItem>
+                  )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Notifications Dropdown */}
           <DropdownMenu
             open={isNotificationOpen}
             onOpenChange={setIsNotificationOpen}
           >
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-[#1a1a1a]" />
+              <button
+                className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-white transition-colors hover:bg-[#f6f4ee] sm:h-10 sm:w-10"
+                aria-label="Notifications"
+              >
+                <Bell className="w-5 h-5 text-[#DA7756]" />
                 {notificationCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
+                  <Badge className="absolute -top-1 -right-1 bg-[#DA7756] text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
                     {notificationCount}
                   </Badge>
                 )}
@@ -690,11 +793,11 @@ export const Header = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="max-w-[400px] p-0 max-h-[500px] overflow-hidden"
+              className="!w-[calc(100vw-1rem)] p-0 max-h-[calc(100vh-5rem)] overflow-hidden sm:!w-[400px] sm:max-w-[400px]"
             >
               {/* Notification Header */}
-              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between">
-                <div>
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between gap-3">
+                <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-gray-900">
                     Notifications
                   </h3>
@@ -707,7 +810,7 @@ export const Header = () => {
                 {notificationCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-xs text-[#C72030] hover:text-[#A01020] font-medium"
+                    className="flex-shrink-0 text-xs text-[#C72030] hover:text-[#A01020] font-medium"
                   >
                     Mark all as read
                   </button>
@@ -715,7 +818,7 @@ export const Header = () => {
               </div>
 
               {/* Notifications List */}
-              <div className="overflow-y-auto max-h-[400px]">
+              <div className="overflow-y-auto max-h-[calc(100vh-12rem)] sm:max-h-[400px]">
                 {notifications.length === 0 ? (
                   <div className="px-4 py-12 text-center">
                     <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -811,8 +914,11 @@ export const Header = () => {
           </DropdownMenu>
 
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-            <DropdownMenuTrigger className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-[#C4b89D] rounded-full flex items-center justify-center">
+            <DropdownMenuTrigger
+              className="flex items-center gap-2 rounded-full"
+              aria-label="User profile"
+            >
+              <div className="w-8 h-8 bg-[#C4b89D] rounded-full flex items-center justify-center text-xs font-semibold text-[#1a1a1a] sm:w-9 sm:h-9 sm:text-sm">
                 {profileDisplayName
                   ?.split(" ")
                   .map((word) => word[0])
@@ -820,18 +926,21 @@ export const Header = () => {
                   .toUpperCase()}
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-72 bg-white border border-[#D5DbDB] shadow-lg p-0">
+            <DropdownMenuContent
+              align="end"
+              className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg p-0 sm:!w-72"
+            >
               {/* User Info Header */}
               <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-gray-900 truncate">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
                     "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
-                <div className="flex items-center text-gray-600 text-xs mt-0.5">
-                  <Mail className="w-3 h-3 mr-1" />
-                  <span>
+                <div className="flex min-w-0 items-center text-gray-600 text-xs mt-0.5">
+                  <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
+                  <span className="truncate">
                     {(isViSite && viAccount
                       ? viAccount.email || ""
                       : user.email) || ""}
@@ -839,16 +948,18 @@ export const Header = () => {
                 </div>
 
                 {/* User Type & Role Pills */}
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex min-w-0 items-center gap-2 mt-3">
                   <Badge
                     variant="outline"
-                    className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
+                    className="max-w-full overflow-hidden text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
                   >
-                    <Shield className="w-3 h-3 mr-1" />
-                    {(isViSite && viAccount
-                      ? viAccount.role_name || ""
-                      : userRoleName || user?.lock_role?.name) ||
-                      "No Role"}{" "}
+                    <Shield className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">
+                      {(isViSite && viAccount
+                        ? viAccount.role_name || ""
+                        : userRoleName || user?.lock_role?.name) ||
+                        "No Role"}
+                    </span>
                   </Badge>
                   {/* <Badge
                     variant="outline"
@@ -876,7 +987,7 @@ export const Header = () => {
                       );
                       window.location.href = "/vas/projects";
                     }}
-                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
+                    className="fm-button-fix fm-button-brand w-full justify-between px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
                   >
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
@@ -893,7 +1004,7 @@ export const Header = () => {
               {/* Menu Items */}
               <div className="py-1">
                 <DropdownMenuItem
-                  onClick={() => navigate("/profile")}
+                  onClick={() => navigate("/business-compass/profile")}
                   className="mx-2 my-1 rounded-md"
                 >
                   <User className="w-4 h-4 mr-2 text-gray-500" />

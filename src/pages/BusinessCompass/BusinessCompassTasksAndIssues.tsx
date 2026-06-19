@@ -20,9 +20,9 @@ const BusinessCompassTasksAndIssues = () => {
 
                 {/* Header — System/SOP + WeeklyReports theme */}
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
+                    <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+                            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 break-words sm:text-3xl">
                                 Tasks &amp; Issues
                             </h1>
                             <button
@@ -38,9 +38,9 @@ const BusinessCompassTasksAndIssues = () => {
                         </p>
                     </div>
 
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                         <div
-                            className="inline-flex rounded-full bg-neutral-200/70 p-1"
+                            className="inline-flex w-full rounded-full bg-neutral-200/70 p-1 sm:w-auto"
                             role="group"
                             aria-label="View scope"
                         >
@@ -48,7 +48,7 @@ const BusinessCompassTasksAndIssues = () => {
                                 type="button"
                                 onClick={() => setViewType('self')}
                                 className={cn(
-                                    'rounded-full px-4 py-2 text-sm font-medium transition-all',
+                                    'flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all sm:flex-none',
                                     viewType === 'self'
                                         ? 'bg-[#fef6f4] text-neutral-900 shadow-sm ring-1 ring-[#DA7756]/20'
                                         : 'text-neutral-600 hover:text-neutral-900'
@@ -60,7 +60,7 @@ const BusinessCompassTasksAndIssues = () => {
                                 type="button"
                                 onClick={() => setViewType('all')}
                                 className={cn(
-                                    'rounded-full px-4 py-2 text-sm font-medium transition-all',
+                                    'flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all sm:flex-none',
                                     viewType === 'all'
                                         ? 'bg-[#fef6f4] text-neutral-900 shadow-sm ring-1 ring-[#DA7756]/20'
                                         : 'text-neutral-600 hover:text-neutral-900'
@@ -73,7 +73,7 @@ const BusinessCompassTasksAndIssues = () => {
                         <Button
                             type="button"
                             onClick={() => setAddTaskOpen(true)}
-                            className="h-10 shrink-0 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85 sm:px-5"
+                            className="h-10 w-full shrink-0 justify-center rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85 sm:w-auto sm:px-5"
                         >
                             <Plus className="mr-2 h-4 w-4" strokeWidth={2} />
                             New Task

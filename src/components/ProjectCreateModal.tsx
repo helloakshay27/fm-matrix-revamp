@@ -287,7 +287,7 @@ const ProjectCreateModal = ({
       return false;
     }
     if (!formData.endDate) {
-      toast.error("Please select owner");
+      toast.error("Please select end date");
       return false;
     }
     const today = new Date();

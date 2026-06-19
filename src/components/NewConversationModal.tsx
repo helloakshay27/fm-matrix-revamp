@@ -55,26 +55,42 @@ const NewConversationModal = ({
     fetchEscalateUsers();
   }, [baseUrl, token]);
 
-  const availableUsers = useMemo(() => {
-    const conversationUserIds = new Set();
-
+  const existingConversationMap = useMemo(() => {
+    const map = new Map<string, string>();
     conversations.forEach((conversation) => {
       if (conversation.sender_id === currentUserId) {
-        conversationUserIds.add(conversation.recipient_id);
+        map.set(String(conversation.recipient_id), String(conversation.id));
       } else if (conversation.recipient_id === currentUserId) {
-        conversationUserIds.add(conversation.sender_id);
+        map.set(String(conversation.sender_id), String(conversation.id));
       }
     });
+    return map;
+  }, [conversations, currentUserId]);
 
+  const availableUsers = useMemo(() => {
     return escalateUsers
       .filter((user) => user.id !== currentUserId)
-      .filter((user) => !conversationUserIds.has(user.id))
       .filter((user) =>
         user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-  }, [escalateUsers, conversations, currentUserId, searchQuery]);
+  }, [escalateUsers, currentUserId, searchQuery]);
+
+  const handleClose = () => {
+    setSearchQuery("");
+    setGroupName("");
+    setSelectedUsers(currentUserId ? [currentUserId] : []);
+    setActiveTab("direct");
+    setNewConversationModal(false);
+  };
 
   const handleCreateConversation = async (id: string) => {
+    const existingId = existingConversationMap.get(String(id));
+    if (existingId) {
+      handleClose();
+      navigate(`/vas/channels/messages/${existingId}`);
+      return;
+    }
+
     const payload = {
       conversation: {
         sender_id: currentUserId,
@@ -85,8 +101,7 @@ const NewConversationModal = ({
       const response = await dispatch(
         createConversation({ baseUrl, token, data: payload })
       ).unwrap();
-      setNewConversationModal(false);
-      // Refresh conversations list
+      handleClose();
       if (onConversationCreated) {
         await onConversationCreated();
       }
@@ -121,7 +136,7 @@ const NewConversationModal = ({
       const response = await dispatch(
         createGroup({ baseUrl, token, data: payload })
       ).unwrap();
-      setNewConversationModal(false);
+      handleClose();
       // Refresh groups list
       if (onGroupCreated) {
         await onGroupCreated();
@@ -152,7 +167,7 @@ const NewConversationModal = ({
         </h2>
         <button
           className="text-gray-400 hover:text-gray-600 transition"
-          onClick={() => setNewConversationModal(false)}
+          onClick={handleClose}
         >
           ✕
         </button>
@@ -233,16 +248,16 @@ const NewConversationModal = ({
                       {user.full_name}
                     </span>
                     <span className="text-xs text-gray-500">
-                      Click to start chat
+                      {existingConversationMap.has(String(user.id))
+                        ? "Open conversation"
+                        : "Click to start chat"}
                     </span>
                   </div>
                 </div>
               ))
             ) : (
               <div className="text-center text-gray-500 text-sm py-8">
-                {searchQuery
-                  ? "No users found"
-                  : "All users already have conversations"}
+                No users found
               </div>
             )}
           </div>

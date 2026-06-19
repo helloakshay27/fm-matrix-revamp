@@ -40,6 +40,8 @@ import { AdminCompassSidebar } from "./AdminCompassSidebar";
 import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
 import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
 import TopNavigation from "./CompanyHub/TopNavigation";
+import VendorSidebar from "./VendorSidebar";
+import VendorDynamicHeader from "./VendorDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -66,8 +68,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
-    hostname === "recess-club.panchshil.com" 
-  location.pathname.startsWith("/club-management");
+    hostname === "recess-club.panchshil.com" ||
+    location.pathname.startsWith("/club-management");
 
   // Detect embedded mode - hide sidebar and header when embedded
   const isEmbedded = isEmbeddedMode();
@@ -151,15 +153,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       isOmanSite,
     });
 
-    if (isViSite) {
-      console.warn("✅ Rendering ViSidebar");
-      return <ViSidebar />;
-    }
-
     // Check if user is in Club Management route - render ClubSidebar
     if (isClubManagementRoute) {
       console.warn("✅ Rendering ClubSidebar");
       return <ClubSidebar />;
+    }
+
+    // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      console.warn("✅ Rendering VendorSidebar");
+      return <VendorSidebar />;
+    }
+
+    if (isViSite) {
+      console.warn("✅ Rendering ViSidebar");
+      return <ViSidebar />;
     }
 
     if (
@@ -310,6 +318,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
       return <ClubDynamicHeader />;
+    }
+
+    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      return <VendorDynamicHeader />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -535,7 +548,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>

@@ -6,9 +6,10 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchPendingApprovals } from "@/store/slices/pendingApprovalSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
   {
@@ -50,7 +51,7 @@ const columns: ColumnConfig[] = [
     key: "siteName",
     label: "Site Name",
     sortable: true,
-    draggable: true,  
+    draggable: true,
     defaultVisible: true,
   },
   {
@@ -87,6 +88,8 @@ const debounce = (func: (...args: any[]) => void, wait: number) => {
 export const PendingApprovalsDashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { shouldShow } = useDynamicPermissions()
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -99,10 +102,13 @@ export const PendingApprovalsDashboard = () => {
   const [filters, setFilters] = useState({
     type: "",
   });
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
+  const [pagination, setPagination] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      current_page: Number(params.get('page')) || 1,
+      total_count: 0,
+      total_pages: 0,
+    };
   });
 
   const fetchData = async (filterParams = {}, page: number = 1) => {
@@ -133,11 +139,11 @@ export const PendingApprovalsDashboard = () => {
         user_id: item.user_id,
       }));
       setPendingApprovalsData(formattedResponse);
-      setPagination({
-        current_page: response.current_page,
+      setPagination((prev) => ({
+        ...prev,
         total_count: response.total_count,
         total_pages: response.total_pages,
-      });
+      }));
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load pending approvals. Please try again.");
@@ -145,8 +151,12 @@ export const PendingApprovalsDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+    fetchData({
+      type: filters.type,
+      search: searchQuery,
+    }, pagination.current_page);
+  }, [pagination.current_page]);
 
   const debouncedFetchData = useCallback(
     debounce((query: string) => {
@@ -189,39 +199,31 @@ export const PendingApprovalsDashboard = () => {
                   ? `finance/grn-srn/details`
                   : `finance/invoices`;
       return (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={() =>
-            navigate(
-              `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}`
-            )
-          }
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        shouldShow("Pending Approvals", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() =>
+              navigate(
+                `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}`
+              )
+            }
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        )
+
       );
     }
     return item[columnKey];
   };
 
-  const handlePageChange = async (page: number) => {
+  const handlePageChange = (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
-
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData({
-        page,
-        type: filters.type,
-        search: searchQuery,
-      });
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
+    setPagination((prev) => ({ ...prev, current_page: page }));
   };
 
   const renderPaginationItems = () => {

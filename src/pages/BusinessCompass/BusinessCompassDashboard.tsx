@@ -1,39 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AlertCircle,
-  Calendar,
-  TrendingUp,
-  FileText,
-  CheckCircle2,
-  Trophy,
-  MessageSquare,
   ChevronRight,
+  ChevronLeft,
+  Sparkles,
+  X,
+  Send,
   Clock,
-  Activity,
-  Building2,
-  Target,
 } from "lucide-react";
-import { AdminViewEmulation } from "@/components/AdminViewEmulation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import "./BusinessCompass.css";
-import { getBaseUrl, getToken } from "@/utils/auth";
+import { getBaseUrl, getToken, getUser } from "@/utils/auth";
 
-// Type definitions based on API response
+// ── Types ──────────────────────────────────────────────────────────────────
 interface CriticalNumber {
   id: number;
   name: string;
-  frequency: string;
   frequency_label: string;
   current_value: number;
   target_value: number;
   unit: string;
   progress_percentage: number;
-  department: string;
 }
 
 interface TopStuckIssue {
@@ -46,556 +35,1964 @@ interface TopStuckIssue {
   updated_at: string;
 }
 
-interface TeamChatMessage {
-  id: number;
-  body: string;
-  sender_name: string;
-  project_space: string;
-  created_at: string;
-  label: string;
-}
-
-interface HallOfFameMember {
-  user_id: number;
-  name: string;
-  total_points: number;
-  daily_points: number;
-  weekly_points: number;
-  feedback_points: number;
-}
-
 interface BusinessHealthComponents {
-  kpi: {
-    percentage: number;
-    count: number;
-  };
-  issues: {
-    count: number;
-  };
-  systems: {
-    healthy: number;
-    total: number;
-    average_health_score: number;
-  };
-  goals: {
-    achieved: number;
-    total: number;
-    percentage: number;
-  };
-}
-
-interface BusinessHealthScore {
-  score: number;
-  out_of: number;
-  label: string;
-  components: BusinessHealthComponents;
-}
-
-interface Counters {
-  daily_reports: number;
-  daily_pending: number;
-  kpis: number;
-  weekly_reports: number;
-  weekly_pending: number;
-  job_descriptions: number;
+  kpi: { percentage: number; count: number };
+  issues: { count: number };
+  systems: { healthy: number; total: number; average_health_score: number };
+  goals: { achieved: number; total: number; percentage: number };
 }
 
 interface DashboardData {
   success: boolean;
   data: {
     profile: {
-      organization_name: string;
       user_name: string;
+      organization_name: string;
       department: string;
       designation: string;
     };
-    critical_numbers: {
-      total: number;
-      items: CriticalNumber[];
+    critical_numbers: { total: number; items: CriticalNumber[] };
+    business_health_score: {
+      score: number;
+      out_of: number;
+      label: string;
+      components: BusinessHealthComponents;
     };
-    business_health_score: BusinessHealthScore;
-    top_stuck_issues: {
-      total: number;
-      items: TopStuckIssue[];
+    top_stuck_issues: { total: number; items: TopStuckIssue[] };
+    latest_team_chat: { total: number; items: any[] };
+    hall_of_fame: { items: any[] };
+    counters: {
+      daily_reports: number;
+      daily_pending: number;
+      kpis: number;
+      weekly_reports: number;
+      weekly_pending: number;
+      job_descriptions: number;
     };
-    latest_team_chat: {
-      total: number;
-      items: TeamChatMessage[];
-    };
-    hall_of_fame: {
-      items: HallOfFameMember[];
-    };
-    counters: Counters;
   };
 }
 
+interface AiSuggestion {
+  category: string;
+  priority: string;
+  potential_points: number;
+  title: string;
+  description: string;
+  timeline: string;
+}
+
+interface AiSuggestionsResponse {
+  success: boolean;
+  score: number;
+  message?: string;
+  data?: {
+    total_potential_improvement: number;
+    suggestions: AiSuggestion[];
+  };
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const AI_SUGGESTION_CATEGORY_STYLE = {
+  issues: {
+    bgColor: "#fce8e8",
+    borderColor: "#fbcfcf",
+    dotColor: "#f87171",
+    label: "Issues",
+  },
+  systems: {
+    bgColor: "#e8f0fe",
+    borderColor: "#c7d9fd",
+    dotColor: "#60a5fa",
+    label: "Systems",
+  },
+  goals: {
+    bgColor: "#edf7ed",
+    borderColor: "#c3e6c4",
+    dotColor: "#4ade80",
+    label: "Goals",
+  },
+  kpi: {
+    bgColor: "#fff3e8",
+    borderColor: "#fddcbc",
+    dotColor: "#fb923c",
+    label: "KPI",
+  },
+} as const;
+
+const getAiSuggestionCategoryStyle = (category: string) =>
+  AI_SUGGESTION_CATEGORY_STYLE[
+    category?.toLowerCase() as keyof typeof AI_SUGGESTION_CATEGORY_STYLE
+  ] || AI_SUGGESTION_CATEGORY_STYLE.issues;
+
+const getAiSuggestionPriorityStyle = (priority: string) => {
+  const normalizedPriority = priority?.toLowerCase();
+  if (normalizedPriority === "high") {
+    return {
+      backgroundColor: "#ffe4e4",
+      color: "#e05050",
+    };
+  }
+
+  if (normalizedPriority === "low") {
+    return {
+      backgroundColor: "#dcfce7",
+      color: "#15803d",
+    };
+  }
+
+  return {
+    backgroundColor: "#fef3c7",
+    color: "#b45309",
+  };
+};
+
+const formatAiSuggestionLabel = (value: string) =>
+  value
+    ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+    : "Medium";
+
+function getWeekDates(offset: number): Date[] {
+  const today = new Date();
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1) + offset * 7);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+function formatWeekLabel(dates: Date[]): string {
+  if (!dates.length) return "";
+  return dates[0].toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+// ── Day status helpers ─────────────────────────────────────────────────────
+type DayStatus = "filled" | "missed" | "holiday" | "upcoming" | "none";
+
+function getDayStatus(
+  date: Date,
+  today: Date,
+  filledDates: Set<string>
+): DayStatus {
+  const isToday = date.toDateString() === today.toDateString();
+  const isPast = date < today && !isToday;
+  const isFuture = date > today;
+  if (isToday) return "none";
+  if (isFuture) return "upcoming";
+  if (filledDates.has(date.toDateString())) return "filled";
+  if (isPast) return "missed";
+  return "none";
+}
+
+const STATUS_DOT: Record<DayStatus, string> = {
+  filled: "#22c55e",
+  missed: "#f87171",
+  holiday: "#fbbf24",
+  upcoming: "#e29393",
+  none: "transparent",
+};
+
+// ── Circle Progress ────────────────────────────────────────────────────────
+function CircleProgress({
+  value,
+  max = 300,
+  color,
+  label,
+}: {
+  value: number;
+  max?: number;
+  color: string;
+  label: string;
+}) {
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.min(value / max, 1);
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative w-14 h-14 sm:w-[68px] sm:h-[68px]">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
+          <circle
+            cx="34"
+            cy="34"
+            r={r}
+            fill="none"
+            stroke="#f0f0f0"
+            strokeWidth="7"
+          />
+          <circle
+            cx="34"
+            cy="34"
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth="7"
+            strokeDasharray={circ}
+            strokeDashoffset={circ - pct * circ}
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-[13px] sm:text-[15px] font-black text-[#1a1a1a]">
+          {value}
+        </span>
+      </div>
+      <span className="text-[10px] sm:text-[11px] text-gray-500 font-semibold">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+const AiSparkleIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path
+      d="M5.5 2.5L6.55 6.85L10.9 7.9L6.55 8.95L5.5 13.3L4.45 8.95L0.1 7.9L4.45 6.85L5.5 2.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M17.2 5.5L17.75 7.65L19.9 8.2L17.75 8.75L17.2 10.9L16.65 8.75L14.5 8.2L16.65 7.65L17.2 5.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M9.8 13.8L10.55 16.75L13.5 17.5L10.55 18.25L9.8 21.2L9.05 18.25L6.1 17.5L9.05 16.75L9.8 13.8Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+// ── Main Component ─────────────────────────────────────────────────────────
 const BusinessCompassDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-  const [dailyReportCount, setDailyReportCount] = useState<number>(0);
-  const [weeklyReportCount, setWeeklyReportCount] = useState<number>(0);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+
+  // ── Dashboard data ────────────────────────────────────────────────────
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [focusMode, setFocusMode] = useState<"Daily" | "Weekly">("Daily");
+  const [kpiPage, setKpiPage] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dayDataLoading, setDayDataLoading] = useState(false);
 
-  useEffect(() => {
-    const completed = localStorage.getItem("bc-profile-completed") === "true";
-    setIsProfileComplete(completed);
-  }, []);
+  // ── AI chat ───────────────────────────────────────────────────────────
+  const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [aiChatTab, setAiChatTab] = useState<"accomplishments" | "plan">(
+    "accomplishments"
+  );
+  const [aiMessage, setAiMessage] = useState("");
+  const [aiSuggestionsOpen, setAiSuggestionsOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
+  const [aiSuggestionsLoading, setAiSuggestionsLoading] = useState(false);
+  const [aiSuggestionsError, setAiSuggestionsError] = useState("");
+  const [totalPotentialImprovement, setTotalPotentialImprovement] =
+    useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
+  const [applyingSuggestions, setApplyingSuggestions] = useState(false);
+  const [suggestionApplied, setSuggestionApplied] = useState(false);
 
+  // ── Daily dynamic data ────────────────────────────────────────────────
+  const [filledDates, setFilledDates] = useState<Set<string>>(new Set());
+  const [accomplishments, setAccomplishments] = useState<string[]>([]);
+  const [todosOverdue, setTodosOverdue] = useState<
+    { title: string; id: number }[]
+  >([]);
+  const [todosHigh, setTodosHigh] = useState<{ title: string; id: number }[]>(
+    []
+  );
+  const [todosLoading, setTodosLoading] = useState(false);
+
+  // ── Weekly dynamic data ───────────────────────────────────────────────
+  const [weeklyAccomplishments, setWeeklyAccomplishments] = useState<string[]>(
+    []
+  );
+  const [weeklyTodosOverdue, setWeeklyTodosOverdue] = useState<
+    { title: string; id: number }[]
+  >([]);
+  const [weeklyTodosHigh, setWeeklyTodosHigh] = useState<
+    { title: string; id: number }[]
+  >([]);
+  const [weeklyLoading, setWeeklyLoading] = useState(false);
+  const [weeklyDataFetched, setWeeklyDataFetched] = useState(false);
+
+  const weekDates = getWeekDates(weekOffset);
+  const today = new Date();
+
+  // ── Display helpers ───────────────────────────────────────────────────
+  const displayAccomplishments =
+    focusMode === "Weekly" ? weeklyAccomplishments : accomplishments;
+  const displayTodosOverdue =
+    focusMode === "Weekly" ? weeklyTodosOverdue : todosOverdue;
+  const displayTodosHigh = focusMode === "Weekly" ? weeklyTodosHigh : todosHigh;
+  const displayLoading =
+    focusMode === "Weekly" ? weeklyLoading : todosLoading || dayDataLoading;
+
+  // ── Fetch data for a specific day ─────────────────────────────────────
+  const fetchDayData = async (date: Date) => {
+    const baseUrl = (getBaseUrl() ?? "https://fm-uat-api.lockated.com").replace(
+      /\/$/,
+      ""
+    );
+    const token = getToken();
+    if (!token) return;
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+    setDayDataLoading(true);
+    try {
+      // Fetch journal for the selected date
+      const jRes = await fetch(
+        `${baseUrl}/user_journals.json?q[journal_type_eq]=daily&q[start_date_eq]=${dateStr}`,
+        { headers }
+      );
+      if (jRes.ok) {
+        const jData = await jRes.json();
+        const journals: any[] = Array.isArray(jData)
+          ? jData
+          : (jData.user_journals ?? []);
+        const report = journals[0];
+        const rawAcc = report?.report_data?.accomplishments;
+        const accItems: any[] = Array.isArray(rawAcc)
+          ? rawAcc
+          : Array.isArray(rawAcc?.items)
+            ? rawAcc.items
+            : [];
+        const items: string[] = accItems
+          .map((item: any) =>
+            typeof item === "string" ? item : (item?.title ?? item?.text ?? "")
+          )
+          .filter(Boolean);
+        setAccomplishments(items);
+      } else {
+        setAccomplishments([]);
+      }
+
+      // Fetch todos for the selected date
+      const userId = (
+        JSON.parse(localStorage.getItem("user") ?? "{}") as { id?: number }
+      ).id;
+      if (userId) {
+        setTodosLoading(true);
+        try {
+          const todoParams = new URLSearchParams();
+          todoParams.append("q[user_id_eq]", String(userId));
+          todoParams.append("for_date", dateStr);
+          const todoRes = await fetch(`${baseUrl}/todos.json?${todoParams}`, {
+            headers,
+          });
+          if (todoRes.ok) {
+            const todoData = await todoRes.json();
+            const todos: any[] = todoData?.todos ?? [];
+            const refDate = new Date(date);
+            refDate.setHours(0, 0, 0, 0);
+            setTodosOverdue(
+              todos
+                .filter((t: any) => {
+                  const ds = t.target_date || t.due_date;
+                  if (!ds) return false;
+                  const due = new Date(ds);
+                  due.setHours(0, 0, 0, 0);
+                  return due < refDate;
+                })
+                .slice(0, 5)
+                .map((t: any) => ({ title: t.title, id: t.id }))
+            );
+            setTodosHigh(
+              todos
+                .filter((t: any) => t.priority === "P1")
+                .slice(0, 5)
+                .map((t: any) => ({ title: t.title, id: t.id }))
+            );
+          }
+        } catch (e) {
+          console.error("Todos error:", e);
+        } finally {
+          setTodosLoading(false);
+        }
+      }
+    } catch (e) {
+      console.error("Day data fetch error:", e);
+    } finally {
+      setDayDataLoading(false);
+    }
+  };
+
+  // ── Refetch day data when selectedDate changes ──────────────────────────
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    fetchDayData(selectedDate);
+  }, [selectedDate]);
+
+  // ── Handle day click ────────────────────────────────────────────────────
+  const handleDayClick = (date: Date) => {
+    const isToday = date.toDateString() === today.toDateString();
+    const isFuture = date > today && !isToday;
+    const isSunday = date.getDay() === 0;
+    if (isFuture || isSunday) return;
+    setSelectedDate(new Date(date));
+  };
+
+  // ── Selected date label ─────────────────────────────────────────────────
+  const selectedDateLabel = selectedDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  // ── Main API fetch ────────────────────────────────────────────────────
+  useEffect(() => {
+    (async () => {
       try {
-        const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
+        const baseUrl = (
+          getBaseUrl() ?? "https://fm-uat-api.lockated.com"
+        ).replace(/\/$/, "");
         const token = getToken();
         if (!token) return;
-
         const headers = {
           "Content-Type": "application/json",
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         };
 
-        // Fetch dashboard data
-        const dashboardUrl = `${baseUrl.replace(/\/$/, "")}/business_compass/dashboard`;
-        const dashboardRes = await fetch(dashboardUrl, { headers });
-        if (dashboardRes.ok) {
-          const data = await dashboardRes.json();
-          setDashboardData(data);
+        // Dashboard
+        const dashRes = await fetch(`${baseUrl}/business_compass/dashboard`, {
+          headers,
+        });
+        if (dashRes.ok) setDashboardData(await dashRes.json());
+
+        const todayStr = new Date().toISOString().split("T")[0];
+
+        // All journals for filled calendar dates
+        const allJRes = await fetch(
+          `${baseUrl}/user_journals.json?q[journal_type_eq]=daily`,
+          { headers }
+        );
+        if (allJRes.ok) {
+          const allJData = await allJRes.json();
+          const allJournals: any[] = Array.isArray(allJData)
+            ? allJData
+            : (allJData.data?.user_journals ?? allJData.user_journals ?? []);
+          const dates = new Set<string>(
+            allJournals.flatMap((j: any) => {
+              const raw = j.journal_date || j.start_date || j.created_at;
+              if (!raw) return [];
+              const d = new Date(raw);
+              return isNaN(d.getTime()) ? [] : [d.toDateString()];
+            })
+          );
+          setFilledDates(dates);
         }
 
-        // Fetch Daily
-        const dailyParams = new URLSearchParams();
-        dailyParams.append("q[:journal_type]", "daily");
-        if (token) dailyParams.append("token", token);
-        const dailyUrl = `${baseUrl.replace(/\/$/, "")}/user_journals.json?${dailyParams.toString()}`;
-        const dailyRes = await fetch(dailyUrl, { headers });
-        if (dailyRes.ok) {
-          const data = await dailyRes.json();
-          const reports = Array.isArray(data) ? data : data.user_journals || [];
-          setDailyReportCount(reports.length);
+        // Today's journal for accomplishments
+        const todayJRes = await fetch(
+          `${baseUrl}/user_journals.json?q[journal_type_eq]=daily&q[start_date_eq]=${todayStr}`,
+          { headers }
+        );
+        if (todayJRes.ok) {
+          const todayJData = await todayJRes.json();
+          const todayJournals: any[] = Array.isArray(todayJData)
+            ? todayJData
+            : (todayJData.user_journals ?? []);
+          const todayReport = todayJournals[0];
+          // accomplishments can be an array OR { items: [...] }
+          const rawAcc = todayReport?.report_data?.accomplishments;
+          const accItems: any[] = Array.isArray(rawAcc)
+            ? rawAcc
+            : Array.isArray(rawAcc?.items)
+              ? rawAcc.items
+              : [];
+          const items: string[] = accItems
+            .map((item: any) =>
+              typeof item === "string"
+                ? item
+                : (item?.title ?? item?.text ?? "")
+            )
+            .filter(Boolean);
+          setAccomplishments(items);
         }
 
-        // Fetch Weekly
-        const weeklyParams = new URLSearchParams();
-        weeklyParams.append("q[:journal_type]", "weekly");
-        if (token) weeklyParams.append("token", token);
-        const weeklyUrl = `${baseUrl.replace(/\/$/, "")}/user_journals.json?${weeklyParams.toString()}`;
-        const weeklyRes = await fetch(weeklyUrl, { headers });
-        if (weeklyRes.ok) {
-          const data = await weeklyRes.json();
-          const reports = Array.isArray(data) ? data : data.user_journals || [];
-          setWeeklyReportCount(reports.length);
+        // Daily todos – fetch all open todos for the user (no date restriction)
+        const userId = (
+          JSON.parse(localStorage.getItem("user") ?? "{}") as { id?: number }
+        ).id;
+        if (userId) {
+          setTodosLoading(true);
+          try {
+            const todoParams = new URLSearchParams();
+            todoParams.append("q[user_id_eq]", String(userId));
+            todoParams.append("q[status_not_eq]", "completed");
+            const todoRes = await fetch(`${baseUrl}/todos.json?${todoParams}`, {
+              headers,
+            });
+            if (todoRes.ok) {
+              const todoData = await todoRes.json();
+              const todos: any[] = todoData?.todos ?? [];
+              const now = new Date();
+              now.setHours(0, 0, 0, 0);
+              setTodosOverdue(
+                todos
+                  .filter((t: any) => {
+                    const dateStr = t.target_date || t.due_date;
+                    if (!dateStr) return false;
+                    const due = new Date(dateStr);
+                    due.setHours(0, 0, 0, 0);
+                    return due < now;
+                  })
+                  .slice(0, 5)
+                  .map((t: any) => ({ title: t.title, id: t.id }))
+              );
+              // P1 = Urgent & Important (Eisenhower Q1)
+              setTodosHigh(
+                todos
+                  .filter((t: any) => t.priority === "P1")
+                  .slice(0, 5)
+                  .map((t: any) => ({ title: t.title, id: t.id }))
+              );
+            }
+          } catch (e) {
+            console.error("Todos error:", e);
+          } finally {
+            setTodosLoading(false);
+          }
         }
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
+      } catch (e) {
+        console.error("Dashboard fetch error:", e);
       } finally {
         setLoading(false);
       }
-    };
-    fetchDashboardData();
+    })();
   }, []);
 
+  // ── Weekly data fetch ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (focusMode !== "Weekly" || weeklyDataFetched) return;
+    (async () => {
+      setWeeklyLoading(true);
+      try {
+        const baseUrl = (
+          getBaseUrl() ?? "https://fm-uat-api.lockated.com"
+        ).replace(/\/$/, "");
+        const token = getToken();
+        if (!token) return;
+        const headers = {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        };
+        const weekStart = weekDates[0].toISOString().split("T")[0];
+        const weekEnd = weekDates[5].toISOString().split("T")[0];
+
+        // Weekly journals → accomplishments
+        const jParams = new URLSearchParams();
+        jParams.append("q[journal_type]", "daily");
+        jParams.append("q[journal_date_gteq]", weekStart);
+        jParams.append("q[journal_date_lteq]", weekEnd);
+        const jRes = await fetch(`${baseUrl}/user_journals.json?${jParams}`, {
+          headers,
+        });
+        if (jRes.ok) {
+          const jData = await jRes.json();
+          const journals: any[] = Array.isArray(jData)
+            ? jData
+            : (jData.user_journals ?? []);
+          const all: string[] = [];
+          journals.forEach((j: any) => {
+            (j?.report_data?.accomplishments?.items ?? []).forEach(
+              (it: any) => {
+                const txt = it.title ?? it.text ?? "";
+                if (txt) all.push(txt);
+              }
+            );
+          });
+          setWeeklyAccomplishments(all);
+        }
+
+        // Weekly todos – all open todos in the week range
+        const userId = (
+          JSON.parse(localStorage.getItem("user") ?? "{}") as { id?: number }
+        ).id;
+        if (userId) {
+          const todoParams = new URLSearchParams();
+          todoParams.append("q[user_id_eq]", String(userId));
+          todoParams.append("q[status_not_eq]", "completed");
+          todoParams.append("q[target_date_gteq]", weekStart);
+          todoParams.append("q[target_date_lteq]", weekEnd);
+          const todoRes = await fetch(`${baseUrl}/todos.json?${todoParams}`, {
+            headers,
+          });
+          if (todoRes.ok) {
+            const todoData = await todoRes.json();
+            const todos: any[] = todoData?.todos ?? [];
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            setWeeklyTodosOverdue(
+              todos
+                .filter((t: any) => {
+                  const dateStr = t.target_date || t.due_date;
+                  if (!dateStr) return false;
+                  const due = new Date(dateStr);
+                  due.setHours(0, 0, 0, 0);
+                  return due < now;
+                })
+                .slice(0, 5)
+                .map((t: any) => ({ title: t.title, id: t.id }))
+            );
+            setWeeklyTodosHigh(
+              todos
+                .filter((t: any) => t.priority === "P1")
+                .slice(0, 5)
+                .map((t: any) => ({ title: t.title, id: t.id }))
+            );
+          }
+        }
+        setWeeklyDataFetched(true);
+      } catch (e) {
+        console.error("Weekly data error:", e);
+      } finally {
+        setWeeklyLoading(false);
+      }
+    })();
+  }, [focusMode, weeklyDataFetched, weekDates]);
+
+  // ── Derived data ──────────────────────────────────────────────────────
+  const d = dashboardData?.data;
+  const health = d?.business_health_score;
+  const score = health?.score ?? 0;
+  const outOf = health?.out_of ?? 100;
+  const scoreLabel = health?.label ?? "Needs Attention";
+  const scorePct = Math.min((score / outOf) * 100, 100);
+  const kpis = d?.critical_numbers?.items ?? [];
+  const issues = d?.top_stuck_issues?.items ?? [];
+  const counters = d?.counters;
+  const profileName = useMemo(() => {
+    try {
+      const saved = localStorage.getItem("bc-profile-data");
+      if (saved) {
+        const p = JSON.parse(saved);
+        if (p.displayName?.trim()) return p.displayName.trim();
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    const u = getUser();
+    const fullName = [u?.firstname, u?.lastname]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    return fullName || d?.profile?.user_name || "User";
+  }, [d]);
+
+  // ── Profile completion ─────────────────────────────────────────────────
+  const profileComplete = useMemo(() => {
+    try {
+      const saved = localStorage.getItem("bc-profile-data");
+      const p = saved ? JSON.parse(saved) : null;
+      if (!p) return false;
+      const fields = [
+        p.displayName,
+        p.email,
+        p.jobTitle,
+        p.city,
+        p.state,
+        p.pinCode,
+        p.dob,
+        p.doj,
+        p.emergencyContactName,
+        p.emergencyContactNumber,
+      ];
+      const filled = fields.filter((f: string) => f?.trim()).length;
+      return filled === fields.length;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // ── AI Summary ───────────────────────────────────────────────
+  const handleGenerateAiSummary = async () => {
+    if (aiSuggestionsLoading) return;
+
+    setAiSuggestionsLoading(true);
+    setAiSuggestionsError("");
+    setAiSuggestions([]);
+    setAiSuggestionsOpen(true);
+
+    try {
+      const configuredBaseUrl = getBaseUrl();
+      if (!configuredBaseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const baseUrl = configuredBaseUrl.replace(/\/$/, "");
+      const token = getToken();
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const response = await fetch(
+        `${baseUrl}/business_compass/generate_ai_suggestions`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({}),
+        }
+      );
+
+      const data = (await response.json().catch(() => null)) as
+        | AiSuggestionsResponse
+        | null;
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || `Failed to fetch AI suggestions (${response.status})`
+        );
+      }
+
+      if (!data?.success || !data.data) {
+        throw new Error(data?.message || "AI suggestions response is invalid.");
+      }
+
+      setAiSuggestions(
+        Array.isArray(data.data.suggestions) ? data.data.suggestions : []
+      );
+      setTotalPotentialImprovement(
+        Number(data.data.total_potential_improvement) || 0
+      );
+      setCurrentScore(Number(data.score) || 0);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate AI suggestions.";
+      setAiSuggestionsError(message);
+      setTotalPotentialImprovement(0);
+      setCurrentScore(0);
+      console.error("Error fetching AI suggestions:", error);
+    } finally {
+      setAiSuggestionsLoading(false);
+    }
+  };
+
+  // ── Apply Suggestions ─────────────────────────────────────────────────
+  const handleApplySuggestions = async () => {
+    if (aiSuggestions.length === 0) {
+      console.warn("No suggestions to apply");
+      return;
+    }
+
+    setApplyingSuggestions(true);
+    try {
+      const configuredBaseUrl = getBaseUrl();
+      if (!configuredBaseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const baseUrl = configuredBaseUrl.replace(/\/$/, "");
+      const token = getToken();
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      // Format suggestions for API
+      const formattedSuggestions = aiSuggestions.map((suggestion) => ({
+        category: suggestion.category,
+        priority: suggestion.priority,
+        title: suggestion.title,
+        description: suggestion.description,
+      }));
+
+      const response = await fetch(
+        `${baseUrl}/business_compass/apply_ai_suggestions`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ suggestions: formattedSuggestions }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to apply suggestions (${response.status})`);
+      }
+
+      setSuggestionApplied(true);
+
+      // Refetch dashboard data to update business health score
+      const dashRes = await fetch(`${baseUrl}/business_compass/dashboard`, {
+        headers,
+      });
+      if (dashRes.ok) {
+        const updatedData = await dashRes.json();
+        setDashboardData(updatedData);
+      }
+
+      // Auto close panel after 2 seconds
+      setTimeout(() => {
+        setAiSuggestionsOpen(false);
+        setSuggestionApplied(false);
+      }, 2000);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to apply suggestions.";
+      console.error("Error applying suggestions:", error);
+      // Show error but allow retry
+      setApplyingSuggestions(false);
+    } finally {
+      setApplyingSuggestions(false);
+    }
+  };
+
+  const issueBadgeStyle = (priority: string): React.CSSProperties => {
+    const p = (priority ?? "").toLowerCase();
+    if (p === "medium")
+      return {
+        background: "#fff",
+        border: "1px solid #f59e0b",
+        color: "#b45309",
+      };
+    if (p === "low")
+      return {
+        background: "#fff",
+        border: "1px solid #22c55e",
+        color: "#15803d",
+      };
+    return {
+      background: "#fff",
+      border: "1px solid #fca5a5",
+      color: "#e05050",
+    };
+  };
+
+  // ── Placeholder issues ────────────────────────────────────────────────
+  const placeholderIssues = [
+    "Observer Issue",
+    "Permits are going for approval despite being in drafts",
+    "Permits are going for approval despite being in drafts",
+    "Permits are going for approval despite being in drafts",
+    "Permits are going for approval despite being in drafts",
+  ];
+
+  // ── Render ────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-7xl mx-auto space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#f6f4ee] p-6 font-poppins">
-      {/* Complete Your Profile Banner */}
-      {!isProfileComplete && (
-        <Card className="overflow-hidden rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 text-[#1a1a1a] shadow-sm">
-          <CardContent className="p-8 space-y-4">
-            <div className="flex items-center gap-3 text-2xl font-bold tracking-tight text-[#1a1a1a]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#DA7756] text-white shadow-sm">
-                <AlertCircle size={24} />
-              </div>
-              Complete Your Profile
-            </div>
-            <p className="max-w-2xl text-sm font-medium text-neutral-600">
-              Please complete your profile information to access all features
-              and improve team collaboration.
-            </p>
-            <Button
-              className="h-10 rounded-[10px] bg-[#DA7756] px-6 font-bold text-white hover:bg-[#c9673f]"
-              onClick={() => navigate("/business-compass/profile")}
-            >
-              Complete Profile Now
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Your Performance Journey Banner */}
-      <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
-        <CardContent className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="text-2xl font-bold tracking-tight text-[#1a1a1a]">
-            Your Performance Journey
-          </div>
-          <div className="flex flex-col gap-3 shrink-0 mt-4 md:mt-0">
-            <Button
-              className="flex h-10 w-full items-center justify-start gap-2 whitespace-nowrap rounded-xl border border-[#DA7756]/25 bg-white px-8 font-bold text-[#DA7756] shadow-sm hover:bg-[#fef6f4] sm:w-auto"
-              onClick={() => navigate("/business-compass/daily-report")}
-            >
-              <Calendar size={16} />
-              Daily Report
-            </Button>
-            <Button
-              className="flex h-10 w-full items-center justify-start gap-2 whitespace-nowrap rounded-xl border border-[#DA7756]/25 bg-white px-8 font-bold text-[#DA7756] shadow-sm hover:bg-[#fef6f4] sm:w-auto"
-              onClick={() => navigate("/business-compass/weekly-report")}
-            >
-              <FileText size={16} />
-              Weekly Report
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Critical Numbers (KPIs) */}
-      <Card className="rounded-[8px] bg-[#f8f6f0] border-none shadow-none overflow-hidden">
-        <CardHeader className="pb-4 pt-6 px-6">
-          <div className="flex items-center gap-2 text-xl font-bold text-[#1a1a1a]">
-            <Target className="text-[#1a1a1a]" size={22} strokeWidth={2.5} />
-            Critical Numbers (KPIs)
-          </div>
-        </CardHeader>
-        <CardContent className="px-6 pb-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {dashboardData?.data?.critical_numbers?.items?.map((kpi: any, idx: number) => (
-              <Card key={idx} className="w-full border-none rounded-[4px] shadow-sm bg-white p-4 flex flex-col gap-3">
+    <div className="relative bg-white min-h-screen font-poppins">
+      <div className="p-3 sm:p-4 lg:p-5">
+        <h1 className="text-[18px] sm:text-[22px] font-bold text-[#1a1a1a] mb-4">
+          Dashboard
+        </h1>
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* ══ MAIN CONTENT ════════════════════════════════════════════════ */}
+          <div className="w-full lg:flex-1 lg:min-w-0 flex flex-col gap-4">
+            {/* Welcome Banner */}
+            <Card className="rounded-2xl border border-gray-100 bg-[#F6F4EE] shadow-sm">
+              <CardContent className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <Badge className="bg-[#C4B89D] hover:bg-[#C4B89D] text-white px-3 py-0.5 rounded-full text-[10px] font-bold border-none shadow-none pointer-events-none mb-3 inline-flex">
-                    {kpi.frequency_label}
-                  </Badge>
-                  <div className="text-[13px] font-bold text-[#374151] leading-snug min-h-[40px] flex items-center pr-2">
-                    {kpi.name}
+                  <p className="text-[16px] sm:text-[18px] font-bold italic text-[#1a1a1a]">
+                    Welcome back {profileName}!
+                  </p>
+                  <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
+                    Here's your Weekly overview.
+                  </p>
+                </div>
+                {!profileComplete && (
+                  <Button
+                    variant="outline"
+                    className="self-start sm:self-auto border border-[#DA7756] bg-white text-[#DA7756] rounded-xl px-5 h-9 text-sm font-semibold hover:bg-[#fef6f4] shadow-none whitespace-nowrap"
+                    onClick={() => navigate("/business-compass/profile")}
+                  >
+                    Complete profile
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Business Health Score */}
+            <Card className="rounded-2xl border border-gray-100 bg-[#F6F4EE] shadow-sm">
+              <CardContent className="px-4 sm:px-6 py-4 sm:py-5">
+                <div className="flex items-start justify-between mb-8">
+                  <h2 className="text-[14px] sm:text-[15px] font-bold text-[#1a1a1a]">
+                    Business Health Score
+                  </h2>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[12px] sm:text-[13px] font-bold text-[#1a1a1a]">
+                      + {score}/{outOf}
+                    </span>
+                    <span className="bg-[#4ade80]/20 text-green-700 text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                      {scoreLabel}
+                    </span>
                   </div>
                 </div>
-                <div className="mt-auto">
-                  <div className="flex items-baseline gap-1.5 mb-2">
-                    <span className="text-[28px] font-black text-[#1a1a1a] leading-none">{kpi.current_value}</span>
-                    <span className="text-[12px] font-semibold text-[#64748b]">/ {kpi.target_value} {kpi.unit}</span>
+
+                {/* Gradient bar – 4 separate pill segments */}
+                <div className="relative pt-8 mb-1 mx-1">
+                  <div
+                    className="absolute flex flex-col items-center"
+                    style={{
+                      left: `${scorePct}%`,
+                      transform: "translateX(-50%)",
+                      top: 0,
+                    }}
+                  >
+                    <span
+                      className="text-white text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap shadow-sm"
+                      style={{ backgroundColor: "#4ECDC4" }}
+                    >
+                      you
+                    </span>
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: "4px solid transparent",
+                        borderRight: "4px solid transparent",
+                        borderTop: "5px solid #4ECDC4",
+                      }}
+                    />
                   </div>
-                  <Progress value={kpi.progress_percentage} className="h-1.5 mb-2 bg-[#e2e8f0]" />
-                  <div className="text-[10px] font-medium text-[#64748b]">
-                    {kpi.progress_percentage}% achieved
+                  <div className="flex gap-1.5">
+                    <div className="h-2.5 sm:h-3 rounded-full flex-1 bg-[#f87171]" />
+                    <div className="h-2.5 sm:h-3 rounded-full flex-1 bg-[#facc15]" />
+                    <div className="h-2.5 sm:h-3 rounded-full flex-1 bg-[#86efac]" />
+                    <div className="h-2.5 sm:h-3 rounded-full flex-1 bg-[#2dd4bf]" />
                   </div>
                 </div>
-              </Card>
-            )) || (
-                <div className="col-span-full text-center py-8 text-gray-500">
-                  No KPI data available
+                <div className="flex justify-between text-[10px] sm:text-[11px] text-gray-400 font-medium mb-4 mt-1.5">
+                  <span>Poor</span>
+                  <span>Normal</span>
+                  <span>Good</span>
+                  <span>Excellent</span>
                 </div>
-              )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Business Health Score */}
-      <Card className="mb-6 overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] shadow-sm">
-        <CardHeader className="pb-4 pt-5 px-6">
-          <div className="flex items-center gap-2 text-lg font-bold text-[#1a1a1a]">
-            <Activity className="text-[#DA7756]" size={20} />
-            Business Health Score
-          </div>
-        </CardHeader>
-        <CardContent className="px-6 pb-6 flex flex-col md:flex-row gap-8 items-center">
-          {/* Circular Score Area */}
-          <div className="flex flex-col items-center justify-center min-w-[200px] md:border-r border-gray-100 pr-0 md:pr-4">
-            <div className="relative w-28 h-28 flex items-center justify-center mb-4">
-              <svg
-                className="w-full h-full transform -rotate-90"
-                viewBox="0 0 100 100"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#f3e6df"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#DA7756"
-                  strokeWidth="8"
-                  strokeDasharray="282.7"
-                  strokeDashoffset={282.7 - (282.7 * (dashboardData?.data?.business_health_score?.score || 0)) / 100}
-                  className="transition-all duration-1000 ease-out"
-                />
-                <circle cx="50" cy="5" r="4" fill="#DA7756" />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-4xl font-black text-[#0f172a] leading-none mb-1">
-                  {dashboardData?.data?.business_health_score?.score || 0}
-                </span>
-                <span className="text-[11px] font-bold text-gray-500">
-                  / {dashboardData?.data?.business_health_score?.out_of || 100}
-                </span>
-              </div>
-            </div>
-            <Badge className="rounded-[6px] border-none bg-[#fef6f4] px-3 py-1 text-xs font-bold text-[#DA7756] shadow-none hover:bg-[#fef6f4]">
-              {dashboardData?.data?.business_health_score?.label || 'Needs Attention'}
-            </Badge>
-          </div>
-
-          {/* 4-Grid Metrics */}
-          <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* KPI Card */}
-            <div className="relative flex min-h-[100px] flex-col items-center justify-center rounded-xl border border-[#DA7756]/15 bg-[#fef6f4] p-4">
-              <span className="text-[12px] font-bold text-[#4b5563] mb-1">
-                KPI
-              </span>
-              <span className="text-[28px] font-black text-[#1a1a1a]">{dashboardData?.data?.business_health_score?.components?.kpi?.percentage || 0}%</span>
-              <div className="absolute bottom-3 left-0 right-0 px-6">
-                <div className="h-1.5 bg-white/70 rounded-full overflow-hidden w-full">
-                  <div className="h-full rounded-full bg-[#DA7756]" style={{ width: `${dashboardData?.data?.business_health_score?.components?.kpi?.percentage || 0}%` }} />
-                </div>
-              </div>
-            </div>
-
-            {/* Issues Card */}
-            <div className="flex min-h-[100px] flex-col items-center justify-center rounded-xl border border-[#DA7756]/15 bg-[#fef6f4] p-4">
-              <span className="text-[12px] font-bold text-[#4b5563] mb-1">
-                Issues
-              </span>
-              <span className="text-[28px] font-black text-[#1a1a1a]">{dashboardData?.data?.business_health_score?.components?.issues?.count || 0}</span>
-            </div>
-
-            {/* Systems Card */}
-            <div className="flex min-h-[100px] flex-col items-center justify-center rounded-xl border border-[#DA7756]/15 bg-[#fef6f4] p-4">
-              <span className="text-[12px] font-bold text-[#4b5563] mb-1">
-                Systems
-              </span>
-              <span className="text-[28px] font-black text-[#1a1a1a]">{dashboardData?.data?.business_health_score?.components?.systems?.healthy || 0}/{dashboardData?.data?.business_health_score?.components?.systems?.total || 0}</span>
-            </div>
-
-            {/* Goals Card */}
-            <div className="flex min-h-[100px] flex-col items-center justify-center rounded-xl border border-[#DA7756]/15 bg-[#fef6f4] p-4">
-              <span className="text-[12px] font-bold text-[#4b5563] mb-1">
-                Goals
-              </span>
-              <span className="text-[28px] font-black text-[#1a1a1a]">{dashboardData?.data?.business_health_score?.components?.goals?.achieved || 0}/{dashboardData?.data?.business_health_score?.components?.goals?.total || 0}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Top Stuck Issues & Latest Team Chat Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Top Stuck Issues */}
-        <Card className="flex min-h-[360px] flex-col rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] shadow-sm">
-          <CardHeader className="py-5 px-6 border-b-0 space-y-0 relative">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2 font-bold text-[#1f2937] text-[15px]">
-                <AlertCircle
-                  size={18}
-                  className="text-[#DA7756]"
-                  strokeWidth={2.5}
-                />
-                Top Stuck Issues
-              </div>
-              <button
-                onClick={() => navigate("/vas/issues")}
-                className="flex items-center gap-1 text-[13px] font-bold text-[#DA7756] hover:underline"
-              >
-                View All →
-              </button>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col p-6 gap-3">
-            {dashboardData?.data?.top_stuck_issues?.items?.length > 0 ? (
-              dashboardData.data.top_stuck_issues.items.slice(0, 5).map((issue: any, idx: number) => (
-                <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-white/50 border border-[#DA7756]/10">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#DA7756] text-white text-xs font-bold flex items-center justify-center">
-                    {idx + 1}
+                {/* 4 metric cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+                  <div
+                    className="rounded-xl p-2.5 sm:p-3 text-center"
+                    style={{
+                      backgroundColor: "#eeedf8",
+                      border: "1px solid #dddcf0",
+                    }}
+                  >
+                    <div className="text-[10px] sm:text-[11px] text-gray-400 font-semibold mb-1">
+                      KPI
+                    </div>
+                    <div className="text-[18px] sm:text-[22px] font-black text-[#1a1a1a]">
+                      {health?.components?.kpi?.percentage ?? 0}%
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-900 truncate">{issue.title}</h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge className={`text-xs px-2 py-0.5 rounded-full ${issue.priority === 'High' ? 'bg-red-100 text-red-700' :
-                          issue.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-green-100 text-green-700'
-                        }`}>
-                        {issue.priority}
-                      </Badge>
-                      <span className="text-xs text-gray-500">{issue.responsible_person}</span>
+                  <div
+                    className="rounded-xl p-2.5 sm:p-3 text-center"
+                    style={{
+                      backgroundColor: "#fce8e8",
+                      border: "1px solid #fbcfcf",
+                    }}
+                  >
+                    <div className="text-[10px] sm:text-[11px] text-gray-500 font-semibold mb-1">
+                      Issues
+                    </div>
+                    <div className="text-[18px] sm:text-[22px] font-black text-[#1a1a1a]">
+                      {health?.components?.issues?.count ?? 0}
+                    </div>
+                  </div>
+                  <div
+                    className="rounded-xl p-2.5 sm:p-3 text-center"
+                    style={{
+                      backgroundColor: "#e8f0fe",
+                      border: "1px solid #c7d9fd",
+                    }}
+                  >
+                    <div className="text-[10px] sm:text-[11px] text-gray-500 font-semibold mb-1">
+                      Systems
+                    </div>
+                    <div className="text-[18px] sm:text-[22px] font-black text-[#1a1a1a]">
+                      {health?.components?.systems?.healthy ?? 0}/
+                      {health?.components?.systems?.total ?? 0}
+                    </div>
+                  </div>
+                  <div
+                    className="rounded-xl p-2.5 sm:p-3 text-center"
+                    style={{
+                      backgroundColor: "#e8f4fe",
+                      border: "1px solid #c7e5fd",
+                    }}
+                  >
+                    <div className="text-[10px] sm:text-[11px] text-gray-500 font-semibold mb-1">
+                      Goals
+                    </div>
+                    <div className="text-[18px] sm:text-[22px] font-black text-[#1a1a1a]">
+                      {health?.components?.goals?.achieved ?? 0}/
+                      {health?.components?.goals?.total ?? 0}
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-3 h-full">
-                <div className="mb-2">
-                  <AlertCircle
-                    size={48}
-                    className="text-[#cbd5e1]"
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <p className="text-[14px] font-medium text-[#64748b]">
-                  No stuck issues
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Latest Team Chat */}
-        <Card className="flex min-h-[360px] flex-col rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] shadow-sm">
-          <CardHeader className="py-5 px-6 border-b-0 space-y-0 relative">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2 font-bold text-[#1f2937] text-[15px]">
-                <MessageSquare
-                  size={18}
-                  className="text-[#DA7756]"
-                  strokeWidth={2.5}
-                />
-                Latest Team Chat
-              </div>
-              <button
-                onClick={() => navigate("/business-compass/directory-and-chat")}
-                className="flex items-center gap-1 text-[13px] font-bold text-[#DA7756] hover:underline"
-              >
-                View All →
-              </button>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col p-6 gap-3">
-            {dashboardData?.data?.latest_team_chat?.items?.length > 0 ? (
-              dashboardData.data.latest_team_chat.items.slice(0, 5).map((message: any, idx: number) => (
-                <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-white/50 border border-[#DA7756]/10">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#DA7756] text-white text-xs font-bold flex items-center justify-center">
-                    {message.sender_name?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-sm font-semibold text-gray-900">{message.sender_name}</h4>
-                      <span className="text-xs text-gray-500">{message.label}</span>
+                {/* AI suggestion bar */}
+                <div
+                  style={{
+                    borderRadius: "16px",
+                    background: "white",
+                    border: "1px solid rgba(218,119,86,0.10)",
+                    boxShadow:
+                      "0 0 0 5px rgba(218,119,86,0.07), 0 4px 18px rgba(218,119,86,0.10)",
+                  }}
+                >
+                  <div
+                    className="flex-col sm:flex-row sm:items-center sm:justify-between"
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      padding: "12px 16px",
+                    }}
+                  >
+                    <div
+                      className="min-w-0"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      <Sparkles size={20} color="#DA7756" />
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          color: "#1a1a1a",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Ai suggestion to improve business score.
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-700 truncate">{message.body}</p>
-                    <p className="text-xs text-gray-500 mt-1">{message.project_space}</p>
+                    <button
+                      onClick={handleGenerateAiSummary}
+                      disabled={aiSuggestionsLoading}
+                      className="w-full sm:w-auto"
+                      style={{
+                        backgroundColor: "#DA7756",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "10px",
+                        padding: "8px 22px",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        cursor: aiSuggestionsLoading ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        transition: "background-color 0.2s",
+                        opacity: aiSuggestionsLoading ? 0.7 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!aiSuggestionsLoading) {
+                          e.currentTarget.style.backgroundColor = "#c9673f";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#DA7756";
+                      }}
+                    >
+                      {aiSuggestionsLoading ? "Generating..." : "Generate"}
+                    </button>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-3 h-full">
-                <div className="mb-2">
-                  <MessageSquare
-                    size={48}
-                    className="text-[#cbd5e1]"
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <p className="text-[14px] font-medium text-[#64748b]">
-                  No messages yet
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      {/* Empty State Banner */}
-      <Card className="mb-6 flex flex-col items-center justify-center rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 py-10 shadow-sm">
-        <Building2
-          size={40}
-          className="mb-3 text-[#DA7756]/35"
-          strokeWidth={1.5}
-        />
-        <p className="text-[14px] font-medium text-neutral-600">
-          No active departments or KPI data available yet
-        </p>
-      </Card>
+                  {aiSuggestionsOpen && (
+                    <div className="ai-suggestions-expand">
+                      <div className="border-t border-[#ede5de] mx-3" />
 
-      {/* Footer Grid Layout */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-6">
-        {/* Hall of Fame (spans vertically) */}
-        <div className="w-full lg:w-1/4 flex">
-          <Card className="flex w-full min-h-[220px] flex-col rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-6 text-[#1a1a1a] shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2 text-[15px] font-bold text-[#1a1a1a]">
-                <Trophy size={18} className="text-[#DA7756]" /> Hall of Fame
-              </div>
-              <Button
-                variant="ghost"
-                className="h-6 p-0 text-[11px] font-bold text-[#DA7756] hover:bg-transparent hover:text-[#c9673f] flex items-center gap-0.5"
-              >
-                View All <ChevronRight size={14} />
-              </Button>
-            </div>
-            <div className="flex flex-1 flex-col gap-3 pb-4">
-              {dashboardData?.data?.hall_of_fame?.items?.length > 0 ? (
-                dashboardData.data.hall_of_fame.items.slice(0, 3).map((member: any, idx: number) => (
-                  <div key={idx} className="flex items-center gap-3 p-2 rounded-lg bg-white/50 border border-[#DA7756]/10">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#DA7756] text-white text-xs font-bold flex items-center justify-center">
-                      {idx + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-gray-900 truncate">{member.name}</h4>
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <span>{member.total_points} pts</span>
-                        <span>•</span>
-                        <span>{member.weekly_points} this week</span>
+                      {/* Header */}
+                      <div className="flex items-start justify-between px-3 pt-3 pb-1">
+                        {aiSuggestionsLoading ? (
+                          <div className="flex-1">
+                            <p className="text-[11px] text-gray-400 italic">
+                              Loading AI suggestions...
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <h4 className="text-[13px] font-bold text-[#1a1a1a]">
+                              AI Suggestions
+                            </h4>
+                            {aiSuggestions.length > 0 && (
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                Implementing all suggestions could boost your
+                                score by{" "}
+                                <span className="font-bold text-[#DA7756]">
+                                  +{totalPotentialImprovement} pts
+                                </span>{" "}
+                                →{" "}
+                                <span className="font-bold text-[#DA7756]">
+                                  {currentScore + totalPotentialImprovement}/100
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setAiSuggestionsOpen(false)}
+                          className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 flex-shrink-0 transition-colors ml-2"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+
+                      {/* 2×2 cards */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-3 pb-2">
+                        {!aiSuggestionsLoading && aiSuggestions.length > 0 ? (
+                          aiSuggestions.map((suggestion) => {
+                            const config = getAiSuggestionCategoryStyle(
+                              suggestion.category
+                            );
+                            const priorityStyles =
+                              getAiSuggestionPriorityStyle(
+                                suggestion.priority
+                              );
+
+                            return (
+                              <div
+                                key={`${suggestion.category}-${suggestion.title}`}
+                                className="rounded-xl p-2.5 flex flex-col gap-1"
+                                style={{
+                                  backgroundColor: config.bgColor,
+                                  border: `1px solid ${config.borderColor}`,
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1">
+                                    <div
+                                      className="w-1.5 h-1.5 rounded-full"
+                                      style={{
+                                        backgroundColor: config.dotColor,
+                                      }}
+                                    />
+                                    <span className="text-[10px] font-bold text-gray-700">
+                                      {config.label}
+                                    </span>
+                                    <span
+                                      className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
+                                      style={priorityStyles}
+                                    >
+                                      {formatAiSuggestionLabel(
+                                        suggestion.priority
+                                      )}
+                                    </span>
+                                  </div>
+                                  <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
+                                    +{suggestion.potential_points} pts
+                                  </span>
+                                </div>
+                                <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
+                                  {suggestion.title}
+                                </p>
+                                <p className="text-[10px] text-gray-500 leading-relaxed">
+                                  {suggestion.description}
+                                </p>
+                                <div className="flex items-center justify-between mt-0.5">
+                                  <div className="flex items-center gap-1 text-[9px] text-gray-400">
+                                    <Clock size={9} />
+                                    <span>{suggestion.timeline}</span>
+                                  </div>
+                                  <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
+                                    Start &gt;
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : aiSuggestionsLoading ? (
+                          <div className="col-span-1 sm:col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                            Generating suggestions...
+                          </div>
+                        ) : aiSuggestionsError ? (
+                          <div className="col-span-1 sm:col-span-2 rounded-xl border border-red-100 bg-red-50 px-3 py-4 text-center text-[12px] font-semibold text-red-600">
+                            {aiSuggestionsError}
+                          </div>
+                        ) : (
+                          <div className="col-span-1 sm:col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                            No suggestions available
+                          </div>
+                        )}
+                      </div>
+
+                      {/* CTA */}
+                      <div className="px-3 pb-3">
+                        <button
+                          onClick={handleApplySuggestions}
+                          disabled={applyingSuggestions || aiSuggestions.length === 0}
+                          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all ${
+                            applyingSuggestions
+                              ? "opacity-70 cursor-not-allowed"
+                              : "hover:opacity-90 cursor-pointer"
+                          }`}
+                          style={{
+                            background: suggestionApplied
+                              ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+                              : "linear-gradient(135deg, #DA7756 0%, #c9673f 100%)",
+                            boxShadow: suggestionApplied
+                              ? "0 3px 12px rgba(34,197,94,0.25)"
+                              : "0 3px 12px rgba(218,119,86,0.25)",
+                          }}
+                        >
+                          {applyingSuggestions ? (
+                            <>
+                              <span className="inline-block animate-spin">⚙️</span>
+                              Applying...
+                            </>
+                          ) : suggestionApplied ? (
+                            <>
+                              <span>✓</span>
+                              Suggestions Applied!
+                            </>
+                          ) : (
+                            <>
+                              <span>✦</span>
+                              Apply all suggestions to my action plan
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Today's Focus – single card containing all 4 sub-panels */}
+            <Card className="rounded-2xl border border-gray-100  bg-[#F6F4EE] shadow-sm">
+              <CardContent className="p-4 sm:p-5">
+                {/* Header row */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1a1a1a]">
+                    Today's Focus
+                  </h3>
+                </div>
+
+                {/* Row 1: Calendar + Tasks Overview */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
+                  {/* Calendar */}
+                  <div className="lg:col-span-2 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                    <p className="text-[11px] text-gray-500 font-medium mb-3">
+                      {focusMode} Report for {selectedDateLabel}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setWeekOffset((o) => o - 1)}
+                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 flex-shrink-0 transition-colors"
+                      >
+                        <ChevronLeft size={13} />
+                      </button>
+                      <div className="flex-1 flex gap-1">
+                        {weekDates.map((date, i) => {
+                          const isSunday = date.getDay() === 0;
+                          const isToday =
+                            date.toDateString() === today.toDateString();
+                          const status = getDayStatus(date, today, filledDates);
+
+                          let cardBorder = "1px solid #e5e7eb";
+                          let headerBg = "#e5e7eb";
+                          let headerTextColor = "#6b7280";
+                          let bodyBg = "#F7F5F0";
+                          let dateTextColor = "#1a1a1a";
+
+                          if (isSunday) {
+                            cardBorder = "1px solid transparent";
+                            headerBg = "transparent";
+                            headerTextColor = "#000000";
+                            bodyBg = "#F5F5F5";
+                            dateTextColor = "#000000";
+                          } else if (isToday) {
+                            cardBorder = "2.5px solid #E49377";
+                            headerBg = "transparent";
+                            headerTextColor = "#1a1a1a";
+                            bodyBg = "#FDF5F2";
+                            dateTextColor = "#1a1a1a";
+                          } else if (status === "filled") {
+                            cardBorder = "1px solid transparent";
+                            headerBg = "#82D4C4";
+                            headerTextColor = "#000000";
+                            dateTextColor = "#000000";
+                          } else if (status === "missed") {
+                            cardBorder = "1px solid transparent";
+                            headerBg = "#e29393";
+                            headerTextColor = "#000000";
+                            dateTextColor = "#000000";
+                          } else if (status === "upcoming") {
+                            cardBorder = "1px solid transparent";
+                            headerBg = "transparent";
+                            headerTextColor = "#000000";
+                            bodyBg = "#F5F5F5";
+                            dateTextColor = "#000000";
+                          } else if (status === "holiday") {
+                            cardBorder = "1px solid #fde047";
+                            headerBg = "#fef9c3";
+                            headerTextColor = "#b45309";
+                            dateTextColor = "#b45309";
+                          }
+
+                          const isSelectedDay =
+                            selectedDate.toDateString() === date.toDateString();
+                          const isClickable =
+                            !isSunday && !(date > today && !isToday);
+
+                          // Override border for selected day
+                          const finalBorder = isSelectedDay
+                            ? "2.5px solid #DA7756"
+                            : cardBorder;
+                          const finalBodyBg = isSelectedDay
+                            ? "#FDF5F2"
+                            : bodyBg;
+
+                          return (
+                            <div
+                              key={i}
+                              className="flex-1 flex flex-col items-center relative transition-all"
+                              onClick={() => handleDayClick(date)}
+                              style={{
+                                border: finalBorder,
+                                borderRadius: "12px",
+                                backgroundColor: finalBodyBg,
+                                cursor: isClickable ? "pointer" : "default",
+                                opacity:
+                                  !isClickable && !isSelectedDay ? 0.6 : 1,
+                              }}
+                            >
+                              {status === "upcoming" && !isSunday && (
+                                <div
+                                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full shadow-sm"
+                                  style={{
+                                    backgroundColor: STATUS_DOT.upcoming,
+                                  }}
+                                />
+                              )}
+                              {/* Decorative Top Strip */}
+                              {headerBg !== "transparent" && (
+                                <div
+                                  className="w-full flex-shrink-0"
+                                  style={{
+                                    height: "6px",
+                                    backgroundColor: headerBg,
+                                    borderTopLeftRadius: "11px",
+                                    borderTopRightRadius: "11px",
+                                  }}
+                                />
+                              )}
+                              {/* Card Content */}
+                              <div
+                                className="w-full flex flex-col items-center justify-center flex-1 py-1"
+                                style={{
+                                  borderBottomLeftRadius: "11px",
+                                  borderBottomRightRadius: "11px",
+                                  ...(headerBg === "transparent"
+                                    ? {
+                                        borderTopLeftRadius: "11px",
+                                        borderTopRightRadius: "11px",
+                                      }
+                                    : {}),
+                                }}
+                              >
+                                <span
+                                  className="text-[10px] sm:text-[11px] font-semibold mb-0.5"
+                                  style={{ color: headerTextColor }}
+                                >
+                                  {DAY_LABELS[i]}
+                                </span>
+                                <span
+                                  className="text-[14px] sm:text-[17px] font-bold leading-tight"
+                                  style={{ color: dateTextColor }}
+                                >
+                                  {date.getDate()}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button
+                        onClick={() => setWeekOffset((o) => o + 1)}
+                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 flex-shrink-0 transition-colors"
+                      >
+                        <ChevronRight size={13} />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-center gap-4 mt-3 flex-wrap">
+                      {[
+                        { color: "#82D4C4", label: "Filled", isCircle: false },
+                        { color: "#e29393", label: "Missed", isCircle: false },
+                        { color: "#D1D5DB", label: "Holiday", isCircle: false },
+                        {
+                          color: STATUS_DOT.upcoming,
+                          label: "Upcoming",
+                          isCircle: true,
+                        },
+                      ].map(({ color, label, isCircle }) => (
+                        <div key={label} className="flex items-center gap-1.5">
+                          <div
+                            className={`w-2.5 h-2.5 flex-shrink-0 ${isCircle ? "rounded-full" : "rounded-[2px]"}`}
+                            style={{ backgroundColor: color }}
+                          />
+                          <span className="text-[10px] sm:text-[11px] text-[#1a1a1a] font-medium">
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="flex flex-1 items-center justify-center text-center text-[13px] font-medium italic text-neutral-600">
-                  No champions yet. Start submitting reports!
-                </p>
-              )}
-            </div>
-          </Card>
-        </div>
 
-        {/* Smaller Stats Grid */}
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="flex flex-col items-center gap-2 rounded-2xl border border-[#DA7756]/15 bg-[#fffaf8] p-4 text-center shadow-sm">
-            <Badge className="mb-1 h-[22px] justify-center rounded-full border-none bg-[#DA7756] px-3 text-[10px] font-bold tracking-tight text-white shadow-none pointer-events-none">
-              Daily Reports (DR)
-            </Badge>
-            <div className="text-3xl font-black text-[#0f172a]">
-              {dashboardData?.data?.counters?.daily_reports || 0}
-            </div>
-          </Card>
+                  {/* Tasks Overview */}
+                  <div className="lg:col-span-1 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                    <p className="text-[13px] font-bold text-[#1a1a1a] mb-4">
+                      Tasks Overview
+                    </p>
+                    {(() => {
+                      const assigned =
+                        focusMode === "Weekly"
+                          ? (counters?.weekly_reports ?? 0)
+                          : (counters?.daily_reports ?? 0);
+                      const pending =
+                        focusMode === "Weekly"
+                          ? (counters?.weekly_pending ?? 0)
+                          : (counters?.daily_pending ?? 0);
+                      const completed = Math.max(0, assigned - pending);
+                      const maxVal = Math.max(assigned, 1);
+                      const rings = [
+                        {
+                          value: assigned,
+                          color: "#a78bfa",
+                          track: "#ede9fe",
+                          label: "Assigned",
+                        },
+                        {
+                          value: completed,
+                          color: "#2dd4bf",
+                          track: "#ccfbf1",
+                          label: "Completed",
+                        },
+                        {
+                          value: pending,
+                          color: "#f87171",
+                          track: "#fee2e2",
+                          label: "Overdue",
+                        },
+                      ];
+                      const r = 30;
+                      const circ = 2 * Math.PI * r;
+                      return (
+                        <div className="flex items-center justify-around">
+                          {rings.map(({ value, color, track, label }) => {
+                            const pct = Math.min(value / maxVal, 1);
+                            return (
+                              <div
+                                key={label}
+                                className="flex flex-col items-center gap-2"
+                              >
+                                <div className="relative w-[68px] h-[68px]">
+                                  <svg
+                                    className="w-full h-full -rotate-90"
+                                    viewBox="0 0 68 68"
+                                  >
+                                    <circle
+                                      cx="34"
+                                      cy="34"
+                                      r={r}
+                                      fill="none"
+                                      stroke={track}
+                                      strokeWidth="7"
+                                    />
+                                    <circle
+                                      cx="34"
+                                      cy="34"
+                                      r={r}
+                                      fill="none"
+                                      stroke={color}
+                                      strokeWidth="7"
+                                      strokeDasharray={circ}
+                                      strokeDashoffset={circ - pct * circ}
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                  <span
+                                    className="absolute inset-0 flex items-center justify-center text-[15px] font-black"
+                                    style={{ color }}
+                                  >
+                                    {value}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] sm:text-[11px] text-gray-500 font-semibold">
+                                  {label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
 
-          <Card className="flex flex-col items-center gap-2 rounded-2xl border border-[#DA7756]/15 bg-[#fffaf8] p-4 text-center shadow-sm">
-            <Badge className="mb-1 h-[22px] justify-center rounded-full border-none bg-[#DA7756] px-3 text-[10px] font-bold tracking-tight text-white shadow-none pointer-events-none">
-              DR Pending
-            </Badge>
-            <div className="text-3xl font-black text-[#0f172a]">{dashboardData?.data?.counters?.daily_pending || 0}</div>
-          </Card>
+                {/* Row 2: Accomplishments + To Do's */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                  {/* Accomplishments */}
+                  <div className="lg:col-span-2 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Sparkles
+                          size={14}
+                          className="text-[#DA7756] flex-shrink-0"
+                        />
+                        <span className="text-[12px] sm:text-[13px] font-bold text-[#1a1a1a] truncate">
+                          Accomplishments Ai overview
+                        </span>
+                        <span
+                          className="text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+                          style={{
+                            backgroundColor: "#ede9fe",
+                            color: "#7c3aed",
+                          }}
+                        >
+                          8/20 Pts
+                        </span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          navigate("/business-compass/daily-report")
+                        }
+                        className="text-[11px] text-[#DA7756] font-bold hover:underline whitespace-nowrap flex-shrink-0"
+                      >
+                        View All &gt;
+                      </button>
+                    </div>
+                    {displayLoading ? (
+                      <p className="text-[11px] text-gray-400 italic">
+                        Loading...
+                      </p>
+                    ) : displayAccomplishments.length > 0 ? (
+                      <ul className="space-y-2">
+                        {displayAccomplishments.map((item, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 text-[11px] sm:text-[12px] text-gray-600 leading-relaxed"
+                          >
+                            <span className="mt-1 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-gray-400" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[11px] text-gray-400 italic">
+                        {focusMode === "Weekly"
+                          ? "No accomplishments this week."
+                          : "No accomplishments for today."}
+                      </p>
+                    )}
+                  </div>
 
-          <Card className="flex flex-col items-center gap-2 rounded-2xl border border-[#DA7756]/15 bg-[#fffaf8] p-4 text-center shadow-sm">
-            <Badge className="mb-1 h-[22px] justify-center rounded-full border-none bg-[#DA7756] px-3 text-[10px] font-bold tracking-tight text-white shadow-none pointer-events-none">
-              KPIs
-            </Badge>
-            <div className="text-3xl font-black text-[#0f172a]">{dashboardData?.data?.counters?.kpis || 0}</div>
-          </Card>
+                  {/* To Do's */}
+                  <div className="lg:col-span-1 bg-[#ffffff] rounded-2xl p-3 sm:p-4">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] sm:text-[13px] font-bold text-[#1a1a1a]">
+                          To Do's
+                        </span>
+                        <span
+                          className="text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                          style={{
+                            backgroundColor: "#ede9fe",
+                            color: "#7c3aed",
+                          }}
+                        >
+                          8/20 Pts
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => navigate("/business-compass/todo")}
+                        className="text-[11px] text-[#DA7756] font-bold hover:underline whitespace-nowrap flex-shrink-0"
+                      >
+                        View All &gt;
+                      </button>
+                    </div>
+                    {displayLoading ? (
+                      <p className="text-[11px] text-gray-400 italic">
+                        Loading...
+                      </p>
+                    ) : (
+                      <>
+                        <div className="mb-3">
+                          <button
+                            onClick={() => navigate("/business-compass/todo")}
+                            className="text-[11px] font-bold text-[#DA7756] mb-1.5 hover:underline text-left"
+                          >
+                            OverDue
+                          </button>
+                          {displayTodosOverdue.length > 0 ? (
+                            <div className="space-y-1.5">
+                              {displayTodosOverdue.map((item) => (
+                                <p
+                                  key={item.id}
+                                  className="text-[11px] sm:text-[12px] text-gray-600 leading-snug pl-0.5 cursor-pointer hover:text-[#DA7756] transition-colors"
+                                  onClick={() =>
+                                    navigate("/business-compass/todo")
+                                  }
+                                >
+                                  {item.title}
+                                </p>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-gray-400 italic">
+                              No overdue todos.
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <button
+                            onClick={() => navigate("/business-compass/todo")}
+                            className="text-[11px] font-bold text-[#DA7756] mb-1.5 hover:underline text-left"
+                          >
+                            Urgent &amp; Important
+                          </button>
+                          {displayTodosHigh.length > 0 ? (
+                            <div className="space-y-1.5">
+                              {displayTodosHigh.map((item) => (
+                                <p
+                                  key={item.id}
+                                  className="text-[11px] sm:text-[12px] text-gray-600 leading-snug pl-0.5 cursor-pointer hover:text-[#DA7756] transition-colors"
+                                  onClick={() =>
+                                    navigate("/business-compass/todo")
+                                  }
+                                >
+                                  {item.title}
+                                </p>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-gray-400 italic">
+                              No urgent &amp; important todos.
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          <Card className="flex flex-col items-center gap-2 rounded-2xl border border-[#DA7756]/15 bg-[#fffaf8] p-4 text-center shadow-sm">
-            <Badge className="mb-1 h-[22px] justify-center rounded-full border-none bg-[#DA7756] px-3 text-[10px] font-bold tracking-tight text-white shadow-none pointer-events-none">
-              Weekly Reports (WR)
-            </Badge>
-            <div className="text-3xl font-black text-[#0f172a]">
-              {dashboardData?.data?.counters?.weekly_reports || 0}
-            </div>
-          </Card>
+          {/* ══ RIGHT PANEL ═════════════════════════════════════════════════ */}
+          <div className="w-full lg:w-[260px] lg:flex-shrink-0 flex flex-col gap-4">
+            {/* KPI's – filtered by focusMode + paginated */}
+            <Card className="rounded-2xl border border-gray-100 bg-[#F6F4EE] shadow-sm">
+              <CardContent className="px-4 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[13px] sm:text-[14px] font-bold text-[#1a1a1a]">
+                    KPI's
+                  </h3>
+                  <span className="text-[10px] font-semibold text-[#DA7756] bg-white px-2 py-0.5 rounded-full border border-[#DA7756]/20">
+                    {kpis.length} KPI{kpis.length !== 1 ? "'s" : ""}
+                  </span>
+                </div>
+                {(() => {
+                  const pool = kpis;
+                  const perPage = 2;
+                  const totalPages = Math.max(
+                    1,
+                    Math.ceil(pool.length / perPage)
+                  );
+                  const safePage = kpiPage % totalPages;
+                  const paged = pool.slice(
+                    safePage * perPage,
+                    safePage * perPage + perPage
+                  );
+                  const hasMore = pool.length > perPage;
+                  return (
+                    <div className="flex items-stretch gap-2">
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        {paged.length > 0 ? (
+                          paged.map((kpi, i) => (
+                            <div
+                              key={kpi.id ?? i}
+                              className="flex flex-col gap-1 p-2.5 rounded-xl bg-white border border-gray-200"
+                            >
+                              <span className="text-[9px] text-gray-400 font-semibold">
+                                {kpi.frequency_label}
+                              </span>
+                              <span className="text-[11px] font-bold text-[#1a1a1a] leading-tight line-clamp-2">
+                                {kpi.name}
+                              </span>
+                              <div className="flex items-baseline gap-0.5 mt-1">
+                                <span className="text-[13px] font-black text-[#1a1a1a]">
+                                  {kpi.current_value}
+                                </span>
+                                <span className="text-[9px] text-gray-400">
+                                  /{kpi.target_value} {kpi.unit}
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-1 mt-0.5">
+                                <div
+                                  className="bg-[#DA7756] h-1 rounded-full"
+                                  style={{
+                                    width: `${Math.min(kpi.progress_percentage, 100)}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="text-[9px] text-gray-400">
+                                {kpi.progress_percentage}%
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-2 text-center py-6 text-[11px] text-gray-400 italic bg-white rounded-xl border border-gray-200">
+                            No KPIs assigned
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() =>
+                          hasMore && setKpiPage((p) => (p + 1) % totalPages)
+                        }
+                        className={cn(
+                          "flex items-center justify-center w-6 flex-shrink-0 transition-colors",
+                          hasMore
+                            ? "text-gray-400 hover:text-[#DA7756] cursor-pointer"
+                            : "text-gray-200 cursor-default"
+                        )}
+                        disabled={!hasMore}
+                        title={
+                          hasMore ? `Page ${safePage + 1}/${totalPages}` : ""
+                        }
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
 
-          <Card className="flex flex-col items-center gap-2 rounded-2xl border border-[#DA7756]/15 bg-[#fffaf8] p-4 text-center shadow-sm">
-            <Badge className="mb-1 h-[22px] justify-center rounded-full border-none bg-[#DA7756] px-3 text-[10px] font-bold tracking-tight text-white shadow-none pointer-events-none">
-              WR Pending
-            </Badge>
-            <div className="text-3xl font-black text-[#0f172a]">{dashboardData?.data?.counters?.weekly_pending || 0}</div>
-          </Card>
+            {/* Top Stuck Issues */}
+            <Card className="rounded-2xl border border-gray-100 bg-[#F6F4EE] shadow-sm">
+              <CardContent className="px-4 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[13px] sm:text-[14px] font-bold text-[#1a1a1a]">
+                    Top Stuck Issues
+                  </h3>
+                  <button
+                    onClick={() => navigate("/vas/issues")}
+                    className="text-[10px] sm:text-[11px] text-[#DA7756] font-bold hover:underline flex items-center gap-0.5"
+                  >
+                    View All <ChevronRight size={10} />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {issues.length > 0 ? (
+                    issues.slice(0, 8).map((issue: any, i: number) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between gap-2 bg-white rounded-xl px-3 py-2.5"
+                      >
+                        <span className="text-[11px] text-gray-700 flex-1 line-clamp-2 leading-snug">
+                          {issue.title}
+                        </span>
+                        <span
+                          className="flex-shrink-0 text-[10px] px-2.5 py-0.5 rounded-full font-semibold"
+                          style={issueBadgeStyle(issue.priority)}
+                        >
+                          {issue.priority || issue.status || "High"}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-[11px] text-gray-400 italic bg-white rounded-xl border border-gray-100">
+                      No stuck issues
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="flex flex-col items-center gap-2 rounded-2xl border border-[#DA7756]/15 bg-[#fffaf8] p-4 text-center shadow-sm">
-            <Badge className="mb-1 h-[22px] justify-center rounded-full border-none bg-[#DA7756] px-3 text-[10px] font-bold tracking-tight text-white shadow-none pointer-events-none">
-              JDs
-            </Badge>
-            <div className="text-3xl font-black text-[#0f172a]">{dashboardData?.data?.counters?.job_descriptions || 0}</div>
-          </Card>
+            {/* Counters */}
+            <Card className="rounded-2xl border border-gray-100 bg-[#F6F4EE] shadow-sm">
+              <CardContent className="px-4 py-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2">
+                  <div
+                    className="text-center p-3 rounded-xl"
+                    style={{
+                      backgroundColor: "#fce8e8",
+                      border: "1px solid #fbcfcf",
+                    }}
+                  >
+                    <p className="text-[9px] text-[#e05050] font-semibold leading-tight mb-1">
+                      Daily report/
+                      <br />
+                      pending
+                    </p>
+                    <p className="text-[15px] font-black text-[#1a1a1a]">
+                      {counters?.daily_reports ?? 0}/
+                      {counters?.daily_pending ?? 0}
+                    </p>
+                  </div>
+                  <div
+                    className="text-center p-3 rounded-xl"
+                    style={{
+                      backgroundColor: "#fce8e8",
+                      border: "1px solid #fbcfcf",
+                    }}
+                  >
+                    <p className="text-[9px] text-[#e05050] font-semibold leading-tight mb-1">
+                      Weekly report/
+                      <br />
+                      pending
+                    </p>
+                    <p className="text-[15px] font-black text-[#1a1a1a]">
+                      {counters?.weekly_reports ?? 0}/
+                      {counters?.weekly_pending ?? 0}
+                    </p>
+                  </div>
+                  <div className="text-center p-3 rounded-xl bg-white border border-gray-200">
+                    <p className="text-[9px] text-gray-400 font-semibold leading-tight mb-1">KPI</p>
+                    <p className="text-[15px] font-black text-[#1a1a1a]">{counters?.kpis ?? 0}</p>
+                  </div>
+                  <div className="relative text-center p-3 rounded-xl bg-white border border-gray-200">
+                    <p className="text-[9px] text-gray-400 font-semibold leading-tight mb-1">JDs</p>
+                    <p className="text-[15px] font-black text-[#1a1a1a]">{counters?.job_descriptions ?? 0}</p>
+                    <Sparkles size={14} className="absolute bottom-2 right-2 text-[#DA7756] opacity-60" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
+
+      {/* ══ AI CHAT – Glass Morphism Panel ══════════════════════════════════ */}
+      {aiChatOpen && (
+        <div
+          className="fixed z-50 ai-chat-enter"
+          style={{
+            bottom: "68px",
+            right: "16px",
+            width: "min(420px, calc(100vw - 32px))",
+          }}
+        >
+          <div
+            style={{
+              padding: "1.5px",
+              borderRadius: "20px",
+              background:
+                "linear-gradient(135deg, rgba(218,119,86,0.70) 0%, rgba(251,200,170,0.40) 40%, rgba(190,185,235,0.60) 100%)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.10)",
+            }}
+          >
+            <div
+              style={{
+                borderRadius: "18.5px",
+                background: "#ffffff",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                className="flex items-center justify-between px-5 pt-4 pb-3"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.45)" }}
+              >
+                <div className="flex gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
+                  {(["accomplishments", "plan"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setAiChatTab(tab)}
+                      className={cn(
+                        "px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-[12px] font-semibold transition-all whitespace-nowrap",
+                        aiChatTab === tab
+                          ? "bg-[#DA7756] text-white shadow-sm"
+                          : "text-gray-600 bg-white/40 hover:bg-white/60"
+                      )}
+                    >
+                      {tab === "accomplishments"
+                        ? "Fill my accomplishments"
+                        : "Plan for next day"}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setAiChatOpen(false)}
+                  className="ml-2 w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="h-36 sm:h-40 px-4 sm:px-5 py-4 flex items-center justify-center">
+                <p className="text-[12px] sm:text-[13px] text-gray-400 italic text-center">
+                  {aiChatTab === "accomplishments"
+                    ? "AI will help you fill your accomplishments..."
+                    : "AI will help you plan for tomorrow..."}
+                </p>
+              </div>
+              <div className="px-4 sm:px-5 pb-5 pt-1">
+                <div
+                  className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-2xl"
+                  style={{
+                    background: "rgba(255,255,255,0.65)",
+                    border: "1px solid rgba(255,255,255,0.80)",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <Sparkles
+                    size={13}
+                    className="text-[#DA7756] flex-shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={aiMessage}
+                    onChange={(e) => setAiMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") setAiMessage("");
+                    }}
+                    placeholder="Ask anything..."
+                    className="flex-1 bg-transparent text-[12px] sm:text-[13px] text-gray-700 placeholder-gray-400 outline-none min-w-0"
+                  />
+                  {aiMessage && (
+                    <button
+                      onClick={() => setAiMessage("")}
+                      className="text-[#DA7756] hover:text-[#c9673f] flex-shrink-0 transition-colors"
+                    >
+                      <Send size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating AI trigger – shared bc-ai-fab button (same as Daily Report) */}
+      {!aiChatOpen && (
+        <button
+          type="button"
+          className="bc-ai-fab"
+          title="AI Assistant"
+          aria-label="AI Assistant"
+          onClick={() => setAiChatOpen(true)}
+        >
+          <AiSparkleIcon className="bc-ai-fab-icon" />
+        </button>
+      )}
     </div>
   );
 };

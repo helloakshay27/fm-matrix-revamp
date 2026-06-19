@@ -1,7 +1,8 @@
 import { useDebounce } from '@/hooks/useDebounce';
 import React, { useState, useEffect, useMemo } from 'react';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, Trash2, BarChart3, Download, Loader2 } from 'lucide-react';
@@ -22,6 +23,7 @@ import axios from 'axios';
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, TextField } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { RecentAttendanceSidebar } from '@/components/RecentAttendanceSidebar';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -82,6 +84,8 @@ const columns: ColumnConfig[] = [
 
 export const AttendanceDashboard = () => {
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
+  const location = useLocation();
   const dispatch = useAppDispatch();
 
   // Redux state
@@ -89,7 +93,10 @@ export const AttendanceDashboard = () => {
 
   // Local state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'departmentChart', 'trendsChart', 'matrixChart'
@@ -121,6 +128,14 @@ export const AttendanceDashboard = () => {
     dispatch(fetchAttendanceData({ departmentFilter, page: currentPage, perPage }));
   }, [dispatch, debouncedSearchQuery, currentPage]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlPage = Number(params.get('page')) || 1;
+    if (urlPage !== currentPage) {
+      navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+    }
+  }, [currentPage]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -138,7 +153,9 @@ export const AttendanceDashboard = () => {
   const handleViewDetails = (row: any) => {
     const id = row.user_id;
     if (id) {
-      navigate(`/maintenance/attendance/details/${id}`);
+      navigate(`/maintenance/attendance/details/${id}`, {
+        state: { returnTo: buildReturnToPath(location.pathname, `?page=${currentPage}`) },
+      });
     }
   };
 
@@ -421,9 +438,10 @@ export const AttendanceDashboard = () => {
       case 'actions':
         return (
           <>
+          {shouldShow("attendance","show")&&(
             <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item)} className="hover:bg-gray-100">
               <Eye className="w-4 h-4" />
-            </Button>
+            </Button>)}
           </>
         );
       case 'name':

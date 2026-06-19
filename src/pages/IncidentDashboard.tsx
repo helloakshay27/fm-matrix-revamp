@@ -24,10 +24,12 @@ import { incidentService, type Incident } from "@/services/incidentService";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
 import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
 import { SiteWisePowerConsumptionChart } from "@/components/charts/SiteWisePowerConsumptionChart";
+import BodyInjuryChartCard from "@/components/incident-analytics/BodyInjuryChartCard";
 
 import {
   DndContext,
@@ -110,6 +112,11 @@ const INCIDENT_CHART_OPTIONS = [
     id: "rcaTable",
     label: "RCA Data Table",
     description: "Root cause analysis detailed logs",
+  },
+  {
+    id: "bodyInjuryChart",
+    label: "Body Injury Chart",
+    description: "Injury locations mapped on human body diagram",
   },
 ];
 
@@ -380,29 +387,34 @@ const RcaTable = ({
             No RCA data found.
           </div>
         ) : (
+          <div className="rounded-xl overflow-hidden border border-gray-200 mx-4 mb-4">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+              <tr>
+                <th
+                  className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center"
+                  style={{ backgroundColor: "#D97655" }}
+                >
                   Sr. No.
                 </th>
                 {RCA_COLUMNS.map((col) => (
                   <th
                     key={col.key}
-                    className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap"
+                    className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center"
+                    style={{ backgroundColor: "#D97655" }}
                   >
                     {col.label}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody>
               {displayData.map(({ row, originalIndex }) => (
                 <tr
                   key={originalIndex}
-                  className="hover:bg-gray-50 transition-colors"
+                  style={{ backgroundColor: originalIndex % 2 === 0 ? "#ffffff" : "#F6F4EE" }}
                 >
-                  <td className="px-4 py-3 text-gray-500 font-medium text-sm">
+                  <td className="px-4 py-3 text-left text-gray-500 font-medium text-xs border-b border-gray-100 whitespace-nowrap">
                     {(currentPage - 1) * perPage + originalIndex + 1}
                   </td>
                   {RCA_COLUMNS.map((col) => {
@@ -411,7 +423,7 @@ const RcaTable = ({
                       return (
                         <td
                           key={col.key}
-                          className="px-4 py-3 text-gray-700 whitespace-nowrap text-sm"
+                          className="px-4 py-3 text-left text-gray-700 whitespace-nowrap text-xs border-b border-gray-100"
                         >
                           {formatTime(val)}
                         </td>
@@ -421,7 +433,7 @@ const RcaTable = ({
                       return (
                         <td
                           key={col.key}
-                          className="px-4 py-3 whitespace-nowrap"
+                          className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100"
                         >
                           {val ? (
                             <Badge className={`text-xs ${getLevelColor(val)}`}>
@@ -437,7 +449,7 @@ const RcaTable = ({
                       return (
                         <td
                           key={col.key}
-                          className="px-4 py-3 whitespace-nowrap"
+                          className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100"
                         >
                           {val ? (
                             <Badge className={`text-xs ${getStatusColor(val)}`}>
@@ -461,7 +473,7 @@ const RcaTable = ({
                       return (
                         <td
                           key={col.key}
-                          className="px-4 py-3 text-sm text-gray-700 max-w-[200px]"
+                          className="px-4 py-3 text-left text-xs text-gray-700 max-w-[200px] border-b border-gray-100"
                         >
                           {val ? (
                             <span title={val} className="block truncate">
@@ -476,7 +488,7 @@ const RcaTable = ({
                     return (
                       <td
                         key={col.key}
-                        className="px-4 py-3 text-gray-700 whitespace-nowrap text-sm"
+                        className="px-4 py-3 text-left text-gray-700 whitespace-nowrap text-xs border-b border-gray-100"
                       >
                         {val ?? <span className="text-gray-400">-</span>}
                       </td>
@@ -486,6 +498,7 @@ const RcaTable = ({
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -527,6 +540,7 @@ const RcaTable = ({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const IncidentDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
 
   // ── List tab state
@@ -1154,15 +1168,17 @@ export const IncidentDashboard = () => {
             columns={columns}
             renderCell={renderCell}
             renderActions={(item) => (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  navigate(`/safety/incident/new-details/${item.id}`)
-                }
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
+              shouldShow("Incident", "show") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    navigate(`/safety/incident/new-details/${item.id}`)
+                  }
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+              )
             )}
             loading={loading}
             emptyMessage={error ?? "No incidents found"}
@@ -1172,12 +1188,14 @@ export const IncidentDashboard = () => {
             storageKey="incidents-dashboard"
             pagination={false}
             leftActions={
-              <Button
-                onClick={() => navigate("/safety/incident/add")}
-                className="bg-[#C72030] text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" /> Add Incident
-              </Button>
+              shouldShow("Incident", "create") && (
+                <Button
+                  onClick={() => navigate("/safety/incident/add")}
+                  className="bg-[#C72030] text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add Incident
+                </Button>
+              )
             }
             onFilterClick={() => setIsFilterModalOpen(true)}
           />
@@ -1282,7 +1300,7 @@ export const IncidentDashboard = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                 {orderedVisibleCharts.map((key) => {
                   const isFullWidth =
-                    key === "levelWiseChart" || key === "rcaTable";
+                    key === "levelWiseChart" || key === "rcaTable" || key === "bodyInjuryChart";
                   return (
                     <div
                       key={key}
@@ -1335,6 +1353,12 @@ export const IncidentDashboard = () => {
                             onDownload={handleExportRca}
                             onSearch={handleRcaSearch}
                             searchValue={rcaSearch}
+                          />
+                        )}
+                        {key === "bodyInjuryChart" && (
+                          <BodyInjuryChartCard
+                            startDate={ddmmyyyyToYYYYMMDD(analyticsDateRange.startDate)}
+                            endDate={ddmmyyyyToYYYYMMDD(analyticsDateRange.endDate)}
                           />
                         )}
                       </SortableChartItem>

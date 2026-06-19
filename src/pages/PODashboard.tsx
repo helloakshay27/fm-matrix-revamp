@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { POFilterDialog } from "@/components/POFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -22,6 +23,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -144,55 +146,6 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
-  // {
-  //   key: "retentionAmount",
-  //   label: "Retention Amount",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "retentionOutstanding",
-  //   label: "Retention Outstanding",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "qcAmount",
-  //   label: "QC Amount",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "qcOutstanding",
-  //   label: "QC Outstanding",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "noOfGrns",
-  //   label: "No of Grns",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "totalAmountPaid",
-  //   label: "Total Amount Paid",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
-  // {
-  //   key: "outstanding",
-  //   label: "Outstanding",
-  //   sortable: true,
-  //   draggable: true,
-  //   defaultVisible: true,
-  // },
   {
     key: "debitCreditNoteRaised",
     label: "Debit/Credit Note Raised",
@@ -206,6 +159,7 @@ export const PODashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions()
   const [orgId, setOrgId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -213,17 +167,23 @@ export const PODashboard = () => {
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    referenceNumber: urlParams.get("referenceNumber") || "",
+    poNumber: urlParams.get("poNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+    approvalStatus: urlParams.get("approvalStatus") || "",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [poList, setPoList] = useState([]);
-  const [filters, setFilters] = useState({
-    referenceNumber: '',
-    poNumber: '',
-    supplierName: '',
-    approvalStatus: ''
-  });
+  const [filters, setFilters] = useState(initialFilters);
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
   });
@@ -264,11 +224,11 @@ export const PODashboard = () => {
       debitCreditNoteRaised: item.debit_credit_note_raised,
     }));
     setPoList(formattedData);
-    setPagination({
-      current_page: response.current_page,
+    setPagination((prev) => ({
+      ...prev,
       total_count: response.total_count,
       total_pages: response.total_pages,
-    });
+    }));
   };
 
   const fetchData = async (filterData: Record<string, any> = {}) => {
@@ -313,37 +273,54 @@ export const PODashboard = () => {
       setLoading(false);
     }
   };
-    useEffect(() => {
-      try {
-        // first try explicit org_id stored separately (common pattern)
-        const storedOrg = localStorage.getItem('org_id');
-        if (storedOrg) {
-          const num = Number(storedOrg);
-          if (!Number.isNaN(num)) {
-            setOrgId(num);
-            return;
-          }
+  useEffect(() => {
+    try {
+      const storedOrg = localStorage.getItem('org_id');
+      if (storedOrg) {
+        const num = Number(storedOrg);
+        if (!Number.isNaN(num)) {
+          setOrgId(num);
+          return;
         }
-  
-        // fallback to user object which may contain org_id/company_id
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          if (user.org_id) {
-            setOrgId(user.org_id);
-          } else if (user.company_id) {
-            setOrgId(user.company_id);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load org_id:', error);
       }
-    }, []);
-  
+
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.org_id) {
+          setOrgId(user.org_id);
+        } else if (user.company_id) {
+          setOrgId(user.company_id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load org_id:', error);
+    }
+  }, []);
+
 
   useEffect(() => {
-    fetchData();
+    fetchData({
+      page: urlPage,
+      search: initialSearch,
+      reference_number: initialFilters.referenceNumber,
+      external_id: initialFilters.poNumber,
+      supplier_name: initialFilters.supplierName,
+      approval_status: initialFilters.approvalStatus,
+    });
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
+    if (filters.poNumber) params.set("poNumber", filters.poNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
+
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -363,25 +340,27 @@ export const PODashboard = () => {
     supplierName: string;
     approvalStatus: string;
   }) => {
-    setFilters(newFilters); // Update filter state
+    setFilters(newFilters);
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
     fetchData({
+      page: 1,
       reference_number: newFilters.referenceNumber,
       external_id: newFilters.poNumber,
       supplier_name: newFilters.supplierName,
       approval_status: newFilters.approvalStatus
-    }); // Fetch data with filters
+    });
   };
 
   const debouncedFetchData = useCallback(
-    debounce((query: string) => {
-      fetchData({ search: query });
+    debounce((query: string, filterParams: any) => {
+      fetchData({ page: 1, search: query, ...filterParams });
     }, 500),
-    [pagination.current_page, filters]
+    []
   );
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
     debouncedFetchData(query, {
       reference_number: filters.referenceNumber,
       external_id: filters.poNumber,
@@ -485,22 +464,31 @@ export const PODashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/po/details/${item.id}`)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
       {
-        item.allLevelApproved === null && <Button
+        shouldShow("PO", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => navigate(`/finance/po/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            })}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {
+        shouldShow("PO", "update") && item.allLevelApproved === null && <Button
           size="sm"
           variant="ghost"
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/finance/po/edit/${item.id}`);
+            navigate(`/finance/po/edit/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
           }}
         >
           <Edit className="w-4 h-4" />
@@ -513,6 +501,8 @@ export const PODashboard = () => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
+
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
@@ -657,9 +647,11 @@ export const PODashboard = () => {
     fetchData();
   };
 
+  console.log("PO create", shouldShow("PO", "create"));
+
   const leftActions = (
     <div className="flex items-center gap-2">
-      {orgId !== 63 && (
+      {shouldShow("PO", "create") && orgId !== 63 && (
         <Button
           className="fm-button-fix fm-button-brand px-4 py-2"
           variant="ghost"

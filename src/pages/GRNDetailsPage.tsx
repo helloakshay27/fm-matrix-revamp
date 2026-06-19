@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
+  AlertTriangle,
   ArrowLeft,
   ClipboardList,
   Contact,
@@ -139,6 +141,13 @@ export const GRNDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const formatIndian = (val: string | number | null | undefined): string => {
+  if (val === "" || val === null || val === undefined) return "-";
+  const n = parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+};
+
   const [openDebitModal, setOpenDebitModal] = useState(false);
   const [grnDetails, setGrnDetails] = useState<any>({});
   const [rejectComment, setRejectComment] = useState("");
@@ -264,6 +273,7 @@ export const GRNDetailsPage = () => {
         approveGRN({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("GRN approved successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
@@ -306,6 +316,7 @@ export const GRNDetailsPage = () => {
         rejectGrn({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("GRN rejected successfully");
+      refreshPendingApprovalsCount();
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
@@ -489,6 +500,22 @@ export const GRNDetailsPage = () => {
         </div>
       </TooltipProvider>
 
+      {approvalStatus?.approval_levels?.filter((a: Approval) => a.status.toLowerCase() === "rejected").map((a: Approval, idx: number) => (
+        <div key={idx} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-700">
+              Rejected by {a.name}
+              {a.approved_by ? ` — ${a.approved_by}` : ""}
+              {a.approved_at ? ` (${a.approved_at})` : ""}
+            </p>
+            <p className="text-sm text-red-600 mt-0.5">
+              Reason: {a.rejection_reason ?? "No reason provided"}
+            </p>
+          </div>
+        </div>
+      ))}
+
       {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-6">
@@ -591,7 +618,7 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Retention Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.retention_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.retention_amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -603,13 +630,13 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.tds_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.tds_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">QC Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.qh_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.qh_amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -621,19 +648,19 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.total_taxes}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.total_taxes)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.grn_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.grn_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">PO Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{purchaseOrder.amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(purchaseOrder.amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -645,19 +672,19 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.invoice_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.invoice_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.payable_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.payable_amount)}</span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.grn_amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.grn_amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -675,7 +702,7 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Gross Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.amount}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.amount)}</span>
           </div>
 
           <div className="flex items-start">
@@ -703,10 +730,9 @@ export const GRNDetailsPage = () => {
         <EnhancedTable
           data={itemsData}
           renderCell={(item: any, columnKey: string) => {
-            switch (columnKey) {
-              default:
-                return item[columnKey];
-            }
+            const amountKeys = ['rate', 'cgst_amount', 'sgst_amount', 'igst_amount', 'tcs_amount', 'taxable_value', 'total_value'];
+            if (amountKeys.includes(columnKey)) return formatIndian(item[columnKey]);
+            return item[columnKey];
           }}
           columns={itemsColumns}
           storageKey="grn-items-table"
@@ -721,19 +747,19 @@ export const GRNDetailsPage = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">Other Expense:</span>
-              <span className="font-medium">{grnDetails.other_expenses}</span>
+              <span className="font-medium">{formatIndian(grnDetails.other_expenses)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Loading Expense:
               </span>
-              <span className="font-medium">{grnDetails.loading_expense}</span>
+              <span className="font-medium">{formatIndian(grnDetails.loading_expense)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Adjustment Amount:
               </span>
-              <span className="font-medium">{grnDetails.adj_amount}</span>
+              <span className="font-medium">{formatIndian(grnDetails.adj_amount)}</span>
             </div>
           </div>
         </div>
@@ -779,12 +805,7 @@ export const GRNDetailsPage = () => {
                             className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
                             title="View"
                             onClick={() => {
-                              setSelectedAttachment({
-                                id: attachment.id,
-                                url: attachment.document_url,
-                                document_name: attachment.filename,
-                              });
-                              setIsPreviewModalOpen(true);
+                              if (attachment.document_url) window.open(attachment.document_url, '_blank');
                             }}
                             type="button"
                           >
@@ -795,12 +816,7 @@ export const GRNDetailsPage = () => {
                             alt={attachment.filename}
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
-                              setSelectedAttachment({
-                                id: attachment.id,
-                                url: attachment.document_url,
-                                document_name: attachment.filename,
-                              });
-                              setIsPreviewModalOpen(true);
+                              if (attachment.document_url) window.open(attachment.document_url, '_blank');
                             }}
                           />
                         </>
@@ -830,12 +846,7 @@ export const GRNDetailsPage = () => {
                           variant="ghost"
                           className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
                           onClick={() => {
-                            setSelectedAttachment({
-                              id: attachment.id,
-                              url: attachment.document_url,
-                              document_name: attachment.filename,
-                            });
-                            setIsPreviewModalOpen(true);
+                            if (attachment.document_url) window.open(attachment.document_url, '_blank');
                           }}
                         >
                           <Eye className="w-4 h-4" />

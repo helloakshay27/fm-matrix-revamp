@@ -147,6 +147,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     responsiblePerson: "",
     responsiblePersonName: "",
     priority: "",
+    isRecurring: false,
     observer: [],
     tags: [],
   });
@@ -400,6 +401,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         observers?: Array<{ user_id: string; user_name: string; id: string }>;
         task_allocation_times?: Array<any>;
         parent_id?: string | null;
+        is_recurring?: boolean;
       };
 
       console.log(taskData);
@@ -448,6 +450,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         responsiblePerson: taskData.responsible_person_id || "",
         responsiblePersonName: taskData.responsible_person?.name || "",
         priority: taskData.priority || "",
+        isRecurring: taskData.is_recurring || false,
         observer: mappedObservers,
         tags: mappedTags,
       });
@@ -590,19 +593,48 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   };
 
   const validateForm = () => {
-    if (
-      !formData.taskTitle ||
-      !formData.responsiblePerson ||
-      !formData.priority ||
-      !formData.observer.length ||
-      !formData.tags.length ||
-      !endDate ||
-      !totalWorkingHours
-    ) {
+    if (!formData.taskTitle?.trim()) {
       toast.dismiss();
-      toast.error("Please fill all required fields.");
+      toast.error("Task title is required.");
       return false;
     }
+
+    if (!formData.responsiblePerson) {
+      toast.dismiss();
+      toast.error("Responsible person is required.");
+      return false;
+    }
+
+    if (!formData.priority) {
+      toast.dismiss();
+      toast.error("Priority is required.");
+      return false;
+    }
+
+    if (!formData.observer?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one observer.");
+      return false;
+    }
+
+    if (!formData.tags?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one tag.");
+      return false;
+    }
+
+    if (!formData.isRecurring && !endDate) {
+      toast.dismiss();
+      toast.error("Target date is required.");
+      return false;
+    }
+
+    if (!totalWorkingHours) {
+      toast.dismiss();
+      toast.error("Please enter working hours.");
+      return false;
+    }
+
     return true;
   };
 
@@ -912,7 +944,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-xs text-gray-700 mb-1">
-                Target Date *
+                Target Date{!formData.isRecurring && <span className="text-red-600">*</span>}
               </label>
               <button
                 type="button"

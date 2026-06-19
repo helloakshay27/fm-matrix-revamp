@@ -41,6 +41,28 @@ const getBaseUrl = () => {
 const BASE_URL = getBaseUrl();
 const AI_CRITICAL_NUMBERS_STORAGE_KEY = "business_plan_ai_critical_numbers";
 
+const getSelectedOrgName = () => {
+  const fallbackName = "HAVEN INFOLINE PRIVATE LIMITED";
+  const selectedOrg = localStorage.getItem("selectedOrg");
+
+  if (!selectedOrg) return fallbackName;
+
+  try {
+    const parsedOrg = JSON.parse(selectedOrg);
+    const parsedName =
+      parsedOrg?.name ||
+      parsedOrg?.company_name ||
+      parsedOrg?.organization_name ||
+      parsedOrg?.title;
+
+    return typeof parsedName === "string" && parsedName.trim()
+      ? parsedName.trim()
+      : fallbackName;
+  } catch {
+    return selectedOrg.trim() || fallbackName;
+  }
+};
+
 function getCleanAiPlanErrorMessage(message: string): string {
   const cleanMessage = (value: string) =>
     value
@@ -388,6 +410,32 @@ interface OverviewMedia {
   videos: OverviewMediaItem[];
 }
 
+const getGoogleDriveFileId = (url: string): string | null => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "lh3.googleusercontent.com") {
+      return (
+        parsed.pathname.match(/\/d\/([^=/?#]+)/)?.[1] ||
+        parsed.pathname.match(/\/d\/(.+)/)?.[1]?.split("=")[0] ||
+        null
+      );
+    }
+    if (parsed.hostname !== "drive.google.com") return null;
+    return (
+      parsed.pathname.match(/\/file\/d\/([^/]+)/)?.[1] ||
+      parsed.searchParams.get("id")
+    );
+  } catch {
+    return null;
+  }
+};
+
+const getGoogleDriveOpenUrl = (url: string): string | null => {
+  const fileId = getGoogleDriveFileId(url);
+  return fileId ? `https://drive.google.com/file/d/${fileId}/view` : null;
+};
+
 const normalizeImageUrl = (url: string): string => {
   if (!url) return "";
   try {
@@ -396,35 +444,94 @@ const normalizeImageUrl = (url: string): string => {
     if (parsed.hostname.includes("google.") && directImageUrl) {
       return directImageUrl;
     }
+
+    if (parsed.hostname === "drive.google.com") {
+      const fileId = getGoogleDriveFileId(url);
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
+      }
+    }
   } catch {
     return url;
   }
   return url;
 };
 
+const EMPTY_OVERVIEW_MEDIA: OverviewMedia = { images: [], videos: [] };
+
 const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   const url = `${BASE_URL}/business_compass/overview_media`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
+
+  // Endpoint may not be deployed on every environment (e.g. live). A 404 — or a
+  // non-JSON (HTML) error page — should not break the page: overview media is
+  // optional, so treat it as "no media" instead of surfacing a raw error.
+  const looksLikeHtml = /^\s*<(?:!doctype|html)/i.test(rawText);
+  if (res.status === 404 || (!res.ok && looksLikeHtml)) {
+    return EMPTY_OVERVIEW_MEDIA;
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
   let json: any;
   try {
     json = JSON.parse(rawText);
   } catch {
-    json = {};
+    // Successful but non-JSON response — nothing usable, degrade gracefully.
+    return EMPTY_OVERVIEW_MEDIA;
   }
-  const parseMediaArray = (arr: any[]): OverviewMediaItem[] =>
+  const parseMediaArray = (
+    arr: any[],
+    normalizeUrl: (url: string) => string = (url) => url
+  ): OverviewMediaItem[] =>
     arr
       .map((item) =>
         typeof item === "string"
           ? { id: null, url: item }
-          : { id: item?.id ?? null, url: item?.url ?? "" }
+          : { id: item?.id ?? null, url: item?.url ?? item?.field_value ?? "" }
       )
-      .map((item) => ({ ...item, url: normalizeImageUrl(item.url) }))
+      .map((item) => ({ ...item, url: normalizeUrl(item.url) }))
       .filter((item) => Boolean(item.url));
+
+  const dataRecords = Array.isArray(json?.data) ? json.data : [];
+  const overviewRecords = dataRecords.filter(
+    (item: any) => item?.group_name === "business_plan_overview"
+  );
+  const imageRecords = overviewRecords.filter((item: any) =>
+    String(item?.field_name || "").toLowerCase().startsWith("image")
+  );
+  const videoRecords = overviewRecords.filter((item: any) =>
+    String(item?.field_name || "").toLowerCase().startsWith("video")
+  );
+  const mergeParsedMedia = (
+    primary: OverviewMediaItem[],
+    secondary: OverviewMediaItem[]
+  ): OverviewMediaItem[] => {
+    const seen = new Set<string>();
+    return [...primary, ...secondary].filter((item) => {
+      if (!item.url || seen.has(item.url)) return false;
+      seen.add(item.url);
+      return true;
+    });
+  };
+
+  const topLevelImages = Array.isArray(json?.images)
+    ? parseMediaArray(json.images, normalizeImageUrl)
+    : [];
+  const recordImages = parseMediaArray(imageRecords, normalizeImageUrl);
+  const topLevelVideos = Array.isArray(json?.videos)
+    ? parseMediaArray(json.videos)
+    : [];
+  const recordVideos = parseMediaArray(videoRecords);
+  const hasTopLevelImages = Array.isArray(json?.images);
+  const hasTopLevelVideos = Array.isArray(json?.videos);
+
   return {
-    images: Array.isArray(json?.images) ? parseMediaArray(json.images) : [],
-    videos: Array.isArray(json?.videos) ? parseMediaArray(json.videos) : [],
+    images: hasTopLevelImages
+      ? topLevelImages
+      : mergeParsedMedia(topLevelImages, recordImages),
+    videos: hasTopLevelVideos
+      ? topLevelVideos
+      : mergeParsedMedia(topLevelVideos, recordVideos),
   };
 };
 
@@ -443,9 +550,23 @@ const saveOverviewImagesApi = async (images: string[]): Promise<void> => {
   }
 };
 
+const getUniqueImageUrls = (urls: string[]): string[] => {
+  const seen = new Set<string>();
+  return urls
+    .map((url) => normalizeImageUrl(String(url || "").trim()))
+    .filter((url) => {
+      if (!url || seen.has(url)) return false;
+      seen.add(url);
+      return true;
+    });
+};
+
 const saveOverviewVideosApi = async (videos: string[]): Promise<void> => {
   const payload = {
-    extra_field: { group_name: "business_plan_overview", videos },
+    extra_field: {
+      group_name: "business_plan_overview",
+      videos: videos.map((url) => getGoogleDriveOpenUrl(url) || url),
+    },
   };
   const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
@@ -461,6 +582,28 @@ const saveOverviewVideosApi = async (videos: string[]): Promise<void> => {
 // ─────────────────────────────────
 //  Icons
 // ─────────────────────────────────
+const mergeOverviewMediaItems = (
+  fetched: OverviewMediaItem[],
+  fallbackUrls: string[]
+): OverviewMediaItem[] => {
+  const merged: OverviewMediaItem[] = [];
+  const seen = new Set<string>();
+
+  fetched.forEach((item) => {
+    if (!item.url || seen.has(item.url)) return;
+    seen.add(item.url);
+    merged.push(item);
+  });
+
+  fallbackUrls.forEach((url) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    merged.push({ id: null, url });
+  });
+
+  return merged;
+};
+
 const InfoIcon = () => (
   <svg
     className="w-4 h-4 text-gray-400"
@@ -478,7 +621,7 @@ const InfoIcon = () => (
 );
 const EyeIcon = ({ color }: { color?: string }) => (
   <svg
-    className="w-4 h-4"
+    className="h-[18px] w-[18px]"
     style={{ color: color || C.primary }}
     fill="none"
     viewBox="0 0 24 24"
@@ -487,7 +630,7 @@ const EyeIcon = ({ color }: { color?: string }) => (
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2.5}
+      strokeWidth={2.2}
       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
     />
     <path
@@ -638,6 +781,9 @@ const InlineImageSlider = ({
 }) => {
   const [current, setCurrent] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
+    () => new Set()
+  );
 
   useEffect(() => {
     if (current >= images.length && images.length > 0)
@@ -661,6 +807,9 @@ const InlineImageSlider = ({
 
   const prev = () => setCurrent((p) => (p > 0 ? p - 1 : images.length - 1));
   const next = () => setCurrent((p) => (p < images.length - 1 ? p + 1 : 0));
+  const currentImageUrl = images[current] || "";
+  const hasImageFailed = failedImageUrls.has(currentImageUrl);
+  const driveOpenUrl = getGoogleDriveOpenUrl(currentImageUrl);
 
   const sliderBox = (
     <div
@@ -669,28 +818,88 @@ const InlineImageSlider = ({
         width: "100%",
         borderRadius: fullscreen ? 0 : 16,
         overflow: "hidden",
-        background: "#111",
-        paddingTop: fullscreen ? undefined : "56.25%",
+        background: "#f3f4f6",
+        paddingTop: fullscreen ? undefined : "48%",
         height: fullscreen ? "100%" : undefined,
       }}
     >
-      <img
-        key={current}
-        src={images[current]}
-        alt={`slide-${current}`}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain" as const,
-          position: fullscreen ? "static" : "absolute",
-          top: fullscreen ? undefined : 0,
-          left: fullscreen ? undefined : 0,
-          display: "block",
-        }}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.opacity = "0.3";
-        }}
-      />
+      {hasImageFailed ? (
+        <div
+          style={{
+            position: fullscreen ? "static" : "absolute",
+            inset: fullscreen ? undefined : 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            padding: 24,
+            textAlign: "center",
+            background: "#f3f4f6",
+            color: C.textMain,
+            fontFamily: "'Poppins', sans-serif",
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700 }}>
+            Image preview is blocked
+          </div>
+          <div style={{ maxWidth: 360, fontSize: 12, color: "#d1d5db" }}>
+            Google Drive does not allow this file to render directly here.
+          </div>
+          {driveOpenUrl && (
+            <a
+              href={driveOpenUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                marginTop: 4,
+                borderRadius: 999,
+                background: "#fff",
+                color: "#111",
+                padding: "8px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+              }}
+            >
+              Open image
+            </a>
+          )}
+        </div>
+      ) : (
+        <img
+          key={current}
+          src={currentImageUrl}
+          alt={`slide-${current}`}
+          referrerPolicy="no-referrer"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover" as const,
+            position: fullscreen ? "static" : "absolute",
+            top: fullscreen ? undefined : 0,
+            left: fullscreen ? undefined : 0,
+            display: "block",
+          }}
+          onLoad={() => {
+            setFailedImageUrls((prevFailed) => {
+              if (!prevFailed.has(currentImageUrl)) return prevFailed;
+              const nextFailed = new Set(prevFailed);
+              nextFailed.delete(currentImageUrl);
+              return nextFailed;
+            });
+          }}
+          onError={() => {
+            setFailedImageUrls((prevFailed) => {
+              const nextFailed = new Set(prevFailed);
+              nextFailed.add(currentImageUrl);
+              return nextFailed;
+            });
+          }}
+        />
+      )}
       <div
         style={{
           position: "absolute",
@@ -955,7 +1164,7 @@ const InlineImageSlider = ({
   }
 
   return (
-    <div className="mb-5">
+    <div className="mb-5 w-full">
       {sliderBox}
       <style>{`@keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
     </div>
@@ -1009,6 +1218,123 @@ const VideoPreview = ({ url }: { url: string }) => {
 // ─────────────────────────────────
 //  Inline Video Player
 // ─────────────────────────────────
+const DirectVideoPlayer: React.FC<{ url: string; safeIdx: number }> = ({
+  url,
+  safeIdx,
+}) => {
+  const driveOpenUrl = getGoogleDriveOpenUrl(url);
+  const isBinaryVideoUrl = (() => {
+    try {
+      return /\.bin$/i.test(new URL(url).pathname);
+    } catch {
+      return false;
+    }
+  })();
+  const videoType = isBinaryVideoUrl ? "video/mp4" : undefined;
+  const [videoError, setVideoError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setVideoError(null);
+  }, [url]);
+
+  if (driveOpenUrl) {
+    return (
+      <a
+        key={`drive-${safeIdx}-${driveOpenUrl}`}
+        href={driveOpenUrl}
+        target="_blank"
+        rel="noreferrer"
+        title="Open Drive video"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#fff",
+          fontSize: 18,
+          fontWeight: 800,
+          textDecoration: "none",
+          background: "#f3f4f6",
+          fontFamily: "'Poppins', sans-serif",
+        }}
+      >
+        Thumbnail
+      </a>
+    );
+  }
+
+  if (videoError) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+          padding: 24,
+          textAlign: "center",
+          background: "#f3f4f6",
+          color: C.textMain,
+          fontFamily: "'Poppins', sans-serif",
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 800 }}>
+          Video preview is unavailable
+        </div>
+        <div style={{ maxWidth: 380, fontSize: 12, color: "#d1d5db" }}>
+          {videoError}
+        </div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            marginTop: 4,
+            borderRadius: 999,
+            background: "#fff",
+            color: "#111",
+            padding: "8px 14px",
+            fontSize: 12,
+            fontWeight: 800,
+            textDecoration: "none",
+          }}
+        >
+          Open video
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <video
+      key={`vid-${safeIdx}-${url}`}
+      controls
+      onError={() =>
+        setVideoError("This video file cannot be played in the browser.")
+      }
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "cover" as const,
+        display: "block",
+      }}
+    >
+      <source src={url} type={videoType} />
+      Your browser does not support the video tag.
+    </video>
+  );
+};
+
 const InlineVideoPlayer: React.FC<{
   videos: string[];
   onDelete: (idx: number) => void;
@@ -1039,15 +1365,15 @@ const InlineVideoPlayer: React.FC<{
   const next = () => setCurrent((p) => (p < videos.length - 1 ? p + 1 : 0));
 
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div style={{ marginBottom: 20, width: "100%" }}>
       <div
         style={{
           position: "relative",
           width: "100%",
-          paddingTop: "56.25%",
+          paddingTop: "48%",
           borderRadius: 16,
           overflow: "hidden",
-          background: "#111",
+          background: "#f3f4f6",
         }}
       >
         {videoId ? (
@@ -1068,20 +1394,7 @@ const InlineVideoPlayer: React.FC<{
             }}
           />
         ) : (
-          <video
-            key={`vid-${safeIdx}-${url}`}
-            src={url}
-            controls
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "contain" as const,
-              display: "block",
-            }}
-          />
+          <DirectVideoPlayer url={url} safeIdx={safeIdx} />
         )}
       </div>
       <div
@@ -1187,7 +1500,7 @@ const InlineVideoPlayer: React.FC<{
             fontFamily: "'Poppins', sans-serif",
           }}
         >
-          {safeIdx + 1}/{videos.length} — {url}
+          {safeIdx + 1}/{videos.length}
         </p>
         <button
           onClick={() => onDelete(safeIdx)}
@@ -1396,16 +1709,43 @@ interface KPI {
 type AiBuilderStage = "questions" | "building" | "plan";
 
 const AI_PLAN_FIELDS = [
-  { key: "purpose", label: "Purpose / Why do we exist?" },
-  { key: "core_values", label: "Core Values" },
-  { key: "brand_promises", label: "Brand Promises & Promise KPIs" },
-  { key: "bhag", label: "BHAG / 10-Year Goal" },
-  { key: "three_year_vision", label: "3-Year Goals & Initiatives" },
-  { key: "annual_goals", label: "1-Year Goals & Initiatives" },
-  { key: "target_markets", label: "Target Markets" },
-  { key: "key_initiatives", label: "Key Initiatives" },
-  { key: "key_metrics", label: "Key Metrics" },
-  { key: "people_process", label: "People & Process" },
+  { key: "purpose", label: "Q1: Why does your company exist?" },
+  {
+    key: "core_values",
+    label: "Q2: What 4-5 values or behaviours best represent your team or culture?",
+  },
+  {
+    key: "brand_promises",
+    label: "Q3: What are the USPs that make you stand out?",
+  },
+  {
+    key: "bhag",
+    label: "Q4: What bold outcome do you want to achieve in the next 10-15 years?",
+  },
+  {
+    key: "three_year_vision",
+    label: "Q5: What do you want to achieve in the next 3-5 years?",
+  },
+  {
+    key: "annual_goals",
+    label: "Q6: What are your main business goals for this financial year?",
+  },
+  {
+    key: "target_markets",
+    label: "Q7: Which customer segments or geographies will you focus on this year?",
+  },
+  {
+    key: "key_initiatives",
+    label: "Q8: What 3 key actions or projects will help you achieve this year's goals?",
+  },
+  {
+    key: "key_metrics",
+    label: "Q9: What are the key numbers or metrics you should regularly track to ensure success?",
+  },
+  {
+    key: "people_process",
+    label: "Q10: What improvements do you need in your people or processes to succeed?",
+  },
 ] as const;
 
 const TOOLTIP_CONTENT: Record<
@@ -1438,24 +1778,40 @@ const TOOLTIP_CONTENT: Record<
 const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
   values,
 }) => {
+  const safeValues = values || [];
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
-        {(values || []).map((v, idx) => (
-          <span
-            key={v.id ?? idx}
-            className="px-4 py-2 text-[12px] font-bold rounded-full shadow-sm tracking-tight border"
-            style={{
-              background: "#FFF0EA",
-              borderColor: "#D46342",
-              color: "#1f2933",
-              boxShadow: "0 6px 14px rgba(184,79,52,0.12)",
-            }}
-          >
+    <div className="grid grid-cols-1 gap-2.5">
+      {safeValues.map((v, idx) => (
+        <div
+          key={v.id ?? idx}
+          className="group/value flex items-center gap-3 rounded-[15px] border border-[#efe5df] bg-gradient-to-r from-white to-[#fff8f4] px-3.5 py-3 shadow-[0_8px_18px_rgba(218,119,86,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#f0cfc2] hover:shadow-[0_12px_24px_rgba(218,119,86,0.12)]"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#fff0ea] text-[12px] font-extrabold text-[#DA7756] ring-1 ring-[#f3d8ce] transition-all duration-200 group-hover/value:bg-[#DA7756] group-hover/value:text-white">
+            {idx + 1}
+          </span>
+
+          <span className="min-w-0 flex-1 text-[13px] font-extrabold leading-5 text-[#1a1a1a]">
             {v.value}
           </span>
-        ))}
-      </div>
+
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.4}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 12.75 9 17.25 19.5 6.75"
+              />
+            </svg>
+          </span>
+        </div>
+      ))}
     </div>
   );
 };
@@ -1593,6 +1949,8 @@ const BusinessPlanAndGoles = () => {
   const [isSavingImages, setIsSavingImages] = useState(false);
   const [isSavingVideos, setIsSavingVideos] = useState(false);
   const [mediaSaveError, setMediaSaveError] = useState<string | null>(null);
+  const overviewImageUploadRef = useRef<HTMLInputElement | null>(null);
+  const overviewVideoUploadRef = useRef<HTMLInputElement | null>(null);
 
   // ── Fetches ──
   const loadBrandPromises = useCallback(async () => {
@@ -1832,7 +2190,7 @@ const BusinessPlanAndGoles = () => {
       day: "numeric",
       year: "numeric",
     });
-    let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
+    let text = `BUSINESS PLAN\n${getSelectedOrgName()}\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
 
     text += `PURPOSE\n${"=".repeat(60)}\n`;
     text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
@@ -2155,19 +2513,19 @@ const BusinessPlanAndGoles = () => {
 
         return typeof item === "string"
           ? {
-              name: item,
-              target: "",
-              current: "",
-              brand_promise: linkedBrandPromise,
-              brand_promise_index: index,
-            }
+            name: item,
+            target: "",
+            current: "",
+            brand_promise: linkedBrandPromise,
+            brand_promise_index: index,
+          }
           : {
-              name: item?.name || item?.title || item?.kpi || "",
-              target: item?.target ?? item?.target_value ?? "",
-              current: item?.current ?? item?.current_value ?? "",
-              brand_promise: linkedBrandPromise,
-              brand_promise_index: index,
-            };
+            name: item?.name || item?.title || item?.kpi || "",
+            target: item?.target ?? item?.target_value ?? "",
+            current: item?.current ?? item?.current_value ?? "",
+            brand_promise: linkedBrandPromise,
+            brand_promise_index: index,
+          };
       })
       .filter((item: any) => {
         const key = String(item.name || "").trim().toLowerCase();
@@ -2177,50 +2535,50 @@ const BusinessPlanAndGoles = () => {
       });
 
     return {
-    purpose: plan.purpose || "",
-    core_values: Array.isArray(plan.core_values) ? plan.core_values : [],
-    core_values_explanation: plan.core_values_explanation || "",
-    brand_promises: brandPromises,
-    brand_promise_kpis: brandPromiseKpis,
-    target_segments: plan.target_segments || "",
-    bhag_alternatives: Array.isArray(plan.bhag_alternatives)
-      ? plan.bhag_alternatives
-      : [],
-    bhag_selected: plan.bhag_selected || "",
-    bhag_initiatives: Array.isArray(plan.bhag_initiatives)
-      ? plan.bhag_initiatives
-      : [],
-    three_year_goals: plan.three_year_goals || "",
-    three_year_initiatives: Array.isArray(plan.three_year_initiatives)
-      ? plan.three_year_initiatives
-      : [],
-    one_year_goals: plan.one_year_goals || "",
-    one_year_initiatives: Array.isArray(plan.one_year_initiatives)
-      ? plan.one_year_initiatives
-      : [],
-    quarterly_goals: plan.quarterly_goals || "",
-    quarterly_theme: plan.quarterly_theme || "",
-    quarterly_initiatives: Array.isArray(plan.quarterly_initiatives)
-      ? plan.quarterly_initiatives
-      : [],
-    quarterly_rewards: Array.isArray(plan.quarterly_rewards)
-      ? plan.quarterly_rewards
-      : [],
-    critical_numbers: [...baseCriticalNumbers, ...brandKpisAsCriticalNumbers],
-    people_drivers:
-      plan.people_drivers &&
-      typeof plan.people_drivers === "object" &&
-      !Array.isArray(plan.people_drivers)
-        ? plan.people_drivers
-        : {},
-    process_drivers: Array.isArray(plan.process_drivers)
-      ? plan.process_drivers
-      : [],
-    strengths: Array.isArray(plan.strengths) ? plan.strengths : [],
-    weaknesses: Array.isArray(plan.weaknesses) ? plan.weaknesses : [],
-    opportunities: Array.isArray(plan.opportunities) ? plan.opportunities : [],
-    threats: Array.isArray(plan.threats) ? plan.threats : [],
-  };
+      purpose: plan.purpose || "",
+      core_values: Array.isArray(plan.core_values) ? plan.core_values : [],
+      core_values_explanation: plan.core_values_explanation || "",
+      brand_promises: brandPromises,
+      brand_promise_kpis: brandPromiseKpis,
+      target_segments: plan.target_segments || "",
+      bhag_alternatives: Array.isArray(plan.bhag_alternatives)
+        ? plan.bhag_alternatives
+        : [],
+      bhag_selected: plan.bhag_selected || "",
+      bhag_initiatives: Array.isArray(plan.bhag_initiatives)
+        ? plan.bhag_initiatives
+        : [],
+      three_year_goals: plan.three_year_goals || "",
+      three_year_initiatives: Array.isArray(plan.three_year_initiatives)
+        ? plan.three_year_initiatives
+        : [],
+      one_year_goals: plan.one_year_goals || "",
+      one_year_initiatives: Array.isArray(plan.one_year_initiatives)
+        ? plan.one_year_initiatives
+        : [],
+      quarterly_goals: plan.quarterly_goals || "",
+      quarterly_theme: plan.quarterly_theme || "",
+      quarterly_initiatives: Array.isArray(plan.quarterly_initiatives)
+        ? plan.quarterly_initiatives
+        : [],
+      quarterly_rewards: Array.isArray(plan.quarterly_rewards)
+        ? plan.quarterly_rewards
+        : [],
+      critical_numbers: [...baseCriticalNumbers, ...brandKpisAsCriticalNumbers],
+      people_drivers:
+        plan.people_drivers &&
+          typeof plan.people_drivers === "object" &&
+          !Array.isArray(plan.people_drivers)
+          ? plan.people_drivers
+          : {},
+      process_drivers: Array.isArray(plan.process_drivers)
+        ? plan.process_drivers
+        : [],
+      strengths: Array.isArray(plan.strengths) ? plan.strengths : [],
+      weaknesses: Array.isArray(plan.weaknesses) ? plan.weaknesses : [],
+      opportunities: Array.isArray(plan.opportunities) ? plan.opportunities : [],
+      threats: Array.isArray(plan.threats) ? plan.threats : [],
+    };
   };
 
   const saveAiPlanToApi = async (
@@ -2402,9 +2760,9 @@ const BusinessPlanAndGoles = () => {
 
     const rows: string[][] = hasPlanPayload
       ? Object.entries(normalizeAiPlanForSave(plan)).map(([key, value]) => [
-          key,
-          typeof value === "object" ? JSON.stringify(value) : String(value ?? ""),
-        ])
+        key,
+        typeof value === "object" ? JSON.stringify(value) : String(value ?? ""),
+      ])
       : [["plan", generatedAiPlan]];
     const csv = [["Field", "Value"], ...rows]
       .map((row) => row.map(escapeCsv).join(","))
@@ -2579,21 +2937,134 @@ const BusinessPlanAndGoles = () => {
   };
 
   // ── Overview Media Handlers ──
+  const refreshOverviewMediaWithFallback = async ({
+    fallbackImages,
+    fallbackVideos,
+  }: {
+    fallbackImages?: string[];
+    fallbackVideos?: string[];
+  }) => {
+    try {
+      const fetched = await fetchOverviewMediaFromApi();
+      setOverviewImages(fetched.images);
+      setOverviewVideos(fetched.videos);
+    } catch (err: any) {
+      setMediaFetchError(err.message || "Failed to load media.");
+      if (fallbackImages) {
+        const images = mergeOverviewMediaItems(overviewImages || [], fallbackImages);
+        setOverviewImages(images);
+      }
+      if (fallbackVideos) {
+        const videos = mergeOverviewMediaItems(overviewVideos || [], fallbackVideos);
+        setOverviewVideos(videos);
+      }
+    }
+  };
+
   const handleAddImage = async () => {
     const trimmed = normalizeImageUrl(newImageUrl.trim());
     if (!trimmed) return;
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      const updated = [
-        ...(overviewImages || []).map((item) => item.url),
+      const latestMedia = await fetchOverviewMediaFromApi().catch(() => null);
+      const existingImages =
+        latestMedia?.images ||
+        (overviewImages || []).filter(
+          (item) => !String(item.url || "").startsWith("data:image/")
+        );
+      const updated = getUniqueImageUrls([
+        ...existingImages.map((item) => item.url),
         trimmed,
-      ];
+      ]);
       await saveOverviewImagesApi(updated);
       setNewImageUrl("");
-      await loadOverviewMedia();
+      await refreshOverviewMediaWithFallback({ fallbackImages: updated });
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save image.");
+    } finally {
+      setIsSavingImages(false);
+    }
+  };
+
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+      reader.readAsDataURL(file);
+    });
+
+  const imageFileToJpegDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = image.naturalWidth || image.width;
+          canvas.height = image.naturalHeight || image.height;
+          const context = canvas.getContext("2d");
+          if (!context) {
+            reject(new Error(`Failed to convert ${file.name} to JPEG`));
+            return;
+          }
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0);
+          resolve(canvas.toDataURL("image/jpeg", 0.92));
+        };
+        image.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+        image.src = String(reader.result || "");
+      };
+      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+      reader.readAsDataURL(file);
+    });
+
+  const handleUploadOverviewImages = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files || []).filter((file) =>
+      file.type.startsWith("image/")
+    );
+    event.target.value = "";
+
+    if (files.length === 0) {
+      toast.error("Please select image files.");
+      return;
+    }
+
+    const availableSlots = Math.max(12 - (overviewImages || []).length, 0);
+    if (availableSlots === 0) {
+      toast.error("You can add up to 12 images.");
+      return;
+    }
+
+    const selectedFiles = files.slice(0, availableSlots);
+    setIsSavingImages(true);
+    setMediaSaveError(null);
+    try {
+      const uploadedUrls = await Promise.all(
+        selectedFiles.map(imageFileToJpegDataUrl)
+      );
+      const latestMedia = await fetchOverviewMediaFromApi().catch(() => null);
+      const existingImages =
+        latestMedia?.images ||
+        (overviewImages || []).filter(
+          (item) => !String(item.url || "").startsWith("data:image/")
+        );
+      const updated = getUniqueImageUrls([
+        ...existingImages.map((item) => item.url),
+        ...uploadedUrls,
+      ]);
+      await saveOverviewImagesApi(updated);
+      await refreshOverviewMediaWithFallback({ fallbackImages: updated });
+      toast.success(`${selectedFiles.length} image(s) uploaded`);
+      if (files.length > selectedFiles.length) {
+        toast.error("Some images were skipped because the limit is 12.");
+      }
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to upload images.");
     } finally {
       setIsSavingImages(false);
     }
@@ -2629,12 +3100,53 @@ const BusinessPlanAndGoles = () => {
       const updated = [
         ...(overviewVideos || []).map((item) => item.url),
         trimmed,
-      ];
+      ].filter((url, index, arr) => url && arr.indexOf(url) === index);
       await saveOverviewVideosApi(updated);
       setNewVideoUrl("");
-      await loadOverviewMedia();
+      await refreshOverviewMediaWithFallback({ fallbackVideos: updated });
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save video.");
+    } finally {
+      setIsSavingVideos(false);
+    }
+  };
+
+  const handleUploadOverviewVideos = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files || []).filter((file) =>
+      file.type.startsWith("video/")
+    );
+    event.target.value = "";
+
+    if (files.length === 0) {
+      toast.error("Please select video files.");
+      return;
+    }
+
+    const availableSlots = Math.max(12 - (overviewVideos || []).length, 0);
+    if (availableSlots === 0) {
+      toast.error("You can add up to 12 videos.");
+      return;
+    }
+
+    const selectedFiles = files.slice(0, availableSlots);
+    setIsSavingVideos(true);
+    setMediaSaveError(null);
+    try {
+      const uploadedUrls = await Promise.all(selectedFiles.map(fileToDataUrl));
+      const updated = [
+        ...(overviewVideos || []).map((item) => item.url),
+        ...uploadedUrls,
+      ].filter((url, index, arr) => url && arr.indexOf(url) === index);
+      await saveOverviewVideosApi(updated);
+      await refreshOverviewMediaWithFallback({ fallbackVideos: updated });
+      toast.success(`${selectedFiles.length} video(s) uploaded`);
+      if (files.length > selectedFiles.length) {
+        toast.error("Some videos were skipped because the limit is 12.");
+      }
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to upload videos.");
     } finally {
       setIsSavingVideos(false);
     }
@@ -2950,229 +3462,325 @@ const BusinessPlanAndGoles = () => {
       style={{ background: C.pageBg, color: C.textMain, fontFamily: C.font }}
     >
       <ThemeStyle />
-
       {/* ── Page Header ── */}
       <div
-        className="bp-panel overflow-hidden p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
+        className="bg-white border rounded-[16px] px-5 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm mb-4"
+        style={{ borderColor: C.primaryBord }}
       >
-        <div>
-          <p
-            className="text-[10px] font-bold uppercase tracking-[0.18em] mb-1"
-            style={{ color: C.primary }}
-          >
-            Strategic overview and goals alignment
-          </p>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            {/* Target / Bullseye Icon */}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.primary} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.1em]"
+              style={{ color: "#8a8a8a" }}
+            >
+              Strategic overview and goals alignment
+            </p>
+          </div>
           <h1
-            className="text-2xl font-bold tracking-tight bp-heading-coral"
-            style={{ color: "#DA7756" }}
+            className="text-[20px] font-bold tracking-tight leading-tight"
+            style={{ color: C.primary, fontFamily: C.font }}
           >
             Business Plan
           </h1>
           <p
-            className="text-sm font-semibold mt-1"
-            style={{ color: C.textMuted }}
+            className="text-[12px] font-medium"
+            style={{ color: "#8a8a8a" }}
           >
-            HAVEN INFOLINE PRIVATE LIMITED
+            {getSelectedOrgName()}
           </p>
         </div>
-        <div className="flex gap-3 shrink-0">
-          <BtnOutline onClick={handleCopyPlan} disabled={isCopyingPlan}>
+
+        <div className="flex items-center gap-5 shrink-0">
+          {/* Copy icon */}
+          <button
+            onClick={handleCopyPlan}
+            disabled={isCopyingPlan}
+            title="Copy Plan"
+            className="flex items-center justify-center transition-colors hover:opacity-70 disabled:opacity-50"
+            style={{ color: C.primary }}
+          >
             {isCopyingPlan ? (
-              <>
-                <LoaderIcon /> Copying...
-              </>
+              <LoaderIcon />
             ) : (
-              "Copy Plan"
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
             )}
-          </BtnOutline>
-          <BtnPrimary onClick={openAiBuilder}>Create with A.I</BtnPrimary>
+          </button>
+
+          {/* Create with AI button - matched to reference image, original size retained */}
+          <div
+            className="relative group"
+            style={{ filter: "drop-shadow(0 10px 18px rgba(218,119,86,0.13))" }}
+          >
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: -1,
+                borderRadius: 12,
+                background:
+                  "linear-gradient(135deg, #ff9a71 0%, #ffd7a7 42%, #c8c9ff 100%)",
+                opacity: 0.95,
+                transition: "opacity .15s, filter .15s",
+              }}
+            />
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: -10,
+                borderRadius: 18,
+                background:
+                  "radial-gradient(circle at 22% 50%, rgba(218,119,86,0.18), transparent 48%), radial-gradient(circle at 88% 80%, rgba(155,133,255,0.14), transparent 44%)",
+                filter: "blur(10px)",
+                opacity: 0.8,
+                pointerEvents: "none",
+              }}
+            />
+            <button
+              onClick={openAiBuilder}
+              className="relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium transition-all active:scale-[0.97]"
+              style={{
+                color: C.primary,
+                fontFamily: C.font,
+                background:
+                  "linear-gradient(180deg, rgba(255,250,246,0.98) 0%, rgba(255,255,255,0.94) 100%)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.95), 0 2px 4px rgba(0,0,0,0.02)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style={{ color: C.primary, flexShrink: 0 }}
+                aria-hidden="true"
+              >
+                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                <path d="M20 3v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+                <path d="M22 5h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+                <path d="M4 17v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+                <path d="M5 18H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+              </svg>
+              Create with Ai
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ── Tab Bar ── */}
       <div
-        className="bp-panel flex w-fit max-w-full rounded-2xl p-1 gap-1 overflow-x-auto"
+        className="bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm mb-6 border"
+        style={{ borderColor: "#f3f4f6" }}
       >
         {tabs.map((tab) => {
           const isActive = activeMainTab === tab.key;
+          // Format label strictly as "Strategic plan" like the image
+          const label = tab.key === "strategic" ? "Strategic plan" : tab.label;
+
           return (
             <button
               key={tab.key}
               onClick={() => setActiveMainTab(tab.key)}
-              className={`py-2 px-4 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap ${isActive ? "bp-tab-active" : "bp-tab-inactive"}`}
+              className={`py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
+              style={{
+                background: isActive ? C.primary : "transparent",
+                color: isActive ? "#fff" : "#7b8393"
+              }}
             >
-              {tab.label}
+              {label}
             </button>
           );
         })}
       </div>
+      {/* ── Tab Bar ── */}
+
 
       {/* ══ STRATEGIC PLAN ══ */}
       {activeMainTab === "strategic" && (
         <div className="space-y-6">
-          {/* Our Business Plan header */}
-          <div
-            className="bp-panel p-5 flex items-center justify-between relative"
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="bp-icon-tile p-2 rounded-xl"
-              >
-                <EyeIcon />
-              </div>
-              <span className="text-[12px] font-bold tracking-[0.15em] text-[#070707] uppercase">
-                Our Business Plan
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div style={{ position: "relative" }}>
-                <BtnIcon
-                  title="Info"
-                  onMouseEnter={() => {
-                    if (infoBtnRef.current) {
-                      const rect = infoBtnRef.current.getBoundingClientRect();
-                      setInfoPos({
-                        top: rect.bottom + window.scrollY + 10,
-                        right: window.innerWidth - rect.right - window.scrollX,
-                      });
-                    }
-                    setIsInfoHovered(true);
-                  }}
-                  onMouseLeave={() => setIsInfoHovered(false)}
-                >
-                  <span ref={infoBtnRef}>
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+          {/* Our Business Plan + Media Section */}
+          <div className="overflow-hidden rounded-[20px] border border-[#e8e3de] bg-white shadow-[0_10px_24px_rgba(26,26,26,0.05)]">
+            {/* Compact Header */}
+            <div className="flex items-center justify-between gap-4 border-b border-[#eee3dd] bg-white px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7]">
+                  <EyeIcon color="#ff6b4a" />
+                </div>
+
+                <div className="min-w-0">
+                  <span className="block text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#070707]">
+                    Our Business Plan
                   </span>
-                </BtnIcon>
-
-                {isInfoHovered &&
-                  ReactDOM.createPortal(
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: infoPos.top,
-                        right: infoPos.right,
-                        zIndex: 99999,
-                        background: "#16102b",
-                        color: "#fff",
-                        borderRadius: 16,
-                        boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                        padding: "20px",
-                        width: 380,
-                        fontFamily: "'Poppins', sans-serif",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <h4
-                        style={{
-                          margin: "0 0 16px 0",
-                          fontSize: 14,
-                          fontWeight: 800,
-                          color: "#e2baff",
-                          textAlign: "center",
-                        }}
-                      >
-                        How to Create Business Plan Infographics
-                      </h4>
-                      <ol
-                        style={{
-                          paddingLeft: 16,
-                          margin: 0,
-                          fontSize: 12,
-                          lineHeight: 1.6,
-                          color: "#d1d5db",
-                          listStyleType: "decimal",
-                        }}
-                      >
-                        <li style={{ marginBottom: 12 }}>
-                          First, complete your business plan sections above
-                          (Core Values, Purpose, Brand Promises, BHAG, Goals,
-                          etc.)
-                        </li>
-                        <li style={{ marginBottom: 12 }}>
-                          Click the{" "}
-                          <strong style={{ color: "#fff" }}>'Copy Text'</strong>{" "}
-                          button at the top of the page to copy your plan
-                        </li>
-                        <li style={{ marginBottom: 12 }}>
-                          Go to{" "}
-                          <strong style={{ color: "#fff" }}>
-                            gemini.google.com
-                          </strong>
-                        </li>
-                        <li style={{ marginBottom: 12 }}>
-                          Use this prompt:
-                          <div
-                            style={{
-                              background: "rgba(255,255,255,0.08)",
-                              padding: "10px",
-                              borderRadius: 8,
-                              marginTop: 6,
-                              fontStyle: "italic",
-                              border: "1px solid rgba(255,255,255,0.15)",
-                            }}
-                          >
-                            "Create an infographic for the business plan of my
-                            company in landscape mode (red, black & white
-                            colors) from the plan given below: &lt;paste your
-                            business plan here&gt;"
-                          </div>
-                        </li>
-                        <li>
-                          Download the generated infographic and add it here
-                          using the image URL or upload feature
-                        </li>
-                      </ol>
-                    </div>,
-                    document.body
-                  )}
+                  <p className="mt-0.5 text-[10px] font-semibold text-[#6b7280]">
+                    Add images and explainer videos
+                  </p>
+                </div>
               </div>
-              <BtnIcon onClick={() => setShowAddContent(!showAddContent)}>
-                <ChevronIcon isExpanded={showAddContent} />
-              </BtnIcon>
-            </div>
-          </div>
 
-          {/* Add Content Dropdown */}
-          {showAddContent && (
-            <div
-              className="bp-panel overflow-hidden"
-            >
-              <div
-                className="flex border-b"
-                style={{ borderColor: C.primaryBord }}
-              >
-                {["images", "video"].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setAddContentTab(t)}
-                    className="flex-1 py-3 text-[13px] font-bold transition-colors capitalize"
-                    style={{
-                      background:
-                        addContentTab === t ? C.primary : "transparent",
-                      color: addContentTab === t ? "#fff" : C.textMuted,
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <BtnIcon
+                    title="Info"
+                    onMouseEnter={() => {
+                      if (infoBtnRef.current) {
+                        const rect = infoBtnRef.current.getBoundingClientRect();
+                        setInfoPos({
+                          top: rect.bottom + window.scrollY + 10,
+                          right: window.innerWidth - rect.right - window.scrollX,
+                        });
+                      }
+                      setIsInfoHovered(true);
                     }}
+                    onMouseLeave={() => setIsInfoHovered(false)}
                   >
-                    {t === "images" ? "Images" : "Explainer Video"}
-                  </button>
-                ))}
+                    <span ref={infoBtnRef}>
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </span>
+                  </BtnIcon>
+
+                  {isInfoHovered &&
+                    ReactDOM.createPortal(
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: infoPos.top,
+                          right: infoPos.right,
+                          zIndex: 99999,
+                          background: "#16102b",
+                          color: "#fff",
+                          borderRadius: 16,
+                          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                          padding: "20px",
+                          width: 380,
+                          fontFamily: "'Poppins', sans-serif",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        <h4
+                          style={{
+                            margin: "0 0 16px 0",
+                            fontSize: 14,
+                            fontWeight: 800,
+                            color: "#e2baff",
+                            textAlign: "center",
+                          }}
+                        >
+                          How to Create Business Plan Infographics
+                        </h4>
+                        <ol
+                          style={{
+                            paddingLeft: 16,
+                            margin: 0,
+                            fontSize: 12,
+                            lineHeight: 1.6,
+                            color: "#d1d5db",
+                            listStyleType: "decimal",
+                          }}
+                        >
+                          <li style={{ marginBottom: 12 }}>
+                            First, complete your business plan sections above
+                            (Core Values, Purpose, Brand Promises, BHAG, Goals,
+                            etc.)
+                          </li>
+                          <li style={{ marginBottom: 12 }}>
+                            Click the{" "}
+                            <strong style={{ color: "#fff" }}>'Copy Text'</strong>{" "}
+                            button at the top of the page to copy your plan
+                          </li>
+                          <li style={{ marginBottom: 12 }}>
+                            Go to{" "}
+                            <strong style={{ color: "#fff" }}>
+                              gemini.google.com
+                            </strong>
+                          </li>
+                          <li style={{ marginBottom: 12 }}>
+                            Use this prompt:
+                            <div
+                              style={{
+                                background: "rgba(255,255,255,0.08)",
+                                padding: "10px",
+                                borderRadius: 8,
+                                marginTop: 6,
+                                fontStyle: "italic",
+                                border: "1px solid rgba(255,255,255,0.15)",
+                              }}
+                            >
+                              "Create an infographic for the business plan of my
+                              company in landscape mode (red, black & white
+                              colors) from the plan given below: &lt;paste your
+                              business plan here&gt;"
+                            </div>
+                          </li>
+                          <li>
+                            Download the generated infographic and add it here
+                            using the image URL or upload feature
+                          </li>
+                        </ol>
+                      </div>,
+                      document.body
+                    )}
+                </div>
+
+                <BtnIcon onClick={() => setShowAddContent(!showAddContent)}>
+                  <ChevronIcon isExpanded={showAddContent} />
+                </BtnIcon>
               </div>
-              <div className="p-6">
+            </div>
+
+            {/* Image / Video Content - attached to header without gap */}
+            {showAddContent && (
+              <div className="px-4 pb-4 pt-3">
+                <div className="mb-4 flex rounded-2xl border border-[#eee3dd] bg-[#f7f1ed] p-1">
+                  {["images", "video"].map((t) => {
+                    const isActive = addContentTab === t;
+
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => setAddContentTab(t)}
+                        className={`flex-1 rounded-xl px-4 py-2 text-[13px] font-extrabold capitalize transition-all duration-200 ${isActive
+                            ? "bg-[#DA7756] text-white shadow-[0_8px_16px_rgba(218,119,86,0.22)]"
+                            : "text-[#6b7280] hover:bg-white hover:text-[#DA7756]"
+                          }`}
+                      >
+                        {t === "images" ? "Images" : "Explainer Video"}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {mediaSaveError && (
                   <div className="bp-error-banner mb-4">{mediaSaveError}</div>
                 )}
+
                 {mediaFetchError && (
                   <div className="bp-error-banner mb-4 flex items-center justify-between">
                     <span>{mediaFetchError}</span>
@@ -3187,51 +3795,58 @@ const BusinessPlanAndGoles = () => {
 
                 {addContentTab === "images" && (
                   <div>
-                    <div className="flex gap-2 mb-3">
+                    <div className="mb-3 flex gap-2 max-sm:flex-col">
+                      <input
+                        ref={overviewImageUploadRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleUploadOverviewImages}
+                      />
+
                       <input
                         type="text"
                         value={newImageUrl}
                         onChange={(e) => setNewImageUrl(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleAddImage()}
                         placeholder="Paste image URL or Google Drive link..."
-                        className="bp-input flex-1"
+                        className="min-h-[40px] flex-1 rounded-xl border border-[#e5e7eb] bg-[#fffaf8] px-3 py-2 text-[13px] font-semibold text-[#1a1a1a] outline-none transition-all placeholder:text-[#a3a3a3] placeholder:font-medium focus:border-[#DA7756] focus:ring-4 focus:ring-[#DA7756]/15 disabled:opacity-60"
                         disabled={isSavingImages}
                       />
+
                       <button
                         onClick={handleAddImage}
                         disabled={isSavingImages || !newImageUrl.trim()}
-                        className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
-                        style={{
-                          background: C.primaryTint,
-                          color: C.primaryHov,
-                          borderColor: C.primaryBord,
-                        }}
+                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-[#fdf9f7] px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fff3ed] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isSavingImages ? <LoaderIcon /> : "+ Add"}
                       </button>
+
+                      <button
+                        onClick={() => overviewImageUploadRef.current?.click()}
+                        disabled={isSavingImages}
+                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-white px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fdf9f7] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSavingImages ? <LoaderIcon /> : "Upload"}
+                      </button>
                     </div>
-                    <p
-                      className="text-[11px] mb-4 font-semibold"
-                      style={{ color: C.textMuted }}
-                    >
+
+                    <p className="mb-4 text-[11px] font-bold text-[#6b7280]">
                       {(overviewImages || []).length}/12 images
                     </p>
+
                     {isFetchingMedia ? (
-                      <div
-                        className="w-full rounded-2xl animate-pulse mb-5"
-                        style={{ height: 340, background: "#e5e1d8" }}
-                      />
+                      <div className="mb-5 h-[260px] w-full animate-pulse rounded-2xl bg-[#e5e1d8]" />
                     ) : (overviewImages || []).length === 0 ? (
-                      <div
-                        className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed"
-                        style={{ borderColor: C.primaryBord }}
-                      >
+                      <div className="mb-5 flex flex-col items-center rounded-[18px] border-2 border-dashed border-[#eadfd8] bg-gradient-to-br from-[#fffaf8] to-white px-5 py-8 text-center">
                         <ImagePlaceholder />
-                        <p
-                          className="text-[13px] font-bold"
-                          style={{ color: C.textMuted }}
-                        >
+                        <p className="text-[13px] font-extrabold text-[#1a1a1a]">
                           No images added yet
+                        </p>
+                        <p className="mt-1 max-w-[360px] text-[11px] font-semibold leading-5 text-[#6b7280]">
+                          Paste an image URL, upload an image, or generate an AI
+                          infographic prompt.
                         </p>
                       </div>
                     ) : (
@@ -3241,95 +3856,122 @@ const BusinessPlanAndGoles = () => {
                         isSaving={isSavingImages}
                       />
                     )}
-                    <p
-                      className="text-[11px] mb-2 font-bold mt-2"
-                      style={{ color: C.textMuted }}
-                    >
-                      Generate with AI:
-                    </p>
-                    <div className="flex gap-3">
-                      {/* ── Create Image (overview) ── */}
-                      <button
-                        onClick={() => handleCopyAiPrompt("overview")}
-                        disabled={isCopyingAiPrompt === "overview"}
-                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
-                        style={{ borderColor: C.primaryBord }}
-                      >
-                        {isCopyingAiPrompt === "overview" ? (
-                          <>
-                            <LoaderIcon /> Copying...
-                          </>
-                        ) : (
-                          "✨ Create Image (overview)"
-                        )}
-                      </button>
-                      {/* ── Create Image (detailed) ── */}
-                      <button
-                        onClick={() => handleCopyAiPrompt("detailed")}
-                        disabled={isCopyingAiPrompt === "detailed"}
-                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
-                        style={{ borderColor: C.primaryBord }}
-                      >
-                        {isCopyingAiPrompt === "detailed" ? (
-                          <>
-                            <LoaderIcon /> Copying...
-                          </>
-                        ) : (
-                          "✨ Create Image (detailed)"
-                        )}
-                      </button>
+
+                    <div className="mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DA7756]">
+                            Generate with AI
+                          </p>
+                          <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
+                            Copy ready-made prompt for infographic creation
+                          </p>
+                        </div>
+
+                        <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#c9673f] shadow-sm">
+                          Prompt
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <button
+                          onClick={() => handleCopyAiPrompt("overview")}
+                          disabled={isCopyingAiPrompt === "overview"}
+                          className="group relative inline-flex min-h-[46px] items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#efd8cf] bg-gradient-to-br from-white to-[#fff3ed] px-4 py-3 text-[13px] font-extrabold text-[#c9673f] shadow-[0_10px_20px_rgba(218,119,86,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DA7756]/50 hover:shadow-[0_14px_26px_rgba(218,119,86,0.16)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/80 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+                          <span className="relative z-10 flex items-center gap-2">
+                            {isCopyingAiPrompt === "overview" ? (
+                              <>
+                                <LoaderIcon /> Copying...
+                              </>
+                            ) : (
+                              <>
+                                <span>✨</span>
+                                <span>Create Image Overview</span>
+                              </>
+                            )}
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => handleCopyAiPrompt("detailed")}
+                          disabled={isCopyingAiPrompt === "detailed"}
+                          className="group relative inline-flex min-h-[46px] items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#efd8cf] bg-gradient-to-br from-white to-[#fff3ed] px-4 py-3 text-[13px] font-extrabold text-[#c9673f] shadow-[0_10px_20px_rgba(218,119,86,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DA7756]/50 hover:shadow-[0_14px_26px_rgba(218,119,86,0.16)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/80 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+                          <span className="relative z-10 flex items-center gap-2">
+                            {isCopyingAiPrompt === "detailed" ? (
+                              <>
+                                <LoaderIcon /> Copying...
+                              </>
+                            ) : (
+                              <>
+                                <span>🎨</span>
+                                <span>Create Detailed Image</span>
+                              </>
+                            )}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {addContentTab === "video" && (
                   <div>
-                    <div className="flex gap-2 mb-1.5">
+                    <div className="mb-2 flex gap-2 max-sm:flex-col">
+                      <input
+                        ref={overviewVideoUploadRef}
+                        type="file"
+                        accept="video/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleUploadOverviewVideos}
+                      />
+
                       <input
                         type="text"
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
-                        placeholder="Paste YouTube Video URL..."
-                        className="bp-input flex-1"
+                        placeholder="Paste YouTube, Drive, or direct video URL..."
+                        className="min-h-[40px] flex-1 rounded-xl border border-[#e5e7eb] bg-[#fffaf8] px-3 py-2 text-[13px] font-semibold text-[#1a1a1a] outline-none transition-all placeholder:text-[#a3a3a3] placeholder:font-medium focus:border-[#DA7756] focus:ring-4 focus:ring-[#DA7756]/15 disabled:opacity-60"
                         disabled={isSavingVideos}
                       />
+
                       <button
                         onClick={handleAddVideo}
                         disabled={isSavingVideos || !newVideoUrl.trim()}
-                        className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
-                        style={{
-                          background: C.primaryTint,
-                          color: C.primaryHov,
-                          borderColor: C.primaryBord,
-                        }}
+                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-[#fdf9f7] px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fff3ed] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isSavingVideos ? <LoaderIcon /> : "+ Add"}
                       </button>
+
+                      <button
+                        onClick={() => overviewVideoUploadRef.current?.click()}
+                        disabled={isSavingVideos}
+                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#e8e3de] bg-white px-4 py-2 text-[13px] font-extrabold text-[#c9673f] transition-all duration-150 hover:border-[#d4cdc6] hover:bg-[#fdf9f7] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSavingVideos ? <LoaderIcon /> : "Upload"}
+                      </button>
                     </div>
 
-                    <p
-                      className="text-[11px] font-bold mb-4"
-                      style={{ color: C.textMuted }}
-                    >
+                    <p className="mb-4 text-[11px] font-bold text-[#6b7280]">
                       {(overviewVideos || []).length}/12 videos added
                     </p>
+
                     {isFetchingMedia ? (
-                      <div
-                        className="w-full rounded-2xl animate-pulse mb-5"
-                        style={{ height: 340, background: "#e5e1d8" }}
-                      />
+                      <div className="mb-5 h-[260px] w-full animate-pulse rounded-2xl bg-[#e5e1d8]" />
                     ) : (overviewVideos || []).length === 0 ? (
-                      <div
-                        className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed"
-                        style={{ borderColor: C.primaryBord }}
-                      >
+                      <div className="mb-5 flex flex-col items-center rounded-[18px] border-2 border-dashed border-[#eadfd8] bg-gradient-to-br from-[#fffaf8] to-white px-5 py-8 text-center">
                         <VideoPlaceholder />
-                        <p
-                          className="text-[13px] font-bold"
-                          style={{ color: C.textMuted }}
-                        >
+                        <p className="text-[13px] font-extrabold text-[#1a1a1a]">
                           No explainer videos added yet
+                        </p>
+                        <p className="mt-1 max-w-[360px] text-[11px] font-semibold leading-5 text-[#6b7280]">
+                          Add a YouTube, Google Drive, or direct video link for
+                          your business plan.
                         </p>
                       </div>
                     ) : (
@@ -3339,77 +3981,126 @@ const BusinessPlanAndGoles = () => {
                         isSaving={isSavingVideos}
                       />
                     )}
-                    <p
-                      className="text-[11px] mb-2 font-bold mt-2"
-                      style={{ color: C.textMuted }}
-                    >
-                      Generate with AI:
-                    </p>
-                    {/* ── Create Video Script ── */}
-                    <button
-                      onClick={() => handleCopyAiPrompt("script")}
-                      disabled={isCopyingAiPrompt === "script"}
-                      className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 gap-1.5"
-                      style={{ borderColor: C.primaryBord }}
-                    >
-                      {isCopyingAiPrompt === "script" ? (
-                        <>
-                          <LoaderIcon /> Copying...
-                        </>
-                      ) : (
-                        "📄 Create Video Script"
-                      )}
-                    </button>
+
+                    <div className="mt-4 rounded-2xl border border-[#eee3dd] bg-[#fffaf8] p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DA7756]">
+                            Generate with AI
+                          </p>
+                          <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
+                            Copy a video script prompt from your business plan
+                          </p>
+                        </div>
+
+                        <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#c9673f] shadow-sm">
+                          Script
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleCopyAiPrompt("script")}
+                        disabled={isCopyingAiPrompt === "script"}
+                        className="group relative inline-flex min-h-[46px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#efd8cf] bg-gradient-to-br from-white to-[#fff3ed] px-4 py-3 text-[13px] font-extrabold text-[#c9673f] shadow-[0_10px_20px_rgba(218,119,86,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DA7756]/50 hover:shadow-[0_14px_26px_rgba(218,119,86,0.16)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/80 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+                        <span className="relative z-10 flex items-center gap-2">
+                          {isCopyingAiPrompt === "script" ? (
+                            <>
+                              <LoaderIcon /> Copying...
+                            </>
+                          ) : (
+                            <>
+                              <span>📄</span>
+                              <span>Create Video Script</span>
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* ── 3 Cards ── */}
-          <div className="bp-section-band p-6">
-            <p
-              className="text-[10px] font-bold uppercase tracking-[0.18em] mb-5"
-              style={{ color: C.primary }}
-            >
-              Strategic Essentials
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Core Values */}
-              <div
-                className="bp-card-lift bp-soft-card p-5 flex flex-col"
-                style={{
-                  borderTop: `4px solid ${C.primary}`,
-                }}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3
-                    className="font-bold text-[14px] flex items-center gap-1.5"
-                    style={{ color: C.textMain }}
+          {/* ── Strategic Essentials ── */}
+          <div className="rounded-[22px] border border-[#e8e3de] bg-white shadow-[0_10px_26px_rgba(26,26,26,0.045)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ebe6] px-4 py-3 sm:px-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#f7f7f7] text-[#ff6b4a]">
+                  <svg
+                    className="h-[18px] w-[18px]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
                   >
-                    Core Values
-                    <span
-                      onMouseEnter={(e) => handleCardInfoEnter(e, "core")}
-                      onMouseLeave={() => setActiveCardInfo(null)}
-                      style={{ cursor: "help" }}
-                    >
-                      <InfoIcon />
-                    </span>
-                  </h3>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                </div>
+
+                <div>
+                  <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#070707]">
+                    Strategic Essentials
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280]">
+                    Values, purpose and promises that define your strategy.
+                  </p>
+                </div>
+              </div>
+
+              <span className="rounded-full border border-[#eee3dd] bg-[#fafafa] px-3 py-1 text-[11px] font-extrabold text-[#6b7280]">
+                3 essentials
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 sm:p-5">
+              {/* Core Values */}
+              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 12.75 9 17.25 19.5 6.75"
+                        />
+                      </svg>
+                    </div>
+
+                    <h3 className="flex items-center gap-1.5 text-[14px] font-extrabold text-[#1a1a1a]">
+                      Core Values
+                      <span
+                        onMouseEnter={(e) => handleCardInfoEnter(e, "core")}
+                        onMouseLeave={() => setActiveCardInfo(null)}
+                        className="cursor-help"
+                      >
+                        <InfoIcon />
+                      </span>
+                    </h3>
+                  </div>
+
                   <button
                     onClick={() => openTopModal("core")}
-                    className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
-                    style={{ color: "#9ca3af" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = C.primary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#9ca3af")
-                    }
+                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                    title="Edit core values"
                   >
                     <EditIcon />
                   </button>
                 </div>
+
                 {isFetchingCore ? (
                   <div className="flex flex-wrap gap-2">
                     {[1, 2, 3, 4].map((n) => (
@@ -3417,7 +4108,7 @@ const BusinessPlanAndGoles = () => {
                     ))}
                   </div>
                 ) : coreFetchError ? (
-                  <div className="text-[12px] text-red-500 font-semibold">
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
                     ⚠ {coreFetchError}{" "}
                     <button onClick={loadCoreValues} className="underline">
                       Retry
@@ -3428,7 +4119,7 @@ const BusinessPlanAndGoles = () => {
                     {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
                   </div>
                 ) : (
-                  <div className="flex flex-col h-full">
+                  <div className="flex h-full flex-col">
                     {coreVideoUrl && <VideoPreview url={coreVideoUrl} />}
                     {(coreValues || []).length === 0 ? (
                       <div>
@@ -3447,40 +4138,46 @@ const BusinessPlanAndGoles = () => {
               </div>
 
               {/* Purpose */}
-              <div
-                className="bp-card-lift bp-soft-card p-5 flex flex-col"
-                style={{
-                  borderTop: `4px solid ${C.primary}`,
-                }}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3
-                    className="font-bold text-[14px] flex items-center gap-1.5"
-                    style={{ color: C.textMain }}
-                  >
-                    Purpose
-                    <span
-                      onMouseEnter={(e) => handleCardInfoEnter(e, "purpose")}
-                      onMouseLeave={() => setActiveCardInfo(null)}
-                      style={{ cursor: "help" }}
-                    >
-                      <InfoIcon />
-                    </span>
-                  </h3>
+              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
+                      </svg>
+                    </div>
+
+                    <h3 className="flex items-center gap-1.5 text-[14px] font-extrabold text-[#1a1a1a]">
+                      Purpose
+                      <span
+                        onMouseEnter={(e) => handleCardInfoEnter(e, "purpose")}
+                        onMouseLeave={() => setActiveCardInfo(null)}
+                        className="cursor-help"
+                      >
+                        <InfoIcon />
+                      </span>
+                    </h3>
+                  </div>
+
                   <button
                     onClick={() => openTopModal("purpose")}
-                    className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
-                    style={{ color: "#9ca3af" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = C.primary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#9ca3af")
-                    }
+                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                    title="Edit purpose"
                   >
                     <EditIcon />
                   </button>
                 </div>
+
                 {isFetchingPurpose ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((n) => (
@@ -3488,7 +4185,7 @@ const BusinessPlanAndGoles = () => {
                     ))}
                   </div>
                 ) : purposeFetchError ? (
-                  <div className="text-[12px] text-red-500 font-semibold">
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
                     ⚠ {purposeFetchError}{" "}
                     <button onClick={loadPurpose} className="underline">
                       Retry
@@ -3497,13 +4194,10 @@ const BusinessPlanAndGoles = () => {
                 ) : !purposeText && !purposeVideoUrl ? (
                   emptyAddBtn(() => openTopModal("purpose"), "Add Purpose")
                 ) : (
-                  <div className="flex flex-col h-full">
+                  <div className="flex h-full flex-col">
                     {purposeVideoUrl && <VideoPreview url={purposeVideoUrl} />}
                     {purposeText ? (
-                      <p
-                        className="text-[13px] font-semibold leading-relaxed"
-                        style={{ color: C.primary }}
-                      >
+                      <p className="rounded-2xl bg-white p-3 text-[13px] font-semibold leading-relaxed text-[#DA7756] ring-1 ring-[#f0ebe6]">
                         {purposeText}
                       </p>
                     ) : (
@@ -3519,40 +4213,46 @@ const BusinessPlanAndGoles = () => {
               </div>
 
               {/* Brand Promises */}
-              <div
-                className="bp-card-lift bp-soft-card p-5 flex flex-col"
-                style={{
-                  borderTop: `4px solid ${C.primary}`,
-                }}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3
-                    className="font-bold text-[14px] flex items-center gap-1.5"
-                    style={{ color: C.textMain }}
-                  >
-                    Brand Promises
-                    <span
-                      onMouseEnter={(e) => handleCardInfoEnter(e, "brand")}
-                      onMouseLeave={() => setActiveCardInfo(null)}
-                      style={{ cursor: "help" }}
-                    >
-                      <InfoIcon />
-                    </span>
-                  </h3>
+              <div className="group flex min-h-[178px] flex-col rounded-[18px] border border-[#ece7e1] bg-[#fbfbfb] p-4 shadow-[0_8px_18px_rgba(26,26,26,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ddd6cf] hover:bg-white hover:shadow-[0_14px_28px_rgba(26,26,26,0.07)]">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#ff6b4a] shadow-sm ring-1 ring-[#f0ebe6]">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.125 2.04 2.948-.415a.75.75 0 0 1 .816.816l-.415 2.948 2.04 2.125a.75.75 0 0 1 0 1.04l-2.04 2.125.415 2.948a.75.75 0 0 1-.816.816l-2.948-.415-2.125 2.04a.75.75 0 0 1-1.04 0l-2.125-2.04-2.948.415a.75.75 0 0 1-.816-.816l.415-2.948-2.04-2.125a.75.75 0 0 1 0-1.04l2.04-2.125-.415-2.948a.75.75 0 0 1 .816-.816l2.948.415 2.125-2.04Z"
+                        />
+                      </svg>
+                    </div>
+
+                    <h3 className="flex items-center gap-1.5 text-[14px] font-extrabold text-[#1a1a1a]">
+                      Brand Promises
+                      <span
+                        onMouseEnter={(e) => handleCardInfoEnter(e, "brand")}
+                        onMouseLeave={() => setActiveCardInfo(null)}
+                        className="cursor-help"
+                      >
+                        <InfoIcon />
+                      </span>
+                    </h3>
+                  </div>
+
                   <button
                     onClick={() => openTopModal("brand")}
-                    className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
-                    style={{ color: "#9ca3af" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = C.primary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#9ca3af")
-                    }
+                    className="rounded-xl p-2 text-[#9ca3af] transition-all duration-150 hover:bg-[#f3f4f6] hover:text-[#DA7756] active:scale-95"
+                    title="Edit brand promises"
                   >
                     <EditIcon />
                   </button>
                 </div>
+
                 {isFetchingBrand ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((n) => (
@@ -3560,7 +4260,7 @@ const BusinessPlanAndGoles = () => {
                     ))}
                   </div>
                 ) : brandFetchError ? (
-                  <div className="text-[12px] text-red-500 font-semibold">
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
                     ⚠ {brandFetchError}{" "}
                     <button onClick={loadBrandPromises} className="underline">
                       Retry
@@ -3569,7 +4269,7 @@ const BusinessPlanAndGoles = () => {
                 ) : (brandPromises || []).length === 0 && !brandVideoUrl ? (
                   emptyAddBtn(() => openTopModal("brand"), "Add Promise")
                 ) : (
-                  <div className="flex flex-col h-full">
+                  <div className="flex h-full flex-col">
                     {brandVideoUrl && <VideoPreview url={brandVideoUrl} />}
                     {(brandPromises || []).length === 0 ? (
                       <div>
@@ -3579,18 +4279,13 @@ const BusinessPlanAndGoles = () => {
                         )}
                       </div>
                     ) : (
-                      <ul
-                        className="space-y-3 text-[12px]"
-                        style={{ color: C.textMuted }}
-                      >
+                      <ul className="space-y-2.5 text-[12px] text-[#6b7280]">
                         {(brandPromises || []).map((p, idx) => (
-                          <li key={p.id ?? idx} className="flex items-start">
-                            <span
-                              className="mr-2 mt-0.5 shrink-0 font-bold"
-                              style={{ color: C.primary }}
-                            >
-                              •
-                            </span>
+                          <li
+                            key={p.id ?? idx}
+                            className="flex items-start rounded-2xl bg-white p-3 ring-1 ring-[#f0ebe6]"
+                          >
+                            <span className="mr-2 mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6b4a]" />
                             <div>
                               <div
                                 dangerouslySetInnerHTML={{
@@ -3601,11 +4296,11 @@ const BusinessPlanAndGoles = () => {
                                 }}
                               />
                               {p.kpis && p.kpis.length > 0 ? (
-                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                <p className="mt-0.5 text-[11px] text-gray-400">
                                   {p.kpis.join(", ")}
                                 </p>
                               ) : (
-                                <p className="text-[11px] text-gray-400 italic mt-0.5">
+                                <p className="mt-0.5 text-[11px] italic text-gray-400">
                                   No KPIs linked
                                 </p>
                               )}
@@ -3842,7 +4537,7 @@ const BusinessPlanAndGoles = () => {
                       {(Array.isArray(aiPlanDisplay.brand_promises) ||
                         Array.isArray(
                           aiPlanDisplay.brand_promise_kpis ||
-                            aiPlanDisplay["brand Promise KPIs"]
+                          aiPlanDisplay["brand Promise KPIs"]
                         )) &&
                         renderAiPlanSection(
                           "Brand Promises",
@@ -3851,18 +4546,18 @@ const BusinessPlanAndGoles = () => {
                               renderAiPlanStringList(aiPlanDisplay.brand_promises)}
                             {Array.isArray(
                               aiPlanDisplay.brand_promise_kpis ||
-                                aiPlanDisplay["brand Promise KPIs"]
+                              aiPlanDisplay["brand Promise KPIs"]
                             ) && (
-                              <div>
-                                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
-                                  KPIs
-                                </p>
-                                {renderAiPlanStringList(
-                                  aiPlanDisplay.brand_promise_kpis ||
+                                <div>
+                                  <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                    KPIs
+                                  </p>
+                                  {renderAiPlanStringList(
+                                    aiPlanDisplay.brand_promise_kpis ||
                                     aiPlanDisplay["brand Promise KPIs"]
-                                )}
-                              </div>
-                            )}
+                                  )}
+                                </div>
+                              )}
                           </div>
                         )}
 

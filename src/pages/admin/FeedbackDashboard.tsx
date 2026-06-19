@@ -1353,7 +1353,7 @@ const FeedbackDashboard = () => {
               <LineChart className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900">
+              <h1 className="text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
                 Feedback Dashboard
               </h1>
               <p className="mt-1 text-sm font-medium text-neutral-500">
@@ -1362,7 +1362,7 @@ const FeedbackDashboard = () => {
             </div>
           </div>
           <div
-            className="rounded-xl border px-4 py-2.5 text-sm font-bold"
+            className="rounded-xl border px-4 py-2.5 text-xs font-bold sm:text-sm"
             style={{ borderColor: BP.primaryBord, background: BP.primaryBg, color: BP.textMuted }}
           >
             {totalFeedbacks} total feedback entries
@@ -1503,14 +1503,14 @@ const FeedbackDashboard = () => {
                     key={entry.id}
                     className="feedback-row feedback-card-lift flex items-center gap-3 rounded-xl px-3 py-3 sm:gap-4 sm:px-4"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-xs font-bold text-white sm:h-10 sm:w-10 sm:text-sm">
                       {entry.rank}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
-                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                      <p className="truncate text-sm font-semibold text-neutral-900 sm:text-base">{entry.name}</p>
+                      <p className="truncate text-xs text-neutral-600 sm:text-sm">{entry.designation}</p>
                     </div>
-                    <span className="shrink-0 rounded-lg bg-[#DA7756]/15 px-3 py-1 text-sm font-semibold text-[#9e4f36]">
+                    <span className="shrink-0 rounded-lg bg-[#DA7756]/15 px-2 py-1 text-xs font-semibold text-[#9e4f36] sm:px-3 sm:text-sm">
                       {entry.count} received
                     </span>
                   </li>
@@ -1535,14 +1535,14 @@ const FeedbackDashboard = () => {
                     key={entry.id}
                     className="feedback-row feedback-card-lift flex items-center gap-3 rounded-xl px-3 py-3 sm:gap-4 sm:px-4"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#b85f42] text-sm font-bold text-white">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#b85f42] text-xs font-bold text-white sm:h-10 sm:w-10 sm:text-sm">
                       {entry.rank}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
-                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                      <p className="truncate text-sm font-semibold text-neutral-900 sm:text-base">{entry.name}</p>
+                      <p className="truncate text-xs text-neutral-600 sm:text-sm">{entry.designation}</p>
                     </div>
-                    <span className="shrink-0 rounded-lg bg-[#b85f42]/15 px-3 py-1 text-sm font-semibold text-[#8f4a33]">
+                    <span className="shrink-0 rounded-lg bg-[#b85f42]/15 px-2 py-1 text-xs font-semibold text-[#8f4a33] sm:px-3 sm:text-sm">
                       {entry.count} given
                     </span>
                   </li>
@@ -1583,7 +1583,7 @@ const FeedbackDashboard = () => {
                 setAiSummaryError(null);
                 setIsAiSummaryModalOpen(true);
               }}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#DA7756] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#c9673f] active:scale-[0.98] disabled:opacity-70 lg:self-center"
+              className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#c9673f] active:scale-[0.98] disabled:opacity-70 sm:w-auto lg:self-center"
             >
               {aiLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-white" strokeWidth={2} />
@@ -1596,7 +1596,7 @@ const FeedbackDashboard = () => {
 
           {aiFeedbackSummary && (
             <div className="mt-5 space-y-4 border-t pt-5" style={{ borderColor: BP.primaryBord }}>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border bg-[#fffaf8] p-4" style={{ borderColor: BP.primaryBord }}>
                   <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
                     Overall Health
@@ -1634,7 +1634,7 @@ const FeedbackDashboard = () => {
                 </div>
               )}
 
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {!!aiFeedbackSummary.top_performers?.length && (
                   <div className="rounded-xl border bg-white p-4" style={{ borderColor: BP.primaryBord }}>
                     <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-neutral-500">

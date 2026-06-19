@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -97,6 +97,7 @@ export const AddAMCPage = () => {
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
+    assetsPerDay: '',
     remarks: ''
   });
 
@@ -152,6 +153,21 @@ export const AddAMCPage = () => {
   const { assets, loading: AssetsLoading } = inventoryAssetsState as unknown as { assets: Array<{ id: number; name: string }> | null, loading: boolean };
 
   const [loading, setLoading] = useState(false);
+
+  // Create Checklist state
+  const [createChecklist, setCreateChecklist] = useState(false);
+  const [checklistTemplates, setChecklistTemplates] = useState<Array<{ id: number; name: string }>>([]);
+  const [checklistTemplatesLoading, setChecklistTemplatesLoading] = useState(false);
+  const [checklistFields, setChecklistFields] = useState({
+    templateId: '',
+    graceTimeType: '',
+    graceTimeValue: '',
+  });
+  const [checklistErrors, setChecklistErrors] = useState({
+    templateId: '',
+    graceTimeType: '',
+    graceTimeValue: '',
+  });
 
   const suppliers: any[] = []; // not used now; kept for group type select reuse logic below
 
@@ -341,6 +357,28 @@ export const AddAMCPage = () => {
     fetchTechnicians();
   }, [dispatch]);
 
+  // Fetch checklist templates when toggle turns ON or checklist_type changes
+  useEffect(() => {
+    if (!createChecklist) return;
+    setChecklistTemplatesLoading(true);
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) { setChecklistTemplatesLoading(false); return; }
+    fetch(`https://${baseUrl}/pms/custom_forms/get_templates.json`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const templates = Array.isArray(data) ? data
+          : Array.isArray(data?.templates) ? data.templates
+            : Array.isArray(data?.custom_forms) ? data.custom_forms
+              : [];
+        setChecklistTemplates(templates);
+      })
+      .catch(() => toast.error('Failed to fetch checklist templates'))
+      .finally(() => setChecklistTemplatesLoading(false));
+  }, [createChecklist, formData.details]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const storedDraft = localStorage.getItem(AMC_DRAFT_STORAGE_KEY);
@@ -520,6 +558,22 @@ export const AddAMCPage = () => {
         newErrors.firstService = 'Please select a first service date.';
         isValid = false;
       }
+
+      if (formData.firstService) {
+        const firstServiceDate = new Date(formData.firstService);
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+
+        if (firstServiceDate < startDate) {
+          newErrors.firstService =
+            'First Service Date cannot be before Start Date.';
+          isValid = false;
+        } else if (firstServiceDate > endDate) {
+          newErrors.firstService =
+            'First Service Date cannot be after End Date.';
+          isValid = false;
+        }
+      }
       if (!formData.cost) {
         newErrors.cost = 'Please enter the cost.';
         isValid = false;
@@ -649,6 +703,25 @@ export const AddAMCPage = () => {
     }
 
     setErrors(newErrors);
+
+    // Checklist validation
+    if (createChecklist) {
+      const newChecklistErrors = { templateId: '', graceTimeType: '', graceTimeValue: '' };
+      if (!checklistFields.templateId) {
+        newChecklistErrors.templateId = 'Please select a checklist template.';
+        isValid = false;
+      }
+      if (!checklistFields.graceTimeType) {
+        newChecklistErrors.graceTimeType = 'Please select grace time type.';
+        isValid = false;
+      }
+      if (!checklistFields.graceTimeValue) {
+        newChecklistErrors.graceTimeValue = 'Please enter grace time value.';
+        isValid = false;
+      }
+      setChecklistErrors(newChecklistErrors);
+    }
+
     return isValid;
   };
 
@@ -960,6 +1033,7 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
     sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
     sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+    sendData.append('pms_asset_amc[assets_per_day]', formData.assetsPerDay);
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
     sendData.append('pms_asset_amc[checklist_type]', formData.details === 'Asset' ? "Asset" : "Service");
     sendData.append('pms_asset_amc[time_expression]', buildCronExpression());
@@ -1002,6 +1076,14 @@ export const AddAMCPage = () => {
       sendData.append('technician_id', String(formData.technician));
     }
 
+    // Checklist fields
+    sendData.append('pms_asset_amc[create_checklist]', String(createChecklist));
+    if (createChecklist) {
+      sendData.append('pms_asset_amc[tmp_custom_form_id]', checklistFields.templateId);
+      sendData.append('pms_asset_amc[grace_time_type]', checklistFields.graceTimeType);
+      sendData.append('pms_asset_amc[grace_time_value]', checklistFields.graceTimeValue);
+    }
+
     attachments.contracts.forEach((file) => {
       sendData.append('amc_contracts[content][]', file);
     });
@@ -1016,7 +1098,7 @@ export const AddAMCPage = () => {
       if (action === 'show') {
         const amcId = result?.id;
         if (amcId) {
-          navigate(`/maintenance/amc/details/${amcId}`);
+          navigate(`/maintenance/amc`);
         } else {
           const errorMessage =
             result?.message || result?.error || "AMC created, but no ID returned for redirection.";
@@ -1050,6 +1132,7 @@ export const AddAMCPage = () => {
           paymentTerms: '',
           firstService: '',
           noOfVisits: '',
+          assetsPerDay: '',
           remarks: ''
         });
         setAttachments({
@@ -1071,7 +1154,7 @@ export const AddAMCPage = () => {
         });
         setTimeSetupData(initialTimeSetupState);
         toast.success("AMC has been successfully created and scheduled.");
-        navigate(`/maintenance/amc/details/${amcId}`);
+        navigate(`/maintenance/amc`);
         return;
       }
     } catch (error: any) {
@@ -1145,10 +1228,11 @@ export const AddAMCPage = () => {
   const errorStyles = "text-red-500 text-sm mt-1";
 
   const fetchAsset = async () => {
-    const CACHE_KEY = 'amc_cache_assets';
+    const CACHE_KEY = 'amc_cache_assets_v2';
     const cached = getDropdownCache(CACHE_KEY);
     if (cached) {
-      setAssetList(cached as unknown[]);
+      const arr = Array.isArray(cached) ? cached : (Array.isArray((cached as any)?.assets) ? (cached as any).assets : []);
+      setAssetList(arr as unknown[]);
       return;
     }
     const baseUrl = localStorage.getItem('baseUrl');
@@ -1166,11 +1250,12 @@ export const AddAMCPage = () => {
       }
 
       const data = await response.json();
-      setAssetList(data);
-      setDropdownCache(CACHE_KEY, data);
-      return data;
+      const arr = Array.isArray(data) ? data : (Array.isArray(data?.assets) ? data.assets : []);
+      setAssetList(arr);
+      setDropdownCache(CACHE_KEY, arr);
+      return arr;
     } catch (error) {
-      console.error('Error fetching SAC:', error);
+      console.error('Error fetching assets:', error);
     }
   };
 
@@ -1440,7 +1525,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Asset"
                             checked={formData.details === 'Asset'}
                             readOnly
@@ -1453,7 +1538,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Service"
                             checked={formData.details === 'Service'}
                             readOnly
@@ -1472,7 +1557,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Comprehensive"
                             checked={formData.amcType === 'Comprehensive'}
                             readOnly
@@ -1485,7 +1570,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Non-Comprehensive"
                             checked={formData.amcType === 'Non-Comprehensive'}
                             readOnly
@@ -1504,7 +1589,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Individual"
                             checked={formData.type === 'Individual'}
                             readOnly
@@ -1517,7 +1602,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Group"
                             checked={formData.type === 'Group'}
                             readOnly
@@ -1746,7 +1831,7 @@ export const AddAMCPage = () => {
                         sx={{ mb: 3 }}
                       />
 
-                      <TextField
+                      {/* <TextField
                         disabled
                         label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
                         type="date"
@@ -1754,6 +1839,25 @@ export const AddAMCPage = () => {
                         value={formData.firstService || ''}
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 3 }}
+                      /> */}
+
+                      <TextField
+                        label={
+                          <span>
+                            First Service Date <span style={{ color: 'red' }}>*</span>
+                          </span>
+                        }
+                        type="date"
+                        fullWidth
+                        value={formData.firstService}
+                        onChange={(e) => handleInputChange('firstService', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: formData.startDate || undefined,
+                          max: formData.endDate || undefined,
+                        }}
+                        error={!!errors.firstService}
+                        helperText={errors.firstService}
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
@@ -1782,6 +1886,7 @@ export const AddAMCPage = () => {
                         fullWidth
                         value={formData.cost}
                         sx={{ mb: 3 }}
+
                       />
 
                       <TextField
@@ -1941,7 +2046,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Asset"
                           checked={formData.details === 'Asset'}
                           readOnly
@@ -1954,7 +2059,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Service"
                           checked={formData.details === 'Service'}
                           readOnly
@@ -1973,7 +2078,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Comprehensive"
                           checked={formData.amcType === 'Comprehensive'}
                           readOnly
@@ -1986,7 +2091,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Non-Comprehensive"
                           checked={formData.amcType === 'Non-Comprehensive'}
                           readOnly
@@ -2005,7 +2110,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Individual"
                           checked={formData.type === 'Individual'}
                           readOnly
@@ -2018,7 +2123,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Group"
                           checked={formData.type === 'Group'}
                           readOnly
@@ -2695,368 +2800,464 @@ export const AddAMCPage = () => {
                 {formData.type === 'Individual' ? (
                   <>
                     {formData.details === 'Asset' ? (
-                    
+                      <div>
+                        {/* Header row */}
+                        <div className="flex items-center justify-between mb-2">
+                          <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#444' }}>
+                            Assets <span style={{ color: '#C72030' }}>*</span>
+                          </Typography>
+                          {formData.asset_ids.length > 0 && (
+                            <span className="text-xs text-[#C72030] font-medium">{formData.asset_ids.length} selected</span>
+                          )}
+                        </div>
 
+                        {/* Search */}
+                        <div className="relative mb-3">
+                          <input
+                            type="text"
+                            placeholder="Search assets by name (min 3 chars)..."
+                            value={assetQuery}
+                            onChange={e => setAssetQuery(e.target.value)}
+                            disabled={isSubmitting}
+                            className="w-full px-3 py-2 pl-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
+                          />
+                          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                          </svg>
+                          {assetSearchLoading && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loading…</span>
+                          )}
+                        </div>
 
+                        {/* Table */}
+                        <div className={`border rounded overflow-auto max-h-64 ${errors.asset_ids ? 'border-red-400' : 'border-gray-200'}`}>
+                          <table className="w-full text-sm border-collapse min-w-[600px]">
+                            <thead className="bg-[#F6F4EE] sticky top-0 z-10">
+                              <tr>
+                                <th className="px-3 py-2 w-10">
+                                  <input
+                                    type="checkbox"
+                                    style={{ accentColor: '#C72030' }}
+                                    disabled={isSubmitting || assetOptions.length === 0}
+                                    checked={assetOptions.length > 0 && assetOptions.every(a => formData.asset_ids.includes(Number(a.id)))}
+                                    onChange={e => {
+                                      const filteredIds = assetOptions.map(a => Number(a.id));
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        asset_ids: e.target.checked
+                                          ? [...new Set([...prev.asset_ids, ...filteredIds])]
+                                          : prev.asset_ids.filter(id => !filteredIds.includes(id)),
+                                      }));
+                                      setErrors(prev => ({ ...prev, asset_ids: '' }));
+                                    }}
+                                  />
+                                </th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Name</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Manufacturer</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Ext. Ref. ID</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Building</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Floor</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Room</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {assetOptions.length === 0 ? (
+                                <tr>
+                                  <td colSpan={7} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                    {assetSearchLoading
+                                      ? 'Searching…'
+                                      : assetQuery.length > 0 && assetQuery.length < 3
+                                        ? 'Type at least 3 characters to search'
+                                        : 'No assets found'}
+                                  </td>
+                                </tr>
+                              ) : (
+                                assetOptions.map((asset: any) => {
+                                  const isChecked = formData.asset_ids.includes(Number(asset.id));
+                                  return (
+                                    <tr
+                                      key={asset.id}
+                                      className={`border-t border-gray-100 cursor-pointer transition-colors ${isChecked ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                                      onClick={() => {
+                                        if (isSubmitting) return;
+                                        const id = Number(asset.id);
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          asset_ids: isChecked
+                                            ? prev.asset_ids.filter(x => x !== id)
+                                            : [...prev.asset_ids, id],
+                                        }));
+                                        setErrors(prev => ({ ...prev, asset_ids: '' }));
+                                      }}
+                                    >
+                                      <td className="px-3 py-2 text-center">
+                                        <input
+                                          type="checkbox"
+                                          style={{ accentColor: '#C72030' }}
+                                          checked={isChecked}
+                                          onChange={() => { }}
+                                          disabled={isSubmitting}
+                                        />
+                                      </td>
+                                      <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.floor || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.room || '-'}</td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        {errors.asset_ids && (
+                          <p className="text-xs text-red-600 mt-1">{errors.asset_ids}</p>
+                        )}
 
+                        {/* Selected Assets Order Panel */}
+                        {formData.asset_ids.length > 0 && (
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#444' }}>
+                                Selected Assets — Submission Order
+                              </Typography>
+                              <span className="text-xs text-gray-400">Use arrows to reorder</span>
+                            </div>
+                            <div className="border border-gray-200 rounded overflow-hidden">
+                              {formData.asset_ids.map((id, idx) => {
+                                const allAssets = [...(assetList || []), ...(assetOptions || [])];
+                                const asset = allAssets.find((a: any) => Number(a.id) === id);
+                                const total = formData.asset_ids.length;
+                                return (
+                                  <div
+                                    key={id}
+                                    className="flex items-center gap-3 px-3 py-2 bg-white border-b border-gray-100 last:border-b-0"
+                                  >
+                                    {/* Editable position — type a number to jump/swap */}
+                                    <div className="flex flex-col items-center shrink-0" title="Type a position number to move here">
+                                      <input
+                                        type="number"
+                                        min={1}
+                                        max={total}
+                                        disabled={isSubmitting}
+                                        value={idx + 1}
+                                        onChange={e => {
+                                          const target = Number(e.target.value) - 1;
+                                          if (isNaN(target) || target < 0 || target >= total || target === idx) return;
+                                          setFormData(prev => {
+                                            const arr = [...prev.asset_ids];
+                                            // Remove from current position, insert at target
+                                            arr.splice(idx, 1);
+                                            arr.splice(target, 0, id);
+                                            return { ...prev, asset_ids: arr };
+                                          });
+                                        }}
+                                        className="w-9 h-7 text-center text-xs font-bold text-white rounded-full border-none outline-none bg-[#C72030] disabled:opacity-60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      />
+                                      <span className="text-[9px] text-gray-400 mt-0.5 leading-none">pos</span>
+                                    </div>
 
+                                    {/* Asset info */}
+                                    <span className="flex-1 text-sm font-medium text-[#1a1a1a] truncate">
+                                      {asset?.name || `Asset #${id}`}
+                                    </span>
+                                    {asset?.location?.building && (
+                                      <span className="text-xs text-gray-400 shrink-0">
+                                        {[asset.location.building, asset.location.floor, asset.location.room]
+                                          .filter(Boolean).join(' › ')}
+                                      </span>
+                                    )}
 
+                                    {/* Up / Down buttons */}
+                                    <div className="flex flex-col gap-0.5 shrink-0">
+                                      <button
+                                        type="button"
+                                        disabled={idx === 0 || isSubmitting}
+                                        className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                        onClick={() => setFormData(prev => {
+                                          const arr = [...prev.asset_ids];
+                                          [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                                          return { ...prev, asset_ids: arr };
+                                        })}
+                                        title="Move up"
+                                      >
+                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832l-3.71 3.938a.75.75 0 01-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clipRule="evenodd" /></svg>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={idx === total - 1 || isSubmitting}
+                                        className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                        onClick={() => setFormData(prev => {
+                                          const arr = [...prev.asset_ids];
+                                          [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+                                          return { ...prev, asset_ids: arr };
+                                        })}
+                                        title="Move down"
+                                      >
+                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
+                                      </button>
+                                    </div>
 
-<FormControl fullWidth error={!!errors.asset_ids}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Assets <span style={{ color: "#C72030" }}>*</span>
-  </Typography>
-
-  <Select
-    isMulti
-    options={(assetOptions || []).map((item) => ({
-      value: item.id,
-      label: item.name,
-    }))}
-    value={(assetOptions || [])
-      .filter((item) =>
-        formData.asset_ids.includes(item.id)
-      )
-      .map((item) => ({
-        value: item.id,
-        label: item.name,
-      }))}
-    onChange={(selected: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        asset_ids: selected
-          ? selected.map((item: any) => item.value)
-          : [],
-      }));
-
-      setErrors((prev: any) => ({
-        ...prev,
-        asset_ids: "",
-      }));
-    }}
-    isClearable
-    closeMenuOnSelect={false}
-    hideSelectedOptions={false}
-    placeholder="Search Assets"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.asset_ids
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
-
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
-
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
-
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
-
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
-
-      multiValue: (base) => ({
-        ...base,
-        backgroundColor: "rgba(199,32,48,0.08)",
-      }),
-
-      multiValueLabel: (base) => ({
-        ...base,
-        color: "#C72030",
-        fontWeight: 500,
-      }),
-
-      multiValueRemove: (base) => ({
-        ...base,
-        color: "#C72030",
-        ":hover": {
-          backgroundColor: "#C72030",
-          color: "#fff",
-        },
-      }),
-    }}
-    
-  />
-
-  {errors.asset_ids && (
-    <FormHelperText>
-      {errors.asset_ids}
-    </FormHelperText>
-  )}
-</FormControl>
-
+                                    {/* Remove */}
+                                    <button
+                                      type="button"
+                                      disabled={isSubmitting}
+                                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
+                                      onClick={() => setFormData(prev => ({
+                                        ...prev,
+                                        asset_ids: prev.asset_ids.filter(x => x !== id),
+                                      }))}
+                                      title="Remove"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
 
 
 
 
-<FormControl fullWidth error={!!errors.service_ids}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Services <span style={{ color: "#C72030" }}>*</span>
-  </Typography>
+                      <FormControl fullWidth error={!!errors.service_ids}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Services <span style={{ color: "#C72030" }}>*</span>
+                        </Typography>
 
-  <Select
-    isMulti
-    options={(services || []).map((item) => ({
-      value: item.id,
-      label: item.service_name,
-    }))}
-    value={(services || [])
-      .filter((item) =>
-        formData.service_ids.includes(item.id)
-      )
-      .map((item) => ({
-        value: item.id,
-        label: item.service_name,
-      }))}
-    onChange={(selected: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        service_ids: selected
-          ? selected.map((item: any) => item.value)
-          : [],
-      }));
+                        <Select
+                          isMulti
+                          options={(services || []).map((item) => ({
+                            value: item.id,
+                            label: item.service_name,
+                          }))}
+                          value={(services || [])
+                            .filter((item) =>
+                              formData.service_ids.includes(item.id)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.service_name,
+                            }))}
+                          onChange={(selected: any) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              service_ids: selected
+                                ? selected.map((item: any) => item.value)
+                                : [],
+                            }));
 
-      setErrors((prev: any) => ({
-        ...prev,
-        service_ids: "",
-      }));
-    }}
-    isClearable
-    closeMenuOnSelect={false}
-    hideSelectedOptions={false}
-    placeholder="Search Services"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.service_ids
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                            setErrors((prev: any) => ({
+                              ...prev,
+                              service_ids: "",
+                            }));
+                          }}
+                          isClearable
+                          closeMenuOnSelect={false}
+                          hideSelectedOptions={false}
+                          placeholder="Search Services"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.service_ids
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                            // option: (base, state) => ({
+                            //   ...base,
+                            //   backgroundColor: state.isFocused
+                            //     ? "rgba(199,32,48,0.08)"
+                            //     : "#fff",
+                            //   color: "#000",
+                            //   cursor: "pointer",
+                            // }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff" // faint blue on hover
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                            placeholder: (base) => ({
+                              ...base,
+                              color: "#999",
+                            }),
 
-      multiValue: (base) => ({
-        ...base,
-        backgroundColor: "rgba(199,32,48,0.08)",
-      }),
+                            multiValue: (base) => ({
+                              ...base,
+                              backgroundColor: "rgba(199,32,48,0.08)",
+                            }),
 
-      multiValueLabel: (base) => ({
-        ...base,
-        color: "#C72030",
-        fontWeight: 500,
-      }),
+                            multiValueLabel: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              fontWeight: 500,
+                            }),
 
-      multiValueRemove: (base) => ({
-        ...base,
-        color: "#C72030",
-        ":hover": {
-          backgroundColor: "#C72030",
-          color: "#fff",
-        },
-      }),
-    }}
-  />
+                            multiValueRemove: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              ":hover": {
+                                backgroundColor: "#C72030",
+                                color: "#fff",
+                              },
+                            }),
+                          }}
+                        />
 
-  {errors.service_ids && (
-    <FormHelperText>
-      {errors.service_ids}
-    </FormHelperText>
-  )}
-</FormControl>
+                        {errors.service_ids && (
+                          <FormHelperText>
+                            {errors.service_ids}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
                     )}
 
 
 
 
 
-{supplierField}
+                    {supplierField}
 
 
 
 
 
 
-                  
 
 
-<FormControl fullWidth error={!!errors.technician}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Technician
-  </Typography>
 
-  <Select
-    options={(technicianOptions || []).map((item) => ({
-      value: item.id,
-      label: item.full_name || item.name,
-    }))}
-    value={
-      (technicianOptions || [])
-        .filter(
-          (item) =>
-            String(item.id) ===
-            String(formData.technician)
-        )
-        .map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))[0] || null
-    }
-    onChange={(selected: any) => {
-      handleInputChange(
-        "technician",
-        selected ? String(selected.value) : ""
-      );
+                    <FormControl fullWidth error={!!errors.technician}>
+                      <Typography
+                        sx={{
+                          fontSize: "14px",
+                          mb: 1,
+                          fontWeight: 500,
+                          color: "#444",
+                        }}
+                      >
+                        Technician
+                      </Typography>
 
-      setErrors((prev: any) => ({
-        ...prev,
-        technician: "",
-      }));
-    }}
-    isDisabled={
-      loading || techniciansLoading || isSubmitting
-    }
-    isClearable
-    placeholder="Search Technician"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.technician
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                      <Select
+                        options={(technicianOptions || []).map((item) => ({
+                          value: item.id,
+                          label: item.full_name || item.name,
+                        }))}
+                        value={
+                          (technicianOptions || [])
+                            .filter(
+                              (item) =>
+                                String(item.id) ===
+                                String(formData.technician)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.full_name || item.name,
+                            }))[0] || null
+                        }
+                        onChange={(selected: any) => {
+                          handleInputChange(
+                            "technician",
+                            selected ? String(selected.value) : ""
+                          );
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                          setErrors((prev: any) => ({
+                            ...prev,
+                            technician: "",
+                          }));
+                        }}
+                        isDisabled={
+                          loading || techniciansLoading || isSubmitting
+                        }
+                        isClearable
+                        placeholder="Search Technician"
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            minHeight: "56px",
+                            borderRadius: "4px",
+                            borderColor: errors.technician
+                              ? "#d32f2f"
+                              : state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                            boxShadow: "none",
+                            "&:hover": {
+                              borderColor: "#C72030",
+                            },
+                          }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
+                          menu: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+
+                          // option: (base, state) => ({
+                          //   ...base,
+                          //   backgroundColor: state.isFocused
+                          //     ? "rgba(199,32,48,0.08)"
+                          //     : "#fff",
+                          //   color: "#000",
+                          //   cursor: "pointer",
+                          // }),
 
 
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused
+                              ? "#eff6ff" // faint blue on hover
+                              : "#fff",
+                            color: "#000",
+                            cursor: "pointer",
+                          }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: "#999",
+                          }),
 
-      singleValue: (base) => ({
-        ...base,
-        color: "#000",
-      }),
-    }}
-  />
+                          singleValue: (base) => ({
+                            ...base,
+                            color: "#000",
+                          }),
+                        }}
+                      />
 
-  {errors.technician && (
-    <FormHelperText>
-      {errors.technician}
-    </FormHelperText>
-  )}
-</FormControl>
+                      {errors.technician && (
+                        <FormHelperText>
+                          {errors.technician}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
                   </>
                 ) : (
                   // <>
@@ -3138,237 +3339,237 @@ export const AddAMCPage = () => {
                   // </>
 
 
-<>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    {/* Group */}
-    <FormControl fullWidth error={!!errors.group}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Group
-      </Typography>
+                      {/* Group */}
+                      <FormControl fullWidth error={!!errors.group}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Group
+                        </Typography>
 
-      <Select
-        options={(assetGroups || []).map((group) => ({
-          value: group.id,
-          label: group.name,
-        }))}
-        value={
-          (assetGroups || [])
-            .filter(
-              (group) =>
-                String(group.id) === String(formData.group)
-            )
-            .map((group) => ({
-              value: group.id,
-              label: group.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleGroupChange(
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={loading || isSubmitting}
-        placeholder="Search Group"
-        isClearable
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: errors.group
-              ? "#d32f2f"
-              : state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(assetGroups || []).map((group) => ({
+                            value: group.id,
+                            label: group.name,
+                          }))}
+                          value={
+                            (assetGroups || [])
+                              .filter(
+                                (group) =>
+                                  String(group.id) === String(formData.group)
+                              )
+                              .map((group) => ({
+                                value: group.id,
+                                label: group.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleGroupChange(
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={loading || isSubmitting}
+                          placeholder="Search Group"
+                          isClearable
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.group
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.group && (
-        <FormHelperText>
-          {errors.group}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.group && (
+                          <FormHelperText>
+                            {errors.group}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-    {/* SubGroup */}
-    <FormControl fullWidth>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        SubGroup
-      </Typography>
+                      {/* SubGroup */}
+                      <FormControl fullWidth>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          SubGroup
+                        </Typography>
 
-      <Select
-        options={(subGroups || []).map((subGroup) => ({
-          value: subGroup.id,
-          label: subGroup.name,
-        }))}
-        value={
-          (subGroups || [])
-            .filter(
-              (subGroup) =>
-                String(subGroup.id) === String(formData.subgroup)
-            )
-            .map((subGroup) => ({
-              value: subGroup.id,
-              label: subGroup.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "subgroup",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          !formData.group || loading || isSubmitting
-        }
-        isClearable
-        placeholder="Search SubGroup"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(subGroups || []).map((subGroup) => ({
+                            value: subGroup.id,
+                            label: subGroup.name,
+                          }))}
+                          value={
+                            (subGroups || [])
+                              .filter(
+                                (subGroup) =>
+                                  String(subGroup.id) === String(formData.subgroup)
+                              )
+                              .map((subGroup) => ({
+                                value: subGroup.id,
+                                label: subGroup.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "subgroup",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            !formData.group || loading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search SubGroup"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
-    </FormControl>
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
+                      </FormControl>
 
-    {supplierField}
+                      {supplierField}
 
-    {/* Technician */}
-    <FormControl fullWidth error={!!errors.technician}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Technician
-      </Typography>
+                      {/* Technician */}
+                      <FormControl fullWidth error={!!errors.technician}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Technician
+                        </Typography>
 
-      <Select
-        options={(technicianOptions || []).map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))}
-        value={
-          (technicianOptions || [])
-            .filter(
-              (item) =>
-                String(item.id) === String(formData.technician)
-            )
-            .map((item) => ({
-              value: item.id,
-              label: item.full_name || item.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "technician",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          loading || techniciansLoading || isSubmitting
-        }
-        isClearable
-        placeholder="Search Technician"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(technicianOptions || []).map((item) => ({
+                            value: item.id,
+                            label: item.full_name || item.name,
+                          }))}
+                          value={
+                            (technicianOptions || [])
+                              .filter(
+                                (item) =>
+                                  String(item.id) === String(formData.technician)
+                              )
+                              .map((item) => ({
+                                value: item.id,
+                                label: item.full_name || item.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "technician",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            loading || techniciansLoading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search Technician"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.technician && (
-        <FormHelperText>
-          {errors.technician}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.technician && (
+                          <FormHelperText>
+                            {errors.technician}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-  </div>
-</>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -3416,7 +3617,12 @@ export const AddAMCPage = () => {
                     placeholder="Enter Contract Name"
                     fullWidth
                     value={formData.contractName}
-                    onChange={e => handleInputChange('contractName', e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (!/[0-9]/.test(val)) {
+                        handleInputChange('contractName', val);
+                      }
+                    }}
                     error={!!errors.contractName}
                     helperText={errors.contractName}
                     sx={{ mb: 3 }}
@@ -3491,6 +3697,11 @@ export const AddAMCPage = () => {
                     fullWidth
                     value={formData.cost}
                     onChange={e => handleInputChange('cost', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     error={!!errors.cost}
                     helperText={errors.cost}
                     sx={{ mb: 3 }}
@@ -3510,8 +3721,34 @@ export const AddAMCPage = () => {
                         handleInputChange('noOfVisits', value);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     error={!!errors.noOfVisits}
                     helperText={errors.noOfVisits}
+                    sx={{ mb: 3 }}
+                  />
+
+                  <TextField
+                    disabled={isSubmitting}
+                    label="Assets Per Day"
+                    placeholder="Enter Assets Per Day"
+                    type="number"
+                    fullWidth
+                    value={formData.assetsPerDay}
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (/^\d*$/.test(value)) {
+                        handleInputChange('assetsPerDay', value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     sx={{ mb: 3 }}
                   />
 
@@ -3525,8 +3762,6 @@ export const AddAMCPage = () => {
                     sx={{ mb: 3 }}
                   />
 
-                  {/* Empty column to match the 3-column layout */}
-                  <div></div>
                 </div>
               </CardContent>
             </Card>
@@ -3599,6 +3834,94 @@ export const AddAMCPage = () => {
                   }}
                   hideTitle
                 />
+              </CardContent>
+            </Card>
+
+            {/* Create Checklist */}
+            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
+              <CardContent className="p-4">
+                {/* Toggle */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Switch
+                    checked={createChecklist}
+                    onChange={(e) => {
+                      setCreateChecklist(e.target.checked);
+                      if (!e.target.checked) {
+                        setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#C72030',
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#C72030',
+                      },
+                    }}
+                  />
+                  <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
+                </div>
+
+                {createChecklist && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Checklist Template */}
+                    <FormControl fullWidth variant="outlined" error={!!checklistErrors.templateId}>
+                      <InputLabel shrink>Checklist Template *</InputLabel>
+                      <MuiSelect
+                        label="Checklist Template *"
+                        value={checklistFields.templateId}
+                        onChange={e => {
+                          setChecklistFields(prev => ({ ...prev, templateId: String(e.target.value) }));
+                          setChecklistErrors(prev => ({ ...prev, templateId: '' }));
+                        }}
+                        displayEmpty
+                        disabled={checklistTemplatesLoading}
+                      >
+                        <MenuItem value=""><em>{checklistTemplatesLoading ? 'Loading...' : 'Select Template'}</em></MenuItem>
+                        {checklistTemplates.map(t => (
+                          <MenuItem key={t.id} value={String(t.id)}>{t.form_name}</MenuItem>
+                        ))}
+                      </MuiSelect>
+                      {checklistErrors.templateId && <FormHelperText>{checklistErrors.templateId}</FormHelperText>}
+                    </FormControl>
+
+                    {/* Grace Time Type */}
+                    <FormControl fullWidth variant="outlined" error={!!checklistErrors.graceTimeType}>
+                      <InputLabel shrink>Grace Time Type *</InputLabel>
+                      <MuiSelect
+                        label="Grace Time Type *"
+                        value={checklistFields.graceTimeType}
+                        onChange={e => {
+                          setChecklistFields(prev => ({ ...prev, graceTimeType: String(e.target.value) }));
+                          setChecklistErrors(prev => ({ ...prev, graceTimeType: '' }));
+                        }}
+                        displayEmpty
+                      >
+                        <MenuItem value=""><em>Select Type</em></MenuItem>
+                        <MenuItem value="hour">Hours</MenuItem>
+                        <MenuItem value="day">Days</MenuItem>
+                      </MuiSelect>
+                      {checklistErrors.graceTimeType && <FormHelperText>{checklistErrors.graceTimeType}</FormHelperText>}
+                    </FormControl>
+
+                    {/* Grace Time Value */}
+                    <TextField
+                      label="Grace Time Value *"
+                      type="number"
+                      variant="outlined"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                      value={checklistFields.graceTimeValue}
+                      onChange={e => {
+                        setChecklistFields(prev => ({ ...prev, graceTimeValue: e.target.value }));
+                        setChecklistErrors(prev => ({ ...prev, graceTimeValue: '' }));
+                      }}
+                      error={!!checklistErrors.graceTimeValue}
+                      helperText={checklistErrors.graceTimeValue}
+                      inputProps={{ min: 0 }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </>

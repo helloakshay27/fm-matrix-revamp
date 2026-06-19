@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import posthog from "posthog-js";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building2, Check, Eye, EyeOff } from "lucide-react";
@@ -148,7 +149,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
-      toast.error("Failed to fetch organizations. Please try again.");
+      toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
       console.error("Auto-select organization error:", error);
     } finally {
       setIsLoading(false);
@@ -176,10 +177,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       return valid
         ? { isValid: true, message: "" }
         : {
-            isValid: false,
-            message:
-              "Please enter a valid email address (e.g. name@example.com).",
-          };
+          isValid: false,
+          message:
+            "Please enter a valid email address (e.g. name@example.com).",
+        };
     }
 
     // Treat as mobile: strip spaces/dashes, allow optional leading +
@@ -188,9 +189,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     return valid
       ? { isValid: true, message: "" }
       : {
-          isValid: false,
-          message: "Please enter a valid mobile number (7–15 digits).",
-        };
+        isValid: false,
+        message: "Please enter a valid mobile number (7–15 digits).",
+      };
   };
 
   const validatePassword = (password: string) => {
@@ -254,7 +255,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
-      toast.error("Failed to fetch organizations. Please try again.");
+      toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -272,9 +273,18 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   const handleOrganizationSelect = (org: Organization) => {
     const baseUrl = `${org.sub_domain}.${org.domain}`;
+    const selectedOrgPayload = JSON.stringify({
+      id: org.id,
+      name: org.name,
+      domain: org.domain,
+      sub_domain: org.sub_domain,
+      backend_url: org.backend_url,
+      backend_domain: org.backend_domain,
+    });
 
     // Save org details
     localStorage.setItem("selectedOrg", org.name);
+    localStorage.setItem("selectedOrganization", selectedOrgPayload);
     localStorage.setItem("org_id", org.id.toString());
 
     // Use saveBaseUrl for normalized URL storage
@@ -282,6 +292,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     //Session Storage For App-Level
     sessionStorage.setItem("selectedOrg", org.name);
+    sessionStorage.setItem("selectedOrganization", selectedOrgPayload);
     sessionStorage.setItem("baseUrl", baseUrl); // Session storage doesn't need normalization
     sessionStorage.setItem("org_id", org.id.toString());
 
@@ -407,6 +418,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
+          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -452,6 +465,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
+          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -488,12 +503,27 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
+        user_roster_id: response?.user_roster_id,
+        is_vendor: response.is_vendor,
+        supplier_id: response.supplier_id,
       });
+
+      // Store vendor/supplier ID for vendor portal routing
+      if (response.supplier_id) {
+        localStorage.setItem("vendor_id", response.supplier_id.toString());
+      }
       saveToken(response.access_token);
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
+
+      // Identify user in PostHog
+      posthog.identify(response.id?.toString(), {
+        email: response.email,
+        name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
+        user_type: response.user_type,
+      });
 
       // Fetch and store lock_account_id
       await fetchLockAccount();
@@ -520,6 +550,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/ops-console/settings/account/user-list-otp", {
             replace: true,
           });
+          return;
+        }
+
+        if (response.is_vendor && response.supplier_id) {
+          navigate(`/vendor/supplier-details/${response.supplier_id}`, { replace: true });
           return;
         }
 
@@ -621,13 +656,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
-              step === currentStep
-                ? "bg-[#C72030] text-white shadow-lg scale-110"
-                : step < currentStep
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 text-gray-400"
-            }`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
+              ? "bg-[#C72030] text-white shadow-lg scale-110"
+              : step < currentStep
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-400"
+              }`}
           >
             {step < currentStep ? (
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -639,19 +673,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       </div>
       <div className="flex justify-center items-center gap-2">
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
       </div>
       <p className="text-gray-400 text-sm mt-3 font-medium">
@@ -860,7 +891,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       />
 
 
-  {/* CAPTCHA — shown only for Vodafone Idea */}
+      {/* CAPTCHA — shown only for Vodafone Idea */}
       {selectedOrganization?.name === "Vodafone Idea" && (
         <div className="mb-6">
           <p className="text-gray-700 font-medium text-sm mb-2">Please enter the CAPTCHA below</p>
@@ -933,7 +964,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         .
       </div>
 
-    
+
       {/* Login Button */}
       <Button
         onClick={handleLogin}
@@ -983,9 +1014,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
             {/* Logo */}
             <div
-              className={`text-center mb-5 flex flex-col items-center space-y-2 ${
-                isViSite ? "-mt-4" : ""
-              }`}
+              className={`text-center mb-5 flex flex-col items-center space-y-2 ${isViSite ? "-mt-4" : ""
+                }`}
             >
               {isOmanSite ? (
                 <svg
@@ -1111,11 +1141,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               )}
 
               <p
-                className={`${
-                  isViSite
-                    ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
-                    : "text-gray-600 text-sm font-medium"
-                }`}
+                className={`${isViSite
+                  ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
+                  : "text-gray-600 text-sm font-medium"
+                  }`}
               >
                 Sign in to your account
               </p>

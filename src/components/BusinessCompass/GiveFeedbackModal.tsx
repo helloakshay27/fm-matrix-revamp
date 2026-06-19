@@ -1,16 +1,7 @@
 import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Loader2, Send } from "lucide-react";
+import { Star, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import apiClient from "@/utils/apiClient";
 import { getUser } from "@/utils/auth";
@@ -144,120 +135,105 @@ export function GiveFeedbackModal({
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden rounded-2xl border-[#DA7756]/20 bg-white p-0 shadow-xl focus:outline-none sm:max-w-[500px]">
-        <DialogHeader className="shrink-0 p-6 pb-4">
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold text-neutral-900">
-            <Star className="h-5 w-5 fill-[#DA7756] text-[#DA7756]" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+      <div className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-y-auto overflow-x-hidden rounded-[18px] bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-3rem)]">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h2 className="text-[17px] font-bold text-[#111827]">
             Feedback for {receiver?.name}
-          </DialogTitle>
-          <DialogDescription className="text-neutral-500">
-            Share your appreciation and constructive thoughts.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-          <div className="grid gap-6">
-          {/* Rating Selection */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold text-neutral-700">Rating Score</Label>
-            <div className="flex items-center gap-2">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setScore(s)}
-                  className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200",
-                    score >= s
-                      ? "bg-[#DA7756] text-white shadow-md scale-110"
-                      : "bg-neutral-100 text-neutral-400 hover:bg-neutral-200"
-                  )}
-                >
-                  <Star
-                    className={cn("h-5 w-5", score >= s ? "fill-current" : "")}
-                    strokeWidth={score >= s ? 2.5 : 2}
-                  />
-                </button>
-              ))}
-              <span className="ml-2 text-sm font-bold text-[#DA7756]">
-                {score === 0 ? "Select rating" : score === 5 ? "Excellent" : score === 4 ? "Great" : score === 3 ? "Good" : score === 2 ? "Needs Improvement" : "Poor"}
-              </span>
-            </div>
-          </div>
-
-          {/* Feedback Fields */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="positive_opening" className="text-sm font-semibold text-neutral-700">
-                Positive Opening
-              </Label>
-              <Textarea
-                id="positive_opening"
-                placeholder="Start with something they did well..."
-                value={positiveOpening}
-                onChange={(e) => setPositiveOpening(e.target.value)}
-                className="min-h-[80px] resize-none border-neutral-200 focus:border-[#DA7756] focus:ring-[#DA7756]/10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="constructive_feedback" className="text-sm font-semibold text-neutral-700">
-                Constructive Feedback
-              </Label>
-              <Textarea
-                id="constructive_feedback"
-                placeholder="What could be improved?"
-                value={constructiveFeedback}
-                onChange={(e) => setConstructiveFeedback(e.target.value)}
-                className="min-h-[80px] resize-none border-neutral-200 focus:border-[#DA7756] focus:ring-[#DA7756]/10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="positive_closing" className="text-sm font-semibold text-neutral-700">
-                Positive Closing
-              </Label>
-              <Textarea
-                id="positive_closing"
-                placeholder="End on a supportive note..."
-                value={positiveClosing}
-                onChange={(e) => setPositiveClosing(e.target.value)}
-                className="min-h-[80px] resize-none border-neutral-200 focus:border-[#DA7756] focus:ring-[#DA7756]/10"
-              />
-            </div>
-          </div>
-          </div>
+          </h2>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <DialogFooter className="shrink-0 gap-3 border-t border-neutral-100 bg-neutral-50/50 p-4 sm:gap-0 sm:p-6 sm:pt-4">
-          <Button
-            variant="ghost"
-            onClick={handleClose}
-            className="text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || score === 0}
-            className="bg-[#DA7756] hover:bg-[#DA7756]/90 text-white shadow-lg shadow-[#DA7756]/20"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Submit
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="w-full rounded-[16px] bg-[#f5f2eb] px-5 py-5">
+          <div className="space-y-4">
+            {[
+              {
+                title: "Situation",
+                value: positiveOpening,
+                onChange: setPositiveOpening,
+                placeholder: "When and where did this happen?",
+              },
+              {
+                title: "Behavior",
+                value: constructiveFeedback,
+                onChange: setConstructiveFeedback,
+                placeholder: "What specifically did they do or say?",
+              },
+              {
+                title: "Impact",
+                value: positiveClosing,
+                onChange: setPositiveClosing,
+                placeholder: "What was the result or effect?",
+              },
+            ].map(({ title, value, onChange, placeholder }) => (
+              <div key={title} className="space-y-2">
+                <Label className="text-[12px] font-bold text-[#111827]">
+                  {title}
+                </Label>
+                <Textarea
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  placeholder={placeholder}
+                  className="min-h-[58px] resize-none rounded-[12px] border-0 bg-white px-4 py-3 text-[12px] text-[#111827] shadow-none outline-none placeholder:text-[#9ca3af] focus:ring-1 focus:ring-[#DA7756]/20"
+                />
+              </div>
+            ))}
+
+            <div className="space-y-2">
+              <Label className="text-[12px] font-bold text-[#111827]">
+                Rating
+              </Label>
+              <div className="flex gap-0.5" role="group" aria-label="Star rating">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={score === n}
+                    aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                    onClick={() => setScore(n)}
+                    className="rounded-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
+                  >
+                    <Star
+                      className={cn(
+                        "h-5 w-5",
+                        n <= score
+                          ? "fill-[#ffb000] text-[#ffb000]"
+                          : "fill-[#e8edf5] text-[#e8edf5]"
+                      )}
+                      strokeWidth={n <= score ? 0 : 1.5}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting || score === 0}
+              className="inline-flex h-[34px] w-full items-center justify-center gap-2 rounded-[7px] bg-[#e77252] px-8 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] disabled:opacity-60"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Feedback"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -447,6 +447,7 @@ const PERMIT_ANALYTICS_OPTIONS = [
 
 export const PermitToWorkDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [permits, setPermits] = useState<Permit[]>([]);
   const [originalPermits, setOriginalPermits] = useState<Permit[]>([]);
@@ -472,7 +473,10 @@ export const PermitToWorkDashboard = () => {
   const [currentSearchParam, setCurrentSearchParam] = useState<string>('');
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [pageSize] = useState(20);
@@ -653,12 +657,9 @@ export const PermitToWorkDashboard = () => {
 
         // Update pagination info
         if (permitsResponse.pagination) {
-          setCurrentPage(permitsResponse.pagination.current_page || 1);
           setTotalPages(permitsResponse.pagination.total_pages || 1);
           setTotalCount(permitsResponse.pagination.total_count || 0);
         } else {
-          // Fallback pagination info if not provided
-          setCurrentPage(1);
           setTotalPages(1);
           setTotalCount(permitsResponse.permits?.length || 0);
         }
@@ -736,13 +737,10 @@ export const PermitToWorkDashboard = () => {
       setPermitCounts(countsResponse);
 
       // Update pagination info
-      if (permitsResponse.pagination) {
-        setCurrentPage(permitsResponse.pagination.current_page || 1);
+     if (permitsResponse.pagination) {
         setTotalPages(permitsResponse.pagination.total_pages || 1);
         setTotalCount(permitsResponse.pagination.total_count || 0);
       } else {
-        // Fallback pagination info if not provided
-        setCurrentPage(currentPage);
         setTotalPages(1);
         setTotalCount(permitsResponse.permits?.length || 0);
       }
@@ -872,13 +870,10 @@ export const PermitToWorkDashboard = () => {
       setPermits(permitsResponse.permits || []);
 
       // Update pagination info
-      if (permitsResponse.pagination) {
-        setCurrentPage(permitsResponse.pagination.current_page || 1);
+     if (permitsResponse.pagination) {
         setTotalPages(permitsResponse.pagination.total_pages || 1);
         setTotalCount(permitsResponse.pagination.total_count || 0);
       } else {
-        // Fallback pagination info if not provided
-        setCurrentPage(1);
         setTotalPages(1);
         setTotalCount(permitsResponse.permits?.length || 0);
       }
@@ -893,11 +888,15 @@ export const PermitToWorkDashboard = () => {
     }
   };
 
-  // Handle page change for pagination
+ // Handle page change for pagination
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages || loading) return;
     setCurrentPage(newPage);
   };
+
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
 
   // Render cell content for EnhancedTable
   const renderCell = (permit: Permit, columnKey: string) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Trash2 } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
@@ -26,6 +26,13 @@ interface RecurringExpense {
 }
 
 const columns: ColumnConfig[] = [
+  {
+    key: "actions",
+    label: "Action",
+    sortable: false,
+    hideable: false,
+    draggable: false,
+  },
   {
     key: "profile_name",
     label: "Profile Name",
@@ -96,6 +103,7 @@ const RecurringExpensesListPage: React.FC = () => {
     RecurringExpense[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -212,7 +220,94 @@ const RecurringExpensesListPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const getStatusBadge = (status?: string) => {
+  const handleDelete = async (item: RecurringExpense) => {
+    if (!window.confirm(`Are you sure you want to delete "${item.profile_name}"?`)) {
+      return;
+    }
+
+    setDeletingId(item.id);
+    try {
+      const token = localStorage.getItem("token");
+      let baseUrl = localStorage.getItem("baseUrl") || "";
+
+      if (!token || !baseUrl) {
+        sonnerToast.error("Missing authentication or base URL");
+        setDeletingId(null);
+        return;
+      }
+
+      if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+        baseUrl = `https://${baseUrl}`;
+      }
+
+      const response = await fetch(`${baseUrl}/recurring_expenses/${item.id}.json`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errBody || response.statusText}`
+        );
+      }
+
+      sonnerToast.success("Recurring expense deleted successfully");
+      loadData(debouncedSearchQuery);
+    } catch (error: any) {
+      console.error("Failed to delete recurring expense:", error);
+      sonnerToast.error(error.message || "Failed to delete recurring expense");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleToggleStatus = async (item: RecurringExpense) => {
+    setDeletingId(item.id);
+    try {
+      const token = localStorage.getItem("token");
+      let baseUrl = localStorage.getItem("baseUrl") || "";
+
+      if (!token || !baseUrl) {
+        sonnerToast.error("Missing authentication or base URL");
+        setDeletingId(null);
+        return;
+      }
+
+      if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+        baseUrl = `https://${baseUrl}`;
+      }
+
+      const response = await fetch(`${baseUrl}/recurring_expenses/${item.id}/toggle_active.json`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errBody || response.statusText}`
+        );
+      }
+
+      const newStatus = item.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+      sonnerToast.success(`Recurring expense marked as ${newStatus}`);
+      loadData(debouncedSearchQuery);
+    } catch (error: any) {
+      console.error("Failed to toggle recurring expense status:", error);
+      sonnerToast.error(error.message || "Failed to update status");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const getStatusBadge = (status?: string, item?: RecurringExpense) => {
     const upper = status?.toUpperCase() || "";
     let cls = "bg-gray-100 text-gray-800";
 
@@ -221,7 +316,9 @@ const RecurringExpensesListPage: React.FC = () => {
 
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}`}
+        onClick={() => item && handleToggleStatus(item)}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls} cursor-pointer hover:opacity-80 transition-opacity`}
+        title="Click to toggle status"
       >
         {upper || "-"}
       </span>
@@ -236,8 +333,19 @@ const RecurringExpensesListPage: React.FC = () => {
           size="icon"
           onClick={() => navigate(`/accounting/recurring-expenses/${item.id}`)}
           className="h-8 w-8"
+          title="View Details"
         >
           <Eye className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleDelete(item)}
+          disabled={deletingId === item.id || loading}
+          className="h-8 w-8 hover:text-destructive"
+          title="Delete"
+        >
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     ),
@@ -255,7 +363,7 @@ const RecurringExpensesListPage: React.FC = () => {
     frequency: <span>{item.frequency || "-"}</span>,
     last_expense_date: <span>{item.last_expense_date || "-"}</span>,
     next_expense_date: <span>{item.next_expense_date || "-"}</span>,
-    status: getStatusBadge(item.status),
+    status: getStatusBadge(item.status, item),
     amount: <span className="font-medium">{item.amount || "-"}</span>,
 
     reference: (
@@ -287,10 +395,11 @@ const RecurringExpensesListPage: React.FC = () => {
         leftActions={
           <Button
             onClick={() => navigate("/accounting/recurring-expenses/create")}
-            className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+            // className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+            className='fm-button-fix fm-button-brand px-4 py-2P'
           >
             <Plus className="h-4 w-4" />
-            New
+            Add
           </Button>
         }
       />

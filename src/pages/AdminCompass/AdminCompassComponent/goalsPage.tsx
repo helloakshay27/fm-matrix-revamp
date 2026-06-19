@@ -6,13 +6,13 @@ import { toast } from "sonner";
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
-  primaryBg: "#f6f4ee",
+  primaryBg: "#ffffff",
   primaryTint: "rgba(218,119,86,0.06)",
-  primaryBord: "#e8e3de",
+  primaryBord: "rgba(218,119,86,0.18)",
   cardBg: "#ffffff",
   textMain: "#1a1a1a",
   textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
+  borderLgt: "#e5e7eb",
   font: "'Poppins', sans-serif",
 };
 
@@ -82,7 +82,7 @@ const useDebounce = (fn: (...args: any[]) => void, delay: number) => {
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => fn(...args), delay);
     },
-    [fn, delay]
+    [fn, delay],
   );
 };
 
@@ -181,15 +181,41 @@ const TargetLargeIcon = () => (
 const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-    .goals-page-wrap, .goals-page-wrap * { font-family: 'Poppins', sans-serif !important; }
-    .st-goal-slider { -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:99px; outline:none; cursor:pointer; }
-    .st-goal-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background:${C.primary}; cursor:pointer; border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition:transform 0.15s; }
+    .goals-page-wrap, .goals-page-wrap * { font-family: 'Poppins', sans-serif !important; box-sizing:border-box; }
+    .goal-shell { border-radius:24px; overflow:hidden; background:#ffffff; border:1px solid #e9edf3; box-shadow:0 12px 30px rgba(17,24,39,0.06); }
+    .goal-header { border-bottom:1px solid #eef0f4; background:#ffffff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .goal-header-left { flex:1; min-width:0; display:flex; align-items:center; gap:12px; }
+    .goal-icon-box { width:38px; height:38px; border-radius:13px; background:#f7f7f7; color:#ff6b4a; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .goal-kicker { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.14em; color:#111827; display:flex; align-items:center; gap:6px; min-width:0; margin:0; }
+    .goal-body { padding:18px 20px 22px; background:#ffffff; }
+    .goal-section-block { padding:0 0 18px; background:#ffffff; }
+    .goal-section-row { margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .goal-section-title { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.14em; color:#111827; display:flex; align-items:center; gap:8px; }
+    .goal-section-dot { width:18px; height:18px; border-radius:50%; background:#ffffff; border:1px solid #d8dee8; flex-shrink:0; }
+    .goal-count-pill { font-size:11px; font-weight:400; color:${C.textMuted}; background:#f8fafc; border:1px solid #eef0f4; border-radius:999px; padding:5px 10px; }
+    .goal-strategic-card { background:#ffffff; border:1px solid #eef0f4; border-radius:16px; padding:15px 16px; box-shadow:0 8px 18px rgba(17,24,39,.035); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease; }
+    .goal-strategic-card:hover { transform:translateY(-1px); border-color:rgba(218,119,86,.20); background:#fffdfb; box-shadow:0 10px 22px rgba(17,24,39,.055); }
+    .goal-initiative-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    @media (max-width:768px) { .goal-initiative-grid { grid-template-columns:1fr; } }
+    .goal-card { position:relative; background:#ffffff; border-radius:15px; padding:14px; border:1px solid #e9edf3; box-shadow:0 6px 16px rgba(17,24,39,0.035); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease; overflow:hidden; }
+    .goal-card:hover { transform:translateY(-1px); border-color:rgba(218,119,86,0.20); background:#fffdfb; box-shadow:0 10px 22px rgba(17,24,39,0.055); }
+    .goal-actions { display:flex; gap:4px; opacity:0; transform:translateY(-2px); transition:opacity .15s, transform .15s; background:rgba(255,255,255,.94); border:1px solid #eef0f4; border-radius:12px; padding:4px; box-shadow:0 8px 18px rgba(17,24,39,.06); }
+    .goal-card:hover .goal-actions, .goal-strategic-card:hover .goal-actions, .goal-actions.always { opacity:1; transform:translateY(0); }
+    .goal-actions button { background:none; border:none; padding:6px; border-radius:9px; cursor:pointer; color:#9ca3af; display:flex; align-items:center; transition:background .12s,color .12s, transform .12s; }
+    .goal-actions button:hover { transform:scale(1.04); }
+    .goal-actions .edit:hover { color:${C.primary}; background:#fff3ed; }
+    .goal-actions .del:hover { color:#ef4444; background:#fee2e2; }
+    .goal-add-btn { font-size:12px; font-weight:500; padding:8px 15px; border-radius:12px; border:1px dashed #cbd5e1; background:#ffffff; color:#111827; cursor:pointer; box-shadow:0 6px 14px rgba(17,24,39,.035); transition:transform .15s, box-shadow .15s, background .15s; display:inline-flex; align-items:center; gap:8px; font-family:'Poppins',sans-serif; }
+    .goal-add-btn:hover { transform:translateY(-1px); box-shadow:0 10px 20px rgba(17,24,39,.08); background:#fffdfb; }
+    .goal-empty { grid-column:1/-1; border:1.5px dashed rgba(218,119,86,.24); background:linear-gradient(135deg,#fffaf8,#ffffff); border-radius:18px; padding:26px 18px; text-align:center; }
+    .st-goal-slider { -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:99px; outline:none; cursor:pointer; }
+    .st-goal-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%; background:${C.primary}; cursor:pointer; border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.18); transition:transform 0.15s; }
     .st-goal-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
     .st-modal-slider { -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:99px; outline:none; cursor:pointer; }
     .st-modal-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:${C.primary}; cursor:pointer; border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition:transform 0.15s; }
     .st-modal-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
     .st-modal-portal { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.42); backdrop-filter:blur(4px); }
-    .st-modal-box { background:${C.primaryBg}; border-radius:20px; border:1px solid ${C.primaryBord}; box-shadow:0 30px 80px rgba(0,0,0,0.20); width:100%; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
+    .st-modal-box { background:linear-gradient(180deg,#ffffff 0%,#fffaf8 100%); border-radius:22px; border:1px solid rgba(218,119,86,0.18); box-shadow:0 30px 90px rgba(0,0,0,0.22); width:100%; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
     .st-input { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; font-family:'Poppins',sans-serif; }
     .st-input[type="date"] { padding: 9px 12px; cursor: pointer; }
     .st-input:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
@@ -199,10 +225,94 @@ const ThemeStyle = () => (
     .st-textarea::placeholder { color:#a3a3a3; }
     .st-select { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 36px 10px 12px; font-size:13px; color:${C.textMain}; background:#fff; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; background-size:16px; cursor:pointer; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; font-family:'Poppins',sans-serif; }
     .st-select:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
-    .st-label { display:block; font-size:13px; font-weight:700; color:${C.textMain}; margin-bottom:6px; }
-    .st-error-banner { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; border-radius:12px; padding:10px 14px; font-size:13px; font-weight:600; }
-    .st-skeleton { background:linear-gradient(90deg,#eeebe4 25%,#e5e1d8 50%,#eeebe4 75%); background-size:200% 100%; animation:st-shimmer 1.4s infinite; border-radius:8px; }
+    .st-label { display:block; font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:${C.textMain}; margin-bottom:6px; }
+    .st-error-banner { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; border-radius:12px; padding:10px 14px; font-size:13px; font-weight:500; }
+    .st-skeleton { background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%); background-size:200% 100%; animation:st-shimmer 1.4s infinite; border-radius:8px; }
     @keyframes st-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @media (max-width:640px) {
+      .goals-page-wrap {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+      .goal-shell {
+        border-radius: 16px;
+      }
+      .goal-header {
+        padding: 10px 12px;
+        align-items: flex-start;
+      }
+      .goal-header-left {
+        gap: 9px;
+      }
+      .goal-icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 11px;
+      }
+      .goal-kicker {
+        font-size: 10px;
+        line-height: 1.35;
+        letter-spacing: .08em;
+      }
+      .goal-body {
+        padding: 14px 12px 16px;
+      }
+      .goal-section-row {
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .goal-section-title {
+        min-width: 0;
+        font-size: 10px;
+        letter-spacing: .08em;
+        line-height: 1.35;
+      }
+      .goal-count-pill {
+        flex-shrink: 0;
+      }
+      .goal-strategic-card {
+        padding: 12px;
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px;
+      }
+      .goal-strategic-card .goal-actions {
+        align-self: flex-end;
+      }
+      .goal-card {
+        padding: 12px;
+      }
+      .goal-actions {
+        opacity: 1;
+        transform: none;
+      }
+      .goal-add-btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .st-modal-portal {
+        padding: 0;
+        align-items: stretch;
+      }
+      .st-modal-box {
+        min-height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+      }
+      .st-modal-box .grid {
+        grid-template-columns: 1fr !important;
+      }
+      .st-modal-box .p-6 {
+        padding: 14px !important;
+      }
+      .st-modal-box .p-5 {
+        padding: 12px !important;
+      }
+      .st-modal-box .px-6 {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+      }
+    }
   `}</style>
 );
 
@@ -257,7 +367,7 @@ const Modal = ({
     >
       {children}
     </div>,
-    document.body
+    document.body,
   );
 };
 
@@ -298,7 +408,7 @@ const UserSelect = ({
   const selectedUser = users.find((u: any) => String(u.id) === String(value));
   const displayValue = selectedUser
     ? selectedUser.full_name ||
-      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
     : "";
 
   const filteredUsers = users.filter((u: any) => {
@@ -346,7 +456,7 @@ const UserSelect = ({
         >
           {value && (
             <div
-              className="p-2.5 hover:bg-red-50 cursor-pointer text-[13px] border-b text-red-500 font-semibold truncate"
+              className="p-2.5 hover:bg-red-50 cursor-pointer text-[13px] border-b text-red-500 font-medium truncate"
               style={{ borderColor: C.borderLgt }}
               onClick={() => {
                 onChange("");
@@ -431,7 +541,7 @@ const GoalSection = ({
   const [strategicGoals, setStrategicGoals] = useState<StrategicGoalData[]>([]);
   const [strategicGoalId, setStrategicGoalId] = useState<number | null>(null);
   const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(
-    null
+    null,
   );
   const [linkedStrategicInitiatives, setLinkedStrategicInitiatives] = useState<
     number[]
@@ -446,7 +556,7 @@ const GoalSection = ({
 
   // ── Pending delete state for initiative (replaces window.confirm) ──
   const [pendingDeleteGoalId, setPendingDeleteGoalId] = useState<number | null>(
-    null
+    null,
   );
 
   const fetchUsers = useCallback(async () => {
@@ -458,7 +568,7 @@ const GoalSection = ({
     try {
       const res = await fetch(
         `${BASE_URL}/api/users?organization_id=${orgId}`,
-        { method: "GET", headers: getAuthHeaders() }
+        { method: "GET", headers: getAuthHeaders() },
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -472,7 +582,7 @@ const GoalSection = ({
     try {
       const res = await fetch(
         `${BASE_URL}/goals?q[goal_category_eq]=strategic`,
-        { method: "GET", headers: getAuthHeaders() }
+        { method: "GET", headers: getAuthHeaders() },
       );
       if (!res.ok) return;
       const json = await res.json();
@@ -491,7 +601,7 @@ const GoalSection = ({
           : [],
       }));
       setStrategicGoals(
-        mapped.filter((sg) => config.strategicPeriodFilter(sg.period))
+        mapped.filter((sg) => config.strategicPeriodFilter(sg.period)),
       );
     } catch (err) {
       console.error("fetchStrategicGoal:", err);
@@ -504,7 +614,7 @@ const GoalSection = ({
     try {
       const res = await fetch(
         `${BASE_URL}/goals?q[goal_category_eq]=operational`,
-        { method: "GET", headers: getAuthHeaders() }
+        { method: "GET", headers: getAuthHeaders() },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
@@ -530,7 +640,7 @@ const GoalSection = ({
       const mapped = records.map(mapRecord);
       setAllGoals(mapped);
       setInitiatives(
-        mapped.filter((g) => g.period === config.operationalPeriod)
+        mapped.filter((g) => g.period === config.operationalPeriod),
       );
     } catch (err: any) {
       setFetchError(err.message || "Failed to load goals");
@@ -558,7 +668,7 @@ const GoalSection = ({
   const handleCardSlider = (id: number, val: string) => {
     const clamped = clampProgress(val);
     setInitiatives((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, progress: clamped } : i))
+      prev.map((i) => (i.id === id ? { ...i, progress: clamped } : i)),
     );
     if (sliderPatchTimer.current[id])
       clearTimeout(sliderPatchTimer.current[id]);
@@ -712,7 +822,7 @@ const GoalSection = ({
       toast.success(
         isEditing
           ? "Strategic goal updated successfully!"
-          : "Strategic goal created successfully!"
+          : "Strategic goal created successfully!",
       );
     } catch (err: any) {
       toast.error(err.message || "Failed to save. Please try again.");
@@ -760,20 +870,20 @@ const GoalSection = ({
     try {
       const res = isEditing
         ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          })
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        })
         : await fetch(`${BASE_URL}/goals`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          });
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
       dispatchGoalsUpdated();
       toast.success(
-        isEditing ? "Goal updated successfully!" : "Goal created successfully!"
+        isEditing ? "Goal updated successfully!" : "Goal created successfully!",
       );
     } catch (err: any) {
       toast.error(err.message || "Error saving goal.");
@@ -838,7 +948,7 @@ const GoalSection = ({
 
   const toggleStrategicLink = (id: number) => {
     setLinkedStrategicInitiatives((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
@@ -849,7 +959,7 @@ const GoalSection = ({
     borderRadius: 10,
     padding: "10px 20px",
     fontSize: 13,
-    fontWeight: 700,
+    fontWeight: 500,
     cursor: "pointer",
     fontFamily: C.font,
   };
@@ -857,25 +967,16 @@ const GoalSection = ({
   return (
     <div
       className={wrapClass}
-      style={{ padding: "24px 0", fontFamily: C.font }}
+      style={{ padding: "18px 0", fontFamily: C.font }}
     >
-      <div
-        className="rounded-2xl overflow-hidden shadow-sm mt-6 border"
-        style={{ background: C.cardBg, borderColor: C.borderLgt }}
-      >
+      <div className="goal-shell">
         {/* Header */}
-        <div
-          className="px-6 py-4 border-b flex items-center justify-between"
-          style={{ borderColor: C.borderLgt, background: C.primaryBg }}
-        >
-          <div className="flex items-center gap-2">
-            <HeaderTargetIcon />
-            <h2
-              className="font-black text-lg m-0"
-              style={{ color: C.textMain }}
-            >
-              {config.sectionTitle}
-            </h2>
+        <div className="goal-header">
+          <div className="goal-header-left">
+            <span className="goal-icon-box">
+              <HeaderTargetIcon />
+            </span>
+            <h2 className="goal-kicker">{config.sectionTitle}</h2>
             <span
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -904,12 +1005,12 @@ const GoalSection = ({
                 left: infoPos.left,
                 transform: infoPos.transform,
                 zIndex: 99999,
-                background: "#16102b",
+                background: "#0B1221",
                 color: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                padding: "16px",
-                width: 340,
+                borderRadius: 10,
+                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                padding: "18px 24px",
+                width: 380,
                 textAlign: "center",
                 fontFamily: "'Poppins', sans-serif",
                 pointerEvents: "none",
@@ -920,7 +1021,7 @@ const GoalSection = ({
                 style={{
                   margin: "0 0 10px 0",
                   fontSize: 13,
-                  fontWeight: 800,
+                  fontWeight: 500,
                   color: "#fff",
                 }}
               >
@@ -947,12 +1048,25 @@ const GoalSection = ({
                 </p>
               ))}
             </div>,
-            document.body
+            document.body,
           )}
 
-        <div className="p-6">
+        <div className="goal-body">
           {/* Strategic Goals Block */}
-          <div className="mb-8">
+          <div className="goal-section-block">
+            <div className="goal-section-row">
+              <div className="goal-section-title">
+                <span className="goal-section-dot" />
+                Strategic Priorities
+                {isFetching && <LoaderIcon className="w-3.5 h-3.5" />}
+              </div>
+              {!isFetching && (
+                <span className="goal-count-pill">
+                  {strategicGoals.length} item
+                  {strategicGoals.length === 1 ? "" : "s"}
+                </span>
+              )}
+            </div>
             {isFetching ? (
               <div className="st-skeleton h-24 w-full rounded-xl" />
             ) : strategicGoals.length > 0 ? (
@@ -960,15 +1074,11 @@ const GoalSection = ({
                 {strategicGoals.map((sg) => (
                   <div
                     key={sg.id}
-                    className="bg-white rounded-xl p-5 flex justify-between items-center group transition-all"
-                    style={{
-                      border: `1px solid ${C.borderLgt}`,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                    }}
+                    className="goal-strategic-card flex justify-between items-center group"
                   >
                     <div>
                       <h3
-                        className="font-bold text-[16px] m-0"
+                        className="font-medium text-[16px] leading-[1.5] m-0"
                         style={{ color: C.textMain }}
                       >
                         {sg.title}
@@ -976,7 +1086,7 @@ const GoalSection = ({
                       <div className="flex items-center gap-2 mt-2">
                         {sg.period && (
                           <span
-                            className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
+                            className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wider"
                             style={{
                               background: C.primaryTint,
                               color: C.primary,
@@ -1008,19 +1118,17 @@ const GoalSection = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="goal-actions always">
                       <button
                         onClick={() => openStrategicModal(sg)}
-                        className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors text-gray-500 border"
-                        style={{ borderColor: C.borderLgt }}
+                        className="edit"
                         title="Edit"
                       >
                         <EditIcon />
                       </button>
                       <button
                         onClick={() => confirmDeleteStrategic(sg.id as number)}
-                        className="p-2 bg-gray-50 hover:bg-red-50 rounded-lg cursor-pointer transition-colors text-gray-500 hover:text-red-500 border"
-                        style={{ borderColor: C.borderLgt }}
+                        className="del"
                         title="Delete"
                       >
                         <TrashIcon />
@@ -1031,8 +1139,7 @@ const GoalSection = ({
                 <div className="flex justify-end mt-4">
                   <button
                     onClick={() => openStrategicModal()}
-                    className="text-sm font-black px-4 py-2 rounded-xl transition-colors"
-                    style={{ color: C.primary, background: "transparent" }}
+                    className="goal-add-btn"
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.background = C.primaryTint)
                     }
@@ -1045,16 +1152,10 @@ const GoalSection = ({
                 </div>
               </div>
             ) : (
-              <div
-                className="text-center py-10 rounded-2xl mb-4"
-                style={{
-                  border: `2px dashed ${C.primaryBord}`,
-                  backgroundColor: "#fffaf9",
-                }}
-              >
+              <div className="goal-empty mb-4">
                 <TargetLargeIcon />
                 <h3
-                  className="text-[16px] font-bold mb-1"
+                  className="text-[16px] font-medium mb-1"
                   style={{ color: C.textMain }}
                 >
                   {config.emptyStrategicTitle}
@@ -1064,8 +1165,7 @@ const GoalSection = ({
                 </p>
                 <button
                   onClick={() => openStrategicModal()}
-                  className="px-5 py-2.5 rounded-lg font-bold text-[13px] transition-colors shadow-sm flex items-center justify-center mx-auto gap-2 text-white"
-                  style={{ background: C.primary }}
+                  className="goal-add-btn mx-auto"
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.background = C.primaryHov)
                   }
@@ -1080,7 +1180,7 @@ const GoalSection = ({
           </div>
 
           {fetchError && (
-            <div className="mb-5 bg-red-100 border border-red-300 text-red-700 text-sm font-semibold rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+            <div className="mb-5 bg-red-100 border border-red-300 text-red-700 text-sm font-medium rounded-xl px-4 py-3 flex items-center justify-between gap-3">
               <span>⚠ {fetchError}</span>
               <button onClick={fetchGoals} className="text-xs underline">
                 Retry
@@ -1088,20 +1188,23 @@ const GoalSection = ({
             </div>
           )}
 
-          <div className="mb-3 flex items-center gap-2">
-            <span
-              className="text-[10px] font-black uppercase tracking-[0.15em]"
-              style={{ color: "#070707" }}
-            >
+          <div className="goal-section-row">
+            <div className="goal-section-title">
+              <span className="goal-section-dot" />
               {config.initiativesSectionLabel}
-            </span>
-            {isFetching && <LoaderIcon className="w-3.5 h-3.5" />}
+              {isFetching && <LoaderIcon className="w-3.5 h-3.5" />}
+            </div>
+            {!isFetching && (
+              <span className="goal-count-pill">
+                {initiatives.length} item{initiatives.length === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
 
           {isFetching ? (
             <SkeletonCards />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <div className="goal-initiative-grid">
               {initiatives.length === 0 && !fetchError && (
                 <p
                   className="col-span-2 text-sm italic py-2"
@@ -1111,23 +1214,16 @@ const GoalSection = ({
                 </p>
               )}
               {initiatives.map((init) => (
-                <div
-                  key={init.id}
-                  className="rounded-2xl p-4 transition-all group hover:shadow-md"
-                  style={{
-                    background: C.cardBg,
-                    border: `1px solid ${C.borderLgt}`,
-                  }}
-                >
+                <div key={init.id} className="goal-card group">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-start gap-2.5 flex-1 min-w-0">
                       <div
-                        className="mt-1 w-3.5 h-3.5 rounded-full border-[3px] bg-white shrink-0"
-                        style={{ borderColor: C.primary }}
+                        className="mt-[3px] w-[18px] h-[18px] rounded-full border bg-white shrink-0 flex items-center justify-center"
+                        style={{ borderColor: "#d8dee8" }}
                       />
                       <div>
                         <span
-                          className="font-black text-[14px] leading-snug block"
+                          className="font-medium text-[12px] leading-[1.45] block"
                           style={{ color: C.textMain }}
                         >
                           {init.title}
@@ -1135,7 +1231,7 @@ const GoalSection = ({
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                           {init.periodLabel && (
                             <span
-                              className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
+                              className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wider"
                               style={{
                                 background: C.primaryTint,
                                 color: C.primary,
@@ -1146,7 +1242,7 @@ const GoalSection = ({
                           )}
                           {(init.ownerName || init.targetDate) && (
                             <span
-                              className="text-xs font-medium"
+                              className="text-[10.5px] font-normal"
                               style={{ color: C.textMuted }}
                             >
                               {init.ownerName && (
@@ -1163,14 +1259,11 @@ const GoalSection = ({
                         </div>
                       </div>
                     </div>
-                    <div
-                      className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-xl border ml-2"
-                      style={{ borderColor: C.borderLgt }}
-                    >
+                    <div className="goal-actions shrink-0 ml-2">
                       <button
                         onClick={() => openEditGoalModal(init)}
-                        className="p-1 rounded-lg transition-colors"
-                        style={{ color: "#9ca3af" }}
+                        className="edit"
+                        style={{}}
                         onMouseEnter={(e) =>
                           (e.currentTarget.style.color = C.primary)
                         }
@@ -1182,8 +1275,8 @@ const GoalSection = ({
                       </button>
                       <button
                         onClick={() => requestDeleteGoal(init.id as number)}
-                        className="p-1 rounded-lg transition-colors"
-                        style={{ color: "#9ca3af" }}
+                        className="edit"
+                        style={{}}
                         onMouseEnter={(e) =>
                           (e.currentTarget.style.color = "#ef4444")
                         }
@@ -1209,7 +1302,7 @@ const GoalSection = ({
                       style={{ background: sliderBg(init.progress) }}
                     />
                     <span
-                      className="text-xs font-black w-9 text-right shrink-0 tabular-nums"
+                      className="text-xs font-medium w-9 text-right shrink-0 tabular-nums"
                       style={{ color: C.textMuted }}
                     >
                       {init.progress}%
@@ -1223,8 +1316,7 @@ const GoalSection = ({
           <div className="mt-6 flex justify-end">
             <button
               onClick={openCreateGoalModal}
-              className="text-sm font-black px-4 py-2 rounded-xl transition-colors"
-              style={{ color: C.primary, background: "transparent" }}
+              className="goal-add-btn"
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = C.primaryTint)
               }
@@ -1242,9 +1334,10 @@ const GoalSection = ({
           <Modal onClose={closeModal}>
             <div
               style={{
-                background: "#fff",
-                borderRadius: 16,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+                background: "linear-gradient(180deg,#ffffff 0%,#fffaf8 100%)",
+                borderRadius: 22,
+                border: "1px solid rgba(218,119,86,0.18)",
+                boxShadow: "0 26px 76px rgba(0,0,0,0.20)",
                 width: "100%",
                 maxWidth: 380,
                 overflow: "hidden",
@@ -1256,7 +1349,7 @@ const GoalSection = ({
                 <div
                   style={{
                     fontSize: 15,
-                    fontWeight: 700,
+                    fontWeight: 500,
                     color: C.textMain,
                     marginBottom: 8,
                   }}
@@ -1280,7 +1373,7 @@ const GoalSection = ({
                   disabled={isDeleting}
                   style={{
                     padding: "10px 24px",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     color: "#fff",
                     background: "#dc2626",
                     border: "none",
@@ -1302,7 +1395,7 @@ const GoalSection = ({
                   disabled={isDeleting}
                   style={{
                     padding: "10px 24px",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     color: C.textMain,
                     background: "#f3f4f6",
                     border: "none",
@@ -1324,9 +1417,10 @@ const GoalSection = ({
           <Modal onClose={closeModal}>
             <div
               style={{
-                background: "#fff",
-                borderRadius: 16,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+                background: "linear-gradient(180deg,#ffffff 0%,#fffaf8 100%)",
+                borderRadius: 22,
+                border: "1px solid rgba(218,119,86,0.18)",
+                boxShadow: "0 26px 76px rgba(0,0,0,0.20)",
                 width: "100%",
                 maxWidth: 380,
                 overflow: "hidden",
@@ -1338,7 +1432,7 @@ const GoalSection = ({
                 <div
                   style={{
                     fontSize: 15,
-                    fontWeight: 700,
+                    fontWeight: 500,
                     color: C.textMain,
                     marginBottom: 8,
                   }}
@@ -1362,7 +1456,7 @@ const GoalSection = ({
                   disabled={isDeleting}
                   style={{
                     padding: "10px 24px",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     color: "#fff",
                     background: "#dc2626",
                     border: "none",
@@ -1384,7 +1478,7 @@ const GoalSection = ({
                   disabled={isDeleting}
                   style={{
                     padding: "10px 24px",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     color: C.textMain,
                     background: "#f3f4f6",
                     border: "none",
@@ -1411,7 +1505,7 @@ const GoalSection = ({
               >
                 <div>
                   <h2
-                    className="font-black text-[17px] m-0"
+                    className="font-medium text-[17px] m-0"
                     style={{ color: C.textMain }}
                   >
                     {config.modalStrategicTitle(isEditingStrategic)}
@@ -1464,7 +1558,7 @@ const GoalSection = ({
                       })
                     }
                     placeholder="e.g., Achieve ₹100Cr Revenue"
-                    className="st-input font-bold"
+                    className="st-input font-medium"
                     autoFocus
                   />
                 </div>
@@ -1563,7 +1657,7 @@ const GoalSection = ({
                           <input
                             type="checkbox"
                             checked={linkedStrategicInitiatives.includes(
-                              g.id as number
+                              g.id as number,
                             )}
                             onChange={() => toggleStrategicLink(g.id as number)}
                             className="mt-0.5 w-4 h-4"
@@ -1578,7 +1672,7 @@ const GoalSection = ({
                             </div>
                             {g.period && (
                               <span
-                                className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide"
+                                className="inline-block mt-1 px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wide"
                                 style={{
                                   background: C.primaryTint,
                                   color: C.primary,
@@ -1646,9 +1740,10 @@ const GoalSection = ({
           <Modal onClose={closeModal}>
             <div
               style={{
-                background: "#fff",
-                borderRadius: 16,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+                background: "linear-gradient(180deg,#ffffff 0%,#fffaf8 100%)",
+                borderRadius: 22,
+                border: "1px solid rgba(218,119,86,0.18)",
+                boxShadow: "0 26px 76px rgba(0,0,0,0.20)",
                 width: "100%",
                 maxWidth: 640,
                 display: "flex",
@@ -1692,7 +1787,7 @@ const GoalSection = ({
                   style={{
                     margin: 0,
                     fontSize: 20,
-                    fontWeight: 800,
+                    fontWeight: 500,
                     color: C.textMain,
                   }}
                 >
@@ -1771,8 +1866,8 @@ const GoalSection = ({
                       style={{
                         borderColor:
                           tempGoal.targetValue !== undefined &&
-                          (Number(tempGoal.targetValue) === 0 ||
-                            tempGoal.targetValue === "")
+                            (Number(tempGoal.targetValue) === 0 ||
+                              tempGoal.targetValue === "")
                             ? "#fca5a5"
                             : undefined,
                       }}
@@ -1785,7 +1880,7 @@ const GoalSection = ({
                             fontSize: 11,
                             color: "#dc2626",
                             marginTop: 4,
-                            fontWeight: 600,
+                            fontWeight: 500,
                           }}
                         >
                           Target value cannot be zero.
@@ -1845,7 +1940,7 @@ const GoalSection = ({
                           fontSize: 11,
                           color: "#dc2626",
                           marginTop: 4,
-                          fontWeight: 600,
+                          fontWeight: 500,
                         }}
                       >
                         Unit is required.
@@ -1886,7 +1981,7 @@ const GoalSection = ({
                       <label
                         style={{
                           fontSize: 13,
-                          fontWeight: 700,
+                          fontWeight: 500,
                           color: C.textMain,
                         }}
                       >
@@ -1915,7 +2010,7 @@ const GoalSection = ({
                             textAlign: "center",
                             padding: "4px 6px",
                             fontSize: 13,
-                            fontWeight: 800,
+                            fontWeight: 500,
                             outline: "none",
                             color: C.textMain,
                             fontFamily: C.font,
@@ -1924,7 +2019,7 @@ const GoalSection = ({
                         <span
                           style={{
                             fontSize: 13,
-                            fontWeight: 700,
+                            fontWeight: 500,
                             color: C.textMuted,
                           }}
                         >
@@ -1945,7 +2040,7 @@ const GoalSection = ({
                       style={{ background: sliderBg(tempGoal.progress) }}
                     />
                     <div
-                      className="text-white font-black text-center py-2 rounded-xl text-[13px] mt-4"
+                      className="text-white font-medium text-center py-2 rounded-xl text-[13px] mt-4"
                       style={{ background: C.primary }}
                     >
                       {tempGoal.progress.toFixed(1)}% Completed
@@ -1981,7 +2076,7 @@ const GoalSection = ({
                     borderRadius: 10,
                     padding: "14px",
                     fontSize: 15,
-                    fontWeight: 800,
+                    fontWeight: 500,
                     cursor: isSaving ? "not-allowed" : "pointer",
                     transition: "background .15s",
                     opacity: isSaving ? 0.7 : 1,
@@ -2024,7 +2119,7 @@ const mediumTermConfig: GoalSectionConfig = {
   strategicPeriodFilter: (p) => p === "three_to_five_years",
   defaultStrategicPeriod: "three_to_five_years",
   addStrategicLabel: "Add Strategic Priority",
-  addInitiativeLabel: "Add New Operational Goal",
+  addInitiativeLabel: "Add New Initiative ",
   emptyStrategicTitle: "Set Your Strategic Priorities",
   emptyStrategicSubtitle: "What are your core objectives for the future?",
   initiativesSectionLabel: "Operational Initiatives (3-5 Years)",

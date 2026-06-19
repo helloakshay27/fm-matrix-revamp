@@ -18,11 +18,17 @@ import {
   CheckCircle2,
   Circle,
   Star,
+  Eye,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
+import AddToDoModal from "../../../components/AddToDoModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -198,6 +204,25 @@ const fetchDynamicMembers = async () => {
   }));
 };
 
+const getMemberResponsiblePrefill = (member: any) => {
+  const id =
+    member?.user_id ||
+    member?.id ||
+    member?.user?.id ||
+    member?.daily_report?.user_id ||
+    member?.daily_report?.user?.id ||
+    "";
+  const name =
+    member?.name ||
+    member?.full_name ||
+    member?.user?.full_name ||
+    member?.user?.name ||
+    [member?.firstname, member?.lastname].filter(Boolean).join(" ") ||
+    `User ${id}`;
+
+  return id ? { id: String(id), name } : null;
+};
+
 const fetchDailyMeetingData = async ({
   meetingId,
   dateStr,
@@ -251,6 +276,7 @@ const normalizeReportData = (rd: any) => {
       self_rating: null,
       total_score: null,
       is_absent: null,
+      absent_reason: null,
       kpis: {},
     };
   }
@@ -270,8 +296,164 @@ const normalizeReportData = (rd: any) => {
     self_rating: rd.self_rating ?? null,
     total_score: rd.total_score ?? null,
     is_absent: rd.is_absent ?? null,
+    absent_reason: rd.absent_reason ?? null,
     kpis: rd.kpis && typeof rd.kpis === "object" ? rd.kpis : {},
   };
+};
+
+const fmtItemDate = (d?: string): string | null => {
+  if (!d) return null;
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  return `${String(dt.getDate()).padStart(2, "0")}/${String(
+    dt.getMonth() + 1
+  ).padStart(2, "0")}/${dt.getFullYear()}`;
+};
+
+const fmtItemHours = (h?: number): string | null => {
+  if (!h) return null;
+  if (h < 1) return `${Math.round(h * 60)}m`;
+  const wh = Math.floor(h);
+  const m = Math.round((h - wh) * 60);
+  return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
+};
+
+const getItemOverdueLabel = (targetDate?: string): string | null => {
+  if (!targetDate) return null;
+  const end = new Date(targetDate);
+  if (isNaN(end.getTime())) return null;
+  end.setHours(23, 59, 59, 999);
+  const diff = end.getTime() - new Date().getTime();
+  if (diff > 0) return null;
+  const abs = Math.abs(diff);
+  const d = Math.floor(abs / 86400000);
+  const h = Math.floor((abs % 86400000) / 3600000);
+  const m = Math.floor((abs % 3600000) / 60000);
+  if (d > 0) return `${d}d ${h}h overdue`;
+  if (h > 0) return `${h}h ${m}m overdue`;
+  return `${m}m overdue`;
+};
+
+// Cache for item details fetched on-demand by source_id (keyed by `${type}:${id}`)
+const itemDetailCache: Record<string, any> = {};
+const itemDetailInflight: Record<string, Promise<any> | undefined> = {};
+
+const fetchItemDetail = async (
+  type: string,
+  id: any
+): Promise<any | null> => {
+  if (!type || id === undefined || id === null) return null;
+  const key = `${type}:${id}`;
+  if (key in itemDetailCache) return itemDetailCache[key];
+  if (itemDetailInflight[key]) return itemDetailInflight[key];
+
+  let url: string | null = null;
+  if (type === "task") url = `${getBaseUrl()}/task_managements/${id}.json`;
+  else if (type === "todo") url = `${getBaseUrl()}/todos/${id}.json`;
+  else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
+  if (!url) return null;
+
+  const p = (async () => {
+    try {
+      const res = await fetch(url as string, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        itemDetailCache[key] = null;
+        return null;
+      }
+      const json = await res.json();
+      const data =
+        json?.task ||
+        json?.todo ||
+        json?.issue ||
+        json?.data?.task ||
+        json?.data?.todo ||
+        json?.data?.issue ||
+        json?.data ||
+        json;
+      itemDetailCache[key] = data || null;
+      return itemDetailCache[key];
+    } catch {
+      itemDetailCache[key] = null;
+      return null;
+    } finally {
+      itemDetailInflight[key] = undefined;
+    }
+  })();
+  itemDetailInflight[key] = p;
+  return p;
+};
+
+// Render target date + overdue + estimated effort + effective (active) time for a report item
+export const ReportItemMeta = ({ item }: { item: any }) => {
+  const sourceType = (
+    item?.source_type ||
+    item?.sourceType ||
+    item?.type ||
+    ""
+  ).toLowerCase();
+  const sourceId = item?.source_id ?? item?.sourceId ?? item?.id;
+  const [fetched, setFetched] = useState<any>(null);
+
+  // When the item lacks embedded details, fetch them by source_id
+  useEffect(() => {
+    let active = true;
+    if (
+      !item?.originalData &&
+      sourceId &&
+      ["task", "todo", "issue"].includes(sourceType)
+    ) {
+      fetchItemDetail(sourceType, sourceId).then((data) => {
+        if (active && data) setFetched(data);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [item?.originalData, sourceId, sourceType]);
+
+  const d = item?.originalData || fetched;
+  const status = (item?.status || d?.status || "").toLowerCase();
+  const isDone = ["completed", "closed", "done"].includes(status);
+  const targetRaw =
+    d?.target_date || d?.due_date || d?.end_date || item?.target_date;
+  const dueDate = fmtItemDate(targetRaw);
+  const overdueLabel = isDone ? null : getItemOverdueLabel(targetRaw);
+  const effortEst = fmtItemHours(d?.total_allocated_hours || d?.estimated_hour);
+  const hasActiveTime = sourceType === "task" && d?.active_time_till_now;
+
+  if (!dueDate && !overdueLabel && !effortEst && !hasActiveTime) return null;
+
+  return (
+    <div className="flex items-center gap-3 px-3 pb-2 -mt-1 flex-wrap">
+      {dueDate && (
+        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <Calendar className="w-3 h-3 shrink-0" />
+          {dueDate}
+        </span>
+      )}
+      {overdueLabel && (
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+          <AlertTriangle className="w-3 h-3 shrink-0" />
+          {overdueLabel}
+        </span>
+      )}
+      {effortEst && (
+        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <Clock className="w-3 h-3 shrink-0" />
+          Est: {effortEst}
+        </span>
+      )}
+      {hasActiveTime && (
+        <span className="flex items-center gap-1 text-[10px] text-green-600">
+          <Zap className="w-3 h-3 shrink-0" />
+          <ActiveTimer
+            activeTimeTillNow={d.active_time_till_now}
+            isStarted={d.is_started}
+          />
+        </span>
+      )}
+    </div>
+  );
 };
 
 const getItemTitle = (item: any): string => {
@@ -290,16 +472,82 @@ const getItemStatus = (item: any): string => {
 const isCompletedStatus = (status: string) =>
   ["closed", "completed", "done"].includes(status.toLowerCase());
 
+const getCalendarDisplayStatus = (status: any) => {
+  const normalizedStatus = String(status || "").toLowerCase();
+  if (["holiday", "non_meeting"].includes(normalizedStatus)) {
+    return "holiday";
+  }
+  return normalizedStatus;
+};
+
 const getItemType = (item: any): string => {
   if (!item || typeof item !== "object") return "task";
   return String(item.type || "task").toLowerCase();
 };
 
-const groupTasksIssuesByType = (items: any[] = []) => ({
-  tasks: items.filter((item) => getItemType(item) === "task"),
-  issues: items.filter((item) => getItemType(item) === "issue"),
-  todos: items.filter((item) => getItemType(item) === "todo"),
-});
+const getViewSourceType = (item: any): string => {
+  const rawType = String(
+    item?.source_type ||
+      item?.sourceType ||
+      item?.originalData?.source_type ||
+      item?.originalData?.sourceType ||
+      item?.type ||
+      ""
+  ).toLowerCase();
+
+  const rawId = String(item?.id || item?.source_id || "").toLowerCase();
+
+  if (rawType.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-")) return "todo";
+  if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return getItemType(item);
+};
+
+const getViewSourceId = (item: any): any => {
+  const rawId =
+    item?.source_id ??
+    item?.sourceId ??
+    item?.task_id ??
+    item?.taskId ??
+    item?.issue_id ??
+    item?.issueId ??
+    item?.todo_id ??
+    item?.todoId ??
+    item?.originalData?.source_id ??
+    item?.originalData?.sourceId ??
+    item?.originalData?.id ??
+    item?.originalData?.task_id ??
+    item?.originalData?.taskId ??
+    item?.originalData?.issue_id ??
+    item?.originalData?.issueId ??
+    item?.originalData?.todo_id ??
+    item?.originalData?.todoId ??
+    item?.id;
+
+  if (rawId === null || rawId === undefined || rawId === "") return null;
+
+  const cleaned = String(rawId).replace(/^(task|issue|todo)-/i, "");
+  return cleaned || rawId;
+};
+
+const getPayloadSourceType = (item: any): any => {
+  const rawType = String(
+    item?.source_type ||
+    item?.sourceType ||
+    item?.originalData?.source_type ||
+    item?.originalData?.sourceType ||
+    item?.type ||
+    ""
+  ).toLowerCase();
+  const rawId = String(item?.id || item?.source_id || "").toLowerCase();
+
+  if (rawType.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-")) return "todo";
+  if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return null;
+};
 
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
   const merged: any[] = [];
@@ -356,6 +604,35 @@ const getReportTotalScore = (report: any, rawSource: any = null) => {
   return Number.isFinite(numericScore) ? numericScore : null;
 };
 
+const isReportAbsent = (
+  report: any,
+  rawSource: any = null,
+  normalized: any = null
+) =>
+  [
+    report?.is_absent,
+    report?.daily_report?.is_absent,
+    rawSource?.is_absent,
+    rawSource?.details?.is_absent,
+    rawSource?.sections?.is_absent,
+    normalized?.is_absent,
+  ].some((value) => value === true || value === "true" || value === 1);
+
+const getReportAbsentReason = (
+  report: any,
+  rawSource: any = null,
+  normalized: any = null
+) =>
+  String(
+    report?.absent_reason ??
+    report?.daily_report?.absent_reason ??
+    rawSource?.absent_reason ??
+    rawSource?.details?.absent_reason ??
+    rawSource?.sections?.absent_reason ??
+    normalized?.absent_reason ??
+    "Absent"
+  ).trim() || "Absent";
+
 const formatSelfRating = (rating: any): string => {
   if (rating === null || rating === undefined || rating === "") return "";
   const ratingText = String(rating).trim();
@@ -379,7 +656,6 @@ const resolveRawSource = (report: any) => {
   const draftReport = report.daily_report || {};
   const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
-  const hasReportData = rd && Object.keys(rd).length > 0;
 
   const normalizeDraftRaw = (raw: any) => ({
     ...raw,
@@ -399,41 +675,15 @@ const resolveRawSource = (report: any) => {
       raw.details?.is_absent ??
       raw.sections?.is_absent ??
       false,
+    absent_reason:
+      raw.absent_reason ??
+      draftReport.absent_reason ??
+      raw.details?.absent_reason ??
+      raw.sections?.absent_reason ??
+      null,
   });
 
-  if (!hasReportData && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (report.status === "pending" && hasDraft) {
-    return normalizeDraftRaw(draftRaw);
-  }
-
-  if (hasReportData && hasDraft) {
-    const normalizedDraft = normalizeDraftRaw(draftRaw);
-
-    return {
-      ...normalizedDraft,
-      ...rd,
-      tasks_issues: Array.isArray(rd.tasks_issues)
-        ? mergeTasksIssuesPreservingType(
-            normalizedDraft.tasks_issues || [],
-            rd.tasks_issues
-          )
-        : normalizedDraft.tasks_issues || [],
-      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
-        : normalizedDraft.tomorrow_plan || [],
-      accomplishments:
-        rd.accomplishments?.items ||
-        (Array.isArray(rd.accomplishments)
-          ? rd.accomplishments
-          : normalizedDraft.accomplishments || []),
-      self_rating: normalizedDraft.self_rating,
-      total_score: rd.total_score ?? normalizedDraft.total_score,
-      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
-    };
-  }
+  if (hasDraft) return normalizeDraftRaw(draftRaw);
 
   return rd;
 };
@@ -463,9 +713,9 @@ const DailyTab = ({
   );
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
   const [meetingsLoaded, setMeetingsLoaded] = useState(false);
-  const [selectedMeetingId, setSelectedMeetingIdState] = useState<string | null>(
-    () => externalSelectedMeetingId || null
-  );
+  const [selectedMeetingId, setSelectedMeetingIdState] = useState<
+    string | null
+  >(() => externalSelectedMeetingId || null);
   const [membersList, setMembersList] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState("all");
   const [dailyData, setDailyData] = useState<any>(null);
@@ -481,15 +731,95 @@ const DailyTab = ({
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [isTodoModalOpen, setIsTodoModalOpen] = useState(false);
+  const [actionMemberPrefill, setActionMemberPrefill] = useState<any>(null);
   const [quickActionOpenId, setQuickActionOpenId] = useState<any>(null);
   const [quickActionText, setQuickActionText] = useState("");
 
   // Feedback specific states
   const [feedbackOpenId, setFeedbackOpenId] = useState<any>(null);
+  const [feedbackClosingId, setFeedbackClosingId] = useState<any>(null);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [fetchedFeedbacks, setFetchedFeedbacks] = useState<any[]>([]);
   const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
+
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
+
+  const handleViewReportItem = (item: any) => {
+    console.log("handleViewReportItem CLICKED, item:", item);
+    const computedType = getItemType(item);
+    const sourceType = (item.source_type || item.originalData?.source_type || computedType).toLowerCase();
+    const sourceId = item.id || item.task_id || item.issue_id || item.source_id || item.originalData?.id || item.originalData?.task_id || item.originalData?.issue_id;
+    const originalData = item.originalData || item;
+
+    console.log("handleViewReportItem - computedType:", computedType, "sourceType:", sourceType, "sourceId:", sourceId);
+
+    if (sourceType === "todo") {
+      console.log("Opening Todo Details Modal for:", originalData);
+      setSelectedTodo(originalData);
+      setIsDetailsModalOpen(true);
+      return;
+    }
+
+    if (!sourceType) return;
+
+    if (sourceType === "task") {
+      const navPath = sourceId ? `/vas/tasks/${sourceId}` : '/vas/tasks';
+      console.log("Navigating to task path:", navPath);
+      navigate(navPath);
+    } else if (sourceType === "issue") {
+      const navPath = sourceId ? `/vas/issues/${sourceId}` : '/vas/issues';
+      console.log("Navigating to issue path:", navPath);
+      navigate(navPath);
+    }
+  };
+
+  const handleViewTaskIssueTodoItem = async (item: any) => {
+    const sourceType = getViewSourceType(item);
+    const sourceId = getViewSourceId(item);
+    const originalData = item?.originalData || item;
+
+    if (sourceType === "todo") {
+      const todoId = sourceId;
+      setSelectedTodo({ ...originalData, id: todoId ?? originalData?.id });
+      setIsDetailsModalOpen(true);
+
+      if (todoId) {
+        try {
+          const res = await fetch(`${getBaseUrl()}/todos/${todoId}.json`, {
+            headers: getAuthHeaders(),
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const todoDetails = json?.todo || json?.data?.todo || json?.data || json;
+            if (todoDetails) setSelectedTodo(todoDetails);
+          }
+        } catch (error) {
+          console.error("Failed to fetch todo details:", error);
+        }
+      }
+      return;
+    }
+
+    if (sourceType === "task") {
+      if (!sourceId) {
+        toast.error("Task details not found for this item.");
+        return;
+      }
+      navigate(`/vas/tasks/${sourceId}`);
+      return;
+    }
+
+    if (sourceType === "issue") {
+      if (!sourceId) {
+        toast.error("Issue details not found for this item.");
+        return;
+      }
+      navigate(`/vas/issues/${sourceId}`);
+    }
+  };
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -505,7 +835,9 @@ const DailyTab = ({
   useEffect(() => {
     if (!externalSelectedMeetingId) return;
     setSelectedMeetingIdState((current) =>
-      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+      current === externalSelectedMeetingId
+        ? current
+        : externalSelectedMeetingId
     );
   }, [externalSelectedMeetingId]);
 
@@ -515,6 +847,51 @@ const DailyTab = ({
   };
 
   const navigate = useNavigate();
+
+  const openTaskModalForMember = (member: any) => {
+    const responsiblePerson = getMemberResponsiblePrefill(member);
+    if (!responsiblePerson) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTaskModalOpen(true);
+  };
+
+  const openIssueModalForMember = (member: any) => {
+    const responsiblePerson = getMemberResponsiblePrefill(member);
+    if (!responsiblePerson) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsIssueModalOpen(true);
+  };
+
+  const openTodoModalForMember = (member: any) => {
+    const responsiblePerson = getMemberResponsiblePrefill(member);
+    if (!responsiblePerson) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+    setActionMemberPrefill({ responsible_person: responsiblePerson });
+    setIsTodoModalOpen(true);
+  };
+
+  const closeTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setActionMemberPrefill(null);
+  };
+
+  const closeIssueModal = () => {
+    setIsIssueModalOpen(false);
+    setActionMemberPrefill(null);
+  };
+
+  const closeTodoModal = () => {
+    setIsTodoModalOpen(false);
+    setActionMemberPrefill(null);
+  };
 
   // ── Auto-populate checked in reports into selectedReports ──
   useEffect(() => {
@@ -609,8 +986,8 @@ const DailyTab = ({
 
         setMeetingJournalId(
           json.data?.meeting_journal_id ||
-            meetingJournalReport?.journal_id ||
-            null
+          meetingJournalReport?.journal_id ||
+          null
         );
 
         if (!skipNotesRestore) {
@@ -637,13 +1014,20 @@ const DailyTab = ({
           } else {
             const allReports: any[] =
               json.data?.member_reports || json.data?.reports || [];
+            const absentSubmittedIds = new Set(
+              allReports
+                .filter((r: any) => isReportAbsent(r, resolveRawSource(r)))
+                .map((r: any) => String(r.user_id))
+            );
             const pureMissed = [
               ...allReports
                 .filter((r: any) => r.status === "pending" && !r.daily_report)
                 .map((r: any) => r.name),
-              ...(json.data?.missed_members || []).map(
-                (m: any) => m.name || m.user
-              ),
+              ...(json.data?.missed_members || [])
+                .filter(
+                  (m: any) => !absentSubmittedIds.has(String(m.id || m.user_id))
+                )
+                .map((m: any) => m.name || m.user),
             ].filter(Boolean);
             const uniqueMissed = [...new Set(pureMissed)] as string[];
 
@@ -723,10 +1107,7 @@ const DailyTab = ({
 
     const rawSource = resolveRawSource(report);
     const baseReportData =
-      report.report_data ||
-      report.daily_report?.report_data ||
-      rawSource ||
-      {};
+      report.daily_report?.report_data || report.report_data || rawSource || {};
 
     if (patch.tomorrow_plan_item) {
       const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
@@ -806,11 +1187,10 @@ const DailyTab = ({
     if (currentIndex !== -1) {
       let nextIndex = currentIndex + days;
       while (nextIndex >= 0 && nextIndex < calendarRow.length) {
-        const s = calendarRow[nextIndex].status;
+        const s = getCalendarDisplayStatus(calendarRow[nextIndex].status);
         const nextDate = calendarRow[nextIndex].full_date;
         if (
           s !== "holiday" &&
-          s !== "non_meeting" &&
           s !== "upcoming" &&
           (days < 0 || nextDate <= todayKey)
         ) {
@@ -855,6 +1235,7 @@ const DailyTab = ({
         const rawSource = resolveRawSource(report);
         const source = normalizeReportData(rawSource);
         const draftRaw = report.daily_report?.report_data || {};
+        if (isReportAbsent(report, rawSource, source)) return;
 
         source.accomplishments.forEach((a: any) =>
           pushUnique(allAccomplishments, { ...a, member: report.name }, [
@@ -917,10 +1298,16 @@ const DailyTab = ({
     allMissed: any[],
     meetingNotesText: string
   ) => {
+    const absentSubmittedIds = new Set(
+      allReports
+        .filter((r: any) => isReportAbsent(r, resolveRawSource(r)))
+        .map((r: any) => String(r.user_id))
+    );
     const pureMissedNames = allReports
       .filter((r: any) => r.status === "pending" && !r.daily_report)
       .map((r: any) => r.name);
     allMissed.forEach((m: any) => {
+      if (absentSubmittedIds.has(String(m.id || m.user_id))) return;
       if (!pureMissedNames.includes(m.name)) pureMissedNames.push(m.name);
     });
 
@@ -946,6 +1333,28 @@ const DailyTab = ({
         if (Array.isArray(rawSource.tomorrow_plan))
           tpRaw = rawSource.tomorrow_plan;
 
+        const tasksIssuesRaw = Array.isArray(rawSource.tasks_issues)
+          ? rawSource.tasks_issues
+          : [];
+        const tasks_issues = tasksIssuesRaw
+          .filter((item: any) => !isCompletedStatus(getItemStatus(item)))
+          .map((item: any) => ({
+            type: getViewSourceType(item),
+            title: item.title || item.text || item.name || "",
+            text: item.title || item.text || item.name || "",
+            status: item.status || "open",
+            priority: item.priority || item.urgency || "",
+            target_date:
+              item.target_date ||
+              item.due_date ||
+              item.end_date ||
+              item.deadline ||
+              null,
+            source_id: getViewSourceId(item),
+            source_type: getViewSourceType(item),
+            originalData: item.originalData || item,
+          }));
+
         const tomorrow_plan = tpRaw.map((p: any) =>
           typeof p === "string" ? p : p.title || p.text || ""
         );
@@ -969,6 +1378,7 @@ const DailyTab = ({
           self_rating: `${selfRatingVal}/10`,
           kpis: Array.isArray(rawSource.kpis) ? rawSource.kpis : [],
           accomplishments,
+          tasks_issues,
           tomorrow_plan,
         };
       });
@@ -1016,16 +1426,27 @@ const DailyTab = ({
         meeting_notes: meetingNotesObj,
         accomplishments: allAccomplishments.map((a) => ({
           title: a.title || a.text || "",
+          source_id: getViewSourceId(a),
+          source_type: getPayloadSourceType(a),
         })),
-        tasks_issues: allTasksIssues.map((t) => ({
-          type: getItemType(t),
-          title: t.title || t.text || "",
-          status: t.status || "open",
-        })),
+        tasks_issues: allTasksIssues
+          .filter((t) => !isCompletedStatus(getItemStatus(t)))
+          .map((t) => ({
+            type: getViewSourceType(t),
+            title: t.title || t.text || "",
+            status: t.status || "open",
+            source_id: getViewSourceId(t),
+            source_type: getViewSourceType(t),
+          })),
         big_win: combinedBigWin || null,
-        tomorrow_plan: allTomorrowPlan.map((p) => ({
-          title: p.title || p.text || "",
-        })),
+        tomorrow_plan: allTomorrowPlan.map((p) => {
+          const sourceType = getPayloadSourceType(p);
+          return {
+            title: p.title || p.text || "",
+            source_id: getViewSourceId(p),
+            source_type: sourceType,
+          };
+        }),
         kpis: {
           score: `${combinedKpis.score}`,
           tasks: `${combinedKpis.tasks}`,
@@ -1200,16 +1621,27 @@ const DailyTab = ({
         meeting_notes: meetingNotesObj,
         accomplishments: allAccomplishments.map((a) => ({
           title: a.title || a.text || "",
+          source_id: getViewSourceId(a),
+          source_type: getPayloadSourceType(a),
         })),
-        tasks_issues: allTasksIssues.map((t) => ({
-          type: getItemType(t),
-          title: t.title || t.text || "",
-          status: t.status || "open",
-        })),
+        tasks_issues: allTasksIssues
+          .filter((t) => !isCompletedStatus(getItemStatus(t)))
+          .map((t) => ({
+            type: getViewSourceType(t),
+            title: t.title || t.text || "",
+            status: t.status || "open",
+            source_id: getViewSourceId(t),
+            source_type: getViewSourceType(t),
+          })),
         big_win: combinedBigWin || null,
-        tomorrow_plan: allTomorrowPlan.map((p) => ({
-          title: p.title || p.text || "",
-        })),
+        tomorrow_plan: allTomorrowPlan.map((p) => {
+          const sourceType = getPayloadSourceType(p);
+          return {
+            title: p.title || p.text || "",
+            source_id: getViewSourceId(p),
+            source_type: sourceType,
+          };
+        }),
         kpis: {
           score: `${combinedKpis.score}`,
           tasks: `${combinedKpis.tasks}`,
@@ -1281,6 +1713,15 @@ const DailyTab = ({
       })
     );
   let failedMembers = dailyData?.missed_members || [];
+  const absentSubmittedUserIds = new Set(
+    memberReports
+      .filter((report: any) => isReportAbsent(report, resolveRawSource(report)))
+      .map((report: any) => String(report.user_id))
+  );
+  failedMembers = failedMembers.filter(
+    (member: any) =>
+      !absentSubmittedUserIds.has(String(member.id || member.user_id))
+  );
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
       (r: any) => String(r.user_id) === selectedMember
@@ -1339,6 +1780,27 @@ const DailyTab = ({
     navigate("/admin-compass/feedback-dashboard");
   };
 
+  const resetFeedbackForm = () => {
+    setFeedbackRating(0);
+    setFeedbackMessage("");
+  };
+
+  const openFeedbackPanel = (panelId: any, targetUserId?: string | number) => {
+    setFeedbackClosingId(null);
+    setFeedbackOpenId(panelId);
+    resetFeedbackForm();
+    if (targetUserId) loadPastFeedbacks(targetUserId);
+  };
+
+  const closeFeedbackPanel = (panelId: any) => {
+    setFeedbackClosingId(panelId);
+    window.setTimeout(() => {
+      setFeedbackOpenId((current: any) => (current === panelId ? null : current));
+      setFeedbackClosingId((current: any) => (current === panelId ? null : current));
+      resetFeedbackForm();
+    }, 180);
+  };
+
   const visibleReportIds = memberReports.map((r: any) =>
     String(r.journal_id || r.user_id)
   );
@@ -1350,216 +1812,371 @@ const DailyTab = ({
 
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
 
+  const visibleReports = memberReports.filter(
+    (report: any) => report.status !== "pending" || !!report.daily_report
+  );
+
   return (
     <div
-      className="space-y-5 pb-12"
+      className="pb-12 space-y-6"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* ══ CALENDAR CARD ══ */}
-      <div className="rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm overflow-hidden">
-        <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 p-2 rounded-lg">
-              <Calendar size={20} className="text-blue-600" />
-            </div>
-            <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
-              Daily Meeting for {topDateStr}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => changeDate(-1)}
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-neutral-600" />
-            </button>
-            <button
-              onClick={() => changeDate(1)}
-              disabled={isNextDateDisabled}
-              className={cn(
-                "flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm transition-colors",
-                isNextDateDisabled
-                  ? "opacity-40 cursor-not-allowed"
-                  : "hover:bg-gray-50"
-              )}
-            >
-              <ChevronRight className="w-5 h-5 text-neutral-600" />
-            </button>
-          </div>
-        </div>
-
-        {/* ── Calendar Body ── */}
-        {isLoading && !dailyData ? (
-          <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <div
-                key={i}
-                className="min-w-[96px] h-[110px] rounded-[16px] skeleton shrink-0"
-              />
-            ))}
-          </div>
-        ) : noMeetings ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 border border-[#DA7756]/20">
-              <Calendar className="w-7 h-7 text-[#DA7756] opacity-40" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-neutral-500">
-                No meetings configured
-              </p>
-              <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
-                Please configure a meeting first to view the daily calendar.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
-            {calendarRow.map((dateItem: any) => {
-              const isSelected = dateItem.full_date === activeDate;
-              let rawStatus = dateItem.status;
-
-              if (isSelected && meetingJournalId) {
-                rawStatus = "submitted";
-              }
-
-              const isUpcoming = rawStatus === "upcoming";
-
-              if (isUpcoming) {
-                return (
-                  <div
-                    key={dateItem.full_date}
-                    className="min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-not-allowed border-2 transition-all shrink-0 snap-center shadow-sm relative group bg-[#f8fafc] text-[#94a3b8] border-gray-100"
-                    title="Upcoming – not selectable"
-                  >
-                    <div className="contents">
-                      <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
-                        {dateItem.day}
-                      </span>
-                      <span className="text-3xl font-black tracking-tighter">
-                        {dateItem.date}
-                      </span>
-                      <div className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center bg-black/10 text-[#854d0e]">
-                        Upcoming
-                      </div>
-                    </div>
+      <style>
+        {`
+          @keyframes feedbackPanelIn {
+            from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes feedbackPanelOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-6px) scale(0.985); }
+          }
+          .feedback-panel-enter { animation: feedbackPanelIn 180ms ease-out both; }
+          .feedback-panel-exit { animation: feedbackPanelOut 180ms ease-in both; }
+        `}
+      </style>
+      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
+        {/* ══ LEFT COLUMN ══ */}
+        <div className="h-full">
+          {/* ══ CALENDAR CARD ══ */}
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full flex flex-col">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-50 p-2 rounded-lg">
+                    <Calendar size={20} className="text-blue-600" />
                   </div>
-                );
-              }
-
-              let bg = "#F0EDEA",
-                textColor = "#9CA3AF",
-                labelBg = "rgba(0,0,0,0.07)",
-                labelColor = "#9CA3AF",
-                displayLabel = "Holiday";
-
-              if (rawStatus === "missed") {
-                bg = "#ef4444";
-                textColor = "#FFFFFF";
-                labelBg = "rgba(255,255,255,0.22)";
-                labelColor = "#FFFFFF";
-                displayLabel = "Miss";
-              } else if (rawStatus === "done" || rawStatus === "submitted") {
-                bg = "#22c55e";
-                textColor = "#FFFFFF";
-                labelBg = "rgba(255,255,255,0.22)";
-                labelColor = "#FFFFFF";
-                displayLabel = "Filled";
-              } else if (
-                rawStatus === "holiday" ||
-                rawStatus === "non_meeting"
-              ) {
-                bg = "#facd55";
-                textColor = "#8A6D3B";
-                labelBg = "rgba(0,0,0,0.09)";
-                labelColor = "#8A6D3B";
-                displayLabel = "Holiday";
-              }
-
-              const isHoliday =
-                rawStatus === "holiday" || rawStatus === "non_meeting";
-
-              return (
-                <div
-                  key={dateItem.full_date}
-                  onClick={
-                    isHoliday
-                      ? undefined
-                      : () => setActiveDate(dateItem.full_date)
-                  }
-                  className={cn(
-                    "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 border-2 transition-all shrink-0 snap-center shadow-sm relative group",
-                    isHoliday ? "cursor-not-allowed" : "cursor-pointer"
-                  )}
-                  title={isHoliday ? "Holiday – not selectable" : undefined}
-                >
-                  <div
-                    className="flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-[16px] transition-all duration-200"
-                    style={{
-                      background: bg,
-                      color: textColor,
-                      boxShadow: isSelected
-                        ? "0 0 0 3px #ffffff, 0 0 0 6px #D7E5FC"
-                        : "0 3px 10px rgba(0,0,0,0.09)",
-                    }}
-                  >
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
-                      {dateItem.day}
-                    </span>
-                    <span className="text-3xl font-black tracking-tighter">
-                      {dateItem.date}
-                    </span>
-                    <div
-                      className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center"
-                      style={{ background: labelBg, color: labelColor }}
-                    >
-                      {displayLabel}
-                    </div>
-                  </div>
-                  {dateItem.is_today && (
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#CE7A5A] rounded-full" />
-                  )}
-                  {isSelected && (
-                    <div
-                      className="absolute top-0 right-0 w-[14px] h-[14px] bg-[#3B82F6] rounded-full border-[2px] border-white shadow-sm"
-                      style={{ transform: "translate(40%, -40%)", zIndex: 10 }}
-                    />
-                  )}
+                  <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
+                    Daily Meeting for {topDateStr}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => changeDate(-1)}
+                    className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-neutral-600" />
+                  </button>
+                  <button
+                    onClick={() => changeDate(1)}
+                    disabled={isNextDateDisabled}
+                    className={cn(
+                      "flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm transition-colors",
+                      isNextDateDisabled
+                        ? "opacity-40 cursor-not-allowed"
+                        : "hover:bg-gray-50"
+                    )}
+                  >
+                    <ChevronRight className="w-5 h-5 text-neutral-600" />
+                  </button>
+                </div>
+              </div>
 
-        {!noMeetings && (
-          <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#22c55e]" />{" "}
-              Filled
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#ef4444]" />{" "}
-              Missed (click to fill)
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#facd55]" />{" "}
-              Holiday
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <span
-                className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#f1f5f9] border border-gray-100"
-              />{" "}
-              Upcoming
+              {/* ── Calendar Body ── */}
+              {isLoading && !dailyData ? (
+                <div className="flex gap-4 overflow-x-auto pb-8 pt-4 scrollbar-none snap-x">
+                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    <div
+                      key={i}
+                      className="min-w-[96px] h-[110px] rounded-[16px] skeleton shrink-0"
+                    />
+                  ))}
+                </div>
+              ) : noMeetings ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 border border-[#DA7756]/20">
+                    <Calendar className="w-7 h-7 text-[#DA7756] opacity-40" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-neutral-500">
+                      No meetings configured
+                    </p>
+                    <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
+                      Please configure a meeting first to view the daily
+                      calendar.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-8 pt-4 scrollbar-none snap-x">
+                  {calendarRow.map((dateItem: any) => {
+                    const isSelected = dateItem.full_date === activeDate;
+                    let rawStatus = dateItem.status;
+
+                    if (isSelected && meetingJournalId) {
+                      rawStatus = "submitted";
+                    }
+
+                    const displayStatus =
+                      getCalendarDisplayStatus(rawStatus) ||
+                      (dateItem.full_date > getLocalDateKey()
+                        ? "upcoming"
+                        : "");
+                    const isHoliday = displayStatus === "holiday";
+                    const isUpcoming = displayStatus === "upcoming";
+                    const isFilled =
+                      displayStatus === "done" || displayStatus === "submitted";
+                    const isMissed = displayStatus === "missed";
+
+                    // top bar color (BusinessCompass style)
+                    let topBarColor = "transparent";
+                    let displayLabel = "Upcoming";
+                    if (isFilled) {
+                      topBarColor = "#61CDBB";
+                      displayLabel = "Filled";
+                    } else if (isMissed) {
+                      topBarColor = "#E28B8B";
+                      displayLabel = "Miss";
+                    } else if (isHoliday) {
+                      topBarColor = "#D1D5DB";
+                      displayLabel = "Holiday";
+                    } else if (isUpcoming) {
+                      displayLabel = "Upcoming";
+                    }
+
+                    return (
+                      <div
+                        key={dateItem.full_date}
+                        onClick={
+                          isHoliday || isUpcoming
+                            ? undefined
+                            : () => setActiveDate(dateItem.full_date)
+                        }
+                        className={cn(
+                          "min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all shrink-0 snap-center relative",
+                          isHoliday || isUpcoming
+                            ? "cursor-not-allowed opacity-70"
+                            : "cursor-pointer"
+                        )}
+                        style={{
+                          background: isSelected ? "#FFFFFF" : "#F5F5F5",
+                          border: isSelected
+                            ? "1.5px solid #DA7756"
+                            : "1.5px solid transparent",
+                          boxShadow: isSelected
+                            ? "0 2px 8px rgba(218,119,86,0.18)"
+                            : "none",
+                        }}
+                        title={
+                          isHoliday
+                            ? "Holiday - not selectable"
+                            : isUpcoming
+                              ? "Upcoming - not selectable"
+                              : undefined
+                        }
+                      >
+                        {topBarColor !== "transparent" && (
+                          <div
+                            className="absolute top-[-1.5px] left-[-1.5px] right-[-1.5px] z-10 h-2.5 rounded-t-xl"
+                            style={{ backgroundColor: topBarColor }}
+                          />
+                        )}
+                        {isUpcoming && !isSelected && (
+                          <div
+                            className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border border-white"
+                            style={{
+                              backgroundColor: "#E28B8B",
+                              transform: "translate(30%, -30%)",
+                            }}
+                          />
+                        )}
+                        <span className="text-[11px] font-semibold text-gray-500 mt-2">
+                          {dateItem.day}
+                        </span>
+                        <span className="text-[22px] font-black text-gray-800 leading-tight">
+                          {dateItem.date}
+                        </span>
+                        <span
+                          className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5"
+                          style={{
+                            color: isFilled
+                              ? "#0f9e7b"
+                              : isMissed
+                                ? "#c0392b"
+                                : isHoliday
+                                  ? "#6b7280"
+                                  : "#94a3b8",
+                            background: isFilled
+                              ? "#e6faf6"
+                              : isMissed
+                                ? "#fce8e8"
+                                : isHoliday
+                                  ? "#f1f5f9"
+                                  : "#f1f5f9",
+                          }}
+                        >
+                          {displayLabel}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {!noMeetings && (
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 pt-4 border-t border-gray-100 mt-3">
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ background: "#61CDBB" }}
+                    />
+                    Filled
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ background: "#E28B8B" }}
+                    />
+                    Missed
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ background: "#D1D5DB" }}
+                    />
+                    Holiday
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
+                    <span
+                      className="w-3 h-3 rounded-full"
+                      style={{ background: "#E28B8B" }}
+                    />
+                    Upcoming
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
         </div>
-      </div>
+        {/* ══ END LEFT COLUMN ══ (calendar only) */}
 
+        {/* ══ RIGHT COLUMN — Notes Panel ══ */}
+        <div className="h-full">
+          {isLoading && !dailyData && (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-full flex flex-col animate-pulse">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <div className="h-4 w-36 rounded-full skeleton" />
+                <div className="h-3 w-20 rounded-full skeleton" />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-gray-100">
+                <div className="h-7 w-20 rounded-2xl skeleton" />
+                <div className="h-7 w-24 rounded-2xl skeleton" />
+                <div className="h-7 w-20 rounded-2xl skeleton" />
+              </div>
+              <div className="p-4 flex-1 flex flex-col gap-2">
+                <div className="h-3 w-24 rounded-full skeleton" />
+                <div className="flex-1 rounded-2xl skeleton min-h-[120px]" />
+              </div>
+              <div className="flex items-center justify-between bg-gray-50 p-3 px-4 border-t border-gray-100">
+                <div className="h-5 w-24 rounded-full skeleton" />
+                <div className="h-9 w-32 rounded-2xl skeleton" />
+              </div>
+            </div>
+          )}
+          {!isLoading && dailyData && !noMeetings && (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-full flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
+                  <FileText className="w-4 h-4 text-[#CE7A5A]" />
+                  Daily Reports ({configName})
+                </div>
+                <span className="text-xs text-neutral-400">{topDateStr}</span>
+              </div>
+
+              {/* Stats row */}
+              <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-gray-100">
+                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-[#CE7A5A] text-white shadow-sm">
+                  Total: {dailyData.total_members || 0}
+                </span>
+                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-green-600 border border-green-400/50 shadow-sm">
+                  Submitted: {dailyData.submitted || 0}
+                </span>
+                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#b91c1c] border border-[#b91c1c]/70 shadow-sm">
+                  Missed: {dailyData.missed || 0}
+                </span>
+              </div>
+
+              {/* Meeting Notes — grows to fill height */}
+              <div className="p-4 flex-1 flex flex-col">
+                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                  Meeting Notes
+                </p>
+                <textarea
+                  value={meetingNotes}
+                  onChange={(e) => setMeetingNotes(e.target.value)}
+                  className="w-full flex-1 border border-gray-200 rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[120px] resize-none placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
+                  placeholder={
+                    meetingJournalId
+                      ? "Edit discussion points..."
+                      : "Team members who missed + discussion points will appear here..."
+                  }
+                />
+              </div>
+
+              {/* Footer: Select All + Save */}
+              <div className="flex items-center justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
+                <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={areAllVisibleReportsSelected}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 shrink-0 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                  />
+                  <span className="text-sm font-bold leading-tight text-[#1A1A1A] whitespace-nowrap">
+                    Select All
+                  </span>
+                </label>
+                {isActiveDateSubmitted ? (
+                  <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
+                    {!notesChanged && (
+                      <span className="min-w-0 max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
+                        Edit notes to enable update
+                      </span>
+                    )}
+                    <BtnPrimary
+                      icon={isSavingMeeting ? Loader2 : RefreshCw}
+                      onClick={handleUpdateNotesOnly}
+                      disabled={isSavingMeeting || !notesChanged}
+                      loading={isSavingMeeting}
+                      className="min-h-[44px] min-w-[156px] whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100"
+                    >
+                      {isSavingMeeting ? "Updating..." : "Update Notes"}
+                    </BtnPrimary>
+                  </div>
+                ) : meetingJournalId ? (
+                  <BtnPrimary
+                    icon={isSavingMeeting ? Loader2 : RefreshCw}
+                    onClick={handleUpdateMeeting}
+                    disabled={isSavingMeeting}
+                    loading={isSavingMeeting}
+                    className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                  >
+                    {isSavingMeeting ? "Updating..." : "Update Meeting"}
+                  </BtnPrimary>
+                ) : (
+                  <BtnPrimary
+                    icon={isSavingMeeting ? Loader2 : FileText}
+                    onClick={handleSaveMeeting}
+                    disabled={isSavingMeeting}
+                    loading={isSavingMeeting}
+                  >
+                    {isSavingMeeting ? "Saving..." : "Save Meeting"}
+                  </BtnPrimary>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        {/* ══ END RIGHT COLUMN (notes) ══ */}
+      </div>
+      {/* ══ END CALENDAR+NOTES GRID ══ */}
+
+      {/* ══ FULL WIDTH BELOW — Filters ══ */}
       {/* ══ FILTERS ══ */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
+          <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
             Meeting
           </span>
           {noMeetings ? (
@@ -1584,9 +2201,10 @@ const DailyTab = ({
 
         {!noMeetings && (
           <>
+            <div className="w-px h-5 bg-gray-200 shrink-0" />
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
-                Member
+              <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
+                Members
               </span>
               <SearchableSelect
                 value={selectedMember}
@@ -1601,18 +2219,6 @@ const DailyTab = ({
                 ]}
               />
             </div>
-            <button
-              onClick={() => loadDailyData(false)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-neutral-600 shadow-sm hover:border-[#CE7A5A]/60 hover:text-[#CE7A5A] transition-all"
-            >
-              <RefreshCw
-                className={cn(
-                  "w-3.5 h-3.5",
-                  isLoading && "animate-spin text-[#CE8261]"
-                )}
-              />{" "}
-              Refresh
-            </button>
           </>
         )}
       </div>
@@ -1691,323 +2297,241 @@ const DailyTab = ({
         </div>
       )}
 
-      {/* ══ REPORTS SECTION ══ */}
+      {/* ══ REPORTS SECTION — member cards in left col ══ */}
       {!isLoading && dailyData && !noMeetings && (
         <>
-          <div className="border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm overflow-hidden bg-[#FFFDFB]">
-            <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fef6f4]">
-              <div>
-                <h3 className="font-bold text-sm text-neutral-900 flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white border border-[rgba(218,119,86,0.22)]">
-                    <FileText className="w-4 h-4 text-[#CE7A5A]" />
-                  </div>
-                  Daily Reports ({configName})
-                </h3>
-                <p className="text-xs text-neutral-400 mt-0.5">{topDateStr}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap pt-3">
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-[#CE7A5A] text-white shadow-sm">
-                  Total: {dailyData.total_members || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#CE7A5A] border border-[#CE7A5A]/40 shadow-sm">
-                  Submitted: {dailyData.submitted || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#b91c1c] border border-[#b91c1c]/70 shadow-sm">
-                  Missed: {dailyData.missed || 0}
-                </span>
-              </div>
+          {visibleReports.length === 0 && failedMembers.length === 0 && (
+            <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white border border-gray-200 rounded-2xl">
+              No reports found for this selection.
             </div>
+          )}
 
-            {memberReports.length === 0 && failedMembers.length === 0 && (
-              <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white">
-                No reports found for this selection.
-              </div>
-            )}
+          {visibleReports.length > 0 && (
+            <div>
+              {/* ══ Report Cards ══ */}
+              <div className="space-y-4">
+                {visibleReports
+                  .map((report: any) => {
+                    const rId = report.journal_id || report.user_id;
+                    const isExpanded = expandedReports.includes(rId);
+                    const isFeedbackVisible =
+                      feedbackOpenId === rId || feedbackClosingId === rId;
+                    const isFeedbackClosing = feedbackClosingId === rId;
+                    const isRawPending = report.status === "pending";
+                    const hasDraft = !!report.daily_report;
+                    const isPermanentlyChecked =
+                      report.checked_in_meeting === true;
+                    const draftRaw = report.daily_report?.report_data || {};
 
-            {memberReports.length > 0 && (
-              <div className="p-4 bg-[#FFFDFB]">
-                {/* ══ Meeting Notes Box ══ */}
-                <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm mb-6">
-                  <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#FFFAF8]">
-                    <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
-                      <Users className="w-4 h-4 text-[#CE7A5A]" /> Meeting Notes
-                    </div>
-                    <BtnIcon
-                      onClick={() => loadDailyData(false)}
-                      title="Refresh"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                    </BtnIcon>
-                  </div>
+                    const rawDisplayRd = resolveRawSource(report);
+                    const displayRd = normalizeReportData(rawDisplayRd);
+                    const isAbsentReport = isReportAbsent(
+                      report,
+                      rawDisplayRd,
+                      displayRd
+                    );
+                    const isPending = isRawPending && !isAbsentReport;
+                    const absentReason = getReportAbsentReason(
+                      report,
+                      rawDisplayRd,
+                      displayRd
+                    );
+                    const attendanceLabel = isAbsentReport ? "Absent" : "Present";
+                    const absentReasonText =
+                      isAbsentReport && absentReason.toLowerCase() !== "absent"
+                        ? absentReason
+                        : "";
+                    const attendanceBadgeClass = isAbsentReport
+                      ? "bg-red-50 text-red-700 border-red-100"
+                      : "bg-green-50 text-green-700 border-green-100";
 
-                  <div className="p-4">
-                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
-                      {meetingJournalId ? "Discussion Points" : "Meeting Notes"}
-                    </p>
-                    <textarea
-                      value={meetingNotes}
-                      onChange={(e) => setMeetingNotes(e.target.value)}
-                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
-                      placeholder={
-                        meetingJournalId
-                          ? "Edit discussion points..."
-                          : "Team members who missed + discussion points will appear here..."
-                      }
-                    />
-                  </div>
+                    const normalizedReportName = (report.name || "")
+                      .trim()
+                      .toLowerCase();
 
-                  <div className="flex items-center justify-between bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)]">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={areAllVisibleReportsSelected}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
-                      />
-                      <span className="text-sm font-medium text-[#1A1A1A]">
-                        Select All
-                      </span>
-                    </label>
-
-                    {isActiveDateSubmitted ? (
-                      <div className="flex items-center gap-2">
-                        {!notesChanged && (
-                          <span className="text-[11px] text-neutral-400 font-medium italic">
-                            Edit notes to enable update
-                          </span>
-                        )}
-                        <BtnPrimary
-                          icon={isSavingMeeting ? Loader2 : RefreshCw}
-                          onClick={handleUpdateNotesOnly}
-                          disabled={isSavingMeeting || !notesChanged}
-                          loading={isSavingMeeting}
-                          className="bg-blue-600 hover:bg-blue-700 border-blue-700"
-                        >
-                          {isSavingMeeting ? "Updating..." : "Update Notes"}
-                        </BtnPrimary>
-                      </div>
-                    ) : meetingJournalId ? (
-                      <BtnPrimary
-                        icon={isSavingMeeting ? Loader2 : RefreshCw}
-                        onClick={handleUpdateMeeting}
-                        disabled={isSavingMeeting}
-                        loading={isSavingMeeting}
-                        className="bg-blue-600 hover:bg-blue-700 border-blue-700"
-                      >
-                        {isSavingMeeting ? "Updating..." : "Update Meeting"}
-                      </BtnPrimary>
-                    ) : (
-                      <BtnPrimary
-                        icon={isSavingMeeting ? Loader2 : FileText}
-                        onClick={handleSaveMeeting}
-                        disabled={isSavingMeeting}
-                        loading={isSavingMeeting}
-                      >
-                        {isSavingMeeting ? "Saving..." : "Save Meeting"}
-                      </BtnPrimary>
-                    )}
-                  </div>
-                </div>
-
-                {/* ══ Report Cards ══ */}
-                <div className="space-y-4">
-                  {memberReports
-                    .filter(
-                      (report: any) =>
-                        report.status !== "pending" || !!report.daily_report
-                    )
-                    .map((report: any) => {
-                      const rId = report.journal_id || report.user_id;
-                      const isExpanded = expandedReports.includes(rId);
-                      const isPending = report.status === "pending";
-                      const hasDraft = !!report.daily_report;
-                      const isPermanentlyChecked =
-                        report.checked_in_meeting === true;
-                      const draftRaw = report.daily_report?.report_data || {};
-
-                      const rawDisplayRd = resolveRawSource(report);
-                      const displayRd = normalizeReportData(rawDisplayRd);
-
-                      const normalizedReportName = (report.name || "")
-                        .trim()
-                        .toLowerCase();
-
-                      const userAccomplishments =
-                        displayRd.accomplishments.filter(
-                          (item: any) =>
-                            !item.member ||
-                            String(item.member).trim().toLowerCase() ===
-                              normalizedReportName
-                        );
-
-                      const userTasksIssues = displayRd.tasks_issues.filter(
+                    const userAccomplishments =
+                      displayRd.accomplishments.filter(
                         (item: any) =>
                           !item.member ||
                           String(item.member).trim().toLowerCase() ===
-                            normalizedReportName
-                      );
-                      const groupedTasksIssues =
-                        groupTasksIssuesByType(userTasksIssues);
-
-                      const userTomorrowPlan = displayRd.tomorrow_plan.filter(
-                        (item: any) =>
-                          !item.member ||
-                          String(item.member).trim().toLowerCase() ===
-                            normalizedReportName
+                          normalizedReportName
                       );
 
-                      // ── NEW LOGIC FOR SCORING ──
-                      const sections =
-                        draftRaw?.sections ||
-                        rawDisplayRd?.sections ||
-                        displayRd?.sections ||
-                        report?.report_data?.sections ||
-                        {};
-                      const kpisFallback =
-                        report.kpis ||
-                        report.report_data?.kpis ||
-                        rawDisplayRd?.kpis ||
-                        {};
+                    const userTasksIssues = displayRd.tasks_issues.filter(
+                      (item: any) =>
+                        !item.member ||
+                        String(item.member).trim().toLowerCase() ===
+                        normalizedReportName
+                    );
+                    const visibleTasksIssues = userTasksIssues.filter(
+                      (item: any) => !isCompletedStatus(getItemStatus(item))
+                    );
 
-                      // Explicit strict checker to prevent `0` from failing over to fallback values
-                      const getScore = (val1: any, val2: any) => {
-                        if (val1 !== undefined && val1 !== null && val1 !== "")
-                          return Number(val1);
-                        if (val2 !== undefined && val2 !== null && val2 !== "")
-                          return Number(val2);
-                        return 0;
-                      };
+                    const userTomorrowPlan = displayRd.tomorrow_plan.filter(
+                      (item: any) =>
+                        !item.member ||
+                        String(item.member).trim().toLowerCase() ===
+                        normalizedReportName
+                    );
 
-                      const kpiAchieved = getScore(
-                        sections.kpi_achievement,
-                        kpisFallback.score
-                      );
-                      const kpiStr = `${kpiAchieved}/20`;
+                    // ── NEW LOGIC FOR SCORING ──
+                    const sections =
+                      draftRaw?.sections ||
+                      rawDisplayRd?.sections ||
+                      displayRd?.sections ||
+                      {};
+                    const kpisFallback =
+                      report.kpis ||
+                      rawDisplayRd?.kpis ||
+                      {};
 
-                      const tasksIssuesAchieved = getScore(
+                    // Explicit strict checker to prevent `0` from failing over to fallback values
+                    const getScore = (val1: any, val2: any) => {
+                      if (val1 !== undefined && val1 !== null && val1 !== "")
+                        return Number(val1);
+                      if (val2 !== undefined && val2 !== null && val2 !== "")
+                        return Number(val2);
+                      return 0;
+                    };
+
+                    const kpiAchieved = isAbsentReport
+                      ? 0
+                      : getScore(sections.kpi_achievement, kpisFallback.score);
+                    const kpiStr = `${kpiAchieved}/20`;
+
+                    const tasksIssuesAchieved = isAbsentReport
+                      ? 0
+                      : getScore(
                         sections.tasks_issues_todos ?? sections.tasks_issues,
                         kpisFallback.tasks
                       );
-                      const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
+                    const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
-                      const planAchieved = getScore(
-                        sections.planning,
-                        kpisFallback.planning
-                      );
-                      const planStr = `${planAchieved}/20`;
+                    const planAchieved = isAbsentReport
+                      ? 0
+                      : getScore(sections.planning, kpisFallback.planning);
+                    const planStr = `${planAchieved}/20`;
 
-                      const timeAchieved = getScore(
-                        sections.timing,
-                        kpisFallback.timing
-                      );
-                      const timeStr = `${timeAchieved}/20`;
+                    const timeAchieved = getScore(
+                      sections.timing,
+                      kpisFallback.timing
+                    );
+                    const timeStr = `${timeAchieved}/20`;
 
-                      const selfRating =
-                        rawDisplayRd?.self_rating ??
+                    const selfRating = isAbsentReport
+                      ? 0
+                      : (rawDisplayRd?.self_rating ??
                         draftRaw?.details?.self_rating ??
                         draftRaw?.sections?.self_rating ??
-                        null;
-                      const selfRatingText = formatSelfRating(selfRating);
+                        null);
+                    const selfRatingText = formatSelfRating(selfRating);
 
-                      const totalScoreValue = getReportTotalScore(
-                        report,
-                        rawDisplayRd
-                      );
-                      const totalScoreStr = Math.round(totalScoreValue ?? 0);
+                    const totalScoreValue = getReportTotalScore(
+                      report,
+                      rawDisplayRd
+                    );
+                    const totalScoreStr = Math.round(totalScoreValue ?? 0);
 
-                      const canExpand = !isPending || hasDraft;
-                      const isSelected = selectedReports.includes(rId);
+                    const canExpand = !isPending || hasDraft;
+                    const isSelected = selectedReports.includes(rId);
 
-                      return (
+                    return (
+                      <div
+                        key={rId}
+                        className={cn(
+                          "bg-white border rounded-xl shadow-sm overflow-hidden transition-all",
+                          isSelected
+                            ? "border-[#4A90E2] border-l-[4px]"
+                            : "border-[#EAE3DF]"
+                        )}
+                      >
                         <div
-                          key={rId}
                           className={cn(
-                            "bg-white border rounded-xl shadow-sm overflow-hidden transition-all",
-                            isSelected
-                              ? "border-[#4A90E2] border-l-[4px]"
-                              : "border-[#EAE3DF]"
+                            "p-4 transition-colors flex items-start gap-4",
+                            canExpand
+                              ? "cursor-pointer hover:bg-gray-50"
+                              : "cursor-default"
                           )}
+                          onClick={() => canExpand && toggleExpand(rId)}
                         >
-                          <div
-                            className={cn(
-                              "p-4 transition-colors flex items-start gap-4",
-                              canExpand
-                                ? "cursor-pointer hover:bg-gray-50"
-                                : "cursor-default"
-                            )}
-                            onClick={() => canExpand && toggleExpand(rId)}
-                          >
-                            <div className="flex items-start gap-3 pt-1">
-                              <input
-                                type="checkbox"
-                                checked={isPermanentlyChecked || isSelected}
-                                disabled={isPermanentlyChecked}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  if (isPermanentlyChecked) return;
-                                  setSelectedReports((prev) =>
-                                    e.target.checked
-                                      ? [...prev, rId]
-                                      : prev.filter((id) => id !== rId)
-                                  );
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className={cn(
-                                  "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
-                                  isPermanentlyChecked
-                                    ? "opacity-60 cursor-not-allowed"
-                                    : "cursor-pointer"
-                                )}
-                              />
-                              <div className="flex flex-col items-center gap-1">
-                                <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
-                                  {totalScoreStr}
-                                </div>
-                                {selfRatingText && (
-                                  <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                                    ⭐ {selfRatingText}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                          <div className="flex items-start gap-3 pt-1">
+                            <input
+                              type="checkbox"
+                              checked={isPermanentlyChecked || isSelected}
+                              disabled={isPermanentlyChecked}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                if (isPermanentlyChecked) return;
+                                setSelectedReports((prev) =>
+                                  e.target.checked
+                                    ? [...prev, rId]
+                                    : prev.filter((id) => id !== rId)
+                                );
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className={cn(
+                                "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
+                                isPermanentlyChecked
+                                  ? "opacity-60 cursor-not-allowed"
+                                  : "cursor-pointer"
+                              )}
+                            />
+                          </div>
 
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
-                                      {report.name}
-                                    </h3>
-                                    {(report.name?.includes("HOD") ||
-                                      report.name?.includes("TL")) && (
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                                    {report.name}
+                                  </h3>
+                                  {(report.name?.includes("HOD") ||
+                                    report.name?.includes("TL")) && (
                                       <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
                                         <Crown className="w-3 h-3 fill-orange-400" />{" "}
                                         HOD
                                       </span>
                                     )}
-                                    {report.department && (
-                                      <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                                        {report.department}
-                                      </span>
-                                    )}
-                                    {isPending && !hasDraft ? (
-                                      <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
-                                        PENDING
-                                      </span>
-                                    ) : (
-                                      ""
-                                    )}
-                                  </div>
-                                  <div className="text-[11px] text-gray-400 mb-2 truncate">
-                                    {report.email}
-                                    {report.submitted_at && (
-                                      <span className="ml-1">
-                                        • {formatDateTime(report.submitted_at)}
-                                      </span>
-                                    )}
-                                  </div>
+                                  {report.department && (
+                                    <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                      {report.department}
+                                    </span>
+                                  )}
                                 </div>
+                                <div className="text-[11px] text-gray-400 mb-2 truncate">
+                                  {report.email || "Report submitted"}
+                                  {report.submitted_at && (
+                                    <span className="ml-1">
+                                      • {formatDateTime(report.submitted_at)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
 
+                              <div className="flex items-center gap-2 shrink-0">
+                                {isPending && !hasDraft && (
+                                  <span className="text-red-500 text-xs font-semibold">
+                                    Not submitted
+                                  </span>
+                                )}
+                                {!isPending && (
+                                  <>
+                                    <span className="text-[10px] font-bold text-white bg-[#10B981] border border-[#10B981] px-2 py-0.5 rounded-full shrink-0">
+                                      Submitted
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        "border text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                                        attendanceBadgeClass
+                                      )}
+                                    >
+                                      {attendanceLabel}
+                                      {absentReasonText
+                                        ? `: ${absentReasonText}`
+                                        : ""}
+                                    </span>
+                                  </>
+                                )}
                                 {canExpand && (
                                   <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
                                     <ChevronDown
@@ -2019,663 +2543,1260 @@ const DailyTab = ({
                                   </button>
                                 )}
                               </div>
+                            </div>
 
-                              {(!isPending || hasDraft) && (
-                                <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    KPI: {kpiStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Tasks, Issues & Todos: {tasksIssuesStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Planning: {planStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Timing: {timeStr}
-                                  </span>
+                            {canExpand && (
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  KPI: {kpiStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Task, Issues & To-do's: {tasksIssuesStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Planning: {planStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Timing: {timeStr}
+                                </span>
+                              </div>
+                            )}
+
+                            {canExpand && dateRow.length > 0 && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                                  {configName}
+                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {dateRow.map((d: any, i: number) => {
+                                    const s = getCalendarDisplayStatus(d.status);
+                                    return (
+                                      <div
+                                        key={i}
+                                        className={cn(
+                                          "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                          s === "done" || s === "submitted"
+                                            ? "bg-[#10B981] text-white border-[#10B981]"
+                                            : s === "missed"
+                                              ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                              : s === "holiday"
+                                                ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
+                                                : "bg-gray-100 text-gray-400 border-gray-200"
+                                        )}
+                                      >
+                                        <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                          {d.day ? d.day.charAt(0) : ""}
+                                        </span>
+                                        <span className="leading-none">
+                                          {d.date ?? ""}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {isExpanded && canExpand && (
+                          <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                            <div className="p-5 space-y-5">
+                              <div className="flex items-center gap-4 text-sm mb-4">
+                                <span>
+                                  ⭐ Self rating {selfRatingText || "0/10"}
+                                </span>
+                                <span className="text-gray-400">
+                                  Total Score: {totalScoreStr}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "font-semibold",
+                                    isAbsentReport ? "text-red-600" : "text-green-600"
+                                  )}
+                                >
+                                  {attendanceLabel}
+                                  {absentReasonText ? `: ${absentReasonText}` : ""}
+                                </span>
+                              </div>
+
+                              {!isAbsentReport && displayRd.big_win && (
+                                <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
+                                  <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">
+                                      Big Win 🏆
+                                    </div>
+                                    <p className="text-sm font-semibold text-amber-900">
+                                      {displayRd.big_win}
+                                    </p>
+                                  </div>
                                 </div>
                               )}
 
-                              {canExpand && (
-                                <p className="text-[10px] text-gray-400 italic mb-2 mt-1">
-                                  Click to view tasks, accomplishments & plan
-                                </p>
-                              )}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Accomplishments */}
+                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                    <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                    </div>
+                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                      Accomplishments
+                                    </h4>
+                                  </div>
+                                  {isAbsentReport || userAccomplishments.length === 0 ? (
+                                    <p className="text-xs text-neutral-300 italic">
+                                      None recorded.
+                                    </p>
+                                  ) : (
+                                    <ul className="space-y-2">
+                                      {userAccomplishments.map(
+                                        (item: any, i: number) => {
+                                          const type = (item.source_type || "note").toLowerCase();
+                                          const typePillStyle =
+                                            type === "issue"
+                                              ? "bg-red-100 text-red-700 border-red-200"
+                                              : type === "todo"
+                                                ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                : type === "task"
+                                                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
+                                                  : "bg-gray-100 text-gray-600 border-gray-200";
+                                          const hasDetails = ["task", "issue", "todo"].includes(type);
 
-                              {(!isPending || hasDraft) &&
-                                dateRow.length > 0 && (
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                                      {configName}
-                                    </span>
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      {dateRow.map((d: any, i: number) => {
-                                        const s =
-                                          d.status === "non_meeting"
-                                            ? "holiday"
-                                            : d.status;
+                                          return (
+                                            <li
+                                              key={i}
+                                              className="flex flex-col rounded-[10px] border transition-all bg-green-50/60 border-green-100"
+                                            >
+                                              <div className="flex items-center gap-2 px-3 py-2.5">
+                                                <span
+                                                  className={cn(
+                                                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                    typePillStyle
+                                                  )}
+                                                >
+                                                  {type}
+                                                </span>
+                                                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                                                  {getItemTitle(item)}
+                                                </span>
+                                                {hasDetails && (
+                                                  <button
+                                                    onClick={() => handleViewReportItem(item)}
+                                                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                    title={`View ${type}`}
+                                                  >
+                                                    <Eye className="w-3 h-3" />
+                                                  </button>
+                                                )}
+                                              </div>
+                                              <ReportItemMeta item={item} />
+                                            </li>
+                                          );
+                                        }
+                                      )}
+                                    </ul>
+                                  )}
+                                </div>
+
+                                {/* Tasks & Issues — status buckets */}
+                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                    <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                                      <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                                    </div>
+                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                      Task, Issues & To Do
+                                    </h4>
+                                    {visibleTasksIssues.length > 0 && (
+                                      <span className="ml-auto text-[10px] font-bold text-neutral-400">
+                                        {visibleTasksIssues.length}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isAbsentReport || visibleTasksIssues.length === 0 ? (
+                                    <p className="text-xs text-neutral-300 italic">
+                                      None recorded.
+                                    </p>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {(
+                                        [
+                                          {
+                                            key: "overdue",
+                                            label: "Overdue",
+                                            statuses: ["overdue", "overdued"],
+                                            colorClass: "text-red-700",
+                                            headerBg:
+                                              "bg-red-50 hover:bg-red-100",
+                                            pillBg: "bg-red-100 text-red-700",
+                                            itemBg:
+                                              "bg-red-50/60 border-red-100",
+                                          },
+                                          {
+                                            key: "in_progress",
+                                            label: "In Progress",
+                                            statuses: [
+                                              "in_progress",
+                                              "started",
+                                            ],
+                                            colorClass: "text-sky-700",
+                                            headerBg:
+                                              "bg-sky-50 hover:bg-sky-100",
+                                            pillBg: "bg-sky-100 text-sky-700",
+                                            itemBg:
+                                              "bg-sky-50/60 border-sky-100",
+                                          },
+                                          {
+                                            key: "open",
+                                            label: "Open",
+                                            statuses: [
+                                              "open",
+                                              "pending",
+                                              "reopen",
+                                              "reopened",
+                                            ],
+                                            colorClass: "text-slate-600",
+                                            headerBg:
+                                              "bg-slate-50 hover:bg-slate-100",
+                                            pillBg:
+                                              "bg-slate-100 text-slate-600",
+                                            itemBg:
+                                              "bg-slate-50/60 border-slate-100",
+                                          },
+                                          {
+                                            key: "on_hold",
+                                            label: "On Hold",
+                                            statuses: ["on_hold"],
+                                            colorClass: "text-orange-700",
+                                            headerBg:
+                                              "bg-orange-50 hover:bg-orange-100",
+                                            pillBg:
+                                              "bg-orange-100 text-orange-700",
+                                            itemBg:
+                                              "bg-orange-50/60 border-orange-100",
+                                          },
+                                          {
+                                            key: "completed",
+                                            label: "Completed",
+                                            statuses: [
+                                              "completed",
+                                              "closed",
+                                              "done",
+                                            ],
+                                            colorClass: "text-green-700",
+                                            headerBg:
+                                              "bg-green-50 hover:bg-green-100",
+                                            pillBg:
+                                              "bg-green-100 text-green-700",
+                                            itemBg:
+                                              "bg-green-50/60 border-green-100",
+                                          },
+                                        ] as const
+                                      ).map((bucket) => {
+                                        const bucketItems =
+                                          visibleTasksIssues.filter((item: any) =>
+                                            (
+                                              bucket.statuses as readonly string[]
+                                            ).includes(
+                                              (
+                                                item.status || "open"
+                                              ).toLowerCase()
+                                            )
+                                          );
+                                        if (bucketItems.length === 0)
+                                          return null;
                                         return (
-                                          <div
-                                            key={i}
-                                            className={cn(
-                                              "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                              s === "done" || s === "submitted"
-                                                ? "bg-[#10B981] text-white border-[#10B981]"
-                                                : s === "missed"
-                                                  ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                                  : s === "holiday"
-                                                    ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
-                                                    : "bg-gray-100 text-gray-400 border-gray-200"
-                                            )}
-                                          >
-                                            <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                              {d.day ? d.day.charAt(0) : ""}
-                                            </span>
-                                            <span className="leading-none">
-                                              {d.date ?? ""}
-                                            </span>
+                                          <div key={bucket.key}>
+                                            <div
+                                              className={cn(
+                                                "flex items-center gap-2 px-2 py-1.5 rounded-[6px] mb-1",
+                                                bucket.headerBg
+                                              )}
+                                            >
+                                              <span
+                                                className={cn(
+                                                  "text-[10px] font-black uppercase tracking-wider flex-1",
+                                                  bucket.colorClass
+                                                )}
+                                              >
+                                                {bucket.label}
+                                              </span>
+                                              <span
+                                                className={cn(
+                                                  "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                                                  bucket.pillBg
+                                                )}
+                                              >
+                                                {bucketItems.length}
+                                              </span>
+                                            </div>
+                                            <ul className="space-y-1.5 pl-1 mb-1">
+                                              {bucketItems.map(
+                                                (item: any, i: number) => {
+                                                  const type =
+                                                    getItemType(item);
+                                                  const typePillStyle =
+                                                    type === "issue"
+                                                      ? "bg-red-100 text-red-700 border-red-200"
+                                                      : type === "todo"
+                                                        ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                        : "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30";
+                                                  const priority =
+                                                    item.priority ||
+                                                    item.urgency ||
+                                                    "";
+                                                  const priorityPill =
+                                                    priority?.toLowerCase() ===
+                                                      "high"
+                                                      ? "bg-red-50 text-red-600 border-red-200"
+                                                      : priority?.toLowerCase() ===
+                                                        "medium"
+                                                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                                        : priority?.toLowerCase() ===
+                                                          "low"
+                                                          ? "bg-green-50 text-green-700 border-green-200"
+                                                          : "";
+                                                  const taskId =
+                                                    item.id ||
+                                                    item.task_id ||
+                                                    item.issue_id ||
+                                                    item.source_id;
+                                                  const dueDate =
+                                                    item.target_date ||
+                                                    item.due_date ||
+                                                    item.end_date ||
+                                                    item.deadline;
+                                                  const hasDetails = ["task", "issue", "todo"].includes(type);
+                                                  const matchingSourceItem = [
+                                                    ...displayRd.accomplishments,
+                                                    ...displayRd.tomorrow_plan,
+                                                  ].find(
+                                                    (sourceItem: any) =>
+                                                      getItemTitle(sourceItem).trim().toLowerCase() ===
+                                                        getItemTitle(item).trim().toLowerCase() &&
+                                                      getViewSourceType(sourceItem) === type
+                                                  );
+                                                  const viewItem = {
+                                                    ...matchingSourceItem,
+                                                    ...item,
+                                                    source_id:
+                                                      item.source_id ??
+                                                      item.sourceId ??
+                                                      matchingSourceItem?.source_id ??
+                                                      matchingSourceItem?.sourceId ??
+                                                      getViewSourceId(item),
+                                                    source_type:
+                                                      item.source_type ??
+                                                      item.sourceType ??
+                                                      matchingSourceItem?.source_type ??
+                                                      matchingSourceItem?.sourceType ??
+                                                      type,
+                                                    originalData:
+                                                      item.originalData ?? matchingSourceItem?.originalData,
+                                                  };
+
+                                                  return (
+                                                    <li
+                                                      key={i}
+                                                      onClick={hasDetails ? () => handleViewTaskIssueTodoItem(viewItem) : undefined}
+                                                      className={cn(
+                                                        "flex flex-col rounded-[10px] border transition-all",
+                                                        bucket.itemBg,
+                                                        hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+                                                      )}
+                                                    >
+                                                      <div className="flex items-center gap-2 px-3 py-2.5">
+                                                        {/* Type pill */}
+                                                        <span
+                                                          className={cn(
+                                                            "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                            typePillStyle
+                                                          )}
+                                                        >
+                                                          {type}
+                                                        </span>
+                                                        {/* Title */}
+                                                        <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                                                          {getItemTitle(item)}
+                                                        </span>
+                                                        {/* Priority */}
+                                                        {priorityPill && (
+                                                          <span
+                                                            className={cn(
+                                                              "shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                                                              priorityPill
+                                                            )}
+                                                          >
+                                                            {priority}
+                                                          </span>
+                                                        )}
+                                                        {/* View button — always shown for task/issue */}
+                                                        {hasDetails && (
+                                                          <button
+                                                            onClick={(event) => {
+                                                              event.stopPropagation();
+                                                              handleViewTaskIssueTodoItem(viewItem);
+                                                            }}
+                                                            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                            title={`View ${type}`}
+                                                          >
+                                                            <Eye className="w-3 h-3" />
+                                                            {/* <span className="text-[9px] font-bold">View</span> */}
+                                                          </button>
+                                                        )}
+                                                      </div>
+                                                      {/* Target date · overdue · Est · Effective time */}
+                                                      <ReportItemMeta item={viewItem} />
+                                                    </li>
+                                                  );
+                                                }
+                                              )}
+                                            </ul>
                                           </div>
                                         );
                                       })}
                                     </div>
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-
-                          {isExpanded && canExpand && (
-                            <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
-                              <div className="p-5 space-y-5">
-                                <div className="flex flex-wrap gap-3">
-                                  {selfRatingText && (
-                                    <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
-                                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                      <span className="text-sm font-bold text-yellow-800">
-                                        Self Rating: {selfRatingText}
-                                      </span>
-                                    </div>
                                   )}
-                                  {totalScoreValue != null && (
-                                    <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                                      <span className="text-sm font-bold text-purple-800">
-                                        Total Score: {totalScoreStr}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {displayRd.is_absent !== null &&
-                                    displayRd.is_absent !== undefined && (
-                                      <div
-                                        className={cn(
-                                          "flex items-center gap-2 rounded-xl px-4 py-2.5 border",
-                                          displayRd.is_absent
-                                            ? "bg-red-50 border-red-100"
-                                            : "bg-green-50 border-green-100"
-                                        )}
-                                      >
-                                        <span
-                                          className={cn(
-                                            "text-sm font-bold",
-                                            displayRd.is_absent
-                                              ? "text-red-700"
-                                              : "text-green-700"
-                                          )}
-                                        >
-                                          {displayRd.is_absent
-                                            ? "Absent"
-                                            : "Present"}
-                                        </span>
-                                      </div>
-                                    )}
                                 </div>
 
-                                {displayRd.big_win && (
-                                  <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
-                                    <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                                    <div>
-                                      <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">
-                                        Big Win 🏆
-                                      </div>
-                                      <p className="text-sm font-semibold text-amber-900">
-                                        {displayRd.big_win}
-                                      </p>
+                                {/* Tomorrow's Plan */}
+                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                                    <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                      <Calendar className="w-3.5 h-3.5 text-blue-600" />
                                     </div>
+                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                      Tomorrow's Plan
+                                    </h4>
                                   </div>
-                                )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  {/* Accomplishments */}
-                                  <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                      <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                      </div>
-                                      <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                        Accomplishments
-                                      </h4>
-                                    </div>
-                                    {userAccomplishments.length === 0 ? (
-                                      <p className="text-xs text-neutral-300 italic">
-                                        None recorded.
-                                      </p>
-                                    ) : (
-                                      <ul className="space-y-2">
-                                        {userAccomplishments.map(
-                                          (item: any, i: number) => (
-                                            <li
-                                              key={i}
-                                              className="flex items-start gap-2 text-xs text-neutral-700"
-                                            >
-                                              <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
-                                              <span className="leading-relaxed">
-                                                {getItemTitle(item)}
-                                              </span>
-                                            </li>
-                                          )
-                                        )}
-                                      </ul>
-                                    )}
-                                  </div>
-
-                                  {/* Tasks & Issues */}
-                                  <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                      <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                                        <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
-                                      </div>
-                                      <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                        Tasks, Issues & Todos
-                                      </h4>
-                                    </div>
-                                    {userTasksIssues.length === 0 ? (
-                                      <p className="text-xs text-neutral-300 italic">
-                                        None recorded.
-                                      </p>
-                                    ) : (
-                                      <div className="space-y-4">
-                                        {[
-                                          {
-                                            label: "Tasks",
-                                            items: groupedTasksIssues.tasks,
-                                            dotClass: "bg-blue-400",
-                                          },
-                                          {
-                                            label: "Issues",
-                                            items: groupedTasksIssues.issues,
-                                            dotClass: "bg-red-400",
-                                          },
-                                          {
-                                            label: "Todos",
-                                            items: groupedTasksIssues.todos,
-                                            dotClass: "bg-violet-400",
-                                          },
-                                        ].map((section) => (
-                                          <div key={section.label}>
-                                            <div className="flex items-center justify-between gap-2 mb-2">
-                                              <p className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider">
-                                                {section.label}
-                                              </p>
-                                              <span className="text-[10px] font-bold text-neutral-400">
-                                                {section.items.length}
-                                              </span>
-                                            </div>
-                                            {section.items.length === 0 ? (
-                                              <p className="text-xs text-neutral-300 italic">
-                                                None recorded.
-                                              </p>
-                                            ) : (
-                                              <ul className="space-y-2.5">
-                                                {section.items.map(
-                                                  (item: any, i: number) => (
-                                                    <li
-                                                      key={`${section.label}-${i}`}
-                                                      className="flex items-start gap-2 text-xs text-neutral-700"
-                                                    >
-                                                      <div
-                                                        className={cn(
-                                                          "w-1.5 h-1.5 rounded-full mt-1.5 shrink-0",
-                                                          section.dotClass
-                                                        )}
-                                                      />
-                                                      <span
-                                                        className={cn(
-                                                          "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                                          getItemStatus(item) ===
-                                                            "open"
-                                                            ? "bg-red-100 text-red-600"
-                                                            : isCompletedStatus(
-                                                                  getItemStatus(
-                                                                    item
-                                                                  )
-                                                                )
-                                                              ? "bg-green-100 text-green-600"
-                                                              : "bg-gray-100 text-gray-500"
-                                                        )}
-                                                      >
-                                                        {getItemStatus(item)}
-                                                      </span>
-                                                      <span className="leading-relaxed">
-                                                        {getItemTitle(item)}
-                                                      </span>
-                                                    </li>
-                                                  )
-                                                )}
-                                              </ul>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Tomorrow's Plan */}
-                                  <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                      <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                        <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                                      </div>
-                                      <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                        Tomorrow's Plan
-                                      </h4>
-                                    </div>
-                                    {userTomorrowPlan.length === 0 ? (
-                                      <p className="text-xs text-neutral-300 italic">
-                                        None recorded.
-                                      </p>
-                                    ) : (
-                                      <ul className="space-y-2">
-                                        {userTomorrowPlan.map(
-                                          (item: any, i: number) => (
-                                            <li
-                                              key={i}
-                                              className="flex items-start gap-2 text-xs text-neutral-700"
-                                            >
-                                              <Circle className="w-3 h-3 text-blue-300 mt-0.5 shrink-0" />
-                                              <span className="leading-relaxed">
-                                                {getItemTitle(item)}
-                                              </span>
-                                            </li>
-                                          )
-                                        )}
-                                      </ul>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-2 pt-1">
-                                  <button
-                                    onClick={() => setIsTaskModalOpen(true)}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" /> Add Task
-                                  </button>
-                                  <button
-                                    onClick={() => setIsIssueModalOpen(true)}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" /> Stuck Issue
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setQuickActionOpenId(
-                                        quickActionOpenId === rId ? null : rId
-                                      );
-                                      setQuickActionText("");
-                                    }}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" /> Add to Plan
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (feedbackOpenId === rId) {
-                                        setFeedbackOpenId(null);
-                                      } else {
-                                        setFeedbackOpenId(rId);
-                                        setFeedbackRating(0);
-                                        setFeedbackMessage("");
-                                        loadPastFeedbacks(report.user_id);
-                                      }
-                                    }}
-                                    className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
-                                  >
-                                    <MessageSquare className="w-3.5 h-3.5" />{" "}
-                                    Feedback
-                                  </button>
-                                </div>
-
-                                {/* Quick Add to Plan */}
-                                {quickActionOpenId === rId && (
-                                  <div className="border-t border-[#EAE3DF] pt-4 mt-1">
-                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-3">
-                                      Add to Tomorrow's Plan
+                                  {isAbsentReport || userTomorrowPlan.length === 0 ? (
+                                    <p className="text-xs text-neutral-300 italic">
+                                      None recorded.
                                     </p>
-                                    <div className="flex items-center gap-3">
-                                      <input
-                                        autoFocus
-                                        type="text"
-                                        value={quickActionText}
-                                        onChange={(e) =>
-                                          setQuickActionText(e.target.value)
-                                        }
-                                        placeholder="Add to tomorrow's plan..."
-                                        className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-neutral-400"
-                                        onKeyDown={async (e) => {
-                                          if (
-                                            e.key === "Enter" &&
-                                            quickActionText.trim()
-                                          ) {
-                                            const ok = await updateJournal(
-                                              report,
-                                              {
-                                                tomorrow_plan_item:
-                                                  quickActionText.trim(),
-                                              }
-                                            );
-                                            if (ok) {
-                                              toast.success(
-                                                "Added to tomorrow's plan!"
-                                              );
-                                              setQuickActionOpenId(null);
-                                              setQuickActionText("");
-                                              await loadDailyData(false);
-                                            }
-                                          }
-                                          if (e.key === "Escape") {
-                                            setQuickActionOpenId(null);
-                                            setQuickActionText("");
-                                          }
-                                        }}
-                                      />
-                                      <button
-                                        onClick={async () => {
-                                          if (quickActionText.trim()) {
-                                            const ok = await updateJournal(
-                                              report,
-                                              {
-                                                tomorrow_plan_item:
-                                                  quickActionText.trim(),
-                                              }
-                                            );
-                                            if (ok) {
-                                              toast.success(
-                                                "Added to tomorrow's plan!"
-                                              );
-                                              setQuickActionOpenId(null);
-                                              setQuickActionText("");
-                                              await loadDailyData(false);
-                                            }
-                                          }
-                                        }}
-                                        className="px-5 py-2 rounded-full text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
-                                      >
-                                        Add
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setQuickActionOpenId(null);
-                                          setQuickActionText("");
-                                        }}
-                                        className="px-5 py-2 rounded-full text-xs font-bold text-neutral-600 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
+                                  ) : (
+                                    <ul className="space-y-2">
+                                      {userTomorrowPlan.map(
+                                        (item: any, i: number) => {
+                                          const type = (item.source_type || "note").toLowerCase();
+                                          const typePillStyle =
+                                            type === "issue"
+                                              ? "bg-red-100 text-red-700 border-red-200"
+                                              : type === "todo"
+                                                ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                : type === "task"
+                                                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
+                                                  : "bg-gray-100 text-gray-600 border-gray-200";
+                                          const hasDetails = ["task", "issue", "todo"].includes(type);
 
-                                {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
-                                {feedbackOpenId === rId && (
-                                  <div className="border-t border-[#EAE3DF] pt-5 mt-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                      {/* COLUMN 1: Add New Feedback */}
-                                      <div>
-                                        <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                          Provide Feedback
-                                        </p>
-                                        <p className="text-sm font-bold text-neutral-800 mb-2">
-                                          Rating (1-5 stars)
-                                        </p>
-                                        <div className="flex items-center gap-1 mb-4">
-                                          {[1, 2, 3, 4, 5].map((star) => (
-                                            <button
-                                              key={star}
-                                              type="button"
-                                              onClick={() =>
-                                                setFeedbackRating(star)
-                                              }
-                                              className="transition-transform hover:scale-110"
+                                          return (
+                                            <li
+                                              key={i}
+                                              onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
+                                              className={cn(
+                                                "flex flex-col rounded-[10px] border transition-all bg-blue-50/60 border-blue-100",
+                                                hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+                                              )}
                                             >
-                                              <svg
-                                                className="w-8 h-8"
-                                                viewBox="0 0 24 24"
-                                                fill={
-                                                  star <= feedbackRating
-                                                    ? "#F59E0B"
-                                                    : "none"
-                                                }
-                                                stroke={
-                                                  star <= feedbackRating
-                                                    ? "#F59E0B"
-                                                    : "#D1D5DB"
-                                                }
-                                                strokeWidth="1.5"
-                                              >
-                                                <path
-                                                  strokeLinejoin="round"
-                                                  d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                                                />
-                                              </svg>
-                                            </button>
-                                          ))}
+                                              <div className="flex items-center gap-2 px-3 py-2.5">
+                                                <span
+                                                  className={cn(
+                                                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                    typePillStyle
+                                                  )}
+                                                >
+                                                  {type}
+                                                </span>
+                                                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                                                  {getItemTitle(item)}
+                                                </span>
+                                                {hasDetails && (
+                                                  <button
+                                                    onClick={(event) => {
+                                                      event.stopPropagation();
+                                                      handleViewTaskIssueTodoItem(item);
+                                                    }}
+                                                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                    title={`View ${type}`}
+                                                  >
+                                                    <Eye className="w-3 h-3" />
+                                                  </button>
+                                                )}
+                                              </div>
+                                              <ReportItemMeta item={item} />
+                                            </li>
+                                          );
+                                        }
+                                      )}
+                                    </ul>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                <button
+                                  onClick={() => openTaskModalForMember(report)}
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Add Task
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    openIssueModalForMember(report)
+                                  }
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                                </button>
+                                <button
+                                  onClick={() => openTodoModalForMember(report)}
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Add Todo
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (feedbackOpenId === rId) {
+                                      closeFeedbackPanel(rId);
+                                    } else {
+                                      openFeedbackPanel(rId, report.user_id);
+                                    }
+                                  }}
+                                  className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-[#DA7756] border border-[#c96546] rounded-full text-xs font-bold shadow-sm hover:bg-[#c96546] transition-all duration-150 active:scale-95"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />{" "}
+                                  Feedback
+                                </button>
+                              </div>
+
+                              {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
+                              {isFeedbackVisible && (
+                                <div
+                                  className={cn(
+                                    "border-t border-[#EAE3DF] pt-3 mt-2",
+                                    isFeedbackClosing
+                                      ? "feedback-panel-exit pointer-events-none"
+                                      : "feedback-panel-enter"
+                                  )}
+                                >
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {/* COLUMN 1: Add New Feedback */}
+                                    <div className="h-full rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center">
+                                          <MessageSquare className="w-3.5 h-3.5 text-[#DA7756]" />
                                         </div>
-                                        <p className="text-sm font-bold text-neutral-800 mb-2">
-                                          Feedback Message
-                                        </p>
-                                        <textarea
-                                          autoFocus
-                                          value={feedbackMessage}
-                                          onChange={(e) =>
-                                            setFeedbackMessage(e.target.value)
-                                          }
-                                          placeholder="Enter constructive feedback..."
-                                          rows={3}
-                                          className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
-                                        />
-                                        <div className="flex items-center gap-3 mt-4">
-                                          <button
-                                            onClick={async () => {
-                                              if (feedbackRating === 0) {
-                                                toast.error(
-                                                  "Please select a star rating!"
-                                                );
-                                                return;
-                                              }
-                                              try {
-                                                const loggedInUserId =
-                                                  localStorage.getItem(
-                                                    "userId"
-                                                  ) || "";
-                                                const payload = {
-                                                  resource_type: "User",
-                                                  resource_id: report.user_id,
-                                                  rating_from_id:
-                                                    loggedInUserId,
-                                                  score: feedbackRating,
-                                                  reviews: feedbackMessage,
-                                                  positive_opening: "",
-                                                  constructive_feedback: "",
-                                                  positive_closing: "",
-                                                };
-                                                const res = await fetch(
-                                                  `${getBaseUrl()}/ratings`,
-                                                  {
-                                                    method: "POST",
-                                                    headers: {
-                                                      ...getAuthHeaders(),
-                                                      "Content-Type":
-                                                        "application/json",
-                                                    },
-                                                    body: JSON.stringify(
-                                                      payload
-                                                    ),
-                                                  }
-                                                );
-                                                if (!res.ok)
-                                                  throw new Error(
-                                                    `HTTP ${res.status}`
-                                                  );
-                                                toast.success(
-                                                  "Feedback added!"
-                                                );
-                                                setFeedbackOpenId(null);
-                                                setFeedbackRating(0);
-                                                setFeedbackMessage("");
-                                                await loadDailyData(false);
-                                              } catch (err: any) {
-                                                toast.error(
-                                                  "Error adding feedback: " +
-                                                    err.message
-                                                );
-                                              }
-                                            }}
-                                            className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
-                                          >
-                                            Submit Feedback
-                                          </button>
-                                          <button
-                                            onClick={() => {
-                                              setFeedbackOpenId(null);
-                                              setFeedbackRating(0);
-                                              setFeedbackMessage("");
-                                            }}
-                                            className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                          >
-                                            Cancel
-                                          </button>
+                                        <div>
+                                          <p className="text-xs font-bold text-gray-900 leading-none">
+                                            Provide Feedback
+                                          </p>
+                                          <p className="text-[10px] font-medium text-gray-400 mt-0.5">
+                                            Share rating and feedback
+                                          </p>
                                         </div>
                                       </div>
+                                      <div className="rounded-lg border border-gray-100 bg-gray-50/70 px-3 py-2 mb-2">
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                          Rating
+                                        </p>
+                                        <div className="flex items-center gap-1">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                          <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() =>
+                                              setFeedbackRating(star)
+                                            }
+                                            className="rounded-lg transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20"
+                                          >
+                                            <svg
+                                              className="w-6 h-6"
+                                              viewBox="0 0 24 24"
+                                              fill={
+                                                star <= feedbackRating
+                                                  ? "#ffb000"
+                                                  : "none"
+                                              }
+                                              stroke={
+                                                star <= feedbackRating
+                                                  ? "#ffb000"
+                                                  : "#CBD5E1"
+                                              }
+                                              strokeWidth="1.5"
+                                            >
+                                              <path
+                                                strokeLinejoin="round"
+                                                d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                                              />
+                                            </svg>
+                                          </button>
+                                        ))}
+                                        </div>
+                                      </div>
+                                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                        Feedback Message
+                                      </p>
+                                      <textarea
+                                        autoFocus
+                                        value={feedbackMessage}
+                                        onChange={(e) =>
+                                          setFeedbackMessage(e.target.value)
+                                        }
+                                        placeholder="Enter constructive feedback..."
+                                        rows={3}
+                                        className="w-full min-h-[68px] resize-none rounded-lg border border-[#F0E8E3] bg-[#FFFCFA] px-3 py-2 text-xs text-neutral-800 placeholder:text-gray-400 shadow-sm outline-none transition-all focus:border-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/15"
+                                      />
+                                      <div className="flex items-center gap-2 mt-3">
+                                        <button
+                                          onClick={async () => {
+                                            if (feedbackRating === 0) {
+                                              toast.error(
+                                                "Please select a star rating!"
+                                              );
+                                              return;
+                                            }
+                                            try {
+                                              const loggedInUserId =
+                                                localStorage.getItem(
+                                                  "userId"
+                                                ) || "";
+                                              const payload = {
+                                                resource_type: "User",
+                                                resource_id: report.user_id,
+                                                rating_from_id: loggedInUserId,
+                                                score: feedbackRating,
+                                                reviews: feedbackMessage,
+                                                positive_opening: "",
+                                                constructive_feedback: "",
+                                                positive_closing: "",
+                                              };
+                                              const res = await fetch(
+                                                `${getBaseUrl()}/ratings`,
+                                                {
+                                                  method: "POST",
+                                                  headers: {
+                                                    ...getAuthHeaders(),
+                                                    "Content-Type":
+                                                      "application/json",
+                                                  },
+                                                  body: JSON.stringify(payload),
+                                                }
+                                              );
+                                              if (!res.ok)
+                                                throw new Error(
+                                                  `HTTP ${res.status}`
+                                                );
+                                              toast.success("Feedback added!");
+                                              closeFeedbackPanel(rId);
+                                              await loadDailyData(false);
+                                            } catch (err: any) {
+                                              toast.error(
+                                                "Error adding feedback: " +
+                                                err.message
+                                              );
+                                            }
+                                          }}
+                                          className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-[#DA7756] px-4 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#c96546]"
+                                        >
+                                          Submit Feedback
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            closeFeedbackPanel(rId);
+                                          }}
+                                          className="inline-flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-neutral-700 shadow-sm transition-all duration-150 hover:bg-gray-50 active:scale-95"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
 
-                                      {/* COLUMN 2: Recent Feedbacks — sorted newest first */}
-                                      <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
-                                        <div className="flex items-center justify-between mb-4">
-                                          <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
+                                    {/* COLUMN 2: Recent Feedbacks — sorted newest first */}
+                                    <div className="h-full bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm w-full flex flex-col">
+                                      <div className="flex h-8 items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-6 h-6 rounded-lg bg-purple-50 flex items-center justify-center">
+                                            <Star className="w-3 h-3 text-purple-500" />
+                                          </div>
+                                          <p className="text-xs font-bold text-gray-900">
                                             Recent Feedbacks
                                           </p>
-                                          <button
-                                            onClick={handleFeedback}
-                                            className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
-                                          >
-                                            View All{" "}
-                                            <ChevronRight className="w-3 h-3" />
-                                          </button>
                                         </div>
+                                        <button
+                                          onClick={handleFeedback}
+                                          className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-[11px] font-bold text-[#DA7756] hover:bg-orange-50"
+                                        >
+                                          View All{" "}
+                                          <ChevronRight className="w-3 h-3" />
+                                        </button>
+                                      </div>
 
-                                        {isFetchingFeedbacks ? (
-                                          <div className="flex justify-center items-center h-full py-6">
-                                            <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                                          </div>
-                                        ) : fetchedFeedbacks.length === 0 ? (
-                                          <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
-                                            <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
-                                            <span className="text-xs font-medium italic">
-                                              No past feedback found.
-                                            </span>
-                                          </div>
-                                        ) : (
-                                          <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                            {/* Already sorted newest-first in loadPastFeedbacks */}
-                                            {fetchedFeedbacks
-                                              .slice(0, 3)
-                                              .map((fb: any, idx: number) => (
-                                                <div
-                                                  key={fb.id ?? idx}
-                                                  className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
-                                                >
-                                                  <div className="flex items-center gap-1 mb-1.5">
-                                                    {[1, 2, 3, 4, 5].map(
-                                                      (star) => (
-                                                        <Star
-                                                          key={star}
-                                                          className={cn(
-                                                            "w-3 h-3",
-                                                            star <= fb.score
-                                                              ? "text-yellow-400 fill-yellow-400"
-                                                              : "text-gray-200"
-                                                          )}
-                                                        />
-                                                      )
-                                                    )}
-                                                    {fb.created_at && (
-                                                      <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
-                                                        {new Date(
-                                                          fb.created_at
-                                                        ).toLocaleDateString(
-                                                          "en-IN",
-                                                          {
-                                                            day: "numeric",
-                                                            month: "short",
-                                                            year: "2-digit",
-                                                          }
+                                      {isFetchingFeedbacks ? (
+                                        <div className="flex justify-center items-center h-full py-6">
+                                          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                        </div>
+                                      ) : fetchedFeedbacks.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                          <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                          <span className="text-xs font-medium italic">
+                                            No past feedback found.
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <div className="mt-2 space-y-2">
+                                          {/* Already sorted newest-first in loadPastFeedbacks */}
+                                          {fetchedFeedbacks
+                                            .slice(0, 3)
+                                            .map((fb: any, idx: number) => (
+                                              <div
+                                                key={fb.id ?? idx}
+                                                className="bg-gray-50/80 px-2.5 py-2 rounded-lg border border-gray-100 shadow-sm"
+                                              >
+                                                <div className="flex items-center gap-1 mb-1.5">
+                                                  {[1, 2, 3, 4, 5].map(
+                                                    (star) => (
+                                                      <Star
+                                                        key={star}
+                                                        className={cn(
+                                                          "w-3 h-3",
+                                                          star <= fb.score
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-gray-200"
                                                         )}
-                                                      </span>
-                                                    )}
-                                                  </div>
-                                                  {fb.reviews ? (
-                                                    <p className="text-xs text-neutral-700 leading-relaxed">
-                                                      {fb.reviews}
-                                                    </p>
-                                                  ) : (
-                                                    <p className="text-xs text-neutral-400 italic">
-                                                      No review provided.
-                                                    </p>
+                                                      />
+                                                    )
                                                   )}
-                                                  {fb.reviewer && (
-                                                    <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
-                                                      — {fb.reviewer.trim()}
-                                                    </p>
+                                                  {fb.created_at && (
+                                                    <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
+                                                      {new Date(
+                                                        fb.created_at
+                                                      ).toLocaleDateString(
+                                                        "en-IN",
+                                                        {
+                                                          day: "numeric",
+                                                          month: "short",
+                                                          year: "2-digit",
+                                                        }
+                                                      )}
+                                                    </span>
                                                   )}
                                                 </div>
-                                              ))}
-                                          </div>
-                                        )}
-                                      </div>
+                                                {fb.reviews ? (
+                                                  <p className="text-xs text-neutral-700 leading-relaxed">
+                                                    {fb.reviews}
+                                                  </p>
+                                                ) : (
+                                                  <p className="text-xs text-neutral-400 italic">
+                                                    No review provided.
+                                                  </p>
+                                                )}
+                                                {fb.reviewer && (
+                                                  <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                                    — {fb.reviewer.trim()}
+                                                  </p>
+                                                )}
+                                              </div>
+                                            ))}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {failedMembers.length > 0 && (
-            <div className="bg-[#fff1f2] border border-red-200 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-red-600 font-bold text-sm mb-4">
-                <AlertTriangle className="w-4 h-4" /> Team Members Who Failed to
-                Submit ({failedMembers.length}):
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                {failedMembers.map((member: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 bg-white border border-red-100 px-3 py-1.5 rounded-full shadow-sm"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                    <span className="text-[12px] font-bold text-gray-700">
-                      {member.name || member}
-                    </span>
-                  </div>
-                ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
         </>
+      )}
+
+      {/* ══ FULL WIDTH — Team members who failed to submit ══ */}
+      {failedMembers.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <AlertTriangle className="w-4 h-4 text-[#DA7756]" />
+              <span>Team members who failed to submit</span>
+            </div>
+            <span className="text-sm font-bold text-neutral-500">
+              {failedMembers.length}
+            </span>
+          </div>
+          <div className="space-y-4">
+            {failedMembers.map((member: any, i: number) => {
+              const missedId = `missed-${member.id || member.user_id || member.name || i}`;
+              const isMissedExpanded = expandedReports.includes(missedId);
+              const isMissedFeedbackVisible =
+                feedbackOpenId === missedId || feedbackClosingId === missedId;
+              const isMissedFeedbackClosing = feedbackClosingId === missedId;
+
+              return (
+                <div
+                  key={missedId}
+                  onClick={() => toggleExpand(missedId)}
+                  className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all cursor-pointer"
+                >
+                  <div className="p-4 flex items-start gap-4">
+                    <div className="flex items-start gap-3 pt-1">
+                      <input
+                        type="checkbox"
+                        checked
+                        readOnly
+                        disabled
+                        className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
+                      />
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
+                          0
+                        </div>
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                          Missed
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                              {member.name || member}
+                            </h3>
+                            {member.department && (
+                              <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                {member.department}
+                              </span>
+                            )}
+                            <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
+                              NOT SUBMITTED
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-gray-400 mb-2 truncate">
+                            {member.email ||
+                              "Report not submitted for this date"}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(missedId);
+                          }}
+                          className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
+                        >
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 transition-transform",
+                              isMissedExpanded && "rotate-180"
+                            )}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          KPI: 0/20
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          Tasks, Issues & Todos: 0/20
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          Planning: 0/20
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                          Timing: 0/20
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
+                        Click to view missed submission details
+                      </p>
+
+                      {dateRow.length > 0 && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                            {configName}
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {dateRow.map((d: any, dateIndex: number) => {
+                              const s =
+                                d.full_date === activeDate
+                                  ? "missed"
+                                  : getCalendarDisplayStatus(d.status);
+
+                              return (
+                                <div
+                                  key={dateIndex}
+                                  className={cn(
+                                    "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                    s === "done" || s === "submitted"
+                                      ? "bg-[#10B981] text-white border-[#10B981]"
+                                      : s === "missed"
+                                        ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                        : s === "holiday"
+                                          ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
+                                          : "bg-gray-100 text-gray-400 border-gray-200"
+                                  )}
+                                >
+                                  <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                    {d.day ? d.day.charAt(0) : ""}
+                                  </span>
+                                  <span className="leading-none">
+                                    {d.date ?? ""}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {isMissedExpanded && (
+                    <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                      <div className="p-5 space-y-5">
+                        <div className="flex flex-wrap gap-3">
+                          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
+                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                            <span className="text-sm font-bold text-yellow-800">
+                              Self Rating: 0/10
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
+                            <span className="text-sm font-bold text-purple-800">
+                              Total Score: 0
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
+                            <span className="text-sm font-bold text-red-700">
+                              Missed
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                              <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                              </div>
+                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                Accomplishments
+                              </h4>
+                            </div>
+                            <p className="text-xs text-neutral-300 italic">
+                              None recorded.
+                            </p>
+                          </div>
+
+                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                              <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                                <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                              </div>
+                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                Tasks, Issues & Todos
+                              </h4>
+                            </div>
+                            <p className="text-xs text-neutral-300 italic">
+                              None recorded.
+                            </p>
+                          </div>
+
+                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                              <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                              </div>
+                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                Tomorrow's Plan
+                              </h4>
+                            </div>
+                            <p className="text-xs text-neutral-300 italic">
+                              None recorded.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTaskModalForMember(member);
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Task
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openIssueModalForMember(member);
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTodoModalForMember(member);
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Todo
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (feedbackOpenId === missedId) {
+                                closeFeedbackPanel(missedId);
+                              } else {
+                                openFeedbackPanel(
+                                  missedId,
+                                  member.id || member.user_id
+                                );
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-[#DA7756] border border-[#c96546] rounded-full text-xs font-bold shadow-sm hover:bg-[#c96546] transition-all duration-150 active:scale-95"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                          </button>
+                        </div>
+
+                        {isMissedFeedbackVisible && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className={cn(
+                              "border-t border-[#EAE3DF] pt-3 mt-2",
+                              isMissedFeedbackClosing
+                                ? "feedback-panel-exit pointer-events-none"
+                                : "feedback-panel-enter"
+                            )}
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="h-full rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center">
+                                    <MessageSquare className="w-3.5 h-3.5 text-[#DA7756]" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-gray-900 leading-none">
+                                      Provide Feedback
+                                    </p>
+                                    <p className="text-[10px] font-medium text-gray-400 mt-0.5">
+                                      Share rating and feedback
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="rounded-lg border border-gray-100 bg-gray-50/70 px-3 py-2 mb-2">
+                                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                    Rating
+                                  </p>
+                                  <div className="flex items-center gap-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      type="button"
+                                      onClick={() => setFeedbackRating(star)}
+                                      className="rounded-lg transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20"
+                                    >
+                                      <Star
+                                        className={cn(
+                                          "w-6 h-6",
+                                          star <= feedbackRating
+                                            ? "text-[#ffb000] fill-[#ffb000]"
+                                            : "text-slate-300 fill-transparent"
+                                        )}
+                                        strokeWidth={1.5}
+                                      />
+                                    </button>
+                                  ))}
+                                  </div>
+                                </div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                  Feedback Message
+                                </p>
+                                <textarea
+                                  autoFocus
+                                  value={feedbackMessage}
+                                  onChange={(e) =>
+                                    setFeedbackMessage(e.target.value)
+                                  }
+                                  placeholder="Enter constructive feedback..."
+                                  rows={3}
+                                  className="w-full min-h-[68px] resize-none rounded-lg border border-[#F0E8E3] bg-[#FFFCFA] px-3 py-2 text-xs text-neutral-800 placeholder:text-gray-400 shadow-sm outline-none transition-all focus:border-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/15"
+                                />
+                                <div className="flex items-center gap-2 mt-3">
+                                  <button
+                                    onClick={async () => {
+                                      if (feedbackRating === 0) {
+                                        toast.error(
+                                          "Please select a star rating!"
+                                        );
+                                        return;
+                                      }
+
+                                      const targetUserId =
+                                        member.id || member.user_id;
+                                      if (!targetUserId) {
+                                        toast.error(
+                                          "User ID not found for this member."
+                                        );
+                                        return;
+                                      }
+
+                                      try {
+                                        const loggedInUserId =
+                                          localStorage.getItem("userId") || "";
+                                        const payload = {
+                                          resource_type: "User",
+                                          resource_id: targetUserId,
+                                          rating_from_id: loggedInUserId,
+                                          score: feedbackRating,
+                                          reviews: feedbackMessage,
+                                          positive_opening: "",
+                                          constructive_feedback: "",
+                                          positive_closing: "",
+                                        };
+                                        const res = await fetch(
+                                          `${getBaseUrl()}/ratings`,
+                                          {
+                                            method: "POST",
+                                            headers: {
+                                              ...getAuthHeaders(),
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            body: JSON.stringify(payload),
+                                          }
+                                        );
+                                        if (!res.ok)
+                                          throw new Error(`HTTP ${res.status}`);
+                                        toast.success("Feedback added!");
+                                        closeFeedbackPanel(missedId);
+                                        await loadDailyData(false);
+                                      } catch (err: any) {
+                                        toast.error(
+                                          "Error adding feedback: " +
+                                          err.message
+                                        );
+                                      }
+                                    }}
+                                    className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-[#DA7756] px-4 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#c96546]"
+                                  >
+                                    Submit Feedback
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      closeFeedbackPanel(missedId);
+                                    }}
+                                    className="inline-flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-neutral-700 shadow-sm transition-all duration-150 hover:bg-gray-50 active:scale-95"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="h-full bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm w-full flex flex-col">
+                                <div className="flex h-8 items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-lg bg-purple-50 flex items-center justify-center">
+                                      <Star className="w-3 h-3 text-purple-500" />
+                                    </div>
+                                    <p className="text-xs font-bold text-gray-900">
+                                      Recent Feedbacks
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={handleFeedback}
+                                    className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-[11px] font-bold text-[#DA7756] hover:bg-orange-50"
+                                  >
+                                    View All{" "}
+                                    <ChevronRight className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {isFetchingFeedbacks ? (
+                                  <div className="flex justify-center items-center h-full py-6">
+                                    <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                  </div>
+                                ) : fetchedFeedbacks.length === 0 ? (
+                                  <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                    <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                    <span className="text-xs font-medium italic">
+                                      No past feedback found.
+                                    </span>
+                                  </div>
+                                ) : (
+                                      <div className="mt-2 space-y-2">
+                                        {fetchedFeedbacks
+                                          .slice(0, 3)
+                                          .map((fb: any, idx: number) => (
+                                            <div
+                                              key={fb.id ?? idx}
+                                              className="bg-gray-50/80 px-2.5 py-2 rounded-lg border border-gray-100 shadow-sm"
+                                            >
+                                          <div className="flex items-center gap-1 mb-1.5">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                              <Star
+                                                key={star}
+                                                className={cn(
+                                                  "w-3 h-3",
+                                                  star <= fb.score
+                                                    ? "text-yellow-400 fill-yellow-400"
+                                                    : "text-gray-200"
+                                                )}
+                                              />
+                                            ))}
+                                            {fb.created_at && (
+                                              <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
+                                                {new Date(
+                                                  fb.created_at
+                                                ).toLocaleDateString("en-IN", {
+                                                  day: "numeric",
+                                                  month: "short",
+                                                  year: "2-digit",
+                                                })}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {fb.reviews ? (
+                                            <p className="text-xs text-neutral-700 leading-relaxed">
+                                              {fb.reviews}
+                                            </p>
+                                          ) : (
+                                            <p className="text-xs text-neutral-400 italic">
+                                              No review provided.
+                                            </p>
+                                          )}
+                                          {fb.reviewer && (
+                                            <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                              - {fb.reviewer.trim()}
+                                            </p>
+                                          )}
+                                        </div>
+                                      ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {isTaskModalOpen &&
@@ -2683,7 +3804,7 @@ const DailyTab = ({
           <div className="fixed inset-0 z-[9999] flex">
             <div
               className="flex-1 bg-black/40 backdrop-blur-sm"
-              onClick={() => setIsTaskModalOpen(false)}
+              onClick={closeTaskModal}
             />
             <div
               className="relative flex flex-col bg-white shadow-2xl"
@@ -2694,7 +3815,7 @@ const DailyTab = ({
                   Add Tasks
                 </h2>
                 <button
-                  onClick={() => setIsTaskModalOpen(false)}
+                  onClick={closeTaskModal}
                   className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500"
                 >
                   <X className="w-5 h-5" />
@@ -2704,12 +3825,12 @@ const DailyTab = ({
               <div className="flex-1 overflow-y-auto">
                 <ProjectTaskCreateModal
                   isEdit={false}
-                  onCloseModal={() => setIsTaskModalOpen(false)}
+                  onCloseModal={closeTaskModal}
                   className="max-w-full mx-0"
-                  prefillData={null}
+                  prefillData={actionMemberPrefill}
                   opportunityId={null}
                   onSuccess={async () => {
-                    setIsTaskModalOpen(false);
+                    closeTaskModal();
                     await loadDailyData(false);
                   }}
                   isConversion={false}
@@ -2722,8 +3843,23 @@ const DailyTab = ({
 
       <AddIssueModal
         openDialog={isIssueModalOpen}
-        handleCloseDialog={() => setIsIssueModalOpen(false)}
+        handleCloseDialog={closeIssueModal}
         preSelectedProjectId={undefined}
+        prefillData={actionMemberPrefill}
+      />
+      <AddToDoModal
+        isModalOpen={isTodoModalOpen}
+        setIsModalOpen={closeTodoModal}
+        getTodos={async () => {
+          closeTodoModal();
+          await loadDailyData(false);
+        }}
+        prefillData={actionMemberPrefill}
+      />
+      <TodoDetailsModal
+        isModalOpen={isDetailsModalOpen}
+        setIsModalOpen={setIsDetailsModalOpen}
+        todo={selectedTodo}
       />
     </div>
   );

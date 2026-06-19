@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Filter, Eye, Search } from "lucide-react";
@@ -23,6 +23,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 export const SpaceManagementBookingsDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isRosterExportOpen, setIsRosterExportOpen] = useState(false);
@@ -51,10 +52,19 @@ export const SpaceManagementBookingsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [bookingData, setBookingData] = useState<BookingRow[]>([]);
 
-  const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(() => {
+  const params = new URLSearchParams(window.location.search);
+  return Number(params.get('page')) || 1;
+});
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loadingBookings, setLoadingBookings] = useState<boolean>(false);
   const [errorBookings, setErrorBookings] = useState<string | null>(null);
+
+useEffect(() => {
+  navigate(`${location.pathname}?page=${page}`, {
+    replace: true,
+  });
+}, [page]);
 
   // Fetch bookings from external API on mount
   useEffect(() => {
@@ -148,8 +158,10 @@ export const SpaceManagementBookingsDashboard = () => {
     setIsEditOpen(true);
   };
   const handleViewBooking = (bookingId: string) => {
-    navigate(`/vas/space-management/bookings/details/${bookingId}`);
-  };
+  navigate(
+    `/vas/space-management/bookings/details/${bookingId}?page=${page}`
+  );
+};
   const handleCancelBooking = (booking: BookingRow) => {
     setSelectedBooking(booking);
     setIsCancelOpen(true);
@@ -256,7 +268,7 @@ export const SpaceManagementBookingsDashboard = () => {
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>Space</span>
           <span>&gt;</span>
-          <span>Seat Booking List</span>
+          <span>Seat Booking List </span>
         </div>
         
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">SEAT BOOKING LIST</h1>

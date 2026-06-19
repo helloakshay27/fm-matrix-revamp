@@ -5,17 +5,17 @@ import { toast } from "sonner";
 // ── Design tokens ──
 const C = {
   primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBg: "#fdf9f7",
-  primaryTint: "rgba(218,119,86,0.06)",
-  primaryBord: "#e8e3de",
-  primaryBordStrong: "#d4cdc6",
-  pageBg: "#f6f4ee",
+  primaryHov: "#c9674a",
+  primaryBg: "#ffffff",
+  primaryTint: "rgba(218,119,86,0.10)",
+  primaryBord: "rgba(218,119,86,0.20)",
+  primaryBordStrong: "#d1d5db",
+  pageBg: "#ffffff",
   cardBg: "#ffffff",
-  tealBg: "#f6f4ee",
-  textMain: "#1a1a1a",
+  tealBg: "#ffffff",
+  textMain: "#111827",
   textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
+  borderLgt: "#e5e7eb",
   font: "'Poppins', sans-serif",
 };
 
@@ -354,7 +354,7 @@ const SearchableSelect = ({
                     fontFamily: C.font,
                     background: isSelected ? C.primaryTint : "transparent",
                     color: isSelected ? C.primary : C.textMain,
-                    fontWeight: isSelected ? 700 : 500,
+                    fontWeight: isSelected ? 600 : 500,
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected)
@@ -393,7 +393,8 @@ const SearchableSelect = ({
 const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-    .kp-wrap * { font-family: 'Poppins', sans-serif !important; }
+    .kp-wrap * { font-family: 'Poppins', sans-serif !important; box-sizing: border-box; }
+    .ac-heading { font-size: 18px; font-weight: 600; color: #111827; margin: 0; font-family: inherit; }
     @keyframes kp-spin    { to { transform: rotate(360deg); } }
     @keyframes kp-pulse   { 0%,100%{opacity:1} 50%{opacity:.5} }
     @keyframes kp-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
@@ -409,9 +410,9 @@ const ThemeStyle = () => (
       backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     }
     .kp-modal {
-      background: #f6f4ee; border-radius: 20px;
-      border: 1px solid rgba(218,119,86,0.20);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.20);
+      background: #ffffff; border-radius: 16px;
+      border: none;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.20);
       width: 100%; position: relative;
       display: flex; flex-direction: column;
       max-height: 90vh; overflow: hidden;
@@ -423,9 +424,9 @@ const ThemeStyle = () => (
     .kp-modal-body::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
     .kp-modal-body::-webkit-scrollbar-thumb:hover { background: #DA7756; }
     .kp-input {
-      width: 100%; border: 1px solid #e5e7eb; border-radius: 12px;
-      padding: 9px 12px; font-size: 13px; font-weight: 600;
-      color: #1a1a1a; background: #fffaf8;
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 8px 12px; font-size: 13px; font-weight: 500;
+      color: #111827; background: #fafafa;
       transition: border-color .15s, box-shadow .15s;
       box-sizing: border-box; outline: none;
       font-family: 'Poppins', sans-serif !important;
@@ -433,9 +434,9 @@ const ThemeStyle = () => (
     .kp-input:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
     .kp-input::placeholder { color: #a3a3a3; font-weight: 500; }
     .kp-textarea {
-      width: 100%; border: 1px solid #e5e7eb; border-radius: 12px;
-      padding: 9px 12px; font-size: 13px; font-weight: 600;
-      color: #1a1a1a; background: #fffaf8;
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 8px 12px; font-size: 13px; font-weight: 500;
+      color: #111827; background: #fafafa;
       transition: border-color .15s, box-shadow .15s;
       box-sizing: border-box; resize: vertical; min-height: 88px;
       outline: none; font-family: 'Poppins', sans-serif !important;
@@ -443,9 +444,9 @@ const ThemeStyle = () => (
     .kp-textarea:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
     .kp-textarea::placeholder { color: #a3a3a3; font-weight: 500; }
     .kp-select {
-      width: 100%; border: 1px solid #e5e7eb; border-radius: 12px;
-      padding: 9px 36px 9px 12px; font-size: 13px; font-weight: 600;
-      color: #1a1a1a; background: #fffaf8;
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 8px 36px 8px 12px; font-size: 13px; font-weight: 500;
+      color: #111827; background: #fafafa;
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
@@ -454,9 +455,9 @@ const ThemeStyle = () => (
     }
     .kp-select:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
     .kp-search {
-      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 12px;
-      padding: 9px 12px 9px 38px; font-size: 13px; font-weight: 600;
-      color: #1a1a1a; background: #fffaf8;
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 8px 12px 8px 38px; font-size: 13px; font-weight: 500;
+      color: #111827; background: #fafafa;
       box-sizing: border-box; transition: border-color .15s; outline: none;
       font-family: 'Poppins', sans-serif !important;
     }
@@ -471,16 +472,64 @@ const ThemeStyle = () => (
     .kp-list-item:hover { border-color: #e8e3de; box-shadow: 0 4px 12px rgba(218,119,86,0.09); }
     .kp-list-item.selected-item { border-color: #DA7756; background: #fdf9f7; }
     .kp-process-card {
-      background: #fff; border-radius: 14px;
-      border: 1px solid #ebebeb; border-left: 4px solid #DA7756;
+      background: #fff; border-radius: 12px;
+      border: 1px dashed #d1d5db;
       display: flex; flex-direction: column; gap: 8px;
-      padding: 12px 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-      transition: box-shadow .2s, transform .2s;
+      padding: 16px;
+      box-shadow: none;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
     }
-    .kp-process-card:hover { box-shadow: 0 8px 32px rgba(218,119,86,0.12); transform: translateY(-1px); }
+    .kp-process-card:hover { border-color: #DA7756; box-shadow: 0 4px 12px rgba(218,119,86,0.10); transform: translateY(-1px); }
     .kp-process-card .card-actions { opacity: 0; transition: opacity .15s; }
     .kp-process-card:hover .card-actions { opacity: 1; }
+    @media (max-width: 640px) {
+      .kp-section-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        margin-bottom: 14px !important;
+      }
+      .kp-title-row {
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+      }
+      .kp-title-row .ac-heading {
+        font-size: 14px !important;
+        line-height: 1.15 !important;
+      }
+      .kp-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+      .kp-actions button {
+        width: 100% !important;
+        min-height: 34px !important;
+        justify-content: center !important;
+        padding: 7px 8px !important;
+        font-size: 10px !important;
+        line-height: 1.15 !important;
+        white-space: normal !important;
+      }
+      .kp-action-divider {
+        display: none !important;
+      }
+      .kp-process-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .kp-process-card {
+        min-width: 0 !important;
+        padding: 12px !important;
+      }
+      .kp-process-card:hover {
+        transform: none !important;
+      }
+      .kp-process-card .card-actions {
+        opacity: 1 !important;
+      }
+    }
     .kp-checkbox-custom {
       width: 17px; height: 17px;
       border: 1.5px solid #d4d4d4; border-radius: 5px;
@@ -599,8 +648,8 @@ const StatusBadge = ({ status }: { status: string }) => {
         background: cfg.bg,
         color: cfg.color,
         border: `1px solid ${cfg.border}`,
-        fontSize: 11,
-        fontWeight: 700,
+        fontSize: 10,
+        fontWeight: 500,
         padding: "3px 10px",
         borderRadius: 99,
         whiteSpace: "nowrap",
@@ -643,8 +692,8 @@ const PRIORITIES = ["Low", "Medium", "High"];
 const labelSt: React.CSSProperties = {
   display: "block",
   fontSize: 12,
-  fontWeight: 800,
-  color: "#1a1a1a",
+  fontWeight: 600,
+  color: "#111827",
   marginBottom: 6,
   fontFamily: C.font,
 };
@@ -996,35 +1045,38 @@ export const KeyProcessesSection = () => {
   );
 
   return (
-    <div className="kp-wrap" style={{ fontFamily: C.font, marginTop: 24 }}>
+    <div
+      className="kp-wrap"
+      style={{
+        padding: "24px",
+        background: "#ffffff",
+        borderRadius: "16px",
+        border: `1px solid ${C.borderLgt}`,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        marginBottom: "24px",
+        fontFamily: C.font,
+      }}
+    >
       <ThemeStyle />
 
-      <div
-        style={{
-          borderRadius: 8,
-          border: `1px solid ${C.primaryBord}`,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        }}
-      >
+      <div>
         {/* ── Header ── */}
         <div
+          className="kp-section-header"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "18px 20px",
-            background: C.tealBg,
-            borderTopLeftRadius: 8,
-            borderTopRightRadius: 8,
-            borderBottom: `2px solid ${C.primaryBord}`,
+            marginBottom: 20,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="kp-title-row" style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
                 width: 36,
                 height: 36,
                 borderRadius: 10,
+                background: "#f3f4f6",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1034,15 +1086,8 @@ export const KeyProcessesSection = () => {
               <DocIcon />
             </div>
             <h1
-              style={{
-                fontSize: 12,
-                fontWeight: 900,
-                color: "#070707",
-                margin: 0,
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                fontFamily: C.font,
-              }}
+              className="ac-heading"
+              style={{ fontFamily: C.font }}
             >
               Key Processes (SOPs)
             </h1>
@@ -1060,18 +1105,18 @@ export const KeyProcessesSection = () => {
               {showInfoTooltip && (
                 <div className="kp-tooltip">
                   <div
-                    style={{ fontWeight: 800, marginBottom: 12, fontSize: 13 }}
+                    style={{ fontWeight: 600, marginBottom: 12, fontSize: 13 }}
                   >
                     SWOT Analysis - Know Yourself
                   </div>
                   <div style={{ marginBottom: 12 }}>
-                    <span style={{ fontWeight: 800 }}>
+                    <span style={{ fontWeight: 600 }}>
                       Strengths & Weaknesses:
                     </span>{" "}
                     What you control inside your business
                   </div>
                   <div style={{ marginBottom: 16 }}>
-                    <span style={{ fontWeight: 800 }}>
+                    <span style={{ fontWeight: 600 }}>
                       Opportunities & Threats:
                     </span>{" "}
                     External market forces you must respond to
@@ -1110,7 +1155,7 @@ export const KeyProcessesSection = () => {
             {isFetching && <LoaderIcon />}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="kp-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
               onClick={openCreate}
               style={{
@@ -1118,27 +1163,28 @@ export const KeyProcessesSection = () => {
                 alignItems: "center",
                 gap: 6,
                 fontSize: 12,
-                fontWeight: 800,
-                color: "#070707",
-                background: "rgba(255,255,255,0.25)",
-                border: "1px solid rgba(255,255,255,0.40)",
+                fontWeight: 600,
+                color: "#fff",
+                background: C.primary,
+                border: "none",
                 borderRadius: 8,
-                padding: "6px 14px",
+                padding: "8px 16px",
                 cursor: "pointer",
                 fontFamily: C.font,
                 transition: "background .15s",
               }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.40)")
+                (e.currentTarget.style.background = C.primaryHov)
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.25)")
+                (e.currentTarget.style.background = C.primary)
               }
             >
               <PlusIcon /> Create New
             </button>
             <div
-              style={{ width: 1, height: 16, background: "rgba(0,0,0,0.15)" }}
+              className="kp-action-divider"
+              style={{ width: 1, height: 16, background: "#e5e7eb" }}
             />
             <button
               onClick={openSelect}
@@ -1147,17 +1193,24 @@ export const KeyProcessesSection = () => {
                 alignItems: "center",
                 gap: 6,
                 fontSize: 12,
-                fontWeight: 800,
-                color: "#070707",
-                background: "transparent",
+                fontWeight: 600,
+                color: "#4b5563",
+                background: "#f3f4f6",
                 border: "none",
+                borderRadius: 8,
+                padding: "8px 14px",
                 cursor: "pointer",
                 fontFamily: C.font,
-                opacity: 0.7,
-                transition: "opacity .15s",
+                transition: "all .15s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.7")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#e5e7eb";
+                e.currentTarget.style.color = "#111827";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#f3f4f6";
+                e.currentTarget.style.color = "#4b5563";
+              }}
             >
               <SelectIcon /> Select
             </button>
@@ -1167,10 +1220,7 @@ export const KeyProcessesSection = () => {
         {/* ── Body ── */}
         <div
           style={{
-            padding: 20,
-            background: C.tealBg,
-            borderBottomLeftRadius: 8,
-            borderBottomRightRadius: 8,
+            background: "#ffffff",
           }}
         >
           {fetchError && (
@@ -1182,7 +1232,7 @@ export const KeyProcessesSection = () => {
                 borderRadius: 12,
                 padding: "10px 14px",
                 fontSize: 13,
-                fontWeight: 700,
+                fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -1195,7 +1245,7 @@ export const KeyProcessesSection = () => {
                 onClick={fetchSops}
                 style={{
                   fontSize: 11,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   background: "none",
                   border: "none",
                   cursor: "pointer",
@@ -1211,6 +1261,7 @@ export const KeyProcessesSection = () => {
 
           {isFetching ? (
             <div
+              className="kp-process-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3,1fr)",
@@ -1232,42 +1283,43 @@ export const KeyProcessesSection = () => {
                 width: "100%",
                 padding: "36px 0",
                 borderRadius: 14,
-                border: `2px dashed ${C.primaryBord}`,
-                background: C.primaryTint,
+                border: "1px dashed #d1d5db",
+                background: "#fff",
                 cursor: "pointer",
                 fontFamily: C.font,
                 transition: "all .15s",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = C.primary;
-                e.currentTarget.style.background = "#fdf9f7";
+                e.currentTarget.style.background = "#fafafa";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = C.primaryBord;
-                e.currentTarget.style.background = C.primaryTint;
+                e.currentTarget.style.borderColor = "#d1d5db";
+                e.currentTarget.style.background = "#fff";
               }}
             >
               <div
                 style={{
-                  width: 36,
-                  height: 36,
+                  width: 28,
+                  height: 28,
                   borderRadius: "50%",
-                  background: "rgba(218,119,86,0.18)",
+                  background: C.primaryTint,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: 8,
+                  marginBottom: 6,
                   color: C.primary,
                 }}
               >
                 <PlusIcon />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 900, color: C.primary }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.primary }}>
                 Add Key Processes
               </span>
             </button>
           ) : (
             <div
+              className="kp-process-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3,1fr)",
@@ -1286,7 +1338,7 @@ export const KeyProcessesSection = () => {
                     <span
                       style={{
                         fontSize: 13,
-                        fontWeight: 700,
+                        fontWeight: 500,
                         color: C.textMain,
                         lineHeight: 1.4,
                         fontFamily: C.font,
@@ -1336,7 +1388,7 @@ export const KeyProcessesSection = () => {
                         alignItems: "center",
                         gap: 4,
                         fontSize: 12,
-                        fontWeight: 600,
+                        fontWeight: 500,
                         color: C.primary,
                         textDecoration: "none",
                         width: "fit-content",
@@ -1367,7 +1419,7 @@ export const KeyProcessesSection = () => {
             style={{
               background: "#fff",
               borderRadius: 16,
-              boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+              boxShadow: "0 20px 40px -10px rgba(0,0,0,0.20)",
               width: "100%",
               maxWidth: 380,
               overflow: "hidden",
@@ -1379,7 +1431,7 @@ export const KeyProcessesSection = () => {
               <div
                 style={{
                   fontSize: 15,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: C.textMain,
                   marginBottom: 8,
                 }}
@@ -1403,7 +1455,7 @@ export const KeyProcessesSection = () => {
                 disabled={isDeleting}
                 style={{
                   padding: "10px 24px",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: "#fff",
                   background: "#dc2626",
                   border: "none",
@@ -1425,7 +1477,7 @@ export const KeyProcessesSection = () => {
                 disabled={isDeleting}
                 style={{
                   padding: "10px 24px",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: C.textMain,
                   background: "#f3f4f6",
                   border: "none",
@@ -1469,15 +1521,7 @@ export const KeyProcessesSection = () => {
                     flexShrink: 0,
                   }}
                 />
-                <h2
-                  style={{
-                    fontSize: 17,
-                    fontWeight: 900,
-                    color: C.textMain,
-                    margin: 0,
-                    fontFamily: C.font,
-                  }}
-                >
+                <h2 className="ac-heading" style={{ fontFamily: C.font }}>
                   {activeModal === "edit" ? "Edit SOP" : "Create New SOP"}
                 </h2>
               </div>
@@ -1605,7 +1649,7 @@ export const KeyProcessesSection = () => {
                   <span
                     style={{
                       fontSize: 13,
-                      fontWeight: 800,
+                      fontWeight: 600,
                       color: C.textMain,
                       width: 36,
                       textAlign: "right",
@@ -1696,7 +1740,7 @@ export const KeyProcessesSection = () => {
                 style={{
                   padding: "10px 20px",
                   fontSize: 13,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: C.textMain,
                   background: "#fff",
                   border: `1px solid ${C.primaryBord}`,
@@ -1720,9 +1764,9 @@ export const KeyProcessesSection = () => {
                 style={{
                   padding: "10px 22px",
                   fontSize: 13,
-                  fontWeight: 900,
+                  fontWeight: 600,
                   color: "#fff",
-                  background: isSaving ? "#9ca3af" : "#1a1a1a",
+                  background: isSaving ? "#9ca3af" : C.primary,
                   border: "none",
                   borderRadius: 12,
                   cursor: isSaving ? "not-allowed" : "pointer",
@@ -1734,10 +1778,10 @@ export const KeyProcessesSection = () => {
                   fontFamily: C.font,
                 }}
                 onMouseEnter={(e) => {
-                  if (!isSaving) e.currentTarget.style.background = "#000";
+                  if (!isSaving) e.currentTarget.style.background = C.primaryHov;
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSaving) e.currentTarget.style.background = "#1a1a1a";
+                  if (!isSaving) e.currentTarget.style.background = C.primary;
                 }}
               >
                 {isSaving && <LoaderIcon />}
@@ -1783,15 +1827,7 @@ export const KeyProcessesSection = () => {
                     }}
                   />
                   <div>
-                    <h2
-                      style={{
-                        fontSize: 17,
-                        fontWeight: 900,
-                        color: C.textMain,
-                        margin: "0 0 2px",
-                        fontFamily: C.font,
-                      }}
-                    >
+                    <h2 className="ac-heading" style={{ margin: "0 0 2px", fontFamily: C.font }}>
                       Select Key Processes
                     </h2>
                     <p
@@ -1855,7 +1891,7 @@ export const KeyProcessesSection = () => {
                     fontFamily: C.font,
                   }}
                 >
-                  <span style={{ fontWeight: 800, color: C.textMain }}>
+                  <span style={{ fontWeight: 600, color: C.textMain }}>
                     {selectedCount} selected
                   </span>
                   {" · "}
@@ -1868,7 +1904,7 @@ export const KeyProcessesSection = () => {
                       alignItems: "center",
                       gap: 4,
                       fontSize: 12,
-                      fontWeight: 800,
+                      fontWeight: 600,
                       color: C.primary,
                       fontFamily: C.font,
                     }}
@@ -1965,7 +2001,7 @@ export const KeyProcessesSection = () => {
                             <span
                               style={{
                                 fontSize: 13,
-                                fontWeight: 800,
+                                fontWeight: 600,
                                 color: C.textMain,
                                 fontFamily: C.font,
                               }}
@@ -2073,13 +2109,13 @@ export const KeyProcessesSection = () => {
                   fontFamily: C.font,
                 }}
               >
-                <strong style={{ color: C.textMain, fontWeight: 800 }}>
+                <strong style={{ color: C.textMain, fontWeight: 600 }}>
                   {selectedCount}
                 </strong>{" "}
                 of {allSops.length} selected
                 {isValidCount && (
                   <span
-                    style={{ color: C.primary, fontWeight: 900, marginLeft: 4 }}
+                    style={{ color: C.primary, fontWeight: 600, marginLeft: 4 }}
                   >
                     ✓
                   </span>
@@ -2096,7 +2132,7 @@ export const KeyProcessesSection = () => {
                     style={{
                       padding: "9px 18px",
                       fontSize: 13,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       color: C.textMain,
                       background: "#fff",
                       border: `1px solid ${C.primaryBord}`,
@@ -2120,9 +2156,9 @@ export const KeyProcessesSection = () => {
                   style={{
                     padding: "9px 20px",
                     fontSize: 13,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#fff",
-                    background: "#1a1a1a",
+                    background: C.primary,
                     border: "none",
                     borderRadius: 12,
                     cursor: "pointer",
@@ -2131,10 +2167,10 @@ export const KeyProcessesSection = () => {
                     fontFamily: C.font,
                   }}
                   onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = "#000")
+                    (e.currentTarget.style.background = C.primaryHov)
                   }
                   onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "#1a1a1a")
+                    (e.currentTarget.style.background = C.primary)
                   }
                 >
                   Save Selection

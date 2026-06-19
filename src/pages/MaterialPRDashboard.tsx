@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -12,6 +13,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { cache } from "@/utils/cacheUtils";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const CACHE_TTL = 5 * 60 * 1000;   // 5 minutes — fresh
 const STALE_TTL = 30 * 60 * 1000;  // 30 minutes — show stale while revalidating
@@ -66,7 +68,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
-   {
+  {
     key: "lastApprovedBy",
     label: "Last Approved By",
     sortable: true,
@@ -94,7 +96,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
- 
+
   {
     key: "prAmount",
     label: "PR Amount",
@@ -116,22 +118,30 @@ export const MaterialPRDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
+  const { shouldShow } = useDynamicPermissions()
+
   const [loading, setLoading] = useState(false);
   const bgRefreshingRef = useRef(false);
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    referenceNumber: urlParams.get("referenceNumber") || "",
+    prNumber: urlParams.get("prNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+    approvalStatus: urlParams.get("approvalStatus") || "",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [materialPR, setMaterialPR] = useState([]);
-  const [filters, setFilters] = useState({
-    referenceNumber: "",
-    prNumber: "",
-    supplierName: "",
-    approvalStatus: "",
-  });
+  const [filters, setFilters] = useState(initialFilters);
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
   });
@@ -144,7 +154,7 @@ export const MaterialPRDashboard = () => {
       po_number: item.po_number,
       referenceNo: item.reference_number,
       supplierName: item.supplier?.company_name,
-      createdBy: item.user.full_name,
+      createdBy: item.user?.full_name || "-",
       createdOn: item.created_at,
       lastApprovedBy: item.approved_by_user,
       approvedStatus: item.all_level_approved
@@ -212,8 +222,28 @@ export const MaterialPRDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData({
+      page: urlPage,
+      search: initialSearch,
+      reference_number: initialFilters.referenceNumber,
+      external_id: initialFilters.prNumber,
+      supplier_name: initialFilters.supplierName,
+      approval_status: initialFilters.approvalStatus,
+    });
   }, []);
+
+  // Update URL whenever pagination, filters or search changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
+    if (filters.prNumber) params.set("prNumber", filters.prNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
+
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   // Invalidate cache and re-fetch when site changes while page is open
   useEffect(() => {
@@ -349,25 +379,34 @@ export const MaterialPRDashboard = () => {
   const renderActions = (item: any) => {
     return (
       <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/finance/material-pr/details/${item.id}`);
-          }}
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
         {
-          item.canEditAll && <Button
+          shouldShow("Material PR", "show") && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="p-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/finance/material-pr/details/${item.id}`, {
+                  state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+                });
+              }}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )
+        }
+
+        {
+          shouldShow("Material PR", "update") && item.canEditAll && <Button
             size="sm"
             variant="ghost"
             className="p-1"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/finance/material-pr/edit/${item.id}`);
+              navigate(`/finance/material-pr/edit/${item.id}`, {
+                state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+              });
             }}
           >
             <Edit className="w-4 h-4" />
@@ -384,13 +423,17 @@ export const MaterialPRDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/finance/material-pr/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("Material PR", "create") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => navigate("/finance/material-pr/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </div>
   );
 

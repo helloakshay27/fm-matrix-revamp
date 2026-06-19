@@ -8,16 +8,28 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 // Type definitions for Vendor Credit
 interface VendorCredit {
     id: number;
     credit_note_number: string;
-    vendor_name: string;
+    supplier_name: string;
+    vendor_name?: string;
     date: string;
     order_number: string;
     bill_number: string;
     amount: number;
+    total_amount: number;
     balance_due: number;
     status: 'draft' | 'open' | 'paid' | 'overdue' | 'cancelled';
     active: boolean;
@@ -109,6 +121,9 @@ export const VendorCreditsListPage: React.FC = () => {
     const [vendorCreditData, setVendorCreditData] = useState<VendorCredit[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<VendorCredit | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
         per_page: 10,
@@ -197,6 +212,36 @@ export const VendorCreditsListPage: React.FC = () => {
         setCurrentPage(1);
     };
 
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            setDeleteLoading(true);
+            setLoading(true);
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+
+            await axios.delete(
+                `https://${baseUrl}/lock_account_supplier_credits/${deleteTarget.id}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            toast.success('Vendor credit deleted successfully!');
+            setShowDeleteModal(false);
+            setDeleteTarget(null);
+            fetchVendorCreditData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error: unknown) {
+            console.error('Error deleting vendor credit:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.error(`Failed to delete vendor credit: ${errorMessage}`);
+        } finally {
+            setDeleteLoading(false);
+            setLoading(false);
+        }
+    };
+
     const getStatusBadge = (status: string) => {
         const statusColors: Record<string, string> = {
             draft: 'bg-gray-100 text-gray-800',
@@ -245,18 +290,16 @@ export const VendorCreditsListPage: React.FC = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </button>
-                {/* <button
+                <button
                     onClick={() => {
-                        if (confirm('Are you sure you want to delete this vendor credit?')) {
-                            toast.success('Vendor credit deleted successfully!');
-                            fetchVendorCreditData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-                        }
+                        setDeleteTarget(vc);
+                        setShowDeleteModal(true);
                     }}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button> */}
+                </button>
             </div>
         ),
         credit_note_number: (
@@ -325,10 +368,11 @@ export const VendorCreditsListPage: React.FC = () => {
                 loading={loading}
                 leftActions={(
                     <Button
-                        className='bg-primary text-primary-foreground hover:bg-primary/90'
+                        // className='bg-primary text-primary-foreground hover:bg-primary/90'
+                         className='fm-button-fix fm-button-brand px-4 py-2P'
                         onClick={() => navigate('/accounting/vendor-credits/add')}
                     >
-                        <Plus className="w-4 h-4 mr-2" /> New
+                        <Plus className="w-4 h-4 mr-2" /> Add
                     </Button>
                 )}
             />
@@ -344,6 +388,50 @@ export const VendorCreditsListPage: React.FC = () => {
                     onPerPageChange={handlePerPageChange}
                 />
             )}
+            <AlertDialog
+                open={showDeleteModal}
+                onOpenChange={(open) => {
+                    setShowDeleteModal(open);
+                    if (!open) setDeleteTarget(null);
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Vendor Credit</AlertDialogTitle>
+
+                        <AlertDialogDescription>
+                            Once you delete this vendor credit, you won't be able to retrieve it later.
+                            Are you sure you want to delete {deleteTarget?.credit_note_number || 'this vendor credit'}?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteLoading}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleConfirmDelete();
+                            }}
+                            disabled={deleteLoading}
+                            style={{
+                                backgroundColor: '#dc2626',
+                                color: '#ffffff',
+                                border: 'none',
+                            }}
+                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#b91c1c';
+                            }}
+                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#dc2626';
+                            }}
+                        >
+                            {deleteLoading ? 'Deleting...' : 'OK'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

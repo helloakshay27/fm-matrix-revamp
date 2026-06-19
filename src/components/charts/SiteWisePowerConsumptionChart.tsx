@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
@@ -118,19 +117,25 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
   };
 
   return (
-    <Card className={`hover:shadow-lg transition-shadow duration-200 ${className}`}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold text-analytics-text">{title}</CardTitle>
+    <div className={`bg-white rounded-xl border border-gray-200 shadow-sm w-full ${className}`}>
+      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3
+          className="text-base font-semibold text-gray-900"
+          style={{ fontFamily: 'Work Sans, sans-serif' }}
+        >
+          {title}
+        </h3>
         <button
+          type="button"
           onClick={handleDownloadClick}
-          className="p-1.5 rounded-md text-gray-500 hover:text-[#C72030] hover:bg-[#EDEAE3] transition-colors duration-200"
+          className="p-1.5 rounded-md text-gray-400 hover:text-[#C72030] hover:bg-gray-100 transition-colors duration-200"
           title="Download"
         >
           <Download className="w-4 h-4" />
         </button>
-      </CardHeader>
+      </div>
 
-      <CardContent>
+      <div className="p-5">
         <ResponsiveContainer width="100%" height={height}>
           <ComposedChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
@@ -143,7 +148,6 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
               dy={10}
             />
 
-            {/* Left Y axis — always shown */}
             <YAxis
               yAxisId="left"
               label={leftYAxisLabel ? { value: leftYAxisLabel, angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#6B7280' } } : undefined}
@@ -153,7 +157,6 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
               tickLine={false}
             />
 
-            {/* Right Y axis — only if any line uses it */}
             {hasRightAxis && (
               <YAxis
                 yAxisId="right"
@@ -169,7 +172,6 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ paddingTop: '20px' }} />
 
-            {/* Bars */}
             {activeBars.map(bar => (
               <Bar
                 key={bar.dataKey}
@@ -182,7 +184,6 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
               />
             ))}
 
-            {/* Lines */}
             {activeLines.map(line => (
               <Line
                 key={line.dataKey}
@@ -198,7 +199,7 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
             ))}
           </ComposedChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

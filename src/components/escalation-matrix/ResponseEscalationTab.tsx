@@ -242,6 +242,13 @@ export const ResponseEscalationTab: React.FC = () => {
     );
   };
 
+  const getUserNamesFromDetails = (
+    userDetails: { id: number | string; name: string }[] | undefined | null
+  ): string => {
+    if (!userDetails || userDetails.length === 0) return "";
+    return userDetails.map((u) => u.name).join(", ");
+  };
+
   const getUserNames = (userIds: string | number[] | null): string => {
     if (!userIds) return "";
 
@@ -347,64 +354,46 @@ export const ResponseEscalationTab: React.FC = () => {
             .includes(selectedCategoryFilter.toLowerCase());
         });
 
+  // Extract user IDs from an escalation entry — prefers details array, falls back to raw field
+  const getEscalationUserIds = (escalation: { escalate_to_users?: unknown; escalate_to_users_details?: { id: number | string; name: string }[] } | undefined): number[] => {
+    if (!escalation) return [];
+    // Prefer escalate_to_users_details: [{id, name}] — most reliable
+    if (Array.isArray(escalation.escalate_to_users_details) && escalation.escalate_to_users_details.length > 0) {
+      return escalation.escalate_to_users_details
+        .map((u) => Number(u.id))
+        .filter((id) => !isNaN(id));
+    }
+    // Fallback: escalate_to_users may be a JSON string, array of IDs, or array of objects
+    const raw = escalation.escalate_to_users;
+    if (!raw) return [];
+    if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map(Number).filter((id) => !isNaN(id)) : [];
+      } catch {
+        return [];
+      }
+    }
+    if (Array.isArray(raw)) {
+      return (raw as Array<number | { id: number | string }>)
+        .map((v) => (typeof v === "object" && v !== null ? Number((v as { id: number | string }).id) : Number(v)))
+        .filter((id) => !isNaN(id));
+    }
+    return [];
+  };
+
   // Handle edit rule
   const handleEditRule = (rule: ResponseEscalationGetResponse) => {
     setEditingRule(rule);
 
-    // Pre-populate form with existing data
     const formData = {
       categoryIds: [rule.category_id],
       escalationLevels: {
-        e1: rule.escalations.find((e) => e.name === "E1")?.escalate_to_users
-          ? (typeof rule.escalations.find((e) => e.name === "E1")
-              ?.escalate_to_users === "string"
-              ? JSON.parse(
-                  rule.escalations.find((e) => e.name === "E1")
-                    ?.escalate_to_users as string
-                )
-              : rule.escalations.find((e) => e.name === "E1")
-                  ?.escalate_to_users) || []
-          : [],
-        e2: rule.escalations.find((e) => e.name === "E2")?.escalate_to_users
-          ? (typeof rule.escalations.find((e) => e.name === "E2")
-              ?.escalate_to_users === "string"
-              ? JSON.parse(
-                  rule.escalations.find((e) => e.name === "E2")
-                    ?.escalate_to_users as string
-                )
-              : rule.escalations.find((e) => e.name === "E2")
-                  ?.escalate_to_users) || []
-          : [],
-        e3: rule.escalations.find((e) => e.name === "E3")?.escalate_to_users
-          ? (typeof rule.escalations.find((e) => e.name === "E3")
-              ?.escalate_to_users === "string"
-              ? JSON.parse(
-                  rule.escalations.find((e) => e.name === "E3")
-                    ?.escalate_to_users as string
-                )
-              : rule.escalations.find((e) => e.name === "E3")
-                  ?.escalate_to_users) || []
-          : [],
-        e4: rule.escalations.find((e) => e.name === "E4")?.escalate_to_users
-          ? (typeof rule.escalations.find((e) => e.name === "E4")
-              ?.escalate_to_users === "string"
-              ? JSON.parse(
-                  rule.escalations.find((e) => e.name === "E4")
-                    ?.escalate_to_users as string
-                )
-              : rule.escalations.find((e) => e.name === "E4")
-                  ?.escalate_to_users) || []
-          : [],
-        e5: rule.escalations.find((e) => e.name === "E5")?.escalate_to_users
-          ? (typeof rule.escalations.find((e) => e.name === "E5")
-              ?.escalate_to_users === "string"
-              ? JSON.parse(
-                  rule.escalations.find((e) => e.name === "E5")
-                    ?.escalate_to_users as string
-                )
-              : rule.escalations.find((e) => e.name === "E5")
-                  ?.escalate_to_users) || []
-          : [],
+        e1: getEscalationUserIds(rule.escalations.find((e) => e.name === "E1")),
+        e2: getEscalationUserIds(rule.escalations.find((e) => e.name === "E2")),
+        e3: getEscalationUserIds(rule.escalations.find((e) => e.name === "E3")),
+        e4: getEscalationUserIds(rule.escalations.find((e) => e.name === "E4")),
+        e5: getEscalationUserIds(rule.escalations.find((e) => e.name === "E5")),
       },
     };
 
@@ -1060,7 +1049,7 @@ export const ResponseEscalationTab: React.FC = () => {
                                   key={escalation.name}
                                   className="text-sm text-gray-700"
                                 >
-                                  {getUserNames(escalation.escalate_to_users)}
+                                  {getUserNamesFromDetails(escalation.escalate_to_users_details) || getUserNames(escalation.escalate_to_users)}
                                 </div>
                               ))}
                             </div>

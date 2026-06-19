@@ -231,7 +231,7 @@ export const BookingSetupClubDashboard = () => {
         return (
           <div className="flex items-center justify-center">
             <div
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? 'bg-green-500' : 'bg-gray-300'
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? '!bg-green-500' : 'bg-gray-300'
                 }`}
               onClick={() => handleStatusToggle(item.id)}
             >
@@ -274,7 +274,7 @@ export const BookingSetupClubDashboard = () => {
     <div className="flex items-center gap-2">
       <Button
         onClick={() => setShowActionPanel(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2  flex items-center gap-2 border-0"
       >
         <Plus className="w-4 h-4" />
         Action

@@ -14,6 +14,7 @@ import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters } from '../services/wasteGenerationAPI';
 import { useLayout } from '@/contexts/LayoutContext';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { format, subYears } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -21,6 +22,8 @@ import {
 
 // Analytics Components
 import { TicketAnalyticsFilterDialog } from "@/components/TicketAnalyticsFilterDialog";
+
+import { AssetAnalyticsFilterDialog } from '@/components/AssetAnalyticsFilterDialog';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const toApiDate = (ddmmyyyy: string) => {
@@ -58,15 +61,9 @@ const WasteCategoryChart: React.FC<WasteChartProps> = ({ data, isLoading, onDown
     if (!active || !payload?.length) return null;
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[160px]">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <p className="font-semibold text-gray-800 truncate max-w-[120px]">{label}</p>
-          <button
-            className="text-[#C72030] hover:underline text-xs flex items-center gap-1 shrink-0"
-            onClick={() => onEye(label ?? '')}
-          >
-            <Eye className="w-3 h-3" /> View
-          </button>
-        </div>
+          <div className="flex items-center gap-4 mb-2">
+            <p className="font-semibold text-gray-800 truncate max-w-[160px]">{label}</p>
+          </div>
         {payload.map((p) => (
           <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
             <span className="w-2 h-2 rounded-full inline-block shrink-0" style={{ background: p.fill }} />
@@ -157,6 +154,7 @@ const SiteDetailModal: React.FC<SiteDetailModalProps> = ({ siteName, siteData, o
 const UtilityWasteGenerationDashboard = () => {
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useLayout();
+  const { shouldShow } = useDynamicPermissions();
   const panelRef = useRef<HTMLDivElement>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -175,10 +173,10 @@ const UtilityWasteGenerationDashboard = () => {
   // default: today & 1 year ago
   const today = new Date();
   const oneYearAgo = subYears(today, 1);
-  const [analyticsDateRange, setAnalyticsDateRange] = useState({
-    startDate: format(oneYearAgo, 'dd/MM/yyyy'),
-    endDate: format(today, 'dd/MM/yyyy'),
-  });
+ const [analyticsDateRange, setAnalyticsDateRange] = useState({
+  startDate: oneYearAgo,
+  endDate: today,
+});
 
   // KPI card data
   const [kpiData, setKpiData] = useState<{
@@ -231,18 +229,24 @@ const UtilityWasteGenerationDashboard = () => {
   const handleDownloadChart = async () => {
     try {
       const siteId = getSiteId();
-      const from = toApiDate(analyticsDateRange.startDate);
-      const to   = toApiDate(analyticsDateRange.endDate);
-      const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_segregation_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
+      const from = format(analyticsDateRange.startDate, "yyyy-MM-dd");
+      const to = format(analyticsDateRange.endDate, "yyyy-MM-dd");
+      const token = localStorage.getItem('token') || '';
+      const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_segregation_download?site_id=${siteId}&from_date=${from}&to_date=${to}&token=${token}`;
       const res = await fetch(url, { headers: { Authorization: getAuthHeader() } });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const contentDisposition = res.headers.get('content-disposition') || '';
-      const match = contentDisposition.match(/filename="?(.+)"?/);
-      const filename = match ? match[1] : 'waste_segregation.csv';
+      const match = contentDisposition.match(/filename="?([^";]+)"?/);
+      let filename = match ? match[1] : 'waste_segregation.xlsx';
+      if (!filename.toLowerCase().endsWith('.xlsx') && !filename.toLowerCase().endsWith('.xls')) {
+        filename = `${filename}.xlsx`;
+      }
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = objUrl; a.download = filename; a.click();
+      a.href = objUrl;
+      a.download = filename;
+      a.click();
       URL.revokeObjectURL(objUrl);
     } catch (e) {
       console.error(e);
@@ -277,14 +281,15 @@ const UtilityWasteGenerationDashboard = () => {
     : [];
 
   // Load analytics when date range changes
-  const { startDate: analyticsStart, endDate: analyticsEnd } = analyticsDateRange;
-  useEffect(() => {
-    const from = toApiDate(analyticsStart);
-    const to   = toApiDate(analyticsEnd);
-    fetchKpis(from, to);
-    fetchChartData(from, to);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analyticsStart, analyticsEnd]);
+ const { startDate: analyticsStart, endDate: analyticsEnd } = analyticsDateRange;
+
+useEffect(() => {
+  const from = format(analyticsStart, "yyyy-MM-dd");
+  const to = format(analyticsEnd, "yyyy-MM-dd");
+
+  fetchKpis(from, to);
+  fetchChartData(from, to);
+}, [analyticsStart, analyticsEnd]);
 
   const loadWasteGenerations = async (page: number = 1, filters?: WasteGenerationFilters) => {
     try {
@@ -341,7 +346,7 @@ const UtilityWasteGenerationDashboard = () => {
                 { key: 'wg_date', label: 'Waste Date' },
               ]}
               renderCell={(item: WasteGeneration, key) => {
-                if (key === 'actions') return <Button variant="ghost" onClick={() => handleView(item.id)}><Eye className="h-4 w-4" /></Button>;
+                if (key === 'actions') return shouldShow("Waste Generation", "show") ? <Button variant="ghost" onClick={() => handleView(item.id)}><Eye className="h-4 w-4" /></Button> : null;
                 if (key === 'vendor') return item.vendor?.company_name || 'N/A';
                 if (key === 'category') return item.category?.category_name || 'N/A';
                 return item[key] || 'N/A';
@@ -350,9 +355,11 @@ const UtilityWasteGenerationDashboard = () => {
               onSearchChange={setSearchTerm}
               onFilterClick={() => setIsFilterOpen(true)}
               leftActions={
-                <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
-                  <Plus className="w-4 h-4 mr-2" /> Action
-                </Button>
+                shouldShow("Waste Generation", "show") ? (
+                  <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
+                    <Plus className="w-4 h-4 mr-2" /> Action
+                  </Button>
+                ) : undefined
               }
             />
           </TabsContent>
@@ -369,9 +376,9 @@ const UtilityWasteGenerationDashboard = () => {
               >
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
-                  </span>
+                <span className="text-sm font-medium text-gray-700">
+  {format(analyticsDateRange.startDate, "dd/MM/yyyy")} - {format(analyticsDateRange.endDate, "dd/MM/yyyy")}
+</span>
                 </div>
                 <Filter className="w-4 h-4 text-gray-600" />
               </Button>
@@ -437,14 +444,18 @@ const UtilityWasteGenerationDashboard = () => {
 
       <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} onExport={() => {}} />
       <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
-      <TicketAnalyticsFilterDialog
-        title='Waste Generation'
-        isOpen={isAnalyticsFilterOpen}
-        onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={(f) => setAnalyticsDateRange(f)}
-        currentStartDate={analyticsDateRange.startDate}
-        currentEndDate={analyticsDateRange.endDate}
-      />
+  <AssetAnalyticsFilterDialog
+  isOpen={isAnalyticsFilterOpen}
+  onClose={() => setIsAnalyticsFilterOpen(false)}
+  currentStartDate={analyticsDateRange.startDate}
+  currentEndDate={analyticsDateRange.endDate}
+  onApplyFilters={(startDate, endDate) =>
+    setAnalyticsDateRange({
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+    })
+  }
+/>
       <SiteDetailModal
         siteName={detailSite}
         siteData={detailEntries}

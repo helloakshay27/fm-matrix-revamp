@@ -130,7 +130,7 @@ export const TrialBalanceDetails = () => {
             <Button
                 variant="ghost"
                 className="mb-4 px-0"
-                onClick={() => navigate("/accounting/reports/balance-sheet")}
+                onClick={() => navigate("/accounting/reports/trial-balance")}
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back

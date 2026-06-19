@@ -188,9 +188,11 @@ export const fetchMeetingReport = async ({
   return json.data ?? json;
 };
 
-export const fetchAnalytics = async (period = "last_7_days") => {
+export const fetchAnalytics = async (period = "last_7_days", meetingId = "") => {
   const headers = getAuthHeaders();
-  const url = `${getBaseUrl()}/user_journals/analytics?period=${period}`;
+  const params = new URLSearchParams({ period });
+  if (meetingId) params.append("meeting_id", meetingId);
+  const url = `${getBaseUrl()}/user_journals/analytics?${params.toString()}`;
   const res = await fetch(url, { method: "GET", headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

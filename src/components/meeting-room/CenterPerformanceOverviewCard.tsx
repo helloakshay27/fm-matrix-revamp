@@ -32,56 +32,71 @@ export const CenterPerformanceOverviewCard: React.FC<CenterPerformanceOverviewCa
   title = 'Center Wise - Meeting Room Performance Overview',
   rows,
 }) => {
+  const thCls = 'px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header';
+  const tdCls = 'px-4 py-3 text-center text-sm border-b border-gray-100';
+
   return (
-    <div className="bg-white rounded-lg border border-analytics-border">
-      <div className="px-4 py-3 border-b border-analytics-border">
-        <h3 className="font-semibold text-analytics-text">{title}</h3>
-      </div>
-      <div className="p-4 overflow-x-auto">
-        <table className="min-w-full border text-sm text-center">
-          <thead className="bg-[#ded9cd] text-[#b62527] font-semibold text-sm">
-            <tr>
-              <th className="border border-black p-3 text-left align-middle" rowSpan={2}>
-                Site Name
-              </th>
-              <th className="border border-black p-3 text-center" colSpan={3}>
-                Meeting Room
-              </th>
-            </tr>
-            <tr>
-              <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
-              <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
-              <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows && rows.length > 0 ? rows.map((row, idx) => {
-              const meeting: any = row.meeting_room || row.meeting || {};
-              const utilTrend = meeting.utilization_trend ?? null;
-              const cancelTrend = meeting.cancellation_trend ?? null;
-              const revenueTrend = meeting.revenue_trend ?? null;
-              const siteLabel = row.site_name || row.site || '-';
-              return (
-                <tr key={idx} className="border-t">
-                  <td className="p-2 border font-medium text-left">{siteLabel}</td>
-                  <td className="p-2 border">
-                    {meeting.utilization_rate ?? '-'} <Arrow up={utilTrend === '↑' ? true : utilTrend === '↓' ? false : null} />
-                  </td>
-                  <td className="p-2 border">
-                    {meeting.cancellation_rate ?? '-'} <Arrow up={cancelTrend === '↑' ? true : cancelTrend === '↓' ? false : null} />
-                  </td>
-                  <td className="p-2 border">
-                    {meeting.revenue ?? '-'} <Arrow up={revenueTrend === '↑' ? true : revenueTrend === '↓' ? false : null} />
-                  </td>
+    <div className="bg-white rounded-xl p-5">
+      <h3
+        className="font-semibold text-base mb-4"
+        style={{ fontFamily: 'Work Sans, sans-serif' }}
+      >
+        {title}
+      </h3>
+      <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr>
+                  <th rowSpan={2} className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                    Site Name
+                  </th>
+                  <th colSpan={3} className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                    Meeting Room
+                  </th>
                 </tr>
-              );
-            }) : (
-              <tr>
-                <td className="p-3 text-center" colSpan={4}>No data</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                <tr style={{ borderTop: '1px solid rgba(255,255,255,0.4)' }}>
+                  <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Utilization<br />Rate (in %)</th>
+                  <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Cancellation<br />Rate (in %)</th>
+                  <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Revenue<br />(in ₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows && rows.length > 0 ? rows.map((row, idx) => {
+                  const meeting = (row.meeting_room || row.meeting || {}) as {
+                    utilization_rate?: string | number;
+                    cancellation_rate?: string | number;
+                    revenue?: string | number;
+                    utilization_trend?: string | null;
+                    cancellation_trend?: string | null;
+                    revenue_trend?: string | null;
+                  };
+                  const utilTrend = meeting.utilization_trend ?? null;
+                  const cancelTrend = meeting.cancellation_trend ?? null;
+                  const revenueTrend = meeting.revenue_trend ?? null;
+                  const siteLabel = row.site_name || row.site || '-';
+                  return (
+                    <tr key={idx} style={{ backgroundColor: ['#F6F4EE', '#E3909026', '#EFEFFB'][idx % 3] }}>
+                      <td className={`${tdCls} text-left font-medium text-gray-800`}>{siteLabel}</td>
+                      <td className={tdCls}>
+                        {meeting.utilization_rate ?? '-'} <Arrow up={utilTrend === '↑' ? true : utilTrend === '↓' ? false : null} />
+                      </td>
+                      <td className={tdCls}>
+                        {meeting.cancellation_rate ?? '-'} <Arrow up={cancelTrend === '↑' ? true : cancelTrend === '↓' ? false : null} />
+                      </td>
+                      <td className={tdCls}>
+                        {meeting.revenue ?? '-'} <Arrow up={revenueTrend === '↑' ? true : revenueTrend === '↓' ? false : null} />
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td className="px-4 py-6 text-center text-gray-400 text-sm" colSpan={4}>No data</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
       </div>
     </div>
   );
