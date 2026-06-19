@@ -80,12 +80,12 @@ export const VendorOtherBillsPage = () => {
       const data = await response.json();
 
       // Assuming data structure based on standard Lockated API
-      const cards = data.cards || {};
+      const summary = data.summary || {};
       setStats({
-        totalBills: cards.total || cards.total_bills || 0,
-        totalAmount: cards.total_amount || 0,
-        totalPaidAmount: cards.total_paid_amount || cards.paid_amount || 0,
-        totalPendingAmount: cards.total_pending_amount || cards.pending_amount || 0,
+        totalBills: summary.total_bill_count || summary.total || 0,
+        totalAmount: summary.total_amount || 0,
+        totalPaidAmount: summary.total_paid || summary.paid_amount || 0,
+        totalPendingAmount: summary.total_pending || summary.pending_amount || 0,
       });
 
       const list = data.bills_list || data.bills || data.data || [];
