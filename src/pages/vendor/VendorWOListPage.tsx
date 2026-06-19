@@ -83,10 +83,10 @@ export const VendorWOListPage = () => {
     const items = response?.work_orders || response?.data || [];
     const formatted = items.map((item: any) => ({
       id: item.id,
-      woNumber: item.wo_number || "-",
+      woNumber: item.wo_no|| "-",
       referenceNo: item.reference_number || "-",
-      createdOn: item.created_at ? item.created_at.split("T")[0] : "-",
-      supplier: item.supplier_name || "-",
+      createdOn: item.created_on ? item.created_on.split("T")[0] : "-",
+      supplier: item.supplier || "-",
       approvalStatus: item.all_level_approved
         ? "Approved"
         : item.all_level_approved === false
