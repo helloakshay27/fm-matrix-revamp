@@ -52,10 +52,10 @@ const Transition = forwardRef(function Transition(
 });
 
 const globalPriorityOptions = [
-  { value: 2, label: "Low" },
-  { value: 3, label: "Medium" },
-  { value: 4, label: "High" },
   { value: 5, label: "Urgent" },
+  { value: 4, label: "High" },
+  { value: 3, label: "Medium" },
+  { value: 2, label: "Low" },
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
@@ -148,11 +148,10 @@ const Attachments = ({ attachments, setAttachments }) => {
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${
-          isDragActive
+        className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
             ? 'border-blue-500 bg-blue-50'
             : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
-        }`}
+          }`}
       >
         <div className="flex flex-col items-center justify-center space-y-2">
           <CloudUploadIcon
@@ -473,12 +472,12 @@ const AddIssueModal = ({
         prev.some((user) => user.id === responsiblePersonId)
           ? prev
           : [
-              ...prev,
-              {
-                id: String(responsiblePersonId),
-                full_name: prefillData.responsible_person.name,
-              },
-            ]
+            ...prev,
+            {
+              id: String(responsiblePersonId),
+              full_name: prefillData.responsible_person.name,
+            },
+          ]
       );
     }
   }, [prefillData]);
@@ -504,12 +503,12 @@ const AddIssueModal = ({
         setUsers(
           shouldAddPrefilledUser
             ? [
-                ...apiUsers,
-                {
-                  id: String(responsiblePersonId),
-                  full_name: responsiblePersonName || `User ${responsiblePersonId}`,
-                },
-              ]
+              ...apiUsers,
+              {
+                id: String(responsiblePersonId),
+                full_name: responsiblePersonName || `User ${responsiblePersonId}`,
+              },
+            ]
             : apiUsers
         );
       } catch (error) {
