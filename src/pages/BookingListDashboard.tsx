@@ -112,6 +112,7 @@ const BookingListDashboard = () => {
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const isPulsePath = window.location.pathname.startsWith('/pulse/amenity');
 
   const { data: bookings, loading, error } = useAppSelector((state) => state.facilityBookings);
 
@@ -707,6 +708,15 @@ const BookingListDashboard = () => {
       variant: 'outline' as const,
       loading: exportLoading,
     },
+    ...(isPulsePath
+      ? [
+        {
+          label: 'Add Previous',
+          icon: Plus,
+          onClick: () => navigate('/pulse/amenity/previous-booking/add'),
+        },
+      ]
+      : []),
   ];
 
   return (

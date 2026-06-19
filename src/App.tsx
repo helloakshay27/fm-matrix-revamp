@@ -567,6 +567,12 @@ const VendorInvoiceListPage = lazy(() => import("./pages/vendor/VendorInvoiceLis
 const SupplierDetails = lazy(() => import("./pages/vendor/SupplierDetails"));
 const VendorOtherBillsPage = lazy(() => import("./pages/vendor/VendorOtherBillsPage").then(m => ({ default: m.VendorOtherBillsPage })));
 const VendorPermitsPage = lazy(() => import("./pages/vendor/VendorPermitsPage").then(m => ({ default: m.VendorPermitsPage })));
+const VendorPODetailPage = lazy(() => import("./pages/vendor/VendorPODetailPage").then(m => ({ default: m.VendorPODetailPage })));
+const VendorGRNDetailPage = lazy(() => import("./pages/vendor/VendorGRNDetailPage").then(m => ({ default: m.VendorGRNDetailPage })));
+const VendorWODetailPage = lazy(() => import("./pages/vendor/VendorWODetailPage").then(m => ({ default: m.VendorWODetailPage })));
+const VendorInvoiceDetailPage = lazy(() => import("./pages/vendor/VendorInvoiceDetailPage").then(m => ({ default: m.VendorInvoiceDetailPage })));
+const VendorOtherBillDetailPage = lazy(() => import("./pages/vendor/VendorOtherBillDetailPage").then(m => ({ default: m.VendorOtherBillDetailPage })));
+const VendorPermitDetailPage = lazy(() => import("./pages/vendor/VendorPermitDetailPage").then(m => ({ default: m.VendorPermitDetailPage })));
 
 // Import WBS page
 const WBSElementDashboard = lazy(() => import("./pages/WBSElementDashboard").then(m => ({ default: m.WBSElementDashboard })));
@@ -757,6 +763,7 @@ const AddBookingSetupPage = lazy(() => import("./pages/AddBookingSetupPage").the
 
 // Import Add Facility Booking page
 const AddFacilityBookingPage = lazy(() => import("./pages/AddFacilityBookingPage").then(m => ({ default: m.AddFacilityBookingPage })));
+const AddPastBookingPage = lazy(() => import("./pages/AddPastBookings.tsx").then(m => ({ default: m.AddPastBookings })));
 const PaymentRedirectPage = lazy(() => import("./pages/PaymentRedirectPage").then(m => ({ default: m.PaymentRedirectPage })));
 const AssetGroupsDashboard = lazy(() => import("./pages/setup/AssetGroupsDashboard").then(m => ({ default: m.AssetGroupsDashboard })));
 
@@ -2517,9 +2524,9 @@ function App() {
                               path="/accounting/payments-made/:id"
                               element={<PaymentMadeDetailsPage />}
                             />
-                             <Route
+                            <Route
                               path="/accounting/payments-made/edit/:id"
-                              element={<EditPaymentPage/>}
+                              element={<EditPaymentPage />}
                             />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
@@ -4388,6 +4395,12 @@ function App() {
                             <Route path="/vendor/supplier-details/:id" element={<SupplierDetails />} />
                             <Route path="/vendor/other-bills" element={<VendorOtherBillsPage />} />
                             <Route path="/vendor/permits" element={<VendorPermitsPage />} />
+                            <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
+                            <Route path="/vendor/grn/details/:id" element={<VendorGRNDetailPage />} />
+                            <Route path="/vendor/wo/details/:id" element={<VendorWODetailPage />} />
+                            <Route path="/vendor/invoice/details/:id" element={<VendorInvoiceDetailPage />} />
+                            <Route path="/vendor/other-bills/details/:id" element={<VendorOtherBillDetailPage />} />
+                            <Route path="/vendor/permits/details/:id" element={<VendorPermitDetailPage />} />
 
                             <Route path="/finance/po" element={<PODashboard />} />
                             <Route
@@ -6294,6 +6307,10 @@ function App() {
                             <Route
                               path="/pulse/amenity/add"
                               element={<AddFacilityBookingPage />}
+                            />
+                            <Route
+                              path="/pulse/amenity/previous-booking/add"
+                              element={<AddPastBookingPage />}
                             />
                             <Route
                               path="/pulse/amenity/:id"

@@ -1099,7 +1099,14 @@ const DailyTab = ({
     report: any,
     patch: { self_rating?: number; tomorrow_plan_item?: string }
   ) => {
-    const journalId = report.journal_id || report.daily_report?.id;
+    // The card renders the member's OWN daily report (resolveRawSource →
+    // daily_report.report_data), so updates must target that same record.
+    // `journal_id` can point at the aggregated meeting journal (only some
+    // members have it), which is NOT what's displayed — using it first meant
+    // members without a journal_id (or whose journal_id ≠ daily report) didn't
+    // reflect the change. Prefer the member's daily report id.
+    const journalId =
+      report.daily_report?.id || report.journal_id || meetingJournalId;
     if (!journalId) {
       toast.error("Journal ID not found for this report.");
       return false;
@@ -1778,6 +1785,29 @@ const DailyTab = ({
 
   const handleFeedback = () => {
     navigate("/admin-compass/feedback-dashboard");
+  };
+
+  // ── Add an item to a member's Tomorrow's Plan ──
+  const [isSavingPlan, setIsSavingPlan] = useState(false);
+  const toggleAddToPlan = (rId: any) => {
+    setQuickActionText("");
+    setQuickActionOpenId((current: any) => (current === rId ? null : rId));
+  };
+  const handleAddToPlan = async (report: any) => {
+    const text = quickActionText.trim();
+    if (!text) {
+      toast.error("Please enter a plan item.");
+      return;
+    }
+    setIsSavingPlan(true);
+    const ok = await updateJournal(report, { tomorrow_plan_item: text });
+    setIsSavingPlan(false);
+    if (ok) {
+      toast.success("Added to tomorrow's plan!");
+      setQuickActionOpenId(null);
+      setQuickActionText("");
+      await loadDailyData(true);
+    }
   };
 
   const resetFeedbackForm = () => {
@@ -3056,6 +3086,17 @@ const DailyTab = ({
                                   <Plus className="w-3.5 h-3.5" /> Add Todo
                                 </button>
                                 <button
+                                  onClick={() => toggleAddToPlan(rId)}
+                                  className={cn(
+                                    "flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm transition-colors",
+                                    quickActionOpenId === rId
+                                      ? "text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700"
+                                      : "text-indigo-600 bg-white border border-indigo-200 hover:bg-indigo-50"
+                                  )}
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Add to Plan
+                                </button>
+                                <button
                                   onClick={() => {
                                     if (feedbackOpenId === rId) {
                                       closeFeedbackPanel(rId);
@@ -3069,6 +3110,53 @@ const DailyTab = ({
                                   Feedback
                                 </button>
                               </div>
+
+                              {/* ── Add to Tomorrow's Plan input ── */}
+                              {quickActionOpenId === rId && (
+                                <div className="border-t border-[#EAE3DF] pt-3 mt-2">
+                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                                    Add to Tomorrow's Plan
+                                  </p>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <input
+                                      autoFocus
+                                      value={quickActionText}
+                                      onChange={(e) =>
+                                        setQuickActionText(e.target.value)
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !isSavingPlan)
+                                          handleAddToPlan(report);
+                                      }}
+                                      placeholder="Enter a plan item for tomorrow..."
+                                      className="flex-1 min-w-[200px] border border-gray-300 rounded-xl px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] placeholder:text-neutral-400"
+                                    />
+                                    <button
+                                      onClick={() => handleAddToPlan(report)}
+                                      disabled={
+                                        isSavingPlan || !quickActionText.trim()
+                                      }
+                                      className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                      {isSavingPlan ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Plus className="w-4 h-4" />
+                                      )}
+                                      Add
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setQuickActionOpenId(null);
+                                        setQuickActionText("");
+                                      }}
+                                      className="px-5 py-2 rounded-xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
 
                               {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
                               {isFeedbackVisible && (

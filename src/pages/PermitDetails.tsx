@@ -3032,11 +3032,11 @@ export const PermitDetails = () => {
                                                         setExtensionId(extension.id.toString())
                                                     }}
                                                     disabled={isApproving || isRejecting}
-                                                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
                                                 >
                                                     {isRejecting ? (
                                                         <>
-                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin !text-white" />
                                                             Rejecting...
                                                         </>
                                                     ) : (
@@ -3398,7 +3398,7 @@ export const PermitDetails = () => {
                                     <Button
                                         onClick={handleReject}
                                         disabled={isApproving || isRejecting}
-                                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
                                     >
                                         {isRejecting ? (
                                             <>
@@ -3688,7 +3688,7 @@ export const PermitDetails = () => {
                         <Button
                             onClick={handleReject}
                             disabled={isApproving || isRejecting}
-                            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                            className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
                         >
                             {isRejecting ? (
                                 <>
