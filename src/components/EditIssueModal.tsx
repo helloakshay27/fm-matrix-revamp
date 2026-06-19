@@ -44,10 +44,10 @@ const Transition = forwardRef(function Transition(
 });
 
 const globalPriorityOptions = [
-    { value: 2, label: "Low" },
-    { value: 3, label: "Medium" },
-    { value: 4, label: "High" },
     { value: 5, label: "Urgent" },
+    { value: 4, label: "High" },
+    { value: 3, label: "Medium" },
+    { value: 2, label: "Low" },
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
