@@ -144,6 +144,7 @@ export const Header = () => {
     org_id === "90" ||
     isPulseSite ||
     isClubSite; // Example condition for restricted user
+  const isVendor = user?.is_vendor === true;
 
   const assetSuggestions = [
     "sdcdsc",
@@ -514,7 +515,7 @@ export const Header = () => {
           {/* Dashboard Button */}
           {!isRestrictedUser && (
             <div className="hidden xl:flex items-center gap-2">
-              {!isViSite && (
+              {!isViSite && !isVendor && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -523,7 +524,7 @@ export const Header = () => {
                   Dashboard
                 </button>
               )}
-              {!isViSite && (
+              {!isViSite && !isVendor && (
                 <button
                   onClick={() =>
                     (window.location.href = "/dashboard-executive")
@@ -734,7 +735,7 @@ export const Header = () => {
                 align="end"
                 className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg sm:!w-64"
               >
-                {!isViSite && (
+                {!isViSite && !isVendor && (
                   <DropdownMenuItem
                     onClick={() => (window.location.href = "/dashboard")}
                   >
@@ -742,7 +743,7 @@ export const Header = () => {
                     Dashboard
                   </DropdownMenuItem>
                 )}
-                {!isViSite && (
+                {!isViSite && !isVendor && (
                   <DropdownMenuItem
                     onClick={() =>
                       (window.location.href = "/dashboard-executive")
