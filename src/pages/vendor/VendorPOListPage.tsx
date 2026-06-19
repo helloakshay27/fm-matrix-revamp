@@ -77,12 +77,12 @@ export const VendorPOListPage = () => {
   });
 
   const applyResponse = (response: any) => {
-    const cards = response?.cards || {};
+    const summary = response?.summary || {};
     setStats({
-      totalCount: cards.total || cards.total_po || 0,
-      totalAmount: cards.total_amount || 0,
-      totalPaidAmount: cards.total_paid_amount || cards.paid_amount || 0,
-      totalPendingAmount: cards.total_pending_amount || cards.pending_amount || 0,
+      totalCount: summary.total || summary.total_po_count || 0,
+      totalAmount: summary.total_value || 0,
+      totalPaidAmount: summary.total_paid || summary.paid || 0,
+      totalPendingAmount: summary.total_pending || summary.pending|| 0,
     });
 
     const items = response?.purchase_orders || response?.data || [];
