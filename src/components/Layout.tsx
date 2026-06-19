@@ -484,8 +484,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         allowedDomains={["vi-web.gophygital.work"]}
       />
 
-      {/* Conditional Header - Hide in embedded mode, for vendors, or for employee users */}
-      {isEmbedded ? null : (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) ? null : isEmployeeUser && isLocalhost ? (
+      {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
+      {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
           selectedCompany?.id === 295 ||
           selectedCompany?.id === 298 ||
