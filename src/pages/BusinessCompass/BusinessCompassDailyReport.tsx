@@ -1225,15 +1225,20 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const addAccomplishment = () => {
     markDraftDirty();
+    const id = Date.now().toString();
     setAccomplishments([
-      ...accomplishments,
       {
-        id: Date.now().toString(),
+        id,
         text: "",
-        completed: true,
+        completed: false,
         starred: false,
         fromYesterday: false,
       },
+      ...accomplishments,
+    ]);
+    setPlanningItems((prev) => [
+      ...prev,
+      { id: `from-accom-${id}`, text: "", starred: false },
     ]);
   };
 
@@ -1262,6 +1267,12 @@ const BusinessCompassDailyReport: React.FC = () => {
           { id: `from-accom-${id}`, text: item.text, starred: item.starred },
         ]);
       }
+    }
+    // When checking a manually added item, remove it from Plan for Tomorrow
+    if (item && !item.completed) {
+      setPlanningItems((prev) =>
+        prev.filter((p) => p.id !== `from-accom-${id}`)
+      );
     }
   };
 
@@ -1307,6 +1318,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) => (a.id === id ? { ...a, text } : a))
+    );
+    setPlanningItems((prev) =>
+      prev.map((p) => (p.id === `from-accom-${id}` ? { ...p, text } : p))
     );
   };
 

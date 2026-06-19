@@ -1605,6 +1605,12 @@ const ProjectTaskCreateModal = ({
       return;
     }
 
+    if (!formData.description?.trim()) {
+      toast.dismiss();
+      toast.error("Task description is required.");
+      return;
+    }
+
     if (!formData.responsiblePerson) {
       toast.dismiss();
       toast.error("Responsible person is required.");
@@ -1680,6 +1686,12 @@ const ProjectTaskCreateModal = ({
       if (!formData.taskTitle?.trim()) {
         toast.dismiss();
         toast.error("Task title is required.");
+        return;
+      }
+
+      if (!formData.description?.trim()) {
+        toast.dismiss();
+        toast.error("Task description is required.");
         return;
       }
 
