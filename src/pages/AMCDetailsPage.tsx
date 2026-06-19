@@ -26,6 +26,9 @@ import {
   BarChart3,
   Settings,
   Plus,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AddVisitModal } from "@/components/AddVisitModal";
@@ -42,6 +45,7 @@ import { Eye } from "lucide-react";
 import { AMCAnalyticsTab } from "@/components/amc-details/AMCAnalyticsTab";
 import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreviewTab";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { toast } from "sonner";
 
 interface AMCDetailsData {
   id: number;
@@ -215,6 +219,7 @@ export const AMCDetailsPage = () => {
   const [visitEditTechnicianId, setVisitEditTechnicianId] = useState("");
   const [visitEditRemarks, setVisitEditRemarks] = useState("");
   const [visitEditStatus, setVisitEditStatus] = useState("");
+  const [visitEditOriginalStatus, setVisitEditOriginalStatus] = useState("");
   const [visitEditDocument, setVisitEditDocument] = useState<File | null>(null);
   const [visitEditSelectedAssetIds, setVisitEditSelectedAssetIds] = useState<number[]>([]);
   const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
@@ -349,6 +354,7 @@ export const AMCDetailsPage = () => {
     setVisitEditTechnicianId(visit.technician ? String(visit.technician.id) : "");
     setVisitEditRemarks(visit.remarks || "");
     setVisitEditStatus((visit as any).status || "");
+    setVisitEditOriginalStatus((visit as any).status || "");
     setVisitEditDocument(null);
     const assetIds: number[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
     setVisitEditSelectedAssetIds(assetIds);
@@ -358,6 +364,10 @@ export const AMCDetailsPage = () => {
 
   const handleVisitUpdate = async () => {
     if (!selectedVisitId) return;
+    if (visitEditStatus === visitEditOriginalStatus) {
+      toast.error("Please change the status before submitting.");
+      return;
+    }
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     if (!baseUrl || !token) return;
@@ -1569,16 +1579,19 @@ export const AMCDetailsPage = () => {
                         {/* Summary Cards */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                           {[
-                            { label: "Total", value: group.total ?? 0, bg: "bg-[#F6F4EE]", textColor: "text-gray-900" },
-                            { label: "Completed", value: group.completed ?? 0, bg: "bg-green-50", textColor: "text-green-700" },
-                            { label: "Pending", value: group.pending ?? 0, bg: "bg-blue-50", textColor: "text-blue-700" },
-                            { label: "Missed", value: group.missed ?? 0, bg: "bg-red-50", textColor: "text-red-700" },
+                            { label: "Total", value: group.total ?? 0, icon: BarChart3 },
+                            { label: "Completed", value: group.completed ?? 0, icon: CheckCircle2 },
+                            { label: "Pending", value: group.pending ?? 0, icon: Clock },
+                            { label: "Missed", value: group.missed ?? 0, icon: AlertCircle },
                           ].map((card) => (
-                            <div key={card.label} className={`${card.bg} rounded-lg p-4`}>
-                              <div className={`text-2xl font-bold ${card.textColor}`}>
-                                {String(card.value).padStart(2, "0")}
+                            <div key={card.label} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center flex-shrink-0">
+                                <card.icon className="w-6 h-6 text-[#C72030]" />
                               </div>
-                              <div className="text-sm text-gray-600 font-medium mt-0.5">{card.label}</div>
+                              <div>
+                                <div className="text-2xl font-semibold text-[#1A1A1A]">{String(card.value).padStart(2, "0")}</div>
+                                <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1589,7 +1602,7 @@ export const AMCDetailsPage = () => {
                             {group.description && (
                               <span><span className="font-medium text-gray-800">Description:</span> {group.description}</span>
                             )}
-                            <span><span className="font-medium text-gray-800">Schedule:</span> <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{group.cron_expression}</code></span>
+                            {/* <span><span className="font-medium text-gray-800">Schedule:</span> <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{group.cron_expression}</code></span> */}
                           </div>
                         )}
 
@@ -1833,6 +1846,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Visit Date</label>
                       <input
                         type="date"
+                        disabled={visitEditVisitDate}
                         value={visitEditVisitDate}
                         onChange={(e) => setVisitEditVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -1846,6 +1860,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Actual Visit Date</label>
                       <input
                         type="date"
+                        
                         value={visitEditActualVisitDate}
                         onChange={(e) => setVisitEditActualVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -2330,18 +2345,20 @@ export const AMCDetailsPage = () => {
                             <TableHead className="font-semibold text-[#1a1a1a]">
                               Model No.
                             </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Group & Sub Group
-                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Group</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Sub Group</TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">
                               Status
                             </TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">
                               Criticality
                             </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Location
-                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Site</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Building</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Wing</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Area</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Floor</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Room</TableHead>
                           </>
                         )}
                       </TableRow>
@@ -2398,21 +2415,13 @@ export const AMCDetailsPage = () => {
                         )
                       ) : amcDetails.amc_assets?.length > 0 ? (
                         amcDetails.amc_assets.map((asset: any) => {
-                          const locationParts = [
-                            asset.building_name || asset.building,
-                            asset.wing_name || asset.wing,
-                            asset.area_name || asset.area,
-                            asset.floor_name || asset.floor,
-                            asset.room_name || asset.room,
-                          ].filter(Boolean);
-                          const location =
-                            locationParts.length > 0
-                              ? locationParts.join(", ")
-                              : "—";
-                          const groupSubGroup =
-                            [asset.group_name, asset.sub_group_name]
-                              .filter(Boolean)
-                              .join(" / ") || "—";
+                          const loc = asset.location ?? {};
+                          const site = loc.site || asset.site_name || "—";
+                          const building = loc.building || asset.building_name || asset.building || "—";
+                          const wing = loc.wing || asset.wing_name || asset.wing || "—";
+                          const area = loc.area || asset.area_name || asset.area || "—";
+                          const floor = loc.floor || asset.floor_name || asset.floor || "—";
+                          const room = loc.room || asset.room_name || asset.room || "—";
                           return (
                             <TableRow
                               key={asset.id}
@@ -2439,9 +2448,8 @@ export const AMCDetailsPage = () => {
                               <TableCell className="text-gray-900">
                                 {asset.model_no || asset.model_number || "—"}
                               </TableCell>
-                              <TableCell className="text-gray-900">
-                                {groupSubGroup}
-                              </TableCell>
+                              <TableCell className="text-gray-900">{asset.group_name || "—"}</TableCell>
+                              <TableCell className="text-gray-900">{asset.sub_group_name || "—"}</TableCell>
                               <TableCell>
                                 <span
                                   className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
@@ -2455,16 +2463,19 @@ export const AMCDetailsPage = () => {
                               <TableCell className="text-gray-900">
                                 {asset.criticality || "—"}
                               </TableCell>
-                              <TableCell className="text-gray-900 text-sm">
-                                {location}
-                              </TableCell>
+                              <TableCell className="text-gray-900 text-sm">{site}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{building}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{wing}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{area}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{floor}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{room}</TableCell>
                             </TableRow>
                           );
                         })
                       ) : (
                         <TableRow className="border-b border-gray-200">
                           <TableCell
-                            colSpan={8}
+                            colSpan={14}
                             className="text-center text-sm text-gray-500"
                           >
                             No assets found
@@ -2542,7 +2553,7 @@ export const AMCDetailsPage = () => {
 
       <AddVisitModal
         isOpen={showAddVisitModal}
-        onClose={hanldeClose}
+        onClose={handleClose}
         amcId={amcDetails?.id?.toString() || id || ""}
       />
     </div>
