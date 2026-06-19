@@ -757,6 +757,7 @@ const AddBookingSetupPage = lazy(() => import("./pages/AddBookingSetupPage").the
 
 // Import Add Facility Booking page
 const AddFacilityBookingPage = lazy(() => import("./pages/AddFacilityBookingPage").then(m => ({ default: m.AddFacilityBookingPage })));
+const AddPastBookingPage = lazy(() => import("./pages/AddPastBookings.tsx").then(m => ({ default: m.AddPastBookings })));
 const PaymentRedirectPage = lazy(() => import("./pages/PaymentRedirectPage").then(m => ({ default: m.PaymentRedirectPage })));
 const AssetGroupsDashboard = lazy(() => import("./pages/setup/AssetGroupsDashboard").then(m => ({ default: m.AssetGroupsDashboard })));
 
@@ -2517,9 +2518,9 @@ function App() {
                               path="/accounting/payments-made/:id"
                               element={<PaymentMadeDetailsPage />}
                             />
-                             <Route
+                            <Route
                               path="/accounting/payments-made/edit/:id"
-                              element={<EditPaymentPage/>}
+                              element={<EditPaymentPage />}
                             />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
@@ -6294,6 +6295,10 @@ function App() {
                             <Route
                               path="/pulse/amenity/add"
                               element={<AddFacilityBookingPage />}
+                            />
+                            <Route
+                              path="/pulse/amenity/previous-booking/add"
+                              element={<AddPastBookingPage />}
                             />
                             <Route
                               path="/pulse/amenity/:id"
