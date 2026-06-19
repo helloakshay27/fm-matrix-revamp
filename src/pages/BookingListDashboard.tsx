@@ -26,6 +26,7 @@ const enhancedTableColumns: ColumnConfig[] = [
   { key: 'companyName', label: 'Company Name', sortable: true, draggable: true },
   { key: 'facility', label: 'Facility', sortable: true, draggable: true },
   { key: 'facilityType', label: 'Facility Type', sortable: true, draggable: true },
+  { key: 'charges', label: 'Charges', sortable: true, draggable: true },
   { key: 'scheduledDate', label: 'Scheduled Date', sortable: true, draggable: true },
   { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, draggable: true },
   { key: 'bookingStatus', label: 'Booking Status', sortable: true, draggable: true },
@@ -107,7 +108,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 const BookingListDashboard = () => {
   const navigate = useNavigate();
-   const { shouldShow } = useDynamicPermissions();
+  const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -132,7 +133,8 @@ const BookingListDashboard = () => {
   const [scheduledDateTo, setScheduledDateTo] = useState<string>('');
   const [createdOnDateFrom, setCreatedOnDateFrom] = useState<string>('');
   const [createdOnDateTo, setCreatedOnDateTo] = useState<string>('');
-  const [isFiltering, setIsFiltering] = useState(false)
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
@@ -308,6 +310,7 @@ const BookingListDashboard = () => {
         scheduledDate: item.startdate.split("T")[0],
         scheduledTime: item.show_schedule_24_hour,
         source: item.source,
+        charges: item.amount_full
       }));
       setBookingData(updatedResponse);
       setPagination({
@@ -416,6 +419,7 @@ const BookingListDashboard = () => {
           scheduledDate: item.startdate.split('T')[0],
           scheduledTime: item.show_schedule_24_hour,
           source: item.source,
+          charges: item.amount_full,
         }));
 
         setBookingData(updatedResponse);
@@ -631,18 +635,19 @@ const BookingListDashboard = () => {
 
   const renderActions = (item: BookingData) => (
     <>
-    {shouldShow("Bookings","show")&&(
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleView(item.id)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>)}
-      { 
-      shouldShow("Bookings","update") &&
-        item.facilityType === "Request" && item.bookingStatus === 'Pending' && (
-          
+      {shouldShow("Bookings", "show") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleView(item.id)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>)}
+      {
+        shouldShow("Bookings", "update") &&
+        // item.facilityType === "Request" && 
+        item.bookingStatus === 'Pending' &&
+        (
           <Button
             variant="ghost"
             size="sm"
@@ -652,7 +657,7 @@ const BookingListDashboard = () => {
           </Button>
         )
       }
-      
+
     </>
   );
 
@@ -663,15 +668,19 @@ const BookingListDashboard = () => {
     }));
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
+    setShowExportConfirm(true);
+  };
+
+  const confirmDownload = async () => {
     setExportLoading(true);
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/facility_bookings/export.xlsx`, {
+      const response = await axios.get(`https://${baseUrl}/pms/admin/facility_bookings/export.xlsx`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         responseType: 'blob',
-      })
+      });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -686,6 +695,7 @@ const BookingListDashboard = () => {
       toast.error('Error downloading file');
     } finally {
       setExportLoading(false);
+      setShowExportConfirm(false);
     }
   };
 
@@ -737,14 +747,14 @@ const BookingListDashboard = () => {
         emptyMessage={loading || isPageLoading ? 'Loading bookings...' : 'No bookings found'}
         leftActions={
           <div className="flex flex-wrap gap-2">
-            {shouldShow("Bookings","create")&&(
-            <Button
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              onClick={() => setShowActionPanel(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Action
-            </Button>)}
+            {shouldShow("Bookings", "create") && (
+              <Button
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                onClick={() => setShowActionPanel(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Action
+              </Button>)}
           </div>
         }
       />
@@ -897,6 +907,69 @@ const BookingListDashboard = () => {
         isOpen={isExportByCentreModalOpen}
         onClose={() => setIsExportByCentreModalOpen(false)}
       />
+
+      {showExportConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-100">
+                  <Download className="w-4 h-4 text-amber-600" />
+                </div>
+                <h2 className="text-base font-semibold text-gray-800">Confirm Export</h2>
+              </div>
+              <button
+                onClick={() => !exportLoading && setShowExportConfirm(false)}
+                disabled={exportLoading}
+                className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                The export may take some time to complete depending on the data size.
+              </p>
+              <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+                <span className="mt-0.5 text-amber-500 text-base leading-none">⚠</span>
+                <p className="text-sm text-amber-800 font-medium">
+                  Please do not refresh or close the page while the export is in progress.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+              {exportLoading ? (
+                <div className="flex items-center gap-3 w-full justify-center py-1">
+                  <Loader2 className="w-5 h-5 animate-spin text-[#C72030]" />
+                  <span className="text-sm font-medium text-gray-600">Exporting, please wait...</span>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowExportConfirm(false)}
+                    className="px-5"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={confirmDownload}
+                    className="px-5 bg-[#C72030] hover:bg-[#a81b28] text-white"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
