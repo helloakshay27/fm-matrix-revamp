@@ -19,8 +19,11 @@ import {
   Circle,
   Star,
   Eye,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
@@ -105,10 +108,10 @@ const SearchableSelect = ({
   return (
     <div
       ref={ref}
-      className="relative"
+      className="relative w-full sm:w-auto"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <div className="relative flex items-center min-w-[160px]">
+      <div className="relative flex items-center min-w-0 sm:min-w-[160px]">
         <input
           type="text"
           className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60 transition-all cursor-pointer placeholder:text-neutral-700"
@@ -296,6 +299,161 @@ const normalizeReportData = (rd: any) => {
     absent_reason: rd.absent_reason ?? null,
     kpis: rd.kpis && typeof rd.kpis === "object" ? rd.kpis : {},
   };
+};
+
+const fmtItemDate = (d?: string): string | null => {
+  if (!d) return null;
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  return `${String(dt.getDate()).padStart(2, "0")}/${String(
+    dt.getMonth() + 1
+  ).padStart(2, "0")}/${dt.getFullYear()}`;
+};
+
+const fmtItemHours = (h?: number): string | null => {
+  if (!h) return null;
+  if (h < 1) return `${Math.round(h * 60)}m`;
+  const wh = Math.floor(h);
+  const m = Math.round((h - wh) * 60);
+  return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
+};
+
+const getItemOverdueLabel = (targetDate?: string): string | null => {
+  if (!targetDate) return null;
+  const end = new Date(targetDate);
+  if (isNaN(end.getTime())) return null;
+  end.setHours(23, 59, 59, 999);
+  const diff = end.getTime() - new Date().getTime();
+  if (diff > 0) return null;
+  const abs = Math.abs(diff);
+  const d = Math.floor(abs / 86400000);
+  const h = Math.floor((abs % 86400000) / 3600000);
+  const m = Math.floor((abs % 3600000) / 60000);
+  if (d > 0) return `${d}d ${h}h overdue`;
+  if (h > 0) return `${h}h ${m}m overdue`;
+  return `${m}m overdue`;
+};
+
+// Cache for item details fetched on-demand by source_id (keyed by `${type}:${id}`)
+const itemDetailCache: Record<string, any> = {};
+const itemDetailInflight: Record<string, Promise<any> | undefined> = {};
+
+const fetchItemDetail = async (
+  type: string,
+  id: any
+): Promise<any | null> => {
+  if (!type || id === undefined || id === null) return null;
+  const key = `${type}:${id}`;
+  if (key in itemDetailCache) return itemDetailCache[key];
+  if (itemDetailInflight[key]) return itemDetailInflight[key];
+
+  let url: string | null = null;
+  if (type === "task") url = `${getBaseUrl()}/task_managements/${id}.json`;
+  else if (type === "todo") url = `${getBaseUrl()}/todos/${id}.json`;
+  else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
+  if (!url) return null;
+
+  const p = (async () => {
+    try {
+      const res = await fetch(url as string, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        itemDetailCache[key] = null;
+        return null;
+      }
+      const json = await res.json();
+      const data =
+        json?.task ||
+        json?.todo ||
+        json?.issue ||
+        json?.data?.task ||
+        json?.data?.todo ||
+        json?.data?.issue ||
+        json?.data ||
+        json;
+      itemDetailCache[key] = data || null;
+      return itemDetailCache[key];
+    } catch {
+      itemDetailCache[key] = null;
+      return null;
+    } finally {
+      itemDetailInflight[key] = undefined;
+    }
+  })();
+  itemDetailInflight[key] = p;
+  return p;
+};
+
+// Render target date + overdue + estimated effort + effective (active) time for a report item
+export const ReportItemMeta = ({ item }: { item: any }) => {
+  const sourceType = (
+    item?.source_type ||
+    item?.sourceType ||
+    item?.type ||
+    ""
+  ).toLowerCase();
+  const sourceId = item?.source_id ?? item?.sourceId ?? item?.id;
+  const [fetched, setFetched] = useState<any>(null);
+
+  // When the item lacks embedded details, fetch them by source_id
+  useEffect(() => {
+    let active = true;
+    if (
+      !item?.originalData &&
+      sourceId &&
+      ["task", "todo", "issue"].includes(sourceType)
+    ) {
+      fetchItemDetail(sourceType, sourceId).then((data) => {
+        if (active && data) setFetched(data);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [item?.originalData, sourceId, sourceType]);
+
+  const d = item?.originalData || fetched;
+  const status = (item?.status || d?.status || "").toLowerCase();
+  const isDone = ["completed", "closed", "done"].includes(status);
+  const targetRaw =
+    d?.target_date || d?.due_date || d?.end_date || item?.target_date;
+  const dueDate = fmtItemDate(targetRaw);
+  const overdueLabel = isDone ? null : getItemOverdueLabel(targetRaw);
+  const effortEst = fmtItemHours(d?.total_allocated_hours || d?.estimated_hour);
+  const hasActiveTime = sourceType === "task" && d?.active_time_till_now;
+
+  if (!dueDate && !overdueLabel && !effortEst && !hasActiveTime) return null;
+
+  return (
+    <div className="flex items-center gap-3 px-3 pb-2 -mt-1 flex-wrap">
+      {dueDate && (
+        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <Calendar className="w-3 h-3 shrink-0" />
+          {dueDate}
+        </span>
+      )}
+      {overdueLabel && (
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+          <AlertTriangle className="w-3 h-3 shrink-0" />
+          {overdueLabel}
+        </span>
+      )}
+      {effortEst && (
+        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <Clock className="w-3 h-3 shrink-0" />
+          Est: {effortEst}
+        </span>
+      )}
+      {hasActiveTime && (
+        <span className="flex items-center gap-1 text-[10px] text-green-600">
+          <Zap className="w-3 h-3 shrink-0" />
+          <ActiveTimer
+            activeTimeTillNow={d.active_time_till_now}
+            isStarted={d.is_started}
+          />
+        </span>
+      )}
+    </div>
+  );
 };
 
 const getItemTitle = (item: any): string => {
@@ -941,7 +1099,14 @@ const DailyTab = ({
     report: any,
     patch: { self_rating?: number; tomorrow_plan_item?: string }
   ) => {
-    const journalId = report.journal_id || report.daily_report?.id;
+    // The card renders the member's OWN daily report (resolveRawSource →
+    // daily_report.report_data), so updates must target that same record.
+    // `journal_id` can point at the aggregated meeting journal (only some
+    // members have it), which is NOT what's displayed — using it first meant
+    // members without a journal_id (or whose journal_id ≠ daily report) didn't
+    // reflect the change. Prefer the member's daily report id.
+    const journalId =
+      report.daily_report?.id || report.journal_id || meetingJournalId;
     if (!journalId) {
       toast.error("Journal ID not found for this report.");
       return false;
@@ -1622,6 +1787,29 @@ const DailyTab = ({
     navigate("/admin-compass/feedback-dashboard");
   };
 
+  // ── Add an item to a member's Tomorrow's Plan ──
+  const [isSavingPlan, setIsSavingPlan] = useState(false);
+  const toggleAddToPlan = (rId: any) => {
+    setQuickActionText("");
+    setQuickActionOpenId((current: any) => (current === rId ? null : rId));
+  };
+  const handleAddToPlan = async (report: any) => {
+    const text = quickActionText.trim();
+    if (!text) {
+      toast.error("Please enter a plan item.");
+      return;
+    }
+    setIsSavingPlan(true);
+    const ok = await updateJournal(report, { tomorrow_plan_item: text });
+    setIsSavingPlan(false);
+    if (ok) {
+      toast.success("Added to tomorrow's plan!");
+      setQuickActionOpenId(null);
+      setQuickActionText("");
+      await loadDailyData(true);
+    }
+  };
+
   const resetFeedbackForm = () => {
     setFeedbackRating(0);
     setFeedbackMessage("");
@@ -1660,7 +1848,7 @@ const DailyTab = ({
 
   return (
     <div
-      className="pb-12 space-y-6"
+      className="pb-12 space-y-6 min-w-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <style>
@@ -1677,22 +1865,22 @@ const DailyTab = ({
           .feedback-panel-exit { animation: feedbackPanelOut 180ms ease-in both; }
         `}
       </style>
-      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
         {/* ══ LEFT COLUMN ══ */}
         <div className="h-full">
           {/* ══ CALENDAR CARD ══ */}
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full flex flex-col">
             <div className="p-5">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="bg-blue-50 p-2 rounded-lg">
                     <Calendar size={20} className="text-blue-600" />
                   </div>
-                  <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
+                  <span className="text-base sm:text-lg font-bold text-[#1a1a1a] tracking-tight leading-tight">
                     Daily Meeting for {topDateStr}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto">
                   <button
                     onClick={() => changeDate(-1)}
                     className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
@@ -1918,8 +2106,8 @@ const DailyTab = ({
           {!isLoading && dailyData && !noMeetings && (
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-full flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 border-b border-gray-100">
+                <div className="flex min-w-0 items-center gap-2 font-semibold text-neutral-800 text-sm">
                   <FileText className="w-4 h-4 text-[#CE7A5A]" />
                   Daily Reports ({configName})
                 </div>
@@ -1957,7 +2145,7 @@ const DailyTab = ({
               </div>
 
               {/* Footer: Select All + Save */}
-              <div className="flex items-center justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
                 <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -1970,7 +2158,7 @@ const DailyTab = ({
                   </span>
                 </label>
                 {isActiveDateSubmitted ? (
-                  <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
+                  <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                     {!notesChanged && (
                       <span className="min-w-0 max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
                         Edit notes to enable update
@@ -1981,7 +2169,7 @@ const DailyTab = ({
                       onClick={handleUpdateNotesOnly}
                       disabled={isSavingMeeting || !notesChanged}
                       loading={isSavingMeeting}
-                      className="min-h-[44px] min-w-[156px] whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100"
+                    className="min-h-[44px] min-w-0 whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100 sm:min-w-[156px]"
                     >
                       {isSavingMeeting ? "Updating..." : "Update Notes"}
                     </BtnPrimary>
@@ -2016,8 +2204,8 @@ const DailyTab = ({
 
       {/* ══ FULL WIDTH BELOW — Filters ══ */}
       {/* ══ FILTERS ══ */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
             Meeting
           </span>
@@ -2043,8 +2231,8 @@ const DailyTab = ({
 
         {!noMeetings && (
           <>
-            <div className="w-px h-5 bg-gray-200 shrink-0" />
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" />
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
                 Members
               </span>
@@ -2289,7 +2477,7 @@ const DailyTab = ({
                       >
                         <div
                           className={cn(
-                            "p-4 transition-colors flex items-start gap-4",
+                            "p-4 transition-colors flex items-start gap-3 sm:gap-4",
                             canExpand
                               ? "cursor-pointer hover:bg-gray-50"
                               : "cursor-default"
@@ -2321,7 +2509,7 @@ const DailyTab = ({
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                                   <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
@@ -2350,7 +2538,7 @@ const DailyTab = ({
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 shrink-0">
+                              <div className="flex flex-wrap items-center gap-2 shrink-0">
                                 {isPending && !hasDraft && (
                                   <span className="text-red-500 text-xs font-semibold">
                                     Not submitted
@@ -2405,7 +2593,7 @@ const DailyTab = ({
                             )}
 
                             {canExpand && dateRow.length > 0 && (
-                              <div className="flex items-center gap-2 mt-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
                                 <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
                                   {configName}
                                 </span>
@@ -2444,7 +2632,7 @@ const DailyTab = ({
                         {isExpanded && canExpand && (
                           <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                             <div className="p-5 space-y-5">
-                              <div className="flex items-center gap-4 text-sm mb-4">
+                              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
                                 <span>
                                   ⭐ Self rating {selfRatingText || "0/10"}
                                 </span>
@@ -2533,6 +2721,7 @@ const DailyTab = ({
                                                   </button>
                                                 )}
                                               </div>
+                                              <ReportItemMeta item={item} />
                                             </li>
                                           );
                                         }
@@ -2788,24 +2977,8 @@ const DailyTab = ({
                                                           </button>
                                                         )}
                                                       </div>
-                                                      {/* Date row */}
-                                                      {dueDate && (
-                                                        <div className="flex items-center gap-1 px-3 pb-2 -mt-1">
-                                                          <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
-                                                          <span className="text-[10px] text-gray-500">
-                                                            {new Date(
-                                                              dueDate
-                                                            ).toLocaleDateString(
-                                                              "en-GB",
-                                                              {
-                                                                day: "2-digit",
-                                                                month: "short",
-                                                                year: "numeric",
-                                                              }
-                                                            )}
-                                                          </span>
-                                                        </div>
-                                                      )}
+                                                      {/* Target date · overdue · Est · Effective time */}
+                                                      <ReportItemMeta item={viewItem} />
                                                     </li>
                                                   );
                                                 }
@@ -2881,6 +3054,7 @@ const DailyTab = ({
                                                   </button>
                                                 )}
                                               </div>
+                                              <ReportItemMeta item={item} />
                                             </li>
                                           );
                                         }
@@ -2912,6 +3086,17 @@ const DailyTab = ({
                                   <Plus className="w-3.5 h-3.5" /> Add Todo
                                 </button>
                                 <button
+                                  onClick={() => toggleAddToPlan(rId)}
+                                  className={cn(
+                                    "flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm transition-colors",
+                                    quickActionOpenId === rId
+                                      ? "text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700"
+                                      : "text-indigo-600 bg-white border border-indigo-200 hover:bg-indigo-50"
+                                  )}
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Add to Plan
+                                </button>
+                                <button
                                   onClick={() => {
                                     if (feedbackOpenId === rId) {
                                       closeFeedbackPanel(rId);
@@ -2925,6 +3110,53 @@ const DailyTab = ({
                                   Feedback
                                 </button>
                               </div>
+
+                              {/* ── Add to Tomorrow's Plan input ── */}
+                              {quickActionOpenId === rId && (
+                                <div className="border-t border-[#EAE3DF] pt-3 mt-2">
+                                  <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                                    Add to Tomorrow's Plan
+                                  </p>
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
+                                    <input
+                                      autoFocus
+                                      value={quickActionText}
+                                      onChange={(e) =>
+                                        setQuickActionText(e.target.value)
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !isSavingPlan)
+                                          handleAddToPlan(report);
+                                      }}
+                                      placeholder="Enter a plan item for tomorrow..."
+                                      className="w-full flex-1 min-w-0 sm:min-w-[200px] border border-gray-300 rounded-xl px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] placeholder:text-neutral-400"
+                                    />
+                                    <button
+                                      onClick={() => handleAddToPlan(report)}
+                                      disabled={
+                                        isSavingPlan || !quickActionText.trim()
+                                      }
+                                      className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                      {isSavingPlan ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Plus className="w-4 h-4" />
+                                      )}
+                                      Add
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setQuickActionOpenId(null);
+                                        setQuickActionText("");
+                                      }}
+                                      className="px-5 py-2 rounded-xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
 
                               {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
                               {isFeedbackVisible && (
@@ -3659,14 +3891,14 @@ const DailyTab = ({
         createPortal(
           <div className="fixed inset-0 z-[9999] flex">
             <div
-              className="flex-1 bg-black/40 backdrop-blur-sm"
+              className="hidden flex-1 bg-black/40 backdrop-blur-sm sm:block"
               onClick={closeTaskModal}
             />
             <div
-              className="relative flex flex-col bg-white shadow-2xl"
-              style={{ width: "min(760px, 95vw)" }}
+              className="relative flex h-full w-full flex-col bg-white shadow-2xl sm:h-auto"
+              style={{ width: "min(760px, 100vw)" }}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 shrink-0">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-neutral-200 shrink-0">
                 <h2 className="text-base font-bold text-neutral-900">
                   Add Tasks
                 </h2>

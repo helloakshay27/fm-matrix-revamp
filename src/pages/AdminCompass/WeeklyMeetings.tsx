@@ -86,9 +86,15 @@ const responsiveStyles = `
     }
 
     .weekly-meeting-tab {
-      padding: 8px 12px !important;
-      font-size: 12px !important;
-      gap: 5px !important;
+      padding: 6px 9px !important;
+      font-size: 11px !important;
+      gap: 4px !important;
+      min-height: 30px;
+    }
+
+    .weekly-meeting-tab svg {
+      width: 13px !important;
+      height: 13px !important;
     }
 
     .weekly-meetings-content {

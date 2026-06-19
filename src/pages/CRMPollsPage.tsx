@@ -24,8 +24,10 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const CRMPollsPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const baseUrl = localStorage.getItem('baseUrl')
   const token = localStorage.getItem('token')
 
@@ -254,6 +256,7 @@ const CRMPollsPage = () => {
             Manage your polls and surveys
           </Typography>
         </Box>
+        {shouldShow("Polls", "create") && (
         <Button
           variant="contained"
           startIcon={<Plus size={20} />}
@@ -270,6 +273,7 @@ const CRMPollsPage = () => {
         >
           Add Poll
         </Button>
+        )}
       </Box>
 
       {/* Search and Filter */}
@@ -430,14 +434,18 @@ const CRMPollsPage = () => {
             sx: { borderRadius: 2, minWidth: 160 }
           }}
         >
+          {shouldShow("Polls", "show") && (
           <MenuItem onClick={handleMenuClose}>
             <Eye size={16} style={{ marginRight: 12 }} />
             View Results
           </MenuItem>
+          )}
+          {shouldShow("Polls", "update") && (
           <MenuItem onClick={handleMenuClose}>
             <Edit size={16} style={{ marginRight: 12 }} />
             Edit Poll
           </MenuItem>
+          )}
           <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
             <Trash2 size={16} style={{ marginRight: 12 }} />
             Delete

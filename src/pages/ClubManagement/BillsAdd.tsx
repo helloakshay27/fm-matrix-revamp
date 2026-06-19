@@ -5,24 +5,33 @@ function mapPurchaseOrderToBill(poData, customers, itemOptions) {
     // Find the vendor/customer by ID
     const supplierId = poData?.pms_supplier_id || poData?.supplier?.id;
     const vendor = customers.find(c => String(c.id) === String(supplierId));
-    // Map items
-    const items = Array.isArray(poData.purchase_order_items)
-        ? poData.purchase_order_items.map(item => {
-            const matchedItem = itemOptions.find(opt => String(opt.id) === String(item.lock_account_item_id));
+    // Support both accounting PO format (purchase_order_items) and PMS PO format (pms_po_inventories/pms_pr_inventories)
+    // Use .find() instead of || so that an empty array [] doesn't block the fallback ([] is truthy in JS)
+    const poItems = [
+        poData.purchase_order_items,
+        poData.pms_po_inventories,
+        poData.pms_pr_inventories,
+    ].find(arr => Array.isArray(arr) && arr.length > 0) || [];
+    const items = Array.isArray(poItems)
+        ? poItems.map((item, index) => {
+            const itemId = item.lock_account_item_id || item.inventory?.id;
+            const matchedItem = itemId
+                ? itemOptions.find(opt => String(opt.id) === String(itemId))
+                : undefined;
             return {
-                id: String(item.lock_account_item_id || Date.now()),
-                name: matchedItem?.name || item.name || '',
-                description: item.description || '',
+                id: String(itemId || item.id || `${Date.now()}-${index}`),
+                name: matchedItem?.name || item.inventory?.name || item.prod_desc || item.name || '',
+                description: item.description || item.prod_desc || '',
                 quantity: item.quantity || 1,
                 rate: item.rate || 0,
                 discount: item.discount || 0,
                 discountType: 'percentage',
                 tax: '',
                 taxRate: 0,
-                amount: 0,
+                amount: item.total_value || item.amount || 0,
                 customer: '',
-                account: matchedItem?.account || '',
-                item_id: String(item.lock_account_item_id || ''),
+                account: matchedItem?.account || String(item.lock_account_ledger_id || ''),
+                item_id: itemId ? String(itemId) : '',
                 item_tax_type: '',
                 tax_group_id: null,
                 tax_exemption_id: null,
@@ -32,13 +41,17 @@ function mapPurchaseOrderToBill(poData, customers, itemOptions) {
     return {
         vendor,
         items,
-        referenceNumber: poData.order_number || '',
+        referenceNumber: poData.external_id || poData.order_number || String(poData.reference_number || '') || '',
         subject: poData.subject || '',
+        salesOrderDate: poData.po_date ? String(poData.po_date).slice(0, 10) : '',
+        expectedShipmentDate: poData.expected_delivery_date ? String(poData.expected_delivery_date).slice(0, 10) : '',
+        customerNotes: poData.notes || poData.customer_notes || poData.terms_conditions || '',
+        termsAndConditions: poData.terms_conditions || poData.terms_and_conditions || '',
         billingAddress: poData?.billing_address?.formatted_address || poData?.supplier?.formatted_address || '',
-        shippingAddress: poData?.shipping_address?.formatted_address || '',
+        shippingAddress: poData?.shipping_address?.formatted_address
+            || (typeof poData?.delivery_address === 'string' ? poData.delivery_address : poData?.delivery_address?.formatted_address || poData?.delivery_address?.full_address || ''),
         sourceOfSupply: poData?.billing_address?.state || poData?.supplier?.state || '',
         destinationOfSupply: poData?.shipping_address?.state || '',
-        // Add more mappings as needed
     };
 }
 
@@ -971,10 +984,14 @@ export const BillsAdd: React.FC = () => {
             if (poPrefill.items && poPrefill.items.length > 0) setItems(poPrefill.items);
             if (poPrefill.referenceNumber) setReferenceNumber(poPrefill.referenceNumber);
             if (poPrefill.subject) setSubject(poPrefill.subject);
+            if (poPrefill.salesOrderDate) setSalesOrderDate(poPrefill.salesOrderDate);
+            if (poPrefill.expectedShipmentDate) setExpectedShipmentDate(poPrefill.expectedShipmentDate);
             if (poPrefill.billingAddress) setBillingAddress(poPrefill.billingAddress);
             if (poPrefill.shippingAddress) setShippingAddress(poPrefill.shippingAddress);
             if (poPrefill.sourceOfSupply) setSourceOfSupply(poPrefill.sourceOfSupply);
             if (poPrefill.destinationOfSupply) setDestinationOfSupply(poPrefill.destinationOfSupply);
+            if (poPrefill.customerNotes) setCustomerNotes(poPrefill.customerNotes);
+            if (poPrefill.termsAndConditions) setTermsAndConditions(poPrefill.termsAndConditions);
         }
         // eslint-disable-next-line
     }, [poPrefill]);

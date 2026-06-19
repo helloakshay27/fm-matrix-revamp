@@ -2213,7 +2213,9 @@ export const AMCDashboard = () => {
                     label: "Add Schedule",
                     icon: Plus,
                     onClick: () =>
-                      navigate("/maintenance/schedule/add?type=AMC"),
+                      navigate(
+                        `/maintenance/schedule/add?type=AMC${selectedItems.length > 0 ? `&amc_id=${selectedItems[0]}` : ""}`
+                      ),
                   },
                 ]}
                 onClearSelection={clearSelectionsAndClosePanel}

@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Authentication utility functions
+import posthog from "posthog-js";
 export interface User {
   id: number;
   email: string;
@@ -231,6 +232,7 @@ export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.BASE_URL);
   localStorage.clear();
+  posthog.reset();
 };
 const hostname = window.location.hostname;
 

@@ -1430,7 +1430,14 @@ const IssueDetailsPage = () => {
                             opacity: isFirstCollapsed ? 0 : 1,
                         }}
                     >
-                        <p className="whitespace-pre-wrap">{issueData?.description}</p>
+                        <div
+                            className="prose prose-sm max-w-none quill-content"
+                            dangerouslySetInnerHTML={{
+                                __html:
+                                    issueData?.description ||
+                                    "<p>No description provided</p>",
+                            }}
+                        />
                     </div>
                 </div>
 

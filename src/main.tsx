@@ -6,6 +6,8 @@ import { initColorPatch } from "./utils/colorPatch.ts";
 import { Provider } from "react-redux";
 import { store } from "./store/store.ts";
 import { BrowserRouter as Router } from "react-router-dom";
+import { PostHogProvider } from "@posthog/react";
+import { PostHogPageView } from "./components/PostHogPageView.tsx";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
@@ -19,10 +21,21 @@ if (window.location.hostname === "fm-matrix.lockated.com" || window.location.hos
   initColorPatch();
 }
 
+const posthogOptions = {
+  api_host: import.meta.env.VITE_POSTHOG_HOST,
+  defaults: "2026-01-30",
+} as const;
+
 createRoot(document.getElementById("root")!).render(
-  <Provider store={store}>
-    <Router>
-      <App />
-    </Router>
-  </Provider>
+  <PostHogProvider
+    apiKey={import.meta.env.VITE_POSTHOG_PROJECT_TOKEN}
+    options={posthogOptions}
+  >
+    <Provider store={store}>
+      <Router>
+        <PostHogPageView />
+        <App />
+      </Router>
+    </Provider>
+  </PostHogProvider>
 );

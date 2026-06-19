@@ -139,7 +139,7 @@ export const VendorPermitsPage = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => {}}
+        onClick={() => navigate(`/vendor/permits/details/${item.id}`)}
         title="View"
       >
         <Eye className="w-4 h-4" />

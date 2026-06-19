@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { Bell, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getUser } from "../utils/auth";
+import { getUser, clearAuth } from "../utils/auth";
 
 export const EmployeeDynamicHeader: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +11,7 @@ export const EmployeeDynamicHeader: React.FC = () => {
   const user = getUser();
 
   const handleLogout = () => {
-    localStorage.clear();
+    clearAuth();
     navigate("/login");
   };
 

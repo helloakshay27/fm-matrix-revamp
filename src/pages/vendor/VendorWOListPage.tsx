@@ -72,21 +72,21 @@ export const VendorWOListPage = () => {
   });
 
   const applyResponse = (response: any) => {
-    const cards = response?.cards || {};
+    const summary = response?.summary || {};
     setStats({
-      totalCount: cards.total || cards.total_wo || 0,
-      totalAmount: cards.total_amount || 0,
-      totalPaidAmount: cards.total_paid_amount || cards.paid_amount || 0,
-      totalPendingAmount: cards.total_pending_amount || cards.pending_amount || 0,
+      totalCount: summary.total_wo_count || summary.total_wo || 0,
+      totalAmount: summary.total_value || 0,
+      totalPaidAmount: summary.total_paid || summary.paid_amount || 0,
+      totalPendingAmount: summary.total_pending|| summary.pending_amount || 0,
     });
 
     const items = response?.work_orders || response?.data || [];
     const formatted = items.map((item: any) => ({
       id: item.id,
-      woNumber: item.wo_number || "-",
+      woNumber: item.wo_no|| "-",
       referenceNo: item.reference_number || "-",
-      createdOn: item.created_at ? item.created_at.split("T")[0] : "-",
-      supplier: item.supplier_name || "-",
+      createdOn: item.created_on ? item.created_on.split("T")[0] : "-",
+      supplier: item.supplier || "-",
       approvalStatus: item.all_level_approved
         ? "Approved"
         : item.all_level_approved === false

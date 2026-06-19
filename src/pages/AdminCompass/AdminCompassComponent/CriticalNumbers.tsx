@@ -418,6 +418,49 @@ const ThemeStyle = () => (
       box-shadow: 0 4px 12px rgba(218,119,86,0.10);
       transform: translateY(-1px);
     }
+    @media (max-width: 640px) {
+      .cn-section-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        margin-bottom: 14px !important;
+      }
+      .cn-title-row {
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+      }
+      .cn-title-row .ac-heading {
+        font-size: 14px !important;
+        line-height: 1.15 !important;
+      }
+      .cn-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+      .cn-actions button {
+        width: 100% !important;
+        min-height: 34px !important;
+        justify-content: center !important;
+        padding: 7px 8px !important;
+        font-size: 10px !important;
+        line-height: 1.15 !important;
+        white-space: normal !important;
+      }
+      .cn-kpi-grid,
+      .cn-select-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .cn-kpi-card {
+        min-height: 126px !important;
+        height: auto !important;
+      }
+      .cn-kpi-card:hover {
+        transform: none !important;
+      }
+    }
     .cn-scroll::-webkit-scrollbar { width: 4px; }
     .cn-scroll::-webkit-scrollbar-track { background: transparent; }
     .cn-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
@@ -776,8 +819,8 @@ export const CriticalNumbers = () => {
       <ThemeStyle />
 
       {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="cn-section-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div className="cn-title-row" style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* Logo / Icon with exact light grey background */}
           <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, flexShrink: 0 }}>
             <TrendIcon />
@@ -810,7 +853,7 @@ export const CriticalNumbers = () => {
           )}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="cn-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {isFetching && <LoaderIcon />}
           <button
             onClick={() => setShowSelectPanel((v) => !v)}
@@ -844,13 +887,13 @@ export const CriticalNumbers = () => {
         <div style={{ background: "#f9fafb", border: `1px solid ${C.borderLgt}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, marginBottom: 12 }}>Select KPIs to display as Critical Numbers (3–5 recommended):</p>
           {isFetching ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginBottom: 16 }}>
+            <div className="cn-select-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginBottom: 16 }}>
               {[1, 2, 3, 4].map((n) => <div key={n} className="cn-skeleton" style={{ height: 48, borderRadius: 10 }} />)}
             </div>
           ) : kpis.length === 0 ? (
             <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", marginBottom: 16 }}>No KPIs found. Create one above.</p>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginBottom: 16 }}>
+            <div className="cn-select-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginBottom: 16 }}>
               {kpis.map((kpi) => (
                 <label key={kpi.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#fff", borderRadius: 8, cursor: "pointer", border: `1px solid ${kpi.selected ? C.primary : C.borderLgt}`, transition: "all .15s", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
                   <input type="checkbox" checked={kpi.selected} onChange={() => toggleKpi(kpi.id)} style={{ width: 16, height: 16, accentColor: C.primary, cursor: "pointer", flexShrink: 0 }} />
@@ -872,7 +915,7 @@ export const CriticalNumbers = () => {
 
       {/* ── KPI Cards ── */}
       {!showSelectPanel && !isFetching && selectedKpis.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+        <div className="cn-kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
           {selectedKpis.map((kpi) => (
             <div key={kpi.id} className="cn-kpi-card">
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>

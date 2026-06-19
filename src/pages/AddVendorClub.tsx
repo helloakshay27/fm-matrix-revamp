@@ -244,7 +244,7 @@ export const AddVendorClub = () => {
   const [complianceAttachments, setComplianceAttachments] = useState<File[]>([]);
   const [otherAttachments, setOtherAttachments] = useState<File[]>([]);
   const [openingBalances, setOpeningBalances] = useState([
-    { billNo: '', date: '', dueDate: '', amount: '' }
+    { billNo: '', date: '', dueDate: '', accountType: 'Bill', amount: '' }
   ]);
 
   const validateStep = () => {
@@ -569,10 +569,13 @@ export const AddVendorClub = () => {
     // Step 0 (cont): Opening Balance Details - optional, only append if data exists
     openingBalances.forEach((row, index) => {
       if (row.billNo || row.date || row.dueDate || row.amount) {
+        const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
+        const signedAmount = row.accountType === 'Vendor credit' ? -absAmount : absAmount;
         apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][bill_no]`, row.billNo || '');
         apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][date]`, row.date || '');
         apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][due_date]`, row.dueDate || '');
-        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][amount]`, row.amount || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][account_type]`, row.accountType || 'Bill');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][amount]`, String(signedAmount));
       }
     });
 
@@ -1021,13 +1024,13 @@ export const AddVendorClub = () => {
                 </div>
               </Box>
             </SectionCard>
-            <SectionCard>
+            <SectionCard className="mb-10 " >
               <SectionHeader>
                 <Landmark className="text-[#da7756]" />
                 <SectionTitle>OPENING BALANCE</SectionTitle>
               </SectionHeader>
               <Box p={3}>
-                <div className="space-y-3">
+                <div className="space-y-3 mb-5">
                   {openingBalances.map((row, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <TextField
@@ -1106,22 +1109,41 @@ export const AddVendorClub = () => {
                         sx={{ flex: 1 }}
                       />
                       <TextField
+                        select
+                        label="Type"
+                        size="small"
+                        value={row.accountType || 'Bill'}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].accountType = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        sx={{ flex: 1 }}
+                      >
+                        <MenuItem value="Bill">Bill</MenuItem>
+                        <MenuItem value="Vendor credit">Vendor Credit</MenuItem>
+                      </TextField>
+                      <TextField
                         label="Amount"
                         placeholder="Enter amount"
-                        type="number"
                         size="small"
                         value={row.amount}
                         onChange={(e) => {
                           const updated = [...openingBalances];
-                          updated[index].amount = e.target.value;
+                          updated[index].amount = e.target.value.replace(/^-/, '');
                           setOpeningBalances(updated);
+                        }}
+                        InputProps={{
+                          startAdornment: row.accountType === 'Vendor credit' && row.amount !== ''
+                            ? <span style={{ marginRight: 2 }}>-</span>
+                            : null,
                         }}
                         sx={{ flex: 1 }}
                       />
                       <IconButton
                         onClick={() => {
                           if (index === openingBalances.length - 1) {
-                            setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', amount: '' }]);
+                            setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', accountType: 'Bill', amount: '' }]);
                           } else {
                             setOpeningBalances(openingBalances.filter((_, i) => i !== index));
                           }
@@ -1589,7 +1611,7 @@ export const AddVendorClub = () => {
         {getStepContent(activeStep)}
       </div>
 
-      <div className="flex justify-end gap-4 mt-8">
+      <div className="flex justify-end gap-4 mt-8 mb-10">
         <DraftButton disabled={activeStep === 0} onClick={handleBack}>
           Back
         </DraftButton>

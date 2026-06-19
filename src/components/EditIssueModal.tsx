@@ -8,7 +8,7 @@ import {
     fetchProjectTasks,
 } from "@/store/slices/projectTasksSlice";
 import { toast } from "sonner";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, Mic, MicOff } from "lucide-react";
 import {
     Select,
     MenuItem,
@@ -19,6 +19,7 @@ import {
     Dialog,
     DialogContent,
     Slide,
+    IconButton,
 } from "@mui/material";
 import { Button as SubmitButton } from "@/components/ui/button";
 import { TransitionProps } from "@mui/material/transitions";
@@ -31,6 +32,9 @@ import { AddTagModal } from "./AddTagModal";
 import axios from "axios";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { SpeechInput } from "./SpeechInput";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -40,10 +44,10 @@ const Transition = forwardRef(function Transition(
 });
 
 const globalPriorityOptions = [
-    { value: 2, label: "Low" },
-    { value: 3, label: "Medium" },
-    { value: 4, label: "High" },
     { value: 5, label: "Urgent" },
+    { value: 4, label: "High" },
+    { value: 3, label: "Medium" },
+    { value: 2, label: "Low" },
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
@@ -239,6 +243,12 @@ const EditIssueModal = ({
     const endDateRef = useRef(null);
     const collapsibleRef = useRef(null);
     const startCollapsibleRef = useRef(null);
+    const quillRef = useRef<HTMLDivElement>(null);
+    const quillEditorRef = useRef<Quill | null>(null);
+    const descriptionRef = useRef("");
+    const [baseValue, setBaseValue] = useState("");
+
+    const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
 
     const monthNames = [
         "Jan",
@@ -486,6 +496,62 @@ const EditIssueModal = ({
             setCalendarTaskHours(formattedHours);
         }
     }, [userAvailability]);
+
+    // Handle STT for Description
+    useEffect(() => {
+        if (isListening && transcript && activeId === "edit-issue-description") {
+            const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+            if (quillEditorRef.current) {
+                const formattedValue = newValue.startsWith("<") ? newValue : `<p>${newValue}</p>`;
+                quillEditorRef.current.root.innerHTML = formattedValue;
+                setDescription(formattedValue);
+            }
+        }
+    }, [isListening, transcript, activeId, baseValue]);
+
+    // Keep ref always pointing to latest description so the Quill init timer can read it
+    useEffect(() => {
+        descriptionRef.current = description;
+    }, [description]);
+
+    // Initialize Quill Editor — wait for Dialog slide transition before mounting
+    useEffect(() => {
+        if (!openDialog) {
+            quillEditorRef.current = null;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            if (quillRef.current && !quillEditorRef.current) {
+                quillEditorRef.current = new Quill(quillRef.current, {
+                    theme: "snow",
+                    placeholder: "Enter Description...",
+                    modules: {
+                        toolbar: [
+                            [{ header: [1, 2, 3, false] }],
+                            ["bold", "italic", "underline", "strike"],
+                            ["blockquote"],
+                            [{ list: "ordered" }, { list: "bullet" }],
+                            ["link"],
+                            ["clean"],
+                        ],
+                    },
+                });
+
+                // Prefill with latest description (set by issueData useEffect)
+                if (descriptionRef.current) {
+                    quillEditorRef.current.root.innerHTML = descriptionRef.current;
+                }
+
+                quillEditorRef.current.on("text-change", () => {
+                    const htmlContent = quillEditorRef.current?.root.innerHTML;
+                    setDescription(htmlContent || "");
+                });
+            }
+        }, 200);
+
+        return () => clearTimeout(timer);
+    }, [openDialog]);
 
     // Fetch tasks for start date
     useEffect(() => {
@@ -741,6 +807,11 @@ const EditIssueModal = ({
                 toast.error("Title is required");
                 return;
             }
+            const descriptionText = quillEditorRef.current?.getText().trim() || "";
+            if (!descriptionText || descriptionText === "\n") {
+                toast.error("Description is required");
+                return;
+            }
             if (!responsiblePerson) {
                 toast.error("Responsible Person is required");
                 return;
@@ -937,11 +1008,17 @@ const EditIssueModal = ({
                                 size="small"
                                 label="Title"
                                 value={title}
-                                onChange={(value) => setTitle(value)}
+                                onChange={(value) => {
+                                    if (value.length <= 200) setTitle(value);
+                                }}
                                 placeholder="Enter Issue Title"
                                 required
                                 variant="outlined"
+                                inputProps={{ maxLength: 200 }}
                             />
+                            <div className="flex justify-end mt-1">
+                                <span className="text-xs text-gray-500">{title.length}/200</span>
+                            </div>
                         </Box>
 
                         {/* Project and Milestone */}
@@ -1024,36 +1101,45 @@ const EditIssueModal = ({
 
                         {/* Description */}
                         <Box sx={{ mb: 2 }}>
-                            <SpeechInput
-                                multiline
-                                name="description"
-                                minRows={4}
-                                maxRows={6}
-                                placeholder="Enter Description"
-                                label="Description"
-                                value={description}
-                                onChange={(value) => setDescription(value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-                                    "& .MuiInputBase-input[aria-hidden='true']": {
-                                        flex: 0,
-                                        width: 0,
-                                        height: 0,
-                                        padding: "0 !important",
-                                        margin: 0,
-                                        display: "none",
-                                    },
-                                    "& .MuiInputBase-input": {
-                                        resize: "none !important",
-                                    },
-                                }}
-                            />
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-sm font-medium">
+                                    Description<span className="text-red-500">*</span>
+                                </label>
+                                {supported && (
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            if (isListening && activeId === "edit-issue-description") {
+                                                stopListening();
+                                            } else {
+                                                const currentText = quillEditorRef.current
+                                                    ? quillEditorRef.current.root.innerHTML
+                                                    : description;
+                                                setBaseValue(currentText === "<p><br></p>" ? "" : currentText);
+                                                startListening("edit-issue-description");
+                                            }
+                                        }}
+                                        color={isListening && activeId === "edit-issue-description" ? "secondary" : "default"}
+                                        sx={{ color: isListening && activeId === "edit-issue-description" ? "#C72030" : "inherit" }}
+                                    >
+                                        {isListening && activeId === "edit-issue-description" ? (
+                                            <Mic size={18} />
+                                        ) : (
+                                            <MicOff size={18} />
+                                        )}
+                                    </IconButton>
+                                )}
+                            </div>
+                            <div className="bc-description-toolbar-compact">
+                                <div
+                                    ref={quillRef}
+                                    style={{
+                                        border: "1px solid rgba(0, 0, 0, 0.23)",
+                                        borderRadius: "4px",
+                                        minHeight: "150px",
+                                    }}
+                                />
+                            </div>
                         </Box>
 
                         {/* Responsible Person */}
@@ -1388,6 +1474,75 @@ const EditIssueModal = ({
                 onClose={() => setIsTagModalOpen(false)}
                 onTagCreated={() => fetchMentionTags()}
             />
+            <style>{`
+                .ql-toolbar {
+                    border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+                    border-radius: 4px 4px 0 0;
+                    background-color: #fafafa;
+                    margin-bottom: 0 !important;
+                }
+                .ql-container {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-radius: 0 0 4px 4px;
+                    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+                    margin-top: 0 !important;
+                }
+                .ql-editor {
+                    padding: 12px 14px;
+                    font-size: 14px;
+                    line-height: 1.5;
+                }
+                .ql-editor.ql-blank::before {
+                    color: rgba(0, 0, 0, 0.6);
+                    font-style: normal;
+                }
+                .ql-toolbar button:hover { color: #01569E; }
+                .ql-toolbar button.ql-active { color: #01569E; }
+                @media (max-width: 640px) {
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow {
+                        display: flex !important;
+                        flex-wrap: nowrap !important;
+                        align-items: center !important;
+                        overflow-x: auto !important;
+                        padding: 3px 4px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-formats {
+                        display: inline-flex !important;
+                        flex-shrink: 0 !important;
+                        margin-right: 3px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow button {
+                        width: 16px !important;
+                        height: 16px !important;
+                        padding: 1px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow button svg {
+                        width: 10px !important;
+                        height: 10px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker {
+                        height: 16px !important;
+                        font-size: 9px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker.ql-header {
+                        width: 62px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label {
+                        padding-left: 3px !important;
+                        padding-right: 10px !important;
+                        line-height: 16px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label svg {
+                        width: 10px !important;
+                        height: 10px !important;
+                    }
+                }
+            `}</style>
 
             {/* Responsible Person Change Modal */}
             <ResponsiblePersonChangeModal

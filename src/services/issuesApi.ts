@@ -65,15 +65,15 @@ export const fetchIssues = async ({
   try {
     const response = baseUrl
       ? await axios.get(`https://${baseUrl}/issues.json?${queryString}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       : await baseClient.get(`/issues.json?${queryString}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
     return response.data;
   } catch (error) {
@@ -93,15 +93,15 @@ export const fetchIssueById = async (
   try {
     const response = baseUrl
       ? await axios.get(`https://${baseUrl}/issues/${id}.json`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       : await baseClient.get(`/issues/${id}.json`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
     return response.data.issue;
   } catch (error) {
@@ -122,19 +122,19 @@ export const updateIssueApi = async (
   try {
     const response = baseUrl
       ? await axios.patch(
-          `https://${baseUrl}/issues/${id}.json`,
-          { issue: data },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-      : await baseClient.patch(`/issues/${id}.json`, { issue: data }, {
+        `https://${baseUrl}/issues/${id}.json`,
+        { issue: data },
+        {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
+        }
+      )
+      : await baseClient.patch(`/issues/${id}.json`, { issue: data }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
     return response.data.issue || response.data;
   } catch (error) {
@@ -157,19 +157,19 @@ export const importIssuesApi = async (
 
     const response = baseUrl
       ? await axios.post(
-          `https://${baseUrl}/issues/import_issues.json`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-      : await baseClient.post(`/issues/import_issues.json`, formData, {
+        `https://${baseUrl}/issues/import_issues.json`,
+        formData,
+        {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
+        }
+      )
+      : await baseClient.post(`/issues/import_issues.json`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
     return response.data;
   } catch (error) {
@@ -188,20 +188,20 @@ export const downloadSampleIssueFile = async (
   try {
     const response = baseUrl
       ? await axios.get(
-          `https://${baseUrl}/assets/sample_issue.xlsx`,
-          {
-            responseType: "blob",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-      : await baseClient.get(`/assets/sample_issue.xlsx`, {
+        `https://${baseUrl}/sample_issue.xlsx`,
+        {
           responseType: "blob",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
+        }
+      )
+      : await baseClient.get(`/sample_issue.xlsx`, {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
     return response.data;
   } catch (error) {
