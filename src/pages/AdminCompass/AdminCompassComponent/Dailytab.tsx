@@ -108,10 +108,10 @@ const SearchableSelect = ({
   return (
     <div
       ref={ref}
-      className="relative"
+      className="relative w-full sm:w-auto"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <div className="relative flex items-center min-w-[160px]">
+      <div className="relative flex items-center min-w-0 sm:min-w-[160px]">
         <input
           type="text"
           className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60 transition-all cursor-pointer placeholder:text-neutral-700"
@@ -1848,7 +1848,7 @@ const DailyTab = ({
 
   return (
     <div
-      className="pb-12 space-y-6"
+      className="pb-12 space-y-6 min-w-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <style>
@@ -1865,22 +1865,22 @@ const DailyTab = ({
           .feedback-panel-exit { animation: feedbackPanelOut 180ms ease-in both; }
         `}
       </style>
-      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
         {/* ══ LEFT COLUMN ══ */}
         <div className="h-full">
           {/* ══ CALENDAR CARD ══ */}
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full flex flex-col">
             <div className="p-5">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="bg-blue-50 p-2 rounded-lg">
                     <Calendar size={20} className="text-blue-600" />
                   </div>
-                  <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
+                  <span className="text-base sm:text-lg font-bold text-[#1a1a1a] tracking-tight leading-tight">
                     Daily Meeting for {topDateStr}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto">
                   <button
                     onClick={() => changeDate(-1)}
                     className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
@@ -2106,8 +2106,8 @@ const DailyTab = ({
           {!isLoading && dailyData && !noMeetings && (
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-full flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 border-b border-gray-100">
+                <div className="flex min-w-0 items-center gap-2 font-semibold text-neutral-800 text-sm">
                   <FileText className="w-4 h-4 text-[#CE7A5A]" />
                   Daily Reports ({configName})
                 </div>
@@ -2145,7 +2145,7 @@ const DailyTab = ({
               </div>
 
               {/* Footer: Select All + Save */}
-              <div className="flex items-center justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
                 <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -2158,7 +2158,7 @@ const DailyTab = ({
                   </span>
                 </label>
                 {isActiveDateSubmitted ? (
-                  <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
+                  <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                     {!notesChanged && (
                       <span className="min-w-0 max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
                         Edit notes to enable update
@@ -2169,7 +2169,7 @@ const DailyTab = ({
                       onClick={handleUpdateNotesOnly}
                       disabled={isSavingMeeting || !notesChanged}
                       loading={isSavingMeeting}
-                      className="min-h-[44px] min-w-[156px] whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100"
+                    className="min-h-[44px] min-w-0 whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100 sm:min-w-[156px]"
                     >
                       {isSavingMeeting ? "Updating..." : "Update Notes"}
                     </BtnPrimary>
@@ -2204,8 +2204,8 @@ const DailyTab = ({
 
       {/* ══ FULL WIDTH BELOW — Filters ══ */}
       {/* ══ FILTERS ══ */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
             Meeting
           </span>
@@ -2231,8 +2231,8 @@ const DailyTab = ({
 
         {!noMeetings && (
           <>
-            <div className="w-px h-5 bg-gray-200 shrink-0" />
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" />
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
                 Members
               </span>
@@ -2477,7 +2477,7 @@ const DailyTab = ({
                       >
                         <div
                           className={cn(
-                            "p-4 transition-colors flex items-start gap-4",
+                            "p-4 transition-colors flex items-start gap-3 sm:gap-4",
                             canExpand
                               ? "cursor-pointer hover:bg-gray-50"
                               : "cursor-default"
@@ -2509,7 +2509,7 @@ const DailyTab = ({
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                                   <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
@@ -2538,7 +2538,7 @@ const DailyTab = ({
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 shrink-0">
+                              <div className="flex flex-wrap items-center gap-2 shrink-0">
                                 {isPending && !hasDraft && (
                                   <span className="text-red-500 text-xs font-semibold">
                                     Not submitted
@@ -2593,7 +2593,7 @@ const DailyTab = ({
                             )}
 
                             {canExpand && dateRow.length > 0 && (
-                              <div className="flex items-center gap-2 mt-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
                                 <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
                                   {configName}
                                 </span>
@@ -2632,7 +2632,7 @@ const DailyTab = ({
                         {isExpanded && canExpand && (
                           <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                             <div className="p-5 space-y-5">
-                              <div className="flex items-center gap-4 text-sm mb-4">
+                              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
                                 <span>
                                   ⭐ Self rating {selfRatingText || "0/10"}
                                 </span>
@@ -3117,7 +3117,7 @@ const DailyTab = ({
                                   <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
                                     Add to Tomorrow's Plan
                                   </p>
-                                  <div className="flex items-center gap-2 flex-wrap">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
                                     <input
                                       autoFocus
                                       value={quickActionText}
@@ -3129,7 +3129,7 @@ const DailyTab = ({
                                           handleAddToPlan(report);
                                       }}
                                       placeholder="Enter a plan item for tomorrow..."
-                                      className="flex-1 min-w-[200px] border border-gray-300 rounded-xl px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] placeholder:text-neutral-400"
+                                      className="w-full flex-1 min-w-0 sm:min-w-[200px] border border-gray-300 rounded-xl px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] placeholder:text-neutral-400"
                                     />
                                     <button
                                       onClick={() => handleAddToPlan(report)}
@@ -3891,14 +3891,14 @@ const DailyTab = ({
         createPortal(
           <div className="fixed inset-0 z-[9999] flex">
             <div
-              className="flex-1 bg-black/40 backdrop-blur-sm"
+              className="hidden flex-1 bg-black/40 backdrop-blur-sm sm:block"
               onClick={closeTaskModal}
             />
             <div
-              className="relative flex flex-col bg-white shadow-2xl"
-              style={{ width: "min(760px, 95vw)" }}
+              className="relative flex h-full w-full flex-col bg-white shadow-2xl sm:h-auto"
+              style={{ width: "min(760px, 100vw)" }}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 shrink-0">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-neutral-200 shrink-0">
                 <h2 className="text-base font-bold text-neutral-900">
                   Add Tasks
                 </h2>
