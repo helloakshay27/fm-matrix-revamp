@@ -116,6 +116,7 @@ interface VisitLogEntry {
   actual_visit_date?: string | null;
   status?: string;
   remarks?: string | null;
+  assets_covered?: string[] | null;
   technician?: Technician | null;
   attachment?: {
     id?: number;
@@ -1555,9 +1556,9 @@ export const AMCDetailsPage = () => {
                           }`}
                         >
                           {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
-                          <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
-                            {group.no_of_visits ?? group.visits.length}
-                          </span>
+                          {/* <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"> */}
+                            {/* {group.no_of_visits ?? group.visits.length} */}
+                          {/* </span> */}
                         </button>
                       ))}
                     </div>
@@ -1602,6 +1603,7 @@ export const AMCDetailsPage = () => {
                                 <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Date</TableHead>
                                 <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Time</TableHead>
                                 <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
                                 <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
                                 <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
                                 <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
@@ -1611,7 +1613,7 @@ export const AMCDetailsPage = () => {
                             <TableBody className="bg-white">
                               {group.visits.length === 0 ? (
                                 <TableRow>
-                                  <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                                  <TableCell colSpan={10} className="text-center py-6 text-gray-500">
                                     No visits found.
                                   </TableCell>
                                 </TableRow>
@@ -1637,6 +1639,13 @@ export const AMCDetailsPage = () => {
                                       <TableCell className="text-gray-900">{visit.scheduled_date || "—"}</TableCell>
                                       <TableCell className="text-gray-900">{visit.scheduled_time || "—"}</TableCell>
                                       <TableCell className="text-gray-900">{visit.actual_visit_date || "—"}</TableCell>
+                                      <TableCell className="text-gray-900 text-center">
+                                        {Array.isArray(visit.assets_covered) && visit.assets_covered.length > 0 ? (
+                                          <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            {visit.assets_covered.length}
+                                          </span>
+                                        ) : "—"}
+                                      </TableCell>
                                       <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
                                       <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
                                       <TableCell>
