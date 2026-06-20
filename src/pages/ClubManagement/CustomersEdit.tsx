@@ -865,7 +865,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                                 + Add New
                             </button>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" >
                             <button
                                 className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
                                 onClick={handleSaveTerms}
@@ -1052,6 +1052,14 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                         onChange={(e) => handleChange(index, "account_type", e.target.value)}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
+                        SelectProps={{
+                            MenuProps: {
+                                disablePortal: false,
+                                PaperProps: {
+                                    style: { zIndex: 1500, minWidth: 160, maxHeight: 300 },
+                                },
+                            },
+                        }}
                     >
                         <MenuItem value="Invoice">Invoice</MenuItem>
                         <MenuItem value="Credit note">Credit Note</MenuItem>
@@ -2170,7 +2178,7 @@ const CustomersEdit = () => {
                 </div>
 
                 {/* BUTTONS */}
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-3 justify-center" style={{ marginBottom: '100px' }}>
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
