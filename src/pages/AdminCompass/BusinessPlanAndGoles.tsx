@@ -3937,7 +3937,7 @@ const BusinessPlanAndGoles = () => {
             <button
               key={tab.key}
               onClick={() => setActiveMainTab(tab.key)}
-              className={`py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
+              className={`py-2 px-5 sm:px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
               style={{
                 background: isActive ? C.primary : "transparent",
                 color: isActive ? "#fff" : "#7b8393"
@@ -5726,3 +5726,19 @@ const BusinessPlanAndGoles = () => {
 };
 
 export default BusinessPlanAndGoles;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -130,16 +130,16 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
   };
 
   return (
-    <div className="space-y-5 pb-12">
+    <div className="space-y-5 pb-12 min-w-0">
 
       {/* ── Header Card ── */}
       <div className="rounded-sm p-4 sm:p-5" style={{ backgroundColor: ACCENT, border: `1px solid ${BORDER}` }}>
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-start sm:items-center gap-3 mb-5 min-w-0">
           <div className="flex h-9 w-9 items-center justify-center rounded-sm" style={{ backgroundColor: WHITE, border: `1px solid ${BORDER}` }}>
             <FileText className="w-4 h-4 text-[#1a1a1a]" />
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-[#1a1a1a]">HOD Huddle — Daily Meeting</h2>
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-bold text-[#1a1a1a] leading-tight break-words">HOD Huddle — Daily Meeting</h2>
             <p className="text-xs text-gray-500 mt-0.5">{fullDateString}</p>
           </div>
         </div>
@@ -207,12 +207,12 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
       )}
 
       {/* ── Filters ── */}
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
         {[
           { label: "MEETING", value: selectedMeeting, setter: setSelectedMeeting },
           { label: "MEMBER",  value: selectedMember,  setter: setSelectedMember  },
         ].map(({ label, value, setter }) => (
-          <div key={label} className="flex items-center gap-2">
+          <div key={label} className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</span>
             <div className="flex items-center gap-1.5 rounded-sm px-3 py-1.5 cursor-pointer hover:brightness-95"
               style={{ backgroundColor: ACCENT, border: `1px solid ${BORDER}` }}
@@ -236,7 +236,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
         <SectionTitle text="Daily Reports for HOD Huddle" />
 
         {/* Meta row */}
-        <div className="p-4 flex justify-between items-start flex-wrap gap-3"
+        <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3"
           style={{ backgroundColor: ACCENT, borderBottom: `1px solid ${BORDER}` }}
         >
           <p className="text-sm font-bold text-[#1a1a1a] flex items-center gap-2">
@@ -252,11 +252,11 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
         {/* Meeting Notes */}
         <div className="p-4" style={{ backgroundColor: "#f9f7f4" }}>
           <div className="rounded-sm overflow-hidden" style={{ backgroundColor: WHITE, border: `1px solid ${BORDER}` }}>
-            <div className="flex items-center justify-between p-3" style={{ backgroundColor: ACCENT, borderBottom: `1px solid ${BORDER}` }}>
-              <span className="flex items-center gap-2 font-semibold text-[#1a1a1a] text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3" style={{ backgroundColor: ACCENT, borderBottom: `1px solid ${BORDER}` }}>
+              <span className="flex min-w-0 items-center gap-2 font-semibold text-[#1a1a1a] text-sm leading-tight">
                 <Users className="w-4 h-4" /> HOD Huddle (10:00) · 31 Mar (Tue)
               </span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 self-end sm:self-auto">
                 <BtnIcon title="Calendar"><CalendarIcon className="w-3.5 h-3.5" /></BtnIcon>
                 <BtnIcon title="Refresh"><RefreshCw className="w-3.5 h-3.5" /></BtnIcon>
               </div>
@@ -271,7 +271,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                 placeholder="Enter meeting remarks, feedback, action items..."
               />
             </div>
-            <div className="flex items-center justify-between p-3"
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3"
               style={{ backgroundColor: ACCENT, borderTop: `1px solid ${BORDER}` }}
             >
               <label className="flex items-center gap-2.5 cursor-pointer">
@@ -317,7 +317,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
             >
               {/* Row header */}
               <div
-                className="p-4 flex items-start sm:items-center justify-between gap-4 cursor-pointer transition-colors"
+                className="p-4 flex items-start justify-between gap-3 cursor-pointer transition-colors"
                 style={{
                   backgroundColor: isExpanded ? ACCENT : WHITE,
                   borderBottom: isExpanded ? `1px solid ${BORDER}` : "none",
@@ -326,7 +326,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                 onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.backgroundColor = WHITE; }}
                 onClick={() => toggleExpand(report.id)}
               >
-                <div className="flex items-start sm:items-center gap-3">
+                <div className="flex min-w-0 items-start sm:items-center gap-3">
                   <input
                     type="checkbox"
                     className="w-4 h-4 mt-1 sm:mt-0 rounded-sm cursor-pointer accent-black"
@@ -338,7 +338,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                   >
                     {report.score}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-bold text-[#1a1a1a] text-sm">{report.user}</h3>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm"
@@ -347,7 +347,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                         {report.dept}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5">{report.email} • {report.timestamp}</div>
+                    <div className="text-xs text-gray-500 mt-0.5 break-words">{report.email} • {report.timestamp}</div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
                       {report.kpiStats.map((stat, i) => (
                         <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-sm"
@@ -377,8 +377,10 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                       { title: "Accomplishments", icon: CheckCircle2, colorCls: "text-[#15803d]", items: report.accomplishments },
                       { title: "Tomorrow's Plan", icon: ArrowRight,   colorCls: "text-[#a16207]", items: report.plans           },
                     ].map(({ title, icon: Icon, colorCls, items }, colIdx) => (
-                      <div key={title} className="p-4"
-                        style={{ borderRight: colIdx < 2 ? `1px solid ${BORDER}` : "none" }}
+                      <div
+                        key={title}
+                        className={cn("p-4", colIdx < 2 && "border-b md:border-b-0 md:border-r")}
+                        style={{ borderColor: BORDER }}
                       >
                         <h4 className={cn("flex items-center gap-2 font-bold mb-3 text-xs uppercase tracking-wider", colorCls)}>
                           <Icon className="w-3.5 h-3.5" /> {title}
@@ -422,13 +424,13 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                       <div className="rounded-sm p-3 max-w-2xl"
                         style={{ backgroundColor: WHITE, border: `1px solid ${BORDER}` }}
                       >
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             placeholder={`Add ${activeInlineAction.action}...`}
                             value={inlineText}
                             onChange={(e) => setInlineText(e.target.value)}
-                            className="flex-1 rounded-sm p-2 text-sm focus:outline-none focus:ring-1 focus:ring-black text-[#1a1a1a]"
+                            className="flex-1 min-w-0 rounded-sm p-2 text-sm focus:outline-none focus:ring-1 focus:ring-black text-[#1a1a1a]"
                             style={{ border: `1px solid ${BORDER}`, backgroundColor: ACCENT }}
                             autoFocus
                           />
@@ -485,7 +487,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                 />
               </div>
             </div>
-            <div className="p-4 flex justify-end gap-2"
+            <div className="p-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
               style={{ backgroundColor: ACCENT, borderTop: `1px solid ${BORDER}` }}
             >
               <BtnOutline onClick={() => { setIsTaskModalOpen(false); setTaskTitle(""); }}>Cancel</BtnOutline>

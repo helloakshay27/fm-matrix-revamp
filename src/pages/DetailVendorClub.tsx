@@ -373,13 +373,6 @@ const DetailVendorClub = () => {
                             <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                                 {vendor?.company_name}
                             </h1>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigate(`/accounting/vendor/edit/${vendor?.id}`)}
-                            >
-                                Edit Vendor
-                            </Button>
                         </div>
                         <div className="text-sm text-gray-600">
                             Vendor # {vendor?.id} • Created by{" "}
@@ -965,6 +958,7 @@ const DetailVendorClub = () => {
                                                         <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Bill No</TableHead>
                                                         <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Bill Date</TableHead>
                                                         <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Due Date</TableHead>
+                                                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Type</TableHead>
                                                         <TableHead className="font-semibold text-gray-900 py-3 px-4 text-right" style={{ borderColor: '#fff' }}>Amount</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
@@ -977,6 +971,9 @@ const DetailVendorClub = () => {
                                                             </TableCell>
                                                             <TableCell className="py-3 px-4">
                                                                 {balance.due_date ? new Date(balance.due_date).toLocaleDateString() : '-'}
+                                                            </TableCell>
+                                                            <TableCell className="py-3 px-4 text-left font-medium">
+                                                                {balance.account_type || '-'}
                                                             </TableCell>
                                                             <TableCell className="py-3 px-4 text-right font-medium">
                                                                 ₹ {balance.amount?.toLocaleString('en-IN') || '-'}

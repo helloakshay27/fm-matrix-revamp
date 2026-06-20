@@ -375,6 +375,7 @@ export const CustomersDetails = () => {
                                             <th className="px-3 py-2 text-left rounded-l-lg">Bill No</th>
                                             <th className="px-3 py-2 text-left">Bill Date</th>
                                             <th className="px-3 py-2 text-left">Due Date</th>
+                                            <th className="px-3 py-2 text-left">Type</th>
                                             <th className="px-3 py-2 text-left rounded-r-lg">Amount</th>
                                         </tr>
                                     </thead>
@@ -392,6 +393,7 @@ export const CustomersDetails = () => {
                                                         ? new Date(item.due_date).toLocaleDateString("en-GB")
                                                         : "-"}
                                                 </td>
+                                                <td className="px-3 py-2 capitalize">{item.account_type || "-"}</td>
                                                 <td className="px-3 py-2 font-medium">
                                                     ₹ {item.amount || 0}
                                                 </td>

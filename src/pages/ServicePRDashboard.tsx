@@ -421,17 +421,17 @@ export const ServicePRDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      {
-        shouldShow("Service PR", "create") && (
-          <Button
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
-            onClick={() => navigate("/finance/service-pr/add")}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-        )
-      }
+      {/* {
+        shouldShow("Service PR", "create") && ( */}
+      <Button
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
+        onClick={() => navigate("/finance/service-pr/add")}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+      {/* )
+      } */}
 
     </div>
   );
