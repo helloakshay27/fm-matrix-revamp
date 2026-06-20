@@ -202,44 +202,40 @@ export const ExternalUsersDashboard = () => {
   ];
 
 
+  const pillBadge = (bg: string, color: string, label: string) => (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+      style={{ backgroundColor: bg, color }}
+    >
+      {label}
+    </span>
+  );
+
   const getStatusBadge = (status: string) => {
-    if (!status) {
-      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
-    }
+    if (!status) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
     switch (status.toLowerCase()) {
-      case 'approved':
-        return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
-      case 'rejected':
-        // Present 'rejected' as 'Deactivated' per product requirement
-        return <Badge className="bg-red-500 text-white hover:bg-red-600">Deactivated</Badge>;
-      default:
-        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
+      case 'approved':  return pillBadge('#dcfce7', '#15803d', 'Approved');
+      case 'pending':   return pillBadge('#fff3e0', '#da7756', 'Pending');
+      case 'rejected':  return pillBadge('#fee2e2', '#dc2626', 'Deactivated');
+      default:          return pillBadge('#f3f4f6', '#6b7280', status);
     }
   };
 
   const getTypeBadge = (type: string) => {
-    if (!type) {
-      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
-    }
+    if (!type) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
     switch (type.toLowerCase()) {
-      case 'external':
-        return <Badge className="bg-orange-500 text-white hover:bg-orange-600">External</Badge>;
-      case 'contractor':
-        return <Badge className="bg-purple-500 text-white hover:bg-purple-600">Contractor</Badge>;
-      case 'vendor':
-        return <Badge className="bg-blue-500 text-white hover:bg-blue-600">Vendor</Badge>;
-      default:
-        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{type}</Badge>;
+      case 'external':   return pillBadge('#fff3e0', '#da7756', 'External');
+      case 'contractor': return pillBadge('#f3e8ff', '#7e22ce', 'Contractor');
+      case 'vendor':     return pillBadge('#dbeafe', '#1d4ed8', 'Vendor');
+      default:           return pillBadge('#f3f4f6', '#6b7280', type);
     }
   };
 
   const getYesNoBadge = (value: boolean | string) => {
     const isYes = value === true || value === 'yes' || value === 'Yes';
-    return <Badge className={isYes ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600"}>
-      {isYes ? 'Yes' : 'No'}
-    </Badge>;
+    return isYes
+      ? pillBadge('#dcfce7', '#15803d', 'Yes')
+      : pillBadge('#fee2e2', '#dc2626', 'No');
   };
 
   const columns: ColumnConfig[] = [
@@ -300,7 +296,8 @@ export const ExternalUsersDashboard = () => {
           <div className="w-full flex justify-center">
             <div
               onClick={() => !disabled && handleToggleActive(user)}
-              className={`mx-auto relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-400'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`mx-auto relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              style={{ backgroundColor: isActive ? '#da7756' : '#9ca3af' }}
             >
               <span
                 className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}

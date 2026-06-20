@@ -28,6 +28,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TextField, Box } from "@mui/material";
 import axios from "axios";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
@@ -100,6 +101,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const CRMFMUserDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -487,14 +489,18 @@ const CRMFMUserDashboard = () => {
   };
 
   const renderActions = (user: any) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => handleViewUser(user.id)}
-      className="hover:bg-gray-100"
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
+    <>
+      {shouldShow("FM Users", "show") && (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleViewUser(user.id)}
+        className="hover:bg-gray-100"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      )}
+    </>
   );
 
   const renderCell = (user: any, columnKey: string) => {

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '../config/apiConfig';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ParkingCategoryData {
   id: number;
@@ -31,6 +32,7 @@ interface ParkingCategoryData {
 }
 
 export const ParkingCategoryPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
@@ -336,6 +338,7 @@ export const ParkingCategoryPage = () => {
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
+          {shouldShow("Parking Category", "create") && (
           <Button 
             onClick={handleAdd}
             className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
@@ -343,6 +346,7 @@ export const ParkingCategoryPage = () => {
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
+          )}
           {/* <Button 
             onClick={fetchParkingCategories}
             disabled={isLoading}
@@ -404,6 +408,7 @@ export const ParkingCategoryPage = () => {
                 {visibleColumns.actions && (
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
+                      {shouldShow("Parking Category", "update") && (
                       <button
                         onClick={() => handleEdit(item.id)}
                         className="p-1 hover:bg-gray-100 rounded"
@@ -411,6 +416,7 @@ export const ParkingCategoryPage = () => {
                       >
                         <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                       </button>
+                      )}
                     </div>
                   </TableCell>
                 )}

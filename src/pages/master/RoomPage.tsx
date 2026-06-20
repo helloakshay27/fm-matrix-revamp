@@ -8,28 +8,30 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Square, Check, Plus, FileDown, X, ChevronLeft, ChevronRight, Upload, Download, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  fetchAreas, 
+import {
+  fetchBuildings,
+  fetchWings,
+  fetchAreas,
   fetchFloors,
   fetchUnits,
   fetchAllRooms,
-  createRoom, 
+  createRoom,
   updateRoom
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const RoomPage = () => {
   const dispatch = useAppDispatch();
-  const { 
-    buildings, 
-    wings, 
-    areas, 
+  const {
+    buildings,
+    wings,
+    areas,
     floors,
     units,
     rooms
   } = useAppSelector((state) => state.location);
+  const { shouldShow } = useDynamicPermissions();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -41,7 +43,7 @@ export const RoomPage = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
@@ -55,7 +57,7 @@ export const RoomPage = () => {
     roomName: '',
     createQrCode: false
   });
-  
+
   const [editRoom, setEditRoom] = useState({
     building: '',
     wing: '',
@@ -69,7 +71,7 @@ export const RoomPage = () => {
   useEffect(() => {
     dispatch(fetchBuildings());
     dispatch(fetchAllRooms());
-    
+
     // Debug localStorage values
     console.log('=== DEBUG localStorage VALUES ===');
     console.log('baseUrl:', localStorage.getItem('baseUrl'));
@@ -122,19 +124,19 @@ export const RoomPage = () => {
 
   useEffect(() => {
     if (newRoom.building && newRoom.wing && newRoom.area) {
-      dispatch(fetchFloors({ 
-        buildingId: parseInt(newRoom.building), 
-        wingId: parseInt(newRoom.wing), 
-        areaId: parseInt(newRoom.area) 
+      dispatch(fetchFloors({
+        buildingId: parseInt(newRoom.building),
+        wingId: parseInt(newRoom.wing),
+        areaId: parseInt(newRoom.area)
       }));
     }
   }, [dispatch, newRoom.building, newRoom.wing, newRoom.area]);
 
   useEffect(() => {
     if (newRoom.building && newRoom.wing && newRoom.area && newRoom.floor) {
-      dispatch(fetchUnits({ 
-        buildingId: parseInt(newRoom.building), 
-        wingId: parseInt(newRoom.wing), 
+      dispatch(fetchUnits({
+        buildingId: parseInt(newRoom.building),
+        wingId: parseInt(newRoom.wing),
         areaId: parseInt(newRoom.area),
         floorId: parseInt(newRoom.floor)
       }));
@@ -156,19 +158,19 @@ export const RoomPage = () => {
 
   useEffect(() => {
     if (editRoom.building && editRoom.wing && editRoom.area && editingRoom) {
-      dispatch(fetchFloors({ 
-        buildingId: parseInt(editRoom.building), 
-        wingId: parseInt(editRoom.wing), 
-        areaId: parseInt(editRoom.area) 
+      dispatch(fetchFloors({
+        buildingId: parseInt(editRoom.building),
+        wingId: parseInt(editRoom.wing),
+        areaId: parseInt(editRoom.area)
       }));
     }
   }, [dispatch, editRoom.building, editRoom.wing, editRoom.area, editingRoom]);
 
   useEffect(() => {
     if (editRoom.building && editRoom.wing && editRoom.area && editRoom.floor && editingRoom) {
-      dispatch(fetchUnits({ 
-        buildingId: parseInt(editRoom.building), 
-        wingId: parseInt(editRoom.wing), 
+      dispatch(fetchUnits({
+        buildingId: parseInt(editRoom.building),
+        wingId: parseInt(editRoom.wing),
         areaId: parseInt(editRoom.area),
         floorId: parseInt(editRoom.floor)
       }));
@@ -218,7 +220,7 @@ export const RoomPage = () => {
       toast.error('Please enter room name');
       return;
     }
-    
+
     try {
       await dispatch(createRoom({
         name: newRoom.roomName,
@@ -262,19 +264,19 @@ export const RoomPage = () => {
         }
       }
       console.log('============================');
-      
+
       // Get baseUrl from localStorage, fallback to default
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-      
+
       console.log('Original baseUrl from localStorage:', baseUrl);
-      
+
       // Remove any protocol if present and ensure https
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const templateUrl = `https://${baseUrl}/assets/room.xlsx`;
-      
+      const templateUrl = `https://${baseUrl}/room.xlsx`;
+
       console.log('Final Template URL:', templateUrl);
       toast.info('Downloading template...');
-      
+
       const response = await fetch(templateUrl, {
         method: 'GET',
         mode: 'cors',
@@ -289,7 +291,7 @@ export const RoomPage = () => {
 
       const blob = await response.blob();
       console.log('Downloaded blob size:', blob.size);
-      
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -299,7 +301,7 @@ export const RoomPage = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Template downloaded successfully');
     } catch (error) {
       console.error('Error downloading template:', error);
@@ -320,16 +322,16 @@ export const RoomPage = () => {
 
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-      
+
       console.log('Original baseUrl from localStorage:', baseUrl);
-      
+
       // Remove any protocol if present and ensure https
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
       const apiUrl = `https://${baseUrl}/pms/account_setups/room_import.json?token=${token}`;
-      
+
       console.log('Final Import API URL:', apiUrl);
       toast.info('Starting import...');
-      
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
@@ -363,7 +365,7 @@ export const RoomPage = () => {
         'application/vnd.ms-excel', // .xls
         'text/csv' // .csv
       ];
-      
+
       if (allowedTypes.includes(file.type)) {
         setImportFile(file);
       } else {
@@ -384,25 +386,25 @@ export const RoomPage = () => {
       roomName: room.name || '',
       active: room.active
     });
-    
+
     // Load the dependencies immediately when editing starts
     if (room.building_id) {
       dispatch(fetchWings(room.building_id));
-      
+
       if (room.wing_id) {
         dispatch(fetchAreas({ buildingId: room.building_id, wingId: room.wing_id }));
-        
+
         if (room.area_id) {
-          dispatch(fetchFloors({ 
-            buildingId: room.building_id, 
-            wingId: room.wing_id, 
-            areaId: room.area_id 
+          dispatch(fetchFloors({
+            buildingId: room.building_id,
+            wingId: room.wing_id,
+            areaId: room.area_id
           }));
-          
+
           if (room.floor_id) {
-            dispatch(fetchUnits({ 
-              buildingId: room.building_id, 
-              wingId: room.wing_id, 
+            dispatch(fetchUnits({
+              buildingId: room.building_id,
+              wingId: room.wing_id,
               areaId: room.area_id,
               floorId: room.floor_id
             }));
@@ -410,13 +412,13 @@ export const RoomPage = () => {
         }
       }
     }
-    
+
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateRoom = async () => {
     if (!editingRoom) return;
-    
+
     if (!editRoom.building) {
       toast.error('Please select a building');
       return;
@@ -425,7 +427,7 @@ export const RoomPage = () => {
       toast.error('Please enter room name');
       return;
     }
-    
+
     try {
       await dispatch(updateRoom({
         id: editingRoom.id,
@@ -457,7 +459,7 @@ export const RoomPage = () => {
         id: roomId,
         updates: { active: !room.active }
       }));
-      
+
       toast.success('Room status updated successfully');
     } catch (error) {
       toast.error('Failed to update room status');
@@ -472,10 +474,10 @@ export const RoomPage = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">ROOM</h1>
-            
+
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleDownloadTemplate}
                 className="flex items-center gap-2"
               >
@@ -520,8 +522,8 @@ export const RoomPage = () => {
                       )}
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
@@ -532,7 +534,7 @@ export const RoomPage = () => {
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         onClick={handleImportRooms}
                         disabled={!importFile || isImporting}
                       >
@@ -545,12 +547,14 @@ export const RoomPage = () => {
               </Dialog>
 
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
-                    <Square className="w-4 h-4" />
-                    Add Room
-                  </Button>
-                </DialogTrigger>
+                {shouldShow("Room", "create") && (
+                  <DialogTrigger asChild>
+                    <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
+                      <Square className="w-4 h-4" />
+                      Add Room
+                    </Button>
+                  </DialogTrigger>
+                )}
                 <DialogContent className="max-w-2xl">
                   <DialogHeader className="flex flex-row items-center justify-between pb-0">
                     <DialogTitle className="flex items-center gap-2">
@@ -567,8 +571,8 @@ export const RoomPage = () => {
                   <div className="grid grid-cols-2 gap-4 py-4">
                     <div className="space-y-2">
                       <Label htmlFor="building">Select Building</Label>
-                      <Select 
-                        value={newRoom.building} 
+                      <Select
+                        value={newRoom.building}
                         onValueChange={(value) => {
                           setNewRoom({ ...newRoom, building: value, wing: '', area: '', floor: '', unit: '' });
                           if (value) {
@@ -592,11 +596,11 @@ export const RoomPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="wing">Select Wing</Label>
-                      <Select 
-                        value={newRoom.wing} 
+                      <Select
+                        value={newRoom.wing}
                         onValueChange={(value) => {
                           setNewRoom({ ...newRoom, wing: value, area: '', floor: '', unit: '' });
                           if (value && newRoom.building) {
@@ -621,11 +625,11 @@ export const RoomPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="area">Select Area</Label>
-                      <Select 
-                        value={newRoom.area} 
+                      <Select
+                        value={newRoom.area}
                         onValueChange={(value) => {
                           setNewRoom({ ...newRoom, area: value, floor: '', unit: '' });
                           if (value && newRoom.building) {
@@ -650,11 +654,11 @@ export const RoomPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="floor">Select Floor</Label>
-                      <Select 
-                        value={newRoom.floor} 
+                      <Select
+                        value={newRoom.floor}
                         onValueChange={(value) => {
                           setNewRoom({ ...newRoom, floor: value, unit: '' });
                           if (value && newRoom.building) {
@@ -679,11 +683,11 @@ export const RoomPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="unit">Select Unit</Label>
-                      <Select 
-                        value={newRoom.unit} 
+                      <Select
+                        value={newRoom.unit}
                         onValueChange={(value) => setNewRoom(prev => ({ ...prev, unit: value }))}
                         disabled={!newRoom.building}
                       >
@@ -699,7 +703,7 @@ export const RoomPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="roomName">Enter Room Name</Label>
                       <Input
@@ -709,7 +713,7 @@ export const RoomPage = () => {
                         placeholder="Enter Room Name"
                       />
                     </div>
-                    
+
                     <div className="space-y-2 col-span-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -721,9 +725,9 @@ export const RoomPage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end gap-2 pt-4">
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => {
                         setIsAddDialogOpen(false);
@@ -741,8 +745,8 @@ export const RoomPage = () => {
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      onClick={handleAddRoom} 
+                    <Button
+                      onClick={handleAddRoom}
                       className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
                       disabled={!newRoom.building || !newRoom.roomName.trim()}
                     >
@@ -751,8 +755,8 @@ export const RoomPage = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              
-              <Button 
+
+              <Button
                 onClick={handlePrintAllQR}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white"
               >
@@ -775,7 +779,7 @@ export const RoomPage = () => {
           </div>
 
           {/* Debug info - remove this later */}
-         
+
 
           {/* Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -815,11 +819,13 @@ export const RoomPage = () => {
                 ) : (
                   currentRooms.map((room) => (
                     <TableRow key={room.id}>
-                       <TableCell>
-                         <Button variant="ghost" size="sm" onClick={() => handleEditRoom(room)}>
-                           <Edit className="w-4 h-4 text-[#C72030]" />
-                         </Button>
-                       </TableCell>
+                      <TableCell>
+                        {shouldShow("Room", "update") && (
+                          <Button variant="ghost" size="sm" onClick={() => handleEditRoom(room)}>
+                            <Edit className="w-4 h-4 text-[#C72030]" />
+                          </Button>
+                        )}
+                      </TableCell>
                       <TableCell>{room.building?.name || 'N/A'}</TableCell>
                       <TableCell>{room.wing?.name || 'N/A'}</TableCell>
                       <TableCell>{room.area?.name || 'N/A'}</TableCell>
@@ -830,8 +836,8 @@ export const RoomPage = () => {
                       <TableCell>{room.name}</TableCell>
                       <TableCell>
                         {room.room_qr_code ? (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setSelectedQrCode(room.room_qr_code);
@@ -845,19 +851,19 @@ export const RoomPage = () => {
                           <span className="text-gray-400 text-sm">-</span>
                         )}
                       </TableCell>
-                       <TableCell>
-                         <button onClick={() => toggleRoomStatus(room.id)} className="cursor-pointer">
-                           {room.active ? (
-                             <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                               <Check className="w-3 h-3 text-white" />
-                             </div>
-                           ) : (
-                             <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                               <span className="text-white text-xs">✗</span>
-                             </div>
-                           )}
-                         </button>
-                       </TableCell>
+                      <TableCell>
+                        <button onClick={() => toggleRoomStatus(room.id)} className="cursor-pointer">
+                          {room.active ? (
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                              <span className="text-white text-xs">✗</span>
+                            </div>
+                          )}
+                        </button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -881,7 +887,7 @@ export const RoomPage = () => {
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                
+
                 <div className="flex items-center space-x-1">
                   {/* Show first page */}
                   {currentPage > 3 && (
@@ -897,7 +903,7 @@ export const RoomPage = () => {
                       {currentPage > 4 && <span className="px-2">...</span>}
                     </>
                   )}
-                  
+
                   {/* Show pages around current page */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
@@ -912,7 +918,7 @@ export const RoomPage = () => {
                         {page}
                       </Button>
                     ))}
-                  
+
                   {/* Show last page */}
                   {currentPage < totalPages - 2 && (
                     <>
@@ -928,7 +934,7 @@ export const RoomPage = () => {
                     </>
                   )}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -957,8 +963,8 @@ export const RoomPage = () => {
               <div className="grid grid-cols-2 gap-4 py-4">
                 <div className="space-y-2">
                   <Label>Select Building</Label>
-                  <Select 
-                    value={editRoom.building} 
+                  <Select
+                    value={editRoom.building}
                     onValueChange={(value) => {
                       setEditRoom({ ...editRoom, building: value, wing: '', area: '', floor: '', unit: '' });
                       if (value) {
@@ -982,11 +988,11 @@ export const RoomPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Select Wing</Label>
-                  <Select 
-                    value={editRoom.wing} 
+                  <Select
+                    value={editRoom.wing}
                     onValueChange={(value) => {
                       setEditRoom({ ...editRoom, wing: value, area: '', floor: '', unit: '' });
                       if (value && editRoom.building) {
@@ -1011,11 +1017,11 @@ export const RoomPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Select Area</Label>
-                  <Select 
-                    value={editRoom.area} 
+                  <Select
+                    value={editRoom.area}
                     onValueChange={(value) => {
                       setEditRoom({ ...editRoom, area: value, floor: '', unit: '' });
                       if (value && editRoom.building) {
@@ -1040,11 +1046,11 @@ export const RoomPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Select Floor</Label>
-                  <Select 
-                    value={editRoom.floor} 
+                  <Select
+                    value={editRoom.floor}
                     onValueChange={(value) => {
                       setEditRoom({ ...editRoom, floor: value, unit: '' });
                       if (value && editRoom.building) {
@@ -1069,11 +1075,11 @@ export const RoomPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Select Unit</Label>
-                  <Select 
-                    value={editRoom.unit} 
+                  <Select
+                    value={editRoom.unit}
                     onValueChange={(value) => setEditRoom(prev => ({ ...prev, unit: value }))}
                     disabled={!editRoom.building}
                   >
@@ -1089,7 +1095,7 @@ export const RoomPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="editRoomName">Room Name</Label>
                   <Input
@@ -1099,7 +1105,7 @@ export const RoomPage = () => {
                     placeholder="Enter Room Name"
                   />
                 </div>
-                
+
                 <div className="space-y-2 col-span-2">
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -1111,10 +1117,10 @@ export const RoomPage = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end pt-4">
-                <Button 
-                  onClick={handleUpdateRoom} 
+                <Button
+                  onClick={handleUpdateRoom}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-8"
                   disabled={!editRoom.roomName.trim() || !editRoom.building}
                 >
@@ -1134,9 +1140,9 @@ export const RoomPage = () => {
                 {selectedQrCode ? (
                   <>
                     <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
-                      <img 
-                        src={selectedQrCode} 
-                        alt="Room QR Code" 
+                      <img
+                        src={selectedQrCode}
+                        alt="Room QR Code"
                         className="w-64 h-64 object-contain"
                       />
                     </div>

@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Edit, Plus, Trash2, Search } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useToast } from '@/hooks/use-toast';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Mock data for materials
 const materialData = [
@@ -77,6 +78,7 @@ const initialFormData: MaterialFormData = {
 };
 
 export const MaterialMasterPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const { setCurrentSection } = useLayout();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -109,6 +111,7 @@ export const MaterialMasterPage = () => {
         {/* Header with Add Button */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">MATERIAL MASTER (E-BOM MODULE)</h1>
+          {shouldShow("Material Master -> EBom", "create") && (
           <Button 
             onClick={() => navigate('/materials/add')}
             className="bg-[#C72030] hover:bg-[#C72030]/90 gap-2"
@@ -116,6 +119,7 @@ export const MaterialMasterPage = () => {
             <Plus className="w-4 h-4" />
             Add Material
           </Button>
+          )}
         </div>
 
         {/* Materials Table */}
@@ -166,6 +170,7 @@ export const MaterialMasterPage = () => {
                   <TableCell>{material.inventoryTracking ? 'Yes' : 'No'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
+                      {shouldShow("Material Master -> EBom", "update") && (
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -173,6 +178,7 @@ export const MaterialMasterPage = () => {
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="sm">

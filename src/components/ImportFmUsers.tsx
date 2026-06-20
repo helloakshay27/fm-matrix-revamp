@@ -96,7 +96,7 @@ export const ImportFmUsers: React.FC<BulkUploadDialogProps> = ({
 
         try {
             const response = await axios.get(
-                `https://${localStorage.getItem('baseUrl')}/assets/sample_fm_user.csv`,
+                `https://${localStorage.getItem('baseUrl')}/sample_fm_user.csv`,
                 {
                     responseType: 'blob',
                     headers: {

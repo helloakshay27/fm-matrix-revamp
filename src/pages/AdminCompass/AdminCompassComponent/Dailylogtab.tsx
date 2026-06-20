@@ -25,7 +25,7 @@ import {
   Crown,
   Calendar,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";/*  */
 import { getBaseUrl, getAuthHeaders } from "./Shared";
 import { toast } from "sonner";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
@@ -34,9 +34,10 @@ import AddToDoModal from "../../../components/AddToDoModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { ReportItemMeta } from "./Dailytab";
 
 // ─────────────────────────────────────────────
-// MUI z-index override
+// MUI z-index override 
 // ─────────────────────────────────────────────
 const muiHighZTheme = createTheme({ zIndex: { modal: 10001, drawer: 10001 } });
 const MuiZIndexFix = ({ children }) => (
@@ -1150,8 +1151,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                 return (
                                   <div
                                     key={i}
-                                    className="flex items-center gap-2 rounded-[10px] border border-green-200 bg-green-50 px-2.5 py-2 min-h-[36px]"
+                                    className="flex flex-col rounded-[10px] border border-green-200 bg-green-50 min-h-[36px]"
                                   >
+                                    <div className="flex items-center gap-2 px-2.5 py-2">
                                     <span
                                       className={cn(
                                         "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
@@ -1176,6 +1178,8 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                         <Eye className="w-3 h-3" />
                                       </button>
                                     )}
+                                    </div>
+                                    <ReportItemMeta item={item} />
                                   </div>
                                 );
                               })}
@@ -1328,21 +1332,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                             </button>
                                           )}
                                         </div>
-                                        {dueDate && (
-                                          <div className="flex items-center gap-1 px-2.5 pb-2 -mt-1">
-                                            <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
-                                            <span className="text-[10px] text-gray-500">
-                                              {new Date(dueDate).toLocaleDateString(
-                                                "en-GB",
-                                                {
-                                                  day: "2-digit",
-                                                  month: "short",
-                                                  year: "numeric",
-                                                },
-                                              )}
-                                            </span>
-                                          </div>
-                                        )}
+                                        <ReportItemMeta item={item} />
                                       </div>
                                     );
                                   })}
@@ -1375,8 +1365,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                 return (
                                   <div
                                     key={i}
-                                    className="flex items-center gap-2 rounded-[10px] border border-blue-200 bg-blue-50 px-2.5 py-2 min-h-[36px]"
+                                    className="flex flex-col rounded-[10px] border border-blue-200 bg-blue-50 min-h-[36px]"
                                   >
+                                    <div className="flex items-center gap-2 px-2.5 py-2">
                                     <span
                                       className={cn(
                                         "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
@@ -1401,6 +1392,8 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                         <Eye className="w-3 h-3" />
                                       </button>
                                     )}
+                                    </div>
+                                    <ReportItemMeta item={item} />
                                   </div>
                                 );
                               })}

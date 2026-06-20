@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import posthog from "posthog-js";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Building2, Eye, EyeOff } from "lucide-react";
@@ -140,7 +141,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
-      toast.error("Failed to fetch organizations. Please try again.");
+      toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
       console.error("Auto-select organization error:", error);
     } finally {
       setIsLoading(false);
@@ -246,7 +247,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         toast.error("No organizations found for this email address.");
       }
     } catch (error) {
-      toast.error("Failed to fetch organizations. Please try again.");
+      toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -331,6 +332,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
+          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -376,6 +379,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          user_roster_id: response?.user_roster_id,
+          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -412,12 +417,27 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
+        user_roster_id: response?.user_roster_id,
+        is_vendor: response.is_vendor,
+        supplier_id: response.supplier_id,
       });
+
+      // Store vendor/supplier ID for vendor portal routing
+      if (response.supplier_id) {
+        localStorage.setItem("vendor_id", response.supplier_id.toString());
+      }
       saveToken(response.access_token);
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
+
+      // Identify user in PostHog
+      posthog.identify(response.id?.toString(), {
+        email: response.email,
+        name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
+        user_type: response.user_type,
+      });
 
       // Fetch and store lock_account_id
       await fetchLockAccount();
@@ -444,6 +464,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/ops-console/settings/account/user-list-otp", {
             replace: true,
           });
+          return;
+        }
+
+        if (response.is_vendor && response.supplier_id) {
+          navigate(`/vendor/supplier-details/${response.supplier_id}`, { replace: true });
           return;
         }
 

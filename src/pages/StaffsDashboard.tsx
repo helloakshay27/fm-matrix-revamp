@@ -23,6 +23,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { fetchSocietyStaffs, searchSocietyStaffs, SocietyStaff, PaginationInfo } from '@/services/societyStaffsAPI';
 import { staffService } from '@/services/staffService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Sample data for different views
 const allStaffsData = [
@@ -146,6 +147,7 @@ const getStatusBadgeColor = (status: string) => {
 };
 
 export const StaffsDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -458,30 +460,34 @@ useEffect(() => {
   const renderRow = (staff: ReturnType<typeof transformedApiData>[0]) => ({
     actions: (
       <div className="flex justify-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleViewStaff(staff.id);
-          }}
-          className="p-2 h-8 w-8 hover:bg-accent"
-          title="View staff"
-        >
-          <Eye className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleEditStaff(staff.id);
-          }}
-          className="p-2 h-8 w-8 hover:bg-accent"
-          title="Edit staff"
-        >
-          <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-        </Button>
+        {shouldShow("Staff", "show") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewStaff(staff.id);
+            }}
+            className="p-2 h-8 w-8 hover:bg-accent"
+            title="View staff"
+          >
+            <Eye className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+          </Button>
+        )}
+        {shouldShow("Staff", "update") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditStaff(staff.id);
+            }}
+            className="p-2 h-8 w-8 hover:bg-accent"
+            title="Edit staff"
+          >
+            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+          </Button>
+        )}
         {/* <Button
           variant="ghost"
           size="sm"
@@ -694,14 +700,16 @@ useEffect(() => {
             onSelectAll={handleSelectAll}
             leftActions={
               <div className="flex gap-3">
-                <Button 
-                  onClick={() => navigate('/security/staff/add')}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="fm-button-fix fm-button-brand px-8 py-2"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add
-                </Button>
+                {shouldShow("Staff", "create") && (
+                  <Button 
+                    onClick={() => navigate('/security/staff/add')}
+                    style={{ backgroundColor: '#C72030' }}
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                  </Button>
+                )}
                 {selectedStaffs.length > 0 && (
                   <Button 
                     onClick={handlePrintQR}

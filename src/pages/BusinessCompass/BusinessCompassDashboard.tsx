@@ -72,8 +72,86 @@ interface DashboardData {
   };
 }
 
+interface AiSuggestion {
+  category: string;
+  priority: string;
+  potential_points: number;
+  title: string;
+  description: string;
+  timeline: string;
+}
+
+interface AiSuggestionsResponse {
+  success: boolean;
+  score: number;
+  message?: string;
+  data?: {
+    total_potential_improvement: number;
+    suggestions: AiSuggestion[];
+  };
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const AI_SUGGESTION_CATEGORY_STYLE = {
+  issues: {
+    bgColor: "#fce8e8",
+    borderColor: "#fbcfcf",
+    dotColor: "#f87171",
+    label: "Issues",
+  },
+  systems: {
+    bgColor: "#e8f0fe",
+    borderColor: "#c7d9fd",
+    dotColor: "#60a5fa",
+    label: "Systems",
+  },
+  goals: {
+    bgColor: "#edf7ed",
+    borderColor: "#c3e6c4",
+    dotColor: "#4ade80",
+    label: "Goals",
+  },
+  kpi: {
+    bgColor: "#fff3e8",
+    borderColor: "#fddcbc",
+    dotColor: "#fb923c",
+    label: "KPI",
+  },
+} as const;
+
+const getAiSuggestionCategoryStyle = (category: string) =>
+  AI_SUGGESTION_CATEGORY_STYLE[
+    category?.toLowerCase() as keyof typeof AI_SUGGESTION_CATEGORY_STYLE
+  ] || AI_SUGGESTION_CATEGORY_STYLE.issues;
+
+const getAiSuggestionPriorityStyle = (priority: string) => {
+  const normalizedPriority = priority?.toLowerCase();
+  if (normalizedPriority === "high") {
+    return {
+      backgroundColor: "#ffe4e4",
+      color: "#e05050",
+    };
+  }
+
+  if (normalizedPriority === "low") {
+    return {
+      backgroundColor: "#dcfce7",
+      color: "#15803d",
+    };
+  }
+
+  return {
+    backgroundColor: "#fef3c7",
+    color: "#b45309",
+  };
+};
+
+const formatAiSuggestionLabel = (value: string) =>
+  value
+    ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+    : "Medium";
 
 function getWeekDates(offset: number): Date[] {
   const today = new Date();
@@ -172,6 +250,23 @@ function CircleProgress({
   );
 }
 
+const AiSparkleIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path
+      d="M5.5 2.5L6.55 6.85L10.9 7.9L6.55 8.95L5.5 13.3L4.45 8.95L0.1 7.9L4.45 6.85L5.5 2.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M17.2 5.5L17.75 7.65L19.9 8.2L17.75 8.75L17.2 10.9L16.65 8.75L14.5 8.2L16.65 7.65L17.2 5.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M9.8 13.8L10.55 16.75L13.5 17.5L10.55 18.25L9.8 21.2L9.05 18.25L6.1 17.5L9.05 16.75L9.8 13.8Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 // ── Main Component ─────────────────────────────────────────────────────────
 const BusinessCompassDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -193,9 +288,15 @@ const BusinessCompassDashboard: React.FC = () => {
     "accomplishments"
   );
   const [aiMessage, setAiMessage] = useState("");
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const [aiSuggestionsOpen, setAiSuggestionsOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
+  const [aiSuggestionsLoading, setAiSuggestionsLoading] = useState(false);
+  const [aiSuggestionsError, setAiSuggestionsError] = useState("");
+  const [totalPotentialImprovement, setTotalPotentialImprovement] =
+    useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
+  const [applyingSuggestions, setApplyingSuggestions] = useState(false);
+  const [suggestionApplied, setSuggestionApplied] = useState(false);
 
   // ── Daily dynamic data ────────────────────────────────────────────────
   const [filledDates, setFilledDates] = useState<Set<string>>(new Set());
@@ -617,8 +718,150 @@ const BusinessCompassDashboard: React.FC = () => {
   }, []);
 
   // ── AI Summary ───────────────────────────────────────────────
-  const handleGenerateAiSummary = () => {
+  const handleGenerateAiSummary = async () => {
+    if (aiSuggestionsLoading) return;
+
+    setAiSuggestionsLoading(true);
+    setAiSuggestionsError("");
+    setAiSuggestions([]);
     setAiSuggestionsOpen(true);
+
+    try {
+      const configuredBaseUrl = getBaseUrl();
+      if (!configuredBaseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const baseUrl = configuredBaseUrl.replace(/\/$/, "");
+      const token = getToken();
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const response = await fetch(
+        `${baseUrl}/business_compass/generate_ai_suggestions`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({}),
+        }
+      );
+
+      const data = (await response.json().catch(() => null)) as
+        | AiSuggestionsResponse
+        | null;
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || `Failed to fetch AI suggestions (${response.status})`
+        );
+      }
+
+      if (!data?.success || !data.data) {
+        throw new Error(data?.message || "AI suggestions response is invalid.");
+      }
+
+      setAiSuggestions(
+        Array.isArray(data.data.suggestions) ? data.data.suggestions : []
+      );
+      setTotalPotentialImprovement(
+        Number(data.data.total_potential_improvement) || 0
+      );
+      setCurrentScore(Number(data.score) || 0);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate AI suggestions.";
+      setAiSuggestionsError(message);
+      setTotalPotentialImprovement(0);
+      setCurrentScore(0);
+      console.error("Error fetching AI suggestions:", error);
+    } finally {
+      setAiSuggestionsLoading(false);
+    }
+  };
+
+  // ── Apply Suggestions ─────────────────────────────────────────────────
+  const handleApplySuggestions = async () => {
+    if (aiSuggestions.length === 0) {
+      console.warn("No suggestions to apply");
+      return;
+    }
+
+    setApplyingSuggestions(true);
+    try {
+      const configuredBaseUrl = getBaseUrl();
+      if (!configuredBaseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const baseUrl = configuredBaseUrl.replace(/\/$/, "");
+      const token = getToken();
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      // Format suggestions for API
+      const formattedSuggestions = aiSuggestions.map((suggestion) => ({
+        category: suggestion.category,
+        priority: suggestion.priority,
+        title: suggestion.title,
+        description: suggestion.description,
+      }));
+
+      const response = await fetch(
+        `${baseUrl}/business_compass/apply_ai_suggestions`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ suggestions: formattedSuggestions }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to apply suggestions (${response.status})`);
+      }
+
+      setSuggestionApplied(true);
+
+      // Refetch dashboard data to update business health score
+      const dashRes = await fetch(`${baseUrl}/business_compass/dashboard`, {
+        headers,
+      });
+      if (dashRes.ok) {
+        const updatedData = await dashRes.json();
+        setDashboardData(updatedData);
+      }
+
+      // Auto close panel after 2 seconds
+      setTimeout(() => {
+        setAiSuggestionsOpen(false);
+        setSuggestionApplied(false);
+      }, 2000);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to apply suggestions.";
+      console.error("Error applying suggestions:", error);
+      // Show error but allow retry
+      setApplyingSuggestions(false);
+    } finally {
+      setApplyingSuggestions(false);
+    }
   };
 
   const issueBadgeStyle = (priority: string): React.CSSProperties => {
@@ -814,15 +1057,15 @@ const BusinessCompassDashboard: React.FC = () => {
                   }}
                 >
                   <div
+                    className="flex-col sm:flex-row sm:items-center sm:justify-between"
                     style={{
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
                       gap: "12px",
                       padding: "12px 16px",
                     }}
                   >
                     <div
+                      className="min-w-0"
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -842,6 +1085,8 @@ const BusinessCompassDashboard: React.FC = () => {
                     </div>
                     <button
                       onClick={handleGenerateAiSummary}
+                      disabled={aiSuggestionsLoading}
+                      className="w-full sm:w-auto"
                       style={{
                         backgroundColor: "#DA7756",
                         color: "#fff",
@@ -850,21 +1095,22 @@ const BusinessCompassDashboard: React.FC = () => {
                         padding: "8px 22px",
                         fontSize: "13px",
                         fontWeight: 700,
-                        cursor: "pointer",
+                        cursor: aiSuggestionsLoading ? "not-allowed" : "pointer",
                         whiteSpace: "nowrap",
                         flexShrink: 0,
                         transition: "background-color 0.2s",
+                        opacity: aiSuggestionsLoading ? 0.7 : 1,
                       }}
                       onMouseEnter={(e) => {
-                        (e.target as HTMLButtonElement).style.backgroundColor =
-                          "#c9673f";
+                        if (!aiSuggestionsLoading) {
+                          e.currentTarget.style.backgroundColor = "#c9673f";
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        (e.target as HTMLButtonElement).style.backgroundColor =
-                          "#DA7756";
+                        e.currentTarget.style.backgroundColor = "#DA7756";
                       }}
                     >
-                      Generate
+                      {aiSuggestionsLoading ? "Generating..." : "Generate"}
                     </button>
                   </div>
                   {aiSuggestionsOpen && (
@@ -873,22 +1119,32 @@ const BusinessCompassDashboard: React.FC = () => {
 
                       {/* Header */}
                       <div className="flex items-start justify-between px-3 pt-3 pb-1">
-                        <div>
-                          <h4 className="text-[13px] font-bold text-[#1a1a1a]">
-                            AI Suggestions
-                          </h4>
-                          <p className="text-[11px] text-gray-400 mt-0.5">
-                            Implementing all suggestions could boost your score
-                            by{" "}
-                            <span className="font-bold text-[#DA7756]">
-                              +46 pts
-                            </span>{" "}
-                            →{" "}
-                            <span className="font-bold text-[#DA7756]">
-                              121/100
-                            </span>
-                          </p>
-                        </div>
+                        {aiSuggestionsLoading ? (
+                          <div className="flex-1">
+                            <p className="text-[11px] text-gray-400 italic">
+                              Loading AI suggestions...
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <h4 className="text-[13px] font-bold text-[#1a1a1a]">
+                              AI Suggestions
+                            </h4>
+                            {aiSuggestions.length > 0 && (
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                Implementing all suggestions could boost your
+                                score by{" "}
+                                <span className="font-bold text-[#DA7756]">
+                                  +{totalPotentialImprovement} pts
+                                </span>{" "}
+                                →{" "}
+                                <span className="font-bold text-[#DA7756]">
+                                  {currentScore + totalPotentialImprovement}/100
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                        )}
                         <button
                           onClick={() => setAiSuggestionsOpen(false)}
                           className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 flex-shrink-0 transition-colors ml-2"
@@ -898,187 +1154,118 @@ const BusinessCompassDashboard: React.FC = () => {
                       </div>
 
                       {/* 2×2 cards */}
-                      <div className="grid grid-cols-2 gap-2 px-3 pb-2">
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#fce8e8",
-                            border: "1px solid #fbcfcf",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#f87171]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                Issues
-                              </span>
-                              <span
-                                className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-3 pb-2">
+                        {!aiSuggestionsLoading && aiSuggestions.length > 0 ? (
+                          aiSuggestions.map((suggestion) => {
+                            const config = getAiSuggestionCategoryStyle(
+                              suggestion.category
+                            );
+                            const priorityStyles =
+                              getAiSuggestionPriorityStyle(
+                                suggestion.priority
+                              );
+
+                            return (
+                              <div
+                                key={`${suggestion.category}-${suggestion.title}`}
+                                className="rounded-xl p-2.5 flex flex-col gap-1"
                                 style={{
-                                  backgroundColor: "#ffe4e4",
-                                  color: "#e05050",
+                                  backgroundColor: config.bgColor,
+                                  border: `1px solid ${config.borderColor}`,
                                 }}
                               >
-                                High
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +12 pts
-                            </span>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1">
+                                    <div
+                                      className="w-1.5 h-1.5 rounded-full"
+                                      style={{
+                                        backgroundColor: config.dotColor,
+                                      }}
+                                    />
+                                    <span className="text-[10px] font-bold text-gray-700">
+                                      {config.label}
+                                    </span>
+                                    <span
+                                      className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
+                                      style={priorityStyles}
+                                    >
+                                      {formatAiSuggestionLabel(
+                                        suggestion.priority
+                                      )}
+                                    </span>
+                                  </div>
+                                  <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
+                                    +{suggestion.potential_points} pts
+                                  </span>
+                                </div>
+                                <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
+                                  {suggestion.title}
+                                </p>
+                                <p className="text-[10px] text-gray-500 leading-relaxed">
+                                  {suggestion.description}
+                                </p>
+                                <div className="flex items-center justify-between mt-0.5">
+                                  <div className="flex items-center gap-1 text-[9px] text-gray-400">
+                                    <Clock size={9} />
+                                    <span>{suggestion.timeline}</span>
+                                  </div>
+                                  <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
+                                    Start &gt;
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : aiSuggestionsLoading ? (
+                          <div className="col-span-1 sm:col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                            Generating suggestions...
                           </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Resolve your top 20 critical issues
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            Fix top 20 by severity to reduce score drag and
-                            improve KPI by ~8%.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>1–2 weeks</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
+                        ) : aiSuggestionsError ? (
+                          <div className="col-span-1 sm:col-span-2 rounded-xl border border-red-100 bg-red-50 px-3 py-4 text-center text-[12px] font-semibold text-red-600">
+                            {aiSuggestionsError}
                           </div>
-                        </div>
-
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#e8f0fe",
-                            border: "1px solid #c7d9fd",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#60a5fa]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                Systems
-                              </span>
-                              <span
-                                className="text-[9px] font-semibold px-1 py-0.5 rounded-full"
-                                style={{
-                                  backgroundColor: "#ffe4e4",
-                                  color: "#e05050",
-                                }}
-                              >
-                                High
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +18 pts
-                            </span>
+                        ) : (
+                          <div className="col-span-1 sm:col-span-2 py-6 text-center text-[12px] text-gray-400 italic">
+                            No suggestions available
                           </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Connect all 6 business systems
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            0 of 6 systems integrated. Enables automated data
-                            flow and removes reporting gaps.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>2–3 weeks</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
-                          </div>
-                        </div>
-
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#edf7ed",
-                            border: "1px solid #c3e6c4",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#4ade80]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                Goals
-                              </span>
-                              <span className="text-[9px] font-semibold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                Medium
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +9 pts
-                            </span>
-                          </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Define and track 4 business goals
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            No goals set. Measurable quarterly goals improve KPI
-                            tracking by up to 15%.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>4–6 weeks</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
-                          </div>
-                        </div>
-
-                        <div
-                          className="rounded-xl p-2.5 flex flex-col gap-1"
-                          style={{
-                            backgroundColor: "#fff3e8",
-                            border: "1px solid #fddcbc",
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#fb923c]" />
-                              <span className="text-[10px] font-bold text-gray-700">
-                                KPI
-                              </span>
-                              <span className="text-[9px] font-semibold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                Medium
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-600 bg-white px-1 py-0.5 rounded-full">
-                              +7 pts
-                            </span>
-                          </div>
-                          <p className="text-[11px] font-bold text-[#1a1a1a] leading-snug">
-                            Recalibrate KPI targets to benchmarks
-                          </p>
-                          <p className="text-[10px] text-gray-500 leading-relaxed">
-                            KPI at 59%, below 72% industry average. Benchmark
-                            data can close this gap faster.
-                          </p>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400">
-                              <Clock size={9} />
-                              <span>1 week</span>
-                            </div>
-                            <button className="text-[10px] font-bold text-[#DA7756] hover:underline">
-                              Start &gt;
-                            </button>
-                          </div>
-                        </div>
+                        )}
                       </div>
 
                       {/* CTA */}
                       <div className="px-3 pb-3">
                         <button
-                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-bold text-white transition-opacity hover:opacity-90"
+                          onClick={handleApplySuggestions}
+                          disabled={applyingSuggestions || aiSuggestions.length === 0}
+                          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all ${
+                            applyingSuggestions
+                              ? "opacity-70 cursor-not-allowed"
+                              : "hover:opacity-90 cursor-pointer"
+                          }`}
                           style={{
-                            background:
-                              "linear-gradient(135deg, #DA7756 0%, #c9673f 100%)",
-                            boxShadow: "0 3px 12px rgba(218,119,86,0.25)",
+                            background: suggestionApplied
+                              ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+                              : "linear-gradient(135deg, #DA7756 0%, #c9673f 100%)",
+                            boxShadow: suggestionApplied
+                              ? "0 3px 12px rgba(34,197,94,0.25)"
+                              : "0 3px 12px rgba(218,119,86,0.25)",
                           }}
                         >
-                          ✦ Apply all suggestions to my action plan
+                          {applyingSuggestions ? (
+                            <>
+                              <span className="inline-block animate-spin">⚙️</span>
+                              Applying...
+                            </>
+                          ) : suggestionApplied ? (
+                            <>
+                              <span>✓</span>
+                              Suggestions Applied!
+                            </>
+                          ) : (
+                            <>
+                              <span>✦</span>
+                              Apply all suggestions to my action plan
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -1095,23 +1282,6 @@ const BusinessCompassDashboard: React.FC = () => {
                   <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1a1a1a]">
                     Today's Focus
                   </h3>
-                  <div className="relative">
-                    <select
-                      value={focusMode}
-                      onChange={(e) => {
-                        setFocusMode(e.target.value as "Daily" | "Weekly");
-                        setKpiPage(0);
-                      }}
-                      className="appearance-none text-[12px] sm:text-[13px] border border-gray-200 rounded-xl pl-3 pr-8 py-1.5 text-[#1a1a1a] font-semibold bg-white outline-none cursor-pointer"
-                    >
-                      <option>Daily</option>
-                      <option>Weekly</option>
-                    </select>
-                    <ChevronRight
-                      size={12}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 text-gray-500 pointer-events-none"
-                    />
-                  </div>
                 </div>
 
                 {/* Row 1: Calendar + Tasks Overview */}
@@ -1811,55 +1981,17 @@ const BusinessCompassDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Floating AI trigger – glassmorphism button */}
+      {/* Floating AI trigger – shared bc-ai-fab button (same as Daily Report) */}
       {!aiChatOpen && (
-        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              inset: "-18px",
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle at 42% 38%, rgba(218,119,86,0.38) 0%, rgba(249,170,130,0.16) 50%, transparent 72%)",
-              filter: "blur(10px)",
-            }}
-          />
-          <div className="ai-btn-glow-outer">
-            <div className="ai-btn-glow-spinner" />
-            <button
-              onClick={() => setAiChatOpen(true)}
-              title="AI Assistant"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.06)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-              style={{
-                position: "relative",
-                zIndex: 1,
-                width: "52px",
-                height: "52px",
-                borderRadius: "17.5px",
-                background:
-                  "linear-gradient(148deg, rgba(255,255,255,0.97) 10%, rgba(253,218,196,0.84) 100%)",
-                backdropFilter: "blur(14px)",
-                WebkitBackdropFilter: "blur(14px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                border: "none",
-                outline: "none",
-                boxShadow:
-                  "inset 0 1px 0 rgba(255,255,255,1), 0 4px 14px rgba(218,119,86,0.15)",
-                transition: "transform 0.2s ease",
-              }}
-            >
-              <Sparkles size={24} color="#DA7756" />
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          className="bc-ai-fab"
+          title="AI Assistant"
+          aria-label="AI Assistant"
+          onClick={() => setAiChatOpen(true)}
+        >
+          <AiSparkleIcon className="bc-ai-fab-icon" />
+        </button>
       )}
     </div>
   );

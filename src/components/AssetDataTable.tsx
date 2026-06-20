@@ -424,7 +424,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           </span>
         );
       case "actions":
-        return shouldShow("assets", "view") ? (
+        return shouldShow("Assets", "show") ? (
           <Button
             variant="ghost"
             size="sm"
@@ -726,7 +726,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         isRowDisabled={isRowDisabled}
         key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
-          shouldShow("assets", "add") && !(isRestrictedUser && window.location.pathname.includes('/maintenance/asset')) ? (
+          shouldShow("Assets", "create") && !(isRestrictedUser && window.location.pathname.includes('/maintenance/asset')) ? (
             <Button size="sm" className="fm-button-fix fm-button-brand px-4 py-2" onClick={handleActionClick}>
               <Plus className="w-4 h-4 mr-2" />
               Action

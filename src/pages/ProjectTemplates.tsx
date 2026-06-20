@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     {
@@ -36,6 +37,7 @@ const columns: ColumnConfig[] = [
 ]
 
 const ProjectTemplates = () => {
+    const { shouldShow } = useDynamicPermissions();
     const [templates, setTemplates] = useState([
         {
             id: 1,
@@ -97,6 +99,7 @@ const ProjectTemplates = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
+                {shouldShow("Project Templates","destroy")&&(
                 <Button
                     size="sm"
                     variant="ghost"
@@ -104,7 +107,7 @@ const ProjectTemplates = () => {
                     onClick={() => handleDelete(item.id)}
                 >
                     <Trash2 className="w-4 h-4" />
-                </Button>
+                </Button>)}
             </div>
         )
     };

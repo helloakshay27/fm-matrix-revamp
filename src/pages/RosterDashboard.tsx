@@ -10,6 +10,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Type definitions for the roster data
 interface RosterItem {
@@ -323,6 +324,8 @@ const mockRosterData: RosterItem[] = [
 
 export const RosterDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -503,20 +506,22 @@ export const RosterDashboard = () => {
   const renderRow = (roster: RosterItem) => ({
     actions: (
       <div className="flex items-center gap-2">
+        {shouldShow("Roster","show")&&(
         <button 
           onClick={() => handleView(roster.id)} 
           className="p-1 text-black hover:bg-gray-100 rounded" 
           title="View"
         >
           <Eye className="w-4 h-4" />
-        </button>
+        </button>)}
+        {shouldShow("Roster","update")&&(
         <button 
           onClick={() => handleEdit(roster.id)} 
           className="p-1 text-black hover:bg-gray-100 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button>)}
       </div>
     ),
     template: (
@@ -607,6 +612,7 @@ export const RosterDashboard = () => {
             enableExport={false}
             exportFileName="roster-data"
             leftActions={
+              shouldShow("Roster","create") &&(
               <Button 
                 onClick={handleAdd} 
                 className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
@@ -614,7 +620,8 @@ export const RosterDashboard = () => {
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
-            }
+        )  
+      }
             pagination={false} // Disable built-in pagination since we're adding custom
             loading={loading}
             emptyMessage="No rosters found. Create your first roster to get started."

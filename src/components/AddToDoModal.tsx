@@ -325,14 +325,16 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                                     </IconButton>
                                 )}
                             </div>
-                            <div
-                                ref={quillRef}
-                                style={{
-                                    border: "1px solid rgba(0, 0, 0, 0.23)",
-                                    borderRadius: "4px",
-                                    minHeight: "200px",
-                                }}
-                            />
+                            <div className="bc-description-toolbar-compact">
+                                <div
+                                    ref={quillRef}
+                                    style={{
+                                        border: "1px solid rgba(0, 0, 0, 0.23)",
+                                        borderRadius: "4px",
+                                        minHeight: "200px",
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <TextField
@@ -393,6 +395,48 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                         </div>
                     </div>
                 </form>
+                <style>{`
+                    @media (max-width: 640px) {
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow {
+                            padding: 3px 4px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-formats {
+                            margin-right: 3px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow button {
+                            width: 16px !important;
+                            height: 16px !important;
+                            padding: 1px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow button svg {
+                            width: 10px !important;
+                            height: 10px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker {
+                            height: 16px !important;
+                            font-size: 9px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker.ql-header {
+                            width: 62px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label {
+                            padding-left: 3px !important;
+                            padding-right: 10px !important;
+                            line-height: 16px !important;
+                        }
+
+                        .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label svg {
+                            width: 10px !important;
+                            height: 10px !important;
+                        }
+                    }
+                `}</style>
             </DialogContent>
         </Dialog>
     );

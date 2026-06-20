@@ -19,12 +19,12 @@ interface SalesOrder {
   expected_shipment_date: string;
   amount: number;
   status:
-    | "draft"
-    | "confirmed"
-    | "shipped"
-    | "delivered"
-    | "cancelled"
-    | "closed";
+  | "draft"
+  | "confirmed"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "closed";
   payment_terms: string;
   reference_number: string;
   sales_person_name: string;
@@ -424,13 +424,13 @@ export const RecurringInvoicesListPage: React.FC = () => {
       <span className="text-sm text-gray-600">
         {order?.recurring_detail?.start_date
           ? new Date(order.recurring_detail.start_date).toLocaleDateString(
-              "en-GB",
-              {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              }
-            )
+            "en-GB",
+            {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }
+          )
           : "-"}
       </span>
     ),
@@ -438,13 +438,13 @@ export const RecurringInvoicesListPage: React.FC = () => {
       <span className="text-sm text-gray-600">
         {order?.recurring_detail?.end_date
           ? new Date(order.recurring_detail.end_date).toLocaleDateString(
-              "en-GB",
-              {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              }
-            )
+            "en-GB",
+            {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }
+          )
           : "-"}
       </span>
     ),
@@ -499,7 +499,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/accounting/sales-order/edit/${id}`);
+    navigate(`/accounting/recurring-invoices/edit/${id}`);
   };
 
   const handleDelete = async () => {
@@ -510,13 +510,13 @@ export const RecurringInvoicesListPage: React.FC = () => {
       const token = localStorage.getItem('token');
       const lock_account_id = localStorage.getItem('lock_account_id');
       await axios.delete(
-          `https://${baseUrl}/lock_account_invoices/${selectedDeleteId}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
-          {
-              headers: {
-                  'Content-Type': 'application/json',
-                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              }
+        `https://${baseUrl}/lock_account_invoices/${selectedDeleteId}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           }
+        }
       );
       toast.success("Recurring invoice deleted successfully!", {
         duration: 3000,
@@ -539,26 +539,26 @@ export const RecurringInvoicesListPage: React.FC = () => {
 
   const handleToggleStatus = async (order: SalesOrder) => {
     try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const url = `https://${baseUrl}/lock_account_invoices/${order.id}/toggle_active.json`;
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const url = `https://${baseUrl}/lock_account_invoices/${order.id}/toggle_active.json`;
 
-        const response = await axios.patch(
-            url,
-            {},
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-            }
-        );
+      const response = await axios.patch(
+        url,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
 
-        toast.success(response?.data?.message || "Status updated successfully");
-        fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      toast.success(response?.data?.message || "Status updated successfully");
+      fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     } catch (error) {
-        console.error("Toggle status error:", error);
-        toast.error("Failed to update status");
+      console.error("Toggle status error:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -583,7 +583,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
         leftActions={
           <Button
             // className="bg-primary text-primary-foreground hover:bg-primary/90"
-             className='fm-button-fix fm-button-brand px-4 py-2P'
+            className='fm-button-fix fm-button-brand px-4 py-2P'
             onClick={() => navigate("/accounting/recurring-invoices/create")}
           >
             <Plus className="w-4 h-4 mr-2" /> Add

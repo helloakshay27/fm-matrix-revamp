@@ -223,7 +223,10 @@ const HSNCodeSetup = () => {
                         </div>
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" onClick={handleCloseModal}>Cancel</Button>
-                            <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white">
+                            <Button type="submit" 
+                            // className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                            >
                                 {editingHsn ? 'Update' : 'Add'} HSN Code
                             </Button>
                         </DialogFooter>

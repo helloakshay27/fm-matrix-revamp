@@ -549,7 +549,7 @@ const WeeklyMeetingSettings = () => {
 
     return (
         <>
-            <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-6 shadow-sm">
+            <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-4 shadow-sm sm:p-6">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -558,7 +558,7 @@ const WeeklyMeetingSettings = () => {
                     </div>
                     <Button
                         onClick={handleOpenCreateMeeting}
-                        className="h-10 gap-2 rounded-xl bg-[#DA7756] px-4 font-bold text-white hover:bg-[#c9673f]"
+                        className="h-10 w-full gap-2 rounded-xl bg-[#DA7756] px-4 font-bold text-white hover:bg-[#c9673f] sm:w-auto"
                     >
                         <Plus className="w-4 h-4" />
                         New Meeting
@@ -579,7 +579,7 @@ const WeeklyMeetingSettings = () => {
                     </div>
                 ) : weeklyMeetings.length > 0 ? (
                     // Meetings List - Grid Layout
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
                         {weeklyMeetings.map((meeting) => {
                             const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
                             const dayName = dayNames[meeting.day_of_week] || 'Unknown'
@@ -587,7 +587,7 @@ const WeeklyMeetingSettings = () => {
                             const meetingHeadLabels = getMeetingHeadLabels(meeting)
 
                             return (
-                                <div key={meeting.id} className="border-l-4 border-l-[#5B7DFF] bg-white rounded-[10px] p-5 shadow-md transition-shadow">
+                                <div key={meeting.id} className="border-l-4 border-l-[#5B7DFF] bg-white rounded-[10px] p-4 shadow-md transition-shadow sm:p-5">
                                     {/* Header */}
                                     <div className="flex items-start justify-between mb-3">
                                         <h3 className="text-lg font-bold text-[#1a1a1a]">{meeting.name}</h3>
@@ -750,9 +750,9 @@ const WeeklyMeetingSettings = () => {
                     resetMeetingForm()
                 }
             }}>
-                <DialogContent className="flex h-[88vh] max-h-[88vh] max-w-4xl flex-col gap-0 overflow-hidden rounded-2xl border-gray-200 bg-[#fffaf8] p-0 shadow-2xl">
+                <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-gray-200 bg-[#fffaf8] p-0 shadow-2xl sm:h-[88vh] sm:max-h-[88vh] sm:w-full sm:max-w-4xl sm:rounded-2xl">
                     {/* Header with Theme Color */}
-                    <DialogHeader className="border-b border-[#DA7756]/15 bg-white px-6 py-5">
+                    <DialogHeader className="border-b border-[#DA7756]/15 bg-white px-4 py-4 sm:px-6 sm:py-5">
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex min-w-0 items-start gap-3">
                                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fef6f4] text-[#DA7756]">

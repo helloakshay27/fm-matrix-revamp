@@ -120,7 +120,7 @@ const TeamMembersTable = ({
 
   return (
     <div className="rounded-[20px] border border-[#e8e3de] bg-white p-4 shadow-sm sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-neutral-900">
             Team Members Overview
@@ -129,7 +129,7 @@ const TeamMembersTable = ({
             Daily and weekly performance snapshot by team member
           </p>
         </div>
-        <span className="rounded-xl border border-[#e8e3de] bg-[#fdf9f7] px-3 py-1.5 text-xs font-medium text-neutral-600">
+        <span className="w-full rounded-xl border border-[#e8e3de] bg-[#fdf9f7] px-3 py-1.5 text-center text-xs font-medium text-neutral-600 sm:w-auto">
           {totalMembers} Members
         </span>
       </div>
@@ -145,7 +145,7 @@ const TeamMembersTable = ({
       ) : (
         <>
           <div className="overflow-x-auto rounded-2xl border border-[#e8e3de]">
-            <table className="w-full min-w-[1400px] text-sm text-center">
+            <table className="w-full min-w-[1150px] text-sm text-center">
               <thead>
                 <tr className="border-b border-[#e8e3de] bg-[#fdf9f7] text-xs uppercase tracking-wide text-neutral-500">
                   <th className="px-3 py-3 font-medium text-center">
@@ -326,62 +326,64 @@ const TeamMembersTable = ({
           </div>
 
           {/* Pagination Controls */}
-          <div className="mt-6 flex items-center justify-between border-t border-[#e8e3de] pt-4">
+          <div className="mt-6 flex flex-col gap-3 border-t border-[#e8e3de] pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs text-neutral-600">
               Showing {totalMembers === 0 ? 0 : (currentPage - 1) * 10 + 1} to{" "}
               {Math.min(currentPage * 10, totalMembers)} of {totalMembers}{" "}
               members
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="gap-2 rounded-lg border border-[#DA7756]/25 bg-white hover:bg-[#fef6f4]"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
+            <div className="w-full overflow-x-auto pb-1 sm:w-auto sm:pb-0">
+              <div className="flex min-w-max items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2 hover:bg-[#fef6f4] sm:gap-2 sm:px-3"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                </Button>
 
-              <div className="flex items-center gap-1">
-                {getPaginationPages().map((page, index) =>
-                  page === "..." ? (
-                    <span
-                      key={`ellipsis-${index}`}
-                      className="px-2 py-1 text-xs text-neutral-500"
-                    >
-                      ...
-                    </span>
-                  ) : (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "outline" : "default"}
-                      size="sm"
-                      onClick={() => onPageChange(page as number)}
-                      className={`h-8 w-8 rounded-lg p-0 font-semibold ${
-                        currentPage === page
-                          ? "border border-[#DA7756]/25 bg-white text-neutral-700 hover:bg-[#fef6f4]"
-                          : "bg-[#DA7756] text-white hover:bg-[#DA7756] "
-                      }`}
-                    >
-                      {page}
-                    </Button>
-                  )
-                )}
+                <div className="flex items-center gap-1">
+                  {getPaginationPages().map((page, index) =>
+                    page === "..." ? (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="px-2 py-1 text-xs text-neutral-500"
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "outline" : "default"}
+                        size="sm"
+                        onClick={() => onPageChange(page as number)}
+                        className={`h-7 w-7 rounded-lg p-0 text-xs font-semibold sm:h-8 sm:w-8 sm:text-sm ${
+                          currentPage === page
+                            ? "border border-[#DA7756]/25 bg-white text-neutral-700 hover:bg-[#fef6f4]"
+                            : "bg-[#DA7756] text-white hover:bg-[#DA7756] "
+                        }`}
+                      >
+                        {page}
+                      </Button>
+                    )
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2 hover:bg-[#fef6f4] sm:gap-2 sm:px-3"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="gap-2 rounded-lg border border-[#DA7756]/25 bg-white hover:bg-[#fef6f4]"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </>

@@ -570,6 +570,84 @@ const Styles = () => (
     .gv-top-select:focus {
       border-color: ${C.primary}; box-shadow: 0 0 0 3px ${C.primaryTint};
     }
+    @media (max-width: 640px) {
+      .gv-page-root {
+        padding: 12px !important;
+        border-radius: 14px !important;
+        overflow-x: hidden;
+      }
+      .gv-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        margin-bottom: 16px !important;
+      }
+      .gv-stat-card {
+        height: 78px !important;
+        padding: 10px !important;
+      }
+      .gv-filter-row {
+        align-items: stretch !important;
+        margin-bottom: 16px !important;
+      }
+      .gv-filter-controls,
+      .gv-filter-actions {
+        width: 100%;
+      }
+      .gv-filter-controls > *,
+      .gv-filter-actions > * {
+        width: 100%;
+        max-width: 100%;
+      }
+      .gv-filter-actions {
+        gap: 12px !important;
+        justify-content: space-between !important;
+      }
+      .gv-filter-actions > button {
+        justify-content: center;
+      }
+      .gv-top-search,
+      .gv-top-select {
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      .gv-kanban-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      .gv-kanban-column {
+        padding: 12px !important;
+      }
+      .gv-col-zone {
+        min-height: 96px;
+        padding-bottom: 4px;
+      }
+      .gv-kanban-card {
+        height: auto !important;
+        min-height: 150px;
+      }
+      .gv-list-shell {
+        overflow-x: auto !important;
+        max-width: 100%;
+      }
+      .gv-list-shell table {
+        min-width: 760px;
+      }
+      .gv-pagination {
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 12px 4px;
+      }
+      .gv-modal {
+        width: 100vw;
+        max-width: none;
+        min-height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+      }
+      .gv-overlay {
+        padding: 0;
+      }
+    }
   `}</style>
 );
 
@@ -1176,7 +1254,7 @@ export const GoalsView = () => {
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div style={{ background: C.pageBg, padding: "24px", borderRadius: "16px" }}>
+    <div className="gv-page-root" style={{ background: C.pageBg, padding: "24px", borderRadius: "16px" }}>
       <Styles />
 
       {fetchError && (
@@ -1192,12 +1270,13 @@ export const GoalsView = () => {
       )}
 
       {/* ── Stat cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
+      <div className="gv-stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
         {isFetchingKanban
           ? [1, 2, 3, 4].map((n) => <div key={n} className="gv-skeleton" style={{ height: 100, borderRadius: 16 }} />)
           : stats.map((s) => (
             <div
               key={s.label}
+              className="gv-stat-card"
               style={{
                 background: s.bg,
                 borderRadius: 16,
@@ -1221,8 +1300,8 @@ export const GoalsView = () => {
       </div>
 
       {/* ── Filters & Toggle ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <div className="gv-filter-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+        <div className="gv-filter-controls" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {/* Search */}
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
@@ -1245,7 +1324,7 @@ export const GoalsView = () => {
           </select>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        <div className="gv-filter-actions" style={{ display: "flex", alignItems: "center", gap: 20 }}>
           {/* View Toggle */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4, color: view === "list" ? "#111827" : "#9ca3af", fontSize: 13, fontWeight: 700 }}>
@@ -1287,16 +1366,16 @@ export const GoalsView = () => {
       {/* ── KANBAN VIEW ── */}
       {view === "kanban" &&
         (isFetchingKanban ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+          <div className="gv-kanban-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
             {[1, 2, 3, 4].map((n) => <div key={n} className="gv-skeleton" style={{ height: 300, borderRadius: 12 }} />)}
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+          <div className="gv-kanban-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
             {COLUMNS.map((col) => {
               const colGoals = filtered.filter((g) => g.status === col.key);
               const isOver = dragOverCol === col.key;
               return (
-                <div key={col.key} style={{ background: "#f3f4f6", borderRadius: "16px", padding: "16px 12px" }}>
+                <div key={col.key} className="gv-kanban-column" style={{ background: "#f3f4f6", borderRadius: "16px", padding: "16px 12px" }}>
                   <div
                     style={{
                       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -1360,7 +1439,7 @@ export const GoalsView = () => {
           </div>
         ) : (
           <>
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+            <div className="gv-list-shell" style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               {listGoals.length === 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 16px", textAlign: "center" }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: "#171717", margin: "0 0 6px" }}>No goals found</h3>

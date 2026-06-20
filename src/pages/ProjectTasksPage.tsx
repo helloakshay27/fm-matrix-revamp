@@ -1,4 +1,4 @@
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+﻿import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import {
     Tooltip,
@@ -17,19 +17,60 @@ import {
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { createProjectTask, editProjectTask, resetUserAvailability, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import {
+    createProjectTask,
+    editProjectTask,
+    resetUserAvailability,
+    updateTaskStatus,
+} from "@/store/slices/projectTasksSlice";
 import { updateSprint, fetchSprints } from "@/store/slices/sprintSlice";
-import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
+import {
+    useTasks,
+    useChangeTaskStatus,
+    useCreateTask,
+    useUpdateTaskCompletion,
+    useDeleteTask,
+    useImportTasks,
+} from "@/hooks/useTasks";
 import { useDebounce } from "@/hooks/useDebounce";
-import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
+import {
+    ChartNoAxesColumn,
+    ChevronDown,
+    Eye,
+    List,
+    Plus,
+    X,
+    Search,
+    ChevronRight,
+    Play,
+    Pause,
+    ArrowLeft,
+} from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Dialog, DialogContent, MenuItem, Select, Slide, TextField, Switch, FormControl } from "@mui/material";
+import {
+    Dialog,
+    DialogContent,
+    MenuItem,
+    Select,
+    Slide,
+    TextField,
+    Switch,
+    FormControl,
+} from "@mui/material";
 import { toast } from "sonner";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import TaskManagementKanban from "@/components/TaskManagementKanban";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 import { TransitionProps } from "@mui/material/transitions";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
@@ -200,34 +241,34 @@ const columns: ColumnConfig[] = [
 const STATUS_OPTIONS = [
     {
         value: "all",
-        label: "All"
+        label: "All",
     },
     {
         value: "open",
         label: "Open",
-        color: "bg-[#c85e68]"
+        color: "bg-[#c85e68]",
     },
     {
         value: "in_progress",
         label: "In Progress",
-        color: "bg-yellow-500"
+        color: "bg-yellow-500",
     },
     {
         value: "completed",
         label: "Completed",
-        color: "bg-green-400"
+        color: "bg-green-400",
     },
     {
         value: "on_hold",
         label: "On Hold",
-        color: "bg-grey-500"
+        color: "bg-grey-500",
     },
     {
         value: "overdue",
         label: "Overdue",
-        color: "bg-red-500"
-    }
-]
+        color: "bg-red-500",
+    },
+];
 
 // Map frontend column keys to backend field names
 const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
@@ -251,7 +292,10 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
 };
 
 // Utility function to calculate duration between two dates (matching task_management)
-const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
+const calculateDuration = (
+    start: string | undefined,
+    end: string | undefined
+): { text: string; isOverdue: boolean } => {
     // If end date is missing, return N/A
     if (!end) return { text: "N/A", isOverdue: false };
 
@@ -291,8 +335,16 @@ const calculateDuration = (start: string | undefined, end: string | undefined): 
 };
 
 // Countdown timer component with real-time updates
-const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetDate?: string }) => {
-    const [countdown, setCountdown] = useState(calculateDuration(startDate, targetDate));
+const CountdownTimer = ({
+    startDate,
+    targetDate,
+}: {
+    startDate?: string;
+    targetDate?: string;
+}) => {
+    const [countdown, setCountdown] = useState(
+        calculateDuration(startDate, targetDate)
+    );
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -303,11 +355,16 @@ const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetD
     }, [targetDate, startDate]);
 
     const textColor = countdown.isOverdue ? "text-red-600" : "text-[#029464]";
-    return <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>;
+    return (
+        <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>
+    );
 };
 
 // Validation helper for date ranges
-const validateDateRange = (startDate: string, endDate: string): { valid: boolean; error?: string } => {
+const validateDateRange = (
+    startDate: string,
+    endDate: string
+): { valid: boolean; error?: string } => {
     if (!startDate) return { valid: false, error: "Start date is required" };
     if (!endDate) return { valid: false, error: "End date is required" };
 
@@ -327,21 +384,28 @@ const statusOptions = [
     { value: "on_hold", label: "On Hold" },
     { value: "completed", label: "Completed" },
     { value: "overdue", label: "Overdue" },
-]
+];
 
 // Pause Reason Modal Component
-const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, taskId }) => {
-    const [reason, setReason] = useState('');
+const PauseReasonModal = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    onEndTask,
+    isLoading,
+    taskId,
+}) => {
+    const [reason, setReason] = useState("");
 
     useEffect(() => {
         if (!isOpen) {
-            setReason('');
+            setReason("");
         }
     }, [isOpen]);
 
     const handleSubmit = () => {
         if (!reason.trim()) {
-            toast.error('Please enter a reason for pausing the task');
+            toast.error("Please enter a reason for pausing the task");
             return;
         }
         onSubmit(reason, taskId);
@@ -349,7 +413,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
 
     const handleEndTask = () => {
         if (!reason.trim()) {
-            toast.error('Please enter a reason for ending the task');
+            toast.error("Please enter a reason for ending the task");
             return;
         }
         onEndTask(reason, taskId);
@@ -359,8 +423,10 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause/End</h2>
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Pause/End
+                </h2>
 
                 <div className="mb-6">
                     <textarea
@@ -379,14 +445,10 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
                         disabled={isLoading}
                         className="px-4 py-2 !bg-red-600 !text-white rounded-md !hover:bg-red-700 disabled:opacity-50"
                     >
-                        {isLoading ? 'Submitting...' : 'End Task'}
+                        {isLoading ? "Submitting..." : "End Task"}
                     </Button>
                     <div className="flex items-center gap-3">
-                        <Button
-                            variant="outline"
-                            onClick={onClose}
-                            disabled={isLoading}
-                        >
+                        <Button variant="outline" onClick={onClose} disabled={isLoading}>
                             Cancel
                         </Button>
                         <Button
@@ -394,7 +456,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
                             disabled={isLoading}
                             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                         >
-                            {isLoading ? 'Submitting...' : 'Pause Task'}
+                            {isLoading ? "Submitting..." : "Pause Task"}
                         </Button>
                     </div>
                 </div>
@@ -404,18 +466,26 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
 };
 
 // Responsible Person Change Modal Component
-const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, pendingResponsiblePersonId = null, users = [] }: any) => {
-    const [reason, setReason] = useState('');
+const ResponsiblePersonReasonModal = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    isLoading,
+    taskId,
+    pendingResponsiblePersonId = null,
+    users = [],
+}: any) => {
+    const [reason, setReason] = useState("");
 
     useEffect(() => {
         if (!isOpen) {
-            setReason('');
+            setReason("");
         }
     }, [isOpen]);
 
     const handleSubmit = () => {
         if (!reason.trim()) {
-            toast.error('Please enter a reason for changing the responsible person');
+            toast.error("Please enter a reason for changing the responsible person");
             return;
         }
         if (taskId && pendingResponsiblePersonId) {
@@ -427,8 +497,10 @@ const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, ta
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Responsible Person Change
+                </h2>
 
                 <div className="mb-6">
                     <textarea
@@ -442,11 +514,7 @@ const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, ta
                 </div>
 
                 <div className="flex gap-3 justify-end">
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
                         Cancel
                     </Button>
                     <Button
@@ -454,7 +522,7 @@ const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, ta
                         disabled={isLoading}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                     >
-                        {isLoading ? 'Submitting...' : 'Change Responsible Person'}
+                        {isLoading ? "Submitting..." : "Change Responsible Person"}
                     </Button>
                 </div>
             </div>
@@ -464,17 +532,17 @@ const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, ta
 
 // Hold Reason Modal Component
 const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
-    const [reason, setReason] = useState('');
+    const [reason, setReason] = useState("");
 
     useEffect(() => {
         if (!isOpen) {
-            setReason('');
+            setReason("");
         }
     }, [isOpen]);
 
     const handleSubmit = () => {
         if (!reason.trim()) {
-            toast.error('Please enter a reason for putting the task on hold');
+            toast.error("Please enter a reason for putting the task on hold");
             return;
         }
         onSubmit(reason, taskId);
@@ -484,8 +552,10 @@ const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Hold</h2>
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Hold
+                </h2>
 
                 <div className="mb-6">
                     <textarea
@@ -499,11 +569,7 @@ const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
                 </div>
 
                 <div className="flex gap-3 justify-end">
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
                         Cancel
                     </Button>
                     <Button
@@ -511,7 +577,7 @@ const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
                         disabled={isLoading}
                         className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
                     >
-                        {isLoading ? 'Submitting...' : 'Put on Hold'}
+                        {isLoading ? "Submitting..." : "Put on Hold"}
                     </Button>
                 </div>
             </div>
@@ -521,17 +587,17 @@ const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 
 // Overdue Reason Modal Component
 const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
-    const [reason, setReason] = useState('');
+    const [reason, setReason] = useState("");
 
     useEffect(() => {
         if (!isOpen) {
-            setReason('');
+            setReason("");
         }
     }, [isOpen]);
 
     const handleSubmit = () => {
         if (!reason.trim()) {
-            toast.error('Please enter a reason for the overdue task');
+            toast.error("Please enter a reason for the overdue task");
             return;
         }
         onSubmit(reason);
@@ -541,8 +607,10 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Overdue</h2>
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Overdue
+                </h2>
 
                 <div className="mb-6">
                     <textarea
@@ -556,11 +624,7 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 </div>
 
                 <div className="flex gap-3 justify-end">
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
                         Cancel
                     </Button>
                     <Button
@@ -568,7 +632,7 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                         disabled={isLoading}
                         className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                     >
-                        {isLoading ? 'Submitting...' : 'Submit'}
+                        {isLoading ? "Submitting..." : "Submit"}
                     </Button>
                 </div>
             </div>
@@ -576,14 +640,26 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     );
 };
 
-const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelectedSprintId, onSubmit, isLoading }: any) => {
+const AddToSprintModal = ({
+    isOpen,
+    onClose,
+    sprints,
+    selectedSprintId,
+    setSelectedSprintId,
+    onSubmit,
+    isLoading,
+}: any) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Add to Sprint</h2>
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Add to Sprint
+                </h2>
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Sprint</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Sprint
+                    </label>
                     <Select
                         value={selectedSprintId}
                         onChange={(e) => setSelectedSprintId(e.target.value as string)}
@@ -592,7 +668,9 @@ const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelec
                         size="small"
                         variant="outlined"
                     >
-                        <MenuItem value=""><em>Select a sprint</em></MenuItem>
+                        <MenuItem value="">
+                            <em>Select a sprint</em>
+                        </MenuItem>
                         {sprints.map((sprint: any) => (
                             <MenuItem key={sprint.id} value={String(sprint.id)}>
                                 {sprint.name || sprint.title}
@@ -609,7 +687,7 @@ const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelec
                         disabled={isLoading}
                         className="bg-[#C72030] text-white hover:bg-[#A01020] disabled:opacity-50"
                     >
-                        {isLoading ? 'Adding...' : 'Add to Sprint'}
+                        {isLoading ? "Adding..." : "Add to Sprint"}
                     </Button>
                 </div>
             </div>
@@ -633,11 +711,11 @@ const ProjectTasksPage = () => {
         if (type === "create") {
             setOpenTaskModal(true);
 
-            // ✅ Remove only "type" param
+            // âœ… Remove only "type" param
             const newParams = new URLSearchParams(searchParams);
             newParams.delete("type");
 
-            setSearchParams(newParams, { replace: true }); // 🔥 important
+            setSearchParams(newParams, { replace: true }); // ðŸ”¥ important
         }
     }, [searchParams, setSearchParams]);
 
@@ -657,19 +735,22 @@ const ProjectTasksPage = () => {
 
     // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
     const token =
-        sessionStorage.getItem("mobile_token") ||
-        localStorage.getItem("token");
+        sessionStorage.getItem("mobile_token") || localStorage.getItem("token");
 
     // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
     let baseUrl = localStorage.getItem("baseUrl");
 
     // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
     if (!baseUrl && urlToken) {
-        console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+        console.log(
+            "ðŸ“± Mobile flow detected - baseUrl will be resolved by baseClient interceptor"
+        );
     }
 
     useEffect(() => {
-        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+        setCurrentSection(
+            view === "admin" ? "Value Added Services" : "Project Task"
+        );
     }, [setCurrentSection]);
 
     const { id: projectId, mid } = useParams();
@@ -677,18 +758,18 @@ const ProjectTasksPage = () => {
     const location = useLocation();
     const dispatch = useAppDispatch();
 
-    const [users, setUsers] = useState([])
-    const [projectName, setProjectName] = useState<string>('');
-    const [milestoneName, setMilestoneName] = useState<string>('');
+    const [users, setUsers] = useState([]);
+    const [projectName, setProjectName] = useState<string>("");
+    const [milestoneName, setMilestoneName] = useState<string>("");
     const [openTaskModal, setOpenTaskModal] = useState(false);
     const [selectedView, setSelectedView] = useState<"Kanban" | "List">(() => {
         const saved = localStorage.getItem("taskPageViewPreference");
         return (saved as "Kanban" | "List") || "List";
     });
     const [isOpen, setIsOpen] = useState(false);
-    const [openStatusOptions, setOpenStatusOptions] = useState(false)
-    const [selectedFilterOption, setSelectedFilterOption] = useState("all")
-    const [statuses, setStatuses] = useState([])
+    const [openStatusOptions, setOpenStatusOptions] = useState(false);
+    const [selectedFilterOption, setSelectedFilterOption] = useState("all");
+    const [statuses, setStatuses] = useState([]);
     const [taskType, setTaskType] = useState<"all" | "my">(() => {
         const urlTaskType = searchParams.get("task_type");
         if (urlTaskType === "all" || urlTaskType === "my") {
@@ -707,12 +788,14 @@ const ProjectTasksPage = () => {
         const urlPage = Number(searchParams.get("page"));
         return urlPage > 0 ? urlPage : 1;
     });
-    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [searchTerm, setSearchTerm] = useState<string>("");
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
     // Sorting state
     const [sortColumn, setSortColumn] = useState<string | null>(null);
-    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+        null
+    );
 
     // Import modal state
     const [showActionPanel, setShowActionPanel] = useState(false);
@@ -726,9 +809,15 @@ const ProjectTasksPage = () => {
     const [selectedResponsible, setSelectedResponsible] = useState<number[]>([]);
     const [selectedCreators, setSelectedCreators] = useState<number[]>([]);
     const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
-    const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState<string[]>([]);
+    const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState<
+        string[]
+    >([]);
     const [selectedTags, setSelectedTags] = useState<any[]>([]);
-    const [dates, setDates] = useState({ startDate: '', endDate: '', completedAt: '' });
+    const [dates, setDates] = useState({
+        startDate: "",
+        endDate: "",
+        completedAt: "",
+    });
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
     const [tags, setTags] = useState<any[]>([]);
     const [dropdowns, setDropdowns] = useState({
@@ -743,12 +832,12 @@ const ProjectTasksPage = () => {
         completedAt: false,
     });
     const [searchTerms, setSearchTerms] = useState({
-        status: '',
-        workflowStatus: '',
-        responsiblePerson: '',
-        createdBy: '',
-        project: '',
-        tags: '',
+        status: "",
+        workflowStatus: "",
+        responsiblePerson: "",
+        createdBy: "",
+        project: "",
+        tags: "",
     });
 
     // Pause Modal State
@@ -763,16 +852,24 @@ const ProjectTasksPage = () => {
 
     // Responsible Person Change Modal State
     const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
-    const [responsibleTaskId, setResponsibleTaskId] = useState<number | null>(null);
-    const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<number | null>(null);
+    const [responsibleTaskId, setResponsibleTaskId] = useState<number | null>(
+        null
+    );
+    const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<
+        number | null
+    >(null);
     const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
 
     // Overdue Reason Modal State
     const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
     const [overdueTaskId, setOverdueTaskId] = useState<number | null>(null);
-    const [pendingCompletionPercentage, setPendingCompletionPercentage] = useState<number>(0);
+    const [pendingCompletionPercentage, setPendingCompletionPercentage] =
+        useState<number>(0);
     const [isOverdueLoading, setIsOverdueLoading] = useState(false);
-    const [pendingStatusChange, setPendingStatusChange] = useState<{ id: number; status: string } | null>(null);
+    const [pendingStatusChange, setPendingStatusChange] = useState<{
+        id: number;
+        status: string;
+    } | null>(null);
 
     // Row selection state
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -780,7 +877,7 @@ const ProjectTasksPage = () => {
     // Add to Sprint state
     const [isAddToSprintModalOpen, setIsAddToSprintModalOpen] = useState(false);
     const [sprints, setSprints] = useState<any[]>([]);
-    const [selectedSprintId, setSelectedSprintId] = useState<string>('');
+    const [selectedSprintId, setSelectedSprintId] = useState<string>("");
     const [isAddingToSprint, setIsAddingToSprint] = useState(false);
 
     const handleSelectAll = (checked: boolean) => {
@@ -802,44 +899,53 @@ const ProjectTasksPage = () => {
     const fetchSprintsList = useCallback(async () => {
         try {
             const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
-            const list = result?.sprints || result?.data?.sprints || (Array.isArray(result) ? result : []);
+            const list =
+                result?.sprints ||
+                result?.data?.sprints ||
+                (Array.isArray(result) ? result : []);
             setSprints(list);
         } catch (error) {
-            console.error('Failed to fetch sprints:', error);
+            console.error("Failed to fetch sprints:", error);
         }
     }, [dispatch, token, baseUrl]);
 
     const handleAddToSprintSubmit = async () => {
         if (!selectedSprintId) {
-            toast.error('Please select a sprint');
+            toast.error("Please select a sprint");
             return;
         }
         setIsAddingToSprint(true);
         try {
-            const result = await dispatch(updateSprint({
-                token,
-                baseUrl,
-                id: selectedSprintId,
-                data: { sprint: { task_ids: selectedItems.map(Number) } },
-            })).unwrap();
+            const result = await dispatch(
+                updateSprint({
+                    token,
+                    baseUrl,
+                    id: selectedSprintId,
+                    data: { sprint: { task_ids: selectedItems.map(Number) } },
+                })
+            ).unwrap();
 
             const existingTaskIds: number[] = result?.existing_task_ids || [];
             const existingIssueIds: number[] = result?.existing_issue_ids || [];
 
             if (existingTaskIds.length > 0) {
-                toast.error(`Tasks with IDs ${existingTaskIds.join(', ')} are already added to this sprint`);
+                toast.error(
+                    `Tasks with IDs ${existingTaskIds.join(", ")} are already added to this sprint`
+                );
             }
             if (existingIssueIds.length > 0) {
-                toast.error(`Issues with IDs ${existingIssueIds.join(', ')} are already added to this sprint`);
+                toast.error(
+                    `Issues with IDs ${existingIssueIds.join(", ")} are already added to this sprint`
+                );
             }
             if (existingTaskIds.length === 0 && existingIssueIds.length === 0) {
-                toast.success('Tasks added to sprint successfully');
+                toast.success("Tasks added to sprint successfully");
                 setIsAddToSprintModalOpen(false);
-                setSelectedSprintId('');
+                setSelectedSprintId("");
                 setSelectedItems([]);
             }
         } catch (error) {
-            toast.error('Failed to add tasks to sprint');
+            toast.error("Failed to add tasks to sprint");
         } finally {
             setIsAddingToSprint(false);
         }
@@ -949,7 +1055,10 @@ const ProjectTasksPage = () => {
     // Handle click outside for view dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
+            if (
+                viewDropdownRef.current &&
+                !viewDropdownRef.current.contains(event.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -965,7 +1074,10 @@ const ProjectTasksPage = () => {
     // Handle click outside for status dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+            if (
+                statusDropdownRef.current &&
+                !statusDropdownRef.current.contains(event.target as Node)
+            ) {
                 setOpenStatusOptions(false);
             }
         };
@@ -981,34 +1093,42 @@ const ProjectTasksPage = () => {
     const getStatuses = async () => {
         try {
             const response = baseUrl
-                ? await axios.get(`https://${baseUrl}/project_statuses.json?q[active_eq]=true`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                ? await axios.get(
+                    `https://${baseUrl}/project_statuses.json?q[active_eq]=true`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
                     }
-                })
+                )
                 : await baseClient.get(`/project_statuses.json?q[active_eq]=true`, {
                     headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
-            setStatuses(response.data)
+            setStatuses(response.data);
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
-    }
+    };
 
     const fetchProjectAndMilestoneNames = async () => {
         try {
             // Fetch project name
             if (projectId) {
                 const projectResponse = baseUrl
-                    ? await axios.get(`https://${baseUrl}/project_managements/${projectId}.json`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    })
+                    ? await axios.get(
+                        `https://${baseUrl}/project_managements/${projectId}.json`,
+                        {
+                            headers: { Authorization: `Bearer ${token}` },
+                        }
+                    )
                     : await baseClient.get(`/project_managements/${projectId}.json`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
-                setProjectName(projectResponse.data.title || projectResponse.data.project_code || '');
+                setProjectName(
+                    projectResponse.data.title || projectResponse.data.project_code || ""
+                );
             }
 
             // Fetch milestone name
@@ -1020,38 +1140,44 @@ const ProjectTasksPage = () => {
                     : await baseClient.get(`/milestones/${mid}.json`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
-                setMilestoneName(milestoneResponse.data.title || '');
+                setMilestoneName(milestoneResponse.data.title || "");
             }
         } catch (error) {
-            console.error('Failed to fetch project/milestone names:', error);
+            console.error("Failed to fetch project/milestone names:", error);
         }
-    }
+    };
 
     useEffect(() => {
-        getStatuses()
-    }, [])
+        getStatuses();
+    }, []);
 
     useEffect(() => {
         if (token && (projectId || mid)) {
             fetchProjectAndMilestoneNames();
         }
-    }, [token, projectId, mid])
+    }, [token, projectId, mid]);
 
     // Fetch projects from API
     useEffect(() => {
         const fetchProjects = async () => {
             try {
                 const response = baseUrl
-                    ? await axios.get(`https://${baseUrl}/project_managements/projects_for_dropdown.json`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    })
-                    : await baseClient.get(`/project_managements/projects_for_dropdown.json`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
+                    ? await axios.get(
+                        `https://${baseUrl}/project_managements/projects_for_dropdown.json`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    )
+                    : await baseClient.get(
+                        `/project_managements/projects_for_dropdown.json`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
                 if (response.data && Array.isArray(response.data)) {
                     setProjectOptions(
                         response.data.map((project: any) => ({
@@ -1061,7 +1187,7 @@ const ProjectTasksPage = () => {
                     );
                 }
             } catch (error) {
-                console.error('Error fetching projects:', error);
+                console.error("Error fetching projects:", error);
             }
         };
 
@@ -1093,7 +1219,7 @@ const ProjectTasksPage = () => {
                 const tagsList = response.data || [];
                 setTags(tagsList);
             } catch (error) {
-                console.log('Error fetching tags:', error);
+                console.log("Error fetching tags:", error);
                 setTags([]);
             }
         };
@@ -1131,7 +1257,7 @@ const ProjectTasksPage = () => {
             dates.endDate ||
             dates.completedAt
         ) {
-            localStorage.setItem('taskFilters', JSON.stringify(filters));
+            localStorage.setItem("taskFilters", JSON.stringify(filters));
         }
     }, [
         selectedStatuses,
@@ -1171,19 +1297,28 @@ const ProjectTasksPage = () => {
         );
     };
 
-    const renderCheckboxList = (options: any[], selected: any[], setSelected: Function, searchTerm = '') => {
+    const renderCheckboxList = (
+        options: any[],
+        selected: any[],
+        setSelected: Function,
+        searchTerm = ""
+    ) => {
         const filtered = options.filter((opt) =>
-            typeof opt === 'string'
+            typeof opt === "string"
                 ? opt.toLowerCase().includes(searchTerm.toLowerCase())
-                : opt.label?.toLowerCase().includes(searchTerm.toLowerCase()) || opt.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                : opt.label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                opt.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
         return (
             <div className="max-h-40 overflow-y-auto p-2">
                 {filtered.map((option) => {
-                    const label = typeof option === 'string' ? option : (option.label || option.full_name);
-                    const color = typeof option === 'string' ? null : option.color;
-                    const value = typeof option === 'string' ? option : option.value;
+                    const label =
+                        typeof option === "string"
+                            ? option
+                            : option.label || option.full_name;
+                    const color = typeof option === "string" ? null : option.color;
+                    const value = typeof option === "string" ? option : option.value;
 
                     return (
                         <label
@@ -1198,12 +1333,16 @@ const ProjectTasksPage = () => {
                                 />
                                 <span>{label}</span>
                             </div>
-                            {color && <span className={clsx('w-2 h-2 rounded-full', color)}></span>}
+                            {color && (
+                                <span className={clsx("w-2 h-2 rounded-full", color)}></span>
+                            )}
                         </label>
                     );
                 })}
                 {filtered?.length === 0 && (
-                    <div className="text-center text-gray-400 text-sm py-2">No results found</div>
+                    <div className="text-center text-gray-400 text-sm py-2">
+                        No results found
+                    </div>
                 )}
             </div>
         );
@@ -1214,46 +1353,54 @@ const ProjectTasksPage = () => {
             const params: any = { page: 1 };
 
             if (selectedStatuses.length > 0) {
-                params['q[status_in][]'] = selectedStatuses;
+                params["q[status_in][]"] = selectedStatuses;
             }
             if (selectedWorkflowStatus.length > 0) {
-                params['q[project_status_id_in][]'] = selectedWorkflowStatus;
+                params["q[project_status_id_in][]"] = selectedWorkflowStatus;
             }
             if (selectedResponsible.length > 0) {
-                params['q[responsible_person_id_in][]'] = selectedResponsible;
+                params["q[responsible_person_id_in][]"] = selectedResponsible;
             }
             if (selectedCreators.length > 0) {
-                params['q[created_by_id_in][]'] = selectedCreators;
+                params["q[created_by_id_in][]"] = selectedCreators;
             }
             if (selectedProjects.length > 0) {
-                params['q[project_management_id_in][]'] = selectedProjects;
+                params["q[project_management_id_in][]"] = selectedProjects;
             }
             if (dates.startDate) {
-                params['q[expected_start_date_eq]'] = dates.startDate;
+                params["q[expected_start_date_eq]"] = dates.startDate;
             }
             if (dates.endDate) {
-                params['q[target_date_eq]'] = dates.endDate;
+                params["q[target_date_eq]"] = dates.endDate;
             }
             if (dates.completedAt) {
-                params['q[completed_at_gteq]'] = `${dates.completedAt}T00:00:00`;
-                params['q[completed_at_lteq]'] = `${dates.completedAt}T23:59:59`;
+                params["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
+                params["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
             }
             if (mid) {
-                params['q[milestone_id_eq]'] = mid;
+                params["q[milestone_id_eq]"] = mid;
             }
 
             // Update URL with current filter state
-            updateQueryParams({
-                status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
-                workflow_status: selectedWorkflowStatus.length > 0 ? selectedWorkflowStatus : undefined,
-                responsible: selectedResponsible.length > 0 ? selectedResponsible : undefined,
-                created_by: selectedCreators.length > 0 ? selectedCreators : undefined,
-                project: selectedProjects.length > 0 ? selectedProjects : undefined,
-                tags: selectedTags.length > 0 ? selectedTags : undefined,
-                start_date: dates.startDate || undefined,
-                end_date: dates.endDate || undefined,
-                completed_at: dates.completedAt || undefined,
-            }, true);
+            updateQueryParams(
+                {
+                    status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+                    workflow_status:
+                        selectedWorkflowStatus.length > 0
+                            ? selectedWorkflowStatus
+                            : undefined,
+                    responsible:
+                        selectedResponsible.length > 0 ? selectedResponsible : undefined,
+                    created_by:
+                        selectedCreators.length > 0 ? selectedCreators : undefined,
+                    project: selectedProjects.length > 0 ? selectedProjects : undefined,
+                    tags: selectedTags.length > 0 ? selectedTags : undefined,
+                    start_date: dates.startDate || undefined,
+                    end_date: dates.endDate || undefined,
+                    completed_at: dates.completedAt || undefined,
+                },
+                true
+            );
 
             setIsFilterModalOpen(false);
             setCurrentPage(1);
@@ -1267,7 +1414,7 @@ const ProjectTasksPage = () => {
     const buildFilters = () => {
         const filters: Record<string, any> = {};
         const searchParams = new URLSearchParams(location.search);
-        const urlProjectId = searchParams.get('project_id');
+        const urlProjectId = searchParams.get("project_id");
 
         if (selectedFilterOption !== "all") {
             filters["q[status_eq]"] = selectedFilterOption;
@@ -1283,37 +1430,38 @@ const ProjectTasksPage = () => {
 
         // Add advanced filters
         if (selectedStatuses.length > 0) {
-            filters['q[status_in][]'] = selectedStatuses;
+            filters["q[status_in][]"] = selectedStatuses;
         }
         if (selectedWorkflowStatus.length > 0) {
-            filters['q[project_status_id_in][]'] = selectedWorkflowStatus;
+            filters["q[project_status_id_in][]"] = selectedWorkflowStatus;
         }
         if (selectedResponsible.length > 0) {
-            filters['q[responsible_person_id_in][]'] = selectedResponsible;
+            filters["q[responsible_person_id_in][]"] = selectedResponsible;
         }
         if (selectedCreators.length > 0) {
-            filters['q[created_by_id_in][]'] = selectedCreators;
+            filters["q[created_by_id_in][]"] = selectedCreators;
         }
         if (selectedProjects.length > 0) {
-            filters['q[project_management_id_in][]'] = selectedProjects;
+            filters["q[project_management_id_in][]"] = selectedProjects;
         }
         if (selectedTags.length > 0) {
-            filters['q[task_tags_company_tag_id_in][]'] = selectedTags;
+            filters["q[task_tags_company_tag_id_in][]"] = selectedTags;
         }
         if (dates.startDate) {
-            filters['q[expected_start_date_eq]'] = dates.startDate;
+            filters["q[expected_start_date_eq]"] = dates.startDate;
         }
         if (dates.endDate) {
-            filters['q[target_date_eq]'] = dates.endDate;
+            filters["q[target_date_eq]"] = dates.endDate;
         }
         if (dates.completedAt) {
-            filters['q[completed_at_gteq]'] = `${dates.completedAt}T00:00:00`;
-            filters['q[completed_at_lteq]'] = `${dates.completedAt}T23:59:59`;
+            filters["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
+            filters["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
         }
 
         // Add global search filter (searches in title, task_code, and description)
         if (debouncedSearchTerm.trim()) {
-            filters['q[title_or_task_code_or_description_cont]'] = debouncedSearchTerm.trim();
+            filters["q[title_or_task_code_or_description_cont]"] =
+                debouncedSearchTerm.trim();
         }
 
         return filters;
@@ -1326,21 +1474,21 @@ const ProjectTasksPage = () => {
         isLoading,
         isFetching,
         error,
-        refetch: refetchTasks
+        refetch: refetchTasks,
     } = useTasks({
         taskType,
         page: currentPage,
         filters,
-        sortBy: sortColumn ? COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn : undefined,
+        sortBy: sortColumn
+            ? COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn
+            : undefined,
         sortDirection,
     });
 
     // Extract tasks and pagination from response
-    const tasks = tasksData?.data?.task_managements ||
-        tasksData?.task_managements ||
-        [];
-    const paginationData = tasksData?.data?.pagination ||
-        tasksData?.pagination;
+    const tasks =
+        tasksData?.data?.task_managements || tasksData?.task_managements || [];
+    const paginationData = tasksData?.data?.pagination || tasksData?.pagination;
     const hasMore = currentPage < (paginationData?.total_pages || 1);
 
     // Mutations
@@ -1357,22 +1505,32 @@ const ProjectTasksPage = () => {
         setSelectedProjects([]);
         setSelectedWorkflowStatus([]);
         setSelectedTags([]);
-        setDates({ startDate: '', endDate: '', completedAt: '' });
-        setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '', tags: '' });
-        localStorage.removeItem('taskFilters');
+        setDates({ startDate: "", endDate: "", completedAt: "" });
+        setSearchTerms({
+            status: "",
+            workflowStatus: "",
+            responsiblePerson: "",
+            createdBy: "",
+            project: "",
+            tags: "",
+        });
+        localStorage.removeItem("taskFilters");
 
         // Clear URL params for all filters
-        updateQueryParams({
-            status: undefined,
-            workflow_status: undefined,
-            responsible: undefined,
-            created_by: undefined,
-            project: undefined,
-            tags: undefined,
-            start_date: undefined,
-            end_date: undefined,
-            completed_at: undefined,
-        }, true);
+        updateQueryParams(
+            {
+                status: undefined,
+                workflow_status: undefined,
+                responsible: undefined,
+                created_by: undefined,
+                project: undefined,
+                tags: undefined,
+                start_date: undefined,
+                end_date: undefined,
+                completed_at: undefined,
+            },
+            true
+        );
 
         setCurrentPage(1);
         // Filters automatically cleared and refetched through useTasks hook
@@ -1387,16 +1545,22 @@ const ProjectTasksPage = () => {
     const getUsers = useCallback(async () => {
         try {
             const response = baseUrl
-                ? await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                ? await axios.get(
+                    `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
                     }
-                })
-                : await baseClient.get(`/pms/users/get_escalate_to_users.json?type=Task`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                )
+                : await baseClient.get(
+                    `/pms/users/get_escalate_to_users.json?type=Task`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
                     }
-                });
+                );
             setUsers(response.data.users);
         } catch (error) {
             console.log(error);
@@ -1405,7 +1569,7 @@ const ProjectTasksPage = () => {
 
     useEffect(() => {
         getUsers();
-    }, [getUsers])
+    }, [getUsers]);
 
     const handleOpenDialog = () => {
         setOpenTaskModal(true);
@@ -1417,7 +1581,12 @@ const ProjectTasksPage = () => {
     };
 
     const handlePageChange = async (page: number) => {
-        if (page < 1 || page > (paginationData?.total_pages || 1) || page === currentPage || isLoading) {
+        if (
+            page < 1 ||
+            page > (paginationData?.total_pages || 1) ||
+            page === currentPage ||
+            isLoading
+        ) {
             return;
         }
         setCurrentPage(page);
@@ -1470,7 +1639,11 @@ const ProjectTasksPage = () => {
             }
 
             if (paginationCurrentPage > 3 && paginationCurrentPage < totalPages - 2) {
-                for (let i = paginationCurrentPage - 1; i <= paginationCurrentPage + 1; i++) {
+                for (
+                    let i = paginationCurrentPage - 1;
+                    i <= paginationCurrentPage + 1;
+                    i++
+                ) {
                     items.push(
                         <PaginationItem key={i} className="cursor-pointer">
                             <PaginationLink
@@ -1546,7 +1719,7 @@ const ProjectTasksPage = () => {
     };
 
     const handleSubmit = async (data: any) => {
-        console.log(data)
+        console.log(data);
         // Validate all required fields
         if (!data.title?.trim()) {
             toast.error("Task title is required");
@@ -1610,29 +1783,31 @@ const ProjectTasksPage = () => {
                 ...(mid && { milestone_id: mid }),
                 task_allocation_times_attributes: allocation,
                 estimated_hour: 8 * allocation.length,
-            }
-        }
+            },
+        };
         try {
-            await dispatch(createProjectTask({ token, baseUrl, data: payload })).unwrap();
+            await dispatch(
+                createProjectTask({ token, baseUrl, data: payload })
+            ).unwrap();
 
             toast.success("Task created successfully");
             await refetchTasks();
         } catch (error) {
-            console.log(error)
+            console.log(error);
             // toast.error(String(error) || "Failed to create task")
-            const fullError = error.response.data
+            const fullError = error.response.data;
             Object.keys(fullError).forEach((key) => {
                 toast.error(`${key} ${fullError[key]}`);
-            })
+            });
         }
     };
 
     const handleSampleDownload = async () => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/assets/task_import.xlsx`,
+                `https://${baseUrl}/task_import.xlsx`,
                 {
-                    responseType: 'blob',
+                    responseType: "blob",
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -1640,17 +1815,17 @@ const ProjectTasksPage = () => {
             );
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
+            const link = document.createElement("a");
             link.href = url;
-            link.setAttribute('download', 'sample_task.xlsx');
+            link.setAttribute("download", "sample_task.xlsx");
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-            toast.success('Sample format downloaded successfully');
+            toast.success("Sample format downloaded successfully");
         } catch (error) {
-            console.error('Error downloading sample file:', error);
-            toast.error('Failed to download sample file. Please try again.');
+            console.error("Error downloading sample file:", error);
+            toast.error("Failed to download sample file. Please try again.");
         }
     };
 
@@ -1659,20 +1834,26 @@ const ProjectTasksPage = () => {
         try {
             const formData = new FormData();
             formData.append("file", selectedFile);
-            const response = await axios.post(`https://${baseUrl}/task_managements/import.json`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            const response = await axios.post(
+                `https://${baseUrl}/task_managements/import.json`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-            });
+            );
             // toast.success("Tasks imported successfully");
             // setIsImportModalOpen(false);
             // setSelectedFile(null);
             // fetchData();
             if (response.data.failed && response.data.failed.length > 0) {
-                response.data.failed.forEach((item: { row: number; errors: string[] }) => {
-                    const errorMessages = item.errors.join(', ');
-                    toast.error(`Row ${item.row}: ${errorMessages}`);
-                });
+                response.data.failed.forEach(
+                    (item: { row: number; errors: string[] }) => {
+                        const errorMessages = item.errors.join(", ");
+                        toast.error(`Row ${item.row}: ${errorMessages}`);
+                    }
+                );
             } else {
                 toast.success("Tasks imported successfully");
                 setIsImportModalOpen(false);
@@ -1695,9 +1876,9 @@ const ProjectTasksPage = () => {
         } else if (location.pathname.startsWith("/business-compass/tasks")) {
             navigate(`/business-compass/tasks/${id}`);
         } else {
-            navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
+            navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`);
         }
-    }
+    };
 
     // const renderActions = (item: any) => (
     // <div className="flex items-center justify-center gap-2">
@@ -1718,15 +1899,15 @@ const ProjectTasksPage = () => {
     const handleStatusChange = async (id: number, status: string) => {
         try {
             // Check if task is being put on hold
-            if (status === 'on_hold') {
+            if (status === "on_hold") {
                 setHoldTaskId(id);
                 setIsHoldModalOpen(true);
                 return;
             }
 
             // Check if task is being marked as completed and if it's overdue
-            if (status === 'completed') {
-                const task = tasks.find(t => t.id === id);
+            if (status === "completed") {
+                const task = tasks.find((t) => t.id === id);
                 if (!task) {
                     toast.error("Task not found");
                     return;
@@ -1756,51 +1937,77 @@ const ProjectTasksPage = () => {
             await statusMutation.mutateAsync({ id, status });
             toast.success("Task status changed successfully");
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
-    }
+    };
 
     const handleWorkflowStatusChange = async (id: number, status: string) => {
         try {
-            await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: status } })).unwrap();
+            await dispatch(
+                editProjectTask({
+                    token,
+                    baseUrl,
+                    id: String(id),
+                    data: { project_status_id: status },
+                })
+            ).unwrap();
             setCurrentPage(1);
             toast.success("Task status changed successfully");
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
-    }
+    };
 
-    const handleUpdateTask = async (id: number, responsible_person_id: number) => {
+    const handleUpdateTask = async (
+        id: number,
+        responsible_person_id: number
+    ) => {
         // Show modal to ask for reason
         setResponsibleTaskId(id);
         setPendingResponsiblePersonId(responsible_person_id);
         setIsResponsibleModalOpen(true);
-    }
+    };
 
-    const handleResponsiblePersonReasonSubmit = async (reason: string, tid: number, newResponsiblePersonId: number) => {
+    const handleResponsiblePersonReasonSubmit = async (
+        reason: string,
+        tid: number,
+        newResponsiblePersonId: number
+    ) => {
         if (!tid || !newResponsiblePersonId) return;
 
         setIsResponsibleLoading(true);
         try {
             // Get the current task to find old responsible person
-            const task = tasks.find(t => t.id === tid);
-            const oldResponsibleUser = users.find(u => u.id === task?.responsible_person_id);
-            const oldResponsibleName = oldResponsibleUser?.full_name || 'Unknown';
+            const task = tasks.find((t) => t.id === tid);
+            const oldResponsibleUser = users.find(
+                (u) => u.id === task?.responsible_person_id
+            );
+            const oldResponsibleName = oldResponsibleUser?.full_name || "Unknown";
 
             // Find new responsible person name from users list
-            const newResponsibleUser = users.find(u => u.id === newResponsiblePersonId);
-            const newResponsibleName = newResponsibleUser?.full_name || `User ${newResponsiblePersonId}`;
+            const newResponsibleUser = users.find(
+                (u) => u.id === newResponsiblePersonId
+            );
+            const newResponsibleName =
+                newResponsibleUser?.full_name || `User ${newResponsiblePersonId}`;
 
             // Update task with new responsible person
-            await dispatch(editProjectTask({ token, baseUrl, id: String(tid), data: { responsible_person_id: newResponsiblePersonId } })).unwrap();
+            await dispatch(
+                editProjectTask({
+                    token,
+                    baseUrl,
+                    id: String(tid),
+                    data: { responsible_person_id: newResponsiblePersonId },
+                })
+            ).unwrap();
 
             // Save the change reason as a comment
             const commentPayload = {
                 comment: {
                     body: `Responsible person changed from ${oldResponsibleName} to ${newResponsibleName} with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: 'TaskManagement',
-                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    commentable_type: "TaskManagement",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
             };
@@ -1811,7 +2018,7 @@ const ProjectTasksPage = () => {
                 },
             });
 
-            toast.success('Responsible person changed with reason');
+            toast.success("Responsible person changed with reason");
             setIsResponsibleModalOpen(false);
             setResponsibleTaskId(null);
             setPendingResponsiblePersonId(null);
@@ -1819,14 +2026,14 @@ const ProjectTasksPage = () => {
             // Refresh task list in background
             refetchTasks();
         } catch (error) {
-            console.error('Failed to update responsible person:', error);
+            console.error("Failed to update responsible person:", error);
             toast.error(
-                `Failed to update responsible person: ${error?.response?.data?.error || error?.message || 'Server error'}`
+                `Failed to update responsible person: ${error?.response?.data?.error || error?.message || "Server error"}`
             );
         } finally {
             setIsResponsibleLoading(false);
         }
-    }
+    };
 
     // Handle column sort
     const handleColumnSort = (columnKey: string) => {
@@ -1834,7 +2041,12 @@ const ProjectTasksPage = () => {
 
         // Cycle through: asc -> desc -> null -> asc
         if (sortColumn === columnKey) {
-            newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+            newDirection =
+                sortDirection === "asc"
+                    ? "desc"
+                    : sortDirection === "desc"
+                        ? null
+                        : "asc";
         } else {
             newDirection = "asc";
         }
@@ -1851,15 +2063,22 @@ const ProjectTasksPage = () => {
         setIsPauseLoading(true);
         try {
             // Update task status to "on_hold" (paused)
-            await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'stopped' } })).unwrap();
+            await dispatch(
+                updateTaskStatus({
+                    token,
+                    baseUrl,
+                    id: String(tid),
+                    data: { status: "stopped" },
+                })
+            ).unwrap();
             setCurrentPage(1);
 
             const commentPayload = {
                 comment: {
                     body: `Paused with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: 'TaskManagement',
-                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    commentable_type: "TaskManagement",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
             };
@@ -1870,16 +2089,16 @@ const ProjectTasksPage = () => {
                 },
             });
 
-            toast.success('Task paused successfully with reason');
+            toast.success("Task paused successfully with reason");
             setIsPauseModalOpen(false);
             setPauseTaskId(null);
 
             // Refresh task list in background
             refetchTasks();
         } catch (error) {
-            console.error('Failed to pause task:', error);
+            console.error("Failed to pause task:", error);
             toast.error(
-                `Failed to pause task: ${error?.response?.data?.error || error?.message || 'Server error'}`
+                `Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`
             );
         } finally {
             setIsPauseLoading(false);
@@ -1892,15 +2111,15 @@ const ProjectTasksPage = () => {
         setIsHoldLoading(true);
         try {
             // Update task status to "on_hold"
-            await statusMutation.mutateAsync({ id: tid, status: 'on_hold' });
+            await statusMutation.mutateAsync({ id: tid, status: "on_hold" });
 
             // Save the hold reason as a comment
             const commentPayload = {
                 comment: {
                     body: `On hold with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: 'TaskManagement',
-                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    commentable_type: "TaskManagement",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
             };
@@ -1911,16 +2130,16 @@ const ProjectTasksPage = () => {
                 },
             });
 
-            toast.success('Task put on hold with reason');
+            toast.success("Task put on hold with reason");
             setIsHoldModalOpen(false);
             setHoldTaskId(null);
 
             // Refresh task list in background
             refetchTasks();
         } catch (error) {
-            console.error('Failed to put task on hold:', error);
+            console.error("Failed to put task on hold:", error);
             toast.error(
-                `Failed to put task on hold: ${error?.response?.data?.error || error?.message || 'Server error'}`
+                `Failed to put task on hold: ${error?.response?.data?.error || error?.message || "Server error"}`
             );
         } finally {
             setIsHoldLoading(false);
@@ -1933,7 +2152,14 @@ const ProjectTasksPage = () => {
         setIsPauseLoading(true);
         try {
             // Update task status to "completed"
-            await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'completed' } })).unwrap();
+            await dispatch(
+                updateTaskStatus({
+                    token,
+                    baseUrl,
+                    id: String(tid),
+                    data: { status: "completed" },
+                })
+            ).unwrap();
 
             // TanStack Query will refetch and update the cache automatically
             await refetchTasks();
@@ -1942,8 +2168,8 @@ const ProjectTasksPage = () => {
                 comment: {
                     body: `Ended with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: 'TaskManagement',
-                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    commentable_type: "TaskManagement",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
             };
@@ -1954,16 +2180,16 @@ const ProjectTasksPage = () => {
                 },
             });
 
-            toast.success('Task ended successfully');
+            toast.success("Task ended successfully");
             setIsPauseModalOpen(false);
             setPauseTaskId(null);
 
             // Refresh task list in background
             refetchTasks();
         } catch (error) {
-            console.error('Failed to end task:', error);
+            console.error("Failed to end task:", error);
             toast.error(
-                `Failed to end task: ${error?.response?.data?.error || error?.message || 'Server error'}`
+                `Failed to end task: ${error?.response?.data?.error || error?.message || "Server error"}`
             );
         } finally {
             setIsPauseLoading(false);
@@ -1972,7 +2198,14 @@ const ProjectTasksPage = () => {
 
     const handlePlayTask = async (id: number) => {
         try {
-            await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status: 'started' } })).unwrap();
+            await dispatch(
+                updateTaskStatus({
+                    token,
+                    baseUrl,
+                    id: String(id),
+                    data: { status: "started" },
+                })
+            ).unwrap();
 
             // TanStack Query will refetch and update the cache automatically
             await refetchTasks();
@@ -1982,9 +2215,12 @@ const ProjectTasksPage = () => {
             console.log(error);
             toast.error("Failed to start task");
         }
-    }
+    };
 
-    const handleCompletionPercentageChange = async (id: number, completionPercentage: number | string) => {
+    const handleCompletionPercentageChange = async (
+        id: number,
+        completionPercentage: number | string
+    ) => {
         const percentage = Number(completionPercentage);
 
         // Validate percentage
@@ -1999,7 +2235,7 @@ const ProjectTasksPage = () => {
         }
 
         // Find the task to check if it's overdue
-        const task = tasks.find(t => t.id === id);
+        const task = tasks.find((t) => t.id === id);
         if (!task) {
             toast.error("Task not found");
             return;
@@ -2024,14 +2260,17 @@ const ProjectTasksPage = () => {
         } else {
             // Directly save the percentage if not overdue using TanStack Query mutation
             try {
-                await completionMutation.mutateAsync({ id, completionPercent: percentage });
+                await completionMutation.mutateAsync({
+                    id,
+                    completionPercent: percentage,
+                });
                 toast.success("Completion percentage updated successfully");
             } catch (error) {
                 console.log(error);
                 toast.error("Failed to update completion percentage");
             }
         }
-    }
+    };
 
     const handleOverdueReasonSubmit = async (reason: string) => {
         if (!overdueTaskId) return;
@@ -2040,10 +2279,16 @@ const ProjectTasksPage = () => {
         try {
             // If this is a status change (marking as complete)
             if (pendingStatusChange) {
-                await statusMutation.mutateAsync({ id: overdueTaskId, status: pendingStatusChange.status });
+                await statusMutation.mutateAsync({
+                    id: overdueTaskId,
+                    status: pendingStatusChange.status,
+                });
             } else {
                 // Otherwise it's a completion percentage change
-                await completionMutation.mutateAsync({ id: overdueTaskId, completionPercent: pendingCompletionPercentage });
+                await completionMutation.mutateAsync({
+                    id: overdueTaskId,
+                    completionPercent: pendingCompletionPercentage,
+                });
             }
 
             // Save the overdue reason as a comment
@@ -2051,8 +2296,8 @@ const ProjectTasksPage = () => {
                 comment: {
                     body: `Overdue reason: ${reason}`,
                     commentable_id: overdueTaskId,
-                    commentable_type: 'TaskManagement',
-                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    commentable_type: "TaskManagement",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
             };
@@ -2066,8 +2311,8 @@ const ProjectTasksPage = () => {
             refetchTasks();
 
             const message = pendingStatusChange
-                ? 'Task marked as complete with overdue reason'
-                : 'Completion percentage updated with overdue reason';
+                ? "Task marked as complete with overdue reason"
+                : "Completion percentage updated with overdue reason";
 
             toast.success(message);
             setIsOverdueModalOpen(false);
@@ -2076,30 +2321,34 @@ const ProjectTasksPage = () => {
             setPendingStatusChange(null);
         } catch (error) {
             console.log(error);
-            toast.error('Failed to update task');
+            toast.error("Failed to update task");
         } finally {
             setIsOverdueLoading(false);
         }
-    }
+    };
 
     function formatHours(hours: number): string {
-        console.log(hours)
+        console.log(hours);
         if (hours < 1) {
             const minutes = Math.round(hours * 60);
-            return `${minutes} min${minutes !== 1 ? 's' : ''}`;
+            return `${minutes} min${minutes !== 1 ? "s" : ""}`;
         }
 
         const wholeHours = Math.floor(hours);
         const remainingMinutes = Math.round((hours - wholeHours) * 60);
 
         if (remainingMinutes === 0) {
-            return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''}`;
+            return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""}`;
         }
 
-        return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''} ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+        return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""} ${remainingMinutes} min${remainingMinutes !== 1 ? "s" : ""}`;
     }
 
-    const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
+    const renderCell = (
+        item: any,
+        columnKey: string,
+        isSubtask: boolean = false
+    ) => {
         const renderProgressBar = (
             completed: number,
             total: number,
@@ -2137,23 +2386,30 @@ const ProjectTasksPage = () => {
 
         switch (columnKey) {
             case "actions":
-                return <div className="flex items-center justify-center gap-2">
-                    {shouldShow("employee_project_tasks", "show") && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="p-1"
-                            onClick={() => handleView(item.id)}
-                            title="View Task Details"
-                        >
-                            <Eye className="w-4 h-4" />
-                        </Button>
-                    )}
-                </div>
+                return (
+                    <div className="flex items-center justify-center gap-2">
+                        {shouldShow("employee_project_tasks", "show") && (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="p-1"
+                                onClick={() => handleView(item.id)}
+                                title="View Task Details"
+                            >
+                                <Eye className="w-4 h-4" />
+                            </Button>
+                        )}
+                    </div>
+                );
             case "id":
-                return <span className="w-[80px]">{isSubtask ? 'S-' : 'T-'}{item.id}</span>
+                return (
+                    <span className="w-[80px]">
+                        {isSubtask ? "S-" : "T-"}
+                        {item.id}
+                    </span>
+                );
             case "title":
-                const isCompleted = item.status === 'completed';
+                const isCompleted = item.status === "completed";
                 const isTaskStarted = item.is_started;
                 const hasSubtasks = item.total_sub_tasks > 0;
 
@@ -2169,7 +2425,8 @@ const ProjectTasksPage = () => {
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                        {!hasSubtasks && !isCompleted &&
+                        {!hasSubtasks &&
+                            !isCompleted &&
                             (isTaskStarted ? (
                                 <button
                                     onClick={() => {
@@ -2203,112 +2460,134 @@ const ProjectTasksPage = () => {
                     overdue: { dot: "bg-red-500" },
                 };
 
-                const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.open;
+                const colors =
+                    statusColorMap[item.status as keyof typeof statusColorMap] ||
+                    statusColorMap.open;
 
-                return <FormControl
-                    variant="standard"
-                    sx={{ width: 148 }} // same as w-32
-                >
-                    <Select
-                        value={item.status}
-                        onChange={(e) =>
-                            handleStatusChange(item.id, e.target.value as string)
-                        }
-                        // disabled
-                        disableUnderline
-                        renderValue={(value) => (
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
-                                <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
-                            </div>
-                        )}
-                        sx={{
-                            fontSize: "0.875rem",
-                            cursor: "pointer",
-                            "& .MuiSelect-select": {
-                                padding: "4px 0",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                            },
-                            // "&.Mui-disabled": {
-                            //     color: "#000",
-                            // },
-                            // // For the selected value text
-                            // "&.Mui-disabled .MuiSelect-select": {
-                            //     color: "#000",
-                            //     WebkitTextFillColor: "#000",
-                            // },
-                        }}
+                return (
+                    <FormControl
+                        variant="standard"
+                        sx={{ width: 148 }} // same as w-32
                     >
-                        {statusOptions.map((opt) => {
-                            const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
-                            return (
-                                <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                    <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
-                                    <span>{opt.label}</span>
-                                </MenuItem>
-                            );
-                        })}
-                    </Select>
-                </FormControl>
+                        <Select
+                            value={item.status}
+                            onChange={(e) =>
+                                handleStatusChange(item.id, e.target.value as string)
+                            }
+                            // disabled
+                            disableUnderline
+                            renderValue={(value) => (
+                                <div
+                                    style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                                >
+                                    <span
+                                        className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}
+                                    ></span>
+                                    <span>
+                                        {statusOptions.find((opt) => opt.value === value)?.label ||
+                                            value}
+                                    </span>
+                                </div>
+                            )}
+                            sx={{
+                                fontSize: "0.875rem",
+                                cursor: "pointer",
+                                "& .MuiSelect-select": {
+                                    padding: "4px 0",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                },
+                                // "&.Mui-disabled": {
+                                //     color: "#000",
+                                // },
+                                // // For the selected value text
+                                // "&.Mui-disabled .MuiSelect-select": {
+                                //     color: "#000",
+                                //     WebkitTextFillColor: "#000",
+                                // },
+                            }}
+                        >
+                            {statusOptions.map((opt) => {
+                                const optColors =
+                                    statusColorMap[opt.value as keyof typeof statusColorMap];
+                                return (
+                                    <MenuItem
+                                        key={opt.value}
+                                        value={opt.value}
+                                        sx={{ display: "flex", alignItems: "center", gap: "8px" }}
+                                    >
+                                        <span
+                                            className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}
+                                        ></span>
+                                        <span>{opt.label}</span>
+                                    </MenuItem>
+                                );
+                            })}
+                        </Select>
+                    </FormControl>
+                );
             }
             case "workflowStatus": {
-                return <FormControl
-                    variant="standard"
-                    sx={{ width: 128 }} // same as w-32
-                >
-                    <Select
-                        value={item.project_status_id ?? "1"}
-                        onChange={(e) =>
-                            handleWorkflowStatusChange(item.id, e.target.value as string)
-                        }
-                        disableUnderline
-                        sx={{
-                            fontSize: "0.875rem",
-                            cursor: "pointer",
-                            "& .MuiSelect-select": {
-                                padding: "4px 0",
-                            },
-                        }}
+                return (
+                    <FormControl
+                        variant="standard"
+                        sx={{ width: 128 }} // same as w-32
                     >
-                        {statuses.map((opt) => (
-                            <MenuItem key={opt.id} value={opt.id}>
-                                {opt.status}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                        <Select
+                            value={item.project_status_id ?? "1"}
+                            onChange={(e) =>
+                                handleWorkflowStatusChange(item.id, e.target.value as string)
+                            }
+                            disableUnderline
+                            sx={{
+                                fontSize: "0.875rem",
+                                cursor: "pointer",
+                                "& .MuiSelect-select": {
+                                    padding: "4px 0",
+                                },
+                            }}
+                        >
+                            {statuses.map((opt) => (
+                                <MenuItem key={opt.id} value={opt.id}>
+                                    {opt.status}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                );
             }
             case "responsible": {
-                return <FormControl
-                    variant="standard"
-                    fullWidth
-                    sx={{
-                        minWidth: 200,
-                    }}
-                >
-                    <Select
-                        value={item.responsible_person_id ?? ""}
-                        onChange={(e) =>
-                            handleUpdateTask(item.id, Number(e.target.value))
-                        }
-                        disableUnderline
+                return (
+                    <FormControl
+                        variant="standard"
+                        fullWidth
                         sx={{
-                            fontSize: "0.875rem",
-                            cursor: "pointer",
-                            "& .MuiSelect-select": {
-                                padding: "4px 0",
-                            },
+                            minWidth: 200,
                         }}
                     >
-                        {users.map((user) => (
-                            <MenuItem key={user.id} value={user.id}>
-                                {user.full_name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                        <Select
+                            value={item.responsible_person_id ?? ""}
+                            onChange={(e) =>
+                                handleUpdateTask(item.id, Number(e.target.value))
+                            }
+                            disableUnderline
+                            sx={{
+                                fontSize: "0.875rem",
+                                cursor: "pointer",
+                                "& .MuiSelect-select": {
+                                    padding: "4px 0",
+                                },
+                            }}
+                        >
+                            {users.map((user) => (
+                                <MenuItem key={user.id} value={user.id}>
+                                    {user.full_name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                );
             }
             case "created_by": {
                 return item.created_by_name || "-";
@@ -2324,16 +2603,28 @@ const ProjectTasksPage = () => {
                 return renderProgressBar(completed, total, "bg-[#ff9a9e]", "issues");
             }
             case "duration": {
-                return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
+                return (
+                    <CountdownTimer
+                        startDate={item.expected_start_date}
+                        targetDate={item.target_date}
+                    />
+                );
             }
             case "efforts_duration": {
-                return `${formatHours(item?.total_allocated_hours || 0)}`
+                return `${formatHours(item?.total_allocated_hours || 0)}`;
             }
             case "priority": {
-                return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";
+                return (
+                    item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-"
+                );
             }
             case "started_time": {
-                return <ActiveTimer activeTimeTillNow={item?.active_time_till_now} isStarted={item?.is_started} />;
+                return (
+                    <ActiveTimer
+                        activeTimeTillNow={item?.active_time_till_now}
+                        isStarted={item?.is_started}
+                    />
+                );
             }
             case "predecessor": {
                 return item.predecessor_task?.length || "0";
@@ -2342,7 +2633,9 @@ const ProjectTasksPage = () => {
                 return item.successor_task?.length || "0";
             }
             case "completion_percentage": {
-                const loggedInUserId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+                const loggedInUserId = JSON.parse(
+                    localStorage.getItem("user") || "{}"
+                )?.id;
 
                 if (item.responsible_person_id === loggedInUserId) {
                     return (
@@ -2356,7 +2649,9 @@ const ProjectTasksPage = () => {
                                 if (e.key === "Enter") {
                                     const value = (e.target as HTMLInputElement).value;
                                     if (value < item.completion_percent) {
-                                        toast.error(`Completion percentage must be greater than or equal to the current completion percentage (${item.completion_percent}%)`);
+                                        toast.error(
+                                            `Completion percentage must be greater than or equal to the current completion percentage (${item.completion_percent}%)`
+                                        );
                                         return;
                                     }
                                     handleCompletionPercentageChange(item.id, value);
@@ -2366,7 +2661,9 @@ const ProjectTasksPage = () => {
                                 const value = e.target.value;
                                 if (value !== String(item.completion_percent)) {
                                     if (value < item.completion_percent) {
-                                        toast.error(`Completion percentage must be greater than or equal to the current completion percentage (${item.completion_percent}%)`);
+                                        toast.error(
+                                            `Completion percentage must be greater than or equal to the current completion percentage (${item.completion_percent}%)`
+                                        );
                                         return;
                                     }
                                     handleCompletionPercentageChange(item.id, value);
@@ -2376,21 +2673,27 @@ const ProjectTasksPage = () => {
                     );
                 }
 
-                return <input
-                    type="number"
-                    defaultValue={item.completion_percent || 0}
-                    className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
-                    min={0}
-                    max={100}
-                    readOnly
-                />
+                return (
+                    <input
+                        type="number"
+                        defaultValue={item.completion_percent || 0}
+                        className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
+                        min={0}
+                        max={100}
+                        readOnly
+                    />
+                );
             }
             default:
                 return item[columnKey] || "-";
         }
     };
 
-    const renderEditableCell = (columnKey: string, value: any, onChange: (val: any) => void) => {
+    const renderEditableCell = (
+        columnKey: string,
+        value: any,
+        onChange: (val: any) => void
+    ) => {
         if (columnKey === "status") {
             return (
                 <Select
@@ -2420,13 +2723,11 @@ const ProjectTasksPage = () => {
                     <MenuItem value="">
                         <em>Select Responsible Person</em>
                     </MenuItem>
-                    {
-                        users.map((user: any) => (
-                            <MenuItem key={user.id} value={user.id}>
-                                {user.full_name || user.name}
-                            </MenuItem>
-                        ))
-                    }
+                    {users.map((user: any) => (
+                        <MenuItem key={user.id} value={user.id}>
+                            {user.full_name || user.name}
+                        </MenuItem>
+                    ))}
                 </Select>
             );
         }
@@ -2482,48 +2783,57 @@ const ProjectTasksPage = () => {
             );
         }
         return null;
-    }
+    };
 
     const leftActions = (
         <>
             {shouldShow("employee_project_tasks", "create") && (
                 <Button
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white px-2 sm:px-4"
                     onClick={() => setShowActionPanel(true)}
                 >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Action
+                    <Plus className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Action</span>
                 </Button>
             )}
-
-            <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
-                <span className="text-gray-700 font-medium text-sm">Total Tasks:</span>
-                <span className="text-lg font-bold text-[#C72030]">
-                    {paginationData?.total_count || 0}
-                </span>
-            </div>
         </>
     );
 
     const rightActions = (
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
+            {/* Total Tasks count - visible on all screen sizes */}
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                    Total:
+                </span>
+                <span className="text-sm font-bold text-[#C72030]">
+                    {paginationData?.total_count || 0}
+                </span>
+            </div>
+
             {/* Task Type Toggle - Only show when NOT in milestone context */}
             {!mid && (
-                <div className="flex items-center px-4 py-2">
-                    <span className="text-gray-700 font-medium text-sm">My Tasks</span>
+                <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-1">
+                    <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                        My
+                    </span>
                     <Switch
                         checked={taskType === "all"}
                         onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
                         sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                                color: '#C72030',
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                                color: "#C72030",
                             },
-                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                backgroundColor: '#C72030',
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                                backgroundColor: "#C72030",
                             },
+                            transform: "scale(0.8)",
+                            margin: "-4px",
                         }}
                     />
-                    <span className="text-gray-700 font-medium text-sm">All Tasks</span>
+                    <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                        All
+                    </span>
                 </div>
             )}
 
@@ -2531,21 +2841,21 @@ const ProjectTasksPage = () => {
             <div className="relative" ref={viewDropdownRef}>
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                    className="flex items-center gap-1 px-2 py-1.5 text-gray-700 hover:bg-gray-100 rounded"
                 >
-                    <span className="text-[#C72030] font-medium flex items-center gap-2">
+                    <span className="text-[#C72030] font-medium flex items-center gap-1">
                         {selectedView === "Kanban" ? (
-                            <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+                            <ChartNoAxesColumn className="w-3.5 h-3.5 rotate-180 text-[#C72030]" />
                         ) : (
-                            <List className="w-4 h-4 text-[#C72030]" />
+                            <List className="w-3.5 h-3.5 text-[#C72030]" />
                         )}
-                        {selectedView}
+                        <span className="hidden sm:inline text-xs">{selectedView}</span>
                     </span>
-                    <ChevronDown className="w-4 h-4 text-gray-600" />
+                    <ChevronDown className="w-3 h-3 text-gray-600" />
                 </button>
 
                 {isOpen && (
-                    <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                    <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[150px]">
                         <div className="py-2">
                             <button
                                 onClick={() => {
@@ -2581,54 +2891,51 @@ const ProjectTasksPage = () => {
             <div className="relative" ref={statusDropdownRef}>
                 <button
                     onClick={() => setOpenStatusOptions(!openStatusOptions)}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                    className="flex items-center gap-1 px-2 py-1.5 text-gray-700 hover:bg-gray-100 rounded"
                 >
-                    <span className="text-[#C72030] font-medium flex items-center gap-2">
-                        {STATUS_OPTIONS.find((option) => option.value === selectedFilterOption)?.label || "All"}
+                    <span className="text-[#C72030] font-medium text-xs max-w-[50px] sm:max-w-[80px] truncate">
+                        {STATUS_OPTIONS.find(
+                            (option) => option.value === selectedFilterOption
+                        )?.label || "All"}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-gray-600" />
+                    <ChevronDown className="w-3 h-3 text-gray-600 flex-shrink-0" />
                 </button>
 
                 {openStatusOptions && (
-                    <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                    <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[150px]">
                         <div className="py-2">
-                            {
-                                STATUS_OPTIONS.map((option) => (
-                                    <button
-                                        onClick={() => {
-                                            setSelectedFilterOption(option.value);
-                                            setOpenStatusOptions(false);
-                                        }}
-                                        className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
-                                    >
-                                        <span className="text-gray-700">{option.label}</span>
-                                    </button>
-                                ))
-                            }
+                            {STATUS_OPTIONS.map((option) => (
+                                <button
+                                    onClick={() => {
+                                        setSelectedFilterOption(option.value);
+                                        setOpenStatusOptions(false);
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                >
+                                    <span className="text-gray-700">{option.label}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
                 )}
             </div>
-
         </div>
     );
 
     if (selectedView === "Kanban") {
         return (
-            <div className="p-6">
-                {
-                    location.pathname.includes("projects") && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate(-1)}
-                            className="px-0 mb-2"
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back
-                        </Button>
-                    )
-                }
-                <div className="flex items-center justify-between">
+            <div className="p-3 sm:p-6">
+                {location.pathname.includes("projects") && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate(-1)}
+                        className="px-0 mb-2"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back
+                    </Button>
+                )}
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <Button
                         className="bg-[#C72030] hover:bg-[#A01020] text-white"
                         onClick={handleOpenDialog}
@@ -2636,24 +2943,30 @@ const ProjectTasksPage = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         {/* Task Type Toggle - Only show when NOT in milestone context */}
                         {!mid && (
-                            <div className="flex items-center gap-2 px-4 py-2">
-                                <span className="text-gray-700 font-medium text-sm">My Task</span>
+                            <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2">
+                                <span className="text-gray-700 font-medium text-xs sm:text-sm">
+                                    My Task
+                                </span>
                                 <Switch
                                     checked={taskType === "all"}
-                                    onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
+                                    onChange={() =>
+                                        setTaskType(taskType === "all" ? "my" : "all")
+                                    }
                                     sx={{
-                                        '& .MuiSwitch-switchBase.Mui-checked': {
-                                            color: '#C72030',
+                                        "& .MuiSwitch-switchBase.Mui-checked": {
+                                            color: "#C72030",
                                         },
-                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                            backgroundColor: '#C72030',
+                                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                                            backgroundColor: "#C72030",
                                         },
                                     }}
                                 />
-                                <span className="text-gray-700 font-medium text-sm">All Task</span>
+                                <span className="text-gray-700 font-medium text-xs sm:text-sm">
+                                    All Task
+                                </span>
                             </div>
                         )}
 
@@ -2709,7 +3022,10 @@ const ProjectTasksPage = () => {
                 </div>
 
                 <TaskManagementKanban
-                    fetchData={() => { setCurrentPage(1); refetchTasks(); }}
+                    fetchData={() => {
+                        setCurrentPage(1);
+                        refetchTasks();
+                    }}
                     showMyTasksOnly={taskType === "my"}
                     selectedFilterOption={selectedFilterOption}
                     selectedStatuses={selectedStatuses}
@@ -2727,18 +3043,25 @@ const ProjectTasksPage = () => {
                     maxWidth={false}
                 >
                     <DialogContent
-                        className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-                        style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                        className="w-full sm:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                        style={{
+                            margin: 0,
+                            maxHeight: "100vh",
+                            display: "flex",
+                            flexDirection: "column",
+                        }}
                         sx={{
                             padding: "0 !important",
                             "& .MuiDialogContent-root": {
                                 padding: "0 !important",
                                 overflow: "auto",
-                            }
+                            },
                         }}
                     >
                         <div className="sticky top-0 bg-white z-10">
-                            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+                            <h3 className="text-[14px] font-medium text-center mt-8">
+                                Add Tasks
+                            </h3>
                             <X
                                 className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
                                 onClick={handleCloseModal}
@@ -2787,7 +3110,10 @@ const ProjectTasksPage = () => {
 
                         {/* Subtask data in same columns */}
                         {columns.map((column) => (
-                            <td key={`${parentId}-subtask-${idx}-${column.key}`} className="p-4 text-left min-w-32">
+                            <td
+                                key={`${parentId}-subtask-${idx}-${column.key}`}
+                                className="p-4 text-left min-w-32"
+                            >
                                 {renderCell(subtask, column.key, true)}
                             </td>
                         ))}
@@ -2798,14 +3124,16 @@ const ProjectTasksPage = () => {
     };
 
     return (
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
             {/* Breadcrumbs */}
             {location.pathname.includes("projects") && (
                 <Breadcrumb className="mb-4">
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink
-                                onClick={() => navigate(`/vas/projects/${projectId}/milestones/${mid}`)}
+                                onClick={() =>
+                                    navigate(`/vas/projects/${projectId}/milestones/${mid}`)
+                                }
                                 className="cursor-pointer"
                             >
                                 {projectName || "Project"}
@@ -2814,7 +3142,9 @@ const ProjectTasksPage = () => {
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <BreadcrumbLink
-                                onClick={() => navigate(`/vas/projects/${projectId}/milestones`)}
+                                onClick={() =>
+                                    navigate(`/vas/projects/${projectId}/milestones`)
+                                }
                                 className="cursor-pointer"
                             >
                                 {milestoneName || "Milestone"}
@@ -2841,36 +3171,38 @@ const ProjectTasksPage = () => {
                 )
             } */}
 
-            <EnhancedTable
-                data={tasks}
-                columns={columns}
-                // renderActions={renderActions}
-                renderCell={renderCell}
-                leftActions={leftActions}
-                rightActions={rightActions}
-                storageKey="projects-table"
-                onSort={handleColumnSort}
-                onSearchChange={handleSearchChange}
-                onFilterClick={() => setIsFilterModalOpen(true)}
-                canAddRow={true}
-                loading={isLoading}
-                readonlyColumns={["id", "duration", "predecessor", "successor"]}
-                onAddRow={(newRowData) => {
-                    handleSubmit(newRowData)
-                }}
-                renderEditableCell={renderEditableCell}
-                newRowPlaceholder="Click to add new task"
-                collapsible={true}
-                getChildrenKey={() => "sub_tasks_managements"}
-                renderChildrenRows={renderChildrenRows}
-                // enableFreeze={true}
-                // freezeColumnsCount={4}
-                selectable={true}
-                selectedItems={selectedItems}
-                onSelectAll={handleSelectAll}
-                onSelectItem={handleSelectItem}
-                getItemId={(item: any) => String(item.id)}
-            />
+            <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+                <EnhancedTable
+                    data={tasks}
+                    columns={columns}
+                    // renderActions={renderActions}
+                    renderCell={renderCell}
+                    leftActions={leftActions}
+                    rightActions={rightActions}
+                    storageKey="projects-table"
+                    onSort={handleColumnSort}
+                    onSearchChange={handleSearchChange}
+                    onFilterClick={() => setIsFilterModalOpen(true)}
+                    canAddRow={true}
+                    loading={isLoading}
+                    readonlyColumns={["id", "duration", "predecessor", "successor"]}
+                    onAddRow={(newRowData) => {
+                        handleSubmit(newRowData);
+                    }}
+                    renderEditableCell={renderEditableCell}
+                    newRowPlaceholder="Click to add new task"
+                    collapsible={true}
+                    getChildrenKey={() => "sub_tasks_managements"}
+                    renderChildrenRows={renderChildrenRows}
+                    // enableFreeze={true}
+                    // freezeColumnsCount={4}
+                    selectable={true}
+                    selectedItems={selectedItems}
+                    onSelectAll={handleSelectAll}
+                    onSelectItem={handleSelectItem}
+                    getItemId={(item: any) => String(item.id)}
+                />
+            </div>
 
             <Dialog
                 open={openTaskModal}
@@ -2879,18 +3211,25 @@ const ProjectTasksPage = () => {
                 maxWidth={false}
             >
                 <DialogContent
-                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                    className="w-full sm:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    style={{
+                        margin: 0,
+                        maxHeight: "100vh",
+                        display: "flex",
+                        flexDirection: "column",
+                    }}
                     sx={{
                         padding: "0 !important",
                         "& .MuiDialogContent-root": {
                             padding: "0 !important",
                             overflow: "auto",
-                        }
+                        },
                     }}
                 >
                     <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+                        <h3 className="text-[14px] font-medium text-center mt-8">
+                            Add Tasks
+                        </h3>
                         <X
                             className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
                             onClick={handleCloseModal}
@@ -2913,15 +3252,35 @@ const ProjectTasksPage = () => {
                         <PaginationContent>
                             <PaginationItem>
                                 <PaginationPrevious
-                                    onClick={() => handlePageChange(Math.max(1, paginationData.current_page - 1))}
-                                    className={paginationData.current_page === 1 || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    onClick={() =>
+                                        handlePageChange(
+                                            Math.max(1, paginationData.current_page - 1)
+                                        )
+                                    }
+                                    className={
+                                        paginationData.current_page === 1 || isLoading
+                                            ? "pointer-events-none opacity-50"
+                                            : "cursor-pointer"
+                                    }
                                 />
                             </PaginationItem>
                             {renderPaginationItems()}
                             <PaginationItem>
                                 <PaginationNext
-                                    onClick={() => handlePageChange(Math.min(paginationData.total_pages, paginationData.current_page + 1))}
-                                    className={paginationData.current_page === paginationData.total_pages || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    onClick={() =>
+                                        handlePageChange(
+                                            Math.min(
+                                                paginationData.total_pages,
+                                                paginationData.current_page + 1
+                                            )
+                                        )
+                                    }
+                                    className={
+                                        paginationData.current_page ===
+                                            paginationData.total_pages || isLoading
+                                            ? "pointer-events-none opacity-50"
+                                            : "cursor-pointer"
+                                    }
                                 />
                             </PaginationItem>
                         </PaginationContent>
@@ -2938,25 +3297,36 @@ const ProjectTasksPage = () => {
             >
                 <DialogContent
                     className="w-full max-w-sm fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto h-full"
-                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                    style={{
+                        margin: 0,
+                        maxHeight: "100vh",
+                        display: "flex",
+                        flexDirection: "column",
+                    }}
                     sx={{
                         padding: "0 !important",
                         "& .MuiDialogContent-root": {
                             padding: "0 !important",
                             overflow: "auto",
-                        }
+                        },
                     }}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-5 border-b sticky top-0 bg-white z-10">
                         <h2 className="text-xl font-semibold">Filter</h2>
-                        <X className="cursor-pointer" onClick={() => setIsFilterModalOpen(false)} />
+                        <X
+                            className="cursor-pointer"
+                            onClick={() => setIsFilterModalOpen(false)}
+                        />
                     </div>
 
                     {/* Search Bar */}
                     <div className="px-6 py-4 border-b">
                         <div className="relative">
-                            <Search className="absolute left-3 top-2.5 text-red-400" size={18} />
+                            <Search
+                                className="absolute left-3 top-2.5 text-red-400"
+                                size={18}
+                            />
                             <input
                                 type="text"
                                 placeholder="Filter search..."
@@ -2968,13 +3338,15 @@ const ProjectTasksPage = () => {
                     {/* Filter Options */}
                     <div className="flex-1 overflow-y-auto divide-y">
                         {/* Project - Only show when NOT in project view */}
-                        {!location.pathname.includes('/projects/') && (
+                        {!location.pathname.includes("/projects/") && (
                             <div className="p-6 py-3">
                                 <div
                                     className="flex items-center justify-between cursor-pointer"
-                                    onClick={() => toggleDropdown('project')}
+                                    onClick={() => toggleDropdown("project")}
                                 >
-                                    <span className="font-medium text-sm select-none">Project</span>
+                                    <span className="font-medium text-sm select-none">
+                                        Project
+                                    </span>
                                     {dropdowns.project ? (
                                         <ChevronDown className="text-gray-400" />
                                     ) : (
@@ -2984,13 +3356,21 @@ const ProjectTasksPage = () => {
                                 {dropdowns.project && (
                                     <div className="mt-4 border">
                                         <div className="relative border-b">
-                                            <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                            <Search
+                                                className="absolute left-3 top-2.5 text-red-400"
+                                                size={16}
+                                            />
                                             <input
                                                 type="text"
                                                 placeholder="Filter project..."
                                                 className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                                                 value={searchTerms.project}
-                                                onChange={(e) => setSearchTerms({ ...searchTerms, project: e.target.value })}
+                                                onChange={(e) =>
+                                                    setSearchTerms({
+                                                        ...searchTerms,
+                                                        project: e.target.value,
+                                                    })
+                                                }
                                             />
                                         </div>
                                         {renderCheckboxList(
@@ -3008,7 +3388,7 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('status')}
+                                onClick={() => toggleDropdown("status")}
                             >
                                 <span className="font-medium text-sm select-none">Status</span>
                                 {dropdowns.status ? (
@@ -3020,17 +3400,25 @@ const ProjectTasksPage = () => {
                             {dropdowns.status && (
                                 <div className="mt-4 border">
                                     <div className="relative border-b">
-                                        <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                        <Search
+                                            className="absolute left-3 top-2.5 text-red-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="text"
                                             placeholder="Filter status..."
                                             className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                                             value={searchTerms.status}
-                                            onChange={(e) => setSearchTerms({ ...searchTerms, status: e.target.value })}
+                                            onChange={(e) =>
+                                                setSearchTerms({
+                                                    ...searchTerms,
+                                                    status: e.target.value,
+                                                })
+                                            }
                                         />
                                     </div>
                                     {renderCheckboxList(
-                                        STATUS_OPTIONS.filter(opt => opt.value !== 'all'),
+                                        STATUS_OPTIONS.filter((opt) => opt.value !== "all"),
                                         selectedStatuses,
                                         setSelectedStatuses,
                                         searchTerms.status
@@ -3043,9 +3431,11 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('workflowStatus')}
+                                onClick={() => toggleDropdown("workflowStatus")}
                             >
-                                <span className="font-medium text-sm select-none">Workflow Status</span>
+                                <span className="font-medium text-sm select-none">
+                                    Workflow Status
+                                </span>
                                 {dropdowns.workflowStatus ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
@@ -3055,13 +3445,21 @@ const ProjectTasksPage = () => {
                             {dropdowns.workflowStatus && (
                                 <div className="mt-4 border">
                                     <div className="relative border-b">
-                                        <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                        <Search
+                                            className="absolute left-3 top-2.5 text-red-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="text"
                                             placeholder="Filter workflow status..."
                                             className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                                             value={searchTerms.workflowStatus}
-                                            onChange={(e) => setSearchTerms({ ...searchTerms, workflowStatus: e.target.value })}
+                                            onChange={(e) =>
+                                                setSearchTerms({
+                                                    ...searchTerms,
+                                                    workflowStatus: e.target.value,
+                                                })
+                                            }
                                         />
                                     </div>
                                     {renderCheckboxList(
@@ -3078,9 +3476,11 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('responsiblePerson')}
+                                onClick={() => toggleDropdown("responsiblePerson")}
                             >
-                                <span className="font-medium text-sm select-none">Responsible Person</span>
+                                <span className="font-medium text-sm select-none">
+                                    Responsible Person
+                                </span>
                                 {dropdowns.responsiblePerson ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
@@ -3090,17 +3490,29 @@ const ProjectTasksPage = () => {
                             {dropdowns.responsiblePerson && (
                                 <div className="mt-4 border">
                                     <div className="relative border-b">
-                                        <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                        <Search
+                                            className="absolute left-3 top-2.5 text-red-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="text"
                                             placeholder="Filter responsible person..."
                                             className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                                             value={searchTerms.responsiblePerson}
-                                            onChange={(e) => setSearchTerms({ ...searchTerms, responsiblePerson: e.target.value })}
+                                            onChange={(e) =>
+                                                setSearchTerms({
+                                                    ...searchTerms,
+                                                    responsiblePerson: e.target.value,
+                                                })
+                                            }
                                         />
                                     </div>
                                     {renderCheckboxList(
-                                        users.map(u => ({ ...u, label: u.full_name, value: u.id })),
+                                        users.map((u) => ({
+                                            ...u,
+                                            label: u.full_name,
+                                            value: u.id,
+                                        })),
                                         selectedResponsible,
                                         setSelectedResponsible,
                                         searchTerms.responsiblePerson
@@ -3113,9 +3525,11 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('createdBy')}
+                                onClick={() => toggleDropdown("createdBy")}
                             >
-                                <span className="font-medium text-sm select-none">Created By</span>
+                                <span className="font-medium text-sm select-none">
+                                    Created By
+                                </span>
                                 {dropdowns.createdBy ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
@@ -3125,17 +3539,29 @@ const ProjectTasksPage = () => {
                             {dropdowns.createdBy && (
                                 <div className="mt-4 border">
                                     <div className="relative border-b">
-                                        <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                        <Search
+                                            className="absolute left-3 top-2.5 text-red-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="text"
                                             placeholder="Filter created by..."
                                             className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                                             value={searchTerms.createdBy}
-                                            onChange={(e) => setSearchTerms({ ...searchTerms, createdBy: e.target.value })}
+                                            onChange={(e) =>
+                                                setSearchTerms({
+                                                    ...searchTerms,
+                                                    createdBy: e.target.value,
+                                                })
+                                            }
                                         />
                                     </div>
                                     {renderCheckboxList(
-                                        users.map(u => ({ ...u, label: u.full_name, value: u.id })),
+                                        users.map((u) => ({
+                                            ...u,
+                                            label: u.full_name,
+                                            value: u.id,
+                                        })),
                                         selectedCreators,
                                         setSelectedCreators,
                                         searchTerms.createdBy
@@ -3148,7 +3574,7 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('tags')}
+                                onClick={() => toggleDropdown("tags")}
                             >
                                 <span className="font-medium text-sm select-none">Tags</span>
                                 {dropdowns.tags ? (
@@ -3160,13 +3586,18 @@ const ProjectTasksPage = () => {
                             {dropdowns.tags && (
                                 <div className="mt-4 border">
                                     <div className="relative border-b">
-                                        <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                        <Search
+                                            className="absolute left-3 top-2.5 text-red-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="text"
                                             placeholder="Filter tags..."
                                             className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                                             value={searchTerms.tags}
-                                            onChange={(e) => setSearchTerms({ ...searchTerms, tags: e.target.value })}
+                                            onChange={(e) =>
+                                                setSearchTerms({ ...searchTerms, tags: e.target.value })
+                                            }
                                         />
                                     </div>
                                     {renderCheckboxList(
@@ -3186,9 +3617,11 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('startDate')}
+                                onClick={() => toggleDropdown("startDate")}
                             >
-                                <span className="font-medium text-sm select-none">Start Date</span>
+                                <span className="font-medium text-sm select-none">
+                                    Start Date
+                                </span>
                                 {dropdowns.startDate ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
@@ -3200,7 +3633,9 @@ const ProjectTasksPage = () => {
                                     <input
                                         type="date"
                                         value={dates.startDate}
-                                        onChange={(e) => setDates({ ...dates, startDate: e.target.value })}
+                                        onChange={(e) =>
+                                            setDates({ ...dates, startDate: e.target.value })
+                                        }
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
                                 </div>
@@ -3211,9 +3646,11 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('endDate')}
+                                onClick={() => toggleDropdown("endDate")}
                             >
-                                <span className="font-medium text-sm select-none">End Date</span>
+                                <span className="font-medium text-sm select-none">
+                                    End Date
+                                </span>
                                 {dropdowns.endDate ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
@@ -3225,7 +3662,9 @@ const ProjectTasksPage = () => {
                                     <input
                                         type="date"
                                         value={dates.endDate}
-                                        onChange={(e) => setDates({ ...dates, endDate: e.target.value })}
+                                        onChange={(e) =>
+                                            setDates({ ...dates, endDate: e.target.value })
+                                        }
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
                                 </div>
@@ -3236,9 +3675,11 @@ const ProjectTasksPage = () => {
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown('completedAt')}
+                                onClick={() => toggleDropdown("completedAt")}
                             >
-                                <span className="font-medium text-sm select-none">Completed At</span>
+                                <span className="font-medium text-sm select-none">
+                                    Completed At
+                                </span>
                                 {dropdowns.completedAt ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
@@ -3250,7 +3691,9 @@ const ProjectTasksPage = () => {
                                     <input
                                         type="date"
                                         value={dates.completedAt}
-                                        onChange={(e) => setDates({ ...dates, completedAt: e.target.value })}
+                                        onChange={(e) =>
+                                            setDates({ ...dates, completedAt: e.target.value })
+                                        }
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
                                 </div>
@@ -3337,7 +3780,7 @@ const ProjectTasksPage = () => {
             )}
 
             {selectedItems.length > 0 && (
-                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] w-[90vw] sm:w-auto selection-panel">
                     <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
                         <div className="text-[#C72030] font-bold text-lg"></div>
                     </div>
@@ -3347,7 +3790,10 @@ const ProjectTasksPage = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
-                                onClick={() => { fetchSprintsList(); setIsAddToSprintModalOpen(true); }}
+                                onClick={() => {
+                                    fetchSprintsList();
+                                    setIsAddToSprintModalOpen(true);
+                                }}
                                 variant="ghost"
                                 size="sm"
                                 className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
@@ -3370,7 +3816,10 @@ const ProjectTasksPage = () => {
 
             <AddToSprintModal
                 isOpen={isAddToSprintModalOpen}
-                onClose={() => { setIsAddToSprintModalOpen(false); setSelectedSprintId(''); }}
+                onClose={() => {
+                    setIsAddToSprintModalOpen(false);
+                    setSelectedSprintId("");
+                }}
                 sprints={sprints}
                 selectedSprintId={selectedSprintId}
                 setSelectedSprintId={setSelectedSprintId}
@@ -3391,6 +3840,6 @@ const ProjectTasksPage = () => {
             />
         </div>
     );
-}
+};
 
-export default ProjectTasksPage
+export default ProjectTasksPage;

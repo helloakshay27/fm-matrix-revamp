@@ -345,6 +345,9 @@ export const ExpenseCreatePage: React.FC = () => {
     }, 0);
   };
 
+  // ✅ Auto-calculated tax amount for the single-expense view
+  const taxAmount = calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
+
   const calculateSubtotal = () =>
     lines.reduce((sum, line) => sum + (parseFloat(line.amount) || 0), 0);
 
@@ -623,7 +626,6 @@ export const ExpenseCreatePage: React.FC = () => {
           },
         ];
       } else {
-        // Multiple lines — ✅ all fields correctly mapped
         expenseAccountsAttributes = lines.map(line => ({
           lock_account_ledger_id: parseInt(line.accountId),
           account_type: line.accountType,
@@ -998,6 +1000,15 @@ export const ExpenseCreatePage: React.FC = () => {
                     ))}
                   </Select>
                 </FormControl>
+
+                {/* ✅ Tax Amount — read-only calculation */}
+                {taxType === 'tax_group' && taxGroupId && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+                    <p className="text-sm text-gray-700">
+                      Tax Amount = ₹<span className="font-semibold text-blue-600">{taxAmount.toFixed(2)}</span>
+                    </p>
+                  </div>
+                )}
 
                 {taxType === 'non_taxable' && (
                   <div className="mt-3">

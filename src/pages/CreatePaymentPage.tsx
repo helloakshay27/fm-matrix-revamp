@@ -580,7 +580,7 @@ export const CreatePaymentPage: React.FC = () => {
       sonnerToast.success("Payment saved successfully!");
       const newId = res.data?.id || res.data?.lock_payment?.id;
       if (newId) {
-        navigate(`/accounting/payments-made?paymentId=${newId}&view=detail`);
+        navigate(`/accounting/payments-made`);
       } else {
         navigate("/accounting/payments-made");
       }

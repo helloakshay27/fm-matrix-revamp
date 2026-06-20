@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
-import { useNavigate,useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { ServicePRFilterDialog } from "@/components/ServicePRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -31,6 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -123,6 +125,7 @@ const columns: ColumnConfig[] = [
 export const ServicePRDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions()
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const location = useLocation();
@@ -130,41 +133,43 @@ export const ServicePRDashboard = () => {
   const bgRefreshingRef = useRef(false);
   const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    referenceNumber: urlParams.get("referenceNumber") || "",
+    prNumber: urlParams.get("prNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+    approvalStatus: urlParams.get("approvalStatus") || "Select",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [servicePR, setServicePR] = useState([]);
-  const [filters, setFilters] = useState({
-    referenceNumber: "",
-    prNumber: "",
-    supplierName: "",
-    approvalStatus: "Select",
-  });
+  const [filters, setFilters] = useState(initialFilters);
   // const [pagination, setPagination] = useState({
   //   current_page: 1,
   //   total_count: 0,
   //   total_pages: 0,
   // });
 
-  const [pagination, setPagination] = useState(() => {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    current_page: Number(params.get('page')) || 1,
+  const [pagination, setPagination] = useState({
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
-  };
-});
+  });
   const [updatingStatus, setUpdatingStatus] = useState<{
     [key: string]: boolean;
   }>({});
 
- const applyResponse = (response: any) => {
-  setServicePR(response.work_orders);
-  setPagination((prev) => ({
-    ...prev,
-    total_count: response.total_count,
-    total_pages: response.total_pages,
-  }));
-};
+  const applyResponse = (response: any) => {
+    setServicePR(response.work_orders);
+    setPagination((prev) => ({
+      ...prev,
+      total_count: response.total_count,
+      total_pages: response.total_pages,
+    }));
+  };
 
   const fetchData = async (filterParams: Record<string, any> = {}) => {
     const page: number = filterParams.page ?? pagination.current_page;
@@ -212,20 +217,28 @@ export const ServicePRDashboard = () => {
   };
 
   useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const urlPage = Number(params.get('page')) || 1;
-  if (urlPage !== pagination.current_page) {
-    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
-  }
-}, [pagination.current_page]);
+    fetchData({
+      page: urlPage,
+      search: initialSearch,
+      reference_number: initialFilters.referenceNumber,
+      external_id: initialFilters.prNumber,
+      supplier_name: initialFilters.supplierName,
+      approval_status: initialFilters.approvalStatus !== "Select" ? initialFilters.approvalStatus : "",
+    });
+  }, []);
 
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
-
+  // Update URL whenever pagination, filters or search changes
   useEffect(() => {
-  fetchData({ page: pagination.current_page });
-}, [pagination.current_page]);
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
+    if (filters.prNumber) params.set("prNumber", filters.prNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.approvalStatus && filters.approvalStatus !== "Select") params.set("approvalStatus", filters.approvalStatus);
+
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   // Invalidate cache and re-fetch when site changes while page is open
   useEffect(() => {
@@ -365,25 +378,34 @@ export const ServicePRDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/service-pr/details/${item.id}`);
-        }}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      {item.can_edit && (
+      {
+        shouldShow("Service PR", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/finance/service-pr/details/${item.id}`, {
+                state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+              });
+            }}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {shouldShow("Service PR", "update") && item.can_edit && (
         <Button
           size="sm"
           variant="ghost"
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/finance/service-pr/edit/${item.id}`);
+            navigate(`/finance/service-pr/edit/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
           }}
         >
           <Edit className="w-4 h-4" />
@@ -399,6 +421,8 @@ export const ServicePRDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
+      {/* {
+        shouldShow("Service PR", "create") && ( */}
       <Button
         className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
         onClick={() => navigate("/finance/service-pr/add")}
@@ -406,6 +430,9 @@ export const ServicePRDashboard = () => {
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
+      {/* )
+      } */}
+
     </div>
   );
 
@@ -422,21 +449,21 @@ export const ServicePRDashboard = () => {
     </Button>
   );
 
- const handlePageChange = async (page: number) => {
-  if (
-    page < 1 ||
-    page > pagination.total_pages ||
-    page === pagination.current_page ||
-    loading
-  ) {
-    return;
-  }
+  const handlePageChange = async (page: number) => {
+    if (
+      page < 1 ||
+      page > pagination.total_pages ||
+      page === pagination.current_page ||
+      loading
+    ) {
+      return;
+    }
 
-  navigate(`${location.pathname}?page=${page}`, { replace: true });
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
 
-  try {
-    setPagination((prev) => ({ ...prev, current_page: page }));
-    await fetchData({
+    try {
+      setPagination((prev) => ({ ...prev, current_page: page }));
+      await fetchData({
         page,
         reference_number: filters.referenceNumber,
         external_id: filters.prNumber,

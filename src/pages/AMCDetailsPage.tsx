@@ -108,10 +108,41 @@ interface AmcVisitLog {
   } | null;
 }
 
+interface VisitLogEntry {
+  id?: number;
+  visit_number: number;
+  scheduled_date?: string;
+  scheduled_time?: string;
+  actual_visit_date?: string | null;
+  status?: string;
+  remarks?: string | null;
+  technician?: Technician | null;
+  attachment?: {
+    id?: number;
+    document?: string;
+    document_url?: string;
+    [key: string]: any;
+  } | null;
+}
+
+interface FrequencyVisitGroup {
+  frequency_config_id: number;
+  frequency: string;
+  description?: string;
+  cron_expression?: string;
+  no_of_visits?: number;
+  total?: number;
+  completed?: number;
+  pending?: number;
+  missed?: number;
+  visits: VisitLogEntry[];
+}
+
 interface AMCDetailsDataWithVisits extends AMCDetailsData {
   amc_visit_logs: AmcVisitLog[];
   amc_contracts?: any[];
   amc_invoices?: any[];
+  visit_logs_by_frequency?: FrequencyVisitGroup[];
 }
 
 interface TicketRecord {
@@ -188,6 +219,9 @@ export const AMCDetailsPage = () => {
   const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
   const [visitUpdateLoading, setVisitUpdateLoading] = useState(false);
+  const [activeVisitFreqTab, setActiveVisitFreqTab] = useState(0);
+
+  const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
     if (!assetIds.length) return;
@@ -371,6 +405,7 @@ export const AMCDetailsPage = () => {
   useEffect(() => {
     if (id) {
       dispatch(fetchAMCDetails(id));
+      setActiveVisitFreqTab(0);
     }
   }, [dispatch, id]);
 
@@ -685,20 +720,22 @@ export const AMCDetailsPage = () => {
                     </div>
                     SUPPLIER INFORMATION
                   </CardTitle>
-                  <Button
-                    className="px-4 py-2 font-medium text-[#C72030] border border-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
+                  {/* <Button
+                    className="px-4 py-2 font-medium t border rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
                     style={{
                       backgroundColor: "#F6F4EE",
-                      color: "#C72030",
+                      color: '#C72030',
                       border: "1px solid #C72030",
                       borderRadius: "4px",
                       padding: "8px 16px",
                       fontSize: "14px",
                       fontWeight: 500,
                     }}
+
+
                   >
                     View Supplier
-                  </Button>
+                  </Button> */}
                 </div>
               </CardHeader>
               <CardContent
@@ -1225,9 +1262,8 @@ export const AMCDetailsPage = () => {
                           return (
                             <div
                               key={card.label}
-                              className={`p-4 rounded-lg cursor-pointer ${
-                                occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
-                              }`}
+                              className={`p-4 rounded-lg cursor-pointer ${occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
+                                }`}
                               style={{ backgroundColor: "#F6F4EE" }}
                               onClick={() => {
                                 setOccurrenceStatusFilter(card.label);
@@ -1445,13 +1481,12 @@ export const AMCDetailsPage = () => {
                             <TableCell>
                               {t.status ? (
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    t.status.toLowerCase() === "open"
-                                      ? "bg-gray-200 text-gray-900"
-                                      : t.status.toLowerCase() === "pending"
-                                        ? "bg-[#C72030] text-white"
-                                        : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${t.status.toLowerCase() === "open"
+                                    ? "bg-gray-200 text-gray-900"
+                                    : t.status.toLowerCase() === "pending"
+                                      ? "bg-[#C72030] text-white"
+                                      : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {t.status}
                                 </span>
@@ -1465,8 +1500,8 @@ export const AMCDetailsPage = () => {
                             <TableCell className="text-gray-900">
                               {t.created_at
                                 ? new Date(t.created_at).toLocaleDateString(
-                                    "en-GB"
-                                  )
+                                  "en-GB"
+                                )
                                 : "—"}
                             </TableCell>
                           </TableRow>
@@ -1504,130 +1539,260 @@ export const AMCDetailsPage = () => {
                 className="p-6"
                 style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
               >
-                {/* Visits Table */}
-                <div className="bg-white rounded-lg border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#EDEAE3]">
-                        <TableHead className="w-10" />
-                        <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
-                        {/* <TableHead className="font-semibold text-[#1a1a1a]">Asset Period</TableHead> */}
-                        <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {amcVisitData.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={10} className="text-center py-6 text-gray-500">
-                            No visit history found.
-                          </TableCell>
+                {visitLogsByFrequency && visitLogsByFrequency.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Frequency Tab Buttons */}
+                    <div className="flex border-b border-gray-200 overflow-x-auto">
+                      {visitLogsByFrequency.map((group, idx) => (
+                        <button
+                          key={group.frequency_config_id}
+                          type="button"
+                          onClick={() => setActiveVisitFreqTab(idx)}
+                          className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                            idx === activeVisitFreqTab
+                              ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
+                        >
+                          {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
+                          <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+                            {group.no_of_visits ?? group.visits.length}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Active Frequency Panel */}
+                    {visitLogsByFrequency.map((group, idx) => idx !== activeVisitFreqTab ? null : (
+                      <div key={group.frequency_config_id}>
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                          {[
+                            { label: "Total", value: group.total ?? 0, bg: "bg-[#F6F4EE]", textColor: "text-gray-900" },
+                            { label: "Completed", value: group.completed ?? 0, bg: "bg-green-50", textColor: "text-green-700" },
+                            { label: "Pending", value: group.pending ?? 0, bg: "bg-blue-50", textColor: "text-blue-700" },
+                            { label: "Missed", value: group.missed ?? 0, bg: "bg-red-50", textColor: "text-red-700" },
+                          ].map((card) => (
+                            <div key={card.label} className={`${card.bg} rounded-lg p-4`}>
+                              <div className={`text-2xl font-bold ${card.textColor}`}>
+                                {String(card.value).padStart(2, "0")}
+                              </div>
+                              <div className="text-sm text-gray-600 font-medium mt-0.5">{card.label}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Cron info row */}
+                        {group.cron_expression && (
+                          <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-600">
+                            {group.description && (
+                              <span><span className="font-medium text-gray-800">Description:</span> {group.description}</span>
+                            )}
+                            <span><span className="font-medium text-gray-800">Schedule:</span> <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{group.cron_expression}</code></span>
+                          </div>
+                        )}
+
+                        {/* Visits Table */}
+                        <div className="bg-white rounded-lg border overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-[#EDEAE3]">
+                                <TableHead className="w-10" />
+                                <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Date</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Time</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody className="bg-white">
+                              {group.visits.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                                    No visits found.
+                                  </TableCell>
+                                </TableRow>
+                              ) : (
+                                group.visits.map((visit) => {
+                                  const isSelected = selectedVisitId === visit.id;
+                                  return (
+                                    <TableRow
+                                      key={visit.id ?? visit.visit_number}
+                                      className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                                    >
+                                      <TableCell className="w-10">
+                                        {visit.id && (
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => setSelectedVisitId(isSelected ? null : visit.id!)}
+                                            className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                          />
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="font-medium text-gray-900">{visit.visit_number}</TableCell>
+                                      <TableCell className="text-gray-900">{visit.scheduled_date || "—"}</TableCell>
+                                      <TableCell className="text-gray-900">{visit.scheduled_time || "—"}</TableCell>
+                                      <TableCell className="text-gray-900">{visit.actual_visit_date || "—"}</TableCell>
+                                      <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
+                                      <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
+                                      <TableCell>
+                                        {visit.status ? (
+                                          <span
+                                            className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                              visit.status.toLowerCase() === "completed"
+                                                ? "bg-green-100 text-green-800"
+                                                : visit.status.toLowerCase() === "missed"
+                                                ? "bg-red-100 text-red-800"
+                                                : visit.status.toLowerCase() === "pending"
+                                                ? "bg-amber-100 text-amber-800"
+                                                : "bg-gray-100 text-gray-700"
+                                            }`}
+                                          >
+                                            {visit.status.toUpperCase()}
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-400 text-sm">—</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        {visit.attachment?.document || visit.attachment?.document_url ? (
+                                          <a
+                                            href={visit.attachment.document || visit.attachment.document_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
+                                          >
+                                            <FileText className="w-4 h-4" />
+                                            View
+                                          </a>
+                                        ) : (
+                                          <span className="text-gray-400 text-sm">—</span>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* Fallback: flat visit table when no frequency groups */
+                  <div className="bg-white rounded-lg border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-[#EDEAE3]">
+                          <TableHead className="w-10" />
+                          <TableHead className="font-semibold text-[#1a1a1a]">Visit</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                         </TableRow>
-                      ) : (
-                        amcVisitData.map((visit) => {
-                          const isSelected = selectedVisitId === visit.id;
-                          return (
-                            <TableRow
-                              key={visit.id}
-                              className={`border-b border-gray-200 transition-colors ${
-                                isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"
-                              }`}
-                            >
-                              <TableCell className="w-10">
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() =>
-                                    setSelectedVisitId(isSelected ? null : visit.id)
-                                  }
-                                  className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
-                                />
-                              </TableCell>
-                              <TableCell className="font-medium text-gray-900">
-                                {visit.visit_number ?? "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {visit.visit_date
-                                  ? new Date(visit.visit_date).toLocaleDateString("en-GB")
-                                  : "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {(visit as any).actual_visit_date
-                                  ? (() => {
-                                      const raw = (visit as any).actual_visit_date as string;
-                                      if (raw.includes("/")) return raw;
-                                      const d = new Date(raw);
-                                      return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
-                                    })()
-                                  : "—"}
-                              </TableCell>
-                              {/* <TableCell className="text-gray-900">
-                                {visit.asset_period || "—"}
-                              </TableCell> */}
-                              <TableCell className="text-gray-900">
-                                {visit.technician?.name || "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">
-                                {visit.remarks || "—"}
-                              </TableCell>
-                              <TableCell>
-                                {(visit as any).status ? (
-                                  <span
-                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
-                                      (visit as any).status.toLowerCase() === "completed"
-                                        ? "bg-green-100 text-green-800"
-                                        : (visit as any).status.toLowerCase() === "cancelled"
+                      </TableHeader>
+                      <TableBody className="bg-white">
+                        {amcVisitData.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                              No visit history found.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          amcVisitData.map((visit) => {
+                            const isSelected = selectedVisitId === visit.id;
+                            return (
+                              <TableRow
+                                key={visit.id}
+                                className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                              >
+                                <TableCell className="w-10">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => setSelectedVisitId(isSelected ? null : visit.id)}
+                                    className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                  />
+                                </TableCell>
+                                <TableCell className="font-medium text-gray-900">{visit.visit_number ?? "—"}</TableCell>
+                                <TableCell className="text-gray-900">
+                                  {visit.visit_date ? new Date(visit.visit_date).toLocaleDateString("en-GB") : "—"}
+                                </TableCell>
+                                <TableCell className="text-gray-900">
+                                  {(visit as any).actual_visit_date
+                                    ? (() => {
+                                        const raw = (visit as any).actual_visit_date as string;
+                                        if (raw.includes("/")) return raw;
+                                        const d = new Date(raw);
+                                        return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                                      })()
+                                    : "—"}
+                                </TableCell>
+                                <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
+                                <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
+                                <TableCell>
+                                  {(visit as any).status ? (
+                                    <span
+                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                        (visit as any).status.toLowerCase() === "completed"
+                                          ? "bg-green-100 text-green-800"
+                                          : (visit as any).status.toLowerCase() === "cancelled"
                                           ? "bg-red-100 text-red-800"
                                           : "bg-gray-100 text-gray-700"
-                                    }`}
-                                  >
-                                    {((visit as any).status as string).toUpperCase()}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {(() => {
-                                  const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
-                                  const total = amcDetails?.amc_assets?.length ?? 0;
-                                  const covered = ids.length;
-                                  return covered > 0 ? (
-                                    <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
-                                      {covered}{total > 0 ? ` / ${total}` : ""}
+                                      }`}
+                                    >
+                                      {((visit as any).status as string).toUpperCase()}
                                     </span>
                                   ) : (
                                     <span className="text-gray-400 text-sm">—</span>
-                                  );
-                                })()}
-                              </TableCell>
-                              <TableCell>
-                                {visit.attachment?.document || visit.attachment?.document_url ? (
-                                  <a
-                                    href={visit.attachment.document || visit.attachment.document_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
-                                  >
-                                    <FileText className="w-4 h-4" />
-                                    View
-                                  </a>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">—</span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {(() => {
+                                    const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
+                                    const total = amcDetails?.amc_assets?.length ?? 0;
+                                    const covered = ids.length;
+                                    return covered > 0 ? (
+                                      <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
+                                        {covered}{total > 0 ? ` / ${total}` : ""}
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400 text-sm">—</span>
+                                    );
+                                  })()}
+                                </TableCell>
+                                <TableCell>
+                                  {visit.attachment?.document || visit.attachment?.document_url ? (
+                                    <a
+                                      href={visit.attachment.document || visit.attachment.document_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
+                                    >
+                                      <FileText className="w-4 h-4" />
+                                      View
+                                    </a>
+                                  ) : (
+                                    <span className="text-gray-400 text-sm">—</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -1982,11 +2147,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>{" "}
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === "active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {asset.asset_status?.replace("_", " ") || "—"}
                                 </span>
@@ -2203,11 +2367,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    (service as any).status === "Active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${(service as any).status === "Active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {(service as any).status || "—"}
                                 </span>
@@ -2272,11 +2435,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === "active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {asset.asset_status?.replace("_", " ") || "—"}
                                 </span>
@@ -2327,6 +2489,9 @@ export const AMCDetailsPage = () => {
                 </span>
                 <span className="text-[12px] font-medium text-[#6B7280] leading-tight">
                   {(() => {
+                    // Check frequency groups first, then fall back to flat list
+                    const freqVisit = visitLogsByFrequency?.flatMap((g) => g.visits).find((v) => v.id === selectedVisitId);
+                    if (freqVisit) return `Visit #${freqVisit.visit_number} — ${freqVisit.scheduled_date || ""}`;
                     const v = amcVisitData.find((x) => x.id === selectedVisitId);
                     return v
                       ? `Visit #${v.visit_number} — ${v.visit_date ? new Date(v.visit_date).toLocaleDateString("en-GB") : ""}`

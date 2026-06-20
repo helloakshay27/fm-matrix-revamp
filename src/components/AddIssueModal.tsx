@@ -1105,9 +1105,23 @@ const AddIssueModal = ({
       open={openDialog}
       onClose={handleCloseDialog}
       TransitionComponent={Transition}
+      maxWidth={false}
+      PaperProps={{
+        sx: {
+          width: { xs: "100vw", lg: "42rem" },
+          maxWidth: "none",
+          height: "100vh",
+          maxHeight: "100vh",
+          margin: 0,
+          borderRadius: 0,
+          position: "fixed",
+          right: 0,
+          top: 0,
+        },
+      }}
     >
       <DialogContent
-        className="w-[42rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm"
+        className="w-full h-full rounded-none bg-[#fff] text-sm"
         style={{ margin: 0 }}
         sx={{
           padding: "0 !important",
@@ -1127,9 +1141,9 @@ const AddIssueModal = ({
             sx={{
               height: "calc(100vh - 110px)",
               overflowY: "auto",
-              pr: 1.5,
+              pr: { xs: 1, sm: 1.5 },
               fontSize: "12px",
-              pl: 2,
+              pl: { xs: 1, sm: 2 },
               pt: 2,
             }}
           >
@@ -1155,7 +1169,14 @@ const AddIssueModal = ({
             </Box>
 
             {/* Project and Milestone */}
-            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                gap: 2,
+                mb: 2,
+              }}
+            >
               <FormControl fullWidth size="small">
                 <InputLabel>Project</InputLabel>
                 <Select
@@ -1194,7 +1215,14 @@ const AddIssueModal = ({
             </Box>
 
             {/* Task and Subtask */}
-            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                gap: 2,
+                mb: 2,
+              }}
+            >
               <FormControl fullWidth size="small">
                 <InputLabel>Task</InputLabel>
                 <Select
@@ -1311,7 +1339,7 @@ const AddIssueModal = ({
             </Box>
 
             {/* Dates Section */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <label className="block text-xs text-gray-700 mb-1">
                   End Date *

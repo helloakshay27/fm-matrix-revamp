@@ -6,9 +6,10 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchPendingApprovals } from "@/store/slices/pendingApprovalSlice";
-import { useNavigate ,useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
   {
@@ -50,7 +51,7 @@ const columns: ColumnConfig[] = [
     key: "siteName",
     label: "Site Name",
     sortable: true,
-    draggable: true,  
+    draggable: true,
     defaultVisible: true,
   },
   {
@@ -88,6 +89,7 @@ export const PendingApprovalsDashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { shouldShow } = useDynamicPermissions()
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -100,7 +102,7 @@ export const PendingApprovalsDashboard = () => {
   const [filters, setFilters] = useState({
     type: "",
   });
- const [pagination, setPagination] = useState(() => {
+  const [pagination, setPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
       current_page: Number(params.get('page')) || 1,
@@ -136,7 +138,7 @@ export const PendingApprovalsDashboard = () => {
         level_id: item.level_id,
         user_id: item.user_id,
       }));
-     setPendingApprovalsData(formattedResponse);
+      setPendingApprovalsData(formattedResponse);
       setPagination((prev) => ({
         ...prev,
         total_count: response.total_count,
@@ -148,7 +150,7 @@ export const PendingApprovalsDashboard = () => {
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
     navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
     fetchData({
       type: filters.type,
@@ -197,24 +199,27 @@ useEffect(() => {
                   ? `finance/grn-srn/details`
                   : `finance/invoices`;
       return (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={() =>
-            navigate(
-              `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}`
-            )
-          }
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        shouldShow("Pending Approvals", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() =>
+              navigate(
+                `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}`
+              )
+            }
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        )
+
       );
     }
     return item[columnKey];
   };
 
- const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
