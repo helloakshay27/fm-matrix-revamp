@@ -2512,14 +2512,22 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
+                      label="Assets Per Day"
+                      placeholder="Enter Assets Per Day"
+                      type="number"
+                      fullWidth
+                      value={formData.assetsPerDay}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled
                       label="Remarks"
                       placeholder="Enter Remarks"
                       fullWidth
                       value={formData.remarks}
                       sx={{ mb: 3 }}
                     />
-
-                    <div></div>
                   </div>
                 </CardContent>
               </Card>
@@ -2546,14 +2554,49 @@ export const AddAMCPage = () => {
                 background: '#FFF',
                 boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
               }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
-                      SCHEDULE
-                    </CardTitle>
-                  </CardHeader> */}
-                <CardContent className="p-4">
-                  <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                <CardContent className="p-0">
+                  {frequencyConfigs.length > 0 ? (
+                    <>
+                      {/* Frequency tabs */}
+                      <div className="flex border-b border-gray-200 overflow-x-auto">
+                        {frequencyConfigs.map((cfg, idx) => (
+                          <button
+                            key={cfg.frequency}
+                            type="button"
+                            onClick={() => setActiveFrequencyTab(idx)}
+                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                              activeFrequencyTab === idx
+                                ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
+                                : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
+                            }`}
+                          >
+                            {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                          </button>
+                        ))}
+                      </div>
+                      {frequencyConfigs.map((cfg, idx) => idx !== activeFrequencyTab ? null : (
+                        <div key={cfg.frequency} className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            {cfg.description && (
+                              <span className="text-sm text-gray-600">{cfg.description}</span>
+                            )}
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {cfg.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                            <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                            <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                          </div>
+                          <TimeSetupStep data={cfg.timeSetupData as typeof initialTimeSetupState} hideTitle disabled showEditButton={false} />
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="p-4">
+                      <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

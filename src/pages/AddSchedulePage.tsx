@@ -6237,6 +6237,7 @@ export const AddSchedulePage = () => {
               </div>
             )}
             <TimeSetupStep
+              key={selectedAmcFrequencyId ?? 'default'}
               data={timeSetupData}
               onChange={(field, value) => {
                 setTimeSetupData(prev => ({ ...prev, [field]: value }));
