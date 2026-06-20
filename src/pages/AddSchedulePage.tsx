@@ -480,7 +480,7 @@ export const AddSchedulePage = () => {
       selectedWeekdays = dayOfWeek.split(',').map(d => reverseWeekdayMap[d.trim()]).filter(Boolean);
       dayMode = 'weekdays';
     } else if (dayOfMonth && dayOfMonth !== '*' && dayOfMonth !== '?') {
-      selectedDays = dayOfMonth.split(',').map(d => d.trim().padStart(2, '0'));
+      selectedDays = dayOfMonth.split(',').map(d => d.trim());
       dayMode = 'specific';
     }
 
