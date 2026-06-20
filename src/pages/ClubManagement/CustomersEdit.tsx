@@ -1003,7 +1003,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     const addRow = () => {
         setOpeningBalances([
             ...openingBalances,
-            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", amount: "" }
+            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", account_type: "Invoice", amount: "" }
         ]);
     };
 
@@ -1015,7 +1015,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     return (
         <div>
             {openingBalances?.map((row, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-3">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-3">
 
                     <TextField
                         label="Bill No"
@@ -1046,12 +1046,32 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                     />
 
                     <TextField
+                        select
+                        label="Type"
+                        value={row.account_type || "Invoice"}
+                        onChange={(e) => handleChange(index, "account_type", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    >
+                        <MenuItem value="Invoice">Invoice</MenuItem>
+                        <MenuItem value="Credit note">Credit Note</MenuItem>
+                    </TextField>
+
+                    <TextField
                         label="Amount"
                         placeholder="Enter amount"
                         value={row.amount}
-                        onChange={(e) => handleChange(index, "amount", e.target.value)}
+                        onChange={(e) => {
+                            const raw = e.target.value.replace(/^-/, "");
+                            handleChange(index, "amount", raw);
+                        }}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            startAdornment: row.account_type === "Credit note" && row.amount !== ""
+                                ? <span style={{ marginRight: 2 }}>-</span>
+                                : null,
+                        }}
                     />
 
                     <div className="flex items-center gap-2">
@@ -1419,7 +1439,8 @@ const CustomersEdit = () => {
                         bill_no: ob.bill_no || "",
                         date: ob.date || new Date().toISOString().split('T')[0],
                         due_date: ob.due_date || "",
-                        amount: ob.amount || ""
+                        account_type: ob.account_type || "Invoice",
+                        amount: ob.amount != null ? Math.abs(Number(ob.amount)).toString() : ""
                     })));
                 }
 
@@ -1537,6 +1558,7 @@ const CustomersEdit = () => {
             bill_no: "",
             date: new Date().toISOString().split('T')[0],
             due_date: "",
+            account_type: "Invoice",
             amount: ""
         }
     ]);
@@ -1772,12 +1794,17 @@ const CustomersEdit = () => {
 
         const openingBalancePayload = openingBalances
             .filter(row => row.bill_no || row.amount) // skip empty rows
-            .map(row => ({
-                bill_no: row.bill_no || null,
-                date: row.date || null,
-                due_date: row.due_date || null,
-                amount: row.amount ? Number(row.amount) : 0
-            }));
+            .map(row => {
+                const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
+                const signedAmount = row.account_type === "Credit note" ? -absAmount : absAmount;
+                return {
+                    bill_no: row.bill_no || null,
+                    date: row.date || null,
+                    due_date: row.due_date || null,
+                    account_type: row.account_type || "Invoice",
+                    amount: signedAmount,
+                };
+            });
 
         // Use lifted remarks state
         const remarksPayload = remarks || '';
