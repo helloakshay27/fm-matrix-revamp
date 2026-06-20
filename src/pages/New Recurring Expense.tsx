@@ -1505,6 +1505,23 @@ const NewRecurringExpensePage: React.FC = () => {
   // Tax helpers — same as ExpenseCreatePage
   // ─────────────────────────────────────────────────────────────────────────
 
+  const calculateTaxForAmount = (
+    amountVal: number,
+    taxTypeVal: string,
+    taxGroupIdVal: string | number | null
+  ) => {
+    if (taxTypeVal !== "tax_group" || !taxGroupIdVal) return 0;
+    const group = taxGroups.find((g) => String(g.id) === String(taxGroupIdVal));
+    if (!group || !Array.isArray(group.tax_rates)) return 0;
+    return group.tax_rates.reduce((sum: number, rate: any) => {
+      const pct = Number(rate.rate) || 0;
+      return sum + (amountVal * pct) / 100;
+    }, 0);
+  };
+
+  // ✅ Auto-calculated tax amount for the recurring expense view
+  const taxAmount = calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
+
   const getLedgerTaxDefaults = (ledger: AccountLedger | undefined) => {
     if (!ledger) return { taxType: "", taxGroupId: null, taxExemptionId: null };
     const pref = ledger.tax_preference;
@@ -2157,6 +2174,15 @@ const NewRecurringExpensePage: React.FC = () => {
                 </Select>
               </FormControl>
             </div>
+
+            {/* ✅ Tax Amount — read-only calculation */}
+            {taxType === "tax_group" && taxGroupId && (
+              <div className="p-3 bg-blue-50 rounded-md border border-blue-100">
+                <p className="text-sm text-gray-700">
+                  Tax Amount = ₹<span className="font-semibold text-blue-600">{taxAmount.toFixed(2)}</span>
+                </p>
+              </div>
+            )}
 
             {/* Exemption Reason — only when non_taxable; wired to exemptions API */}
             {taxType === "non_taxable" && (

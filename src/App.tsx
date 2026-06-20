@@ -1205,6 +1205,7 @@ const ManualJournalAdd = lazy(() => import("./pages/ClubManagement/ManualJournal
 const ManualJournalDashboard = lazy(() => import("./pages/ClubManagement/ManualJournalDashboard"));
 const ManualJournalEdit = lazy(() => import("./pages/ClubManagement/ManualJournalEdit"));
 const OpeningBalance = lazy(() => import("./pages/ClubManagement/OpeningBalance"));
+const OpeningBalanceDetail = lazy(() => import("./pages/ClubManagement/OpeningBalanceDetail"));
 const ProfitAndLossReport = lazy(() => import("./pages/ClubManagement/ProfitAndLossReport"));
 const RecurringJournalAdd = lazy(() => import("./pages/ClubManagement/RecurringJournalAdd"));
 const TDSReceivablesSummaryDetails = lazy(() => import("./pages/ClubManagement/TDSReceivablesSummaryDetails"));
@@ -2928,6 +2929,10 @@ function App() {
                             <Route
                               path="/accounting/opening-balance"
                               element={<OpeningBalance />}
+                            />
+                            <Route
+                              path="/accounting/opening-balance/:id"
+                              element={<OpeningBalanceDetail />}
                             />
                             <Route
                               path="/accounting/tax-setup"
