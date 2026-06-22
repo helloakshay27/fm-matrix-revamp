@@ -106,6 +106,11 @@ interface PermitClosure {
     closed_by: ClosedBy;
     attachments_count: number;
     closure_approval_levels: any[];
+    attachments?: {
+        id: number;
+        filename: string;
+        url: string;
+    }[];
 }
 
 interface MainAttachment {
@@ -192,6 +197,11 @@ interface PermitExtend {
     };
     assignees: string;
     attachments_count: number;
+    attachments?: {
+        id: number;
+        filename: string;
+        url: string;
+    }[];
     extend_approval_levels: ApprovalLevel[];
     status?: string;
 }
@@ -1014,7 +1024,9 @@ export const PermitDetails = () => {
         try {
             const formData = new FormData();
             jsaAttachments.forEach((file, index) => {
-                formData.append(`attachments[]`, file);
+                // formData.append(`attachments[]`, file);
+                formData.append(`jsa_attachments[]`, file);
+
 
             });
             formData.append('pms_permit[id]', id || '');
@@ -1918,36 +1930,22 @@ export const PermitDetails = () => {
                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                const isDownloadable = isPdf || isExcel || isWord;
-
                                 return (
                                     <div
                                         key={attachment.id}
                                         className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                     >
                                         {isImage ? (
-                                            <>
-                                                <button
-                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                    title="View"
-                                                    onClick={() => {
-                                                        setSelectedDoc(attachment);
-                                                        setIsModalOpen(true);
-                                                    }}
-                                                    type="button"
-                                                >
-                                                    {/* <Eye className="w-4 h-4" /> */}
-                                                </button>
-                                                <img
-                                                    src={attachmentUrl}
-                                                    alt={attachmentName}
-                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                    onClick={() => {
-                                                        setSelectedDoc(attachment);
-                                                        setIsModalOpen(true);
-                                                    }}
-                                                />
-                                            </>
+                                            <img
+                                                src={attachmentUrl}
+                                                alt={attachmentName}
+                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                onClick={() => {
+                                                    if (attachmentUrl) {
+                                                        window.open(attachmentUrl, '_blank');
+                                                    }
+                                                }}
+                                            />
                                         ) : isPdf ? (
                                             <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                                 <FileText className="w-6 h-6" />
@@ -1968,23 +1966,18 @@ export const PermitDetails = () => {
                                         <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                                             {attachmentName}
                                         </span>
-                                        {(isDownloadable || isImage) && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                                onClick={() => {
-                                                    if (isImage) {
-                                                        setSelectedDoc(attachment);
-                                                        setIsModalOpen(true);
-                                                    } else if (attachmentUrl) {
-                                                        window.open(attachmentUrl, '_blank');
-                                                    }
-                                                }}
-                                            >
-                                                {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                                            </Button>
-                                        )}
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                            onClick={() => {
+                                                if (attachmentUrl) {
+                                                    window.open(attachmentUrl, '_blank');
+                                                }
+                                            }}
+                                        >
+                                            <Download className="w-4 h-4" />
+                                        </Button>
                                     </div>
                                 );
                             })}
@@ -2017,8 +2010,6 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
@@ -2104,8 +2095,6 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
@@ -2191,8 +2180,6 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
@@ -2278,8 +2265,6 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
@@ -2384,36 +2369,22 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
                                                         className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                                     >
                                                         {isImage ? (
-                                                            <>
-                                                                <button
-                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                                    title="View"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                    type="button"
-                                                                >
-                                                                    {/* <Eye className="w-4 h-4" /> */}
-                                                                </button>
-                                                                <img
-                                                                    src={attachmentUrl}
-                                                                    alt={attachmentName}
-                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                />
-                                                            </>
+                                                            <img
+                                                                src={attachmentUrl}
+                                                                alt={attachmentName}
+                                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                onClick={() => {
+                                                                    if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            />
                                                         ) : isPdf ? (
                                                             <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                                                 <FileText className="w-6 h-6" />
@@ -2434,20 +2405,18 @@ export const PermitDetails = () => {
                                                         <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                                                             {attachmentName}
                                                         </span>
-                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
-                                                        {(isDownloadable || isImage || true) && (  // Show for all, even non-downloadable
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                                                onClick={() => {
-                                                                    setSelectedDoc(attachment);
-                                                                    setIsModalOpen(true);
-                                                                }}
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </Button>
-                                                        )}
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                            onClick={() => {
+                                                                if (attachmentUrl) {
+                                                                    window.open(attachmentUrl, '_blank');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </Button>
                                                     </div>
                                                 );
                                             })}
@@ -2469,36 +2438,22 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
                                                         className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                                     >
                                                         {isImage ? (
-                                                            <>
-                                                                <button
-                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                                    title="View"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                    type="button"
-                                                                >
-                                                                    {/* <Eye className="w-4 h-4" /> */}
-                                                                </button>
-                                                                <img
-                                                                    src={attachmentUrl}
-                                                                    alt={attachmentName}
-                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                />
-                                                            </>
+                                                            <img
+                                                                src={attachmentUrl}
+                                                                alt={attachmentName}
+                                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                onClick={() => {
+                                                                    if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            />
                                                         ) : isPdf ? (
                                                             <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                                                 <FileText className="w-6 h-6" />
@@ -2519,20 +2474,18 @@ export const PermitDetails = () => {
                                                         <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                                                             {attachmentName}
                                                         </span>
-                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
-                                                        {(isDownloadable || isImage || true) && (
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                                                onClick={() => {
-                                                                    setSelectedDoc(attachment);
-                                                                    setIsModalOpen(true);
-                                                                }}
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </Button>
-                                                        )}
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                            onClick={() => {
+                                                                if (attachmentUrl) {
+                                                                    window.open(attachmentUrl, '_blank');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </Button>
                                                     </div>
                                                 );
                                             })}
@@ -2554,36 +2507,22 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
                                                         className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                                     >
                                                         {isImage ? (
-                                                            <>
-                                                                <button
-                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                                    title="View"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                    type="button"
-                                                                >
-                                                                    {/* <Eye className="w-4 h-4" /> */}
-                                                                </button>
-                                                                <img
-                                                                    src={attachmentUrl}
-                                                                    alt={attachmentName}
-                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                />
-                                                            </>
+                                                            <img
+                                                                src={attachmentUrl}
+                                                                alt={attachmentName}
+                                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                onClick={() => {
+                                                                    if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            />
                                                         ) : isPdf ? (
                                                             <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                                                 <FileText className="w-6 h-6" />
@@ -2604,20 +2543,18 @@ export const PermitDetails = () => {
                                                         <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                                                             {attachmentName}
                                                         </span>
-                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
-                                                        {(isDownloadable || isImage || true) && (
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                                                onClick={() => {
-                                                                    setSelectedDoc(attachment);
-                                                                    setIsModalOpen(true);
-                                                                }}
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </Button>
-                                                        )}
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                            onClick={() => {
+                                                                if (attachmentUrl) {
+                                                                    window.open(attachmentUrl, '_blank');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </Button>
                                                     </div>
                                                 );
                                             })}
@@ -2639,36 +2576,22 @@ export const PermitDetails = () => {
                                                 const isPdf = /\.pdf$/i.test(attachmentUrl || '');
                                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
                                                 const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
-                                                const isDownloadable = isPdf || isExcel || isWord;
-
                                                 return (
                                                     <div
                                                         key={attachment.id || index}
                                                         className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                                     >
                                                         {isImage ? (
-                                                            <>
-                                                                <button
-                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                                    title="View"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                    type="button"
-                                                                >
-                                                                    {/* <Eye className="w-4 h-4" /> */}
-                                                                </button>
-                                                                <img
-                                                                    src={attachmentUrl}
-                                                                    alt={attachmentName}
-                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                                    onClick={() => {
-                                                                        setSelectedDoc(attachment);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                />
-                                                            </>
+                                                            <img
+                                                                src={attachmentUrl}
+                                                                alt={attachmentName}
+                                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                onClick={() => {
+                                                                    if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            />
                                                         ) : isPdf ? (
                                                             <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                                                 <FileText className="w-6 h-6" />
@@ -2689,20 +2612,18 @@ export const PermitDetails = () => {
                                                         <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                                                             {attachmentName}
                                                         </span>
-                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
-                                                        {(isDownloadable || isImage || true) && (
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                                                onClick={() => {
-                                                                    setSelectedDoc(attachment);
-                                                                    setIsModalOpen(true);
-                                                                }}
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </Button>
-                                                        )}
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                            onClick={() => {
+                                                                if (attachmentUrl) {
+                                                                    window.open(attachmentUrl, '_blank');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </Button>
                                                     </div>
                                                 );
                                             })}
@@ -2977,6 +2898,69 @@ export const PermitDetails = () => {
                                             <p className="text-gray-900 mt-1">{extension.attachments_count || 0}</p>
                                         </div>
                                     </div>
+                                    {/* Extension Attachments */}
+                                    {extension.attachments && extension.attachments.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <h5 className="font-medium text-gray-700 mb-2">Attachments:</h5>
+                                            <div className="flex items-center flex-wrap gap-4">
+                                                {extension.attachments.map((attachment) => {
+                                                    const attachmentUrl = attachment.url;
+                                                    const attachmentName = attachment.filename || `Document_${attachment.id}`;
+                                                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                    const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                    const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                    const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+
+                                                    return (
+                                                        <div
+                                                            key={attachment.id}
+                                                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                        >
+                                                            {isImage ? (
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                                    }}
+                                                                />
+                                                            ) : isPdf ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                    <FileText className="w-6 h-6" />
+                                                                </div>
+                                                            ) : isExcel ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                    <FileSpreadsheet className="w-6 h-6" />
+                                                                </div>
+                                                            ) : isWord ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                    <FileText className="w-6 h-6" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                    <File className="w-6 h-6" />
+                                                                </div>
+                                                            )}
+                                                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                                {attachmentName}
+                                                            </span>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                                }}
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Extension Approval Levels */}
                                     {extension.extend_approval_levels && extension.extend_approval_levels.length > 0 && (
@@ -3331,7 +3315,7 @@ export const PermitDetails = () => {
 
 
                 {/* Permit Closure Details Section */}
-                {permitData.permit_closure && permitData.permit_closure.completion_comment && permitData.permit_closure.closed_by && (
+                {/* {permitData.permit_closure && permitData.permit_closure.completion_comment && permitData.permit_closure.closed_by && (
                     <Section
                         title="PERMIT CLOSURE DETAILS"
                         icon={<CheckCircle />}
@@ -3416,8 +3400,160 @@ export const PermitDetails = () => {
                             )
                         }
                     </Section>
-                )}
+                )} */}
 
+                {permitData.permit_closure && permitData.permit_closure.completion_comment && permitData.permit_closure.closed_by && (
+                    <Section
+                        title="PERMIT CLOSURE DETAILS"
+                        icon={<CheckCircle />}
+                        sectionKey="closure"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <Field label="Completion Comment" value={permitData.permit_closure.completion_comment || "No comment"} />
+                                <Field label="Attachments Count" value={permitData.permit_closure.attachments_count} />
+                            </div>
+                            <div className="space-y-4">
+                                <Field label="Closed By" value={permitData.permit_closure.closed_by?.full_name || "Not closed yet"} />
+                            </div>
+                        </div>
+
+                        {/* Closure Attachments */}
+                        {permitData.permit_closure.attachments && permitData.permit_closure.attachments.length > 0 && (
+                            <div className="mt-6">
+                                <h4 className="text-sm font-medium text-gray-700 mb-4">Attachments</h4>
+                                <div className="flex items-center flex-wrap gap-4">
+                                    {permitData.permit_closure.attachments.map((attachment) => {
+                                        const attachmentUrl = attachment.url;
+                                        const attachmentName = attachment.filename || `Document_${attachment.id}`;
+                                        const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                        const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                        const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                        const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+
+                                        return (
+                                            <div
+                                                key={attachment.id}
+                                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                            >
+                                                {isImage ? (
+                                                    <img
+                                                        src={attachmentUrl}
+                                                        alt={attachmentName}
+                                                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                        onClick={() => {
+                                                            if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                        }}
+                                                    />
+                                                ) : isPdf ? (
+                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                        <FileText className="w-6 h-6" />
+                                                    </div>
+                                                ) : isExcel ? (
+                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                        <FileSpreadsheet className="w-6 h-6" />
+                                                    </div>
+                                                ) : isWord ? (
+                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                        <FileText className="w-6 h-6" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                        <File className="w-6 h-6" />
+                                                    </div>
+                                                )}
+                                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                    {attachmentName}
+                                                </span>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                    onClick={() => {
+                                                        if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                    }}
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {permitData.permit_closure.closure_approval_levels && permitData.permit_closure.closure_approval_levels.length > 0 && (
+                            <div className="mt-6">
+                                <h4 className="text-sm font-medium text-gray-700 mb-4">Closure Approval Levels</h4>
+                                <div className="flex items-start gap-4">
+                                    {permitData.permit_closure.closure_approval_levels.map((level: any, index: number) => (
+                                        <div key={index} className="space-y-2">
+                                            <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                                                {level.name}: {level.status}
+                                            </div>
+                                            {level.updated_by && level.status_updated_at && (
+                                                <div className="ms-2 text-sm text-gray-600">
+                                                    by {level?.updated_by} on {(level?.status_updated_at && format(level.status_updated_at, 'dd/MM/yyyy hh:mm a'))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {
+                            permitClosure && (
+                                <div className="flex items-center gap-4 justify-center mt-4">
+                                    <Button
+                                        onClick={() => {
+                                            const actualClosureId = permitData.permit_closure?.id?.toString();
+                                            console.log('Using closure ID for approval:', actualClosureId);
+                                            if (actualClosureId) {
+                                                handleApproveClosure(actualClosureId);
+                                            } else {
+                                                toast.error('Closure ID not found in permit data');
+                                            }
+                                        }}
+                                        disabled={isApproving || isRejecting}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
+                                    >
+                                        {isApproving ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                Approving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                Approve Closure
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Button
+                                        onClick={handleReject}
+                                        disabled={isApproving || isRejecting}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
+                                    >
+                                        {isRejecting ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                Rejecting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <AlertTriangle className="w-4 h-4 mr-2" />
+                                                Reject Closure
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            )
+                        }
+                    </Section>
+                )}
                 {/* Comment Log Section */}
                 {permitData.comment_logs && permitData.comment_logs.length > 0 ? (
                     <Section
