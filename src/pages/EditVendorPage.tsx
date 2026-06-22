@@ -1662,7 +1662,7 @@ export const EditVendorPage = () => {
 
             <div className="mt-8">{getStepContent(activeStep)}</div>
 
-            <div className="flex justify-end gap-4 mt-8">
+            <div className="flex justify-end gap-4 mt-8" style={{ marginBottom: '100px' }}>
                 <DraftButton disabled={activeStep === 0} onClick={handleBack}>
                     Back
                 </DraftButton>

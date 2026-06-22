@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Entity, fetchEntities } from "@/store/slices/entitiesSlice";
 import {
   createFmUser,
+  fetchFMUsers,
   fetchRoles,
   fetchSuppliers,
   fetchUnits,
@@ -74,6 +75,7 @@ export const AddFMUserPage = () => {
 
   const [userCategories, setUserCategories] = useState([]);
   const [userAccount, setUserAccount] = useState({});
+  const [users, setUsers] = useState([]);
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,6 +101,15 @@ export const AddFMUserPage = () => {
     }
   };
 
+  const getUsers = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setUsers(response.users || response.fm_users || response.data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     if (isRestrictedUser) {
       navigate("/maintenance/asset");
@@ -112,6 +123,7 @@ export const AddFMUserPage = () => {
     dispatch(fetchAllowedSites(userId));
     dispatch(fetchAllowedCompanies());
     fetchUserCategories();
+    getUsers();
   }, [dispatch, baseUrl, token, userId, isRestrictedUser, navigate]);
 
   useEffect(() => {
@@ -161,6 +173,7 @@ export const AddFMUserPage = () => {
     selectedSites: [] as string[],
     selectedCompanies: [] as string[],
     selectProfileType: "",
+    reportsTo: "",
   });
 
   const [duplicateUserDialog, setDuplicateUserDialog] = useState({
@@ -282,7 +295,15 @@ export const AddFMUserPage = () => {
     setLoadingSubmitting(true);
 
     const formDataToSend = new FormData();
-    formDataToSend.append("user[site_id]", formData.baseSite);
+    const siteId = localStorage.getItem("selectedSiteId") || formData.baseSite;
+    const accountId =
+      (selectedCompany as any)?.id ||
+      (userAccount as any)?.company_id ||
+      localStorage.getItem("selectedCompanyId") ||
+      "";
+
+    formDataToSend.append("user[site_id]", siteId || "");
+    formDataToSend.append("user[registration_source]", "Web");
     formDataToSend.append("user[firstname]", formData.firstName);
     formDataToSend.append("user[lastname]", formData.lastName);
     formDataToSend.append("user[mobile]", formData.mobileNumber);
@@ -291,6 +312,7 @@ export const AddFMUserPage = () => {
     formDataToSend.append("user[entity_id]", formData.selectEntity);
     formDataToSend.append("user[supplier_id]", formData.supplier);
     formDataToSend.append("user[user_category_id]", formData.selectUserCategory);
+    formDataToSend.append("user[report_to_id]", formData.reportsTo);
     formDataToSend.append("user[profile_type]", formData.selectProfileType);
 
     if (profileImage) {
@@ -300,7 +322,7 @@ export const AddFMUserPage = () => {
     // Append permissions as a nested structure
     const permissions = [
       {
-        account_id: userAccount.company_id,
+        account_id: accountId,
         employee_id: formData.employeeId,
         designation: formData.designation,
         unit_id: formData.selectBaseUnit,
@@ -313,6 +335,7 @@ export const AddFMUserPage = () => {
             ? formData.selectedSites
             : formData.selectedCompanies,
         urgency_email_enabled: formData.selectEmailPreference,
+        status: "pending",
       },
     ];
 
@@ -944,6 +967,30 @@ export const AddFMUserPage = () => {
                     </div>
                   )
                 }
+
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Reports To</InputLabel>
+                    <Select
+                      value={formData.reportsTo}
+                      onChange={(e) =>
+                        handleInputChange("reportsTo", e.target.value)
+                      }
+                      label="Reports To"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Reports To</MenuItem>
+                      {users?.map((user: any) => (
+                        <MenuItem key={user.id} value={String(user.id)}>
+                          {user.full_name ||
+                            user.name ||
+                            `${user.firstname || ""} ${user.lastname || ""}`.trim() ||
+                            user.email}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
 
                 {
                   !isClubSite && (
