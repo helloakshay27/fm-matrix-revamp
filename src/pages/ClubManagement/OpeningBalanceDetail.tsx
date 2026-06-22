@@ -10,6 +10,7 @@ interface OpeningBalanceRow {
     bill_no: string;
     date: string;
     due_date: string | null;
+    account_type: string | null;
     amount: number;
 }
 
@@ -122,6 +123,7 @@ const OpeningBalanceDetail = () => {
                                     <th className="border border-gray-300 px-4 py-2 text-left font-semibold">{entityType} Name</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Company</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Bill No</th>
+                                    <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Type</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Date</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Due Date</th>
                                     <th className="border border-gray-300 px-4 py-2 text-right font-semibold">Amount (INR)</th>
@@ -140,6 +142,9 @@ const OpeningBalanceDetail = () => {
                                             {row.detail?.bill_no || "—"}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-2 text-sm">
+                                            {row.detail?.account_type || "—"}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-2 text-sm">
                                             {row.detail?.date ? row.detail.date.split("-").reverse().join("-") : "—"}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-2 text-sm">
@@ -155,7 +160,7 @@ const OpeningBalanceDetail = () => {
                             </tbody>
                             <tfoot>
                                 <tr className="bg-[#E5E0D3] font-semibold">
-                                    <td colSpan={5} className="border border-gray-300 px-4 py-2 text-right">Total</td>
+                                    <td colSpan={6} className="border border-gray-300 px-4 py-2 text-right">Total</td>
                                     <td className="border border-gray-300 px-4 py-2 text-right">
                                         {rows
                                             .reduce((sum, r) => sum + (r.detail?.amount ?? 0), 0)
