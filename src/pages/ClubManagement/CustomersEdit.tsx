@@ -1003,7 +1003,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     const addRow = () => {
         setOpeningBalances([
             ...openingBalances,
-            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", account_type: "Invoice", amount: "" }
+            { id: null, bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", account_type: "Invoice", amount: "" }
         ]);
     };
 
@@ -1563,6 +1563,7 @@ const CustomersEdit = () => {
 
     const [openingBalances, setOpeningBalances] = useState([
         {
+            id: null as number | null,
             bill_no: "",
             date: new Date().toISOString().split('T')[0],
             due_date: "",
@@ -1806,6 +1807,7 @@ const CustomersEdit = () => {
                 const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
                 const signedAmount = row.account_type === "Credit note" ? -absAmount : absAmount;
                 return {
+                    ...(row.id ? { id: row.id } : {}),
                     bill_no: row.bill_no || null,
                     date: row.date || null,
                     due_date: row.due_date || null,
