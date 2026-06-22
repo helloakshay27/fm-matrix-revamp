@@ -763,6 +763,7 @@ const AddBookingSetupPage = lazy(() => import("./pages/AddBookingSetupPage").the
 
 // Import Add Facility Booking page
 const AddFacilityBookingPage = lazy(() => import("./pages/AddFacilityBookingPage").then(m => ({ default: m.AddFacilityBookingPage })));
+const AddPastBookingPage = lazy(() => import("./pages/AddPastBookings.tsx").then(m => ({ default: m.AddPastBookings })));
 const PaymentRedirectPage = lazy(() => import("./pages/PaymentRedirectPage").then(m => ({ default: m.PaymentRedirectPage })));
 const AssetGroupsDashboard = lazy(() => import("./pages/setup/AssetGroupsDashboard").then(m => ({ default: m.AssetGroupsDashboard })));
 
@@ -1204,6 +1205,7 @@ const ManualJournalAdd = lazy(() => import("./pages/ClubManagement/ManualJournal
 const ManualJournalDashboard = lazy(() => import("./pages/ClubManagement/ManualJournalDashboard"));
 const ManualJournalEdit = lazy(() => import("./pages/ClubManagement/ManualJournalEdit"));
 const OpeningBalance = lazy(() => import("./pages/ClubManagement/OpeningBalance"));
+const OpeningBalanceDetail = lazy(() => import("./pages/ClubManagement/OpeningBalanceDetail"));
 const ProfitAndLossReport = lazy(() => import("./pages/ClubManagement/ProfitAndLossReport"));
 const RecurringJournalAdd = lazy(() => import("./pages/ClubManagement/RecurringJournalAdd"));
 const TDSReceivablesSummaryDetails = lazy(() => import("./pages/ClubManagement/TDSReceivablesSummaryDetails"));
@@ -2523,9 +2525,9 @@ function App() {
                               path="/accounting/payments-made/:id"
                               element={<PaymentMadeDetailsPage />}
                             />
-                             <Route
+                            <Route
                               path="/accounting/payments-made/edit/:id"
-                              element={<EditPaymentPage/>}
+                              element={<EditPaymentPage />}
                             />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
@@ -2927,6 +2929,10 @@ function App() {
                             <Route
                               path="/accounting/opening-balance"
                               element={<OpeningBalance />}
+                            />
+                            <Route
+                              path="/accounting/opening-balance/:id"
+                              element={<OpeningBalanceDetail />}
                             />
                             <Route
                               path="/accounting/tax-setup"
@@ -4394,6 +4400,12 @@ function App() {
                             <Route path="/vendor/supplier-details/:id" element={<SupplierDetails />} />
                             <Route path="/vendor/other-bills" element={<VendorOtherBillsPage />} />
                             <Route path="/vendor/permits" element={<VendorPermitsPage />} />
+                            <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
+                            <Route path="/vendor/grn/details/:id" element={<VendorGRNDetailPage />} />
+                            <Route path="/vendor/wo/details/:id" element={<VendorWODetailPage />} />
+                            <Route path="/vendor/invoice/details/:id" element={<VendorInvoiceDetailPage />} />
+                            <Route path="/vendor/other-bills/details/:id" element={<VendorOtherBillDetailPage />} />
+                            <Route path="/vendor/permits/details/:id" element={<VendorPermitDetailPage />} />
 
                             
  <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
@@ -6310,6 +6322,10 @@ function App() {
                             <Route
                               path="/pulse/amenity/add"
                               element={<AddFacilityBookingPage />}
+                            />
+                            <Route
+                              path="/pulse/amenity/previous-booking/add"
+                              element={<AddPastBookingPage />}
                             />
                             <Route
                               path="/pulse/amenity/:id"

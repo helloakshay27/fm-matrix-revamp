@@ -74,6 +74,48 @@ interface ExpenseLine {
   taxExemptionId: string | number | null;
 }
 
+interface MileageRate {
+  id: string;
+  startDate: string;
+  rate: string;
+}
+
+const EMPTY_MILEAGE_RATE = (): MileageRate => ({
+  id: `mr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  startDate: '',
+  rate: '',
+});
+
+const MILEAGE_CATEGORY_OPTIONS: string[] = [
+  'Office Supplies',
+  'Advertising And Marketing',
+  'Bank Fees and Charges',
+  'Credit Card Charges',
+  'Travel Expense',
+  'Telephone Expense',
+  'Automobile Expense',
+  'IT and Internet Expenses',
+  'Rent Expense',
+  'Janitorial Expense',
+  'Postage',
+  'Bad Debt',
+  'Printing and Stationery',
+  'Salaries and Employee Wages',
+  'Meals and Entertainment',
+  'Depreciation Expense',
+  'Consultant Expense',
+  'Repairs and Maintenance',
+  'Other Expenses',
+  'Lodging',
+  'Purchase Discounts',
+  'Raw Materials And Consumables',
+  'Merchandise',
+  'Transportation Expense',
+  'Depreciation And Amortisation',
+  'Contract Assets',
+  'Fuel/Mileage Expenses',
+];
+
 const EMPTY_LINE = (): ExpenseLine => ({
   accountId: '',
   accountType: 'goods',
@@ -221,6 +263,13 @@ export const ExpenseCreatePage: React.FC = () => {
   const [destinationModalOpen, setDestinationModalOpen] = useState(false);
   const [destinationDraft, setDestinationDraft] = useState('');
 
+  // ── Mileage Preferences Modal ─────────────────────────────────────────────
+  const [mileageModalOpen, setMileageModalOpen] = useState(false);
+  const [associateEmployeesToExpenses, setAssociateEmployeesToExpenses] = useState(false);
+  const [defaultMileageCategory, setDefaultMileageCategory] = useState('Fuel/Mileage Expenses');
+  const [defaultMileageUnit, setDefaultMileageUnit] = useState<'km' | 'mile'>('km');
+  const [mileageRates, setMileageRates] = useState([EMPTY_MILEAGE_RATE()]);
+
   const selectedGstDetail = gstDetails.find(
     g => String(g.id) === String(selectedGstDetailId)
   ) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
@@ -345,6 +394,9 @@ export const ExpenseCreatePage: React.FC = () => {
     }, 0);
   };
 
+  // ✅ Auto-calculated tax amount for the single-expense view
+  const taxAmount = calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
+
   const calculateSubtotal = () =>
     lines.reduce((sum, line) => sum + (parseFloat(line.amount) || 0), 0);
 
@@ -410,6 +462,29 @@ export const ExpenseCreatePage: React.FC = () => {
   const removeReceipt = (index: number) =>
     setReceipts(prev => prev.filter((_, i) => i !== index));
 
+  // ── Mileage rate row helpers ───────────────────────────────────────────────
+  const addMileageRate = () => {
+    setMileageRates(prev => [...prev, EMPTY_MILEAGE_RATE()]);
+  };
+
+  const removeMileageRate = (id: string) => {
+    setMileageRates(prev => (prev.length > 1 ? prev.filter(r => r.id !== id) : prev));
+  };
+
+  const updateMileageRate = (id: string, patch: Partial<MileageRate>) => {
+    setMileageRates(prev => prev.map(r => (r.id === id ? { ...r, ...patch } : r)));
+  };
+
+  const handleMileagePreferencesSave = () => {
+    // UI-only for now — no API call yet.
+    // Backend wiring (payload + endpoint) will be added once params are finalized.
+    setMileageModalOpen(false);
+  };
+
+  const handleMileagePreferencesCancel = () => {
+    setMileageModalOpen(false);
+  };
+
   // ── Update a single line field ────────────────────────────────────────────
   const updateLine = (idx: number, patch: Partial<ExpenseLine>) => {
     setLines(prev => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -474,6 +549,15 @@ export const ExpenseCreatePage: React.FC = () => {
     }
     const apiUrl = getApiUrl();
     const token = localStorage.getItem('token');
+
+    // Reset previous vendor's GST state immediately, before the new
+    // request resolves, so stale values never linger on screen.
+    setVendorDetail(null);
+    setGstDetails([]);
+    setSelectedGstDetailId(null);
+    setGstTreatment('');
+    setSourceOfSupply('');
+
     setVendorDetailLoading(true);
     try {
       const res = await axios.get(
@@ -481,16 +565,20 @@ export const ExpenseCreatePage: React.FC = () => {
       );
       const data = res.data?.supplier || res.data;
       setVendorDetail(data);
-      if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
+
+      // Always set (with fallback), never skip — guarantees new vendor's
+      // value (even if empty) overwrites the old one.
+      setGstTreatment(data.gst_preference ? normalizeGstTreatment(data.gst_preference) : '');
+
       const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
       setGstDetails(nextGst);
       const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || data.primary_gst_detail || null;
-      if (primaryGst) {
-        setSelectedGstDetailId(primaryGst.id ?? null);
-        if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
-      }
+
+      setSelectedGstDetailId(primaryGst?.id ?? null);
+      setSourceOfSupply(primaryGst?.place_of_supply || '');
     } catch (err) {
       sonnerToast.error('Failed to load vendor details');
+      // Keep the reset state — don't show old vendor's data on failure.
     } finally {
       setVendorDetailLoading(false);
     }
@@ -623,7 +711,6 @@ export const ExpenseCreatePage: React.FC = () => {
           },
         ];
       } else {
-        // Multiple lines — ✅ all fields correctly mapped
         expenseAccountsAttributes = lines.map(line => ({
           lock_account_ledger_id: parseInt(line.accountId),
           account_type: line.accountType,
@@ -799,14 +886,25 @@ export const ExpenseCreatePage: React.FC = () => {
           <div className="bg-white p-8 rounded-lg shadow-xl">Creating expense...</div>
         </div>
       )}
-
       <header className="sticky top-0 bg-background z-10 pb-4">
-        <div>
-          <h1 className="text-2xl font-bold">New Expense</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create a new expense record</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">New Expense</h1>
+            <p className="text-sm text-muted-foreground mt-1">Create a new expense record</p>
+          </div>
+
+          <div className="flex flex-col items-end">
+            <label className="block text-sm font-medium mb-2">Mileage</label>
+            <button
+              type="button"
+              className="text-sm text-primary hover:underline"
+              onClick={() => setMileageModalOpen(true)}
+            >
+              Record Mileage
+            </button>
+          </div>
         </div>
       </header>
-
       <div className="space-y-6">
         <Section title="Expense Details" icon={<Receipt className="w-5 h-5" />}>
           {/* ── SINGLE VIEW ──────────────────────────────────────────────── */}
@@ -999,6 +1097,15 @@ export const ExpenseCreatePage: React.FC = () => {
                   </Select>
                 </FormControl>
 
+                {/* ✅ Tax Amount — read-only calculation */}
+                {taxType === 'tax_group' && taxGroupId && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+                    <p className="text-sm text-gray-700">
+                      Tax Amount = ₹<span className="font-semibold text-blue-600">{taxAmount.toFixed(2)}</span>
+                    </p>
+                  </div>
+                )}
+
                 {taxType === 'non_taxable' && (
                   <div className="mt-3">
                     <label className="block text-sm font-medium mb-2">Exemption Reason</label>
@@ -1168,6 +1275,7 @@ export const ExpenseCreatePage: React.FC = () => {
                     Associate Tags
                   </button>
                 </div>
+
               </div>
             </div>
           ) : (
@@ -1990,6 +2098,182 @@ export const ExpenseCreatePage: React.FC = () => {
             Save
           </Button>
           <Button onClick={() => setShowTagModal(false)}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Mileage Preferences Modal */}
+      <Dialog
+        open={mileageModalOpen}
+        onClose={() => setMileageModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Set your mileage preferences
+          <IconButton size="small" onClick={() => setMileageModalOpen(false)}>
+            <Close fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ py: 3 }}>
+          <div className="space-y-6">
+
+            {/* Associate employees to expenses */}
+            <FormControlLabel
+              control={
+                <input
+                  type="checkbox"
+                  checked={associateEmployeesToExpenses}
+                  onChange={e => setAssociateEmployeesToExpenses(e.target.checked)}
+                />
+              }
+              label="Associate employees to expenses"
+            />
+
+            {/* Mileage Preference Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Mileage Preference</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Default Mileage Category */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Default Mileage Category
+                  </label>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={defaultMileageCategory}
+                      onChange={e => setDefaultMileageCategory(e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      {MILEAGE_CATEGORY_OPTIONS.map(opt => (
+                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Default Unit */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Default Unit</label>
+                  <RadioGroup
+                    row
+                    value={defaultMileageUnit}
+                    onChange={e => setDefaultMileageUnit(e.target.value as 'km' | 'mile')}
+                  >
+                    <FormControlLabel value="km" control={<Radio />} label="Km" />
+                    <FormControlLabel value="mile" control={<Radio />} label="Mile" />
+                  </RadioGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* Mileage Rates Section */}
+            <div className="space-y-3 border-t pt-4">
+              <div>
+                <h3 className="text-sm font-semibold">Mileage Rates</h3>
+                <p className="text-xs text-gray-500 mt-2">
+                  Any mileage expense recorded on or after the start date will have the
+                  corresponding mileage rate. You can create a default rate (created without
+                  specifying a date), which will be applicable for mileage expenses recorded
+                  before the initial start date.
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                        START DATE
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                        MILEAGE RATE
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {mileageRates.map((rate, idx) => (
+                      <tr key={rate.id}>
+                        {/* Start Date */}
+                        <td className="px-4 py-2">
+                          <TextField
+                            type="date"
+                            value={rate.startDate}
+                            onChange={e => updateMileageRate(rate.id, { startDate: e.target.value })}
+                            placeholder="dd/MM/yyyy"
+                            InputLabelProps={{ shrink: true }}
+                            sx={fieldStyles}
+                            size="small"
+                          />
+                        </td>
+
+                        {/* Mileage Rate with INR prefix */}
+                        <td className="px-4 py-2">
+                          <TextField
+                            type="number"
+                            value={rate.rate}
+                            onChange={e => {
+                              const parsed = parseFloat(e.target.value);
+                              const safe = isNaN(parsed) ? '' : Math.max(0, parsed).toString();
+                              updateMileageRate(rate.id, { rate: safe });
+                            }}
+                            inputProps={{ min: 0, step: 0.01 }}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">INR</InputAdornment>
+                              ),
+                            }}
+                            sx={fieldStyles}
+                            size="small"
+                          />
+                        </td>
+
+                        {/* Remove row — hidden for the first row */}
+                        <td className="px-4 py-2 text-right">
+                          {idx > 0 && (
+                            <IconButton
+                              size="small"
+                              onClick={() => removeMileageRate(rate.id)}
+                            >
+                              <Close fontSize="small" />
+                            </IconButton>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <button
+                type="button"
+                className="text-blue-600 hover:underline text-sm font-medium"
+                onClick={addMileageRate}
+              >
+                + Add Mileage Rate
+              </button>
+            </div>
+
+          </div>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={handleMileagePreferencesSave}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}
+          >
+            Save
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleMileagePreferencesCancel}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}
+          >
             Cancel
           </Button>
         </DialogActions>

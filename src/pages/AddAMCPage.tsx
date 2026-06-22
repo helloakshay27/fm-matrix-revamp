@@ -24,6 +24,41 @@ interface Service {
   service_name: string;
 }
 
+interface FrequencyConfig {
+  frequency: string;
+  description: string;
+  active: boolean;
+  timeSetupData: {
+    hourMode: string;
+    minuteMode: string;
+    dayMode: string;
+    monthMode: string;
+    selectedHours: string[];
+    selectedMinutes: string[];
+    selectedWeekdays: string[];
+    selectedDays: string[];
+    selectedMonths: string[];
+    betweenMinuteStart: string;
+    betweenMinuteEnd: string;
+    betweenMonthStart: string;
+    betweenMonthEnd: string;
+  };
+}
+
+const FREQUENCY_OPTIONS = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'half-yearly', label: 'Half Yearly' },
+  { value: 'yearly', label: 'Yearly' },
+];
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  'half-yearly': 'Half Yearly',
+  yearly: 'Yearly',
+};
+
 const MAX_ATTACHMENT_SIZE_MB = 20;
 const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
 
@@ -147,6 +182,10 @@ export const AddAMCPage = () => {
     betweenMonthEnd: 'December'
   };
   const [timeSetupData, setTimeSetupData] = useState(initialTimeSetupState);
+
+  const [selectedFrequencies, setSelectedFrequencies] = useState<string[]>([]);
+  const [frequencyConfigs, setFrequencyConfigs] = useState<FrequencyConfig[]>([]);
+  const [activeFrequencyTab, setActiveFrequencyTab] = useState(0);
 
   const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
@@ -1038,6 +1077,19 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[checklist_type]', formData.details === 'Asset' ? "Asset" : "Service");
     sendData.append('pms_asset_amc[time_expression]', buildCronExpression());
 
+    // Primary frequency (first selected)
+    if (selectedFrequencies.length > 0) {
+      sendData.append('pms_asset_amc[amc_frequency]', selectedFrequencies[0]);
+    }
+
+    // Per-frequency cron configurations
+    frequencyConfigs.forEach((cfg, idx) => {
+      sendData.append(`frequency_configs[${idx}][frequency]`, cfg.frequency);
+      sendData.append(`frequency_configs[${idx}][description]`, cfg.description);
+      sendData.append(`frequency_configs[${idx}][active]`, String(cfg.active));
+      sendData.append(`frequency_configs[${idx}][cron_expression]`, buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState));
+    });
+
     sendData.append('pms_asset_amc[amc_details_type]', formData.type.toLowerCase()); // Add amc_details_type parameter
 
     if (action === 'schedule') {
@@ -1263,82 +1315,125 @@ export const AddAMCPage = () => {
     fetchAsset();
   }, []);
 
+  // Keep frequencyConfigs in sync when selectedFrequencies changes
+  useEffect(() => {
+    setFrequencyConfigs(prev => {
+      return selectedFrequencies.map(freq => {
+        const existing = prev.find(c => c.frequency === freq);
+        return existing || {
+          frequency: freq,
+          description: '',
+          active: true,
+          timeSetupData: { ...initialTimeSetupState },
+        };
+      });
+    });
+    setActiveFrequencyTab(0);
+  }, [selectedFrequencies]);
+
   console.log(assetList)
 
   const buildCronExpression = () => {
+    const MONTH_MAP: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+    };
+    // Standard cron weekday: 0=Sunday, 1=Monday … 6=Saturday
+    const WEEKDAY_MAP: Record<string, string> = {
+      Sunday: '0', Monday: '1', Tuesday: '2', Wednesday: '3',
+      Thursday: '4', Friday: '5', Saturday: '6',
+    };
+
     let minute = '*';
     let hour = '*';
-    let dayOfMonth = '?';
+    let dayOfMonth = '*';
     let month = '*';
-    let dayOfWeek = '?';
+    let dayOfWeek = '*';
 
+    // Minutes
     if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length > 0) {
       minute = timeSetupData.selectedMinutes.join(',');
     } else if (timeSetupData.minuteMode === 'between') {
-      const start = parseInt(timeSetupData.betweenMinuteStart, 10);
-      const end = parseInt(timeSetupData.betweenMinuteEnd, 10);
-      if (!Number.isNaN(start) && !Number.isNaN(end)) {
-        minute = `${start}-${end}`;
-      }
+      const s = parseInt(timeSetupData.betweenMinuteStart, 10);
+      const e = parseInt(timeSetupData.betweenMinuteEnd, 10);
+      if (!Number.isNaN(s) && !Number.isNaN(e)) minute = `${s}-${e}`;
     }
 
+    // Hours — keep leading zeros as stored ("09", "12")
     if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length > 0) {
       hour = timeSetupData.selectedHours.join(',');
     }
 
+    // Day
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
-      const weekdayMap: Record<string, string> = {
-        'Sunday': '1',
-        'Monday': '2',
-        'Tuesday': '3',
-        'Wednesday': '4',
-        'Thursday': '5',
-        'Friday': '6',
-        'Saturday': '7'
-      };
-      dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).join(',');
-      dayOfMonth = '?';
+      dayOfWeek = timeSetupData.selectedWeekdays.map(d => WEEKDAY_MAP[d]).join(',');
+      // dayOfMonth stays '*'
     } else if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length > 0) {
-      dayOfMonth = timeSetupData.selectedDays.join(',');
-      dayOfWeek = '?';
+      // Strip leading zeros: "01" → "1", "15" → "15"
+      dayOfMonth = timeSetupData.selectedDays.map(d => parseInt(d, 10).toString()).join(',');
+      // dayOfWeek stays '*'
     }
 
+    // Month
     if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length > 0) {
-      const monthMap: Record<string, string> = {
-        'January': '1',
-        'February': '2',
-        'March': '3',
-        'April': '4',
-        'May': '5',
-        'June': '6',
-        'July': '7',
-        'August': '8',
-        'September': '9',
-        'October': '10',
-        'November': '11',
-        'December': '12'
-      };
-      month = timeSetupData.selectedMonths.map(m => monthMap[m]).join(',');
+      month = timeSetupData.selectedMonths.map(m => MONTH_MAP[m].toString()).join(',');
     } else if (timeSetupData.monthMode === 'between') {
-      const monthMap: Record<string, number> = {
-        'January': 1,
-        'February': 2,
-        'March': 3,
-        'April': 4,
-        'May': 5,
-        'June': 6,
-        'July': 7,
-        'August': 8,
-        'September': 9,
-        'October': 10,
-        'November': 11,
-        'December': 12
-      };
-      const startMonth = monthMap[timeSetupData.betweenMonthStart];
-      const endMonth = monthMap[timeSetupData.betweenMonthEnd];
-      if (startMonth && endMonth) {
-        month = `${startMonth}-${endMonth}`;
-      }
+      const s = MONTH_MAP[timeSetupData.betweenMonthStart];
+      const e = MONTH_MAP[timeSetupData.betweenMonthEnd];
+      if (s && e) month = `${s}-${e}`;
+    }
+
+    return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+  };
+
+  const buildCronFromTimeData = (data: typeof initialTimeSetupState): string => {
+    const MONTH_MAP: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+    };
+    // Standard cron weekday: 0=Sunday, 1=Monday … 6=Saturday
+    const WEEKDAY_MAP: Record<string, string> = {
+      Sunday: '0', Monday: '1', Tuesday: '2', Wednesday: '3',
+      Thursday: '4', Friday: '5', Saturday: '6',
+    };
+
+    let minute = '*';
+    let hour = '*';
+    let dayOfMonth = '*';
+    let month = '*';
+    let dayOfWeek = '*';
+
+    // Minutes
+    if (data.minuteMode === 'specific' && data.selectedMinutes.length > 0) {
+      minute = data.selectedMinutes.join(',');
+    } else if (data.minuteMode === 'between') {
+      const s = parseInt(data.betweenMinuteStart, 10);
+      const e = parseInt(data.betweenMinuteEnd, 10);
+      if (!Number.isNaN(s) && !Number.isNaN(e)) minute = `${s}-${e}`;
+    }
+
+    // Hours — keep leading zeros as stored ("09", "12")
+    if (data.hourMode === 'specific' && data.selectedHours.length > 0) {
+      hour = data.selectedHours.join(',');
+    }
+
+    // Day
+    if (data.dayMode === 'weekdays' && data.selectedWeekdays.length > 0) {
+      dayOfWeek = data.selectedWeekdays.map(d => WEEKDAY_MAP[d]).join(',');
+      // dayOfMonth stays '*'
+    } else if (data.dayMode === 'specific' && data.selectedDays.length > 0) {
+      // Strip leading zeros: "01" → "1", "15" → "15"
+      dayOfMonth = data.selectedDays.map(d => parseInt(d, 10).toString()).join(',');
+      // dayOfWeek stays '*'
+    }
+
+    // Month
+    if (data.monthMode === 'specific' && data.selectedMonths.length > 0) {
+      month = data.selectedMonths.map(m => MONTH_MAP[m].toString()).join(',');
+    } else if (data.monthMode === 'between') {
+      const s = MONTH_MAP[data.betweenMonthStart];
+      const e = MONTH_MAP[data.betweenMonthEnd];
+      if (s && e) month = `${s}-${e}`;
     }
 
     return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
@@ -2417,14 +2512,22 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
+                      label="Assets Per Day"
+                      placeholder="Enter Assets Per Day"
+                      type="number"
+                      fullWidth
+                      value={formData.assetsPerDay}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled
                       label="Remarks"
                       placeholder="Enter Remarks"
                       fullWidth
                       value={formData.remarks}
                       sx={{ mb: 3 }}
                     />
-
-                    <div></div>
                   </div>
                 </CardContent>
               </Card>
@@ -2451,14 +2554,49 @@ export const AddAMCPage = () => {
                 background: '#FFF',
                 boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
               }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
-                      SCHEDULE
-                    </CardTitle>
-                  </CardHeader> */}
-                <CardContent className="p-4">
-                  <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                <CardContent className="p-0">
+                  {frequencyConfigs.length > 0 ? (
+                    <>
+                      {/* Frequency tabs */}
+                      <div className="flex border-b border-gray-200 overflow-x-auto">
+                        {frequencyConfigs.map((cfg, idx) => (
+                          <button
+                            key={cfg.frequency}
+                            type="button"
+                            onClick={() => setActiveFrequencyTab(idx)}
+                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                              activeFrequencyTab === idx
+                                ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
+                                : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
+                            }`}
+                          >
+                            {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                          </button>
+                        ))}
+                      </div>
+                      {frequencyConfigs.map((cfg, idx) => idx !== activeFrequencyTab ? null : (
+                        <div key={cfg.frequency} className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            {cfg.description && (
+                              <span className="text-sm text-gray-600">{cfg.description}</span>
+                            )}
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {cfg.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                            <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                            <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                          </div>
+                          <TimeSetupStep data={cfg.timeSetupData as typeof initialTimeSetupState} hideTitle disabled showEditButton={false} />
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="p-4">
+                      <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -3762,6 +3900,51 @@ export const AddAMCPage = () => {
                     sx={{ mb: 3 }}
                   />
 
+                  {/* AMC Frequency multi-select */}
+                  <div className="md:col-span-3">
+                    <FormControl fullWidth>
+                      <Typography sx={{ fontSize: '14px', mb: 1, fontWeight: 500, color: '#444' }}>
+                        AMC Frequency
+                      </Typography>
+                      <Select
+                        isMulti
+                        options={FREQUENCY_OPTIONS}
+                        value={FREQUENCY_OPTIONS.filter(o => selectedFrequencies.includes(o.value))}
+                        onChange={(selected: any) => {
+                          setSelectedFrequencies(selected ? selected.map((s: any) => s.value) : []);
+                        }}
+                        isClearable
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        placeholder="Select Frequencies (optional)"
+                        isDisabled={isSubmitting}
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            minHeight: '40px',
+                            borderRadius: '4px',
+                            borderColor: state.isFocused ? '#C72030' : '#c4c4c4',
+                            boxShadow: 'none',
+                            '&:hover': { borderColor: '#C72030' },
+                          }),
+                          menu: (base) => ({ ...base, zIndex: 9999 }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused ? '#eff6ff' : '#fff',
+                            color: '#000',
+                            cursor: 'pointer',
+                          }),
+                          multiValue: (base) => ({ ...base, backgroundColor: 'rgba(199,32,48,0.08)' }),
+                          multiValueLabel: (base) => ({ ...base, color: '#C72030', fontWeight: 500 }),
+                          multiValueRemove: (base) => ({
+                            ...base, color: '#C72030',
+                            ':hover': { backgroundColor: '#C72030', color: '#fff' },
+                          }),
+                        }}
+                      />
+                    </FormControl>
+                  </div>
+
                 </div>
               </CardContent>
             </Card>
@@ -3792,50 +3975,101 @@ export const AddAMCPage = () => {
                 Schedule
               </h2>
             </div>
-            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
-              <CardContent className="p-4">
-                {/* Selected time summary */}
-                {(() => {
-                  const joinOrAll = (arr: string[], map?: Record<string, string>) => {
-                    if (!arr || arr.length === 0) return 'All';
-                    const vals = map ? arr.map(v => map[v] ?? v) : arr;
-                    return vals.join(', ');
-                  };
-                  const weekdayMap: Record<string, string> = {
-                    'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed', 'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat', 'Sunday': 'Sun'
-                  };
-                  const monthMap: Record<string, string> = {
-                    'January': 'Jan', 'February': 'Feb', 'March': 'Mar', 'April': 'Apr', 'May': 'May', 'June': 'Jun', 'July': 'Jul', 'August': 'Aug', 'September': 'Sep', 'October': 'Oct', 'November': 'Nov', 'December': 'Dec'
-                  };
-                  const hours = timeSetupData.hourMode === 'specific' ? joinOrAll(timeSetupData.selectedHours) : 'All';
-                  const minutes = timeSetupData.minuteMode === 'specific' ? joinOrAll(timeSetupData.selectedMinutes) : `${timeSetupData.betweenMinuteStart}-${timeSetupData.betweenMinuteEnd}`;
-                  const days = timeSetupData.dayMode === 'weekdays' ? joinOrAll(timeSetupData.selectedWeekdays, weekdayMap)
-                    : (timeSetupData.dayMode === 'specific' ? joinOrAll(timeSetupData.selectedDays) : 'All');
-                  const months = timeSetupData.monthMode === 'specific' ? joinOrAll(timeSetupData.selectedMonths, monthMap)
-                    : (timeSetupData.monthMode === 'between' ? `${monthMap[timeSetupData.betweenMonthStart]}-${monthMap[timeSetupData.betweenMonthEnd]}` : 'All');
-                  return (
-                    <div className="mb-3 text-sm text-[#1a1a1a]">
-                      <div><span className="font-semibold">Hours:</span> {hours}</div>
-                      <div><span className="font-semibold">Minutes:</span> {minutes}</div>
-                      <div><span className="font-semibold">Days:</span> {days}</div>
-                      <div><span className="font-semibold">Months:</span> {months}</div>
-                      <div className="mt-1"><span className="font-semibold">Cron:</span> {buildCronExpression()}</div>
+            {/* If frequencies are selected, show one tab per frequency; otherwise show the default single setup */}
+            {frequencyConfigs.length > 0 ? (
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)' }}>
+                <CardContent className="p-0">
+                  {/* Frequency tabs */}
+                  <div className="flex border-b border-gray-200 overflow-x-auto">
+                    {frequencyConfigs.map((cfg, idx) => (
+                      <button
+                        key={cfg.frequency}
+                        type="button"
+                        onClick={() => setActiveFrequencyTab(idx)}
+                        className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                          activeFrequencyTab === idx
+                            ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
+                            : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
+                        }`}
+                      >
+                        {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                      </button>
+                    ))}
+                  </div>
+
+                  {frequencyConfigs.map((cfg, idx) => (
+                    <div key={cfg.frequency} className={idx === activeFrequencyTab ? 'block p-4' : 'hidden'}>
+                      {/* Description + Active toggle row */}
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex-1">
+                          <TextField
+                            label="Description"
+                            placeholder={`Description for ${FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}`}
+                            fullWidth
+                            size="small"
+                            value={cfg.description}
+                            disabled={isSubmitting}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, description: val } : c));
+                            }}
+                          />
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                          <span className="text-sm font-medium text-[#1a1a1a]">Active</span>
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={cfg.active}
+                              onChange={e => {
+                                const val = e.target.checked;
+                                setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, active: val } : c));
+                              }}
+                            />
+                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Cron preview */}
+                      <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                        <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                        <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                      </div>
+
+                      <TimeSetupStep
+                        data={cfg.timeSetupData as typeof initialTimeSetupState}
+                        onChange={(field, value) => {
+                          setFrequencyConfigs(prev => prev.map((c, i) =>
+                            i === idx ? { ...c, timeSetupData: { ...c.timeSetupData, [field]: value } } : c
+                          ));
+                        }}
+                        hideTitle
+                      />
                     </div>
-                  );
-                })()}
-                <TimeSetupStep
-                  data={timeSetupData}
-                  onChange={(field, value) => {
-                    setTimeSetupData(prev => ({ ...prev, [field]: value }));
-                  }}
-                  hideTitle
-                />
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
+                borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
+              }}>
+                <CardContent className="p-4">
+                  <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                    <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                    <span className="font-mono text-[#C72030]">{buildCronExpression()}</span>
+                  </div>
+                  <TimeSetupStep
+                    data={timeSetupData}
+                    onChange={(field, value) => {
+                      setTimeSetupData(prev => ({ ...prev, [field]: value }));
+                    }}
+                    hideTitle
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Create Checklist */}
             <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>

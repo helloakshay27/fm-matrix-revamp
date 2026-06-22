@@ -1087,16 +1087,23 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   // Filter manual accomplishments to exclude items already shown in the auto-added section.
   // This prevents duplicates when a saved report's payload (which merged auto+manual) is reloaded.
+  // Unchecked items appear first, then completed items.
   const visibleAccomplishments = useMemo(() => {
-    if (autoAddedAccomplishments.length === 0) return accomplishments;
-    const autoTitles = new Set(
-      autoAddedAccomplishments.map((item) =>
-        cleanReportText(item.title || "").toLowerCase()
-      )
-    );
-    return accomplishments.filter(
-      (a) => !autoTitles.has(cleanReportText(a.text).toLowerCase())
-    );
+    let filtered = accomplishments;
+    if (autoAddedAccomplishments.length > 0) {
+      const autoTitles = new Set(
+        autoAddedAccomplishments.map((item) =>
+          cleanReportText(item.title || "").toLowerCase()
+        )
+      );
+      filtered = accomplishments.filter(
+        (a) => !autoTitles.has(cleanReportText(a.text).toLowerCase())
+      );
+    }
+    return [...filtered].sort((a, b) => {
+      if (a.completed === b.completed) return 0;
+      return a.completed ? 1 : -1;
+    });
   }, [accomplishments, autoAddedAccomplishments]);
 
   // Derive which task/issue IDs are already in the "Plan for Tomorrow" list
@@ -1225,15 +1232,20 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const addAccomplishment = () => {
     markDraftDirty();
+    const id = Date.now().toString();
     setAccomplishments([
-      ...accomplishments,
       {
-        id: Date.now().toString(),
+        id,
         text: "",
-        completed: true,
+        completed: false,
         starred: false,
         fromYesterday: false,
       },
+      ...accomplishments,
+    ]);
+    setPlanningItems((prev) => [
+      ...prev,
+      { id: `from-accom-${id}`, text: "", starred: false },
     ]);
   };
 
@@ -1263,6 +1275,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         ]);
       }
     }
+    // When checking a manually added item, remove it from Plan for Tomorrow
+    if (item && !item.completed) {
+      setPlanningItems((prev) =>
+        prev.filter((p) => p.id !== `from-accom-${id}`)
+      );
+    }
   };
 
   const toggleStar = (id: string) => {
@@ -1277,8 +1295,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   const addPlanningItem = () => {
     markDraftDirty();
     setPlanningItems([
-      ...planningItems,
       { id: Date.now().toString(), text: "", starred: false },
+      ...planningItems,
     ]);
   };
 
@@ -1307,6 +1325,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) => (a.id === id ? { ...a, text } : a))
+    );
+    setPlanningItems((prev) =>
+      prev.map((p) => (p.id === `from-accom-${id}` ? { ...p, text } : p))
     );
   };
 
