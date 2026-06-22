@@ -3038,7 +3038,7 @@ const BusinessPlanAndGoles = () => {
   );
 
   const renderAiPlanObjectList = (items: any[] = []) => (
-    <div className="space-y-2">
+    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
       {items.map((item, idx) => {
         if (!item || typeof item !== "object") {
           return (
