@@ -21,6 +21,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Entity, fetchEntities } from "@/store/slices/entitiesSlice";
 import {
   editFMUser,
+  fetchFMUsers,
   fetchRoles,
   fetchSuppliers,
   fetchUnits,
@@ -102,6 +103,9 @@ interface UserData {
   lock_user_permission?: LockUserPermission;
   profile_type?: string;
   profile_icon_url?: string;
+  report_to_id?: number | string;
+  report_to?: any;
+  report_to_name?: string;
 }
 
 interface FormData {
@@ -128,6 +132,7 @@ interface FormData {
   lastWorkingDate: string;
   selectUserCategory: string | number;
   selectProfileType: string;
+  reportsTo: string;
 }
 
 interface Payload {
@@ -158,6 +163,7 @@ interface Payload {
     user_category_id: string | number;
     profile_type?: string;
     access_card_number?: string;
+    report_to_id?: string;
   };
   lock_user_permission?: number;
 }
@@ -232,6 +238,7 @@ export const EditFMUserPage = () => {
   const [loadingSubmitting, setLoadingSubmitting] = useState<boolean>(false);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -257,8 +264,16 @@ export const EditFMUserPage = () => {
     lastWorkingDate: "",
     selectUserCategory: "",
     selectProfileType: "",
+    reportsTo: "",
   });
   const [userData, setUserData] = useState<UserData>({});
+
+  const getMemberName = (member: any) =>
+    member?.full_name ||
+    member?.name ||
+    `${member?.firstname || ""} ${member?.lastname || ""}`.trim() ||
+    member?.email ||
+    "";
 
   const fetchUserCategories = async () => {
     try {
@@ -293,6 +308,19 @@ export const EditFMUserPage = () => {
     }
     dispatch(fetchAllowedCompanies());
   }, [dispatch, baseUrl, token, userId, isRestrictedUser, navigate]);
+
+  const getUsers = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setUsers(response.users || response.fm_users || response.data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getUsers();
+  }, [dispatch]);
 
   useEffect(() => {
     const loadUserAccount = async () => {
@@ -365,6 +393,7 @@ export const EditFMUserPage = () => {
         lastWorkingDate: userData.lock_user_permission?.last_working_date || "",
         selectUserCategory: userData.user_category_id,
         selectProfileType: userData.profile_type || "",
+        reportsTo: String(userData.report_to_id || userData.report_to?.id || ""),
       });
     } else {
       console.log("userData not found for id:", id);
@@ -459,6 +488,7 @@ export const EditFMUserPage = () => {
     );
     formDataToSend.append("user[profile_type]", formData.selectProfileType);
     formDataToSend.append("user[access_card_number]", formData.accessCardNumber);
+    formDataToSend.append("user[report_to_id]", formData.reportsTo);
 
     if (profileImage) {
       formDataToSend.append("user[profile_icon]", profileImage);
@@ -1151,6 +1181,27 @@ export const EditFMUserPage = () => {
                     </div>
                   )
                 }
+
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Reports To</InputLabel>
+                    <Select
+                      value={formData.reportsTo}
+                      onChange={(e) =>
+                        handleInputChange("reportsTo", e.target.value as string)
+                      }
+                      label="Reports To"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Reports To</MenuItem>
+                      {users?.map((user: any) => (
+                        <MenuItem key={user.id} value={String(user.id)}>
+                          {getMemberName(user)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
 
                 {
                   !isClubSite && (
