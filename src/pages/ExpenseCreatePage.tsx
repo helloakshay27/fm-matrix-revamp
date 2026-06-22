@@ -549,6 +549,15 @@ export const ExpenseCreatePage: React.FC = () => {
     }
     const apiUrl = getApiUrl();
     const token = localStorage.getItem('token');
+
+    // Reset previous vendor's GST state immediately, before the new
+    // request resolves, so stale values never linger on screen.
+    setVendorDetail(null);
+    setGstDetails([]);
+    setSelectedGstDetailId(null);
+    setGstTreatment('');
+    setSourceOfSupply('');
+
     setVendorDetailLoading(true);
     try {
       const res = await axios.get(
@@ -556,16 +565,20 @@ export const ExpenseCreatePage: React.FC = () => {
       );
       const data = res.data?.supplier || res.data;
       setVendorDetail(data);
-      if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
+
+      // Always set (with fallback), never skip — guarantees new vendor's
+      // value (even if empty) overwrites the old one.
+      setGstTreatment(data.gst_preference ? normalizeGstTreatment(data.gst_preference) : '');
+
       const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
       setGstDetails(nextGst);
       const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || data.primary_gst_detail || null;
-      if (primaryGst) {
-        setSelectedGstDetailId(primaryGst.id ?? null);
-        if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
-      }
+
+      setSelectedGstDetailId(primaryGst?.id ?? null);
+      setSourceOfSupply(primaryGst?.place_of_supply || '');
     } catch (err) {
       sonnerToast.error('Failed to load vendor details');
+      // Keep the reset state — don't show old vendor's data on failure.
     } finally {
       setVendorDetailLoading(false);
     }

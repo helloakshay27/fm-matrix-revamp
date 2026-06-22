@@ -373,6 +373,13 @@ const DetailVendorClub = () => {
                             <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                                 {vendor?.company_name}
                             </h1>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(`/accounting/vendor/edit/${id}`)}
+                            >
+                                Edit Vendor
+                            </Button>
                         </div>
                         <div className="text-sm text-gray-600">
                             Vendor # {vendor?.id} • Created by{" "}
