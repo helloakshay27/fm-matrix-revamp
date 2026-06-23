@@ -94,6 +94,8 @@ export const AddFacilityBookingClubPage = () => {
       child_member_charge?: number;
       child_guest_charge?: number;
       per_slot_charge?: number;
+      hotel_guest_charge?: number;
+      full_court_charge?: number;
     };
     gst?: number;
     sgst?: number;
@@ -178,6 +180,8 @@ export const AddFacilityBookingClubPage = () => {
   const [complementaryReason, setComplementaryReason] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [numberOfGuests, setNumberOfGuests] = useState<number>(0);
+  const [isFullCourt, setIsFullCourt] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showComplimentaryWarning, setShowComplimentaryWarning] = useState(false);
   // Helper: Get max people allowed from facility details
   const maxPeople = facilityDetails?.max_people || 0;
@@ -555,6 +559,7 @@ export const AddFacilityBookingClubPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       if (!selectedUser) {
@@ -626,10 +631,14 @@ export const AddFacilityBookingClubPage = () => {
         });
         // Flat charge: price does not multiply with slot count, only with member/guest count
         totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
-        totalGuestCharge = numberOfGuests * (adultGuestCharge + maxGuestPremium);
+        totalGuestCharge = isFullCourt
+          ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0) * slotsCount
+          : numberOfGuests * (adultGuestCharge + maxGuestPremium);
       } else {
         totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-        totalGuestCharge = numberOfGuests * adultGuestCharge;
+        totalGuestCharge = isFullCourt
+          ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0)
+          : numberOfGuests * adultGuestCharge;
       }
       const slotTotal = selectedSlots.length * perSlotCharge;
 
@@ -720,10 +729,14 @@ export const AddFacilityBookingClubPage = () => {
           const maxMemberPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.memberPremium), 0);
           const maxGuestPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.guestPremium), 0);
           totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
-          totalGuestCharge = numberOfGuests * (adultGuestCharge + maxGuestPremium);
+          totalGuestCharge = isFullCourt
+            ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0) * slotsCount
+            : numberOfGuests * (adultGuestCharge + maxGuestPremium);
         } else {
           totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-          totalGuestCharge = numberOfGuests * adultGuestCharge;
+          totalGuestCharge = isFullCourt
+            ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0)
+            : numberOfGuests * adultGuestCharge;
         }
 
         // Calculate accessory total with quantities
@@ -807,7 +820,8 @@ export const AddFacilityBookingClubPage = () => {
           amount_full: isComplementary ? 0 : costSummary.amountFull,
           booked_members_attributes: bookedMembersAttributes,
           member_count: userType === 'occupant' ? 1 : 0,
-          guest_count: numberOfGuests,
+          guest_count: isFullCourt ? 0 : numberOfGuests,
+          ...(isFullCourt && { is_full_court: true }),
           ...(paymentMethod === 'complementary' && { complementary_payment_reason: complementaryReason }),
         },
         on_behalf_of: userType === 'occupant' ? 'occupant-user' : userType === 'guest' ? 'guest-user' : 'fm-user',
@@ -838,6 +852,8 @@ export const AddFacilityBookingClubPage = () => {
         console.error('Response status:', error.response.status);
       }
       toast.error('Error creating booking. Please check the console for details.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -870,6 +886,13 @@ export const AddFacilityBookingClubPage = () => {
     },
   };
 
+  // Derived select-all state
+  const availableSlotsForSelect = slots.filter(s => !s.is_booked);
+  const allAvailableSelected = availableSlotsForSelect.length > 0 && availableSlotsForSelect.every(s => selectedSlots.includes(s.id));
+  const atMaxLimit = availableSlotsForSelect.length > 0 && selectedSlots.length >= maxSelectableSlots;
+  const isSelectAllChecked = allAvailableSelected || atMaxLimit;
+  const isSelectAllIndeterminate = selectedSlots.length > 0 && !isSelectAllChecked;
+
   return (
     <>
       <div className="p-6 mx-auto">
@@ -895,7 +918,7 @@ export const AddFacilityBookingClubPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
             {/* User Type Selection */}
             <div>
-              <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
+              <RadioGroup value={userType} onValueChange={(val) => { setUserType(val); if (val !== 'guest') setIsFullCourt(false); }} className="flex gap-6">
 
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="occupant" id="occupant" />
@@ -1139,9 +1162,53 @@ export const AddFacilityBookingClubPage = () => {
 
             {/* Select Slot Section */}
             <div>
-              <h2 className="text-lg font-semibold mb-4">Select Slot<span className="text-red-500"> *</span></h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Select Slot<span className="text-red-500"> *</span></h2>
+                {slots.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="select-all-slots"
+                      ref={(el) => { if (el) el.indeterminate = isSelectAllIndeterminate; }}
+                      checked={isSelectAllChecked}
+                      disabled={!canSelectSlots || availableSlotsForSelect.length === 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          let newSelected = [...selectedSlots];
+                          for (const slot of slots) {
+                            if (slot.is_booked || newSelected.includes(slot.id)) continue;
+                            if (newSelected.length >= maxSelectableSlots) break;
+                            const all = [...newSelected, slot.id].sort((a, b) => a - b);
+                            let maxConsec = 1, curr = 1;
+                            for (let i = 1; i < all.length; i++) {
+                              if (all[i] === all[i - 1] + 1) { curr++; maxConsec = Math.max(maxConsec, curr); }
+                              else { curr = 1; }
+                            }
+                            if (maxConsec <= maxConcurrentSlots) {
+                              newSelected.push(slot.id);
+                            }
+                          }
+                          setSelectedSlots(newSelected);
+                        } else {
+                          setSelectedSlots([]);
+                        }
+                      }}
+                      className="w-4 h-4 cursor-pointer text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
+                    />
+                    <Label htmlFor="select-all-slots" className="cursor-pointer text-sm font-medium text-gray-700 select-none">
+                      Select All
+                      {selectedSlots.length > 0 && (
+                        <span className="ml-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                          {selectedSlots.length} selected
+                        </span>
+                      )}
+                    </Label>
+                  </div>
+                )}
+              </div>
               {slots.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {slots.map((slot) => {
                     const disabled = !isSlotSelectable(slot.id);
                     const isBooked = slot.is_booked;
@@ -1181,6 +1248,7 @@ export const AddFacilityBookingClubPage = () => {
                     );
                   })}
                 </div>
+              </>
               ) : (
                 <p className="text-gray-500">
                   {selectedFacility && selectedDate
@@ -1357,6 +1425,20 @@ export const AddFacilityBookingClubPage = () => {
                           <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_guest_charge.toFixed(2)}</td>
                         </tr>
                       )}
+                      {facilityDetails.facility_charge.hotel_guest_charge != null && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="border border-gray-300 px-4 py-3">5</td>
+                          <td className="border border-gray-300 px-4 py-3">Hotel Guest</td>
+                          <td className="border border-gray-300 px-4 py-3">₹{Number(facilityDetails.facility_charge.hotel_guest_charge).toFixed(2)}</td>
+                        </tr>
+                      )}
+                      {facilityDetails.facility_charge.full_court_charge != null && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="border border-gray-300 px-4 py-3">6</td>
+                          <td className="border border-gray-300 px-4 py-3">Full Court</td>
+                          <td className="border border-gray-300 px-4 py-3">₹{Number(facilityDetails.facility_charge.full_court_charge).toFixed(2)}</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1515,10 +1597,14 @@ export const AddFacilityBookingClubPage = () => {
                         const maxMemberPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.memberPremium), 0);
                         const maxGuestPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.guestPremium), 0);
                         totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
-                        totalGuestCharge = numberOfGuests * (adultGuestCharge + maxGuestPremium);
+                        totalGuestCharge = isFullCourt
+                          ? Number(facilityDetails.facility_charge?.full_court_charge ?? 0) * slotsCount
+                          : numberOfGuests * (adultGuestCharge + maxGuestPremium);
                       } else {
                         totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                        totalGuestCharge = numberOfGuests * adultGuestCharge;
+                        totalGuestCharge = isFullCourt
+                          ? Number(facilityDetails.facility_charge?.full_court_charge ?? 0)
+                          : numberOfGuests * adultGuestCharge;
                       }
 
                       const slotTotal = selectedSlots.length * perSlotCharge;
@@ -1628,6 +1714,7 @@ export const AddFacilityBookingClubPage = () => {
                                           const val = Math.max(0, parseInt(e.target.value) || 0);
                                           setNumberOfGuests(val > maxPeople ? maxPeople : val);
                                         }}
+                                        disabled={isFullCourt}
                                         variant="outlined"
                                         placeholder="No. of guests"
                                         sx={{
@@ -1645,9 +1732,23 @@ export const AddFacilityBookingClubPage = () => {
                                           step: 1
                                         }}
                                       />
-                                      <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
+                                      <span className="text-sm text-gray-500">{isFullCourt ? `(Full Court ₹${Number(facilityDetails.facility_charge?.full_court_charge).toFixed(2)} x ${slotsCount} slot${slotsCount > 1 ? 's' : ''})` : `x ₹${adultGuestCharge.toFixed(2)}`}</span>
                                     </div>
                                   </div>
+                                  {userType === 'guest' && Number(facilityDetails.facility_charge?.full_court_charge) > 0 && (
+                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={isFullCourt}
+                                        onChange={(e) => {
+                                          setIsFullCourt(e.target.checked);
+                                          if (e.target.checked) setNumberOfGuests(0);
+                                        }}
+                                        className="w-4 h-4"
+                                      />
+                                      Full Court (₹{Number(facilityDetails.facility_charge?.full_court_charge).toFixed(2)})
+                                    </label>
+                                  )}
                                   {/* Show guest premium calculation per slot as a table */}
                                   {hasSlots && (
                                     <div className="flex justify-start">
@@ -1798,9 +1899,10 @@ export const AddFacilityBookingClubPage = () => {
             <div className="flex justify-center">
               <Button
                 type="submit"
-                className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2"
+                disabled={isSubmitting}
+                className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isSubmitting ? 'Submitting...' : 'Submit'}
               </Button>
             </div>
 
