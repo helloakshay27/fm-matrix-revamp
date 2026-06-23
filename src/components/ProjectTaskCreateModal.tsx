@@ -1228,6 +1228,7 @@ const ProjectTaskCreateModal = ({
   opportunityId,
   onSuccess,
   isConversion = false,
+  isOpen = true,
 }: any) => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -1392,6 +1393,38 @@ const ProjectTaskCreateModal = ({
     dispatch(fetchProjectById({ baseUrl, token, id }));
     dispatch(fetchMilestoneById({ baseUrl, token, id: mid }));
   }, [dispatch, id, mid, token]);
+
+  /* ── Re-fetch fresh data on open; reset stale state on close ── */
+  useEffect(() => {
+    if (isOpen) {
+      getUsers();
+      getTags();
+      setFormData({
+        project: "",
+        milestone: "",
+        taskTitle: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1").replace(/#\[(.*?)\]\(\d+\)/g, "#$1") || "",
+        description: prefillData?.description?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1").replace(/#\[(.*?)\]\(\d+\)/g, "#$1") || "",
+        responsiblePerson: prefillData?.responsible_person?.id || "",
+        responsiblePersonName: prefillData?.responsible_person?.name || "",
+        department: "",
+        priority: "",
+        observer: [],
+        tags: (prefillData?.tags || []).map((tag: any) => ({ value: tag.company_tag_id, label: tag.company_tag?.name || "", id: tag.company_tag_id })),
+        isRecurring: false,
+      });
+      const today = new Date();
+      setStartDate({ year: today.getFullYear(), month: today.getMonth(), date: today.getDate() });
+      setEndDate(null);
+      setSavedTasks([]);
+      setPrevTags([]);
+      setPrevObservers([]);
+      setAttachments([]);
+    } else {
+      setUsers([]);
+      setMembers([]);
+      setTags([]);
+    }
+  }, [isOpen]);
 
   const getTagName = useCallback(
     (id) => tags.find((t) => t.id === id)?.name || "",
@@ -1781,7 +1814,6 @@ const ProjectTaskCreateModal = ({
             project={project}
             milestone={milestone}
             users={members.length > 0 ? members : users}
-            // users={users}
             tags={tags}
             prevTags={prevTags}
             setPrevTags={setPrevTags}
@@ -1818,7 +1850,6 @@ const ProjectTaskCreateModal = ({
             project={project}
             milestone={milestone}
             users={members.length > 0 ? members : users}
-            // users={users}
             tags={tags}
             prevTags={prevTags}
             setPrevTags={setPrevTags}

@@ -304,6 +304,7 @@ const ItemsAdd = () => {
       can_be_sold: form.sellable,
       can_be_purchased: form.purchasable,
       track_inventory: false,
+      current_stock: form.current_stock !== "" ? Number(form.current_stock) : null,
     },
   };
   console.log("Payload for Item submission:", payload);
@@ -364,6 +365,11 @@ const ItemsAdd = () => {
         toast.error("Purchase Account is required for Purchasable items");
         return;
       }
+    }
+
+    if (!form.current_stock && form.current_stock !== "0") {
+      toast.error("Current Stock is required.");
+      return;
     }
 
     const token = localStorage.getItem("token");
@@ -434,12 +440,7 @@ const ItemsAdd = () => {
   form.is_inventory
 );
 
-// if (form.is_inventory) {
-//   formData.append(
-//     "lock_account_item[current_stock]",
-//     form.current_stock
-//   );
-// }
+    formData.append("lock_account_item[current_stock]", form.current_stock);
     formData.append("lock_account_item[tax_preference]", form.tax_preference);
     if (form.type === "goods") {
       formData.append("lock_account_item[hsn_code]", form.hsn_code);
@@ -733,30 +734,30 @@ const ItemsAdd = () => {
   />
 </div>
 {/* STOCK DETAILS */}
-{/* {form.is_inventory && (
+ {/* {form.is_inventory && ( */}
   <div className="mt-6 border rounded-lg p-4 bg-gray-50">
     <h2 className="font-semibold mb-4">Inventory Details</h2>
 
    
     <TextField
       fullWidth
-      label="Current Stock"
+      label={<span>Current Stock <span style={{ color: "red" }}>*</span></span>}
       name="current_stock"
       placeholder="Enter current stock"
       value={form.current_stock}
       onChange={(e) => {
         const value = e.target.value.replace(/[^0-9]/g, "");
-
         setForm((prev) => ({
           ...prev,
           current_stock: value,
         }));
       }}
       InputLabelProps={{ shrink: true }}
+      // required
     />
 
     {/* STOCK TABLE */}
-    {/* <div className="mt-6 overflow-x-auto">
+     {/* <div className="mt-6 overflow-x-auto">
       <table className="w-full border border-gray-200 text-sm">
         <thead className="bg-gray-100">
           <tr>
@@ -780,9 +781,9 @@ const ItemsAdd = () => {
           </tr>
         </tbody>
       </table>
-    </div>
+    </div> */}
   </div>
-)} */} 
+{/* )}  */}
           </div>
 
           {/* RIGHT SIDE ATTACHMENT */}

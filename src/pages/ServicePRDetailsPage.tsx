@@ -885,19 +885,19 @@ export const ServicePRDetailsPage = () => {
 
               {!shouldShowButtons && (
                 <>
-                  {
-                    shouldShow("Service PR", "create") && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                        onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
-                      >
-                        <Copy className="w-4 h-4 mr-1" />
-                        Clone
-                      </Button>
-                    )
-                  }
+                  {/* {
+                    shouldShow("Service PR", "create") && ( */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                    onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Clone
+                  </Button>
+                  {/* )
+                  } */}
 
                   <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                     {

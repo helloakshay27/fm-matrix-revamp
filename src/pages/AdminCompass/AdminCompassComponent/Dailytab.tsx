@@ -301,6 +301,28 @@ const normalizeReportData = (rd: any) => {
   };
 };
 
+const isAdminAddedMissedPlanReport = (report: any) => {
+  const draft = report?.daily_report;
+  if (!draft || report?.checked_in_meeting === true || report?.journal_id)
+    return false;
+
+  const normalized = normalizeReportData(draft.report_data);
+  const hasTomorrowPlan = normalized.tomorrow_plan.length > 0;
+  const hasSubmittedContent =
+    normalized.accomplishments.length > 0 ||
+    normalized.tasks_issues.length > 0 ||
+    !!normalized.big_win ||
+    normalized.self_rating !== null ||
+    normalized.total_score !== null ||
+    Object.keys(normalized.kpis || {}).length > 0;
+
+  return (
+    hasTomorrowPlan &&
+    !hasSubmittedContent &&
+    String(draft.status || "").toLowerCase() !== "submitted"
+  );
+};
+
 const fmtItemDate = (d?: string): string | null => {
   if (!d) return null;
   const dt = new Date(d);
@@ -481,8 +503,8 @@ const getCalendarDisplayStatus = (status: any) => {
 };
 
 const getItemType = (item: any): string => {
-  if (!item || typeof item !== "object") return "task";
-  return String(item.type || "task").toLowerCase();
+  if (!item || typeof item !== "object") return "note";
+  return String(item.type || "note").toLowerCase();
 };
 
 const getViewSourceType = (item: any): string => {
@@ -546,7 +568,14 @@ const getPayloadSourceType = (item: any): any => {
   if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-")) return "todo";
   if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
 
-  return null;
+  return "note";
+};
+
+const getApiErrorMessage = (responseData: any, fallback: string) => {
+  if (Array.isArray(responseData?.errors) && responseData.errors.length > 0) {
+    return responseData.errors.join(", ");
+  }
+  return responseData?.message || responseData?.error || fallback;
 };
 
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
@@ -1021,7 +1050,11 @@ const DailyTab = ({
             );
             const pureMissed = [
               ...allReports
-                .filter((r: any) => r.status === "pending" && !r.daily_report)
+                .filter(
+                  (r: any) =>
+                    (r.status === "pending" && !r.daily_report) ||
+                    isAdminAddedMissedPlanReport(r)
+                )
                 .map((r: any) => r.name),
               ...(json.data?.missed_members || [])
                 .filter(
@@ -1492,8 +1525,7 @@ const DailyTab = ({
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-        const errorMsg =
-          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        const errorMsg = getApiErrorMessage(responseData, `HTTP ${res.status}`);
         throw new Error(errorMsg);
       }
 
@@ -1518,7 +1550,7 @@ const DailyTab = ({
 
       await loadDailyData(true);
     } catch (err: any) {
-      toast.error("Error saving meeting: " + err.message);
+      toast.error(err.message || "Error saving meeting");
     } finally {
       setIsSavingMeeting(false);
     }
@@ -1574,8 +1606,7 @@ const DailyTab = ({
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-        const errorMsg =
-          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        const errorMsg = getApiErrorMessage(responseData, `HTTP ${res.status}`);
         throw new Error(errorMsg);
       }
 
@@ -1677,8 +1708,7 @@ const DailyTab = ({
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-        const errorMsg =
-          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        const errorMsg = getApiErrorMessage(responseData, `HTTP ${res.status}`);
         throw new Error(errorMsg);
       }
 
@@ -1719,7 +1749,32 @@ const DailyTab = ({
         sensitivity: "base",
       })
     );
-  let failedMembers = dailyData?.missed_members || [];
+  const adminPlanMissedMembers = memberReports.filter(
+    isAdminAddedMissedPlanReport
+  );
+  const adminPlanMissedById = new Map(
+    adminPlanMissedMembers.map((report: any) => [String(report.user_id), report])
+  );
+  const baseMissedMembers = (dailyData?.missed_members || []).map(
+    (member: any) => {
+      const memberId = String(member.id || member.user_id);
+      const planReport = adminPlanMissedById.get(memberId);
+      return planReport ? { ...planReport, ...member, id: memberId } : member;
+    }
+  );
+  const failedMemberIdSet = new Set(
+    baseMissedMembers.map((member: any) => String(member.id || member.user_id))
+  );
+  let failedMembers = [
+    ...baseMissedMembers,
+    ...adminPlanMissedMembers
+      .filter((report: any) => !failedMemberIdSet.has(String(report.user_id)))
+      .map((report: any) => ({
+        ...report,
+        id: report.user_id,
+        user_id: report.user_id,
+      })),
+  ];
   const absentSubmittedUserIds = new Set(
     memberReports
       .filter((report: any) => isReportAbsent(report, resolveRawSource(report)))
@@ -1810,6 +1865,57 @@ const DailyTab = ({
     }
   };
 
+  const handleAddMissedMemberPlan = async (member: any) => {
+    const text = quickActionText.trim();
+    if (!text) {
+      toast.error("Please enter a plan item.");
+      return;
+    }
+
+    const userId = member?.user_id || member?.id || member?.user?.id;
+    if (!userId) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+
+    const currentPlan = normalizeReportData(resolveRawSource(member)).tomorrow_plan;
+
+    setIsSavingPlan(true);
+    try {
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/upsert_member_tomorrow_plan`,
+        {
+          method: "POST",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: Number(userId) || userId,
+            report_date: activeDate,
+            tomorrow_plan: [
+              ...currentPlan,
+              {
+                title: text,
+                is_starred: false,
+              },
+            ],
+          }),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      toast.success("Added to tomorrow's plan!");
+      setQuickActionOpenId(null);
+      setQuickActionText("");
+      await loadDailyData(true);
+    } catch (err: any) {
+      toast.error("Error updating plan: " + err.message);
+    } finally {
+      setIsSavingPlan(false);
+    }
+  };
+
   const resetFeedbackForm = () => {
     setFeedbackRating(0);
     setFeedbackMessage("");
@@ -1831,7 +1937,77 @@ const DailyTab = ({
     }, 180);
   };
 
-  const visibleReportIds = memberReports.map((r: any) =>
+  const renderCompactReportItems = (
+    items: any[] = [],
+    emptyText = "None recorded."
+  ) => {
+    if (!items.length) {
+      return <p className="text-xs text-neutral-300 italic">{emptyText}</p>;
+    }
+
+    return (
+      <ul className="space-y-2">
+        {items.map((item: any, index: number) => {
+          const type = getViewSourceType(item);
+          const hasDetails = ["task", "issue", "todo"].includes(type);
+          const typePillStyle =
+            type === "issue"
+              ? "bg-red-100 text-red-700 border-red-200"
+              : type === "todo"
+                ? "bg-violet-100 text-violet-700 border-violet-200"
+                : type === "task"
+                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
+                  : "bg-gray-100 text-gray-600 border-gray-200";
+
+          return (
+            <li
+              key={index}
+              onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
+              className={cn(
+                "flex flex-col rounded-[10px] border border-gray-100 bg-gray-50/70 transition-all",
+                hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+              )}
+            >
+              <div className="flex items-center gap-2 px-3 py-2.5">
+                <span
+                  className={cn(
+                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                    typePillStyle
+                  )}
+                >
+                  {type}
+                </span>
+                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                  {getItemTitle(item)}
+                </span>
+                {hasDetails && (
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleViewTaskIssueTodoItem(item);
+                    }}
+                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                    title={`View ${type}`}
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <ReportItemMeta item={item} />
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  const visibleReports = memberReports.filter(
+    (report: any) =>
+      !isAdminAddedMissedPlanReport(report) &&
+      (report.status !== "pending" || !!report.daily_report)
+  );
+
+  const visibleReportIds = visibleReports.map((r: any) =>
     String(r.journal_id || r.user_id)
   );
   const areAllVisibleReportsSelected =
@@ -1841,10 +2017,6 @@ const DailyTab = ({
     );
 
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
-
-  const visibleReports = memberReports.filter(
-    (report: any) => report.status !== "pending" || !!report.daily_report
-  );
 
   return (
     <div
@@ -2405,6 +2577,10 @@ const DailyTab = ({
                     );
 
                     // ── NEW LOGIC FOR SCORING ──
+                    const reporteeReports = Array.isArray(report.reportee_reports)
+                      ? report.reportee_reports
+                      : [];
+
                     const sections =
                       draftRaw?.sections ||
                       rawDisplayRd?.sections ||
@@ -3064,6 +3240,208 @@ const DailyTab = ({
                                 </div>
                               </div>
 
+                              {reporteeReports.length > 0 && (
+                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 pb-3 border-b border-gray-100">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+                                        <Users className="w-4 h-4 text-indigo-600" />
+                                      </div>
+                                      <div>
+                                        <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                          Reportee Reports
+                                        </h4>
+                                        <p className="text-[10px] text-neutral-400 font-medium">
+                                          Reports submitted under {report.name}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <span className="self-start sm:self-auto px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold">
+                                      {reporteeReports.length} Reportee{reporteeReports.length > 1 ? "s" : ""}
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-4">
+                                    {reporteeReports.map((reportee: any) => {
+                                      const reporteeId = reportee.journal_id || reportee.user_id;
+                                      const reporteeExpandId = `reportee-${rId}-${reporteeId}`;
+                                      const isReporteeExpanded = expandedReports.includes(reporteeExpandId);
+                                      const reporteeRaw = resolveRawSource(reportee);
+                                      const reporteeData = normalizeReportData(reporteeRaw);
+                                      const reporteeAbsent = isReportAbsent(
+                                        reportee,
+                                        reporteeRaw,
+                                        reporteeData
+                                      );
+                                      const reporteeAbsentReason = getReportAbsentReason(
+                                        reportee,
+                                        reporteeRaw,
+                                        reporteeData
+                                      );
+                                      const reporteeSections =
+                                        reportee.daily_report?.report_data?.sections ||
+                                        reporteeRaw?.sections ||
+                                        reporteeData?.sections ||
+                                        {};
+                                      const reporteeGetScore = (value: any) =>
+                                        value !== undefined && value !== null && value !== ""
+                                          ? Number(value)
+                                          : 0;
+                                      const reporteeSelfRating = reporteeAbsent
+                                        ? 0
+                                        : reporteeRaw?.self_rating ??
+                                        reportee.daily_report?.self_rating ??
+                                        null;
+                                      const reporteeStatus = reportee.status || "pending";
+                                      const hasReporteeDraft = !!reportee.daily_report;
+                                      const reporteeIsPending =
+                                        reporteeStatus === "pending" && !hasReporteeDraft;
+
+                                      return (
+                                        <div
+                                          key={reporteeId}
+                                          className="rounded-xl border border-indigo-100 bg-indigo-50/30 overflow-hidden"
+                                        >
+                                          <div
+                                            className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4 cursor-pointer hover:bg-indigo-50/60 transition-colors"
+                                            onClick={() => toggleExpand(reporteeExpandId)}
+                                          >
+                                            <div className="min-w-0">
+                                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                <h5 className="text-sm font-bold text-neutral-900 truncate">
+                                                  {reportee.name}
+                                                </h5>
+                                                {reportee.department && (
+                                                  <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                                    {reportee.department}
+                                                  </span>
+                                                )}
+                                                <span
+                                                  className={cn(
+                                                    "text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0",
+                                                    reporteeIsPending
+                                                      ? "bg-red-50 text-red-700 border-red-100"
+                                                      : "bg-green-50 text-green-700 border-green-100"
+                                                  )}
+                                                >
+                                                  {reporteeIsPending ? "Not Submitted" : "Submitted"}
+                                                </span>
+                                              </div>
+                                              <p className="text-[11px] text-neutral-400 truncate">
+                                                {reportee.email || "Reportee report"}
+                                                {reportee.submitted_at && (
+                                                  <span className="ml-1">
+                                                    - {formatDateTime(reportee.submitted_at)}
+                                                  </span>
+                                                )}
+                                              </p>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0 self-start sm:self-center ml-auto">
+                                              <span
+                                                className={cn(
+                                                  "px-2.5 py-0.5 rounded-full border text-[10px] font-bold shrink-0",
+                                                  reporteeAbsent
+                                                    ? "bg-red-50 text-red-700 border-red-100"
+                                                    : "bg-green-50 text-green-700 border-green-100"
+                                                )}
+                                              >
+                                                {reporteeAbsent ? "Absent" : "Present"}
+                                                {reporteeAbsent &&
+                                                  reporteeAbsentReason.toLowerCase() !== "absent"
+                                                  ? `: ${reporteeAbsentReason}`
+                                                  : ""}
+                                              </span>
+
+                                              <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  toggleExpand(reporteeExpandId);
+                                                }}
+                                                className="flex items-center justify-center w-7 h-7 rounded-full bg-white text-indigo-500 border border-indigo-100 shrink-0 transition-transform"
+                                              >
+                                                <ChevronDown
+                                                  className={cn(
+                                                    "w-4 h-4 transition-transform",
+                                                    isReporteeExpanded && "rotate-180"
+                                                  )}
+                                                />
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                          {isReporteeExpanded && (
+                                            <div className="border-t border-indigo-100 bg-white/70 p-4">
+                                              {reporteeIsPending ? (
+                                                <p className="text-xs text-neutral-400 italic">
+                                                  Report not submitted for this date.
+                                                </p>
+                                              ) : (
+                                                <>
+                                                  <div className="flex flex-nowrap items-center gap-2 mb-3 overflow-x-auto whitespace-nowrap max-w-full pb-1">
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
+                                                      KPI: {reporteeGetScore(reporteeSections.kpi_achievement)}/20
+                                                    </span>
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
+                                                      Score: {Math.round(getReportTotalScore(reportee, reporteeRaw) ?? 0)}
+                                                    </span>
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
+                                                      Self Rating: {formatSelfRating(reporteeSelfRating) || "0/10"}
+                                                    </span>
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
+                                                      Planning: {reporteeGetScore(reporteeSections.planning)}/20
+                                                    </span>
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
+                                                      Tasks: {reporteeGetScore(reporteeSections.tasks_issues_todos ?? reporteeSections.tasks_issues)}/20
+                                                    </span>
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
+                                                      Timing: {reporteeGetScore(reporteeSections.timing)}/20
+                                                    </span>
+                                                  </div>
+
+                                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div className="rounded-xl border border-gray-100 bg-white p-3">
+                                                      <h6 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider mb-2">
+                                                        Accomplishments
+                                                      </h6>
+                                                      {reporteeAbsent
+                                                        ? renderCompactReportItems([], "None recorded.")
+                                                        : renderCompactReportItems(reporteeData.accomplishments)}
+                                                    </div>
+                                                    <div className="rounded-xl border border-gray-100 bg-white p-3">
+                                                      <h6 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider mb-2">
+                                                        Tasks, Issues & Todos
+                                                      </h6>
+                                                      {reporteeAbsent
+                                                        ? renderCompactReportItems([], "None recorded.")
+                                                        : renderCompactReportItems(
+                                                          reporteeData.tasks_issues.filter(
+                                                            (item: any) =>
+                                                              !isCompletedStatus(getItemStatus(item))
+                                                          )
+                                                        )}
+                                                    </div>
+                                                    <div className="rounded-xl border border-gray-100 bg-white p-3">
+                                                      <h6 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider mb-2">
+                                                        Tomorrow's Plan
+                                                      </h6>
+                                                      {reporteeAbsent
+                                                        ? renderCompactReportItems([], "None recorded.")
+                                                        : renderCompactReportItems(reporteeData.tomorrow_plan)}
+                                                    </div>
+                                                  </div>
+                                                </>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
                               <div className="flex flex-wrap gap-2 pt-1">
                                 <button
                                   onClick={() => openTaskModalForMember(report)}
@@ -3423,6 +3801,10 @@ const DailyTab = ({
               const isMissedFeedbackVisible =
                 feedbackOpenId === missedId || feedbackClosingId === missedId;
               const isMissedFeedbackClosing = feedbackClosingId === missedId;
+              const missedMemberData = normalizeReportData(
+                resolveRawSource(member)
+              );
+              const missedTomorrowPlan = missedMemberData.tomorrow_plan;
 
               return (
                 <div
@@ -3606,9 +3988,7 @@ const DailyTab = ({
                                 Tomorrow's Plan
                               </h4>
                             </div>
-                            <p className="text-xs text-neutral-300 italic">
-                              None recorded.
-                            </p>
+                            {renderCompactReportItems(missedTomorrowPlan)}
                           </div>
                         </div>
 
@@ -3643,6 +4023,20 @@ const DailyTab = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              toggleAddToPlan(missedId);
+                            }}
+                            className={cn(
+                              "flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm transition-colors",
+                              quickActionOpenId === missedId
+                                ? "text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700"
+                                : "text-indigo-600 bg-white border border-indigo-200 hover:bg-indigo-50"
+                            )}
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add to Plan
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (feedbackOpenId === missedId) {
                                 closeFeedbackPanel(missedId);
                               } else {
@@ -3657,6 +4051,56 @@ const DailyTab = ({
                             <MessageSquare className="w-3.5 h-3.5" /> Feedback
                           </button>
                         </div>
+
+                        {quickActionOpenId === missedId && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="border-t border-[#EAE3DF] pt-3 mt-2"
+                          >
+                            <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                              Add to Tomorrow's Plan
+                            </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
+                              <input
+                                autoFocus
+                                value={quickActionText}
+                                onChange={(e) =>
+                                  setQuickActionText(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !isSavingPlan) {
+                                    handleAddMissedMemberPlan(member);
+                                  }
+                                }}
+                                placeholder="Enter a plan item for tomorrow..."
+                                className="w-full flex-1 min-w-0 sm:min-w-[200px] border border-gray-300 rounded-xl px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] placeholder:text-neutral-400"
+                              />
+                              <button
+                                onClick={() => handleAddMissedMemberPlan(member)}
+                                disabled={
+                                  isSavingPlan || !quickActionText.trim()
+                                }
+                                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {isSavingPlan ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Plus className="w-4 h-4" />
+                                )}
+                                Add
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setQuickActionOpenId(null);
+                                  setQuickActionText("");
+                                }}
+                                className="px-5 py-2 rounded-xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
                         {isMissedFeedbackVisible && (
                           <div
