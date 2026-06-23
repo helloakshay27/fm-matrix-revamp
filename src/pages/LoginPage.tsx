@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
-import posthog from "posthog-js";
+import ReCAPTCHA from "react-google-recaptcha";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Building2, Eye, EyeOff } from "lucide-react";
@@ -332,8 +331,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
-          user_roster_id: response?.user_roster_id,
-          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -379,8 +376,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
-          user_roster_id: response?.user_roster_id,
-          is_vendor: response.is_vendor,
         });
 
         saveBaseUrl(baseUrl);
@@ -417,11 +412,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
-        user_roster_id: response?.user_roster_id,
         is_vendor: response.is_vendor,
         supplier_id: response.supplier_id,
       });
-
       // Store vendor/supplier ID for vendor portal routing
       if (response.supplier_id) {
         localStorage.setItem("vendor_id", response.supplier_id.toString());
@@ -431,13 +424,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
-
-      // Identify user in PostHog
-      posthog.identify(response.id?.toString(), {
-        email: response.email,
-        name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
-        user_type: response.user_type,
-      });
 
       // Fetch and store lock_account_id
       await fetchLockAccount();
@@ -467,6 +453,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           return;
         }
 
+        // PRIORITY 1: Vendor user - redirect to vendor portal
         if (response.is_vendor && response.supplier_id) {
           navigate(`/vendor/supplier-details/${response.supplier_id}`, { replace: true });
           return;
@@ -707,14 +694,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           />
 
           {/* CAPTCHA */}
-          <div className="flex justify-center mb-4">
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || ""}
-              onChange={(token) => setCaptchaToken(token)}
-              onExpired={() => setCaptchaToken(null)}
-            />
-          </div>
+          {import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY && (
+            <div className="flex justify-center mb-4">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY}
+                onChange={(token) => setCaptchaToken(token)}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
 
           <div className="text-center text-sm text-gray-300 mb-4">
             By clicking Log in you are accepting our{" "}
