@@ -458,6 +458,27 @@ export const TaskDetailsPage = () => {
     }
   };
 
+  // Auto-fetch job sheet when task is closed/completed/partially closed
+  useEffect(() => {
+    const status =
+      taskDetails?.task_details?.status?.value?.toLowerCase() ||
+      taskDetails?.task_status?.toLowerCase() ||
+      "";
+    if (
+      id &&
+      ["closed", "completed", "partially closed"].includes(status) &&
+      !jobSheetData &&
+      !jobSheetLoading
+    ) {
+      setJobSheetLoading(true);
+      taskService
+        .getJobSheet(id)
+        .then(setJobSheetData)
+        .catch(() => {})
+        .finally(() => setJobSheetLoading(false));
+    }
+  }, [taskDetails, id]);
+
   // File upload handler for form
   const handleFileUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -2022,6 +2043,29 @@ export const TaskDetailsPage = () => {
               )}
             </div>
           </Card>
+
+          {/* Task Comments from Job Sheet */}
+          {(jobSheetData?.data?.job_sheet?.task_details?.task_comments ||
+            jobSheetData?.job_sheet?.task_details?.task_comments) && (
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <FileText className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">Task Comments</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <p className="text-sm whitespace-pre-wrap text-gray-700">
+                    {jobSheetData?.data?.job_sheet?.task_details?.task_comments ||
+                      jobSheetData?.job_sheet?.task_details?.task_comments}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Attachments - Show only for closed/completed/partially closed status */}
           {(() => {
