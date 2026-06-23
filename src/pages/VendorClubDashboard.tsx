@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Eye, Upload, X, Loader2 } from 'lucide-react';
+import { Plus, Eye, Edit, Upload, X, Loader2 } from 'lucide-react';
 import { vendorService } from '@/services/vendorService';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
@@ -248,10 +248,21 @@ export const VendorClubDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <div className="flex gap-1">
-            <Button variant="ghost" size="sm" onClick={() => handleViewVendor(item.id)}>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleViewVendor(item.id)}
+              className="p-1 text-black hover:bg-gray-100 rounded"
+              title="View"
+            >
               <Eye className="w-4 h-4" />
-            </Button>
+            </button>
+            <button
+              onClick={() => navigate(`/accounting/vendor/edit/${item.id}`)}
+              className="p-1 text-black hover:bg-gray-100 rounded"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
           </div>
         );
       case 'supplier_type':

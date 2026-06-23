@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
-import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
+import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +49,7 @@ interface FormData {
   email_preference: string;
   access: string[],
   profile_type?: string,
+  reports_to: string,
 }
 
 const attendanceColumns: ColumnConfig[] = [
@@ -108,6 +109,7 @@ export const ViewFMUserPage = () => {
   const { sites } = useAppSelector((state) => state.site);
 
   const [attendanceData, setAttendanceData] = useState([])
+  const [users, setUsers] = useState<any[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false)
   const [paginationData, setPaginationData] = useState({
     current_page: 1,
@@ -138,8 +140,16 @@ export const ViewFMUserPage = () => {
     company_cluster: '',
     last_working_day: '',
     email_preference: '',
-    access: []
+    access: [],
+    reports_to: ''
   });
+
+  const getMemberName = (member: any) =>
+    member?.full_name ||
+    member?.name ||
+    `${member?.firstname || ''} ${member?.lastname || ''}`.trim() ||
+    member?.email ||
+    '';
 
   const fetchAttendance = async (page = 1) => {
     try {
@@ -183,6 +193,19 @@ export const ViewFMUserPage = () => {
     dispatch(fetchAllowedCompanies());
   }, [dispatch, baseUrl, token, userId]);
 
+  const getUsers = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setUsers(response.users || response.fm_users || response.data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getUsers();
+  }, [dispatch]);
+
   const [userData, setUserData] = useState({
     firstname: '',
     lastname: '',
@@ -211,7 +234,10 @@ export const ViewFMUserPage = () => {
     profile_type: '',
     profile_icon_url: '',
     access_to_array: [],
-    urgency_email_enabled: false
+    urgency_email_enabled: false,
+    report_to_id: '',
+    report_to: null,
+    report_to_name: ''
   })
 
   useEffect(() => {
@@ -229,6 +255,8 @@ export const ViewFMUserPage = () => {
   useEffect(() => {
     if (userData) {
       console.log('userData:', userData);
+      const reportToId = (userData as any).report_to_id || (userData as any).report_to?.id || '';
+      const reportToUser = users.find((user) => String(user.id) === String(reportToId));
       setFormData({
         firstname: userData.firstname || '',
         lastname: userData.lastname || '',
@@ -255,11 +283,15 @@ export const ViewFMUserPage = () => {
         email_preference: userData.urgency_email_enabled?.toString(),
         access: userData.access_to_array || [],
         profile_type: userData.profile_type || '',
+        reports_to:
+          getMemberName((userData as any).report_to) ||
+          (userData as any).report_to_name ||
+          getMemberName(reportToUser),
       });
     } else {
       console.log('userData not found for id:', id);
     }
-  }, [userData, id]);
+  }, [userData, id, users]);
 
   const handleInputChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     console.log(`Updating ${field} to:`, value);
@@ -786,6 +818,16 @@ export const ViewFMUserPage = () => {
                       )}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Reports To</Label>
+                  <Input
+                    value={formData.reports_to}
+                    onChange={(e) => handleInputChange('reports_to', e.target.value)}
+                    placeholder="Reports To"
+                    className="w-full"
+                    disabled
+                  />
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Vendor Company Name</Label>

@@ -969,66 +969,84 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     return (
         <div>
             {openingBalances?.map((row, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-10">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-3">
 
-                    <TextField
-                        label="Bill No"
-                        value={row.bill_no}
-                        placeholder="Enter bill number"
-                        onChange={(e) => handleChange(index, "bill_no", e.target.value)}
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                    />
+                    <div className="md:col-span-2">
+                        <TextField
+                            label="Bill No"
+                            value={row.bill_no}
+                            placeholder="Enter bill number"
+                            onChange={(e) => handleChange(index, "bill_no", e.target.value)}
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                        />
+                    </div>
 
-                    <TextField
-                        label="Bill Date"
-                        type="date"
-                        value={row.date}
-                        onChange={(e) => handleChange(index, "date", e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        fullWidth
-                    />
+                    <div className="md:col-span-2">
+                        <TextField
+                            label="Bill Date"
+                            type="date"
+                            value={row.date}
+                            onChange={(e) => handleChange(index, "date", e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                    </div>
 
-                    <TextField
-                        label="Due Date"
-                        type="date"
-                        value={row.due_date}
-                        onChange={(e) => handleChange(index, "due_date", e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        fullWidth
-                        inputProps={{ min: new Date().toISOString().split('T')[0] }}
-                    />
+                    <div className="md:col-span-2">
+                        <TextField
+                            label="Due Date"
+                            type="date"
+                            value={row.due_date}
+                            onChange={(e) => handleChange(index, "due_date", e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                        />
+                    </div>
 
-                    <TextField
-                        select
-                        label="Type"
-                        value={row.account_type || "Invoice"}
-                        onChange={(e) => handleChange(index, "account_type", e.target.value)}
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                    >
-                        <MenuItem value="Invoice">Invoice</MenuItem>
-                        <MenuItem value="Credit note">Credit Note</MenuItem>
-                    </TextField>
+                    <div className="md:col-span-3">
+                        <TextField
+                            select
+                            label="Type"
+                            value={row.account_type || "Invoice"}
+                            onChange={(e) => handleChange(index, "account_type", e.target.value)}
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                            // SelectProps={{
+                            //     MenuProps: {
+                            //         disablePortal: false,
+                            //         PaperProps: {
+                            //             style: { zIndex: 1500, minWidth: 160, maxHeight: 100 },
+                            //         },
+                            //     },
+                            // }}
+                        >
+                            <MenuItem value="Invoice">Invoice</MenuItem>
+                            <MenuItem value="Credit note">Credit Note</MenuItem>
+                        </TextField>
+                    </div>
 
-                    <TextField
-                        label="Amount"
-                        placeholder="Enter amount"
-                        value={row.amount}
-                        onChange={(e) => {
-                            const raw = e.target.value.replace(/^-/, "");
-                            handleChange(index, "amount", raw);
-                        }}
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                            startAdornment: row.account_type === "Credit note" && row.amount !== ""
-                                ? <span style={{ marginRight: 2 }}>-</span>
-                                : null,
-                        }}
-                    />
+                    <div className="md:col-span-2">
+                        <TextField
+                            label="Amount"
+                            placeholder="Enter amount"
+                            value={row.amount}
+                            onChange={(e) => {
+                                const raw = e.target.value.replace(/^-/, "");
+                                handleChange(index, "amount", raw);
+                            }}
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{
+                                startAdornment: row.account_type === "Credit note" && row.amount !== ""
+                                    ? <span style={{ marginRight: 2 }}>-</span>
+                                    : null,
+                            }}
+                        />
+                    </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="md:col-span-1 flex items-center gap-2">
                         <Button onClick={addRow} className="bg-[#DA7756] hover:bg-[#C45F40] text-white">
                             +
                         </Button>
@@ -1968,7 +1986,7 @@ const CustomersAdd = () => {
                 </div>
 
                 {/* BUTTONS */}
-                <div className="flex gap-3 justify-center mb-10">
+                <div className="flex gap-3 justify-center" style={{ marginBottom: '100px' }}>
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
