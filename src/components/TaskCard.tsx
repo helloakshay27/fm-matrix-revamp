@@ -6,9 +6,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CSS } from "@dnd-kit/utilities";
 
-export const getInitials = (name = "") => {
-    // Filter out empty strings after splitting
-    const parts = name?.trim().split(" ").filter(part => part.length > 0);
+export const getInitials = (name: any = "") => {
+    if (!name || typeof name !== "string") return "";
+    const parts = name.trim().split(" ").filter(part => part.length > 0);
 
     if (!parts || parts.length === 0) return "";
     if (parts.length === 1) return parts[0][0]?.toUpperCase() || "";
@@ -35,6 +35,8 @@ const TaskCard = ({
     const token = localStorage.getItem("token");
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+
+    console.log(task)
 
     const [countdown, setCountdown] = useState("");
 
@@ -301,7 +303,7 @@ const TaskCard = ({
                         </span>
                     </span>
                     <span className="h-5 w-5 flex items-center justify-center bg-green-600 text-white rounded-full text-[7px] font-light">
-                        {getInitials(task?.responsible_person)}
+                        {getInitials(task?.responsible_person?.name)}
                     </span>
                 </div>
             </div>
