@@ -2190,20 +2190,20 @@ export const AMCDashboard = () => {
             {showActionPanel && (
               <SelectionPanel
                 actions={[
-                  {
-                    label: "Add Visit",
-                    icon: CalendarPlus,
-                    onClick: () => {
-                      if (selectedItems.length !== 1) {
-                        toast.error(
-                          "Please select exactly 1 AMC to add a visit"
-                        );
-                        return;
-                      }
-                      setAddVisitAmcId(selectedItems[0]);
-                      setShowAddVisitModal(true);
-                    },
-                  },
+                  // {
+                  //   label: "Add Visit",
+                  //   icon: CalendarPlus,
+                  //   onClick: () => {
+                  //     if (selectedItems.length !== 1) {
+                  //       toast.error(
+                  //         "Please select exactly 1 AMC to add a visit"
+                  //       );
+                  //       return;
+                  //     }
+                  //     setAddVisitAmcId(selectedItems[0]);
+                  //     setShowAddVisitModal(true);
+                  //   },
+                  // },
                   {
                     label: "Add AMC",
                     icon: Plus,
