@@ -142,7 +142,7 @@ export const BroadcastFilterModal = ({ open, onOpenChange, onApply }: BroadcastF
                 >
                   <MenuItem value=""><em>{loadingUsers ? 'Loading users...' : 'Select User'}</em></MenuItem>
                   {fmUsers.map((user) => (
-                    <MenuItem key={user.id} value={user.full_name}>
+                    <MenuItem key={user.id} value={user.id}>
                       {user.full_name}
                     </MenuItem>
                   ))}
