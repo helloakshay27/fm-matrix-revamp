@@ -1114,9 +1114,21 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
+            const allowedMimeTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'application/msword', // .doc
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            ];
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx'];
+
             const newFiles = Array.from(files).filter(file => {
-                if (file.type !== 'application/pdf') {
-                    alert(`${file.name}: Only PDF files are accepted`);
+                const ext = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
+                const isValidType = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(ext);
+
+                if (!isValidType) {
+                    alert(`${file.name}: Unsupported file type. Allowed: JPG, PNG, PDF, DOC, DOCX`);
                     return false;
                 }
                 if (file.size > 5 * 1024 * 1024) {
@@ -1433,7 +1445,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     rate: item.rate,
                     total_value: item.amount,
                     ledger_id: item.account_id,
-                    prod_desc: item.description
+                    prod_desc: item.description,
+
+                    tax_type: item.item_tax_type,
+                    tax_group_id: item.tax_group_id
                 };
             });
 
@@ -1483,6 +1498,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 },
                 attachments: [] // Attachment upload logic implementation if needed, passing empty for now as per curl
             };
+            console.log("PO Payload:", JSON.stringify(payload, null, 2));
+
 
             const response = await axios.post(`https://${baseUrl}/pms/purchase_orders.json?access_token=${token}`, payload, {
                 headers: {

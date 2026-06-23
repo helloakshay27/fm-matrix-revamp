@@ -301,6 +301,28 @@ const normalizeReportData = (rd: any) => {
   };
 };
 
+const isAdminAddedMissedPlanReport = (report: any) => {
+  const draft = report?.daily_report;
+  if (!draft || report?.checked_in_meeting === true || report?.journal_id)
+    return false;
+
+  const normalized = normalizeReportData(draft.report_data);
+  const hasTomorrowPlan = normalized.tomorrow_plan.length > 0;
+  const hasSubmittedContent =
+    normalized.accomplishments.length > 0 ||
+    normalized.tasks_issues.length > 0 ||
+    !!normalized.big_win ||
+    normalized.self_rating !== null ||
+    normalized.total_score !== null ||
+    Object.keys(normalized.kpis || {}).length > 0;
+
+  return (
+    hasTomorrowPlan &&
+    !hasSubmittedContent &&
+    String(draft.status || "").toLowerCase() !== "submitted"
+  );
+};
+
 const fmtItemDate = (d?: string): string | null => {
   if (!d) return null;
   const dt = new Date(d);
@@ -1028,7 +1050,11 @@ const DailyTab = ({
             );
             const pureMissed = [
               ...allReports
-                .filter((r: any) => r.status === "pending" && !r.daily_report)
+                .filter(
+                  (r: any) =>
+                    (r.status === "pending" && !r.daily_report) ||
+                    isAdminAddedMissedPlanReport(r)
+                )
                 .map((r: any) => r.name),
               ...(json.data?.missed_members || [])
                 .filter(
@@ -1723,7 +1749,32 @@ const DailyTab = ({
         sensitivity: "base",
       })
     );
-  let failedMembers = dailyData?.missed_members || [];
+  const adminPlanMissedMembers = memberReports.filter(
+    isAdminAddedMissedPlanReport
+  );
+  const adminPlanMissedById = new Map(
+    adminPlanMissedMembers.map((report: any) => [String(report.user_id), report])
+  );
+  const baseMissedMembers = (dailyData?.missed_members || []).map(
+    (member: any) => {
+      const memberId = String(member.id || member.user_id);
+      const planReport = adminPlanMissedById.get(memberId);
+      return planReport ? { ...planReport, ...member, id: memberId } : member;
+    }
+  );
+  const failedMemberIdSet = new Set(
+    baseMissedMembers.map((member: any) => String(member.id || member.user_id))
+  );
+  let failedMembers = [
+    ...baseMissedMembers,
+    ...adminPlanMissedMembers
+      .filter((report: any) => !failedMemberIdSet.has(String(report.user_id)))
+      .map((report: any) => ({
+        ...report,
+        id: report.user_id,
+        user_id: report.user_id,
+      })),
+  ];
   const absentSubmittedUserIds = new Set(
     memberReports
       .filter((report: any) => isReportAbsent(report, resolveRawSource(report)))
@@ -1814,6 +1865,57 @@ const DailyTab = ({
     }
   };
 
+  const handleAddMissedMemberPlan = async (member: any) => {
+    const text = quickActionText.trim();
+    if (!text) {
+      toast.error("Please enter a plan item.");
+      return;
+    }
+
+    const userId = member?.user_id || member?.id || member?.user?.id;
+    if (!userId) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+
+    const currentPlan = normalizeReportData(resolveRawSource(member)).tomorrow_plan;
+
+    setIsSavingPlan(true);
+    try {
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/upsert_member_tomorrow_plan`,
+        {
+          method: "POST",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: Number(userId) || userId,
+            report_date: activeDate,
+            tomorrow_plan: [
+              ...currentPlan,
+              {
+                title: text,
+                is_starred: false,
+              },
+            ],
+          }),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      toast.success("Added to tomorrow's plan!");
+      setQuickActionOpenId(null);
+      setQuickActionText("");
+      await loadDailyData(true);
+    } catch (err: any) {
+      toast.error("Error updating plan: " + err.message);
+    } finally {
+      setIsSavingPlan(false);
+    }
+  };
+
   const resetFeedbackForm = () => {
     setFeedbackRating(0);
     setFeedbackMessage("");
@@ -1899,7 +2001,13 @@ const DailyTab = ({
     );
   };
 
-  const visibleReportIds = memberReports.map((r: any) =>
+  const visibleReports = memberReports.filter(
+    (report: any) =>
+      !isAdminAddedMissedPlanReport(report) &&
+      (report.status !== "pending" || !!report.daily_report)
+  );
+
+  const visibleReportIds = visibleReports.map((r: any) =>
     String(r.journal_id || r.user_id)
   );
   const areAllVisibleReportsSelected =
@@ -1909,10 +2017,6 @@ const DailyTab = ({
     );
 
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
-
-  const visibleReports = memberReports.filter(
-    (report: any) => report.status !== "pending" || !!report.daily_report
-  );
 
   return (
     <div
@@ -3697,6 +3801,10 @@ const DailyTab = ({
               const isMissedFeedbackVisible =
                 feedbackOpenId === missedId || feedbackClosingId === missedId;
               const isMissedFeedbackClosing = feedbackClosingId === missedId;
+              const missedMemberData = normalizeReportData(
+                resolveRawSource(member)
+              );
+              const missedTomorrowPlan = missedMemberData.tomorrow_plan;
 
               return (
                 <div
@@ -3880,9 +3988,7 @@ const DailyTab = ({
                                 Tomorrow's Plan
                               </h4>
                             </div>
-                            <p className="text-xs text-neutral-300 italic">
-                              None recorded.
-                            </p>
+                            {renderCompactReportItems(missedTomorrowPlan)}
                           </div>
                         </div>
 
@@ -3917,6 +4023,20 @@ const DailyTab = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              toggleAddToPlan(missedId);
+                            }}
+                            className={cn(
+                              "flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm transition-colors",
+                              quickActionOpenId === missedId
+                                ? "text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700"
+                                : "text-indigo-600 bg-white border border-indigo-200 hover:bg-indigo-50"
+                            )}
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add to Plan
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (feedbackOpenId === missedId) {
                                 closeFeedbackPanel(missedId);
                               } else {
@@ -3931,6 +4051,56 @@ const DailyTab = ({
                             <MessageSquare className="w-3.5 h-3.5" /> Feedback
                           </button>
                         </div>
+
+                        {quickActionOpenId === missedId && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="border-t border-[#EAE3DF] pt-3 mt-2"
+                          >
+                            <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                              Add to Tomorrow's Plan
+                            </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
+                              <input
+                                autoFocus
+                                value={quickActionText}
+                                onChange={(e) =>
+                                  setQuickActionText(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !isSavingPlan) {
+                                    handleAddMissedMemberPlan(member);
+                                  }
+                                }}
+                                placeholder="Enter a plan item for tomorrow..."
+                                className="w-full flex-1 min-w-0 sm:min-w-[200px] border border-gray-300 rounded-xl px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] placeholder:text-neutral-400"
+                              />
+                              <button
+                                onClick={() => handleAddMissedMemberPlan(member)}
+                                disabled={
+                                  isSavingPlan || !quickActionText.trim()
+                                }
+                                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {isSavingPlan ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Plus className="w-4 h-4" />
+                                )}
+                                Add
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setQuickActionOpenId(null);
+                                  setQuickActionText("");
+                                }}
+                                className="px-5 py-2 rounded-xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
                         {isMissedFeedbackVisible && (
                           <div
