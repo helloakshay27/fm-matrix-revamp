@@ -1445,7 +1445,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     rate: item.rate,
                     total_value: item.amount,
                     ledger_id: item.account_id,
-                    prod_desc: item.description
+                    prod_desc: item.description,
+
+                    tax_type: item.item_tax_type,
+                    tax_group_id: item.tax_group_id
                 };
             });
 
@@ -1495,6 +1498,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 },
                 attachments: [] // Attachment upload logic implementation if needed, passing empty for now as per curl
             };
+            console.log("PO Payload:", JSON.stringify(payload, null, 2));
+
 
             const response = await axios.post(`https://${baseUrl}/pms/purchase_orders.json?access_token=${token}`, payload, {
                 headers: {
