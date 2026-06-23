@@ -107,6 +107,8 @@ export const AddAMCPage = () => {
   const [assetOptions, setAssetOptions] = useState<any[]>([]);
   const [assetQuery, setAssetQuery] = useState('');
   const [assetSearchLoading, setAssetSearchLoading] = useState(false);
+  const [indivGroupFilter, setIndivGroupFilter] = useState('');
+  const [indivSubGroupFilter, setIndivSubGroupFilter] = useState('');
   const [assetMenuId] = useState(() => `asset-menu-${Math.random().toString(36).slice(2)}`);
   const [supplierDisplayLabel, setSupplierDisplayLabel] = useState('');
   // Technician state
@@ -2949,6 +2951,45 @@ export const AddAMCPage = () => {
                           )}
                         </div>
 
+                        {/* Group / SubGroup filters */}
+                        {(() => {
+                          const uniqueGroups = Array.from(new Set(assetOptions.map((a: any) => a.asset_group).filter(Boolean))) as string[];
+                          const uniqueSubGroups = Array.from(new Set(
+                            assetOptions
+                              .filter((a: any) => !indivGroupFilter || a.asset_group === indivGroupFilter)
+                              .map((a: any) => a.asset_sub_group)
+                              .filter(Boolean)
+                          )) as string[];
+                          return (
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
+                                <select
+                                  value={indivGroupFilter}
+                                  onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
+                                  disabled={isSubmitting}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
+                                >
+                                  <option value="">All Groups</option>
+                                  {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
+                                <select
+                                  value={indivSubGroupFilter}
+                                  onChange={e => setIndivSubGroupFilter(e.target.value)}
+                                  disabled={isSubmitting || !indivGroupFilter}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-400"
+                                >
+                                  <option value="">All Sub Groups</option>
+                                  {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {/* Search */}
                         <div className="relative mb-3">
                           <input
@@ -2976,10 +3017,10 @@ export const AddAMCPage = () => {
                                   <input
                                     type="checkbox"
                                     style={{ accentColor: '#C72030' }}
-                                    disabled={isSubmitting || assetOptions.length === 0}
-                                    checked={assetOptions.length > 0 && assetOptions.every(a => formData.asset_ids.includes(Number(a.id)))}
+                                    disabled={isSubmitting || assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length === 0}
+                                    checked={assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length > 0 && assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).every((a: any) => formData.asset_ids.includes(Number(a.id)))}
                                     onChange={e => {
-                                      const filteredIds = assetOptions.map(a => Number(a.id));
+                                      const filteredIds = assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).map((a: any) => Number(a.id));
                                       setFormData(prev => ({
                                         ...prev,
                                         asset_ids: e.target.checked
@@ -2992,25 +3033,36 @@ export const AddAMCPage = () => {
                                 </th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Name</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Manufacturer</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Ext. Ref. ID</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Equipment ID</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Group</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Sub Group</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Building</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Wing</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Area</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Floor</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Room</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Criticality</th>
+
                               </tr>
                             </thead>
                             <tbody>
-                              {assetOptions.length === 0 ? (
-                                <tr>
-                                  <td colSpan={7} className="px-3 py-8 text-center text-gray-400 text-sm">
-                                    {assetSearchLoading
-                                      ? 'Searching…'
-                                      : assetQuery.length > 0 && assetQuery.length < 3
-                                        ? 'Type at least 3 characters to search'
-                                        : 'No assets found'}
-                                  </td>
-                                </tr>
-                              ) : (
-                                assetOptions.map((asset: any) => {
+                              {(() => {
+                                const displayAssets = assetOptions.filter((a: any) =>
+                                  (!indivGroupFilter || a.asset_group === indivGroupFilter) &&
+                                  (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)
+                                );
+                                if (displayAssets.length === 0) return (
+                                  <tr>
+                                    <td colSpan={12} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                      {assetSearchLoading
+                                        ? 'Searching…'
+                                        : assetQuery.length > 0 && assetQuery.length < 3
+                                          ? 'Type at least 3 characters to search'
+                                          : 'No assets found'}
+                                    </td>
+                                  </tr>
+                                );
+                                return displayAssets.map((asset: any) => {
                                   const isChecked = formData.asset_ids.includes(Number(asset.id));
                                   return (
                                     <tr
@@ -3040,13 +3092,18 @@ export const AddAMCPage = () => {
                                       <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.asset_group || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.asset_sub_group || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.wing || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.area || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.floor || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.room || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.criticality || '-'}</td>
                                     </tr>
                                   );
-                                })
-                              )}
+                                });
+                              })()}
                             </tbody>
                           </table>
                         </div>
