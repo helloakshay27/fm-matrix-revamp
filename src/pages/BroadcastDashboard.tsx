@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -104,13 +104,13 @@ export const BroadcastDashboard = () => {
   //   total_pages: 0,
   // });
   const [pagination, setPagination] = useState(() => {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    current_page: Number(params.get('page')) || 1,
-    total_count: 0,
-    total_pages: 0,
-  };
-});
+    const params = new URLSearchParams(window.location.search);
+    return {
+      current_page: Number(params.get('page')) || 1,
+      total_count: 0,
+      total_pages: 0,
+    };
+  });
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [cardData, setCardData] = useState({
     total_notices: "",
@@ -121,13 +121,13 @@ export const BroadcastDashboard = () => {
     expired_notices: ""
   })
 
-useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const urlPage = Number(params.get('page')) || 1;
-  if (urlPage !== pagination.current_page) {
-    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
-  }
-}, [pagination.current_page]);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlPage = Number(params.get('page')) || 1;
+    if (urlPage !== pagination.current_page) {
+      navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+    }
+  }, [pagination.current_page]);
 
 
   useEffect(() => {
@@ -150,7 +150,7 @@ useEffect(() => {
           inactive_notices: response.inactive_notices,
           expired_notices: response.expired_notices
         })
-      setPagination((prev) => ({
+        setPagination((prev) => ({
           ...prev,
           total_count: response.pagination.total_count,
           total_pages: response.pagination.total_pages,
@@ -382,30 +382,30 @@ useEffect(() => {
   // };
 
   const handlePageChange = async (page: number) => {
-  navigate(`${location.pathname}?page=${page}`, { replace: true });
-  setPagination((prev) => ({
-    ...prev,
-    current_page: page,
-  }));
-  try {
-    const response = await dispatch(
-      fetchBroadcasts({
-        baseUrl,
-        token,
-        per_page: 10,
-        page: page,
-      })
-    ).unwrap();
-    setBroadcasts(response.noticeboards || []);
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
     setPagination((prev) => ({
       ...prev,
-      total_count: response.pagination.total_count,
-      total_pages: response.pagination.total_pages,
+      current_page: page,
     }));
-  } catch (error) {
-    toast.error("Failed to fetch bookings");
-  }
-};
+    try {
+      const response = await dispatch(
+        fetchBroadcasts({
+          baseUrl,
+          token,
+          per_page: 10,
+          page: page,
+        })
+      ).unwrap();
+      setBroadcasts(response.noticeboards || []);
+      setPagination((prev) => ({
+        ...prev,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages,
+      }));
+    } catch (error) {
+      toast.error("Failed to fetch bookings");
+    }
+  };
   const handleAdd = () => {
     navigate("/pulse/notices/add");
   };
@@ -430,7 +430,7 @@ useEffect(() => {
     }
 
     if (data.created_by) {
-      params.append("q[created_by_eq]", data.created_by);
+      params.append("q[id_user_eq]", data.created_by);
     }
 
     if (data.created_at) {
@@ -448,7 +448,7 @@ useEffect(() => {
         })
       ).unwrap();
 
-     setBroadcasts(response.noticeboards || []);
+      setBroadcasts(response.noticeboards || []);
       setPagination((prev) => ({
         ...prev,
         total_count: response.pagination.total_count,
@@ -591,24 +591,24 @@ useEffect(() => {
         />
       </Button>
       {shouldShow("Broadcast", "show") && (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => handleView(item.id)}
-        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleView(item.id)}
+          className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
       )}
       {shouldShow("Broadcast", "update") && (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => handleEdit(item.id)}
-        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleEdit(item.id)}
+          className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
       )}
     </div>
   );
@@ -661,13 +661,13 @@ useEffect(() => {
         onFilterClick={() => setIsFilterModalOpen(true)}
         leftActions={
           shouldShow("Broadcast", "create") ? (
-          <Button
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            onClick={handleAdd}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
+            <Button
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              onClick={handleAdd}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
           ) : null
         }
       />

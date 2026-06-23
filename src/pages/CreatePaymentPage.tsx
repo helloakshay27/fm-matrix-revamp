@@ -199,9 +199,7 @@ export const CreatePaymentPage: React.FC = () => {
         timeout: 30000,
       });
       const id =
-        res.data?.lock_account?.id ??
-        res.data?.lock_account_id ??
-        res.data?.id;
+        res.data?.lock_account?.id ?? res.data?.lock_account_id ?? res.data?.id;
 
       if (id) {
         const nextId = String(id);
@@ -227,7 +225,7 @@ export const CreatePaymentPage: React.FC = () => {
 
   // Form State
   const [paymentNumber, setPaymentNumber] = useState("");
-  
+
   // Payment Number Configuration State
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [paymentConfig, setPaymentConfig] = useState({
@@ -235,6 +233,8 @@ export const CreatePaymentPage: React.FC = () => {
     prefix: "",
     nextNumber: 1,
   });
+  const [reflectPaymentPromptOpen, setReflectPaymentPromptOpen] =
+    useState(false);
 
   // Modal temporary states
   const [modalAutoGenerate, setModalAutoGenerate] = useState(true);
@@ -260,12 +260,16 @@ export const CreatePaymentPage: React.FC = () => {
   const [lockAccountTaxId] = useState(1);
 
   // TDS state
-  const [tdsOptions, setTdsOptions] = useState<{ id: string | number; name: string; percentage?: number }[]>([]);
+  const [tdsOptions, setTdsOptions] = useState<
+    { id: string | number; name: string; percentage?: number }[]
+  >([]);
   const [selectedTds, setSelectedTds] = useState("");
   const [loadingTds, setLoadingTds] = useState(false);
-  
+
   // Reverse Charge state
-  const [rcTaxOptions, setRcTaxOptions] = useState<{ id: string | number; name: string; percentage?: number }[]>([]);
+  const [rcTaxOptions, setRcTaxOptions] = useState<
+    { id: string | number; name: string; percentage?: number }[]
+  >([]);
   const [loadingRcTaxes, setLoadingRcTaxes] = useState(false);
   const [isReverseCharge, setIsReverseCharge] = useState(false);
   const [reverseChargeTax, setReverseChargeTax] = useState("");
@@ -273,13 +277,42 @@ export const CreatePaymentPage: React.FC = () => {
   const [destinationOfSupply, setDestinationOfSupply] = useState("");
   const [descriptionOfSupply, setDescriptionOfSupply] = useState("");
   const indianStates = [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
-    "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
-    "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
-    "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
-    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-    "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-    "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry",
   ];
   // Attachments
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
@@ -325,9 +358,9 @@ export const CreatePaymentPage: React.FC = () => {
   // Fetch TDS taxes from API (only TDS, not TCS)
   useEffect(() => {
     const fetchTdsOptions = async () => {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      const lock_account_id = localStorage.getItem('lock_account_id');
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const lock_account_id = localStorage.getItem("lock_account_id");
       if (!baseUrl || !token || !lock_account_id) return;
       setLoadingTds(true);
       try {
@@ -335,13 +368,13 @@ export const CreatePaymentPage: React.FC = () => {
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
         const data = await response.json();
         setTdsOptions(Array.isArray(data) ? data : data?.tax_sections || []);
       } catch (error) {
-        console.error('Failed to fetch TDS options:', error);
+        console.error("Failed to fetch TDS options:", error);
         setTdsOptions([]);
       } finally {
         setLoadingTds(false);
@@ -353,9 +386,9 @@ export const CreatePaymentPage: React.FC = () => {
   // Fetch Reverse Charge (Tax Group) options from API
   useEffect(() => {
     const fetchRcTaxOptions = async () => {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      const lock_account_id = localStorage.getItem('lock_account_id');
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const lock_account_id = localStorage.getItem("lock_account_id");
       if (!baseUrl || !token || !lock_account_id) return;
       setLoadingRcTaxes(true);
       try {
@@ -363,28 +396,31 @@ export const CreatePaymentPage: React.FC = () => {
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
         const data = await response.json();
         // data is expected to be an array of TaxGroups
-        const formattedGroups = (Array.isArray(data) ? (data as TaxGroup[]) : []).map((group) => {
+        const formattedGroups = (
+          Array.isArray(data) ? (data as TaxGroup[]) : []
+        ).map((group) => {
           // If the group has a rate aggregate, use it; otherwise sum the rates from tax_rates
-          const totalRate = typeof group.rate === 'number' 
-            ? group.rate 
-            : Array.isArray(group.tax_rates) 
-              ? group.tax_rates.reduce((sum, r) => sum + (r.rate || 0), 0)
-              : 0;
-            
+          const totalRate =
+            typeof group.rate === "number"
+              ? group.rate
+              : Array.isArray(group.tax_rates)
+                ? group.tax_rates.reduce((sum, r) => sum + (r.rate || 0), 0)
+                : 0;
+
           return {
             id: group.id,
             name: group.name,
-            percentage: totalRate
+            percentage: totalRate,
           };
         });
         setRcTaxOptions(formattedGroups);
       } catch (error) {
-        console.error('Failed to fetch RC Tax options:', error);
+        console.error("Failed to fetch RC Tax options:", error);
         setRcTaxOptions([]);
       } finally {
         setLoadingRcTaxes(false);
@@ -392,7 +428,6 @@ export const CreatePaymentPage: React.FC = () => {
     };
     fetchRcTaxOptions();
   }, []);
-
 
   useEffect(() => {
     const fetchAccountGroups = async () => {
@@ -429,7 +464,9 @@ export const CreatePaymentPage: React.FC = () => {
       if (!accountId) {
         setBills([]);
         setAppliedAmounts({});
-        setBillsError("Could not find lock account for this session. Please reselect your company/site.");
+        setBillsError(
+          "Could not find lock account for this session. Please reselect your company/site."
+        );
         setBillsLoading(false);
         return;
       }
@@ -543,7 +580,9 @@ export const CreatePaymentPage: React.FC = () => {
           payment_of_id: parseInt(selectedVendor, 10),
           paid_amount: paidAmount,
           // Use the dynamically selected TDS id (vendor_advance tab only)
-          lock_account_tax_id: selectedTds ? parseInt(selectedTds, 10) : lockAccountTaxId,
+          lock_account_tax_id: selectedTds
+            ? parseInt(selectedTds, 10)
+            : lockAccountTaxId,
           tds_amount: tdsAmount > 0 ? tdsAmount : undefined,
           tds_percentage: tdsPercentage > 0 ? tdsPercentage : undefined,
           net_amount: tdsAmount > 0 ? paidAmount - tdsAmount : undefined,
@@ -554,14 +593,20 @@ export const CreatePaymentPage: React.FC = () => {
           paid_from_ledger_id: parseInt(paidThrough, 10),
           deposit_to_ledger_id: depositToLedgerId,
           advance: activeTab === "vendor_advance",
-          reverse_charge: activeTab === "vendor_advance" ? isReverseCharge : undefined,
+          reverse_charge:
+            activeTab === "vendor_advance" ? isReverseCharge : undefined,
           reverse_charge_tax_id:
-            activeTab === "vendor_advance" && isReverseCharge && reverseChargeTax
+            activeTab === "vendor_advance" &&
+            isReverseCharge &&
+            reverseChargeTax
               ? parseInt(reverseChargeTax, 10)
               : undefined,
-          source_of_supply: activeTab === "vendor_advance" ? sourceOfSupply : undefined,
-          destination_of_supply: activeTab === "vendor_advance" ? destinationOfSupply : undefined,
-          description_of_supply: activeTab === "vendor_advance" ? descriptionOfSupply : undefined,
+          source_of_supply:
+            activeTab === "vendor_advance" ? sourceOfSupply : undefined,
+          destination_of_supply:
+            activeTab === "vendor_advance" ? destinationOfSupply : undefined,
+          description_of_supply:
+            activeTab === "vendor_advance" ? descriptionOfSupply : undefined,
           notes: notes,
           payment_made: isPaid,
           status: isPaid ? "paid" : "draft",
@@ -580,7 +625,7 @@ export const CreatePaymentPage: React.FC = () => {
       sonnerToast.success("Payment saved successfully!");
       const newId = res.data?.id || res.data?.lock_payment?.id;
       if (newId) {
-        navigate(`/accounting/payments-made`);
+        navigate(`/accounting/payments-made?paymentId=${newId}&view=detail`);
       } else {
         navigate("/accounting/payments-made");
       }
@@ -651,6 +696,7 @@ export const CreatePaymentPage: React.FC = () => {
 
     if (activeTab !== "bill_payment") {
       setPayFullAmount(false);
+      setReflectPaymentPromptOpen(false);
       setBills([]);
       setBillsError("");
       setAppliedAmounts({});
@@ -665,7 +711,10 @@ export const CreatePaymentPage: React.FC = () => {
   const getBillAmountDue = useCallback(
     (bill: LockAccountBill) =>
       parseAmountValue(
-        bill.balance_due ?? bill.amount_due ?? bill.due_amount ?? bill.total_amount
+        bill.balance_due ??
+          bill.amount_due ??
+          bill.due_amount ??
+          bill.total_amount
       ),
     [parseAmountValue]
   );
@@ -674,10 +723,87 @@ export const CreatePaymentPage: React.FC = () => {
     0
   );
   const amountInExcess = Math.max(0, (parseFloat(amount) || 0) - totalApplied);
+  const billTableGridClass =
+    "grid w-full grid-cols-[1.15fr_1fr_1fr_1.05fr_1.05fr_1.4fr_1.2fr] gap-4";
+  const paymentDateInputValue = date ? format(date, "yyyy-MM-dd") : "";
+
+  const handlePaymentAmountChange = useCallback(
+    (value: string) => {
+      setAmount(value);
+      setPayFullAmount(false);
+
+      const numericAmount = parseFloat(value);
+      setReflectPaymentPromptOpen(
+        activeTab === "bill_payment" &&
+          bills.length > 0 &&
+          !billsLoading &&
+          Number.isFinite(numericAmount) &&
+          numericAmount > 0
+      );
+    },
+    [activeTab, bills.length, billsLoading]
+  );
+
+  const applyPaymentAmountToBills = useCallback(() => {
+    let remainingAmount = parseFloat(amount) || 0;
+
+    setAppliedAmounts(
+      bills.reduce<Record<number, string>>((acc, bill) => {
+        if (remainingAmount <= 0) {
+          acc[bill.id] = "";
+          return acc;
+        }
+
+        const amountDue = getBillAmountDue(bill);
+        const rowAmount = Math.min(remainingAmount, amountDue);
+        acc[bill.id] = rowAmount > 0 ? rowAmount.toFixed(2) : "";
+        remainingAmount -= rowAmount;
+        return acc;
+      }, {})
+    );
+    setPayFullAmount(false);
+    setReflectPaymentPromptOpen(false);
+  }, [amount, bills, getBillAmountDue]);
+
+  const handleBillPaymentDateChange = useCallback((value: string) => {
+    if (!value) return;
+    setDate(new Date(`${value}T00:00:00`));
+  }, []);
+
+  const renderReflectPaymentPrompt = () => (
+    <PopoverContent
+      align="start"
+      side="bottom"
+      sideOffset={6}
+      className="w-[290px] rounded-md border border-gray-200 bg-white p-0 shadow-lg"
+    >
+      <div className="px-3 py-4 text-xs leading-5 text-gray-600">
+        Would you like this amount to be reflected in the Payment field?
+      </div>
+      <div className="flex gap-2 border-t border-gray-100 bg-gray-50 px-3 py-2">
+        <Button
+          type="button"
+          className="h-8 rounded px-3 text-xs bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={applyPaymentAmountToBills}
+        >
+          Yes
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-8 rounded px-3 text-xs"
+          onClick={() => setReflectPaymentPromptOpen(false)}
+        >
+          No
+        </Button>
+      </div>
+    </PopoverContent>
+  );
 
   const applyFullPaymentAmount = useCallback(
     (checked: boolean) => {
       setPayFullAmount(checked);
+      setReflectPaymentPromptOpen(false);
 
       if (!checked) {
         setAmount("");
@@ -709,351 +835,684 @@ export const CreatePaymentPage: React.FC = () => {
   }, [bills, getBillAmountDue, payFullAmount, vendorAmountDue]);
 
   // TDS deduction: amount × (selectedTds percentage / 100)
-  const selectedTdsOption = tdsOptions.find((opt) => String(opt.id) === selectedTds);
+  const selectedTdsOption = tdsOptions.find(
+    (opt) => String(opt.id) === selectedTds
+  );
   const tdsPercentage = selectedTdsOption?.percentage ?? 0;
-  const tdsAmount = tdsPercentage > 0 && parseFloat(amount) > 0
-    ? (parseFloat(amount) * tdsPercentage) / 100
-    : 0;
+  const tdsAmount =
+    tdsPercentage > 0 && parseFloat(amount) > 0
+      ? (parseFloat(amount) * tdsPercentage) / 100
+      : 0;
 
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-white">
         <div className="w-full">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* ══ HEADER SECTION (Gray Background) ══ */}
-          <div className="bg-[#f9f9fa] border-b border-gray-200 px-6 pb-6 pt-6 relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-6 top-6 z-10 hover:bg-gray-200 rounded-full h-8 w-8 text-gray-500"
-              onClick={() => navigate("/accounting/payments-made")}
-            >
-              <X className="h-5 w-5" />
-            </Button>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            {/* ══ HEADER SECTION (Gray Background) ══ */}
+            <div className="bg-[#f9f9fa] border-b border-gray-200 px-6 pb-6 pt-6 relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-6 top-6 z-10 hover:bg-gray-200 rounded-full h-8 w-8 text-gray-500"
+                onClick={() => navigate("/accounting/payments-made")}
+              >
+                <X className="h-5 w-5" />
+              </Button>
 
-            {/* Tab Switcher */}
-            <div className="flex justify-start items-end border-b border-gray-200 mb-6">
-              <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 gap-6">
-                <TabsTrigger
-                  value="bill_payment"
-                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-[#DA7756] data-[state=active]:bg-transparent data-[state=active]:text-[#DA7756] data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
-                >
-                  Bill Payment
-                </TabsTrigger>
-                <TabsTrigger
-                  value="vendor_advance"
-                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-[#DA7756] data-[state=active]:bg-transparent data-[state=active]:text-[#DA7756] data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
-                >
-                  Vendor Advance
-                </TabsTrigger>
-              </TabsList>
-            </div>
+              {/* Tab Switcher */}
+              <div className="flex justify-start items-end border-b border-gray-200 mb-6">
+                <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 gap-6">
+                  <TabsTrigger
+                    value="bill_payment"
+                    className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-red-700 data-[state=active]:bg-transparent data-[state=active]:text-red-700 data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                  >
+                    Bill Payment
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="vendor_advance"
+                    className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-red-700 data-[state=active]:bg-transparent data-[state=active]:text-red-700 data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                  >
+                    Vendor Advance
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-            {/* ── Vendor Name – MUI Select (same as BillsAdd style) ── */}
-            <div className="mt-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vendor Name<span className="text-red-500">*</span>
-              </label>
-              <FormControl fullWidth error={!selectedVendor}>
-                <MuiSelect
-                  value={selectedSupplier?.id || ""}
-                  onChange={(e) => {
-                    const vendorId = String(e.target.value);
-                    if (vendorId) {
-                      handleVendorSelect(vendorId);
-                    } else {
-                      setSelectedVendor(null);
-                      setPayFullAmount(false);
-                      setBills([]);
-                      setBillsError("");
-                      setAppliedAmounts({});
-                    }
-                  }}
-                  displayEmpty
-                  sx={{
-                    height: { xs: 28, sm: 36, md: 45 },
-                    "& .MuiInputBase-input, & .MuiSelect-select": {
-                      padding: { xs: "8px", sm: "10px", md: "12px" },
-                    },
-                    backgroundColor: "#fff",
-                    borderRadius: "6px",
-                  }}
-                  MenuProps={{
-                    PaperProps: {
-                      style: {
-                        maxHeight: 350,
-                      },
-                    },
-                  }}
-                >
-                  <MuiMenuItem value="" disabled>
-                    Select a vendor
-                  </MuiMenuItem>
-                  {suppliers.map((option) => (
-                    <MuiMenuItem key={option.id} value={option.id}>
-                      {option.company_name
-                        ? option.name
-                          ? `${option.name} (${option.company_name})`
-                          : option.company_name
-                        : option.name || "Unknown Vendor"}
-                    </MuiMenuItem>
-                  ))}
-                  <MuiMenuItem
-                    sx={{
-                      p: 0,
-                      position: "sticky",
-                      bottom: 0,
-                      background: "white",
-                      zIndex: 10,
-                      mt: 1,
+              {/* ── Vendor Name – MUI Select (same as BillsAdd style) ── */}
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Vendor Name<span className="text-red-500">*</span>
+                </label>
+                <FormControl fullWidth error={!selectedVendor}>
+                  <MuiSelect
+                    value={selectedSupplier?.id || ""}
+                    onChange={(e) => {
+                      const vendorId = String(e.target.value);
+                      if (vendorId) {
+                        handleVendorSelect(vendorId);
+                      } else {
+                        setSelectedVendor(null);
+                        setPayFullAmount(false);
+                        setBills([]);
+                        setBillsError("");
+                        setAppliedAmounts({});
+                      }
                     }}
-                    disableRipple
-                    onKeyDown={(e) => e.stopPropagation()}
-                    onClick={(e) => e.stopPropagation()}
-                  ></MuiMenuItem>
-                </MuiSelect>
-              </FormControl>
-
-              {/* Supply Details (Vendor Advance Only) - Moved here and shows only after vendor selection */}
-              {selectedVendor && activeTab === "vendor_advance" && (
-                <div className="mt-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1.5 text-gray-700">Source of Supply</label>
-                      <FormControl fullWidth size="small">
-                        <MuiSelect
-                          value={sourceOfSupply}
-                          onChange={(e) => setSourceOfSupply(e.target.value as string)}
-                          displayEmpty
-                          sx={{
-                            height: { xs: 28, sm: 36, md: 38 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px", md: "8px" },
-                              fontSize: "14px",
-                            },
-                            backgroundColor: "#fff",
-                            borderRadius: "6px",
-                          }}
-                        >
-                          <MuiMenuItem value="" disabled>Select State</MuiMenuItem>
-                          {indianStates.map((state) => (
-                            <MuiMenuItem key={state} value={state}>
-                              {state}
-                            </MuiMenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1.5 text-gray-700">Destination of Supply</label>
-                      <FormControl fullWidth size="small">
-                        <MuiSelect
-                          value={destinationOfSupply}
-                          onChange={(e) => setDestinationOfSupply(e.target.value as string)}
-                          displayEmpty
-                          sx={{
-                            height: { xs: 28, sm: 36, md: 38 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px", md: "8px" },
-                              fontSize: "14px",
-                            },
-                            backgroundColor: "#fff",
-                            borderRadius: "6px",
-                          }}
-                        >
-                          <MuiMenuItem value="" disabled>Select State</MuiMenuItem>
-                          {indianStates.map((state) => (
-                            <MuiMenuItem key={state} value={state}>
-                              {state}
-                            </MuiMenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <label className="block text-sm font-medium text-gray-700 cursor-help">
-                            Description of Supply
-                          </label>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-[#1e293b] text-white border-none text-[12px] py-1.5 px-3 max-w-[250px]">
-                          <p>provide description for goods or services that you are going to supply</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <Input
-                      value={descriptionOfSupply}
-                      onChange={(e) => setDescriptionOfSupply(e.target.value)}
-                      className="h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm bg-white"
-                      placeholder="Enter description of supply"
+                    displayEmpty
+                    sx={{
+                      height: { xs: 28, sm: 36, md: 45 },
+                      "& .MuiInputBase-input, & .MuiSelect-select": {
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
+                      },
+                      backgroundColor: "#fff",
+                      borderRadius: "6px",
+                    }}
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 350,
+                        },
+                      },
+                    }}
+                  >
+                    <MuiMenuItem value="" disabled>
+                      Select a vendor
+                    </MuiMenuItem>
+                    {suppliers.map((option) => (
+                      <MuiMenuItem key={option.id} value={option.id}>
+                        {option.company_name
+                          ? option.name
+                            ? `${option.name} (${option.company_name})`
+                            : option.company_name
+                          : option.name || "Unknown Vendor"}
+                      </MuiMenuItem>
+                    ))}
+                    <MuiMenuItem
+                      sx={{
+                        p: 0,
+                        position: "sticky",
+                        bottom: 0,
+                        background: "white",
+                        zIndex: 10,
+                        mt: 1,
+                      }}
+                      disableRipple
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     />
-                    <p className="mt-1.5 text-[11px] text-gray-500 italic">
-                      Will be displayed on the Payment Voucher
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                  </MuiSelect>
+                </FormControl>
 
-          {/* ══ MAIN FORM SECTION (White Background) ══ */}
-          <div className="px-6 py-6 bg-white">
-            <div className="space-y-5 transition-all duration-300">
-              {/* ── PAYMENT DETAILS ── */}
-              <div className="border border-gray-200 bg-white">
-                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
-                  <FileText
-                    className="w-[18px] h-[18px] text-[#DA7756]"
-                    strokeWidth={2}
-                  />
-                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
-                    PAYMENT DETAILS
-                  </span>
-                </div>
-                <div className="p-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Payment # */}
+                {/* Supply Details (Vendor Advance Only) - Moved here and shows only after vendor selection */}
+                {selectedVendor && activeTab === "vendor_advance" && (
+                  <div className="mt-6 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                          Source of Supply
+                        </label>
+                        <FormControl fullWidth size="small">
+                          <MuiSelect
+                            value={sourceOfSupply}
+                            onChange={(e) =>
+                              setSourceOfSupply(e.target.value as string)
+                            }
+                            displayEmpty
+                            sx={{
+                              height: { xs: 28, sm: 36, md: 38 },
+                              "& .MuiInputBase-input, & .MuiSelect-select": {
+                                padding: { xs: "8px", sm: "10px", md: "8px" },
+                                fontSize: "14px",
+                              },
+                              backgroundColor: "#fff",
+                              borderRadius: "6px",
+                            }}
+                          >
+                            <MuiMenuItem value="" disabled>
+                              Select State
+                            </MuiMenuItem>
+                            {indianStates.map((state) => (
+                              <MuiMenuItem key={state} value={state}>
+                                {state}
+                              </MuiMenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                          Destination of Supply
+                        </label>
+                        <FormControl fullWidth size="small">
+                          <MuiSelect
+                            value={destinationOfSupply}
+                            onChange={(e) =>
+                              setDestinationOfSupply(e.target.value as string)
+                            }
+                            displayEmpty
+                            sx={{
+                              height: { xs: 28, sm: 36, md: 38 },
+                              "& .MuiInputBase-input, & .MuiSelect-select": {
+                                padding: { xs: "8px", sm: "10px", md: "8px" },
+                                fontSize: "14px",
+                              },
+                              backgroundColor: "#fff",
+                              borderRadius: "6px",
+                            }}
+                          >
+                            <MuiMenuItem value="" disabled>
+                              Select State
+                            </MuiMenuItem>
+                            {indianStates.map((state) => (
+                              <MuiMenuItem key={state} value={state}>
+                                {state}
+                              </MuiMenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                      </div>
+                    </div>
+
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Payment #<span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative font-sans">
-                        <Input
-                          value={paymentNumber}
-                          onChange={(e) => setPaymentNumber(e.target.value)}
-                          readOnly={paymentConfig.autoGenerate}
-                          className={cn(
-                            "pr-10 h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm",
-                            paymentConfig.autoGenerate ? "bg-gray-50 cursor-not-allowed focus-visible:ring-0" : "bg-white cursor-text"
-                          )}
-                          placeholder="Payment number"
-                        />
+                      <div className="flex items-center gap-1.5 mb-1.5">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Settings
-                              className="absolute right-3 top-2.5 h-4 w-4 text-[#DA7756] cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                              onClick={() => setIsConfigModalOpen(true)}
-                            />
+                            <label className="block text-sm font-medium text-gray-700 cursor-help">
+                              Description of Supply
+                            </label>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="bg-[#1e293b] text-white border-none text-[12px] py-1.5 px-3">
-                            <p>Click here to configure auto-generation of payment numbers.</p>
+                          <TooltipContent
+                            side="right"
+                            className="bg-[#1e293b] text-white border-none text-[12px] py-1.5 px-3 max-w-[250px]"
+                          >
+                            <p>
+                              provide description for goods or services that you
+                              are going to supply
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
+                      <Input
+                        value={descriptionOfSupply}
+                        onChange={(e) => setDescriptionOfSupply(e.target.value)}
+                        className="h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm bg-white"
+                        placeholder="Enter description of supply"
+                      />
+                      <p className="mt-1.5 text-[11px] text-gray-500 italic">
+                        Will be displayed on the Payment Voucher
+                      </p>
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-                    {/* Payment Made */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Payment Made<span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex items-center h-[38px] border border-gray-300 rounded-md px-3 bg-white focus-within:ring-1 focus-within:ring-gray-950 focus-within:border-gray-950 transition-colors shadow-sm">
-                        <span className="text-gray-500 text-sm font-medium mr-2">
-                          INR
-                        </span>
-                        <input
-                          value={amount}
-                          onChange={(e) => {
-                            setAmount(e.target.value);
-                            setPayFullAmount(false);
-                          }}
-                          className="flex-1 w-full outline-none text-sm bg-transparent"
-                        />
-                      </div>
-                      {activeTab === "bill_payment" && (
-                        <label className="mt-2 flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-gray-300 text-[#DA7756] focus:ring-[#DA7756] cursor-pointer"
-                            checked={payFullAmount}
-                            disabled={!selectedVendor || billsLoading || vendorAmountDue <= 0}
-                            onChange={(e) => applyFullPaymentAmount(e.target.checked)}
-                          />
-                          <span>
-                            Pay full amount (₹{vendorAmountDue.toFixed(2)})
-                          </span>
-                        </label>
-                      )}
-                      {/* Net amount after TDS — shown only in vendor_advance */}
-                      {activeTab === "vendor_advance" && tdsAmount > 0 && (
-                        <p className="mt-1.5 text-xs text-gray-500">
-                          Amount paid after deducting TDS:{" "}
-                          <span className="font-semibold text-gray-800">
-                            ₹{(parseFloat(amount) - tdsAmount).toFixed(2)}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Reverse Charge (Vendor Advance Only) */}
-                    {activeTab === "vendor_advance" && (
-                      <div className="md:col-span-2 flex items-start border-b border-transparent pb-2">
-                         <label className="text-sm font-medium text-gray-700 min-w-[200px] pt-[2px]">
-                           Reverse Charge
-                         </label>
-                         <div className="flex flex-col flex-1">
-                           <div className="flex items-center gap-2">
-                             <input
-                               type="checkbox"
-                               id="reverseCharge"
-                               className="w-4 h-4 rounded border-gray-300 text-[#DA7756] focus:ring-[#DA7756] cursor-pointer"
-                               checked={isReverseCharge}
-                               onChange={(e) => setIsReverseCharge(e.target.checked)}
-                             />
-                             <label htmlFor="reverseCharge" className="text-[13px] text-gray-700 cursor-pointer hover:text-gray-900 transition-colors">
-                               This transaction is applicable for reverse charge
-                             </label>
-                           </div>
-                           
-                           {isReverseCharge && (
-                             <div className="w-full md:w-[50%] lg:w-[40%] mt-4">
-                               <label className="block text-sm font-medium mb-1.5 text-gray-700">Tax</label>
-                               <FormControl fullWidth size="small">
-                                 <MuiSelect
-                                   value={reverseChargeTax}
-                                   onChange={(e) => setReverseChargeTax(e.target.value as string)}
-                                   displayEmpty
-                                   sx={{
-                                     height: { xs: 28, sm: 36, md: 38 },
-                                     "& .MuiInputBase-input, & .MuiSelect-select": {
-                                       padding: { xs: "8px", sm: "10px", md: "8px" },
-                                       fontSize: "14px",
-                                     },
-                                     backgroundColor: "#fff",
-                                     borderRadius: "6px",
-                                   }}
-                                 >
-                                   <MuiMenuItem value="" disabled>
-                                     {loadingRcTaxes ? "Loading Tax options..." : "Select Tax Group"}
-                                   </MuiMenuItem>
-                                   {!loadingRcTaxes && rcTaxOptions.map((opt) => (
-                                     <MuiMenuItem key={opt.id} value={String(opt.id)}>
-                                       {opt.name}
-                                       {typeof opt.percentage === "number" ? ` [${opt.percentage}%]` : ""}
-                                     </MuiMenuItem>
-                                   ))}
-                                 </MuiSelect>
-                               </FormControl>
-                             </div>
-                           )}
-                         </div>
-                      </div>
-                    )}
-
-                    {/* TDS (Vendor Advance Only) */}
-                    {activeTab === "vendor_advance" && (
+            <div className="px-6 py-6">
+              <div className="space-y-6">
+                <div className="border border-gray-200 bg-white">
+                  <div className="p-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Payment Made */}
                       <div>
-                          <label className="block text-sm font-medium mb-2 text-gray-700">
-                            TDS
+                        <label className="block text-sm font-medium mb-2 text-gray-700">
+                          Payment Made<span className="text-red-500">*</span>
+                        </label>
+                        <Popover
+                          open={
+                            activeTab === "bill_payment" &&
+                            reflectPaymentPromptOpen
+                          }
+                        >
+                          <PopoverTrigger asChild>
+                            <div className="flex items-center h-[38px] border border-gray-300 rounded-md px-3 bg-white focus-within:ring-1 focus-within:ring-gray-950 focus-within:border-gray-950 transition-colors shadow-sm">
+                              <span className="text-gray-500 text-sm font-medium mr-2">
+                                INR
+                              </span>
+                              <input
+                                value={amount}
+                                onChange={(e) =>
+                                  handlePaymentAmountChange(e.target.value)
+                                }
+                                className="flex-1 w-full outline-none text-sm bg-transparent"
+                              />
+                            </div>
+                          </PopoverTrigger>
+                          {renderReflectPaymentPrompt()}
+                        </Popover>
+                        {activeTab === "bill_payment" && (
+                          <label className="mt-2 flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              checked={payFullAmount}
+                              disabled={
+                                !selectedVendor ||
+                                billsLoading ||
+                                vendorAmountDue <= 0
+                              }
+                              onChange={(e) =>
+                                applyFullPaymentAmount(e.target.checked)
+                              }
+                            />
+                            <span>
+                              Pay full amount (₹{vendorAmountDue.toFixed(2)})
+                            </span>
                           </label>
-                          <FormControl fullWidth>
+                        )}
+                        {/* Net amount after TDS — shown only in vendor_advance */}
+                        {activeTab === "vendor_advance" && tdsAmount > 0 && (
+                          <p className="mt-1.5 text-xs text-gray-500">
+                            Amount paid after deducting TDS:{" "}
+                            <span className="font-semibold text-gray-800">
+                              ₹{(parseFloat(amount) - tdsAmount).toFixed(2)}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Reverse Charge (Vendor Advance Only) */}
+                      {activeTab === "vendor_advance" && (
+                        <div className="md:col-span-2 flex items-start border-b border-transparent pb-2">
+                          <label className="text-sm font-medium text-gray-700 min-w-[200px] pt-[2px]">
+                            Reverse Charge
+                          </label>
+                          <div className="flex flex-col flex-1">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="reverseCharge"
+                                className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                                checked={isReverseCharge}
+                                onChange={(e) =>
+                                  setIsReverseCharge(e.target.checked)
+                                }
+                              />
+                              <label
+                                htmlFor="reverseCharge"
+                                className="text-[13px] text-gray-700 cursor-pointer hover:text-gray-900 transition-colors"
+                              >
+                                This transaction is applicable for reverse
+                                charge
+                              </label>
+                            </div>
+
+                            {isReverseCharge && (
+                              <div className="w-full md:w-[50%] lg:w-[40%] mt-4">
+                                <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                                  Tax
+                                </label>
+                                <FormControl fullWidth size="small">
+                                  <MuiSelect
+                                    value={reverseChargeTax}
+                                    onChange={(e) =>
+                                      setReverseChargeTax(
+                                        e.target.value as string
+                                      )
+                                    }
+                                    displayEmpty
+                                    sx={{
+                                      height: { xs: 28, sm: 36, md: 38 },
+                                      "& .MuiInputBase-input, & .MuiSelect-select":
+                                        {
+                                          padding: {
+                                            xs: "8px",
+                                            sm: "10px",
+                                            md: "8px",
+                                          },
+                                          fontSize: "14px",
+                                        },
+                                      backgroundColor: "#fff",
+                                      borderRadius: "6px",
+                                    }}
+                                  >
+                                    <MuiMenuItem value="" disabled>
+                                      {loadingRcTaxes
+                                        ? "Loading Tax options..."
+                                        : "Select Tax Group"}
+                                    </MuiMenuItem>
+                                    {!loadingRcTaxes &&
+                                      rcTaxOptions.map((opt) => (
+                                        <MuiMenuItem
+                                          key={opt.id}
+                                          value={String(opt.id)}
+                                        >
+                                          {opt.name}
+                                          {typeof opt.percentage === "number"
+                                            ? ` [${opt.percentage}%]`
+                                            : ""}
+                                        </MuiMenuItem>
+                                      ))}
+                                  </MuiSelect>
+                                </FormControl>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TDS (Vendor Advance Only) */}
+                      {activeTab === "vendor_advance" && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium mb-2 text-gray-700">
+                              Payment #<span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative font-sans">
+                              <Input
+                                value={paymentNumber}
+                                onChange={(e) =>
+                                  setPaymentNumber(e.target.value)
+                                }
+                                readOnly={paymentConfig.autoGenerate}
+                                className={cn(
+                                  "pr-10 h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm",
+                                  paymentConfig.autoGenerate
+                                    ? "bg-gray-50 cursor-not-allowed focus-visible:ring-0"
+                                    : "bg-white cursor-text"
+                                )}
+                                placeholder="Payment number"
+                              />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Settings
+                                    className="absolute right-3 top-2.5 h-4 w-4 text-blue-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                    onClick={() => setIsConfigModalOpen(true)}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent
+                                  side="top"
+                                  className="bg-[#1e293b] text-white border-none text-[12px] py-1.5 px-3"
+                                >
+                                  <p>
+                                    Click here to configure auto-generation of
+                                    payment numbers.
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
+
+                          {/* Payment Made */}
+                          <div>
+                            <label className="block text-sm font-medium mb-2 text-gray-700">
+                              Payment Made
+                              <span className="text-red-500">*</span>
+                            </label>
+                            <Popover
+                              open={
+                                activeTab === "bill_payment" &&
+                                reflectPaymentPromptOpen
+                              }
+                            >
+                              <PopoverTrigger asChild>
+                                <div className="flex items-center h-[38px] border border-gray-300 rounded-md px-3 bg-white focus-within:ring-1 focus-within:ring-gray-950 focus-within:border-gray-950 transition-colors shadow-sm">
+                                  <span className="text-gray-500 text-sm font-medium mr-2">
+                                    INR
+                                  </span>
+                                  <input
+                                    value={amount}
+                                    onChange={(e) =>
+                                      handlePaymentAmountChange(e.target.value)
+                                    }
+                                    className="flex-1 w-full outline-none text-sm bg-transparent"
+                                  />
+                                </div>
+                              </PopoverTrigger>
+                              {renderReflectPaymentPrompt()}
+                            </Popover>
+                            {/* Net amount after TDS — shown only in vendor_advance */}
+                            {activeTab === "vendor_advance" &&
+                              tdsAmount > 0 && (
+                                <p className="mt-1.5 text-xs text-gray-500">
+                                  Amount paid after deducting TDS:{" "}
+                                  <span className="font-semibold text-gray-800">
+                                    ₹
+                                    {(parseFloat(amount) - tdsAmount).toFixed(
+                                      2
+                                    )}
+                                  </span>
+                                </p>
+                              )}
+                          </div>
+
+                          {/* Reverse Charge (Vendor Advance Only) */}
+                          {activeTab === "vendor_advance" && (
+                            <div className="md:col-span-2 flex items-start border-b border-transparent pb-2">
+                              <label className="text-sm font-medium text-gray-700 min-w-[200px] pt-[2px]">
+                                Reverse Charge
+                              </label>
+                              <div className="flex flex-col flex-1">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id="reverseCharge"
+                                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                                    checked={isReverseCharge}
+                                    onChange={(e) =>
+                                      setIsReverseCharge(e.target.checked)
+                                    }
+                                  />
+                                  <label
+                                    htmlFor="reverseCharge"
+                                    className="text-[13px] text-gray-700 cursor-pointer hover:text-gray-900 transition-colors"
+                                  >
+                                    This transaction is applicable for reverse
+                                    charge
+                                  </label>
+                                </div>
+
+                                {isReverseCharge && (
+                                  <div className="w-full md:w-[50%] lg:w-[40%] mt-4">
+                                    <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                                      Tax
+                                    </label>
+                                    <FormControl fullWidth size="small">
+                                      <MuiSelect
+                                        value={reverseChargeTax}
+                                        onChange={(e) =>
+                                          setReverseChargeTax(
+                                            e.target.value as string
+                                          )
+                                        }
+                                        displayEmpty
+                                        sx={{
+                                          height: { xs: 28, sm: 36, md: 38 },
+                                          "& .MuiInputBase-input, & .MuiSelect-select":
+                                            {
+                                              padding: {
+                                                xs: "8px",
+                                                sm: "10px",
+                                                md: "8px",
+                                              },
+                                              fontSize: "14px",
+                                            },
+                                          backgroundColor: "#fff",
+                                          borderRadius: "6px",
+                                        }}
+                                      >
+                                        <MuiMenuItem value="" disabled>
+                                          {loadingRcTaxes
+                                            ? "Loading Tax options..."
+                                            : "Select Tax Group"}
+                                        </MuiMenuItem>
+                                        {!loadingRcTaxes &&
+                                          rcTaxOptions.map((opt) => (
+                                            <MuiMenuItem
+                                              key={opt.id}
+                                              value={String(opt.id)}
+                                            >
+                                              {opt.name}
+                                              {typeof opt.percentage ===
+                                              "number"
+                                                ? ` [${opt.percentage}%]`
+                                                : ""}
+                                            </MuiMenuItem>
+                                          ))}
+                                      </MuiSelect>
+                                    </FormControl>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* TDS (Vendor Advance Only) */}
+                          {activeTab === "vendor_advance" && (
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-700">
+                                TDS
+                              </label>
+                              <FormControl fullWidth>
+                                <MuiSelect
+                                  value={selectedTds || ""}
+                                  onChange={(e) =>
+                                    setSelectedTds(e.target.value as string)
+                                  }
+                                  displayEmpty
+                                  sx={{
+                                    height: { xs: 28, sm: 36, md: 45 },
+                                    "& .MuiInputBase-input, & .MuiSelect-select":
+                                      {
+                                        padding: {
+                                          xs: "8px",
+                                          sm: "10px",
+                                          md: "12px",
+                                        },
+                                      },
+                                    backgroundColor: "#fff",
+                                    borderRadius: "6px",
+                                  }}
+                                  MenuProps={{
+                                    PaperProps: {
+                                      style: {
+                                        maxHeight: 350,
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <MuiMenuItem value="" disabled>
+                                    {loadingTds
+                                      ? "Loading TDS options..."
+                                      : "Select a Tax"}
+                                  </MuiMenuItem>
+                                  {!loadingTds && tdsOptions.length === 0 && (
+                                    <MuiMenuItem value="" disabled>
+                                      No TDS options available
+                                    </MuiMenuItem>
+                                  )}
+                                  {tdsOptions.map((opt) => (
+                                    <MuiMenuItem
+                                      key={opt.id}
+                                      value={String(opt.id)}
+                                    >
+                                      {opt.name}
+                                      {typeof opt.percentage === "number"
+                                        ? ` [${opt.percentage}%]`
+                                        : ""}
+                                    </MuiMenuItem>
+                                  ))}
+                                </MuiSelect>
+                              </FormControl>
+                              {/* TDS deduction breakdown — shown below TDS dropdown */}
+                              {tdsAmount > 0 && (
+                                <p className="mt-1.5 text-xs font-medium text-red-500 flex items-center gap-1">
+                                  <span>−</span>
+                                  <span>
+                                    TDS ({tdsPercentage}%): ₹
+                                    {tdsAmount.toFixed(2)}
+                                  </span>
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Payment Date */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700">
+                          Bill Date<span className="text-red-500">*</span>
+                        </label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-between text-left font-normal h-[38px] text-sm border-gray-300 shadow-sm bg-white",
+                                !date && "text-muted-foreground"
+                              )}
+                            >
+                              {date ? format(date, "dd-MM-yyyy") : "dd-mm-yyyy"}
+                              <CalendarIcon className="h-4 w-4 text-gray-600" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={date}
+                              onSelect={setDate}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── PAYMENT METHOD ── */}
+                <div className="border border-gray-200 mt-6 bg-white">
+                  <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                    <CreditCard
+                      className="w-[18px] h-[18px] text-[#db4a4a]"
+                      strokeWidth={2}
+                    />
+                    <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                      PAYMENT METHOD
+                    </span>
+                  </div>
+                  <div className="p-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Payment Mode */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700">
+                          Payment Mode
+                        </label>
+                        <Select
+                          value={paymentMode}
+                          onValueChange={setPaymentMode}
+                        >
+                          <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
+                            <SelectValue placeholder="Choose payment mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cash">Cash</SelectItem>
+                            <SelectItem value="Bank Transfer">
+                              Bank Transfer
+                            </SelectItem>
+                            <SelectItem value="Cheque">Cheque</SelectItem>
+                            <SelectItem value="Credit Card">
+                              Credit Card
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Paid Through */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700">
+                          Paid Through<span className="text-red-500">*</span>
+                        </label>
+                        <FormControl fullWidth size="small">
                           <MuiSelect
-                            value={selectedTds || ""}
-                            onChange={(e) => setSelectedTds(e.target.value as string)}
+                            value={paidThrough || ""}
+                            onChange={(e) =>
+                              setPaidThrough(e.target.value as string)
+                            }
                             displayEmpty
                             sx={{
                               height: { xs: 28, sm: 36, md: 45 },
@@ -1064,6 +1523,14 @@ export const CreatePaymentPage: React.FC = () => {
                               borderRadius: "6px",
                             }}
                             MenuProps={{
+                              anchorOrigin: {
+                                vertical: "bottom",
+                                horizontal: "left",
+                              },
+                              transformOrigin: {
+                                vertical: "top",
+                                horizontal: "left",
+                              },
                               PaperProps: {
                                 style: {
                                   maxHeight: 350,
@@ -1072,209 +1539,283 @@ export const CreatePaymentPage: React.FC = () => {
                             }}
                           >
                             <MuiMenuItem value="" disabled>
-                              {loadingTds ? "Loading TDS options..." : "Select a Tax"}
+                              Select an account
                             </MuiMenuItem>
-                            {!loadingTds && tdsOptions.length === 0 && (
-                              <MuiMenuItem value="" disabled>
-                                No TDS options available
-                              </MuiMenuItem>
+                            {accountGroups.map((group) =>
+                              group.ledgers && group.ledgers.length > 0
+                                ? [
+                                    <ListSubheader
+                                      key={`group-${group.id}`}
+                                      className="bg-gray-50 font-bold text-gray-900 leading-8"
+                                    >
+                                      {group.group_name}
+                                    </ListSubheader>,
+                                    ...group.ledgers.map((ledger: Ledger) => (
+                                      <MuiMenuItem
+                                        key={ledger.id}
+                                        value={ledger.id}
+                                        className="pl-6"
+                                      >
+                                        {ledger.name}
+                                      </MuiMenuItem>
+                                    )),
+                                  ]
+                                : null
                             )}
-                            {tdsOptions.map((opt) => (
-                              <MuiMenuItem key={opt.id} value={String(opt.id)}>
-                                {opt.name}
-                                {typeof opt.percentage === "number" ? ` [${opt.percentage}%]` : ""}
-                              </MuiMenuItem>
-                            ))}
                           </MuiSelect>
                         </FormControl>
-                        {/* TDS deduction breakdown — shown below TDS dropdown */}
-                        {tdsAmount > 0 && (
-                          <p className="mt-1.5 text-xs font-medium text-red-500 flex items-center gap-1">
-                            <span>−</span>
-                            <span>TDS ({tdsPercentage}%): ₹{tdsAmount.toFixed(2)}</span>
-                          </p>
-                        )}
-                        </div>
-                    )}
+                      </div>
 
-                    {/* Payment Date */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Bill Date<span className="text-red-500">*</span>
-                      </label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-between text-left font-normal h-[38px] text-sm border-gray-300 shadow-sm bg-white",
-                              !date && "text-muted-foreground"
-                            )}
-                          >
-                            {date ? format(date, "dd-MM-yyyy") : "dd-mm-yyyy"}
-                            <CalendarIcon className="h-4 w-4 text-gray-600" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      {/* Deposit To & Reference (Vendor Advance Only) */}
+                      {activeTab === "vendor_advance" && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium mb-2 text-gray-700">
+                              Deposit To
+                            </label>
+                            <Select defaultValue="prepaid_expenses">
+                              <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
+                                <SelectValue placeholder="Select Account" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="prepaid_expenses">
+                                  Prepaid Expenses
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium mb-2 text-gray-700">
+                              Reference#
+                            </label>
+                            <Input
+                              value={reference}
+                              onChange={(e) => setReference(e.target.value)}
+                              className="border-gray-300 bg-white h-[38px] text-sm shadow-sm"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* ── PAYMENT METHOD ── */}
-              <div className="border border-gray-200 mt-6 bg-white">
-                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
-                  <CreditCard
-                    className="w-[18px] h-[18px] text-[#DA7756]"
-                    strokeWidth={2}
-                  />
-                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
-                    PAYMENT METHOD
-                  </span>
-                </div>
-                <div className="p-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Payment Mode */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Payment Mode
-                      </label>
-                      <Select
-                        value={paymentMode}
-                        onValueChange={setPaymentMode}
-                      >
-                        <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
-                          <SelectValue placeholder="Choose payment mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Cash">Cash</SelectItem>
-                          <SelectItem value="Bank Transfer">
-                            Bank Transfer
-                          </SelectItem>
-                          <SelectItem value="Cheque">Cheque</SelectItem>
-                          <SelectItem value="Credit Card">
-                            Credit Card
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                {/* ── BILLS TABLE (Bill Payment Only) ── */}
+                {activeTab === "bill_payment" && (
+                  <div className="border border-gray-200 mt-6 bg-white">
+                    <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                      <FileText
+                        className="w-[18px] h-[18px] text-[#db4a4a]"
+                        strokeWidth={2}
+                      />
+                      <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                        BILLS
+                      </span>
                     </div>
 
-                    {/* Paid Through */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Paid Through<span className="text-red-500">*</span>
-                      </label>
-                      <FormControl fullWidth size="small">
-                        <MuiSelect
-                          value={paidThrough || ""}
-                          onChange={(e) => setPaidThrough(e.target.value as string)}
-                          displayEmpty
-                          sx={{
-                            height: { xs: 28, sm: 36, md: 45 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px", md: "12px" },
-                            },
-                            backgroundColor: "#fff",
-                            borderRadius: "6px",
-                          }}
-                          MenuProps={{
-                            anchorOrigin: {
-                              vertical: "bottom",
-                              horizontal: "left",
-                            },
-                            transformOrigin: {
-                              vertical: "top",
-                              horizontal: "left",
-                            },
-                            PaperProps: {
-                              style: {
-                                maxHeight: 350,
-                              },
-                            },
+                    <div className="p-5">
+                      <div className="flex justify-end mb-2">
+                        <button
+                          type="button"
+                          className="text-blue-500 text-xs hover:underline"
+                          onClick={() => {
+                            setAppliedAmounts({});
+                            setPayFullAmount(false);
                           }}
                         >
-                          <MuiMenuItem value="" disabled>
-                            Select an account
-                          </MuiMenuItem>
-                          {accountGroups.map((group) =>
-                            group.ledgers && group.ledgers.length > 0
-                              ? [
-                                  <ListSubheader key={`group-${group.id}`} className="bg-gray-50 font-bold text-gray-900 leading-8">
-                                    {group.group_name}
-                                  </ListSubheader>,
-                                  ...group.ledgers.map((ledger: Ledger) => (
-                                    <MuiMenuItem key={ledger.id} value={ledger.id} className="pl-6">
-                                      {ledger.name}
-                                    </MuiMenuItem>
-                                  )),
-                                ]
-                              : null
-                          )}
-                        </MuiSelect>
-                      </FormControl>
+                          Clear Applied Amount
+                        </button>
+                      </div>
+
+                      {/* Table Header */}
+                      <div className="overflow-x-auto">
+                        <div
+                          className={`${billTableGridClass} border-b border-gray-300 pb-2 text-xs font-medium text-gray-500`}
+                        >
+                          <div>Date</div>
+                          <div>Bill#</div>
+                          <div>PO#</div>
+                          <div className="text-right">Bill Amount</div>
+                          <div className="text-right">Amount Due</div>
+                          <div className="flex items-center justify-end gap-1 text-right">
+                            Payment Made on <Info className="h-3 w-3" />
+                          </div>
+                          <div className="text-right">Payment</div>
+                        </div>
+
+                        {/* Loading */}
+                        {billsLoading && (
+                          <div className="min-w-[960px] py-10 text-center text-sm text-gray-500">
+                            Loading bills...
+                          </div>
+                        )}
+
+                        {/* Empty State */}
+                        {!billsLoading && bills.length === 0 && (
+                          <div className="min-w-[960px] py-12 text-center text-gray-800 text-sm border-b border-gray-200">
+                            {selectedVendor
+                              ? "There are no bills for this vendor."
+                              : "Select a vendor to view bills."}
+                          </div>
+                        )}
+
+                        {/* Bill Rows */}
+                        {!billsLoading &&
+                          bills.map((bill) => (
+                            <div
+                              key={bill.id}
+                              className={`${billTableGridClass} border-b border-gray-100 py-3 text-sm items-start hover:bg-gray-50 transition-colors`}
+                            >
+                              <div className="text-gray-800 text-xs">
+                                <div>
+                                  {bill.bill_date
+                                    ? new Date(
+                                        bill.bill_date
+                                      ).toLocaleDateString("en-GB")
+                                    : "-"}
+                                </div>
+                                {bill.due_date && (
+                                  <div className="mt-1 text-[10px] text-gray-500">
+                                    Due Date:{" "}
+                                    {new Date(bill.due_date).toLocaleDateString(
+                                      "en-GB"
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <span className="text-gray-800 font-medium text-xs">
+                                  {bill.bill_number || "-"}
+                                </span>
+                                {bill.subject && (
+                                  <div className="text-[10px] text-gray-400 truncate">
+                                    {bill.subject}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-gray-600 text-xs">
+                                {bill.order_number || "-"}
+                              </div>
+                              <div className="text-right text-gray-800 text-xs font-medium">
+                                {formatAmountValue(bill.total_amount)}
+                              </div>
+                              <div className="text-right text-gray-800 text-xs">
+                                {getBillAmountDue(bill).toFixed(2)}
+                              </div>
+                              <div className="flex justify-end">
+                                <input
+                                  type="date"
+                                  value={paymentDateInputValue}
+                                  onChange={(e) =>
+                                    handleBillPaymentDateChange(e.target.value)
+                                  }
+                                  className="h-8 w-36 rounded border border-gray-300 bg-white px-2 text-right text-xs text-gray-700 focus:outline-none focus:border-blue-400"
+                                />
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={getBillAmountDue(bill)}
+                                  step="0.01"
+                                  placeholder="0"
+                                  value={appliedAmounts[bill.id] ?? ""}
+                                  onChange={(e) => {
+                                    setPayFullAmount(false);
+                                    setAppliedAmounts((prev) => ({
+                                      ...prev,
+                                      [bill.id]: e.target.value,
+                                    }));
+                                  }}
+                                  className="h-8 w-28 rounded border border-gray-300 bg-white px-2 text-right text-xs text-gray-700 focus:outline-none focus:border-blue-400"
+                                />
+                                <button
+                                  type="button"
+                                  className="mt-1 text-[11px] text-blue-500 hover:underline"
+                                  onClick={() => {
+                                    setPayFullAmount(false);
+                                    setAppliedAmounts((prev) => ({
+                                      ...prev,
+                                      [bill.id]:
+                                        getBillAmountDue(bill).toFixed(2),
+                                    }));
+                                  }}
+                                >
+                                  Pay in Full
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+
+                      {/* Total Row */}
+                      <div className="flex justify-end border-t border-gray-200 py-3">
+                        <div className="grid min-w-[220px] grid-cols-2 gap-4 text-sm text-gray-800">
+                          <div className="text-right font-medium">Total :</div>
+                          <div className="text-right font-medium">
+                            {totalApplied.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-
-                    {/* Deposit To & Reference (Vendor Advance Only) */}
-                    {activeTab === "vendor_advance" && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium mb-2 text-gray-700">
-                            Deposit To
-                          </label>
-                          <Select defaultValue="prepaid_expenses">
-                            <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
-                              <SelectValue placeholder="Select Account" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="prepaid_expenses">
-                                Prepaid Expenses
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2 text-gray-700">
-                            Reference#
-                          </label>
-                          <Input
-                            value={reference}
-                            onChange={(e) => setReference(e.target.value)}
-                            className="border-gray-300 bg-white h-[38px] text-sm shadow-sm"
-                          />
-                        </div>
-                      </>
-                    )}
                   </div>
-                </div>
-              </div>
+                )}
 
-              {/* ── BILLS TABLE (Bill Payment Only) ── */}
-              {activeTab === "bill_payment" && (
+                {/* Summary Card (Bill Payment Only) */}
+                {activeTab === "bill_payment" && (
+                  <div className="flex justify-end">
+                    <div className="bg-[#fff8f0] rounded-lg p-6 w-[400px] space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Amount Paid:</span>
+                        <span className="font-medium text-gray-800">
+                          ₹
+                          {parseFloat(amount)
+                            ? parseFloat(amount).toFixed(2)
+                            : "0.00"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">
+                          Amount used for Payments:
+                        </span>
+                        <span className="text-gray-800">
+                          ₹{totalApplied.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Amount Refunded:</span>
+                        <span className="text-gray-800">₹0.00</span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-2">
+                        <span className="text-gray-600 flex items-center gap-1">
+                          <AlertTriangle className="h-4 w-4 text-orange-400 fill-orange-400 text-white" />
+                          Amount in Excess:
+                        </span>
+                        <span className="font-medium text-gray-800">
+                          ₹{amountInExcess.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── CUSTOMER NOTES ── */}
                 <div className="border border-gray-200 mt-6 bg-white">
                   <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
                     <FileText
-                      className="w-[18px] h-[18px] text-[#DA7756]"
+                      className="w-[18px] h-[18px] text-[#db4a4a]"
                       strokeWidth={2}
                     />
                     <span className="text-[13px] font-bold tracking-wide text-[#333]">
-                      BILLS
+                      NOTES
                     </span>
                   </div>
-
                   <div className="p-5">
                     <div className="flex justify-end mb-2">
                       <button
                         type="button"
-                        className="text-[#DA7756] text-xs hover:underline"
+                        className="text-blue-500 text-xs hover:underline"
                         onClick={() => {
                           setAppliedAmounts({});
                           setPayFullAmount(false);
@@ -1285,640 +1826,587 @@ export const CreatePaymentPage: React.FC = () => {
                     </div>
 
                     {/* Table Header */}
-                    <div className="grid grid-cols-12 gap-4 border-b border-black pb-2 text-xs font-medium text-black">
-                      <div className="col-span-2">Date</div>
-                      <div className="col-span-2">Bill#</div>
-                      <div className="col-span-2">PO#</div>
-                      <div className="col-span-2 text-right">Bill Amount</div>
-                      <div className="col-span-2 text-right">Amount Due</div>
-                      <div className="col-span-2 text-right flex items-center justify-end gap-1">
-                        Payment Made <Info className="h-3 w-3" />
-                      </div>
-                    </div>
-
-                    {/* Loading */}
-                    {billsLoading && (
-                      <div className="py-10 text-center text-sm text-gray-500">
-                        Loading bills...
-                      </div>
-                    )}
-
-                    {!billsLoading && billsError && (
-                      <div className="py-10 text-center text-sm text-gray-700 border-b border-gray-200">
-                        <div>{billsError}</div>
-                        {selectedVendor && (
-                          <button
-                            type="button"
-                            className="mt-3 text-[#DA7756] text-xs hover:underline"
-                            onClick={() => fetchBills(selectedVendor)}
-                          >
-                            Retry
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Empty State */}
-                    {!billsLoading && !billsError && bills.length === 0 && (
-                      <div className="py-12 text-center text-gray-800 text-sm border-b border-gray-200">
-                        {selectedVendor
-                          ? "There are no bills for this vendor."
-                          : "Select a vendor to view bills."}
-                      </div>
-                    )}
-
-                    {/* Bill Rows */}
-                    {!billsLoading &&
-                      !billsError &&
-                      bills.map((bill) => (
-                        <div
-                          key={bill.id}
-                          className="grid grid-cols-12 gap-4 border-b border-gray-100 py-3 text-sm items-center hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="col-span-2 text-gray-600 text-xs">
-                            {bill.bill_date
-                              ? new Date(bill.bill_date).toLocaleDateString(
-                                  "en-GB"
-                                )
-                              : "-"}
-                          </div>
-                          <div className="col-span-2">
-                            <span className="text-blue-600 font-medium text-xs">
-                              {bill.bill_number || "-"}
-                            </span>
-                            {bill.subject && (
-                              <div className="text-[10px] text-gray-400 truncate">
-                                {bill.subject}
-                              </div>
-                            )}
-                          </div>
-                          <div className="col-span-2 text-gray-600 text-xs">
-                            {bill.order_number || "-"}
-                          </div>
-                          <div className="col-span-2 text-right text-gray-800 text-xs font-medium">
-                            ₹{formatAmountValue(bill.total_amount)}
-                          </div>
-                          <div className="col-span-2 text-right text-gray-800 text-xs">
-                            ₹{getBillAmountDue(bill).toFixed(2)}
-                          </div>
-                          <div className="col-span-2 flex justify-end">
-                            <input
-                              type="number"
-                              min="0"
-                              max={getBillAmountDue(bill)}
-                              step="0.01"
-                              placeholder="0.00"
-                              value={appliedAmounts[bill.id] ?? ""}
-                              onChange={(e) => {
-                                setPayFullAmount(false);
-                                setAppliedAmounts((prev) => ({
-                                  ...prev,
-                                  [bill.id]: e.target.value,
-                                }));
-                              }}
-                              className="w-24 text-right border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-[#DA7756] bg-white"
-                            />
-                          </div>
+                    <div className="w-full">
+                      <div
+                        className={`${billTableGridClass} border-b border-gray-300 pb-2 text-xs font-medium text-gray-500`}
+                      >
+                        <div>Date</div>
+                        <div>Bill#</div>
+                        <div>PO#</div>
+                        <div className="text-right">Bill Amount</div>
+                        <div className="text-right">Amount Due</div>
+                        <div className="flex items-center justify-end gap-1 text-right">
+                          Payment Made on <Info className="h-3 w-3" />
                         </div>
-                      ))}
-
-                    {/* Total Row */}
-                    <div className="flex justify-between items-center py-4">
-                      <div className="text-sm font-medium">Total :</div>
-                      <div className="text-sm text-gray-700 font-medium">
-                        ₹{totalApplied.toFixed(2)}
+                        <div className="text-right">Payment</div>
                       </div>
+
+                      {/* Loading */}
+                      {billsLoading && (
+                        <div className="w-full py-10 text-center text-sm text-gray-500">
+                          Loading bills...
+                        </div>
+                      )}
+
+                      {!billsLoading && billsError && (
+                        <div className="w-full py-10 text-center text-sm text-gray-700 border-b border-gray-200">
+                          <div>{billsError}</div>
+                          {selectedVendor && (
+                            <button
+                              type="button"
+                              className="mt-3 text-blue-500 text-xs hover:underline"
+                              onClick={() => fetchBills(selectedVendor)}
+                            >
+                              Retry
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Empty State */}
+                      {!billsLoading && !billsError && bills.length === 0 && (
+                        <div className="w-full py-12 text-center text-gray-800 text-sm border-b border-gray-200">
+                          {selectedVendor
+                            ? "There are no bills for this vendor."
+                            : "Select a vendor to view bills."}
+                        </div>
+                      )}
+
+                      {/* Bill Rows */}
+                      {!billsLoading &&
+                        !billsError &&
+                        bills.map((bill) => (
+                          <div
+                            key={bill.id}
+                            className={`${billTableGridClass} border-b border-gray-100 py-3 text-sm items-start hover:bg-gray-50 transition-colors`}
+                          >
+                            <div className="text-gray-800 text-xs">
+                              <div>
+                                {bill.bill_date
+                                  ? new Date(bill.bill_date).toLocaleDateString(
+                                      "en-GB"
+                                    )
+                                  : "-"}
+                              </div>
+                              {bill.due_date && (
+                                <div className="mt-1 text-[10px] text-gray-500">
+                                  Due Date:{" "}
+                                  {new Date(bill.due_date).toLocaleDateString(
+                                    "en-GB"
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <span className="text-gray-800 font-medium text-xs">
+                                {bill.bill_number || "-"}
+                              </span>
+                              {bill.subject && (
+                                <div className="text-[10px] text-gray-400 truncate">
+                                  {bill.subject}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-gray-600 text-xs">
+                              {bill.order_number || "-"}
+                            </div>
+                            <div className="text-right text-gray-800 text-xs font-medium">
+                              {formatAmountValue(bill.total_amount)}
+                            </div>
+                            <div className="text-right text-gray-800 text-xs">
+                              {getBillAmountDue(bill).toFixed(2)}
+                            </div>
+                            <div className="flex justify-end">
+                              <input
+                                type="date"
+                                value={paymentDateInputValue}
+                                onChange={(e) =>
+                                  handleBillPaymentDateChange(e.target.value)
+                                }
+                                className="h-8 w-36 rounded border border-gray-300 bg-white px-2 text-right text-xs text-gray-700 focus:outline-none focus:border-blue-400"
+                              />
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <input
+                                type="number"
+                                min="0"
+                                max={getBillAmountDue(bill)}
+                                step="0.01"
+                                placeholder="0"
+                                value={appliedAmounts[bill.id] ?? ""}
+                                onChange={(e) => {
+                                  setPayFullAmount(false);
+                                  setAppliedAmounts((prev) => ({
+                                    ...prev,
+                                    [bill.id]: e.target.value,
+                                  }));
+                                }}
+                                className="h-8 w-28 rounded border border-gray-300 bg-white px-2 text-right text-xs text-gray-700 focus:outline-none focus:border-blue-400"
+                              />
+                              <button
+                                type="button"
+                                className="mt-1 text-[11px] text-blue-500 hover:underline"
+                                onClick={() => {
+                                  setPayFullAmount(false);
+                                  setAppliedAmounts((prev) => ({
+                                    ...prev,
+                                    [bill.id]:
+                                      getBillAmountDue(bill).toFixed(2),
+                                  }));
+                                }}
+                              >
+                                Pay in Full
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                     </div>
+
+                    {attachmentFiles.length > 0 && (
+                      <div className="space-y-2 mt-4">
+                        {attachmentFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between bg-gray-50 p-3 border border-gray-200 rounded"
+                          >
+                            <div className="flex items-center gap-2">
+                              <AttachFile
+                                fontSize="small"
+                                className="text-gray-500"
+                              />
+                              <span className="text-sm text-gray-700">
+                                {file.name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                ({(file.size / 1024).toFixed(2)} KB)
+                              </span>
+                            </div>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAttachmentFiles((prev) =>
+                                  prev.filter((_, i) => i !== index)
+                                );
+                              }}
+                            >
+                              <MuiClose
+                                fontSize="small"
+                                className="text-gray-500"
+                              />
+                            </IconButton>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
 
-              {/* Summary Card (Bill Payment Only) */}
-              {activeTab === "bill_payment" && (
-                <div className="flex justify-end">
-                  <div className="bg-[#fff8f0] rounded-lg p-6 w-[400px] space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Amount Paid:</span>
-                      <span className="font-medium text-gray-800">
-                        ₹
-                        {parseFloat(amount)
-                          ? parseFloat(amount).toFixed(2)
-                          : "0.00"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        Amount used for Payments:
-                      </span>
-                      <span className="text-gray-800">
-                        ₹{totalApplied.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Amount Refunded:</span>
-                      <span className="text-gray-800">₹0.00</span>
-                    </div>
-                    <div className="flex justify-between text-sm pt-2">
-                      <span className="text-gray-600 flex items-center gap-1">
-                        <AlertTriangle className="h-4 w-4 text-orange-400 fill-orange-400" />
-                        Amount in Excess:
-                      </span>
-                      <span className="font-medium text-gray-800">
-                        ₹{amountInExcess.toFixed(2)}
-                      </span>
+                <div className="pt-2">
+                  <p className="text-xs text-gray-500">
+                    Additional Fields: Start adding custom fields for your
+                    payments made by going to{" "}
+                    <span className="text-gray-700 text-xs italic">
+                      Settings ➜ Purchases ➜ Payments Made.
+                    </span>
+                  </p>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-200 pt-6 pb-4">
+                  <Button
+                    variant="outline"
+                    disabled={isSaving}
+                    className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
+                    onClick={() => handleSave("DRAFT")}
+                  >
+                    {isSaving ? "Saving..." : "Save as Draft"}
+                  </Button>
+                  <Button
+                    disabled={isSaving}
+                    className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-4 text-sm font-medium rounded-[4px]"
+                    onClick={() => handleSave("PAID")}
+                  >
+                    {isSaving ? "Saving..." : "Save as Paid"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={isSaving}
+                    className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
+                    onClick={() => navigate("/accounting/payments-made")}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Tabs>
+
+          {/* Vendor Details Sidebar / Sheet */}
+          <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+            <SheetContent
+              className="w-[450px] sm:w-[500px] sm:max-w-[500px] p-0"
+              side="right"
+            >
+              <div className="p-6 border-b border-gray-200 relative">
+                <SheetClose className="absolute right-4 top-4 rounded-sm hover:opacity-100 opacity-70">
+                  <X className="h-5 w-5 text-gray-400" />
+                  <span className="sr-only">Close</span>
+                </SheetClose>
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-medium">
+                    {(selectedSupplier?.name ?? "?")[0].toUpperCase()}
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-xs text-gray-500">Vendor</div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        {selectedSupplier?.name ?? "-"}
+                      </h2>
+                      <ExternalLink className="h-4 w-4 text-blue-500 cursor-pointer" />
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* ── CUSTOMER NOTES ── */}
-              <div className="border border-gray-200 mt-6 bg-white">
-                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
-                  <FileText
-                    className="w-[18px] h-[18px] text-[#DA7756]"
-                    strokeWidth={2}
-                  />
-                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
-                    NOTES
-                  </span>
-                </div>
-                <div className="p-5">
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full min-h-[96px] border border-gray-400 p-3 text-sm rounded-[4px] resize-y placeholder-gray-400 focus:outline-none"
-                    placeholder="Enter any notes for the customer"
-                  />
                 </div>
               </div>
 
-              {/* ── ATTACH FILES ── */}
-              <div className="border border-gray-200 mt-6 bg-white">
-                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
-                  <Paperclip
-                    className="w-[18px] h-[18px] text-[#DA7756]"
-                    strokeWidth={2}
-                  />
-                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
-                    ATTACH FILES TO SALES ORDER
-                  </span>
-                </div>
-                <div className="p-5">
-                  <div className="border border-dashed border-gray-300 p-12 text-center bg-white hover:bg-gray-50 transition-colors">
-                    <input
-                      type="file"
-                      id="file-upload"
-                      multiple
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        if (attachmentFiles.length + files.length > 10) {
-                          sonnerToast.error("Maximum 10 files allowed.");
-                          return;
-                        }
-                        setAttachmentFiles((prev) => [...prev, ...files]);
-                      }}
-                      className="hidden"
-                      accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                    />
-                    <label
-                      htmlFor="file-upload"
-                      className="cursor-pointer flex flex-col items-center justify-center m-0"
-                    >
-                      <CloudUpload className="w-8 h-8 text-[#98a2b3] mb-3" />
-                      <Typography
-                        variant="body2"
-                        className="text-[#344054] font-semibold mb-1"
-                      >
-                        Upload File
-                      </Typography>
-                      <Typography variant="caption" className="text-[#667085]">
-                        You can upload a maximum of 10 files, 5MB each
-                      </Typography>
-                    </label>
+              <div className="h-[calc(100vh-100px)] overflow-y-auto">
+                <div className="p-4 space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <FileText className="h-4 w-4 text-gray-400" />
+                      <span>{selectedSupplier?.name ?? "-"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <span className="text-blue-500">
+                        {selectedSupplier?.email ?? "-"}
+                      </span>
+                    </div>
                   </div>
 
-                  {attachmentFiles.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      {attachmentFiles.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between bg-gray-50 p-3 border border-gray-200 rounded"
-                        >
-                          <div className="flex items-center gap-2">
-                            <AttachFile
-                              fontSize="small"
-                              className="text-gray-500"
-                            />
-                            <span className="text-sm text-gray-700">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              ({(file.size / 1024).toFixed(2)} KB)
-                            </span>
+                  <div className="flex items-center gap-6 border-b border-gray-200 mt-6 px-4">
+                    <div
+                      onClick={() => setActiveSheetTab("details")}
+                      className={cn(
+                        "pb-2 text-sm font-medium cursor-pointer transition-colors",
+                        activeSheetTab === "details"
+                          ? "border-b-2 border-blue-600 text-gray-900"
+                          : "text-gray-500 hover:text-gray-700"
+                      )}
+                    >
+                      Details
+                    </div>
+                    <div
+                      onClick={() => setActiveSheetTab("activity_log")}
+                      className={cn(
+                        "pb-2 text-sm font-medium cursor-pointer transition-colors",
+                        activeSheetTab === "activity_log"
+                          ? "border-b-2 border-blue-600 text-gray-900"
+                          : "text-gray-500 hover:text-gray-700"
+                      )}
+                    >
+                      Activity Log
+                    </div>
+                  </div>
+
+                  {activeSheetTab === "details" && (
+                    <div className="p-4 space-y-4">
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="border border-gray-100 rounded-lg p-4 flex flex-col items-center justify-center gap-2 shadow-sm bg-white">
+                          <AlertTriangle className="h-5 w-5 text-orange-400 fill-orange-400" />
+                          <div className="text-xs text-gray-500 text-center">
+                            Outstanding Payables
                           </div>
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAttachmentFiles((prev) =>
-                                prev.filter((_, i) => i !== index)
-                              );
-                            }}
-                          >
-                            <MuiClose
-                              fontSize="small"
-                              className="text-gray-500"
-                            />
-                          </IconButton>
+                          <div className="text-lg font-semibold text-gray-900">
+                            ₹0.00
+                          </div>
                         </div>
-                      ))}
+                        <div className="border border-gray-100 rounded-lg p-4 flex flex-col items-center justify-center gap-2 shadow-sm bg-white">
+                          <Gem className="h-5 w-5 text-green-500 fill-green-500" />
+                          <div className="text-xs text-gray-500 text-center">
+                            Unused Credits
+                          </div>
+                          <div className="text-lg font-semibold text-gray-900">
+                            ₹0.00
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-gray-200 rounded-lg mt-6 overflow-hidden">
+                        <div className="bg-white p-4 border-b border-gray-100">
+                          <h3 className="font-medium text-sm text-gray-900">
+                            Contact Details
+                          </h3>
+                        </div>
+                        <div className="p-4 space-y-4 bg-white">
+                          <div className="grid grid-cols-2 text-sm">
+                            <div className="text-gray-500">Currency</div>
+                            <div className="text-gray-900 font-medium">
+                              {selectedSupplier?.currency ?? "INR"}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 text-sm">
+                            <div className="text-gray-500">Payment Terms</div>
+                            <div className="text-gray-900 font-medium">
+                              {selectedSupplier?.payment_terms ??
+                                "Due on Receipt"}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 text-sm">
+                            <div className="text-gray-500">PAN</div>
+                            <div className="text-gray-900 font-medium">
+                              {selectedSupplier?.pan_number ?? "-"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-gray-200 rounded-lg mt-4 bg-white px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-gray-50">
+                        <span className="text-sm font-medium text-gray-900">
+                          Contact Persons{" "}
+                          <span className="bg-gray-400 text-white text-[10px] px-1.5 py-0.5 rounded ml-1">
+                            1
+                          </span>
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+
+                      <div className="border border-gray-200 rounded-lg mt-4 bg-white px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-gray-50">
+                        <span className="text-sm font-medium text-gray-900">
+                          Address
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                  )}
+
+                  {activeSheetTab === "activity_log" && (
+                    <div className="p-6 bg-gray-50/50 min-h-full">
+                      <div className="relative space-y-8 pl-4">
+                        <div className="absolute left-[27px] top-2 bottom-0 w-[2px] bg-gray-100 -z-10" />
+
+                        <div className="flex gap-4 items-start relative">
+                          <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
+                            <FileText className="h-4 w-4 text-yellow-500 fill-yellow-100" />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <div className="text-xs">
+                              <span className="font-semibold text-gray-900">
+                                ajay.pihulkar
+                              </span>{" "}
+                              <span className="text-gray-500">
+                                • 12/02/2026 12:47 AM
+                              </span>
+                            </div>
+                            <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
+                              Expense of amount ₹122.00 created
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-4 items-start relative">
+                          <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
+                            <MessageSquare className="h-4 w-4 text-blue-400" />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <div className="text-xs">
+                              <span className="font-semibold text-gray-900">
+                                ajay.pihulkar
+                              </span>{" "}
+                              <span className="text-gray-500">
+                                • 12/02/2026 12:06 AM
+                              </span>
+                            </div>
+                            <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
+                              Payment of amount ₹250.00 made and applied for 123
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-4 items-start relative">
+                          <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
+                            <FileText className="h-4 w-4 text-yellow-500 fill-yellow-100" />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <div className="text-xs">
+                              <span className="font-semibold text-gray-900">
+                                ajay.pihulkar
+                              </span>{" "}
+                              <span className="text-gray-500">
+                                • 12/02/2026 12:00 AM
+                              </span>
+                            </div>
+                            <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
+                              Purchase Order of amount ₹250.00 converted as bill
+                              123
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-4 items-start relative">
+                          <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
+                            <FileText className="h-4 w-4 text-yellow-500 fill-yellow-100" />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <div className="text-xs">
+                              <span className="font-semibold text-gray-900">
+                                ajay.pihulkar
+                              </span>{" "}
+                              <span className="text-gray-500">
+                                • 11/02/2026 11:56 PM
+                              </span>
+                            </div>
+                            <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
+                              Purchase Order PO-00002 emailed
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
+            </SheetContent>
+          </Sheet>
 
-              <div className="pt-2">
-                <p className="text-xs text-gray-500">
-                  Additional Fields: Start adding custom fields for your
-                  payments made by going to{" "}
-                  <span className="text-gray-700 text-xs italic">
-                    Settings ➜ Purchases ➜ Payments Made.
-                  </span>
+          {/* Configure Payment Number Preferences Modal */}
+          <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
+            <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl">
+              <DialogHeader className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <DialogTitle className="text-lg font-semibold text-gray-900">
+                    Configure Payment Number Preferences
+                  </DialogTitle>
+                </div>
+              </DialogHeader>
+              <div className="p-6 space-y-6">
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Choose how your payment numbers should be generated. You can
+                  automate the sequence or enter them manually for each payment.
                 </p>
+
+                <RadioGroup
+                  value={modalAutoGenerate ? "auto" : "manual"}
+                  onValueChange={(val) => setModalAutoGenerate(val === "auto")}
+                  className="gap-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem
+                        value="auto"
+                        id="auto"
+                        className="text-blue-600 border-gray-300"
+                      />
+                      <Label
+                        htmlFor="auto"
+                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                      >
+                        Auto-generate payment number
+                      </Label>
+                    </div>
+
+                    {modalAutoGenerate && (
+                      <div className="grid grid-cols-2 gap-4 pl-7">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Prefix
+                          </Label>
+                          <Input
+                            value={modalPrefix}
+                            onChange={(e) => setModalPrefix(e.target.value)}
+                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Next Number
+                          </Label>
+                          <Input
+                            type="number"
+                            value={modalNextNumber}
+                            onChange={(e) => setModalNextNumber(e.target.value)}
+                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem
+                        value="manual"
+                        id="manual"
+                        className="text-blue-600 border-gray-300"
+                      />
+                      <Label
+                        htmlFor="manual"
+                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                      >
+                        Add payment number manually for this payment
+                      </Label>
+                    </div>
+
+                    {!modalAutoGenerate && (
+                      <div className="grid grid-cols-2 gap-4 pl-7">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-gray-400">
+                            Prefix
+                          </Label>
+                          <Input
+                            value={modalPrefix}
+                            onChange={(e) => setModalPrefix(e.target.value)}
+                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                            placeholder="e.g. PAY"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-gray-400">
+                            Payment Number
+                          </Label>
+                          <Input
+                            value={modalNextNumber}
+                            onChange={(e) => setModalNextNumber(e.target.value)}
+                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                            placeholder="e.g. 1001"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </RadioGroup>
               </div>
 
-              {/* Footer Actions */}
-              <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-200 pt-6 pb-4">
+              <DialogFooter className="px-6 py-4 bg-gray-50 flex items-center gap-3">
                 <Button
-                  variant="outline"
-                  disabled={isSaving}
-                  className="fm-button-fix border border-[#DA7756] text-[#DA7756] hover:!bg-[#DA7756]/10 h-9 px-4 text-sm font-medium rounded-[4px]"
-                  onClick={() => handleSave("DRAFT")}
+                  onClick={() => {
+                    setPaymentConfig({
+                      autoGenerate: modalAutoGenerate,
+                      prefix: modalPrefix,
+                      nextNumber: parseInt(modalNextNumber, 10) || 1,
+                    });
+                    setIsConfigModalOpen(false);
+
+                    if (selectedVendor) {
+                      setPaymentNumber(`${modalPrefix}${modalNextNumber}`);
+                    }
+                  }}
+                  className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-6 text-sm font-medium rounded-[4px]"
                 >
-                  {isSaving ? "Saving..." : "Save as Draft"}
+                  Save
                 </Button>
                 <Button
-                  disabled={isSaving}
-                  className="fm-button-fix fm-button-brand h-9 px-4 text-sm font-medium rounded-[4px]"
-                  onClick={() => handleSave("PAID")}
-                >
-                  {isSaving ? "Saving..." : "Save as Paid"}
-                </Button>
-                <Button
                   variant="outline"
-                  disabled={isSaving}
-                  className="fm-button-fix border border-[#DA7756] text-[#DA7756] hover:!bg-[#DA7756]/10 h-9 px-4 text-sm font-medium rounded-[4px]"
-                  onClick={() => navigate("/accounting/payments-made")}
+                  onClick={() => setIsConfigModalOpen(false)}
+                  className="h-9 px-6 text-sm border-gray-300 text-gray-600 hover:bg-gray-100"
                 >
                   Cancel
                 </Button>
-              </div>
-            </div>
-          </div>
-        </Tabs>
-
-        {/* Vendor Details Sidebar / Sheet */}
-        <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-          <SheetContent
-            className="w-[450px] sm:w-[500px] sm:max-w-[500px] p-0"
-            side="right"
-          >
-            <div className="p-6 border-b border-gray-200 relative">
-              <SheetClose className="absolute right-4 top-4 rounded-sm hover:opacity-100 opacity-70">
-                <X className="h-5 w-5 text-gray-400" />
-                <span className="sr-only">Close</span>
-              </SheetClose>
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-medium">
-                  {(selectedSupplier?.name ?? "?")[0].toUpperCase()}
-                </div>
-                <div className="space-y-0.5">
-                  <div className="text-xs text-gray-500">Vendor</div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      {selectedSupplier?.name ?? "-"}
-                    </h2>
-                    <ExternalLink className="h-4 w-4 text-[#DA7756] cursor-pointer" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="h-[calc(100vh-100px)] overflow-y-auto">
-              <div className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FileText className="h-4 w-4 text-gray-400" />
-                    <span>{selectedSupplier?.name ?? "-"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-[#DA7756]">
-                      {selectedSupplier?.email ?? "-"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6 border-b border-gray-200 mt-6 px-4">
-                  <div
-                    onClick={() => setActiveSheetTab("details")}
-                    className={cn(
-                      "pb-2 text-sm font-medium cursor-pointer transition-colors",
-                      activeSheetTab === "details"
-                        ? "border-b-2 border-blue-600 text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
-                    )}
-                  >
-                    Details
-                  </div>
-                  <div
-                    onClick={() => setActiveSheetTab("activity_log")}
-                    className={cn(
-                      "pb-2 text-sm font-medium cursor-pointer transition-colors",
-                      activeSheetTab === "activity_log"
-                        ? "border-b-2 border-blue-600 text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
-                    )}
-                  >
-                    Activity Log
-                  </div>
-                </div>
-
-                {activeSheetTab === "details" && (
-                  <div className="p-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div className="border border-gray-100 rounded-lg p-4 flex flex-col items-center justify-center gap-2 shadow-sm bg-white">
-                        <AlertTriangle className="h-5 w-5 text-orange-400 fill-orange-400" />
-                        <div className="text-xs text-gray-500 text-center">
-                          Outstanding Payables
-                        </div>
-                        <div className="text-lg font-semibold text-gray-900">
-                          ₹0.00
-                        </div>
-                      </div>
-                      <div className="border border-gray-100 rounded-lg p-4 flex flex-col items-center justify-center gap-2 shadow-sm bg-white">
-                        <Gem className="h-5 w-5 text-green-500 fill-green-500" />
-                        <div className="text-xs text-gray-500 text-center">
-                          Unused Credits
-                        </div>
-                        <div className="text-lg font-semibold text-gray-900">
-                          ₹0.00
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border border-gray-200 rounded-lg mt-6 overflow-hidden">
-                      <div className="bg-white p-4 border-b border-gray-100">
-                        <h3 className="font-medium text-sm text-gray-900">
-                          Contact Details
-                        </h3>
-                      </div>
-                      <div className="p-4 space-y-4 bg-white">
-                        <div className="grid grid-cols-2 text-sm">
-                          <div className="text-gray-500">Currency</div>
-                          <div className="text-gray-900 font-medium">
-                            {selectedSupplier?.currency ?? "INR"}
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 text-sm">
-                          <div className="text-gray-500">Payment Terms</div>
-                          <div className="text-gray-900 font-medium">
-                            {selectedSupplier?.payment_terms ??
-                              "Due on Receipt"}
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 text-sm">
-                          <div className="text-gray-500">PAN</div>
-                          <div className="text-gray-900 font-medium">
-                            {selectedSupplier?.pan_number ?? "-"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border border-gray-200 rounded-lg mt-4 bg-white px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm font-medium text-gray-900">
-                        Contact Persons{" "}
-                        <span className="bg-gray-400 text-white text-[10px] px-1.5 py-0.5 rounded ml-1">
-                          1
-                        </span>
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    </div>
-
-                    <div className="border border-gray-200 rounded-lg mt-4 bg-white px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm font-medium text-gray-900">
-                        Address
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-                )}
-
-                {activeSheetTab === "activity_log" && (
-                  <div className="p-6 bg-gray-50/50 min-h-full">
-                    <div className="relative space-y-8 pl-4">
-                      <div className="absolute left-[27px] top-2 bottom-0 w-[2px] bg-gray-100 -z-10" />
-
-                      <div className="flex gap-4 items-start relative">
-                        <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
-                          <FileText className="h-4 w-4 text-yellow-500 fill-yellow-100" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="text-xs">
-                            <span className="font-semibold text-gray-900">
-                              ajay.pihulkar
-                            </span>{" "}
-                            <span className="text-gray-500">
-                              • 12/02/2026 12:47 AM
-                            </span>
-                          </div>
-                          <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
-                            Expense of amount ₹122.00 created
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-4 items-start relative">
-                        <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
-                          <MessageSquare className="h-4 w-4 text-blue-400" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="text-xs">
-                            <span className="font-semibold text-gray-900">
-                              ajay.pihulkar
-                            </span>{" "}
-                            <span className="text-gray-500">
-                              • 12/02/2026 12:06 AM
-                            </span>
-                          </div>
-                          <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
-                            Payment of amount ₹250.00 made and applied for 123
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-4 items-start relative">
-                        <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
-                          <FileText className="h-4 w-4 text-yellow-500 fill-yellow-100" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="text-xs">
-                            <span className="font-semibold text-gray-900">
-                              ajay.pihulkar
-                            </span>{" "}
-                            <span className="text-gray-500">
-                              • 12/02/2026 12:00 AM
-                            </span>
-                          </div>
-                          <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
-                            Purchase Order of amount ₹250.00 converted as bill
-                            123
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-4 items-start relative">
-                        <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
-                          <FileText className="h-4 w-4 text-yellow-500 fill-yellow-100" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="text-xs">
-                            <span className="font-semibold text-gray-900">
-                              ajay.pihulkar
-                            </span>{" "}
-                            <span className="text-gray-500">
-                              • 11/02/2026 11:56 PM
-                            </span>
-                          </div>
-                          <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-800 shadow-sm">
-                            Purchase Order PO-00002 emailed
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-        
-        {/* Configure Payment Number Preferences Modal */}
-        <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
-          <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl">
-            <DialogHeader className="px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <DialogTitle className="text-lg font-semibold text-gray-900">
-                  Configure Payment Number Preferences
-                </DialogTitle>
-              </div>
-            </DialogHeader>
-            <div className="p-6 space-y-6">
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Choose how your payment numbers should be generated. You can automate the sequence or enter them manually for each payment.
-              </p>
-              
-              <RadioGroup
-                value={modalAutoGenerate ? "auto" : "manual"}
-                onValueChange={(val) => setModalAutoGenerate(val === "auto")}
-                className="gap-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="auto" id="auto" className="text-blue-600 border-gray-300" />
-                    <Label htmlFor="auto" className="text-sm font-medium text-gray-700 cursor-pointer">
-                      Auto-generate payment number
-                    </Label>
-                  </div>
-                  
-                  {modalAutoGenerate && (
-                    <div className="grid grid-cols-2 gap-4 pl-7">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Prefix</Label>
-                        <Input
-                          value={modalPrefix}
-                          onChange={(e) => setModalPrefix(e.target.value)}
-                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Next Number</Label>
-                        <Input
-                          type="number"
-                          value={modalNextNumber}
-                          onChange={(e) => setModalNextNumber(e.target.value)}
-                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="manual" id="manual" className="text-blue-600 border-gray-300" />
-                    <Label htmlFor="manual" className="text-sm font-medium text-gray-700 cursor-pointer">
-                      Add payment number manually for this payment
-                    </Label>
-                  </div>
-
-                  {!modalAutoGenerate && (
-                    <div className="grid grid-cols-2 gap-4 pl-7">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Prefix</Label>
-                        <Input
-                          value={modalPrefix}
-                          onChange={(e) => setModalPrefix(e.target.value)}
-                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
-                          placeholder="e.g. PAY"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Payment Number</Label>
-                        <Input
-                          value={modalNextNumber}
-                          onChange={(e) => setModalNextNumber(e.target.value)}
-                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
-                          placeholder="e.g. 1001"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <DialogFooter className="px-6 py-4 bg-gray-50 flex items-center gap-3">
-              <Button
-                onClick={() => {
-                  setPaymentConfig({
-                    autoGenerate: modalAutoGenerate,
-                    prefix: modalPrefix,
-                    nextNumber: parseInt(modalNextNumber, 10) || 1,
-                  });
-                  setIsConfigModalOpen(false);
-                  
-                  if (selectedVendor) {
-                    setPaymentNumber(`${modalPrefix}${modalNextNumber}`);
-                  }
-                }}
-                className="fm-button-fix fm-button-brand h-9 px-6 text-sm font-medium rounded-[4px]"
-              >
-                Save
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsConfigModalOpen(false)}
-                className="h-9 px-6 text-sm border-gray-300 text-gray-600 hover:bg-gray-100"
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
-    </div>
     </TooltipProvider>
   );
 };

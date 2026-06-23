@@ -150,7 +150,7 @@ export class JobSheetPDFGenerator {
               : ""
           }
           ${this.generateDailyMaintenanceSection(jobSheetData)}
-          ${this.generateRemarksSection(taskDetails, comments)}
+          ${this.generateRemarksSection(jobSheetData, comments)}
           ${this.generateBottomSection()}
         </body>
       </html>
@@ -265,7 +265,7 @@ export class JobSheetPDFGenerator {
             )}
             ${
               isLastPage
-                ? this.generateRemarksSection(taskDetails, comments)
+                ? this.generateRemarksSection(jobSheetData, comments)
                 : ""
             }
             ${isLastPage ? this.generateBottomSection() : ""}
@@ -1119,37 +1119,35 @@ export class JobSheetPDFGenerator {
   private generateRemarksSection(taskDetails: any, comments: string): string {
     const jobSheet = taskDetails?.data?.job_sheet || taskDetails?.job_sheet;
 
-    // Get comments from multiple sources and map correctly
-    const taskComments = jobSheet?.task_details?.task_comments || "";
-    const userComments = comments || "";
-    const basicInfoComments = jobSheet?.basic_info?.comments || "";
-    const checklistComments =
-      jobSheet?.checklist_responses
-        ?.filter((item: any) => item.comments)
-        .map((item: any) => item.comments) || [];
-    const systemComments = jobSheet?.comments || [];
+    const taskComments   = (jobSheet?.task_details?.task_comments || "").trim();
+    const userComments   = (comments || "").trim();
+    const basicInfoComments = (jobSheet?.basic_info?.comments || "").trim();
+    const systemComments: string[] = (jobSheet?.comments || [])
+      .map((c: any) => (c.comment || c.text || c || "").trim())
+      .filter(Boolean);
 
-    // Combine all available comments with proper filtering and formatting
-    const allComments = [
-      taskComments,
-      userComments,
-      basicInfoComments,
-      ...checklistComments,
-      ...systemComments.map((c: any) => c.comment || c.text || c),
-    ].filter(
-      (comment) =>
-        comment && typeof comment === "string" && comment.trim().length > 0
-    );
+    const hasAny = taskComments || userComments || basicInfoComments || systemComments.length > 0;
 
-    const finalComments = allComments.length > 0 ? allComments.join(" • ") : "";
+    const row = (label: string, text: string) => `
+      <div class="pdf-remark-row">
+        ${label ? `<div class="pdf-remark-label-col">${label}</div>` : ""}
+        <div class="pdf-remark-value-col">${text}</div>
+      </div>`;
+
+    const rows = [
+      taskComments    ? row("",                    taskComments)    : "",
+      userComments    ? row("Additional Comments", userComments)    : "",
+      basicInfoComments ? row("Other Comments",    basicInfoComments) : "",
+      ...systemComments.map((c, i) => row(i === 0 ? "System Comments" : "", c)),
+    ].join("");
 
     return `
-      <div class="svg-remarks-section">
-        <div class="svg-remarks-container">
-          <div class="svg-remarks-label">Remarks</div>
-          <div class="svg-remarks-content">
-            ${finalComments || ""}
-          </div>
+      <div class="pdf-remarks-section">
+        <div class="pdf-remarks-header-bar">
+          <span class="pdf-remarks-header-text">REMARKS</span>
+        </div>
+        <div class="pdf-remarks-body">
+          ${hasAny ? rows : '<div class="pdf-remarks-empty">No remarks available</div>'}
         </div>
       </div>
     `;
