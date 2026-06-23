@@ -1114,9 +1114,21 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
+            const allowedMimeTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'application/msword', // .doc
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            ];
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx'];
+
             const newFiles = Array.from(files).filter(file => {
-                if (file.type !== 'application/pdf') {
-                    alert(`${file.name}: Only PDF files are accepted`);
+                const ext = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
+                const isValidType = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(ext);
+
+                if (!isValidType) {
+                    alert(`${file.name}: Unsupported file type. Allowed: JPG, PNG, PDF, DOC, DOCX`);
                     return false;
                 }
                 if (file.size > 5 * 1024 * 1024) {
