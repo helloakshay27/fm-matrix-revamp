@@ -229,6 +229,7 @@ export const InvoicesDashboard = () => {
       setInvoicesData(response.work_order_invoices);
       setPagination((prev) => ({
         ...prev,
+        current_page: response.pagination.current_page ?? page,
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages
       }));
@@ -326,7 +327,7 @@ export const InvoicesDashboard = () => {
       return;
     }
     setPagination((prev) => ({ ...prev, current_page: page }));
-    fetchData(page, appliedFilters, searchTerm);
+    fetchData(page);
   };
 
   const renderPaginationItems = () => {
