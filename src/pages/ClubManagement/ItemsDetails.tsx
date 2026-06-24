@@ -343,7 +343,7 @@ export const ItemsDetails = () => {
                                         { key: "quantity", label: "Quantity" },
                                         { key: "rate", label: "Rate" },
                                         { key: "total_amount", label: "Amount" },
-                                        { key: "balance", label: "Balance" },
+                                        { key: "balance", label: "Current Stock Balance" },
                                     ]}
                                     renderRow={(row) => ({
                                         ...row,
