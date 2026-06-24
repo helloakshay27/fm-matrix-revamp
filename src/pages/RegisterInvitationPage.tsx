@@ -75,12 +75,17 @@ export const RegisterInvitationPage = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(COMPLETE_REGISTRATION_URL, {
+      const registrationUrl = `${COMPLETE_REGISTRATION_URL}?token=${encodeURIComponent(
+        invitationToken
+      )}`;
+
+      const response = await fetch(registrationUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          token: invitationToken,
           invitation_token: invitationToken,
           firstname: firstName.trim(),
           lastname: lastName.trim(),
