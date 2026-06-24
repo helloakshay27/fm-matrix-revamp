@@ -134,7 +134,8 @@ const ItemsEdit = () => {
         intra_state_tax: "",
         inter_state_tax: "",
         exemption_reason: "",
-         track_inventory: false,
+        track_inventory: false,
+        current_stock: "",
     });
     const [loading, setLoading] = useState(false);
     const [accountGroups, setAccountGroups] = React.useState([]);
@@ -224,6 +225,7 @@ const ItemsEdit = () => {
                     preferred_vendor: data.pms_supplier_id?.toString() || "",
                     tax_preference: data.tax_preference || "",
                     exemption_reason: data.tax_exemption_id?.toString() || "",
+                    current_stock: data.current_stock != null ? String(data.current_stock) : "",
                 });
                 if (data.icon?.document_file_name && data.icon?.attachment_url) {
                     setPreview(data.icon.attachment_url);
@@ -371,6 +373,11 @@ const ItemsEdit = () => {
             }
         }
 
+        if (!form.current_stock && form.current_stock !== "0") {
+            toast.error("Current Stock is required.");
+            return;
+        }
+
         const itemPayload = {
             name: form.name,
             sku: form.sku,
@@ -439,6 +446,7 @@ const ItemsEdit = () => {
     "lock_account_item[track_inventory]",
     form.track_inventory.toString()
 );
+        formData.append("lock_account_item[current_stock]", form.current_stock);
         if (form.sellable) {
             formData.append("lock_account_item[sale_description]", form.sales_description);
             formData.append("lock_account_item[sale_rate]", form.selling_price);
@@ -680,6 +688,22 @@ const ItemsEdit = () => {
         label="Is Inventory"
     />
 </div>
+
+                    <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                        <h2 className="font-semibold mb-4">Inventory Details</h2>
+                        <TextField
+                            fullWidth
+                            label={<span>Current Stock <span style={{ color: "red" }}>*</span></span>}
+                            name="current_stock"
+                            placeholder="Enter current stock"
+                            value={form.current_stock}
+                            onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9]/g, "");
+                                setForm((prev) => ({ ...prev, current_stock: value }));
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                        />
+                    </div>
 
                     </div>
 

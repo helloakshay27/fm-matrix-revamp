@@ -285,6 +285,27 @@ export const ItemsDetails = () => {
 
 
 
+                        {/* INVENTORY DETAILS */}
+                        <div className="border p-6 rounded bg-white">
+                            <h4 className="font-semibold mb-3">Inventory Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex items-center gap-2">
+                                    <b>Is Inventory:</b>
+                                    <input
+                                        type="checkbox"
+                                        checked={!!itemData?.track_inventory}
+                                        readOnly
+                                        disabled
+                                        className="w-4 h-4 accent-[#C72030]"
+                                    />
+                                    <span className="text-sm text-gray-600">
+                                        {itemData?.track_inventory ? "Yes" : "No"}
+                                    </span>
+                                </div>
+                                <p><b>Current Stock:</b> {itemData?.current_stock != null ? itemData.current_stock : "-"}</p>
+                            </div>
+                        </div>
+
                         {/* STOCK MOVEMENTS TABLE */}
                         {itemData?.track_inventory && (
                         <div className="border p-6 rounded bg-white">

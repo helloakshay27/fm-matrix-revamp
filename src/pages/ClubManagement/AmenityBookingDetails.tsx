@@ -857,18 +857,18 @@ export const AmenityBookingDetailsClubPage = () => {
               </Button>
             )
           }
-          {
-            bookings?.current_status === 'Pending' && (
-              <Button
-                variant="outline"
-                className="border-[#C72030] text-[#C72030] hover:bg-red-50"
-                onClick={() => navigate(`/club-management/amenities-booking-club/${id}/edit`)}
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
-            )
-          }
+          {/* {
+            bookings?.current_status === 'Pending' && ( */}
+          <Button
+            variant="outline"
+            className="border-[#C72030] text-[#C72030] hover:bg-red-50"
+            onClick={() => navigate(`/club-management/amenities-booking-club/${id}/edit`)}
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
+          {/* )
+          } */}
           {((bookings?.current_status === 'Pending') || (bookings?.payment_method === "pay_on_facility" && bookings?.amount_paid === null)) && (
             <Button variant="outline" onClick={() => setOpenPaymentModal(true)}>
               <CreditCard className="w-4 h-4 mr-1" />
