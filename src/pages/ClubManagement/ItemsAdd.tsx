@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import {
   // TextField,
@@ -20,6 +20,7 @@ import { InputAdornment, TextField } from "@mui/material";
 import {
   Trash2,
   ArrowLeft,
+  Search,
 } from "lucide-react";
 import {
   Dialog,
@@ -113,6 +114,17 @@ interface Customer {
   name: string;
 }
 
+interface TaxGroup {
+  id: number;
+  name: string;
+}
+
+interface TaxRate {
+  id: number;
+  name: string;
+  rate: number;
+}
+
 const ItemsAdd = () => {
   const navigate = useNavigate();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -143,9 +155,9 @@ const ItemsAdd = () => {
     inter_state_tax: "",
     exemption_reason: "",
 
-     // ✅ NEW
-  is_inventory: false,
-  current_stock: "",
+    // ✅ NEW
+    is_inventory: true,
+    current_stock: "",
 
   });
 
@@ -167,6 +179,10 @@ const ItemsAdd = () => {
   const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
   const [exemptions, setExemptions] = useState([]);
   const [taxSettings, setTaxSettings] = useState<any | null>(null);
+  const [intraTaxes, setIntraTaxes] = useState<TaxGroup[]>([]);
+  const [interTaxes, setInterTaxes] = useState<TaxRate[]>([]);
+  const [intraSearch, setIntraSearch] = useState("");
+  const [interSearch, setInterSearch] = useState("");
 
   React.useEffect(() => {
     const fetchSalesAccountGroups = async () => {
@@ -231,31 +247,53 @@ const ItemsAdd = () => {
     fetchExemptions();
   }, []);
 
-  React.useEffect(() => {
-    const fetchTaxSettings = async () => {
-      try {
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-
-        const res = await axios.get(
+  useEffect(() => {
+    const fetchTaxData = async () => {
+      const [settingsRes, groupRes, rateRes] = await Promise.allSettled([
+        axios.get(
           `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_settings.json`,
-          {
-            headers: {
-              Authorization: token ? `Bearer ${token}` : undefined,
-            },
-          }
-        );
+          { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+        ),
+        axios.get(
+          `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`,
+          { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+        ),
+        axios.get(
+          `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`,
+          { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+        ),
+      ]);
 
-        console.log("Tax settings:", res.data);
-        setTaxSettings(res.data || null); // adjust based on response
-      } catch (err) {
-        console.error("Failed to fetch tax settings", err);
-        setTaxSettings(null);
-      }
+      const settings = settingsRes.status === "fulfilled" ? (settingsRes.value.data || null) : null;
+      const intra = groupRes.status === "fulfilled" ? (Array.isArray(groupRes.value.data) ? groupRes.value.data : []) : [];
+      const inter = rateRes.status === "fulfilled" ? (Array.isArray(rateRes.value.data) ? rateRes.value.data : []) : [];
+
+      setTaxSettings(settings);
+      setIntraTaxes(intra);
+      setInterTaxes(inter);
     };
-
-    fetchTaxSettings();
+    fetchTaxData();
   }, []);
+
+  // Runs after taxSettings + dropdown items are committed to state
+  useEffect(() => {
+    if (taxSettings?.intra_state_tax_rate_id) {
+      setForm((p) => ({ ...p, intra_state_tax: String(taxSettings.intra_state_tax_rate_id) }));
+    }
+    if (taxSettings?.inter_state_tax_rate_id) {
+      setForm((p) => ({ ...p, inter_state_tax: String(taxSettings.inter_state_tax_rate_id) }));
+    }
+  }, [taxSettings]);
+
+  const filteredIntraTaxes = useMemo(
+    () => intraTaxes.filter((t) => t.name.toLowerCase().includes(intraSearch.toLowerCase())),
+    [intraTaxes, intraSearch]
+  );
+
+  const filteredInterTaxes = useMemo(
+    () => interTaxes.filter((t) => t.name.toLowerCase().includes(interSearch.toLowerCase())),
+    [interTaxes, interSearch]
+  );
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
@@ -338,6 +376,17 @@ const ItemsAdd = () => {
         return;
       }
     }
+
+    if (form.tax_preference === "taxable") {
+      if (!form.intra_state_tax) {
+        toast.error("Intra State Tax Rate is required.");
+        return;
+      }
+      if (!form.inter_state_tax) {
+        toast.error("Inter State Tax Rate is required.");
+        return;
+      }
+    }
     if (form.sellable) {
       if (!form.selling_price || isNaN(Number(form.selling_price))) {
         toast.error("Selling Price is required for Sellable items");
@@ -368,7 +417,7 @@ const ItemsAdd = () => {
     }
 
     if (!form.current_stock && form.current_stock !== "0") {
-      toast.error("Current Stock is required.");
+      toast.error("Opening Stock is required.");
       return;
     }
 
@@ -436,11 +485,11 @@ const ItemsAdd = () => {
 
 
     formData.append(
-  "lock_account_item[track_inventory]",
-  form.is_inventory
-);
+      "lock_account_item[track_inventory]",
+      form.is_inventory
+    );
 
-    formData.append("lock_account_item[current_stock]", form.current_stock);
+    formData.append("lock_account_item[opening_stock]", form.current_stock);
     formData.append("lock_account_item[tax_preference]", form.tax_preference);
     if (form.type === "goods") {
       formData.append("lock_account_item[hsn_code]", form.hsn_code);
@@ -450,16 +499,13 @@ const ItemsAdd = () => {
       formData.append("lock_account_item[sac]", form.sac_code);
     }
 
-    if (form.tax_preference === "taxable" && taxSettings) {
-      formData.append(
-        "lock_account_item[intra_state_tax_rate_id]",
-        taxSettings.intra_state_tax_rate_id
-      );
-
-      formData.append(
-        "lock_account_item[inter_state_tax_rate_id]",
-        taxSettings.inter_state_tax_rate_id
-      );
+    if (form.tax_preference === "taxable") {
+      if (form.intra_state_tax) {
+        formData.append("lock_account_item[intra_state_tax_rate_id]", form.intra_state_tax);
+      }
+      if (form.inter_state_tax) {
+        formData.append("lock_account_item[inter_state_tax_rate_id]", form.inter_state_tax);
+      }
     }
 
     if (form.tax_preference === "non_taxable") {
@@ -721,43 +767,43 @@ const ItemsAdd = () => {
             {console.log("exemptions:", exemptions)}
 
             {/* INVENTORY CHECKBOX */}
-<div className="mt-2">
-  <FormControlLabel
-    control={
-      <Checkbox
-        checked={form.is_inventory}
-        name="is_inventory"
-        onChange={handleChange}
-      />
-    }
-    label="Is Inventory"
-  />
-</div>
-{/* STOCK DETAILS */}
- {/* {form.is_inventory && ( */}
-  <div className="mt-6 border rounded-lg p-4 bg-gray-50">
-    <h2 className="font-semibold mb-4">Inventory Details</h2>
+            <div className="mt-2">
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={form.is_inventory}
+                    name="is_inventory"
+                    onChange={handleChange}
+                  />
+                }
+                label="Is Inventory"
+              />
+            </div>
+            {/* STOCK DETAILS */}
+            {/* {form.is_inventory && ( */}
+            <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+              <h2 className="font-semibold mb-4">Inventory Details</h2>
 
-   
-    <TextField
-      fullWidth
-      label={<span>Current Stock <span style={{ color: "red" }}>*</span></span>}
-      name="current_stock"
-      placeholder="Enter current stock"
-      value={form.current_stock}
-      onChange={(e) => {
-        const value = e.target.value.replace(/[^0-9]/g, "");
-        setForm((prev) => ({
-          ...prev,
-          current_stock: value,
-        }));
-      }}
-      InputLabelProps={{ shrink: true }}
-      // required
-    />
 
-    {/* STOCK TABLE */}
-     {/* <div className="mt-6 overflow-x-auto">
+              <TextField
+                fullWidth
+                label={<span>Opening Stock <span style={{ color: "red" }}>*</span></span>}
+                name="current_stock"
+                placeholder="Enter current stock"
+                value={form.current_stock}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  setForm((prev) => ({
+                    ...prev,
+                    current_stock: value,
+                  }));
+                }}
+                InputLabelProps={{ shrink: true }}
+              // required
+              />
+
+              {/* STOCK TABLE */}
+              {/* <div className="mt-6 overflow-x-auto">
       <table className="w-full border border-gray-200 text-sm">
         <thead className="bg-gray-100">
           <tr>
@@ -782,8 +828,8 @@ const ItemsAdd = () => {
         </tbody>
       </table>
     </div> */}
-  </div>
-{/* )}  */}
+            </div>
+            {/* )}  */}
           </div>
 
           {/* RIGHT SIDE ATTACHMENT */}
@@ -872,7 +918,7 @@ const ItemsAdd = () => {
             </div>
 
             <div className="grid gap-6">
-            
+
               <TextField
                 placeholder="Enter selling price"
                 fullWidth
@@ -1027,15 +1073,15 @@ const ItemsAdd = () => {
                   {salesAccountGroups.map((group) =>
                     group.ledgers && group.ledgers.length > 0
                       ? [
-                          <ListSubheader key={"group-" + group.id}>
-                            {group.group_name}
-                          </ListSubheader>,
-                          ...group.ledgers.map((ledger) => (
-                            <MenuItem key={ledger.id} value={ledger.id}>
-                              {ledger.name}
-                            </MenuItem>
-                          )),
-                        ]
+                        <ListSubheader key={"group-" + group.id}>
+                          {group.group_name}
+                        </ListSubheader>,
+                        ...group.ledgers.map((ledger) => (
+                          <MenuItem key={ledger.id} value={ledger.id}>
+                            {ledger.name}
+                          </MenuItem>
+                        )),
+                      ]
                       : null
                   )}
                 </Select>
@@ -1219,15 +1265,15 @@ const ItemsAdd = () => {
                   {purchaseAccountGroups.map((group) =>
                     group.ledgers && group.ledgers.length > 0
                       ? [
-                          <ListSubheader key={"group-" + group.id}>
-                            {group.group_name}
-                          </ListSubheader>,
-                          ...group.ledgers.map((ledger) => (
-                            <MenuItem key={ledger.id} value={ledger.id}>
-                              {ledger.name}
-                            </MenuItem>
-                          )),
-                        ]
+                        <ListSubheader key={"group-" + group.id}>
+                          {group.group_name}
+                        </ListSubheader>,
+                        ...group.ledgers.map((ledger) => (
+                          <MenuItem key={ledger.id} value={ledger.id}>
+                            {ledger.name}
+                          </MenuItem>
+                        )),
+                      ]
                       : null
                   )}
                 </Select>
@@ -1301,29 +1347,113 @@ const ItemsAdd = () => {
           </div>
         </div>
 
-        {form.tax_preference === "taxable" && taxSettings && (
+        {form.tax_preference === "taxable" && (
           <div className="grid md:grid-cols-2 gap-6 mt-4 p-4 border rounded-lg bg-gray-50">
             <div className="md:col-span-2 font-semibold text-gray-700">
               Default Tax Rates
             </div>
 
             {/* Intra State Tax (CGST + SGST) */}
-            <TextField
-              label="Intra State Tax Rate"
-              value={taxSettings.intra_state_tax_rate || "-"}
-              disabled
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
+            <FormControl size="small" fullWidth>
+              <InputLabel id="intra-state-tax-label" shrink>
+                Intra State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+              </InputLabel>
+              <Select
+                labelId="intra-state-tax-label"
+                value={form.intra_state_tax || ""}
+                label="Intra State Tax Rate"
+                displayEmpty
+                renderValue={(val) => {
+                  if (!val) return <span style={{ color: "#888" }}>Select</span>;
+                  const match = intraTaxes.find((t) => String(t.id) === String(val));
+                  return match ? <span>{match.name}</span> : <span style={{ color: "#888" }}>Select</span>;
+                }}
+                onChange={(e) => setForm((p) => ({ ...p, intra_state_tax: e.target.value }))}
+                onClose={() => setIntraSearch("")}
+                MenuProps={{ autoFocus: false, PaperProps: { style: { maxHeight: 300 } } }}
+              >
+                <ListSubheader disableSticky sx={{ p: 1, bgcolor: "#f1f5f9" }}>
+                  <TextField
+                    size="small"
+                    autoFocus
+                    placeholder="Type to search..."
+                    fullWidth
+                    value={intraSearch}
+                    onChange={(e) => setIntraSearch(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search className="h-4 w-4" style={{ color: "#7c3aed" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </ListSubheader>
+                <MenuItem value="">
+                  <span style={{ color: "#888" }}>Select</span>
+                </MenuItem>
+                {filteredIntraTaxes.map((tax) => (
+                  <MenuItem key={tax.id} value={String(tax.id)}>
+                    {tax.name}
+                  </MenuItem>
+                ))}
+                {filteredIntraTaxes.length === 0 && (
+                  <MenuItem disabled>No tax found.</MenuItem>
+                )}
+              </Select>
+            </FormControl>
 
             {/* Inter State Tax (IGST) */}
-            <TextField
-              label="Inter State Tax Rate"
-              value={taxSettings.inter_state_tax_rate || "-"}
-              disabled
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
+            <FormControl size="small" fullWidth>
+              <InputLabel id="inter-state-tax-label" shrink>
+                Inter State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+              </InputLabel>
+              <Select
+                labelId="inter-state-tax-label"
+                value={form.inter_state_tax || ""}
+                label="Inter State Tax Rate"
+                displayEmpty
+                renderValue={(val) => {
+                  if (!val) return <span style={{ color: "#888" }}>Select</span>;
+                  const match = interTaxes.find((t) => String(t.id) === String(val));
+                  return match ? <span>{match.name}</span> : <span style={{ color: "#888" }}>Select</span>;
+                }}
+                onChange={(e) => setForm((p) => ({ ...p, inter_state_tax: e.target.value }))}
+                onClose={() => setInterSearch("")}
+                MenuProps={{ autoFocus: false, PaperProps: { style: { maxHeight: 300 } } }}
+              >
+                <ListSubheader disableSticky sx={{ p: 1, bgcolor: "#f1f5f9" }}>
+                  <TextField
+                    size="small"
+                    autoFocus
+                    placeholder="Type to search..."
+                    fullWidth
+                    value={interSearch}
+                    onChange={(e) => setInterSearch(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search className="h-4 w-4" style={{ color: "#7c3aed" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </ListSubheader>
+                <MenuItem value="">
+                  <span style={{ color: "#888" }}>Select</span>
+                </MenuItem>
+                {filteredInterTaxes.map((tax) => (
+                  <MenuItem key={tax.id} value={String(tax.id)}>
+                    {tax.name}
+                  </MenuItem>
+                ))}
+                {filteredInterTaxes.length === 0 && (
+                  <MenuItem disabled>No tax found.</MenuItem>
+                )}
+              </Select>
+            </FormControl>
           </div>
         )}
         {/* BUTTONS */}
