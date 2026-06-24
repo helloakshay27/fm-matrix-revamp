@@ -804,6 +804,7 @@ const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage").the
 const LoginPage = lazy(() => import("@/pages/LoginPage").then(m => ({ default: m.LoginPage })));
 const OTPVerificationPage = lazy(() => import("@/pages/OTPVerificationPage").then(m => ({ default: m.OTPVerificationPage })));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage").then(m => ({ default: m.ForgotPasswordPage })));
+const RegisterInvitationPage = lazy(() => import("@/pages/RegisterInvitationPage").then(m => ({ default: m.RegisterInvitationPage })));
 const ForgotPasswordOTPPage = lazy(() => import("@/pages/ForgotPasswordOTPPage").then(m => ({ default: m.ForgotPasswordOTPPage })));
 const NewPasswordPage = lazy(() => import("@/pages/NewPasswordPage").then(m => ({ default: m.NewPasswordPage })));
 const LoginSuccessPage = lazy(() => import("@/pages/LoginSuccessPage").then(m => ({ default: m.LoginSuccessPage })));
@@ -1920,6 +1921,10 @@ function App() {
                           <Route
                             path="/forgot-password"
                             element={<ForgotPasswordPage />}
+                          />
+                          <Route
+                            path="/register-invitation"
+                            element={<RegisterInvitationPage />}
                           />
                           <Route
                             path="/forgot-password-otp"
