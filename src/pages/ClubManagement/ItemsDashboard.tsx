@@ -53,6 +53,7 @@ interface ItemData {
   rate: number;
   usage_unit: string;
   current_stock?: number | null;
+   opening_stock?: number | null;
   active?: boolean;
   icon?: {
     document_file_name: string | null;
@@ -736,6 +737,7 @@ export const ItemsDashboard = () => {
     { key: 'sale_description', label: 'Description', sortable: false },
     { key: 'sale_rate', label: 'Rate', sortable: true },
     { key: 'current_stock', label: 'Current Stock', sortable: true },
+    { key: 'opening_stock', label: 'Opening Stock', sortable: true },
     { key: 'active', label: 'Status', sortable: false },
     { key: 'unit', label: 'Usage Unit', sortable: true },
   ];
@@ -812,6 +814,13 @@ export const ItemsDashboard = () => {
     if (columnKey === "current_stock") {
       return item.current_stock ?? "--";
     }
+
+    if (columnKey === "opening_stock") {
+  return item.opening_stock ??
+    "--";
+  // item.current_stock ??
+    
+}
 
     if (columnKey === "active") {
       return (

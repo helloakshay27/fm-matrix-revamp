@@ -303,6 +303,12 @@ export const ItemsDetails = () => {
                                     </span>
                                 </div>
                                 <p><b>Current Stock:</b> {itemData?.current_stock != null ? itemData.current_stock : "-"}</p>
+                                <p>
+  <b>Opening Stock:</b>{" "}
+  { itemData?.opening_stock != null
+    ? itemData.opening_stock
+    : "-"}
+</p>
                             </div>
                         </div>
 
