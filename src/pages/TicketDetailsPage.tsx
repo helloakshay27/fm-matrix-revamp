@@ -5165,6 +5165,9 @@ export const TicketDetailsPage = () => {
                             { label: 'Mode', value: ticketData.complaint_mode || '-' },
                             { label: 'Identification', value: ticketData.proactive_reactive || '-' },
                           ],
+                          [
+                            { label: 'Customer Name', value: ticketData.entity_name || '-' },
+                          ],
                         ].map((row, rIdx) => (
                           <div
                             key={rIdx}
@@ -8514,6 +8517,9 @@ export const TicketDetailsPage = () => {
                         { label: 'Updated By', value: ticketData.updated_by || '-' },
                         { label: 'Mode', value: ticketData.complaint_mode || '-' },
                         { label: 'Identification', value: ticketData.proactive_reactive || '-' },
+                      ],
+                      [
+                        { label: 'Customer Name', value: ticketData.entity_name || '-' },
                       ],
                     ].map((row, rIdx) => (
                       <div
