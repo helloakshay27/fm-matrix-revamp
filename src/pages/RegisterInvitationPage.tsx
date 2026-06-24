@@ -101,7 +101,7 @@ export const RegisterInvitationPage = () => {
       }
 
       toast.success(data?.message || "Your Business Compass account is ready.");
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (error) {
       toast.error(
         error instanceof Error
