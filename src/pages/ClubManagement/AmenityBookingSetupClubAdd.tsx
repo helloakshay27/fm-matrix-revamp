@@ -146,9 +146,11 @@ export const AddBookingSetupClubPage = () => {
     chargeSetup: {
       member: { selected: false, adult: "", child: "" },
       guest: { selected: false, adult: "", child: "" },
+      hotelGuest: { selected: false, adult: "" },
       minimumPersonAllowed: "1",
       maximumPersonAllowed: "1",
       gst: "0.0",
+      fullCourtCharge: "",
     },
     blockDays: {
       startDate: "",
@@ -591,6 +593,20 @@ export const AddBookingSetupClubPage = () => {
           formData.chargeSetup.guest.child || "0"
         );
       }
+
+      // Charge Setup - Hotel Guest charge (adult only)
+      if (formData.chargeSetup.hotelGuest.selected) {
+        formDataToSend.append(
+          "facility_setup[facility_charge_attributes][hotel_guest_charge]",
+          formData.chargeSetup.hotelGuest.adult || "0"
+        );
+      }
+
+      // Charge Setup - Full Court Charge
+      formDataToSend.append(
+        "facility_setup[facility_charge_attributes][full_court_charge]",
+        formData.chargeSetup.fullCourtCharge || "0"
+      );
 
       // Charge Setup - Person limits and GST
       formDataToSend.append(
@@ -1194,6 +1210,71 @@ export const AddBookingSetupClubPage = () => {
                       </div>
                     </td>
                   </tr>
+                  <tr>
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.chargeSetup.hotelGuest.selected}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              chargeSetup: {
+                                ...formData.chargeSetup,
+                                hotelGuest: {
+                                  ...formData.chargeSetup.hotelGuest,
+                                  selected: !!checked,
+                                },
+                              },
+                            })
+                          }
+                        />
+                        <span>Hotel Guest</span>
+                      </div>
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <Checkbox
+                          checked={!!formData.chargeSetup.hotelGuest.adult}
+                          onCheckedChange={(checked) => {
+                            if (!checked) {
+                              setFormData({
+                                ...formData,
+                                chargeSetup: {
+                                  ...formData.chargeSetup,
+                                  hotelGuest: {
+                                    ...formData.chargeSetup.hotelGuest,
+                                    adult: "",
+                                  },
+                                },
+                              });
+                            }
+                          }}
+                        />
+                        <TextField
+                          size="small"
+                          variant="outlined"
+                          value={formData.chargeSetup.hotelGuest.adult}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                              setFormData({
+                                ...formData,
+                                chargeSetup: {
+                                  ...formData.chargeSetup,
+                                  hotelGuest: {
+                                    ...formData.chargeSetup.hotelGuest,
+                                    adult: value,
+                                  },
+                                },
+                              });
+                            }
+                          }}
+                          className="w-full max-w-[200px]"
+                        />
+                      </div>
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3"></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1251,6 +1332,28 @@ export const AddBookingSetupClubPage = () => {
                   }}
                   className="w-32"
                   placeholder="1"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-semibold whitespace-nowrap">Full Court Charge</label>
+                <TextField
+                  size="small"
+                  variant="outlined"
+                  value={formData.chargeSetup.fullCourtCharge}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        chargeSetup: {
+                          ...formData.chargeSetup,
+                          fullCourtCharge: value,
+                        },
+                      });
+                    }
+                  }}
+                  className="w-32"
+                  placeholder="0"
                 />
               </div>
             </div>

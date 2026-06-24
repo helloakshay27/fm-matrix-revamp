@@ -193,7 +193,7 @@ export const ClubGroupMembershipDashboard = () => {
       if (Array.isArray(data.club_member_allocations)) {
         setMemberships(data.club_member_allocations);
         setTotalMembers(data.pagination?.total_count || 0);
-        setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
+        setTotalPages(data.pagination?.total_pages || Math.ceil((data.pagination?.total_count || 0) / perPage));
       } else {
         setMemberships([]);
         setTotalMembers(0);
