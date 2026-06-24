@@ -708,9 +708,9 @@ export const AMCDashboard = () => {
 
   const amcData =
     apiData &&
-    typeof apiData === "object" &&
-    "asset_amcs" in apiData &&
-    Array.isArray((apiData as any).asset_amcs)
+      typeof apiData === "object" &&
+      "asset_amcs" in apiData &&
+      Array.isArray((apiData as any).asset_amcs)
       ? (apiData as any).asset_amcs
       : initialAmcData;
   const pagination =
@@ -762,31 +762,31 @@ export const AMCDashboard = () => {
 
         const assetsArr: SelectOption[] = Array.isArray(assetsData)
           ? assetsData
-              .map((a: any) => ({
-                id: Number(a.id),
-                name: String(a.name ?? "").trim(),
-              }))
-              .filter((a: SelectOption) => a.id && a.name)
+            .map((a: any) => ({
+              id: Number(a.id),
+              name: String(a.name ?? "").trim(),
+            }))
+            .filter((a: SelectOption) => a.id && a.name)
           : [];
 
         const servicesArr: SelectOption[] = Array.isArray(servicesData)
           ? servicesData
-              .map((s: any) => ({
-                id: Number(s.id),
-                name: String(s.service_name ?? s.name ?? "").trim(),
-              }))
-              .filter((s: SelectOption) => s.id && s.name)
+            .map((s: any) => ({
+              id: Number(s.id),
+              name: String(s.service_name ?? s.name ?? "").trim(),
+            }))
+            .filter((s: SelectOption) => s.id && s.name)
           : [];
 
         const groupsArr: SelectOption[] = Array.isArray(
           groupsData?.asset_groups
         )
           ? groupsData.asset_groups
-              .map((g: any) => ({
-                id: Number(g.id),
-                name: String(g.name ?? "").trim(),
-              }))
-              .filter((g: SelectOption) => g.id && g.name)
+            .map((g: any) => ({
+              id: Number(g.id),
+              name: String(g.name ?? "").trim(),
+            }))
+            .filter((g: SelectOption) => g.id && g.name)
           : [];
 
         assetsArr.sort((a, b) => a.name.localeCompare(b.name));
@@ -831,11 +831,11 @@ export const AMCDashboard = () => {
         );
         const arr: SelectOption[] = Array.isArray(resp.data?.asset_groups)
           ? resp.data.asset_groups
-              .map((sg: any) => ({
-                id: Number(sg.id),
-                name: String(sg.name ?? "").trim(),
-              }))
-              .filter((sg: SelectOption) => sg.id && sg.name)
+            .map((sg: any) => ({
+              id: Number(sg.id),
+              name: String(sg.name ?? "").trim(),
+            }))
+            .filter((sg: SelectOption) => sg.id && sg.name)
           : [];
         arr.sort((a, b) => a.name.localeCompare(b.name));
         setSubGroupOptions(arr);
@@ -871,8 +871,8 @@ export const AMCDashboard = () => {
       : 0;
   const expiringIn90Days =
     apiData &&
-    typeof apiData === "object" &&
-    "expiring_in_fifteen_days" in apiData
+      typeof apiData === "object" &&
+      "expiring_in_fifteen_days" in apiData
       ? (apiData as any).expiring_in_fifteen_days
       : 0;
   const serviceTotalAMCs =
@@ -1009,8 +1009,8 @@ export const AMCDashboard = () => {
         currentPage,
         isExpiringFilterActive
           ? formatDateForAPI(
-              new Date(new Date().setDate(new Date().getDate() + 90))
-            )
+            new Date(new Date().setDate(new Date().getDate() + 90))
+          )
           : undefined,
         debouncedSearchQuery
       );
@@ -1093,8 +1093,8 @@ export const AMCDashboard = () => {
       currentPage,
       isExpiringFilterActive
         ? formatDateForAPI(
-            new Date(new Date().setDate(new Date().getDate() + 90))
-          )
+          new Date(new Date().setDate(new Date().getDate() + 90))
+        )
         : undefined,
       debouncedSearchQuery
     );
@@ -1188,15 +1188,15 @@ export const AMCDashboard = () => {
       case "actions":
         return (
           <div className="flex items-center justify-center gap-1">
-            {shouldShow("AMC", "show") && (
-              <div
-                onClick={() => handleViewDetails(item.id)}
-                className="p-1 cursor-pointer hover:text-gray-700"
-                title="View"
-              >
-                <Eye className="w-4 h-4" />
-              </div>
-            )}
+            {/* {shouldShow("AMC", "show") && ( */}
+            <div
+              onClick={() => handleViewDetails(item.id)}
+              className="p-1 cursor-pointer hover:text-gray-700"
+              title="View"
+            >
+              <Eye className="w-4 h-4" />
+            </div>
+            {/* )} */}
             <div
               title="Flag AMC"
               onClick={(e) => {
@@ -1209,15 +1209,15 @@ export const AMCDashboard = () => {
                 className={`w-4 h-4 ${item.is_flagged ? "text-red-500 fill-red-500" : "text-gray-600"}`}
               />
             </div>
-            {shouldShow("AMC", "update") && (
-              <Link
-                to={`/maintenance/amc/edit/${item.id}`}
-                className="p-1 text-gray-600"
-                title="Edit AMC"
-              >
-                <Pencil className="w-4 h-4" />
-              </Link>
-            )}
+            {/* {shouldShow("AMC", "update") && ( */}
+            <Link
+              to={`/maintenance/amc/edit/${item.id}`}
+              className="p-1 text-gray-600"
+              title="Edit AMC"
+            >
+              <Pencil className="w-4 h-4" />
+            </Link>
+            {/* )} */}
           </div>
         );
       case "id":
@@ -1337,17 +1337,17 @@ export const AMCDashboard = () => {
                       value === "active"
                         ? (apiData as any).active_amcs_count + 1
                         : (apiData as any).active_amcs_count -
-                          (item.status === "active" ? 1 : 0),
+                        (item.status === "active" ? 1 : 0),
                     inactive_amcs_count:
                       value === "inactive"
                         ? (apiData as any).inactive_amcs_count + 1
                         : (apiData as any).inactive_amcs_count -
-                          (item.status === "inactive" ? 1 : 0),
+                        (item.status === "inactive" ? 1 : 0),
                     under_observation:
                       value === "under_observation"
                         ? ((apiData as any).under_observation || 0) + 1
                         : (apiData as any).under_observation -
-                          (item.status === "under_observation" ? 1 : 0),
+                        (item.status === "under_observation" ? 1 : 0),
                     total_amcs_count: (apiData as any).total_amcs_count,
                   };
 
@@ -1453,13 +1453,13 @@ export const AMCDashboard = () => {
       case "created_at":
         return item.created_at
           ? new Date(item.created_at).toLocaleString("en-IN", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
           : "-";
       default:
         return "-";
@@ -2247,15 +2247,15 @@ export const AMCDashboard = () => {
               pagination={false}
               onFilterClick={handleFiltersClick}
               leftActions={
-                shouldShow("AMC","create") && (
-                  <Button
-                    onClick={handleActionClick}
-                    className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Action
-                  </Button>
-                )
+                // shouldShow("AMC", "create") && (
+                <Button
+                  onClick={handleActionClick}
+                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                >
+                  <Plus className="w-4 h-4" />
+                  Action
+                </Button>
+                // )
               }
               enableSearch={true}
               searchTerm={searchQuery}
@@ -2293,7 +2293,7 @@ export const AMCDashboard = () => {
                       }
                       className={
                         paginationSafe.current_page ===
-                        paginationSafe.total_pages
+                          paginationSafe.total_pages
                           ? "pointer-events-none opacity-50"
                           : ""
                       }

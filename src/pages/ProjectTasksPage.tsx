@@ -2446,7 +2446,7 @@ const ProjectTasksPage = () => {
                                     className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
                                     title="Play task"
                                 >
-                                    <Play size={13} className="text-green-500" />
+                                    <Play size={13} color="#22c55e" />
                                 </button>
                             ))}
                     </div>
