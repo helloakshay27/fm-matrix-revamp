@@ -478,7 +478,7 @@ export const AMCDetailsPage = () => {
     );
   }
 
-  const hanldeClose = () => {
+  const handleClose = () => {
     setShowAddVisitModal(false);
   };
 
@@ -1559,15 +1559,14 @@ export const AMCDetailsPage = () => {
                           key={group.frequency_config_id}
                           type="button"
                           onClick={() => setActiveVisitFreqTab(idx)}
-                          className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                            idx === activeVisitFreqTab
-                              ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
-                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                          }`}
+                          className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activeVisitFreqTab
+                            ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                            }`}
                         >
                           {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
                           {/* <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"> */}
-                            {/* {group.no_of_visits ?? group.visits.length} */}
+                          {/* {group.no_of_visits ?? group.visits.length} */}
                           {/* </span> */}
                         </button>
                       ))}
@@ -1664,15 +1663,14 @@ export const AMCDetailsPage = () => {
                                       <TableCell>
                                         {visit.status ? (
                                           <span
-                                            className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
-                                              visit.status.toLowerCase() === "completed"
-                                                ? "bg-green-100 text-green-800"
-                                                : visit.status.toLowerCase() === "missed"
+                                            className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${visit.status.toLowerCase() === "completed"
+                                              ? "bg-green-100 text-green-800"
+                                              : visit.status.toLowerCase() === "missed"
                                                 ? "bg-red-100 text-red-800"
                                                 : visit.status.toLowerCase() === "pending"
-                                                ? "bg-amber-100 text-amber-800"
-                                                : "bg-gray-100 text-gray-700"
-                                            }`}
+                                                  ? "bg-amber-100 text-amber-800"
+                                                  : "bg-gray-100 text-gray-700"
+                                              }`}
                                           >
                                             {visit.status.toUpperCase()}
                                           </span>
@@ -1752,11 +1750,11 @@ export const AMCDetailsPage = () => {
                                 <TableCell className="text-gray-900">
                                   {(visit as any).actual_visit_date
                                     ? (() => {
-                                        const raw = (visit as any).actual_visit_date as string;
-                                        if (raw.includes("/")) return raw;
-                                        const d = new Date(raw);
-                                        return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
-                                      })()
+                                      const raw = (visit as any).actual_visit_date as string;
+                                      if (raw.includes("/")) return raw;
+                                      const d = new Date(raw);
+                                      return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                                    })()
                                     : "—"}
                                 </TableCell>
                                 <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
@@ -1764,13 +1762,12 @@ export const AMCDetailsPage = () => {
                                 <TableCell>
                                   {(visit as any).status ? (
                                     <span
-                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
-                                        (visit as any).status.toLowerCase() === "completed"
-                                          ? "bg-green-100 text-green-800"
-                                          : (visit as any).status.toLowerCase() === "cancelled"
+                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${(visit as any).status.toLowerCase() === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : (visit as any).status.toLowerCase() === "cancelled"
                                           ? "bg-red-100 text-red-800"
                                           : "bg-gray-100 text-gray-700"
-                                      }`}
+                                        }`}
                                     >
                                       {((visit as any).status as string).toUpperCase()}
                                     </span>
@@ -1860,7 +1857,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Actual Visit Date</label>
                       <input
                         type="date"
-                        
+
                         value={visitEditActualVisitDate}
                         onChange={(e) => setVisitEditActualVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -2553,7 +2550,7 @@ export const AMCDetailsPage = () => {
 
       <AddVisitModal
         isOpen={showAddVisitModal}
-        onClose={hanldeClose}
+        onClose={handleClose}
         amcId={amcDetails?.id?.toString() || id || ""}
       />
     </div>
