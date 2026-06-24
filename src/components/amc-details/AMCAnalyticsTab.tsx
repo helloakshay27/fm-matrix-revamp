@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { useParams } from "react-router-dom";
@@ -61,6 +70,7 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
   const targetId = amcId ?? id;
   const [analytics, setAnalytics] = useState<AMCAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [pastAmcPage, setPastAmcPage] = useState(1);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -112,6 +122,9 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
   };
 
   const pastPPM = analytics?.past_ppm ?? [];
+  const PAST_AMC_PER_PAGE = 15;
+  const pastAmcTotalPages = Math.max(1, Math.ceil(pastPPM.length / PAST_AMC_PER_PAGE));
+  const pastPPMPage = pastPPM.slice((pastAmcPage - 1) * PAST_AMC_PER_PAGE, pastAmcPage * PAST_AMC_PER_PAGE);
 
   return (
     <div style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
@@ -500,7 +513,7 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
                     </td>
                   </tr>
                 ) : (
-                  pastPPM.map((entry) => {
+                  pastPPMPage.map((entry) => {
                     const statusVal = (entry.status || '').toLowerCase();
                     const isActive = statusVal === 'active';
                     const isExpired = statusVal === 'expired';
@@ -543,6 +556,57 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
             </table>
           </div>
         </div>
+
+        {/* Past AMC Pagination */}
+        {pastAmcTotalPages > 1 && (
+          <div className="flex justify-center mt-4 mb-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPastAmcPage((p) => Math.max(1, p - 1))}
+                    className={pastAmcPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {(() => {
+                  const items: React.ReactNode[] = [];
+                  const delta = 1;
+                  let last = 0;
+                  for (let i = 1; i <= pastAmcTotalPages; i++) {
+                    if (i === 1 || i === pastAmcTotalPages || (i >= pastAmcPage - delta && i <= pastAmcPage + delta)) {
+                      if (last && i - last > 1) {
+                        items.push(
+                          <PaginationItem key={`e-${i}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+                      items.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={pastAmcPage === i}
+                            onClick={() => setPastAmcPage(i)}
+                            className="cursor-pointer"
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                      last = i;
+                    }
+                  }
+                  return items;
+                })()}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPastAmcPage((p) => Math.min(pastAmcTotalPages, p + 1))}
+                    className={pastAmcPage === pastAmcTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   );
