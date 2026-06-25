@@ -375,6 +375,11 @@ const modulesByPackage = {
           name: "Organization",
           href: "/accounting/organisation",
         },
+         {
+          name: "UOM Master",
+          href: "/accounting/uom-master",
+        },
+        
         // { name: "Charges ", href: "/accounting/charge-setup" },
         // { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
       ],

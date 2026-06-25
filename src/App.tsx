@@ -1266,6 +1266,7 @@ const TaxRateSetupPage = lazy(() => import("./pages/ClubManagement/TaxRateSetupP
 const DefaultTaxPreferencesPage = lazy(() => import("./pages/ClubManagement/DefaultTaxPreferencesPage"));
 const SalesPersonMaster = lazy(() => import("./pages/ClubManagement/SalesPersonMaster"));
 const PaymentTermsMaster = lazy(() => import("./pages/ClubManagement/PaymentTermsMaster"));
+const UomMasterPage = lazy(() => import("./pages/ClubManagement/UnitMaster").then(m => ({ default: m.UnitMaster })));
 const CustomersDetails = lazy(() => import("./pages/ClubManagement/CustomersDetails").then(m => ({ default: m.CustomersDetails })));
 const BillsAdd = lazy(() => import("./pages/ClubManagement/BillsAdd").then(m => ({ default: m.BillsAdd })));
 const BillDetails = lazy(() => import("./pages/ClubManagement/BillDetails"));
@@ -3690,6 +3691,10 @@ function App() {
                             <Route
                               path="/accounting/payment-terms"
                               element={<PaymentTermsMaster />}
+                            />
+                            <Route
+                              path="/accounting/uom-master"
+                              element={<UomMasterPage />}
                             />
                             <Route
                               path="/accounting/organisation"

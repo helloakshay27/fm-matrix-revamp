@@ -3812,12 +3812,7 @@ export const AddAMCPage = () => {
                     placeholder="Enter Contract Name"
                     fullWidth
                     value={formData.contractName}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (!/[0-9]/.test(val)) {
-                        handleInputChange('contractName', val);
-                      }
-                    }}
+                    onChange={e => handleInputChange('contractName', e.target.value)}
                     error={!!errors.contractName}
                     helperText={errors.contractName}
                     sx={{ mb: 3 }}
