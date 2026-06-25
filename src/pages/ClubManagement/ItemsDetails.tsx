@@ -303,12 +303,15 @@ export const ItemsDetails = () => {
                                     </span>
                                 </div>
                                 <p><b>Current Stock:</b> {itemData?.current_stock != null ? itemData.current_stock : "-"}</p>
-                                <p>
-  <b>Opening Stock:</b>{" "}
-  { itemData?.opening_stock != null
-    ? itemData.opening_stock
-    : "-"}
-</p>
+                                <p><b>Opening Qty:</b> {itemData?.opening_stock != null ? itemData.opening_stock : "-"}</p>
+                                <p><b>Rate:</b> {itemData?.opening_stock_rate != null ? itemData.opening_stock_rate : "-"}</p>
+                                <p><b>Value:</b> {
+                                    itemData?.opening_stock != null && itemData?.opening_stock_rate != null
+                                        ? (parseFloat(itemData.opening_stock) * parseFloat(itemData.opening_stock_rate)).toFixed(2)
+                                        : itemData?.opening_stock_value != null
+                                            ? itemData.opening_stock_value
+                                            : "-"
+                                }</p>
                             </div>
                         </div>
 
