@@ -168,6 +168,12 @@ export const AddAMCPage = () => {
     invoices: [] as File[]
   });
 
+  // Stores file metadata from a restored draft (name/type/size only — no File object)
+  const [draftAttachmentMeta, setDraftAttachmentMeta] = useState<{
+    contracts: { name: string; size: number; type: string }[];
+    invoices: { name: string; size: number; type: string }[];
+  }>({ contracts: [], invoices: [] });
+
   const initialTimeSetupState = {
     hourMode: 'specific',
     minuteMode: 'specific',
@@ -890,7 +896,11 @@ export const AddAMCPage = () => {
       completedSteps: updatedCompletedSteps,
       showPreviousSections: true,
       isPreviewMode: currentStep === totalSteps - 1 ? isPreviewMode : false,
-      savedAt: new Date().toISOString()
+      savedAt: new Date().toISOString(),
+      attachmentMeta: {
+        contracts: attachments.contracts.map(f => ({ name: f.name, size: f.size, type: f.type })),
+        invoices: attachments.invoices.map(f => ({ name: f.name, size: f.size, type: f.type }))
+      }
     };
 
     saveDraftToStorage(draftData);
@@ -924,6 +934,12 @@ export const AddAMCPage = () => {
     if (draft.timeSetupData) {
       setTimeSetupData(draft.timeSetupData);
     }
+    if (draft.attachmentMeta) {
+      setDraftAttachmentMeta({
+        contracts: draft.attachmentMeta.contracts || [],
+        invoices: draft.attachmentMeta.invoices || []
+      });
+    }
     setShowPreviousSections(!!draft.showPreviousSections);
     setIsPreviewMode(!!draft.isPreviewMode);
     setShowDraftModal(false);
@@ -943,6 +959,7 @@ export const AddAMCPage = () => {
     clearDraftFromStorage();
     setShowDraftModal(false);
     setHasSavedDraft(false);
+    setDraftAttachmentMeta({ contracts: [], invoices: [] });
     toast.info("Starting fresh! Previous draft has been cleared.", {
       position: 'top-right',
       duration: 3000,
@@ -4327,6 +4344,51 @@ export const AddAMCPage = () => {
                         })}
                       </div>
                     )}
+
+                    {/* Draft-restored contract attachments (metadata only — re-upload needed) */}
+                    {draftAttachmentMeta.contracts.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
+                        <div className="flex flex-wrap gap-3">
+                          {draftAttachmentMeta.contracts.map((meta, index) => {
+                            const isPdf = meta.type === 'application/pdf';
+                            const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
+                            return (
+                              <div
+                                key={`draft-contract-${index}`}
+                                className="flex relative flex-col items-center border border-dashed border-amber-400 rounded-md pt-6 px-2 pb-3 w-[130px] bg-amber-50 shadow-sm"
+                              >
+                                {isPdf ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                  </div>
+                                ) : (
+                                  <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-400 mb-1">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                )}
+                                <span className="text-[10px] text-center truncate max-w-[100px] mb-1 text-amber-700">{meta.name}</span>
+                                <span className="text-[9px] text-amber-500">re-upload needed</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
+                                  onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, contracts: prev.contracts.filter((_, i) => i !== index) }))}
+                                  disabled={isSubmitting}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -4406,6 +4468,51 @@ export const AddAMCPage = () => {
                             </div>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Draft-restored invoice attachments (metadata only — re-upload needed) */}
+                    {draftAttachmentMeta.invoices.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {draftAttachmentMeta.invoices.map((meta, index) => {
+                            const isPdf = meta.type === 'application/pdf';
+                            const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
+                            return (
+                              <div
+                                key={`draft-invoice-${index}`}
+                                className="flex relative flex-col items-center border border-dashed border-amber-400 rounded pt-6 p-3 w-[120px] bg-amber-50 shadow-sm"
+                              >
+                                {isPdf ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-400 bg-white mb-1">
+                                    <File className="w-4 h-4" />
+                                  </div>
+                                )}
+                                <span className="text-[10px] text-center truncate max-w-[90px] mb-1 text-amber-700">{meta.name}</span>
+                                <span className="text-[9px] text-amber-500">re-upload needed</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
+                                  onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, invoices: prev.invoices.filter((_, i) => i !== index) }))}
+                                  disabled={isSubmitting}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
