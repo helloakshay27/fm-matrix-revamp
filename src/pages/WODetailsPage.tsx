@@ -218,7 +218,7 @@ export const WODetailsPage = () => {
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
   const [adjustmentAmount, setAdjustmentAmount] = useState("");
-  const [postingDate, setPostingDate] = useState("");
+  const [postingDate, setPostingDate] = useState(new Date().toISOString().split('T')[0]);
   const [relatedTo, setRelatedTo] = useState("");
   const [notes, setNotes] = useState("");
   const [openDebitCreditModal, setOpenDebitCreditModal] = useState(false);
@@ -1011,6 +1011,16 @@ export const WODetailsPage = () => {
             data={invoices}
             columns={invoiceColumns}
             renderCell={(item, columnKey) => {
+              if (columnKey === "id") {
+                return (
+                  <span
+                    className="text-blue-600 cursor-pointer hover:underline"
+                    onClick={() => navigate(`/finance/invoices/${item.id}`)}
+                  >
+                    {item.id}
+                  </span>
+                );
+              }
               return item[columnKey] || "-";
             }}
             storageKey="invoice-table"
