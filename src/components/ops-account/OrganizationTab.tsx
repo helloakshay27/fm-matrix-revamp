@@ -198,6 +198,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       "dev@lockated.com",
       "atharv.karnekar@lockated.com",
       "sumitra.patil@lockated.com",
+      "testpulse1@panchshil.com"
     ];
     setCanEditOrganization(allowedEmails.includes(userEmail));
   };
