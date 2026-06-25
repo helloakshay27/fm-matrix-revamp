@@ -157,6 +157,7 @@ const ItemsEdit = () => {
         track_inventory: false,
         current_stock: "",
         opening_stock: "",
+        opening_stock_rate: "",
     });
     const [loading, setLoading] = useState(false);
     const [salesAccountGroups, setSalesAccountGroups] = React.useState([]);
@@ -283,6 +284,7 @@ const ItemsEdit = () => {
                     exemption_reason: data.tax_exemption_id?.toString() || "",
                     current_stock: data.current_stock != null ? String(data.current_stock) : "",
                     opening_stock: data.opening_stock != null ? String(data.opening_stock) : "",
+                    opening_stock_rate: data.opening_stock_rate != null ? String(data.opening_stock_rate) : "",
                 });
                 if (data.icon?.document_file_name && data.icon?.attachment_url) {
                     setPreview(data.icon.attachment_url);
@@ -507,7 +509,10 @@ const ItemsEdit = () => {
             "lock_account_item[track_inventory]",
             form.track_inventory.toString()
         );
-        formData.append("lock_account_item[opening_stock]", form.current_stock);
+        formData.append("lock_account_item[opening_stock]", form.opening_stock);
+        formData.append("lock_account_item[opening_stock_rate]", form.opening_stock_rate);
+        const openingValue = (parseFloat(form.opening_stock) || 0) * (parseFloat(form.opening_stock_rate) || 0);
+        formData.append("lock_account_item[opening_stock_value]", String(openingValue));
         if (form.sellable) {
             formData.append("lock_account_item[sale_description]", form.sales_description);
             formData.append("lock_account_item[sale_rate]", form.selling_price);
@@ -752,20 +757,41 @@ const ItemsEdit = () => {
 
                         <div className="mt-6 border rounded-lg p-4 bg-gray-50">
                             <h2 className="font-semibold mb-4">Inventory Details</h2>
-                            <div className="grid md:grid-cols-2 gap-4">
+                            <div className="grid md:grid-cols-3 gap-4">
                                 <TextField
                                     fullWidth
-                                    label="Current Stock"
-                                    value={form.current_stock !== "" ? form.current_stock : "-"}
-                                    disabled
+                                    label={<span>Opening Qty <span style={{ color: "red" }}>*</span></span>}
+                                    value={form.opening_stock}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9.]/g, "");
+                                        setForm((prev) => ({ ...prev, opening_stock: value }));
+                                    }}
                                     InputLabelProps={{ shrink: true }}
+                                    placeholder="Enter opening qty"
                                 />
                                 <TextField
                                     fullWidth
-                                    label="Opening Stock"
-                                    value={form.opening_stock !== "" ? form.opening_stock : "-"}
-                                    disabled
+                                    label={<span>Rate <span style={{ color: "red" }}>*</span></span>}
+                                    value={form.opening_stock_rate}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9.]/g, "");
+                                        setForm((prev) => ({ ...prev, opening_stock_rate: value }));
+                                    }}
                                     InputLabelProps={{ shrink: true }}
+                                    placeholder="Enter rate"
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Value"
+                                    value={
+                                        (parseFloat(form.opening_stock) || 0) * (parseFloat(form.opening_stock_rate) || 0)
+                                            ? ((parseFloat(form.opening_stock) || 0) * (parseFloat(form.opening_stock_rate) || 0)).toFixed(2)
+                                            : ""
+                                    }
+                                    InputLabelProps={{ shrink: true }}
+                                    InputProps={{ readOnly: true }}
+                                    placeholder="Auto calculated"
+                                    disabled
                                 />
                             </div>
                         </div>
