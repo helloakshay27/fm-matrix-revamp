@@ -845,16 +845,20 @@ const YearlyView: React.FC<{
                 {month.weeks.map((week, weekIndex) => (
                   <div key={weekIndex} className="grid grid-cols-7 gap-1">
                     {week.days.map((day, dayIndex) => {
+                      // Hide days that belong to previous/next months — keep grid slot empty
+                      if (!day.isCurrentMonth) {
+                        return <div key={dayIndex} className="min-h-[28px]" />;
+                      }
+
                       const hasEvents = day.events.length > 0;
                       const dayKey = day.date.format('YYYY-MM-DD');
-                      const isHovered = hoveredDay === dayKey;
 
                       return (
                         <div
                           key={dayIndex}
                           className={`
                             relative text-xs text-center py-1 cursor-pointer rounded min-h-[28px] flex items-center justify-center
-                            ${day.isCurrentMonth ? 'text-gray-800' : 'text-gray-400'}
+                            text-gray-800
                             ${day.isToday ? 'bg-blue-500 text-white font-bold ring-2 ring-blue-200' : ''}
                             ${hasEvents && !day.isToday ? 'bg-blue-100 text-blue-800 font-medium' : ''}
                             ${hasEvents ? 'hover:bg-blue-200 hover:shadow-md' : 'hover:bg-gray-100'}
@@ -865,7 +869,7 @@ const YearlyView: React.FC<{
                         >
                           {day.date.date()}
 
-                          {/* Enhanced Event Count Badge - Only show when there are events */}
+                          {/* Event Count Badge */}
                           {hasEvents && (
                             <div className="absolute -top-1 -right-1">
                               <div className={`

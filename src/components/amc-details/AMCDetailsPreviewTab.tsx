@@ -2,6 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, FileSpreadsheet, X } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_CONFIG } from "@/config/apiConfig";
@@ -222,6 +231,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
 }) => {
   const [showScheduleSection, setShowScheduleSection] = useState(false);
   const [activePreviewFreqTab, setActivePreviewFreqTab] = useState(0);
+  const [visitPage, setVisitPage] = useState(1);
   const frequencyGroups: Array<{
     frequency_config_id: number;
     frequency: string;
@@ -1128,47 +1138,107 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         {/* Step Content - Schedule */}
         {!showScheduleSection ? (
           <CardContent className="p-0" style={{ backgroundColor: 'rgb(246, 247, 247)' }}>
-            <div className="overflow-x-auto" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              <table className="min-w-full">
-                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
-                  <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 ? (
-                    amc.amc_visit_logs.map((visit: any, index: number) => (
-                      <tr key={visit.id || index} className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="border-b border-gray-100">
-                      <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
-                        No schedule visits found
-                      </td>
-                    </tr>
+            {(() => {
+              const visitLogs = Array.isArray(amc?.amc_visit_logs) ? amc.amc_visit_logs : [];
+              const VISIT_PER_PAGE = 15;
+              const visitTotalPages = Math.max(1, Math.ceil(visitLogs.length / VISIT_PER_PAGE));
+              const visitPageLogs = visitLogs.slice((visitPage - 1) * VISIT_PER_PAGE, visitPage * VISIT_PER_PAGE);
+
+              const renderVisitPaginationItems = () => {
+                const items: React.ReactNode[] = [];
+                const delta = 1;
+                const left = visitPage - delta;
+                const right = visitPage + delta;
+                let last = 0;
+                for (let i = 1; i <= visitTotalPages; i++) {
+                  if (i === 1 || i === visitTotalPages || (i >= left && i <= right)) {
+                    if (last && i - last > 1) {
+                      items.push(
+                        <PaginationItem key={`ellipsis-${i}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    items.push(
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          isActive={visitPage === i}
+                          onClick={() => setVisitPage(i)}
+                          className="cursor-pointer"
+                        >
+                          {i}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                    last = i;
+                  }
+                }
+                return items;
+              };
+
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
+                        <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visitLogs.length > 0 ? (
+                          visitPageLogs.map((visit: any, index: number) => (
+                            <tr key={visit.id || index} className="border-b border-gray-100">
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr className="border-b border-gray-100">
+                            <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
+                              No schedule visits found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {visitLogs.length > 0 && (
+                    <div className="flex justify-center mt-4 mb-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setVisitPage((p) => Math.max(1, p - 1))}
+                              className={visitPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                          {renderVisitPaginationItems()}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setVisitPage((p) => Math.min(visitTotalPages, p + 1))}
+                              className={visitPage === visitTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-            {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 && (
-              <div style={{ padding: '12px 16px', backgroundColor: '#F6F4EE', borderTop: '1px solid #D9D9D9', fontSize: '12px', color: '#666' }}>
-                Total {amc.amc_visit_logs.length} records. Scroll to view all.
-              </div>
-            )}
+                </>
+              );
+            })()}
           </CardContent>
         ) : (
           <CardContent className="p-0" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
