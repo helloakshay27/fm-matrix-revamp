@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Chip } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Chip, Switch } from '@mui/material';
+import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -38,7 +39,7 @@ export const EditAMCPage = () => {
     type: 'Individual',
     amcType: 'Comprehensive',
     assetName: '',
-    asset_ids: [] as string[],
+    asset_ids: [] as number[],
     vendor: '',
     group: '',
     subgroup: '',
@@ -48,13 +49,31 @@ export const EditAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
-    contractName: '', // Added new field
+    contractName: '',
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
+    assetsPerDay: '',
     remarks: '',
     technician: ''
   });
+
+  // Checklist state
+  const [createChecklist, setCreateChecklist] = useState(false);
+  const [checklistTemplates, setChecklistTemplates] = useState<Array<{ id: number; form_name: string }>>([]);
+  const [checklistTemplatesLoading, setChecklistTemplatesLoading] = useState(false);
+  const [checklistFields, setChecklistFields] = useState({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+  const [checklistErrors, setChecklistErrors] = useState({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+
+  // Supplier display label for SupplierSearchSelect
+  const [supplierDisplayLabel, setSupplierDisplayLabel] = useState('');
+
+  // Asset table filter / search state (matching AddAMCPage)
+  const [assetOptions, setAssetOptions] = useState<any[]>([]);
+  const [assetQuery, setAssetQuery] = useState('');
+  const [assetSearchLoading, setAssetSearchLoading] = useState(false);
+  const [indivGroupFilter, setIndivGroupFilter] = useState('');
+  const [indivSubGroupFilter, setIndivSubGroupFilter] = useState('');
 
   // Error state for validation
   const [errors, setErrors] = useState({
@@ -150,6 +169,50 @@ export const EditAMCPage = () => {
   useEffect(() => {
     fetchAsset();
   }, []);
+
+  // Seed asset options from loaded asset list
+  useEffect(() => {
+    if (Array.isArray(assetList) && assetList.length) {
+      setAssetOptions(assetList);
+    }
+  }, [assetList]);
+
+  // Clear back to initial options when search is below threshold
+  useEffect(() => {
+    if (assetQuery.length < 3) {
+      setAssetOptions(assetList || []);
+      setAssetSearchLoading(false);
+    }
+  }, [assetQuery, assetList]);
+
+  // Debounced remote search for assets after 3+ chars
+  useEffect(() => {
+    if (assetQuery.length < 3) return;
+    let active = true;
+    const handler = setTimeout(async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        setAssetSearchLoading(true);
+        const url = `https://${baseUrl}/pms/assets/get_assets.json?q[name_cont]=${encodeURIComponent(assetQuery)}`;
+        const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!active) return;
+        if (resp.ok) {
+          const data = await resp.json();
+          const arr = Array.isArray(data) ? data : (Array.isArray(data?.assets) ? data.assets : []);
+          setAssetOptions(arr);
+        } else {
+          setAssetOptions([]);
+        }
+      } catch (err) {
+        console.error('Asset search error', err);
+      } finally {
+        if (active) setAssetSearchLoading(false);
+      }
+    }, 350);
+    return () => { active = false; clearTimeout(handler); };
+  }, [assetQuery]);
 
   // Parse cron expression to time setup data
   const parseCronToTimeSetup = (cronExpression?: string | null) => {
@@ -256,10 +319,10 @@ export const EditAMCPage = () => {
           : data.coverage_type || data.amc_coverage_type || 'Comprehensive';
       const isGroupType = data.amc_details_type === 'group';
 
-      let assetIds: string[] = [];
+      let assetIds: number[] = [];
       if (Array.isArray(data.amc_assets)) {
         assetIds = data.amc_assets
-          .map((item: any) => item.asset_id?.toString())
+          .map((item: any) => Number(item.asset_id))
           .filter(Boolean);
       }
 
@@ -314,7 +377,7 @@ export const EditAMCPage = () => {
             ? data.resource_id
             : '',
         asset_ids: assetIds,
-        vendor: foundSupplier ? supplierId : '',
+        vendor: supplierId || '',
         group: data.group_id ? data.group_id.toString() : formData.group,
         subgroup: data.sub_group_id ? data.sub_group_id.toString() : formData.subgroup,
         service: foundService || serviceIdToUse
@@ -329,6 +392,7 @@ export const EditAMCPage = () => {
         paymentTerms: data.payment_term || '',
         firstService: data.amc_first_service || '',
         noOfVisits: data.no_of_visits?.toString() || '',
+        assetsPerDay: data.assets_per_day?.toString() || '',
         remarks: data.remarks || '',
         technician: technicianId
       });
@@ -584,6 +648,39 @@ export const EditAMCPage = () => {
     }
   };
 
+  // Supplier change handlers for SupplierSearchSelect
+  const handleSupplierIdChange = useCallback((supplierId: string) => {
+    setFormData(prev => ({ ...prev, vendor: supplierId }));
+    setErrors(prev => ({ ...prev, vendor: '' }));
+    if (!supplierId) setSupplierDisplayLabel('');
+  }, []);
+
+  const handleSupplierOptionChange = useCallback((option: { label: string } | null) => {
+    setSupplierDisplayLabel(option?.label ?? '');
+  }, []);
+
+  // Fetch checklist templates when toggle turns on
+  useEffect(() => {
+    if (!createChecklist) return;
+    setChecklistTemplatesLoading(true);
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) { setChecklistTemplatesLoading(false); return; }
+    fetch(`https://${baseUrl}/pms/custom_forms/get_templates.json`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const templates = Array.isArray(data) ? data
+          : Array.isArray(data?.templates) ? data.templates
+            : Array.isArray(data?.custom_forms) ? data.custom_forms
+              : [];
+        setChecklistTemplates(templates);
+      })
+      .catch(() => toast({ title: 'Error', description: 'Failed to fetch checklist templates.', variant: 'destructive' }))
+      .finally(() => setChecklistTemplatesLoading(false));
+  }, [createChecklist]);
+
   // Step validation functions
   const validateStep = (step: number) => {
     let isValid = true;
@@ -650,6 +747,9 @@ export const EditAMCPage = () => {
       if (!formData.cost) {
         newErrors.cost = 'Please enter the cost.';
         isValid = false;
+      } else if (Number(formData.cost) < 0) {
+        newErrors.cost = 'Cost cannot be negative.';
+        isValid = false;
       }
       if (!formData.contractName) {
         newErrors.contractName = 'Please enter the contract name.';
@@ -661,6 +761,9 @@ export const EditAMCPage = () => {
       }
       if (!formData.noOfVisits) {
         newErrors.noOfVisits = 'Please enter the number of visits.';
+        isValid = false;
+      } else if (Number(formData.noOfVisits) < 0) {
+        newErrors.noOfVisits = 'Number of visits cannot be negative.';
         isValid = false;
       } else if (!Number.isInteger(Number(formData.noOfVisits))) {
         newErrors.noOfVisits = 'Please enter a whole number.';
@@ -735,6 +838,9 @@ export const EditAMCPage = () => {
     if (!formData.cost) {
       newErrors.cost = 'Please enter the cost.';
       isValid = false;
+    } else if (Number(formData.cost) < 0) {
+      newErrors.cost = 'Cost cannot be negative.';
+      isValid = false;
     }
     if (!formData.contractName) {
       newErrors.contractName = 'Please enter the contract name.';
@@ -746,6 +852,9 @@ export const EditAMCPage = () => {
     }
     if (!formData.noOfVisits) {
       newErrors.noOfVisits = 'Please enter the number of visits.';
+      isValid = false;
+    } else if (Number(formData.noOfVisits) < 0) {
+      newErrors.noOfVisits = 'Number of visits cannot be negative.';
       isValid = false;
     } else if (!Number.isInteger(Number(formData.noOfVisits))) {
       newErrors.noOfVisits = 'Please enter a whole number.';
@@ -793,8 +902,17 @@ export const EditAMCPage = () => {
       sendData.append('pms_asset_amc[amc_frequency]', formData.paymentTerms);
       sendData.append('pms_asset_amc[amc_period]', `${formData.startDate} - ${formData.endDate}`);
       sendData.append('pms_asset_amc[no_of_visits]', parseInt(formData.noOfVisits).toString());
+      sendData.append('pms_asset_amc[assets_per_day]', formData.assetsPerDay || '');
       sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
       sendData.append('pms_asset_amc[remarks]', formData.remarks || '');
+
+      // Checklist fields
+      sendData.append('pms_asset_amc[create_checklist]', String(createChecklist));
+      if (createChecklist) {
+        sendData.append('pms_asset_amc[tmp_custom_form_id]', checklistFields.templateId);
+        sendData.append('pms_asset_amc[grace_time_type]', checklistFields.graceTimeType);
+        sendData.append('pms_asset_amc[grace_time_value]', checklistFields.graceTimeValue);
+      }
       sendData.append('pms_asset_amc[pms_site_id]', (amcData as any)?.pms_site_id || '');
       sendData.append('pms_asset_amc[type]', formData.type);
       sendData.append('pms_asset_amc[amc_type]', formData.amcType);
@@ -811,6 +929,9 @@ export const EditAMCPage = () => {
         sendData.append('pms_asset_amc[resource_type]', 'Pms::Asset');
         if (formData.type === 'Individual') {
           sendData.append('pms_asset_amc[resource_id]', formData.asset_ids.join(','));
+          formData.asset_ids.forEach(id => {
+            sendData.append('asset_ids[]', String(id));
+          });
         } else if (formData.type === 'Group') {
           sendData.append('group_id', formData.group || '');
           sendData.append('sub_group_id', formData.subgroup || '');
@@ -1441,10 +1562,11 @@ export const EditAMCPage = () => {
       if (!values.length) {
         return <span style={{ color: '#aaa' }}>Select Assets</span>;
       }
+      const allAssets = [...(assetList || []), ...(assetOptions || [])];
       return values
-        .map((id: string) => {
-          const asset = assetList.find(a => a.id?.toString() === id);
-          return asset?.name || id;
+        .map((id: number | string) => {
+          const asset = allAssets.find(a => Number(a.id) === Number(id));
+          return asset?.name || String(id);
         })
         .join(', ');
     };
@@ -1845,6 +1967,16 @@ export const EditAMCPage = () => {
 
           <TextField
             disabled
+            label="Assets Per Day"
+            placeholder="Enter Assets Per Day"
+            type="number"
+            fullWidth
+            value={formData.assetsPerDay}
+            sx={{ mb: 3 }}
+          />
+
+          <TextField
+            disabled
             label="Remarks"
             placeholder="Enter Remarks"
             fullWidth
@@ -2240,11 +2372,11 @@ export const EditAMCPage = () => {
                             onChange={e => handleInputChange('details', e.target.value)}
                             className="mr-2 w-4 h-4"
                             style={{ accentColor: '#C72030' }}
-                            disabled={true}
+                            disabled={updateLoading}
                           />
                           <span className="text-[#1a1a1a] font-medium">Asset</span>
                         </label>
-                        <label className="flex items-center">
+                        <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
                             name="details"
@@ -2253,11 +2385,9 @@ export const EditAMCPage = () => {
                             onChange={e => handleInputChange('details', e.target.value)}
                             className="mr-2 w-4 h-4"
                             style={{ accentColor: '#C72030' }}
-                            disabled={true}
+                            disabled={updateLoading}
                           />
-
                           <span className="text-[#1a1a1a] font-medium">Service</span>
-
                         </label>
                       </div>
                     </div>
@@ -2317,50 +2447,196 @@ export const EditAMCPage = () => {
                     {formData.type === 'Individual' ? (
                       <>
                         {formData.details === 'Asset' ? (
-                          <FormControl fullWidth variant="outlined" error={!!errors.asset_ids}>
-                            <InputLabel id="asset-select-label" shrink>
-                              Assets <span style={{ color: '#C72030' }}>*</span>
-                            </InputLabel>
-                            <MuiSelect
-                              labelId="asset-select-label"
-                              label="Assets"
-                              multiple
-                              displayEmpty
-                              value={formData.asset_ids}
-                              onChange={e => {
-                                const value = e.target.value as string[];
-                                setFormData(prev => ({
-                                  ...prev,
-                                  asset_ids: value
-                                }));
-                                setErrors(prev => ({ ...prev, asset_ids: '' }));
-                              }}
-                              sx={fieldStylesMUI}
-                              disabled={updateLoading}
-                              renderValue={(selected) => {
-                                if (selected.length === 0) {
-                                  return <em>Select Assets...</em>;
-                                }
-                                return selected.map(id => {
-                                  const asset = assetList.find(a => a.id.toString() === id);
-                                  return asset?.name;
-                                }).join(', ');
-                              }}
-                            >
-                              {Array.isArray(assetList) && assetList.map((asset) => (
-                                <MenuItem key={asset.id} value={asset.id.toString()}>
-                                  <input
-                                    type="checkbox"
-                                    checked={formData.asset_ids.includes(asset.id.toString())}
-                                    readOnly
-                                    style={{ marginRight: '8px', accentColor: '#C72030' }}
-                                  />
-                                  {asset.name}
-                                </MenuItem>
-                              ))}
-                            </MuiSelect>
-                            {errors.asset_ids && <FormHelperText>{errors.asset_ids}</FormHelperText>}
-                          </FormControl>
+                          <div>
+                            {/* Header row */}
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-sm font-medium text-[#444]">
+                                Assets <span style={{ color: '#C72030' }}>*</span>
+                              </label>
+                              {formData.asset_ids.length > 0 && (
+                                <span className="text-xs text-[#C72030] font-medium">{formData.asset_ids.length} selected</span>
+                              )}
+                            </div>
+
+                            {/* Group / SubGroup filters */}
+                            {(() => {
+                              const uniqueGroups = Array.from(new Set(assetOptions.map((a: any) => a.asset_group).filter(Boolean))) as string[];
+                              const uniqueSubGroups = Array.from(new Set(
+                                assetOptions
+                                  .filter((a: any) => !indivGroupFilter || a.asset_group === indivGroupFilter)
+                                  .map((a: any) => a.asset_sub_group)
+                                  .filter(Boolean)
+                              )) as string[];
+                              return (
+                                <div className="grid grid-cols-2 gap-3 mb-3">
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
+                                    <select
+                                      value={indivGroupFilter}
+                                      onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
+                                      disabled={updateLoading}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
+                                    >
+                                      <option value="">All Groups</option>
+                                      {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
+                                    <select
+                                      value={indivSubGroupFilter}
+                                      onChange={e => setIndivSubGroupFilter(e.target.value)}
+                                      disabled={updateLoading || !indivGroupFilter}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-400"
+                                    >
+                                      <option value="">All Sub Groups</option>
+                                      {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* Search */}
+                            <div className="relative mb-3">
+                              <input
+                                type="text"
+                                placeholder="Search assets by name (min 3 chars)..."
+                                value={assetQuery}
+                                onChange={e => setAssetQuery(e.target.value)}
+                                disabled={updateLoading}
+                                className="w-full px-3 py-2 pl-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
+                              />
+                              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                              </svg>
+                              {assetSearchLoading && (
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loading…</span>
+                              )}
+                            </div>
+
+                            {/* Table */}
+                            <div className={`border rounded overflow-auto max-h-64 ${errors.asset_ids ? 'border-red-400' : 'border-gray-200'}`}>
+                              <table className="w-full text-sm border-collapse min-w-[600px]">
+                                <thead className="bg-[#F6F4EE] sticky top-0 z-10">
+                                  <tr>
+                                    <th className="px-3 py-2 w-10">
+                                      <input
+                                        type="checkbox"
+                                        style={{ accentColor: '#C72030' }}
+                                        disabled={updateLoading || assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length === 0}
+                                        checked={assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length > 0 && assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).every((a: any) => formData.asset_ids.includes(Number(a.id)))}
+                                        onChange={e => {
+                                          const filteredIds = assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).map((a: any) => Number(a.id));
+                                          setFormData(prev => ({
+                                            ...prev,
+                                            asset_ids: e.target.checked
+                                              ? [...new Set([...prev.asset_ids, ...filteredIds])]
+                                              : prev.asset_ids.filter(id => !filteredIds.includes(id)),
+                                          }));
+                                          setErrors(prev => ({ ...prev, asset_ids: '' }));
+                                        }}
+                                      />
+                                    </th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Name</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Manufacturer</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Equipment ID</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Group</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Sub Group</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Building</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {(() => {
+                                    const displayAssets = assetOptions.filter((a: any) =>
+                                      (!indivGroupFilter || a.asset_group === indivGroupFilter) &&
+                                      (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)
+                                    );
+                                    if (displayAssets.length === 0) return (
+                                      <tr>
+                                        <td colSpan={7} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                          {assetSearchLoading
+                                            ? 'Searching…'
+                                            : assetQuery.length > 0 && assetQuery.length < 3
+                                              ? 'Type at least 3 characters to search'
+                                              : 'No assets found'}
+                                        </td>
+                                      </tr>
+                                    );
+                                    return displayAssets.map((asset: any) => {
+                                      const isChecked = formData.asset_ids.includes(Number(asset.id));
+                                      return (
+                                        <tr
+                                          key={asset.id}
+                                          className={`border-t border-gray-100 cursor-pointer transition-colors ${isChecked ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                                          onClick={() => {
+                                            if (updateLoading) return;
+                                            const id = Number(asset.id);
+                                            setFormData(prev => ({
+                                              ...prev,
+                                              asset_ids: isChecked
+                                                ? prev.asset_ids.filter(x => x !== id)
+                                                : [...prev.asset_ids, id],
+                                            }));
+                                            setErrors(prev => ({ ...prev, asset_ids: '' }));
+                                          }}
+                                        >
+                                          <td className="px-3 py-2 text-center">
+                                            <input
+                                              type="checkbox"
+                                              style={{ accentColor: '#C72030' }}
+                                              checked={isChecked}
+                                              onChange={() => { }}
+                                              disabled={updateLoading}
+                                            />
+                                          </td>
+                                          <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
+                                          <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
+                                          <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
+                                          <td className="px-3 py-2 text-gray-600">{asset.asset_group || '-'}</td>
+                                          <td className="px-3 py-2 text-gray-600">{asset.asset_sub_group || '-'}</td>
+                                          <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
+                                        </tr>
+                                      );
+                                    });
+                                  })()}
+                                </tbody>
+                              </table>
+                            </div>
+                            {errors.asset_ids && (
+                              <p className="text-xs text-red-600 mt-1">{errors.asset_ids}</p>
+                            )}
+
+                            {/* Selected Assets Panel */}
+                            {formData.asset_ids.length > 0 && (
+                              <div className="mt-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs font-semibold text-[#444]">Selected Assets ({formData.asset_ids.length})</span>
+                                </div>
+                                <div className="border border-gray-200 rounded overflow-hidden">
+                                  {formData.asset_ids.map((id, idx) => {
+                                    const allAssets = [...(assetList || []), ...(assetOptions || [])];
+                                    const asset = allAssets.find((a: any) => Number(a.id) === id);
+                                    return (
+                                      <div key={id} className="flex items-center gap-3 px-3 py-2 bg-white border-b border-gray-100 last:border-b-0">
+                                        <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[#C72030] text-white text-xs font-bold shrink-0">{idx + 1}</span>
+                                        <span className="flex-1 text-sm font-medium text-[#1a1a1a] truncate">{asset?.name || `Asset #${id}`}</span>
+                                        <button
+                                          type="button"
+                                          disabled={updateLoading}
+                                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
+                                          onClick={() => setFormData(prev => ({ ...prev, asset_ids: prev.asset_ids.filter(x => x !== id) }))}
+                                          title="Remove"
+                                        >
+                                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                        </button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <FormControl fullWidth variant="outlined" error={!!errors.service_ids}>
                             <InputLabel id="service-select-label" shrink>
@@ -2454,34 +2730,16 @@ export const EditAMCPage = () => {
                         )}
 
                         <div>
-                          <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
-                            <InputLabel id="vendor-select-label" shrink>
-                              Supplier <span style={{ color: '#C72030' }}>*</span>
-                            </InputLabel>
-                            <MuiSelect
-                              labelId="vendor-select-label"
-                              label="Supplier"
-                              displayEmpty
-                              value={formData.vendor}
-                              onChange={e => handleInputChange('vendor', e.target.value)}
-                              sx={fieldStyles}
-                              disabled={loading || suppliersLoading || updateLoading}
-                              renderValue={(selected) => {
-                                if (!selected) {
-                                  return <em>Select Supplier</em>;
-                                }
-                                const supplier = suppliers.find(s => s.id.toString() === selected);
-                                return supplier ? (supplier.company_name || supplier.name) : selected;
-                              }}
-                            >
-                              <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                              {Array.isArray(suppliers) && suppliers.map((supplier) => (
-                                <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                                  {supplier.company_name || supplier.name}
-                                </MenuItem>
-                              ))}
-                            </MuiSelect>
-                          </FormControl>
+                          <SupplierSearchSelect
+                            value={formData.vendor}
+                            onChange={handleSupplierIdChange}
+                            onOptionChange={handleSupplierOptionChange}
+                            disabled={loading || updateLoading}
+                            error={!!errors.vendor}
+                            helperText={errors.vendor}
+                            label={<>Supplier <span style={{ color: '#C72030' }}>*</span></>}
+                            required
+                          />
                         </div>
 
                         <div>
@@ -2750,17 +3008,27 @@ export const EditAMCPage = () => {
                           name="cost"
                           type="number"
                           value={formData.cost}
-                          onChange={e => handleInputChange('cost', e.target.value)}
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (val === '' || Number(val) >= 0) {
+                              handleInputChange('cost', val);
+                            }
+                          }}
+                          onKeyDown={e => {
+                            if (['e', 'E', '+', '-'].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
                           fullWidth
                           variant="outlined"
                           InputLabelProps={{ shrink: true }}
-                          InputProps={{ sx: fieldStyles }}
+                          InputProps={{ sx: fieldStyles, inputProps: { min: 0 } }}
                           error={!!errors.cost}
                           helperText={errors.cost}
                         />
                       </div>
 
-                      {/* Row 3: No. of Visits */}
+                      {/* Row 3: No. of Visits | Assets Per Day */}
                       <div>
                         <TextField
                           label={<span>No. of Visits<span style={{ color: '#C72030' }}>*</span></span>}
@@ -2792,6 +3060,21 @@ export const EditAMCPage = () => {
                           InputProps={{ sx: fieldStyles }}
                           error={!!errors.noOfVisits}
                           helperText={errors.noOfVisits}
+                        />
+                      </div>
+
+                      <div>
+                        <TextField
+                          label="Assets Per Day"
+                          placeholder="Enter Assets Per Day"
+                          name="assetsPerDay"
+                          type="number"
+                          value={formData.assetsPerDay}
+                          onChange={e => handleInputChange('assetsPerDay', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles, inputProps: { min: 0 } }}
                         />
                       </div>
 
@@ -2877,6 +3160,86 @@ export const EditAMCPage = () => {
                       hideTitle
                       showEditButton={false}
                     />
+                  </CardContent>
+                </Card>
+
+                {/* Create Checklist */}
+                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Switch
+                        checked={createChecklist}
+                        onChange={(e) => {
+                          setCreateChecklist(e.target.checked);
+                          if (!e.target.checked) {
+                            setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+                          }
+                        }}
+                        sx={{
+                          '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' },
+                        }}
+                      />
+                      <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
+                    </div>
+
+                    {createChecklist && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormControl fullWidth variant="outlined" error={!!checklistErrors.templateId}>
+                          <InputLabel shrink>Checklist Template *</InputLabel>
+                          <MuiSelect
+                            label="Checklist Template *"
+                            value={checklistFields.templateId}
+                            onChange={e => {
+                              setChecklistFields(prev => ({ ...prev, templateId: String(e.target.value) }));
+                              setChecklistErrors(prev => ({ ...prev, templateId: '' }));
+                            }}
+                            displayEmpty
+                            disabled={checklistTemplatesLoading}
+                          >
+                            <MenuItem value=""><em>{checklistTemplatesLoading ? 'Loading...' : 'Select Template'}</em></MenuItem>
+                            {checklistTemplates.map(t => (
+                              <MenuItem key={t.id} value={String(t.id)}>{t.form_name}</MenuItem>
+                            ))}
+                          </MuiSelect>
+                          {checklistErrors.templateId && <FormHelperText>{checklistErrors.templateId}</FormHelperText>}
+                        </FormControl>
+
+                        <FormControl fullWidth variant="outlined" error={!!checklistErrors.graceTimeType}>
+                          <InputLabel shrink>Grace Time Type *</InputLabel>
+                          <MuiSelect
+                            label="Grace Time Type *"
+                            value={checklistFields.graceTimeType}
+                            onChange={e => {
+                              setChecklistFields(prev => ({ ...prev, graceTimeType: String(e.target.value) }));
+                              setChecklistErrors(prev => ({ ...prev, graceTimeType: '' }));
+                            }}
+                            displayEmpty
+                          >
+                            <MenuItem value=""><em>Select Type</em></MenuItem>
+                            <MenuItem value="hour">Hours</MenuItem>
+                            <MenuItem value="day">Days</MenuItem>
+                          </MuiSelect>
+                          {checklistErrors.graceTimeType && <FormHelperText>{checklistErrors.graceTimeType}</FormHelperText>}
+                        </FormControl>
+
+                        <TextField
+                          label="Grace Time Value *"
+                          type="number"
+                          variant="outlined"
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                          value={checklistFields.graceTimeValue}
+                          onChange={e => {
+                            setChecklistFields(prev => ({ ...prev, graceTimeValue: e.target.value }));
+                            setChecklistErrors(prev => ({ ...prev, graceTimeValue: '' }));
+                          }}
+                          error={!!checklistErrors.graceTimeValue}
+                          helperText={checklistErrors.graceTimeValue}
+                          inputProps={{ min: 0 }}
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </>

@@ -1404,37 +1404,16 @@ export const AddFacilityBookingClubPage = () => {
                           <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_member_charge.toFixed(2)}</td>
                         </tr>
                       )}
-                      {facilityDetails.facility_charge.child_member_charge != null && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="border border-gray-300 px-4 py-3">2</td>
-                          <td className="border border-gray-300 px-4 py-3">Child Member</td>
-                          <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_member_charge.toFixed(2)}</td>
-                        </tr>
-                      )}
                       {facilityDetails.facility_charge.adult_guest_charge != null && (
                         <tr className="hover:bg-gray-50">
-                          <td className="border border-gray-300 px-4 py-3">3</td>
+                          <td className="border border-gray-300 px-4 py-3">2</td>
                           <td className="border border-gray-300 px-4 py-3">Adult Guest</td>
                           <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_guest_charge.toFixed(2)}</td>
                         </tr>
                       )}
-                      {facilityDetails.facility_charge.child_guest_charge != null && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="border border-gray-300 px-4 py-3">4</td>
-                          <td className="border border-gray-300 px-4 py-3">Child Guest</td>
-                          <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_guest_charge.toFixed(2)}</td>
-                        </tr>
-                      )}
-                      {facilityDetails.facility_charge.hotel_guest_charge != null && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="border border-gray-300 px-4 py-3">5</td>
-                          <td className="border border-gray-300 px-4 py-3">Hotel Guest</td>
-                          <td className="border border-gray-300 px-4 py-3">₹{Number(facilityDetails.facility_charge.hotel_guest_charge).toFixed(2)}</td>
-                        </tr>
-                      )}
                       {facilityDetails.facility_charge.full_court_charge != null && (
                         <tr className="hover:bg-gray-50">
-                          <td className="border border-gray-300 px-4 py-3">6</td>
+                          <td className="border border-gray-300 px-4 py-3">3</td>
                           <td className="border border-gray-300 px-4 py-3">Full Court</td>
                           <td className="border border-gray-300 px-4 py-3">₹{Number(facilityDetails.facility_charge.full_court_charge).toFixed(2)}</td>
                         </tr>
@@ -1667,7 +1646,7 @@ export const AddFacilityBookingClubPage = () => {
                                       <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
                                     </div>
                                     {/* Show member premium calculation per slot as a table */}
-                                    {hasSlots && (
+                                    {/* {hasSlots && (
                                       <div className="flex justify-start">
                                         <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
                                           <thead>
@@ -1694,7 +1673,7 @@ export const AddFacilityBookingClubPage = () => {
                                           </tbody>
                                         </table>
                                       </div>
-                                    )}
+                                    )} */}
                                   </div>
                                   <span className="font-medium">₹{totalUserCharge.toFixed(2)}</span>
                                 </div>
@@ -1714,7 +1693,6 @@ export const AddFacilityBookingClubPage = () => {
                                           const val = Math.max(0, parseInt(e.target.value) || 0);
                                           setNumberOfGuests(val > maxPeople ? maxPeople : val);
                                         }}
-                                        disabled={isFullCourt}
                                         variant="outlined"
                                         placeholder="No. of guests"
                                         sx={{
@@ -1742,7 +1720,6 @@ export const AddFacilityBookingClubPage = () => {
                                         checked={isFullCourt}
                                         onChange={(e) => {
                                           setIsFullCourt(e.target.checked);
-                                          if (e.target.checked) setNumberOfGuests(0);
                                         }}
                                         className="w-4 h-4"
                                       />
@@ -1750,7 +1727,7 @@ export const AddFacilityBookingClubPage = () => {
                                     </label>
                                   )}
                                   {/* Show guest premium calculation per slot as a table */}
-                                  {hasSlots && (
+                                  {/* {hasSlots && (
                                     <div className="flex justify-start">
                                       <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
                                         <thead>
@@ -1777,7 +1754,7 @@ export const AddFacilityBookingClubPage = () => {
                                         </tbody>
                                       </table>
                                     </div>
-                                  )}
+                                  )} */}
                                 </div>
                                 <span className="font-medium">₹{totalGuestCharge.toFixed(2)}</span>
                               </div>
