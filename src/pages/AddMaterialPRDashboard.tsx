@@ -869,6 +869,9 @@ export const AddMaterialPRDashboard = () => {
                   <MenuItem value="non-technical">
                     Non-Technical
                   </MenuItem>
+                  <MenuItem value="security">
+                    Security
+                  </MenuItem>
                 </MuiSelect>
               </FormControl>
 

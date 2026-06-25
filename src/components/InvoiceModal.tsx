@@ -222,7 +222,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         setInvoiceNumber("");
         setInvoiceDate("");
         setAdjustmentAmount("");
-        setPostingDate("");
+        setPostingDate(new Date().toISOString().split('T')[0]);
         setNotes("");
         setRelatedTo("");
         setBOQDetails([
@@ -631,7 +631,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                             <Select
                                                 value={boq.selectedBOQ}
                                                 onChange={(e) => {
-                                                    updateBOQDetail(boq.id, 'selectedBOQ', e.target.value);
+                                                    updateBOQDetail(boq.id, 'selectedBOQ', String(e.target.value));
                                                     setBoqErrors(prev => ({ ...prev, [boq.id]: { ...prev[boq.id], selectedBOQ: '' } }));
                                                 }}
                                                 label="BOQ *"
@@ -645,11 +645,17 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                                     },
                                                 }}
                                             >
-                                                {boqs.map((boq: any) => (
-                                                    <MenuItem key={boq.id} value={boq.id}>
-                                                        {boq.label}
-                                                    </MenuItem>
-                                                ))}
+                                                {boqs.map((boqOption: any) => {
+                                                    const usedElsewhere = boqDetails.some(
+                                                        d => d.id !== boq.id && String(d.selectedBOQ) === String(boqOption.id)
+                                                    );
+                                                    if (usedElsewhere) return null;
+                                                    return (
+                                                        <MenuItem key={boqOption.id} value={String(boqOption.id)}>
+                                                            {boqOption.label}
+                                                        </MenuItem>
+                                                    );
+                                                })}
                                             </Select>
                                             {boqErrors[boq.id]?.selectedBOQ && (
                                                 <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>

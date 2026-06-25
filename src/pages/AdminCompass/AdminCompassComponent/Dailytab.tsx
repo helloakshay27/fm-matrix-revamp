@@ -496,10 +496,62 @@ const isCompletedStatus = (status: string) =>
 
 const getCalendarDisplayStatus = (status: any) => {
   const normalizedStatus = String(status || "").toLowerCase();
+  if (normalizedStatus === "draft") {
+    return "submitted";
+  }
   if (["holiday", "non_meeting"].includes(normalizedStatus)) {
     return "holiday";
   }
   return normalizedStatus;
+};
+
+const getMemberId = (member: any) =>
+  member?.user_id ?? member?.id ?? member?.user?.id ?? null;
+
+const getMemberCalendar = (member: any) => {
+  const calendar = member?.daily_calendar || member?.daily_calender;
+  return Array.isArray(calendar) ? calendar : [];
+};
+
+const mergeCalendarWithFallback = (
+  memberCalendar: any[],
+  fallbackRow: any[] = []
+) => {
+  const fallbackByDate = new Map(
+    fallbackRow.map((item: any) => [item.full_date, item])
+  );
+
+  return memberCalendar.map((item: any) => {
+    const fallback = fallbackByDate.get(item.full_date) || {};
+    return {
+      ...fallback,
+      ...item,
+      is_meeting: item.is_meeting ?? fallback.is_meeting ?? true,
+    };
+  });
+};
+
+const getSelectedMemberCalendarRow = (
+  data: any,
+  memberId: string,
+  fallbackRow: any[] = []
+) => {
+  if (!data || memberId === "all") return [];
+
+  const targetId = String(memberId);
+  const pools = [
+    ...(data.member_reports || []),
+    ...(data.reports || []),
+    ...(data.missed_members || []),
+  ];
+  const member = pools.find(
+    (item: any) => String(getMemberId(item)) === targetId
+  );
+  const memberCalendar = getMemberCalendar(member);
+
+  if (!memberCalendar.length) return [];
+
+  return mergeCalendarWithFallback(memberCalendar, fallbackRow);
 };
 
 const getItemType = (item: any): string => {
@@ -1724,7 +1776,16 @@ const DailyTab = ({
 
   // ── Derived Data ──
   const dateRow = dailyData?.date_row || [];
-  const calendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
+  const baseCalendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
+  const selectedMemberCalendarRow = getSelectedMemberCalendarRow(
+    dailyData,
+    selectedMember,
+    baseCalendarRow
+  );
+  const calendarRow =
+    selectedMemberCalendarRow.length > 0
+      ? selectedMemberCalendarRow
+      : baseCalendarRow;
   const config = dailyData?.config;
   const topDateStr = dailyData?.date || activeDate;
   const isNextDateDisabled = activeDate >= getLocalDateKey();
@@ -2640,6 +2701,10 @@ const DailyTab = ({
 
                     const canExpand = !isPending || hasDraft;
                     const isSelected = selectedReports.includes(rId);
+                    const reportCalendar = getMemberCalendar(report);
+                    const reportCalendarRow = reportCalendar.length
+                      ? mergeCalendarWithFallback(reportCalendar, baseCalendarRow)
+                      : dateRow;
 
                     return (
                       <div
@@ -2768,37 +2833,41 @@ const DailyTab = ({
                               </div>
                             )}
 
-                            {canExpand && dateRow.length > 0 && (
+                            {canExpand && reportCalendarRow.length > 0 && (
                               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
                                 <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
                                   {configName}
                                 </span>
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  {dateRow.map((d: any, i: number) => {
-                                    const s = getCalendarDisplayStatus(d.status);
-                                    return (
-                                      <div
-                                        key={i}
-                                        className={cn(
-                                          "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                          s === "done" || s === "submitted"
-                                            ? "bg-[#10B981] text-white border-[#10B981]"
-                                            : s === "missed"
-                                              ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                              : s === "holiday"
-                                                ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
-                                                : "bg-gray-100 text-gray-400 border-gray-200"
-                                        )}
-                                      >
-                                        <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                          {d.day ? d.day.charAt(0) : ""}
-                                        </span>
-                                        <span className="leading-none">
-                                          {d.date ?? ""}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
+                                  {reportCalendarRow.map(
+                                    (d: any, i: number) => {
+                                      const s = getCalendarDisplayStatus(
+                                        d.status
+                                      );
+                                      return (
+                                        <div
+                                          key={i}
+                                          className={cn(
+                                            "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                            s === "done" || s === "submitted"
+                                              ? "bg-[#10B981] text-white border-[#10B981]"
+                                              : s === "missed"
+                                                ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                                : s === "holiday"
+                                                  ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
+                                                  : "bg-gray-100 text-gray-400 border-gray-200"
+                                          )}
+                                        >
+                                          <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                            {d.day ? d.day.charAt(0) : ""}
+                                          </span>
+                                          <span className="leading-none">
+                                            {d.date ?? ""}
+                                          </span>
+                                        </div>
+                                      );
+                                    }
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -3805,6 +3874,13 @@ const DailyTab = ({
                 resolveRawSource(member)
               );
               const missedTomorrowPlan = missedMemberData.tomorrow_plan;
+              const missedMemberCalendar = getMemberCalendar(member);
+              const missedMemberCalendarRow = missedMemberCalendar.length
+                ? mergeCalendarWithFallback(
+                    missedMemberCalendar,
+                    baseCalendarRow
+                  )
+                : dateRow;
 
               return (
                 <div
@@ -3888,41 +3964,43 @@ const DailyTab = ({
                         Click to view missed submission details
                       </p>
 
-                      {dateRow.length > 0 && (
+                      {missedMemberCalendarRow.length > 0 && (
                         <div className="flex items-center gap-2 mt-2">
                           <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
                             {configName}
                           </span>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            {dateRow.map((d: any, dateIndex: number) => {
-                              const s =
-                                d.full_date === activeDate
-                                  ? "missed"
-                                  : getCalendarDisplayStatus(d.status);
+                            {missedMemberCalendarRow.map(
+                              (d: any, dateIndex: number) => {
+                                const s =
+                                  d.full_date === activeDate
+                                    ? "missed"
+                                    : getCalendarDisplayStatus(d.status);
 
-                              return (
-                                <div
-                                  key={dateIndex}
-                                  className={cn(
-                                    "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                    s === "done" || s === "submitted"
-                                      ? "bg-[#10B981] text-white border-[#10B981]"
-                                      : s === "missed"
-                                        ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                        : s === "holiday"
-                                          ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
-                                          : "bg-gray-100 text-gray-400 border-gray-200"
-                                  )}
-                                >
-                                  <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                    {d.day ? d.day.charAt(0) : ""}
-                                  </span>
-                                  <span className="leading-none">
-                                    {d.date ?? ""}
-                                  </span>
-                                </div>
-                              );
-                            })}
+                                return (
+                                  <div
+                                    key={dateIndex}
+                                    className={cn(
+                                      "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                      s === "done" || s === "submitted"
+                                        ? "bg-[#10B981] text-white border-[#10B981]"
+                                        : s === "missed"
+                                          ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                          : s === "holiday"
+                                            ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
+                                            : "bg-gray-100 text-gray-400 border-gray-200"
+                                    )}
+                                  >
+                                    <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                      {d.day ? d.day.charAt(0) : ""}
+                                    </span>
+                                    <span className="leading-none">
+                                      {d.date ?? ""}
+                                    </span>
+                                  </div>
+                                );
+                              }
+                            )}
                           </div>
                         </div>
                       )}
