@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router-dom";
 import { ticketApi, type TicketFilters } from "@/api/tickets";
@@ -11,6 +11,7 @@ import Spinner from "@/components/common/Spinner";
 import ErrorState from "@/components/common/ErrorState";
 import NewTicketModal from "./NewTicketModal";
 import type { Category } from "@/types/schemas/ticket";
+import { captureHelpdeskEvent } from "@/utils/posthogHelpers";
 
 const statusDotColor: Record<string, string> = {
   open: "var(--forest)",
@@ -45,6 +46,12 @@ const TicketsPage = () => {
   const [showFilters, setShowFilters] = useState(() =>
     Object.values((location.state as any)?.filters ?? {}).some(Boolean)
   );
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // MA-1, UE-1: Helpdesk Viewed — ticket list screen
+  useEffect(() => {
+    captureHelpdeskEvent("Helpdesk Viewed", { screen: "ticket_list" });
+  }, []);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
@@ -88,7 +95,20 @@ const TicketsPage = () => {
   const topCategories = allCategories.filter((c: Category) => !c.parentId);
 
   const setFilter = useCallback((key: keyof typeof filters, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+    setFilters((prev) => {
+      const next = { ...prev, [key]: value || undefined };
+      if (value) {
+        // FA-4: Ticket Filter Applied
+        captureHelpdeskEvent("Ticket Filter Applied", {
+          screen: "ticket_list",
+          filters_used: Object.keys(next).filter(
+            (k) => next[k as keyof typeof next]
+          ),
+          filter_count: Object.values(next).filter(Boolean).length,
+        });
+      }
+      return next;
+    });
     setPage(1);
   }, []);
 
@@ -101,6 +121,18 @@ const TicketsPage = () => {
   const handleSearch = (val: string) => {
     setSearch(val);
     setPage(1);
+    // FA-4: Ticket Search Performed (debounced 600 ms so we don't flood on keystroke)
+    clearTimeout(searchDebounceRef.current);
+    if (val.trim()) {
+      searchDebounceRef.current = setTimeout(() => {
+        captureHelpdeskEvent("Ticket Search Performed", {
+          screen: "ticket_list",
+          query_length: val.length,
+          result_count: data?.meta.total ?? 0,
+          returned_zero: (data?.meta.total ?? 0) === 0,
+        });
+      }, 600);
+    }
   };
 
   return (
@@ -120,7 +152,17 @@ const TicketsPage = () => {
             </p>
           )}
         </div>
-        <button onClick={() => setShowNew(true)} className="btn-primary">
+        <button
+          onClick={() => {
+            setShowNew(true);
+            // WC-1: Ticket Create Form Opened
+            captureHelpdeskEvent("Ticket Create Form Opened", {
+              screen: "ticket_list",
+              entry_point: "add_button",
+            });
+          }}
+          className="btn-primary"
+        >
           + New Ticket
         </button>
       </div>
@@ -397,6 +439,13 @@ const TicketsPage = () => {
                         }
                         onMouseLeave={(e) =>
                           (e.currentTarget.style.color = "var(--text)")
+                        }
+                        onClick={() =>
+                          captureHelpdeskEvent("Ticket Detail Opened", {
+                            screen: "ticket_list",
+                            open_source: "list",
+                            ticket_id: ticket.id,
+                          })
                         }
                       >
                         {ticket.subject}

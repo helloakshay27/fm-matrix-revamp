@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import Modal from "@/components/common/Modal";
 import Spinner from "@/components/common/Spinner";
 import FileUploader from "@/components/common/FileUploader";
 import type { Category } from "@/types/schemas/ticket";
+import { captureHelpdeskEvent } from "@/utils/posthogHelpers";
 
 const schema = z.object({
   subject: z.string().min(1, "Subject is required").max(500),
@@ -37,6 +38,11 @@ const NewTicketModal = ({ onClose }: NewTicketModalProps) => {
   const [selectedParentId, setSelectedParentId] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
+
+  // Tracking refs — not state so they never cause re-renders
+  const formOpenedAtRef = useRef(Date.now());
+  const submittedRef = useRef(false);
+  const lastFieldFocusedRef = useRef("");
 
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts", "all"],
@@ -71,22 +77,70 @@ const NewTicketModal = ({ onClose }: NewTicketModalProps) => {
     register,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { priority: "medium", source_channel: "web" },
   });
 
+  const getFieldsCompletedCount = () =>
+    Object.values(getValues()).filter((v) => v !== undefined && v !== "").length;
+
   const mutation = useMutation({
     mutationFn: (d: FormData) =>
       ticketApi.create({ ...d, attachment_ids: attachmentIds }),
     onSuccess: () => {
+      submittedRef.current = true;
+      // WC-1: Ticket Create Form Submitted
+      captureHelpdeskEvent("Ticket Create Form Submitted", {
+        screen: "ticket_create",
+        time_on_form_sec: Math.round(
+          (Date.now() - formOpenedAtRef.current) / 1000
+        ),
+        fields_completed_count: getFieldsCompletedCount(),
+      });
       qc.invalidateQueries({ queryKey: ["tickets"] });
       addToast("Ticket created", "success");
       onClose();
     },
     onError: () => addToast("Failed to create ticket", "error"),
   });
+
+  // WC-1: fires when user cancels or clicks X without submitting
+  const handleClose = () => {
+    if (!submittedRef.current) {
+      captureHelpdeskEvent("Ticket Create Form Abandoned", {
+        screen: "ticket_create",
+        last_field_focused: lastFieldFocusedRef.current || undefined,
+        time_on_form_sec: Math.round(
+          (Date.now() - formOpenedAtRef.current) / 1000
+        ),
+        fields_completed_count: getFieldsCompletedCount(),
+      });
+    }
+    onClose();
+  };
+
+  // WC-3: Ticket Form Validation Failed
+  const onSubmitError = (errs: Record<string, unknown>) => {
+    captureHelpdeskEvent("Ticket Form Validation Failed", {
+      screen: "ticket_create",
+      failed_fields: Object.keys(errs),
+    });
+  };
+
+  // FA-5: Ticket Attachment Uploaded
+  const handleAttachmentsChange = (ids: string[]) => {
+    if (ids.length > attachmentIds.length) {
+      captureHelpdeskEvent("Ticket Attachment Uploaded", {
+        screen: "ticket_create",
+        context: "create",
+        file_count: ids.length,
+      });
+    }
+    setAttachmentIds(ids);
+  };
 
   const handleParentCategoryChange = (parentId: string) => {
     setSelectedParentId(parentId);
@@ -97,14 +151,18 @@ const NewTicketModal = ({ onClose }: NewTicketModalProps) => {
   };
 
   return (
-    <Modal title="New Ticket" onClose={onClose}>
+    <Modal title="New Ticket" onClose={handleClose}>
       <form
-        onSubmit={handleSubmit((d) => mutation.mutate(d))}
+        onSubmit={handleSubmit((d) => mutation.mutate(d), onSubmitError)}
         className="flex flex-col gap-4 px-6 py-5"
       >
         <div>
           <label className="form-label">Subject *</label>
-          <input {...register("subject")} className="form-input" />
+          <input
+            {...register("subject")}
+            className="form-input"
+            onFocus={() => { lastFieldFocusedRef.current = "subject"; }}
+          />
           {errors.subject && (
             <p className="mt-1 text-xs" style={{ color: "var(--crimson)" }}>
               {errors.subject.message}
@@ -234,16 +292,17 @@ const NewTicketModal = ({ onClose }: NewTicketModalProps) => {
             {...register("description")}
             rows={3}
             className="form-textarea"
+            onFocus={() => { lastFieldFocusedRef.current = "description"; }}
           />
         </div>
 
         <div>
           <label className="form-label">Attachments</label>
-          <FileUploader onAttachmentsChange={setAttachmentIds} />
+          <FileUploader onAttachmentsChange={handleAttachmentsChange} />
         </div>
 
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose} className="btn-ghost">
+          <button type="button" onClick={handleClose} className="btn-ghost">
             Cancel
           </button>
           <button
