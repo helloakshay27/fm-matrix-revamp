@@ -7805,7 +7805,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         }}
       >
         <DialogContent
-          className="fixed right-0 top-0 w-full rounded-none bg-[#fff] text-sm overflow-y-auto"
+          className="w-full sm:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
           style={{
             margin: 0,
             maxHeight: "100vh",
