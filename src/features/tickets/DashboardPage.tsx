@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   AreaChart,
@@ -17,6 +18,7 @@ import {
 import { dashboardApi, type RecentTicket } from "@/api/dashboard";
 import { useAuthStore } from "@/stores/authStore";
 import Spinner from "@/components/common/Spinner";
+import { captureHelpdeskEvent } from "@/utils/posthogHelpers";
 
 // ── Colours ────────────────────────────────────────────────────────────────
 const PRIORITY_COLORS: Record<string, string> = {
@@ -352,6 +354,11 @@ const PriorityDonut = ({
             paddingAngle={3}
             cursor="pointer"
             onClick={(d) => {
+              captureHelpdeskEvent("Analytics Chart Interacted", {
+                screen: "ticket_analytics",
+                chart_name: "priority_donut",
+                segment: d.key,
+              });
               const n = toTickets({
                 ...baseFilters,
                 priority: d.key as string,
@@ -413,6 +420,11 @@ const CategoryBar = ({
     if (!allCategories) return;
     const cat = allCategories.find((c) => c.name === entry.name!);
     if (cat) {
+      captureHelpdeskEvent("Analytics Chart Interacted", {
+        screen: "ticket_analytics",
+        chart_name: "category_bar",
+        segment: cat.name,
+      });
       const n = toTickets({ ...baseFilters, category_id: cat.id });
       navigate(n.to, { state: n.state });
     }
@@ -504,6 +516,11 @@ const DashboardPage = () => {
   const user = useAuthStore((s) => s.user);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const navigate = useNavigate();
+
+  // MA-1, UE-1: Helpdesk Viewed — analytics/dashboard screen
+  useEffect(() => {
+    captureHelpdeskEvent("Helpdesk Viewed", { screen: "ticket_analytics" });
+  }, []);
 
   const {
     data: dash,
@@ -722,6 +739,11 @@ const DashboardPage = () => {
                       paddingAngle={3}
                       cursor="pointer"
                       onClick={(d) => {
+                        captureHelpdeskEvent("Analytics Chart Interacted", {
+                          screen: "ticket_analytics",
+                          chart_name: "channel_pie",
+                          segment: d.key,
+                        });
                         const n = toTickets({
                           source_channel: d.key as string,
                         });

@@ -518,11 +518,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
 
-      // Identify user in PostHog
+      // Identify user in PostHog (spec: user_role, is_internal, company_id)
       posthog.identify(response.id?.toString(), {
         email: response.email,
         name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
         user_type: response.user_type,
+        user_role: response.user_type,
+        is_internal: response.email?.endsWith("@lockated.com") ?? false,
       });
 
       // Fetch and store lock_account_id
