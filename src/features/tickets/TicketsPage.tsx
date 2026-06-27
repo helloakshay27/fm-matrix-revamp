@@ -11,7 +11,7 @@ import Spinner from "@/components/common/Spinner";
 import ErrorState from "@/components/common/ErrorState";
 import NewTicketModal from "./NewTicketModal";
 import type { Category } from "@/types/schemas/ticket";
-import { captureHelpdeskEvent } from "@/utils/posthogHelpers";
+import { useTicketEvents } from "@/components/PostHogTicketCreate";
 
 const statusDotColor: Record<string, string> = {
   open: "var(--forest)",
@@ -37,6 +37,7 @@ const CHANNELS = ["email", "whatsapp", "voice", "web", "api"];
 
 const TicketsPage = () => {
   const location = useLocation();
+  const events = useTicketEvents();
   const [showNew, setShowNew] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -50,7 +51,7 @@ const TicketsPage = () => {
 
   // MA-1, UE-1: Helpdesk Viewed — ticket list screen
   useEffect(() => {
-    captureHelpdeskEvent("Helpdesk Viewed", { screen: "ticket_list" });
+    events.onHelpdeskViewed("ticket_list");
   }, []);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -98,14 +99,10 @@ const TicketsPage = () => {
     setFilters((prev) => {
       const next = { ...prev, [key]: value || undefined };
       if (value) {
-        // FA-4: Ticket Filter Applied
-        captureHelpdeskEvent("Ticket Filter Applied", {
-          screen: "ticket_list",
-          filters_used: Object.keys(next).filter(
-            (k) => next[k as keyof typeof next]
-          ),
-          filter_count: Object.values(next).filter(Boolean).length,
-        });
+        events.onFilterApplied(
+          Object.keys(next).filter((k) => next[k as keyof typeof next]),
+          Object.values(next).filter(Boolean).length
+        );
       }
       return next;
     });
@@ -121,16 +118,10 @@ const TicketsPage = () => {
   const handleSearch = (val: string) => {
     setSearch(val);
     setPage(1);
-    // FA-4: Ticket Search Performed (debounced 600 ms so we don't flood on keystroke)
     clearTimeout(searchDebounceRef.current);
     if (val.trim()) {
       searchDebounceRef.current = setTimeout(() => {
-        captureHelpdeskEvent("Ticket Search Performed", {
-          screen: "ticket_list",
-          query_length: val.length,
-          result_count: data?.meta.total ?? 0,
-          returned_zero: (data?.meta.total ?? 0) === 0,
-        });
+        events.onSearchPerformed(val.length, data?.meta.total ?? 0);
       }, 600);
     }
   };
@@ -155,11 +146,7 @@ const TicketsPage = () => {
         <button
           onClick={() => {
             setShowNew(true);
-            // WC-1: Ticket Create Form Opened
-            captureHelpdeskEvent("Ticket Create Form Opened", {
-              screen: "ticket_list",
-              entry_point: "add_button",
-            });
+            events.onTicketCreateFormOpened("add_button");
           }}
           className="btn-primary"
         >
@@ -441,11 +428,7 @@ const TicketsPage = () => {
                           (e.currentTarget.style.color = "var(--text)")
                         }
                         onClick={() =>
-                          captureHelpdeskEvent("Ticket Detail Opened", {
-                            screen: "ticket_list",
-                            open_source: "list",
-                            ticket_id: ticket.id,
-                          })
+                          events.onTicketDetailOpened(ticket.id, "list")
                         }
                       >
                         {ticket.subject}
