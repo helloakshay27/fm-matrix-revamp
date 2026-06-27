@@ -27,13 +27,13 @@ const HOUR_VALUES = Array.from({ length: 24 }, (_, idx) => idx);
 const MINUTE_VALUES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 const WEEKDAY_CODE_TO_NAME: Record<string, string> = {
-  "1": "Sunday",
-  "2": "Monday",
-  "3": "Tuesday",
-  "4": "Wednesday",
-  "5": "Thursday",
-  "6": "Friday",
-  "7": "Saturday",
+  "0": "Sunday",
+  "1": "Monday",
+  "2": "Tuesday",
+  "3": "Wednesday",
+  "4": "Thursday",
+  "5": "Friday",
+  "6": "Saturday",
 };
 
 type CronConfig = {
@@ -1172,7 +1172,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
           </CardContent>
         ) : (
           <CardContent className="p-0" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-            {frequencyGroups.length > 0 ? (
+            {frequencyGroups.some(g => g.frequency_config_id !== null) ? (
               /* Multi-frequency tabbed cron view */
               <div>
                 {/* Frequency tab buttons */}
@@ -1196,7 +1196,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 {/* Per-frequency content panels */}
                 {frequencyGroups.map((group, idx) => {
                   if (idx !== activePreviewFreqTab) return null;
-                  const freqCronConfig = parseCronExpression(group.cron_expression);
+                  const freqCronConfig = parseCronExpression(group.cron_expression || cronExpression);
                   return (
                     <div key={group.frequency_config_id}>
                       {/* Info row */}
