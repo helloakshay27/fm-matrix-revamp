@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePostHog } from '@posthog/react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -77,6 +78,7 @@ export const TicketListDashboard = () => {
   });
   const [isExporting, setIsExporting] = useState(false);
   const navigate = useNavigate();
+  const posthog = usePostHog();
 
   // Handle search with immediate API call (no debouncing) - like asset search
   const handleSearch = (term: string) => {
@@ -385,6 +387,9 @@ export const TicketListDashboard = () => {
   };
 
   const handleAddTicket = () => {
+    if (posthog) {
+      posthog.capture('Ticket Create Form Opened');
+    }
     navigate('/maintenance/tickets/add');
   };
 

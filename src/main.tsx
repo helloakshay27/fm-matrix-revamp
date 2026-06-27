@@ -28,6 +28,7 @@ if (
 const posthogOptions = {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
   defaults: "2026-01-30",
+  autocapture: false,
 } as const;
 
 createRoot(document.getElementById("root")!).render(
