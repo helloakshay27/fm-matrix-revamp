@@ -125,7 +125,7 @@ const CommunityEdit = () => {
       const fd = new FormData();
       fd.append("community[name]", formData.communityName);
       fd.append("community[description]", formData.description);
-      fd.append("community[category]", formData.category);
+      // fd.append("community[category]", formData.category);
       fd.append("community[community_type]", formData.communityCategory);
       if (formData.coverImage) {
         fd.append("community[attachment]", formData.coverImage);
@@ -213,7 +213,7 @@ const CommunityEdit = () => {
 
           <div className="p-6 bg-white">
             {/* Community Name + Pulse Category */}
-            <div className="mb-6 flex items-center justify-between gap-5">
+            <div className="mb-6 flex items-center gap-5">
               {/* Community Name */}
               <div className="w-[320px]">
                 <TextField
@@ -242,7 +242,7 @@ const CommunityEdit = () => {
               </div>
 
               {/* Pulse Category */}
-              <div className="flex items-center gap-1">
+              {/* <div className="flex items-center gap-1">
                 <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">
                   Pulse Category:
                 </span>
@@ -293,7 +293,7 @@ const CommunityEdit = () => {
                     label={<span className="text-[12px] text-gray-900">Pursuit</span>}
                   />
                 </RadioGroup>
-              </div>
+              </div> */}
 
               <div className="flex items-center gap-1">
                 <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">

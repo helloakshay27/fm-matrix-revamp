@@ -98,7 +98,7 @@ const CommunityAdd = () => {
             formDataToSend.append("community[name]", formData.communityName);
             formDataToSend.append("community[description]", formData.description);
             formDataToSend.append("community[status]", "true");
-            formDataToSend.append("community[category]", formData.category);
+            // formDataToSend.append("community[category]", formData.category);
             formDataToSend.append("community[community_type]", formData.communityCategory);
 
             if (formData.coverImage) {
@@ -143,7 +143,7 @@ const CommunityAdd = () => {
 
                     <div className="p-6 bg-white">
                         {/* Community Name + Pulse Category */}
-                        <div className="mb-6 flex items-center justify-between gap-5">
+                        <div className="mb-6 flex items-center gap-5">
                             {/* Community Name */}
                             <div className="w-[320px]">
                                 <TextField
@@ -172,7 +172,7 @@ const CommunityAdd = () => {
                             </div>
 
                             {/* Pulse Category */}
-                            <div className="flex items-center gap-1">
+                            {/* <div className="flex items-center gap-1">
                                 <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">
                                     Pulse Category:
                                 </span>
@@ -223,7 +223,7 @@ const CommunityAdd = () => {
                                         label={<span className="text-[12px] text-gray-900">Pursuit</span>}
                                     />
                                 </RadioGroup>
-                            </div>
+                            </div> */}
 
                             <div className="flex items-center gap-1">
                                 <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">
