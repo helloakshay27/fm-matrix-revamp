@@ -219,6 +219,7 @@ export const AMCDetailsPage = () => {
   const [occurrenceSearch, setOccurrenceSearch] = useState("");
   const [occurrencePage, setOccurrencePage] = useState(1);
   const [occurrenceTotalCount, setOccurrenceTotalCount] = useState(0);
+  const [occurrenceTotalPages, setOccurrenceTotalPages] = useState(1);
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
@@ -310,9 +311,10 @@ export const AMCDetailsPage = () => {
       const items = Array.isArray(data)
         ? data
         : data.occurrences ?? data.data ?? [];
-      const total = data.total_count ?? data.total ?? items.length;
+      const pagination = data.pagination ?? {};
       setOccurrences(items);
-      setOccurrenceTotalCount(total);
+      setOccurrenceTotalCount(pagination.total_count ?? items.length);
+      setOccurrenceTotalPages(pagination.total_pages ?? 1);
     } catch (e: any) {
       console.error("Occurrences Error:", e);
     } finally {
@@ -1273,7 +1275,7 @@ export const AMCDetailsPage = () => {
                       )
                   );
 
-                  const totalPages = Math.max(1, Math.ceil(occurrenceTotalCount / 15));
+                  const totalPages = occurrenceTotalPages;
 
                   return (
                     <div className="space-y-6">
