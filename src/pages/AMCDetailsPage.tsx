@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -210,6 +219,7 @@ export const AMCDetailsPage = () => {
   const [occurrenceSearch, setOccurrenceSearch] = useState("");
   const [occurrencePage, setOccurrencePage] = useState(1);
   const [occurrenceTotalCount, setOccurrenceTotalCount] = useState(0);
+  const [occurrenceTotalPages, setOccurrenceTotalPages] = useState(1);
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
@@ -220,12 +230,14 @@ export const AMCDetailsPage = () => {
   const [visitEditRemarks, setVisitEditRemarks] = useState("");
   const [visitEditStatus, setVisitEditStatus] = useState("");
   const [visitEditOriginalStatus, setVisitEditOriginalStatus] = useState("");
-  const [visitEditDocument, setVisitEditDocument] = useState<File | null>(null);
+  const [visitEditDocuments, setVisitEditDocuments] = useState<File[]>([]);
   const [visitEditSelectedAssetIds, setVisitEditSelectedAssetIds] = useState<number[]>([]);
   const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
   const [visitUpdateLoading, setVisitUpdateLoading] = useState(false);
   const [activeVisitFreqTab, setActiveVisitFreqTab] = useState(0);
+  const [visitFreqPage, setVisitFreqPage] = useState(1);
+  const [visitFlatPage, setVisitFlatPage] = useState(1);
 
   const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
 
@@ -292,16 +304,17 @@ export const AMCDetailsPage = () => {
     setOccurrencesLoading(true);
     try {
       const idsQs = assetIds.map((aid: number) => `ids[]=${aid}`).join("&");
-      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=20`;
+      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=15`;
       const res = await fetch(url, { headers: { Accept: "application/json" } });
       if (!res.ok) throw new Error(`Occurrences fetch failed: ${res.status}`);
       const data = await res.json();
       const items = Array.isArray(data)
         ? data
         : data.occurrences ?? data.data ?? [];
-      const total = data.total_count ?? data.total ?? items.length;
+      const pagination = data.pagination ?? {};
       setOccurrences(items);
-      setOccurrenceTotalCount(total);
+      setOccurrenceTotalCount(pagination.total_count ?? items.length);
+      setOccurrenceTotalPages(pagination.total_pages ?? 1);
     } catch (e: any) {
       console.error("Occurrences Error:", e);
     } finally {
@@ -355,7 +368,7 @@ export const AMCDetailsPage = () => {
     setVisitEditRemarks(visit.remarks || "");
     setVisitEditStatus((visit as any).status || "");
     setVisitEditOriginalStatus((visit as any).status || "");
-    setVisitEditDocument(null);
+    setVisitEditDocuments([]);
     const assetIds: number[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
     setVisitEditSelectedAssetIds(assetIds);
     fetchVisitTechnicians();
@@ -384,9 +397,9 @@ export const AMCDetailsPage = () => {
       visitEditSelectedAssetIds.forEach((assetId) =>
         formData.append("amc_history[asset_ids][]", String(assetId))
       );
-      if (visitEditDocument) {
-        formData.append("amc_history[document]", visitEditDocument);
-      }
+      visitEditDocuments.forEach((file) => {
+        formData.append("amc_history[documents][]", file);
+      });
       const res = await fetch(
         `https://${baseUrl}/pms/asset_amcs/amc_history_update.json?access_token=${token}`,
         { method: "POST", body: formData }
@@ -1262,7 +1275,7 @@ export const AMCDetailsPage = () => {
                       )
                   );
 
-                  const totalPages = Math.max(1, Math.ceil(occurrenceTotalCount / 20));
+                  const totalPages = occurrenceTotalPages;
 
                   return (
                     <div className="space-y-6">
@@ -1360,26 +1373,52 @@ export const AMCDetailsPage = () => {
 
                       {/* Pagination */}
                       {totalPages > 1 && (
-                        <div className="flex justify-end items-center gap-3 pt-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={occurrencePage <= 1 || occurrencesLoading}
-                            onClick={() => setOccurrencePage((p) => p - 1)}
-                          >
-                            Previous
-                          </Button>
-                          <span className="text-sm text-gray-600">
-                            Page {occurrencePage} of {totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={occurrencePage >= totalPages || occurrencesLoading}
-                            onClick={() => setOccurrencePage((p) => p + 1)}
-                          >
-                            Next
-                          </Button>
+                        <div className="flex justify-center mt-4">
+                          <Pagination>
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious
+                                  onClick={() => setOccurrencePage((p) => Math.max(1, p - 1))}
+                                  className={occurrencePage === 1 || occurrencesLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                              </PaginationItem>
+                              {(() => {
+                                const items: React.ReactNode[] = [];
+                                const delta = 1;
+                                let last = 0;
+                                for (let i = 1; i <= totalPages; i++) {
+                                  if (i === 1 || i === totalPages || (i >= occurrencePage - delta && i <= occurrencePage + delta)) {
+                                    if (last && i - last > 1) {
+                                      items.push(
+                                        <PaginationItem key={`e-${i}`}>
+                                          <PaginationEllipsis />
+                                        </PaginationItem>
+                                      );
+                                    }
+                                    items.push(
+                                      <PaginationItem key={i}>
+                                        <PaginationLink
+                                          isActive={occurrencePage === i}
+                                          onClick={() => setOccurrencePage(i)}
+                                          className="cursor-pointer"
+                                        >
+                                          {i}
+                                        </PaginationLink>
+                                      </PaginationItem>
+                                    );
+                                    last = i;
+                                  }
+                                }
+                                return items;
+                              })()}
+                              <PaginationItem>
+                                <PaginationNext
+                                  onClick={() => setOccurrencePage((p) => Math.min(totalPages, p + 1))}
+                                  className={occurrencePage === totalPages || occurrencesLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
                         </div>
                       )}
                     </div>
@@ -1558,7 +1597,7 @@ export const AMCDetailsPage = () => {
                         <button
                           key={group.frequency_config_id}
                           type="button"
-                          onClick={() => setActiveVisitFreqTab(idx)}
+                          onClick={() => { setActiveVisitFreqTab(idx); setVisitFreqPage(1); }}
                           className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activeVisitFreqTab
                             ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -1601,110 +1640,153 @@ export const AMCDetailsPage = () => {
                             {group.description && (
                               <span><span className="font-medium text-gray-800">Description:</span> {group.description}</span>
                             )}
-                            {/* <span><span className="font-medium text-gray-800">Schedule:</span> <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{group.cron_expression}</code></span> */}
                           </div>
                         )}
 
-                        {/* Visits Table */}
-                        <div className="bg-white rounded-lg border overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="bg-[#EDEAE3]">
-                                <TableHead className="w-10" />
-                                <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Date</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Time</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody className="bg-white">
-                              {group.visits.length === 0 ? (
-                                <TableRow>
-                                  <TableCell colSpan={10} className="text-center py-6 text-gray-500">
-                                    No visits found.
-                                  </TableCell>
-                                </TableRow>
-                              ) : (
-                                group.visits.map((visit) => {
-                                  const isSelected = selectedVisitId === visit.id;
-                                  return (
-                                    <TableRow
-                                      key={visit.id ?? visit.visit_number}
-                                      className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
-                                    >
-                                      <TableCell className="w-10">
-                                        {visit.id && (
-                                          <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            onChange={() => setSelectedVisitId(isSelected ? null : visit.id!)}
-                                            className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
-                                          />
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="font-medium text-gray-900">{visit.visit_number}</TableCell>
-                                      <TableCell className="text-gray-900">{visit.scheduled_date || "—"}</TableCell>
-                                      <TableCell className="text-gray-900">{visit.scheduled_time || "—"}</TableCell>
-                                      <TableCell className="text-gray-900">{visit.actual_visit_date || "—"}</TableCell>
-                                      <TableCell className="text-gray-900 text-center">
-                                        {Array.isArray(visit.assets_covered) && visit.assets_covered.length > 0 ? (
-                                          <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                            {visit.assets_covered.length}
-                                          </span>
-                                        ) : "—"}
-                                      </TableCell>
-                                      <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
-                                      <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
-                                      <TableCell>
-                                        {visit.status ? (
-                                          <span
-                                            className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${visit.status.toLowerCase() === "completed"
-                                              ? "bg-green-100 text-green-800"
-                                              : visit.status.toLowerCase() === "missed"
-                                                ? "bg-red-100 text-red-800"
-                                                : visit.status.toLowerCase() === "pending"
-                                                  ? "bg-amber-100 text-amber-800"
-                                                  : "bg-gray-100 text-gray-700"
-                                              }`}
-                                          >
-                                            {visit.status.toUpperCase()}
-                                          </span>
-                                        ) : (
-                                          <span className="text-gray-400 text-sm">—</span>
-                                        )}
-                                      </TableCell>
-                                      <TableCell>
-                                        {visit.attachment?.document || visit.attachment?.document_url ? (
-                                          <a
-                                            href={visit.attachment.document || visit.attachment.document_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
-                                          >
-                                            <FileText className="w-4 h-4" />
-                                            View
-                                          </a>
-                                        ) : (
-                                          <span className="text-gray-400 text-sm">—</span>
-                                        )}
-                                      </TableCell>
+                        {/* Visits Table with pagination */}
+                        {(() => {
+                          const VFPG = 15;
+                          const vfTotal = Math.max(1, Math.ceil(group.visits.length / VFPG));
+                          const vfPage = Math.min(visitFreqPage, vfTotal);
+                          const vfSlice = group.visits.slice((vfPage - 1) * VFPG, vfPage * VFPG);
+                          const renderVFPages = () => {
+                            const items: React.ReactNode[] = [];
+                            let last = 0;
+                            for (let i = 1; i <= vfTotal; i++) {
+                              if (i === 1 || i === vfTotal || (i >= vfPage - 1 && i <= vfPage + 1)) {
+                                if (last && i - last > 1) items.push(<PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>);
+                                items.push(
+                                  <PaginationItem key={i}>
+                                    <PaginationLink isActive={vfPage === i} onClick={() => setVisitFreqPage(i)} className="cursor-pointer">{i}</PaginationLink>
+                                  </PaginationItem>
+                                );
+                                last = i;
+                              }
+                            }
+                            return items;
+                          };
+                          return (
+                            <>
+                              <div className="bg-white rounded-lg border overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-[#EDEAE3]">
+                                      <TableHead className="w-10" />
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Date</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Time</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                                     </TableRow>
-                                  );
-                                })
+                                  </TableHeader>
+                                  <TableBody className="bg-white">
+                                    {group.visits.length === 0 ? (
+                                      <TableRow>
+                                        <TableCell colSpan={10} className="text-center py-6 text-gray-500">
+                                          No visits found.
+                                        </TableCell>
+                                      </TableRow>
+                                    ) : (
+                                      vfSlice.map((visit) => {
+                                        const isSelected = selectedVisitId === visit.id;
+                                        return (
+                                          <TableRow
+                                            key={visit.id ?? visit.visit_number}
+                                            className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                                          >
+                                            <TableCell className="w-10">
+                                              {visit.id && (
+                                                <input
+                                                  type="checkbox"
+                                                  checked={isSelected}
+                                                  onChange={() => setSelectedVisitId(isSelected ? null : visit.id!)}
+                                                  className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                                />
+                                              )}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-gray-900">{visit.visit_number}</TableCell>
+                                            <TableCell className="text-gray-900">{visit.scheduled_date || "—"}</TableCell>
+                                            <TableCell className="text-gray-900">{visit.scheduled_time || "—"}</TableCell>
+                                            <TableCell className="text-gray-900">{visit.actual_visit_date || "—"}</TableCell>
+                                            <TableCell className="text-gray-900 text-center">
+                                              {Array.isArray(visit.assets_covered) && visit.assets_covered.length > 0 ? (
+                                                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                  {visit.assets_covered.length}
+                                                </span>
+                                              ) : "—"}
+                                            </TableCell>
+                                            <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
+                                            <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
+                                            <TableCell>
+                                              {visit.status ? (
+                                                <span className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${visit.status.toLowerCase() === "completed" ? "bg-green-100 text-green-800" : visit.status.toLowerCase() === "missed" ? "bg-red-100 text-red-800" : visit.status.toLowerCase() === "pending" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-700"}`}>
+                                                  {visit.status.toUpperCase()}
+                                                </span>
+                                              ) : <span className="text-gray-400 text-sm">—</span>}
+                                            </TableCell>
+                                            <TableCell>
+                                              {visit.attachment?.document || visit.attachment?.document_url ? (
+                                                <a href={visit.attachment.document || visit.attachment.document_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
+                                                  <FileText className="w-4 h-4" />View
+                                                </a>
+                                              ) : <span className="text-gray-400 text-sm">—</span>}
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      })
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              {vfTotal > 1 && (
+                                <div className="flex justify-center mt-4">
+                                  <Pagination>
+                                    <PaginationContent>
+                                      <PaginationItem>
+                                        <PaginationPrevious onClick={() => setVisitFreqPage((p) => Math.max(1, p - 1))} className={vfPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                                      </PaginationItem>
+                                      {renderVFPages()}
+                                      <PaginationItem>
+                                        <PaginationNext onClick={() => setVisitFreqPage((p) => Math.min(vfTotal, p + 1))} className={vfPage === vfTotal ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                                      </PaginationItem>
+                                    </PaginationContent>
+                                  </Pagination>
+                                </div>
                               )}
-                            </TableBody>
-                          </Table>
-                        </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
                 ) : (
                   /* Fallback: flat visit table when no frequency groups */
+                  (() => {
+                    const VFLATPG = 15;
+                    const vflatTotal = Math.max(1, Math.ceil(amcVisitData.length / VFLATPG));
+                    const vflatSlice = amcVisitData.slice((visitFlatPage - 1) * VFLATPG, visitFlatPage * VFLATPG);
+                    const renderFlatPages = () => {
+                      const items: React.ReactNode[] = [];
+                      let last = 0;
+                      for (let i = 1; i <= vflatTotal; i++) {
+                        if (i === 1 || i === vflatTotal || (i >= visitFlatPage - 1 && i <= visitFlatPage + 1)) {
+                          if (last && i - last > 1) items.push(<PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>);
+                          items.push(
+                            <PaginationItem key={i}>
+                              <PaginationLink isActive={visitFlatPage === i} onClick={() => setVisitFlatPage(i)} className="cursor-pointer">{i}</PaginationLink>
+                            </PaginationItem>
+                          );
+                          last = i;
+                        }
+                      }
+                      return items;
+                    };
+                    return (
+                      <>
                   <div className="bg-white rounded-lg border overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1728,7 +1810,7 @@ export const AMCDetailsPage = () => {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          amcVisitData.map((visit) => {
+                          vflatSlice.map((visit) => {
                             const isSelected = selectedVisitId === visit.id;
                             return (
                               <TableRow
@@ -1811,6 +1893,24 @@ export const AMCDetailsPage = () => {
                       </TableBody>
                     </Table>
                   </div>
+                  {vflatTotal > 1 && (
+                    <div className="flex justify-center mt-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious onClick={() => setVisitFlatPage((p) => Math.max(1, p - 1))} className={visitFlatPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                          </PaginationItem>
+                          {renderFlatPages()}
+                          <PaginationItem>
+                            <PaginationNext onClick={() => setVisitFlatPage((p) => Math.min(vflatTotal, p + 1))} className={visitFlatPage === vflatTotal ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                      </>
+                    );
+                  })()
                 )}
               </CardContent>
             </Card>
@@ -1911,30 +2011,44 @@ export const AMCDetailsPage = () => {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Attachment</label>
+                      <label className="text-sm font-medium text-gray-700">Attachments</label>
                       <div
                         className="flex items-center gap-2 border border-dashed border-gray-300 rounded-md px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => document.getElementById("visit-doc-input")?.click()}
                       >
                         <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm text-gray-500 truncate flex-1">
-                          {visitEditDocument ? visitEditDocument.name : "Choose File"}
+                        <span className="text-sm text-gray-500 flex-1">
+                          {visitEditDocuments.length === 0 ? "Choose Files" : `${visitEditDocuments.length} file(s) selected`}
                         </span>
-                        {visitEditDocument && (
-                          <button
-                            className="text-xs text-red-500 hover:underline flex-shrink-0"
-                            onClick={(e) => { e.stopPropagation(); setVisitEditDocument(null); }}
-                          >
-                            Remove
-                          </button>
-                        )}
                         <input
                           id="visit-doc-input"
                           type="file"
+                          multiple
                           className="hidden"
-                          onChange={(e) => setVisitEditDocument(e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            const newFiles = Array.from(e.target.files || []);
+                            setVisitEditDocuments((prev) => [...prev, ...newFiles]);
+                            e.target.value = "";
+                          }}
                         />
                       </div>
+                      {visitEditDocuments.length > 0 && (
+                        <ul className="space-y-1 mt-1">
+                          {visitEditDocuments.map((file, i) => (
+                            <li key={i} className="flex items-center gap-2 text-sm text-gray-700 bg-white border border-gray-200 rounded px-3 py-1.5">
+                              <Paperclip className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                              <span className="truncate flex-1">{file.name}</span>
+                              <button
+                                type="button"
+                                className="text-xs text-red-500 hover:underline flex-shrink-0"
+                                onClick={() => setVisitEditDocuments((prev) => prev.filter((_, idx) => idx !== i))}
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
 
