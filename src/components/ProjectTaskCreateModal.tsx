@@ -31,6 +31,7 @@ import {
   fetchTargetDateTasks,
   fetchUserAvailability,
   resetUserAvailability,
+  createTaskDependency,
 } from "@/store/slices/projectTasksSlice";
 import {
   Checkbox,
@@ -1257,6 +1258,8 @@ const ProjectTaskCreateModal = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [dependentTaskId, setDependentTaskId] = useState("");
+  const [projectTasks, setProjectTasks] = useState<any[]>([]);
   const [startDate, setStartDate] = useState(() => {
     const startDate = prefillData?.start_date;
     if (!startDate) return null;
@@ -1387,6 +1390,27 @@ const ProjectTaskCreateModal = ({
     }
   };
 
+  const fetchProjectTasksForDependency = useCallback(async () => {
+    const milestoneId = mid || formData.milestone;
+    if (!milestoneId) {
+      setProjectTasks([]);
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/task_managements.json?q[milestone_id_eq]=${milestoneId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProjectTasks(response.data.task_managements || []);
+    } catch (error) {
+      console.log(error);
+    }
+  }, [baseUrl, token, mid, formData.milestone]);
+
+  useEffect(() => {
+    fetchProjectTasksForDependency();
+  }, [fetchProjectTasksForDependency, mid, formData.milestone]);
+
   useEffect(() => {
     getUsers();
     getTags();
@@ -1419,6 +1443,8 @@ const ProjectTaskCreateModal = ({
       setPrevTags([]);
       setPrevObservers([]);
       setAttachments([]);
+      setDependentTaskId("");
+      setProjectTasks([]);
     } else {
       setUsers([]);
       setMembers([]);
@@ -1769,6 +1795,27 @@ const ProjectTaskCreateModal = ({
       ).unwrap();
       const taskId = response?.id;
 
+      if (dependentTaskId && taskId) {
+        try {
+          await dispatch(
+            createTaskDependency({
+              token: token || '',
+              baseUrl: baseUrl || '',
+              data: {
+                task_dependency: {
+                  task_id: taskId,
+                  dependent_task_id: dependentTaskId,
+                  active: true,
+                  dependence_type: "Predecessor",
+                },
+              },
+            })
+          ).unwrap();
+        } catch (depError) {
+          console.log("Dependency creation failed:", depError);
+        }
+      }
+
       if (onSuccess && taskId) {
         onSuccess(taskId);
       }
@@ -1888,6 +1935,31 @@ const ProjectTaskCreateModal = ({
           onSave={handleSave}
           initialData={recurringData}
         />
+
+        <div className="mb-4">
+          <FormControl fullWidth variant="outlined">
+            <InputLabel shrink>Dependent Task (optional)</InputLabel>
+            <Select
+              label="Dependent Task (optional)"
+              name="dependentTaskId"
+              value={dependentTaskId}
+              onChange={(e) => setDependentTaskId(e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {projectTasks
+                .filter((t: any) => t.id !== (tid ? Number(tid) : undefined))
+                .map((task: any) => (
+                  <MenuItem key={task.id} value={task.id}>
+                    {task.title}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        </div>
 
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white text-[12px]">
           <button
