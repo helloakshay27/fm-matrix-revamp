@@ -8,6 +8,7 @@ import { store } from "./store/store.ts";
 import { BrowserRouter as Router } from "react-router-dom";
 import { PostHogProvider } from "@posthog/react";
 import { PostHogPageView } from "./components/PostHogPageView.tsx";
+import { PostHogTicketCreate } from "./components/PostHogTicketCreate.tsx";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
@@ -38,6 +39,7 @@ createRoot(document.getElementById("root")!).render(
     <Provider store={store}>
       <Router>
         <PostHogPageView />
+        <PostHogTicketCreate />
         <App />
       </Router>
     </Provider>
