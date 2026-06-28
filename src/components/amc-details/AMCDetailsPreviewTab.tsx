@@ -258,11 +258,13 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   const normalizedAmcType = (amc?.amc_type || "").toString().toLowerCase();
   const normalizedChecklistType = (amc?.checklist_type || "").toString().toLowerCase();
   const normalizedResourceType = (amc?.resource_type || "").toString().toLowerCase();
-  const normalizedCoverageType = normalizedAmcType === "non-comprehensive"
-    ? "Non-Comprehensive"
-    : normalizedAmcType === "comprehensive"
-      ? "Comprehensive"
-      : (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  const normalizedCoverageType = (() => {
+    const pmsType = (amc?.pms_amc_type || "").toString();
+    if (pmsType) return pmsType;
+    if (normalizedAmcType === "non-comprehensive") return "Non-Comprehensive";
+    if (normalizedAmcType === "comprehensive") return "Comprehensive";
+    return (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  })();
   const isAssetType =
     normalizedAmcType === "asset" ||
     normalizedChecklistType === "asset" ||

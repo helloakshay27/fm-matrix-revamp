@@ -220,6 +220,7 @@ export const AMCDetailsPage = () => {
   const [occurrencePage, setOccurrencePage] = useState(1);
   const [occurrenceTotalCount, setOccurrenceTotalCount] = useState(0);
   const [occurrenceTotalPages, setOccurrenceTotalPages] = useState(1);
+  const [occurrenceCounts, setOccurrenceCounts] = useState({ scheduled: 0, open: 0, in_progress: 0, closed: 0, overdue: 0 });
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
@@ -312,9 +313,17 @@ export const AMCDetailsPage = () => {
         ? data
         : data.occurrences ?? data.data ?? [];
       const pagination = data.pagination ?? {};
+      const counts = data.counts ?? {};
       setOccurrences(items);
       setOccurrenceTotalCount(pagination.total_count ?? items.length);
       setOccurrenceTotalPages(pagination.total_pages ?? 1);
+      setOccurrenceCounts({
+        scheduled: counts.total_scheduled ?? 0,
+        open: counts.total_open ?? 0,
+        in_progress: counts.in_progress ?? 0,
+        closed: counts.closed ?? 0,
+        overdue: counts.overdue ?? 0,
+      });
     } catch (e: any) {
       console.error("Occurrences Error:", e);
     } finally {
@@ -1259,11 +1268,11 @@ export const AMCDetailsPage = () => {
               >
                 {(() => {
                   const statusCards = [
-                    { label: "Scheduled", color: "#6366F1" },
-                    { label: "Open", color: "#EF4444" },
-                    { label: "In Progress", color: "#F59E0B" },
-                    { label: "Closed", color: "#10B981" },
-                    { label: "Overdue", color: "#C72030" },
+                    { label: "Scheduled", color: "#6366F1", count: occurrenceCounts.scheduled },
+                    { label: "Open", color: "#EF4444", count: occurrenceCounts.open },
+                    { label: "In Progress", color: "#F59E0B", count: occurrenceCounts.in_progress },
+                    { label: "Closed", color: "#10B981", count: occurrenceCounts.closed },
+                    { label: "Overdue", color: "#C72030", count: occurrenceCounts.overdue },
                   ];
 
                   const filtered = occurrences.filter(
@@ -1282,7 +1291,6 @@ export const AMCDetailsPage = () => {
                       {/* Status Cards */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                         {statusCards.map((card) => {
-                          const count = occurrences.filter((o) => o.task_status === card.label).length;
                           return (
                             <div
                               key={card.label}
@@ -1300,7 +1308,7 @@ export const AMCDetailsPage = () => {
                                 </div>
                                 <div>
                                   <div className="text-2xl font-bold text-black">
-                                    {count.toString().padStart(2, "0")}
+                                    {card.count.toString().padStart(2, "0")}
                                   </div>
                                   <div className="text-sm font-medium text-black">{card.label}</div>
                                 </div>
