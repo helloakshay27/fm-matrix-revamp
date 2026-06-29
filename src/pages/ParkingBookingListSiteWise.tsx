@@ -2344,7 +2344,7 @@ const ParkingBookingListSiteWise = () => {
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="parking"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#DA7756] data-[state=inactive]:bg-white data-[state=inactive]:text-[#2D2A26] border-none font-semibold"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -2353,7 +2353,7 @@ const ParkingBookingListSiteWise = () => {
               viewBox="0 0 24 24"
               fill="none"
               strokeWidth={2}
-              className="lucide lucide-car w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              className="lucide lucide-car w-4 h-4 stroke-[#2D2A26] group-data-[state=active]:stroke-[#DA7756]"
             >
               <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
               <circle cx="7" cy="17" r="2" />
@@ -2365,7 +2365,7 @@ const ParkingBookingListSiteWise = () => {
 
           <TabsTrigger
             value="analytics"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#DA7756] data-[state=inactive]:bg-white data-[state=inactive]:text-[#2D2A26] border-none font-semibold"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -2374,7 +2374,7 @@ const ParkingBookingListSiteWise = () => {
               viewBox="0 0 24 24"
               fill="none"
               strokeWidth={2}
-              className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              className="lucide lucide-chart-column w-4 h-4 stroke-[#2D2A26] group-data-[state=active]:stroke-[#DA7756]"
             >
               <path d="M3 3v16a2 2 0 0 0 2 2h16" />
               <path d="M18 17V9" />
@@ -2427,7 +2427,7 @@ const ParkingBookingListSiteWise = () => {
                       }
                     >
                       <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                        <IconComponent className="w-6 h-6 text-[#C72030]" />
+                        <IconComponent className="w-6 h-6 text-[#DA7756]" />
                       </div>
                       <div>
                         <div className="text-2xl font-semibold text-[#1A1A1A]">

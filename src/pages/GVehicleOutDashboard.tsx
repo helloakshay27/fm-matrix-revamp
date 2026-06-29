@@ -40,6 +40,8 @@ interface GVehicleOutDashboardProps {
 
 export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const actionButtonClassName =
+    'bg-[#DA7756] text-white border border-[#DA7756] hover:bg-[#c96546] px-6 py-2 rounded-lg font-medium shadow-none';
 
   const handleHistoryClick = () => {
     if (onHistoryClick) {
@@ -74,14 +76,12 @@ export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardPro
             <div className="flex gap-3">
               <Button 
                 onClick={handleHistoryClick}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+                className={actionButtonClassName}
               >
                 History
               </Button>
               <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+                className={actionButtonClassName}
               >
                 Vehicle Out
               </Button>
@@ -99,8 +99,7 @@ export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardPro
                 />
               </div>
               <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+                className={actionButtonClassName}
               >
                 Go!
               </Button>
@@ -138,7 +137,7 @@ export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardPro
                 {/* Out Button */}
                 <Button
                   onClick={() => handleOut(vehicle.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded"
+                  className={actionButtonClassName}
                 >
                   Out
                 </Button>

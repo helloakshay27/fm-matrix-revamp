@@ -260,31 +260,28 @@ export const RVehiclesDashboard = () => {
   });
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Vehicle Parkings</h1>
+    <div className="p-6 bg-[#F6F4EE] min-h-screen">
+      <h1 className="text-2xl font-bold text-[#2D2A26] mb-6">Vehicle Parkings</h1>
       
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
         <Button 
           onClick={() => setIsAddModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
+          className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 rounded-lg text-[#DA7756] hover:bg-[#fdf0ea] flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add
         </Button>
         <Button 
           onClick={() => setIsImportModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
+          className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 rounded-lg text-[#DA7756] hover:bg-[#fdf0ea] flex items-center gap-2"
         >
           <Download className="w-4 h-4" />
           Import
         </Button>
         <Button 
           onClick={() => setIsFilterModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
+          className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 rounded-lg text-[#DA7756] hover:bg-[#fdf0ea] flex items-center gap-2"
         >
           <SlidersHorizontal className="w-4 h-4" />
           Filters
@@ -292,15 +289,15 @@ export const RVehiclesDashboard = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-border bg-background rounded-t-lg">
+      <div className="flex border-b border-[#e4ddd4] bg-[#F6F4EE] rounded-t-lg overflow-hidden">
         {['History', 'All', 'In', 'Out'].map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
             className={`px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === tab
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                ? 'bg-[#DA7756] text-white'
+                : 'bg-[#F2EEE9] text-[#8a7e72] hover:bg-[#ece4db]'
             }`}
           >
             {tab}
@@ -319,23 +316,21 @@ export const RVehiclesDashboard = () => {
         storageKey="r-vehicles-table"
         emptyMessage="No vehicles available"
         exportFileName="r-vehicles"
-        searchPlaceholder="Search by vehicle number, parking slot, or staff name"
+        searchPlaceholder="Search by vehicle number"
         hideTableExport={false}
         hideColumnsButton={false}
         leftActions={
           <div className="flex gap-3">
             <Button 
               onClick={() => setIsAddModalOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2"
+              className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 text-[#DA7756] hover:bg-[#fdf0ea]"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add
             </Button>
             <Button 
               onClick={() => setIsImportModalOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2"
+              className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 text-[#DA7756] hover:bg-[#fdf0ea]"
             >
               <Download className="w-4 h-4 mr-2" />
               Import

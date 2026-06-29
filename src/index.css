@@ -2046,9 +2046,44 @@ a.fm-button-fix.fm-button-brand:hover,
   color: #ffffff !important;
 }
 
+button.fm-button-fix.fm-button-brand:disabled,
+a.fm-button-fix.fm-button-brand:disabled,
+[role="button"].fm-button-fix.fm-button-brand:disabled {
+  background-color: #e68b6b !important;
+  border-color: #e68b6b !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+}
+
+button.fm-button-fix.fm-button-brand-solid,
+a.fm-button-fix.fm-button-brand-solid,
+[role="button"].fm-button-fix.fm-button-brand-solid {
+  background-color: #da7756 !important;
+  border-color: #da7756 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+button.fm-button-fix.fm-button-brand-solid:disabled,
+a.fm-button-fix.fm-button-brand-solid:disabled,
+[role="button"].fm-button-fix.fm-button-brand-solid:disabled {
+  background-color: #da7756 !important;
+  border-color: #da7756 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+}
+
 button.fm-button-fix.fm-button-brand *,
 a.fm-button-fix.fm-button-brand *,
 [role="button"].fm-button-fix.fm-button-brand * {
+  color: #ffffff !important;
+}
+
+button.fm-button-fix.fm-button-brand-solid *,
+a.fm-button-fix.fm-button-brand-solid *,
+[role="button"].fm-button-fix.fm-button-brand-solid * {
   color: #ffffff !important;
 }
 
