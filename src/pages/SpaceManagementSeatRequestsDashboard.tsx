@@ -218,16 +218,29 @@ export const SpaceManagementSeatRequestsDashboard = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         {request.status === 'Pending' && <>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleStatusChange(request.id, 'Approved')}>
+                            <Button
+                              size="sm"
+                              className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#fffaf6] px-3 text-xs font-medium text-[#DA7756] hover:bg-[#fdf0ea]"
+                              onClick={() => handleStatusChange(request.id, 'Approved')}
+                            >
                               Approve
                             </Button>
-                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => handleStatusChange(request.id, 'Rejected')}>
+                            <Button
+                              size="sm"
+                              className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#DA7756] px-3 text-xs font-medium text-white hover:bg-[#c96546]"
+                              onClick={() => handleStatusChange(request.id, 'Rejected')}
+                            >
                               Reject
                             </Button>
                           </>}
-                        {request.status !== 'Pending' && <Button size="sm" variant="outline" className="border-gray-300 text-gray-700" onClick={() => handleStatusChange(request.id, 'Pending')}>
+                        {request.status !== 'Pending' && <Button
+                            size="sm"
+                            variant="outline"
+                            className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#fffaf6] px-3 text-xs font-medium text-[#DA7756] hover:bg-[#fdf0ea]"
+                            onClick={() => handleStatusChange(request.id, 'Pending')}
+                          >
                             Reset
                           </Button>}
                       </div>
