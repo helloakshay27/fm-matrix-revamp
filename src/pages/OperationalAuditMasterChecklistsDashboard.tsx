@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,11 +11,18 @@ import {
 import { Plus, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
 
 export const OperationalAuditMasterChecklistsDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Master Checklist Import clicked" | "Download Sample Format clicked" } | null>(null);
+  const auditEventKeyRef = useRef(0);
+  const captureAuditEvent = (event: "Master Checklist Import clicked" | "Download Sample Format clicked") => {
+    auditEventKeyRef.current += 1;
+    setAuditEvent({ key: auditEventKeyRef.current, event });
+  };
 
   const handleAddMasterChecklist = () => {
     navigate("/maintenance/audit/operational/master-checklists/add");
@@ -41,12 +48,14 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
   };
 
   const handleDownloadSampleFormat = () => {
+    captureAuditEvent("Download Sample Format clicked");
     console.log("Downloading sample format...");
     // Add download logic here
   };
 
   const handleImportQuestions = () => {
     if (selectedFile) {
+      captureAuditEvent("Master Checklist Import clicked");
       console.log("Importing questions from file:", selectedFile.name);
       // Add import logic here
     } else {
@@ -59,6 +68,10 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
 
   return (
     <div className="p-6">
+      <PostHogAuditActivity event="Audit Schedule List Viewed" properties={{ list_type: "master_checklist" }} />
+      {auditEvent && (
+        <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} />
+      )}
       <div className="mb-6">
         <div>
           <p className="text-[#1a1a1a] opacity-70 mb-2">

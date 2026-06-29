@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PostHogAuditActivity } from '@/components/PostHogAuditActivity';
 import { toast } from 'sonner';
 import {
   Box,
@@ -150,6 +151,12 @@ export const AddOperationalAuditSchedulePage = () => {
 
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Audit Wizard Step Viewed" | "Add Question clicked" | "Add Section clicked" | "Save to Draft clicked" | "Audit Schedule Defined"; properties?: Record<string, unknown> } | null>(null);
+  const auditEventKeyRef = useRef(0);
+  const captureAuditEvent = (event: "Audit Wizard Step Viewed" | "Add Question clicked" | "Add Section clicked" | "Save to Draft clicked" | "Audit Schedule Defined", properties?: Record<string, unknown>) => {
+    auditEventKeyRef.current += 1;
+    setAuditEvent({ key: auditEventKeyRef.current, event, properties });
+  };
   const [scheduleFor, setScheduleFor] = useState('Asset');
   const [activityName, setActivityName] = useState('');
   const [description, setDescription] = useState('');
@@ -239,6 +246,11 @@ export const AddOperationalAuditSchedulePage = () => {
   const [graceTimeValue, setGraceTimeValue] = useState('');
   const [submissionTime, setSubmissionTime] = useState('');
   const [submissionTimeValue, setSubmissionTimeValue] = useState('');
+
+  // Track wizard step views (fires on mount for step 0, then on every step change)
+  useEffect(() => {
+    captureAuditEvent("Audit Wizard Step Viewed", { step_index: activeStep });
+  }, [activeStep]);
 
   // Fetch initial data using exact same APIs as AddSchedulePage
   useEffect(() => {
@@ -1051,6 +1063,7 @@ export const AddOperationalAuditSchedulePage = () => {
       const data = await response.json();
       console.log('Response:', data);
 
+      captureAuditEvent("Audit Schedule Defined");
       toast.success('Operational audit schedule created successfully!', {
         position: 'top-right',
         duration: 4000,
@@ -1109,6 +1122,7 @@ export const AddOperationalAuditSchedulePage = () => {
       }]
     };
     setTaskSections([...taskSections, newSection]);
+    captureAuditEvent("Add Section clicked");
   };
 
   const removeTaskSection = (sectionId: string): void => {
@@ -1145,6 +1159,7 @@ export const AddOperationalAuditSchedulePage = () => {
           : section
       )
     );
+    captureAuditEvent("Add Question clicked");
   };
 
   const removeTaskFromSection = (sectionId: string, taskId: string): void => {
@@ -1597,6 +1612,9 @@ export const AddOperationalAuditSchedulePage = () => {
 
   return (
     <Box sx={{ backgroundColor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
+      {auditEvent && (
+        <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} properties={auditEvent.properties} />
+      )}
       <Box sx={{ maxWidth: '1400px', margin: '0 auto' }}>
         {/* Header */}
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -2858,6 +2876,7 @@ export const AddOperationalAuditSchedulePage = () => {
           <RedButton
             variant="contained"
             onClick={() => {
+              captureAuditEvent("Save to Draft clicked");
               toast.success('Draft saved');
               navigate(-1);
             }}

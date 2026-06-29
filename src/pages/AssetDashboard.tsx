@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { PostHogAssetActivity } from '@/components/PostHogAssetActivity';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchAssetsData, setFilters as setReduxFilters } from '@/store/slices/assetsSlice';
@@ -233,6 +234,17 @@ export const AssetDashboard = () => {
     'categoryWise',
     'groupWise',
   ]);
+  const [activeTab, setActiveTab] = useState('list');
+  const [assetEvent, setAssetEvent] = useState<{ key: number; event: "Asset Analytics Viewed" | "Asset Analytics Widget Configured" | "Asset Export Clicked" | "Asset Filter Applied" | "Asset Columns Changed"; properties?: Record<string, unknown> } | null>(null);
+  const assetEventKeyRef = useRef(0);
+
+  const captureAssetEvent = (
+    event: "Asset Analytics Viewed" | "Asset Analytics Widget Configured" | "Asset Export Clicked" | "Asset Filter Applied" | "Asset Columns Changed",
+    properties?: Record<string, unknown>
+  ) => {
+    assetEventKeyRef.current += 1;
+    setAssetEvent({ key: assetEventKeyRef.current, event, properties });
+  };
 
   // Use search hook
   const { assets: searchedAssets, loading: searchLoading, error: searchError, pagination: searchPagination, searchAssets } =
@@ -264,9 +276,11 @@ export const AssetDashboard = () => {
 
   const handleAnalyticsSelectionChange = (selectedTypes: string[]) => {
     setSelectedAnalyticsTypes(selectedTypes);
+    captureAssetEvent("Asset Analytics Widget Configured", { selected_types: selectedTypes, count: selectedTypes.length });
   };
 
   const handleAnalyticsDownload = async (type: string) => {
+    captureAssetEvent("Asset Export Clicked", { export_type: type });
     try {
       const fromDate = analyticsDateRange.fromDate;
       const toDate = analyticsDateRange.toDate;
@@ -720,6 +734,7 @@ export const AssetDashboard = () => {
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
     setVisibleColumns(columns);
+    captureAssetEvent("Asset Columns Changed");
   };
 
   const handleMoveAsset = () => {
@@ -790,8 +805,15 @@ export const AssetDashboard = () => {
 
   return (
     <>
+      <PostHogAssetActivity event="Asset List Viewed" />
+      {assetEvent && (
+        <PostHogAssetActivity key={assetEvent.key} event={assetEvent.event} properties={assetEvent.properties} />
+      )}
       <div className="p-4 sm:p-6">
-        <Tabs defaultValue="list" className="w-full">
+        <Tabs defaultValue="list" className="w-full" onValueChange={(tab) => {
+            setActiveTab(tab);
+            if (tab === 'analytics') captureAssetEvent("Asset Analytics Viewed");
+          }}>
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
             <TabsTrigger
               value="list"
@@ -1066,7 +1088,12 @@ export const AssetDashboard = () => {
 
         <AssetFilterDialog
           isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
+          onClose={() => {
+            setIsFilterOpen(false);
+            if (Object.keys(filters || {}).length > 0) {
+              captureAssetEvent("Asset Filter Applied", { filter_count: Object.keys(filters || {}).length });
+            }
+          }}
         />
 
         <AssetAnalyticsFilterDialog
