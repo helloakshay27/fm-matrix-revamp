@@ -213,15 +213,17 @@ export const InvoicesDashboard = () => {
   });
   const [invoicesData, setInvoicesData] = useState([]);
 
-  const fetchData = async (page: number = 1) => {
+  const fetchData = async (page: number = 1, filters = appliedFilters, search = searchTerm) => {
     try {
-      const response = await dispatch(getInvoinces({ baseUrl, token, page })).unwrap();
-      // setInvoicesData(response.work_order_invoices);
-      // setPagination({
-      //   current_page: response.pagination.current_page,
-      //   total_count: response.pagination.total_count,
-      //   total_pages: response.pagination.total_pages
-      // })
+      const response = await dispatch(getInvoinces({
+        baseUrl,
+        token,
+        page,
+        search,
+        invoice_number: filters.invoiceNumber,
+        invoice_date: filters.invoiceDate,
+        supplier_name: filters.supplierName,
+      })).unwrap();
       setInvoicesData(response.work_order_invoices);
       setPagination((prev) => ({
         ...prev,
@@ -252,6 +254,7 @@ export const InvoicesDashboard = () => {
 
   const handleFilterApply = (filters: typeof appliedFilters) => {
     setAppliedFilters(filters);
+    fetchData(1, filters, searchTerm);
     toast.success('Filters applied successfully');
   };
 
@@ -310,6 +313,7 @@ export const InvoicesDashboard = () => {
       return;
     }
     setPagination((prev) => ({ ...prev, current_page: page }));
+    fetchData(page, appliedFilters, searchTerm);
   };
 
   const renderPaginationItems = () => {
