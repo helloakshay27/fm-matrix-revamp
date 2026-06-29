@@ -4,9 +4,18 @@ import createApiSlice from "../api/apiSlice";
 
 export const getInvoinces = createAsyncThunk(
     "getInvoinces",
-    async ({ baseUrl, token, page }: { baseUrl: string, token: string, page?: number }, { rejectWithValue }) => {
+    async ({ baseUrl, token, page, search, invoice_number, invoice_date, supplier_name }: {
+        baseUrl: string, token: string, page?: number,
+        search?: string, invoice_number?: string, invoice_date?: string, supplier_name?: string
+    }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/work_order_invoices.json?page=${page}`, {
+            const queryParams = new URLSearchParams();
+            if (invoice_number) queryParams.append("q[invoice_number_cont]", invoice_number);
+            if (invoice_date) queryParams.append("q[invoice_date_eq]", invoice_date);
+            if (supplier_name) queryParams.append("q[pms_supplier_company_name_cont]", supplier_name);
+            const searchStr = search || "";
+            const url = `https://${baseUrl}/pms/work_order_invoices.json?page=${page}&q[invoice_number_or_pms_supplier_company_name_cont]=${searchStr}${queryParams.toString() ? `&${queryParams}` : ""}`;
+            const response = await axios.get(url, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }

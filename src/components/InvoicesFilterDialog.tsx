@@ -49,12 +49,10 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
   };
 
   const handleReset = () => {
-    setFilters({
-      invoiceNumber: '',
-      supplierName: '',
-      status: '',
-      dateRange: ''
-    });
+    const empty = { invoiceNumber: '', supplierName: '', status: '', dateRange: '' };
+    setFilters(empty);
+    onApply({ invoiceNumber: '', invoiceDate: '', supplierName: '' });
+    onOpenChange(false);
   };
 
   return (

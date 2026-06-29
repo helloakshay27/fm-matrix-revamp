@@ -34,12 +34,10 @@ export const InvoicesSESFilterDialog: React.FC<InvoicesSESFilterDialogProps> = (
   };
 
   const handleReset = () => {
-    console.log('Resetting filters...');
-    setFilters({
-      invoiceNumber: '',
-      invoiceDate: '',
-      supplierName: ''
-    });
+    const empty = { invoiceNumber: '', invoiceDate: '', supplierName: '' };
+    setFilters(empty);
+    onApply(empty);
+    onOpenChange(false);
   };
 
   const handleClose = () => {
