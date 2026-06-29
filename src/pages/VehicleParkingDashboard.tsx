@@ -10,15 +10,15 @@ const mockVehicleData = [
     id: 1,
     vehicleNumber: 'MH-12-AB-1234',
     parkingSlot: 'A-101',
-    <div className="p-6 bg-[#F6F4EE] min-h-screen">
+    vehicleCategory: '4 Wheeler',
     vehicleType: 'Sedan',
-        <div className="flex items-center gap-2 text-sm text-[#8a7e72] mb-4">
+    stickerNumber: 'ST001',
     category: 'Staff',
     registrationNumber: 'MH12AB1234',
     activeInactive: true,
     insuranceNumber: 'INS001',
     insuranceValidTill: '2025-12-31',
-        <Heading level="h1" variant="default" className="uppercase mb-6 text-[#2D2A26]">
+    staffName: 'John Doe',
     status: 'Active',
     qrCode: 'QR001'
   },
@@ -26,21 +26,22 @@ const mockVehicleData = [
     id: 2,
     vehicleNumber: 'MH-12-CD-5678',
     parkingSlot: 'B-202',
-            className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 rounded-lg text-[#DA7756] hover:bg-[#fdf0ea] flex items-center gap-2"
+    vehicleCategory: '2 Wheeler',
+    vehicleType: 'Motorcycle',
     stickerNumber: 'ST002',
     category: 'Visitor',
     registrationNumber: 'MH12CD5678',
     activeInactive: false,
     insuranceNumber: 'INS002',
     insuranceValidTill: '2025-06-30',
-            className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] text-[#DA7756] px-4 py-2 rounded-lg hover:bg-[#fdf0ea] flex items-center gap-2"
+    staffName: 'Jane Smith',
     status: 'Inactive',
     qrCode: 'QR002'
   }
 ];
 
 export const VehicleParkingDashboard = () => {
-            className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] text-[#DA7756] px-4 py-2 rounded-lg hover:bg-[#fdf0ea] flex items-center gap-2"
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [vehicleData, setVehicleData] = useState(mockVehicleData);
 
   const handleStatusToggle = (vehicleId: number) => {
@@ -48,66 +49,66 @@ export const VehicleParkingDashboard = () => {
     
     setVehicleData(prev => 
       prev.map(vehicle => 
-        <div className="flex gap-2 mb-6 bg-[#F6F4EE] border border-[#e4ddd4] rounded-lg p-1">
-          <Button className="bg-[#DA7756] hover:bg-[#c9674a] text-white px-4 py-2 rounded-md shadow-none">
+        vehicle.id === vehicleId 
+          ? { ...vehicle, status: vehicle.status === 'Active' ? 'Inactive' : 'Active' }
           : vehicle
       )
-          <Button className="bg-[#DA7756] hover:bg-[#c9674a] text-white px-4 py-2 rounded-md shadow-none">
+    );
   };
 
-          <Button className="bg-[#fffaf6] border border-[#DA7756] text-[#DA7756] px-4 py-2 rounded-md hover:bg-[#fdf0ea] shadow-none">
+  return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
-          <Button className="bg-[#fffaf6] border border-[#DA7756] text-[#DA7756] px-4 py-2 rounded-md hover:bg-[#fdf0ea] shadow-none">
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>vehicle parkings</span>
           <span>&gt;</span>
           <span>Vehicle Parkings</span>
         </div>
         
-        <div className="bg-white rounded-lg border border-[#e4ddd4] overflow-hidden" style={{ boxShadow: 'none' }}>
+        <Heading level="h1" variant="default" className="uppercase mb-6">
           VEHICLE PARKINGS
         </Heading>
-              <thead className="bg-[#f6f4ee]">
+        
         {/* Action Buttons */}
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Actions</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Vehicle Number</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Parking Slot</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Vehicle Category</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Vehicle Type</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Sticker Number</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Category</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Registration Number</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Active/Inactive</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Insurance Number</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Insurance Valid Till</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Staff Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f] border-r border-[#e4ddd4]">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#4a453f]">Qr Code</th>
+        <div className="flex gap-3 mb-6">
+          <Button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add
           </Button>
           <Button 
             variant="outline" 
             className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2"
           >
-                    <td colSpan={14} className="px-4 py-8 text-center text-[#8a7e72]">
+            <Download className="w-4 h-4" />
+            Import
+          </Button>
+          <Button 
+            variant="outline" 
+            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
             Filters
           </Button>
         </div>
 
         {/* Tab Navigation */}
-                    <tr key={vehicle.id} className="hover:bg-[#fdfaf5]">
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">
-                        <button className="text-[#b3a79b] hover:text-[#DA7756]">
+        <div className="flex gap-2 mb-6">
+          <Button className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded">
+            History
           </Button>
           <Button className="bg-[#C72030] hover:bg-[#B01E2A] text-white px-4 py-2 rounded">
             All
-                      <td className="px-4 py-3 border-r border-[#e4ddd4] text-[#1e40af]">{vehicle.vehicleNumber}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.parkingSlot}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.vehicleCategory}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.vehicleType}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.stickerNumber}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.category}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.registrationNumber}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">
+          </Button>
+          <Button className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded">
+            In
+          </Button>
+          <Button className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded">
+            Out
+          </Button>
+        </div>
 
         {/* Table */}
         <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
@@ -115,10 +116,10 @@ export const VehicleParkingDashboard = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.insuranceNumber}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.insuranceValidTill}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">{vehicle.staffName}</td>
-                      <td className="px-4 py-3 border-r border-[#e4ddd4]">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Vehicle Number</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Parking Slot</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Vehicle Category</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Vehicle Type</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Sticker Number</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Category</th>
