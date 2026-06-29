@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -322,6 +323,7 @@ export const ViewSchedulePage = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
+      <PostHogScheduleActivity event="Schedule Detail Viewed" />
       {/* Header */}
       <div className="mb-6">
         <button

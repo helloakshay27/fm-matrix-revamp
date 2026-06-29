@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { PostHogTaskActivity } from "@/components/PostHogTaskActivity";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,19 @@ export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const taskEventKeyRef = useRef(0);
+  const [taskEvent, setTaskEvent] = useState<{
+    key: number;
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  const captureTaskEvent = (
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
+    properties?: Record<string, unknown>
+  ) => {
+    setTaskEvent({ key: ++taskEventKeyRef.current, event, properties });
+  };
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -520,6 +534,8 @@ export const TaskDetailsPage = () => {
 
       sonnerToast.dismiss(loadingToastId);
       sonnerToast.success("Task rescheduled successfully!");
+
+      captureTaskEvent('Task Rescheduled (UI)', { task_id: id });
 
       // Refresh task details after successful reschedule
       const updatedDetails = await taskService.getTaskDetails(id!);
@@ -1279,6 +1295,10 @@ export const TaskDetailsPage = () => {
   };
   return (
     <>
+      <PostHogTaskActivity event="Task Detail Opened" />
+      {taskEvent && (
+        <PostHogTaskActivity key={taskEvent.key} event={taskEvent.event} properties={taskEvent.properties} />
+      )}
       <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
         {/* Header */}
         <div className="mb-6">

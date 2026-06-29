@@ -141,6 +141,7 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
+  onColumnCustomise?: () => void;
   handleExport?: (columnVisibility?: Record<string, boolean>) => void;
   toolbarClassName?: string;
   tableWrapperClassName?: string;
@@ -187,6 +188,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
+  onColumnCustomise,
   toolbarClassName,
   tableWrapperClassName,
   headerCellClassName,
@@ -294,6 +296,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         JSON.stringify(updatedVisibility)
       );
     }
+    onColumnCustomise?.();
   };
 
   // Use API search results or filter data based on search term
@@ -352,6 +355,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           JSON.stringify(newOrder)
         );
       }
+      onColumnCustomise?.();
     }
   };
 

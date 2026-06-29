@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
+import { usePostHog } from '@posthog/react';
 import { toast } from "sonner";
 import { MappingStep } from '@/components/schedule/MappingStep';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep'
@@ -219,12 +221,40 @@ interface ChecklistMappingsData {
   }[];
 }
 
+type ScheduleEvent = React.ComponentProps<typeof PostHogScheduleActivity>['event'];
+
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
+  const posthog = usePostHog();
+  const stepStartTimeRef = useRef<number>(Date.now());
+  const scheduleSavedRef = useRef(false);
+  const scheduleEventKeyRef = useRef(0);
+  const [scheduleEvent, setScheduleEvent] = useState<{
+    key: number;
+    event: ScheduleEvent;
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  const captureScheduleEvent = (event: ScheduleEvent, properties?: Record<string, unknown>) => {
+    setScheduleEvent({ key: ++scheduleEventKeyRef.current, event, properties });
+  };
 
   // Stepper state
   const [customCode, setCustomCode] = useState('');
   const [activeStep, setActiveStep] = useState(0);
+  const activeStepRef = useRef(0);
+
+  // Schedule Create Abandoned — fires on unmount if save never happened
+  useEffect(() => {
+    return () => {
+      if (!scheduleSavedRef.current) {
+        posthog?.capture('Schedule Create Abandoned', {
+          last_block_reached: activeStepRef.current,
+        });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const steps = ['Basic Configuration', 'Schedule Setup', 'Question Setup', 'Time Setup', 'Mapping'];
 
@@ -2057,6 +2087,13 @@ export const AddSchedulePage = () => {
     };
 
     if (stepMessages[activeStep as keyof typeof stepMessages]) {
+      const blockNames = ['Basic', 'Setup', 'Question', 'Time', 'Mapping'];
+      captureScheduleEvent('Schedule Form Block Completed', {
+        block_name: blockNames[activeStep] ?? steps[activeStep],
+        time_on_block_sec: Math.round((Date.now() - stepStartTimeRef.current) / 1000),
+      });
+      stepStartTimeRef.current = Date.now();
+      activeStepRef.current = activeStep;
       toast.success(stepMessages[activeStep as keyof typeof stepMessages], {
         position: 'top-right',
         duration: 4000,
@@ -2090,6 +2127,13 @@ export const AddSchedulePage = () => {
       const result = await response.json();
       setCustomCode(result.custom_form_code);
 
+      scheduleSavedRef.current = true;
+      captureScheduleEvent('Schedule Saved', {
+        schedule_id: result.custom_form_code,
+        schedule_type: formData.type,
+        recurrence_pattern: formData.recurrenceType || '',
+        checklist_step_count: questionSections.reduce((acc: number, s: any) => acc + s.tasks.length, 0),
+      });
       toast.success("Checklist is scheduled successfully!", {
         position: 'top-right',
         duration: 4000,
@@ -6436,6 +6480,10 @@ export const AddSchedulePage = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+      <PostHogScheduleActivity event="Schedule Create Started" />
+      {scheduleEvent && (
+        <PostHogScheduleActivity key={scheduleEvent.key} event={scheduleEvent.event} properties={scheduleEvent.properties} />
+      )}
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">

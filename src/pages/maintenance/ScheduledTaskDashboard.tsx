@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { PostHogTaskActivity } from "@/components/PostHogTaskActivity";
 import { Button } from "@/components/ui/button";
 import {
   Clock,
@@ -287,7 +288,20 @@ export const ScheduledTaskDashboard = () => {
     };
   };
   const navigate = useNavigate();
-    const { shouldShow } = useDynamicPermissions();
+  const { shouldShow } = useDynamicPermissions();
+  const taskEventKeyRef = useRef(0);
+  const [taskEvent, setTaskEvent] = useState<{
+    key: number;
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  const captureTaskEvent = (
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
+    properties?: Record<string, unknown>
+  ) => {
+    setTaskEvent({ key: ++taskEventKeyRef.current, event, properties });
+  };
     const location = useLocation();
 
   const [dateFrom, setDateFrom] = useState("01/07/2025");
@@ -592,11 +606,15 @@ export const ScheduledTaskDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+
   // Handle filter application
   const handleApplyFilters = (filters: TaskFilters) => {
     setCurrentFilters(filters);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
     console.log("Applied filters:", filters);
+    captureTaskEvent('Task Filter Applied', {
+      filters_used: Object.keys(filters).filter(k => (filters as Record<string, unknown>)[k]),
+    });
   };
 
   // Handle pagination
@@ -620,21 +638,24 @@ export const ScheduledTaskDashboard = () => {
 
   // Handle search functionality
   const handleSearch = (query: string) => {
-    console.log("Search query:", query); // Debug log
+    console.log("Search query:", query);
     setSearchQuery(query);
-    setCurrentPage(1); // Reset to first page when searching
-    // The useEffect will handle the API call when debouncedSearchQuery changes
+    setCurrentPage(1);
+    if (query.trim()) {
+      captureTaskEvent('Task Search Performed', { query_len: query.trim().length });
+    }
   };
 
   // Handle status card click
   const handleStatusCardClick = (status: string) => {
     setSelectedStatus(status);
-    setCurrentPage(1); // Reset to first page when filtering by status
+    setCurrentPage(1);
   };
 
   // Handle download tasks
   const handleDownloadTasks = () => {
     setShowTaskExportModal(true);
+    captureTaskEvent('Task List Exported', { view: activeTab });
   };
 
   // Load calendar events
@@ -863,6 +884,10 @@ export const ScheduledTaskDashboard = () => {
 
   const handleAnalyticsSelectionChange = (selectedOptions: string[]) => {
     setSelectedAnalytics(selectedOptions);
+    captureTaskEvent("Task Analytics Report Toggled", {
+      selected_reports: selectedOptions,
+      report_count: selectedOptions.length,
+    });
     const dateRange = getDateRangeForComponents();
     fetchAnalyticsData(dateRange.startDate, dateRange.endDate, selectedOptions);
   };
@@ -897,6 +922,10 @@ export const ScheduledTaskDashboard = () => {
     setAnalyticsDateRange({
       startDate: formatDate(startDate),
       endDate: formatDate(endDate),
+    });
+    captureTaskEvent("Task Analytics Date Range Changed", {
+      start_date: startDateStr,
+      end_date: endDateStr,
     });
     fetchAnalyticsData(startDate, endDate, selectedAnalytics);
   };
@@ -1094,12 +1123,19 @@ export const ScheduledTaskDashboard = () => {
 
   return (
     <>
+      <PostHogTaskActivity event="Task List Viewed" />
+      {taskEvent && (
+        <PostHogTaskActivity key={taskEvent.key} event={taskEvent.event} properties={taskEvent.properties} />
+      )}
       <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
         {/* Header Section */}
 
         <Tabs
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(val) => {
+            setActiveTab(val);
+            captureTaskEvent('Task View Switched', { to_view: val });
+          }}
           defaultValue="list"
           className="w-full"
         >
@@ -1389,6 +1425,7 @@ export const ScheduledTaskDashboard = () => {
                     storageKey="scheduled-tasks-table"
                     onFilterClick={() => setShowTaskFilter(true)}
                     handleExport={() => handleDownloadTasks()}
+                    onColumnCustomise={() => captureTaskEvent("Task Columns Customised")}
                     searchTerm={searchQuery}
                     onSearchChange={handleSearch}
                     emptyMessage="No scheduled tasks found"

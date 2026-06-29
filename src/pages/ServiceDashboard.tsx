@@ -24,6 +24,7 @@ import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { PostHogServiceActivity } from '@/components/PostHogServiceActivity';
 
 interface ServiceRecord {
   id: number;
@@ -993,6 +994,7 @@ export const ServiceDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      <PostHogServiceActivity event="Soft Service List Viewed" />
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>

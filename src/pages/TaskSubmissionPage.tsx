@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { PostHogTaskActivity } from "@/components/PostHogTaskActivity";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,20 @@ interface ChecklistItem {
 export const TaskSubmissionPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const checklistStartedRef = useRef(false);
+  const taskEventKeyRef = useRef(0);
+  const [taskEvent, setTaskEvent] = useState<{
+    key: number;
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  const captureTaskEvent = (
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
+    properties?: Record<string, unknown>
+  ) => {
+    setTaskEvent({ key: ++taskEventKeyRef.current, event, properties });
+  };
 
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
@@ -611,16 +626,34 @@ export const TaskSubmissionPage: React.FC = () => {
     field: "value" | "comment" | "attachment",
     value: any
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      checklist: {
-        ...prev.checklist,
-        [itemId]: {
-          ...prev.checklist[itemId],
-          [field]: value,
+    if (!checklistStartedRef.current) {
+      checklistStartedRef.current = true;
+      captureTaskEvent('Checklist Execution Started', {
+        task_id: id,
+        platform: 'web',
+        step_count: dynamicChecklist.length,
+      });
+    }
+
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        checklist: {
+          ...prev.checklist,
+          [itemId]: { ...prev.checklist[itemId], [field]: value },
         },
-      },
-    }));
+      };
+      if (field === 'value') {
+        const item = updated.checklist[itemId];
+        captureTaskEvent('Checklist Item Answered', {
+          task_id: id,
+          has_reading: typeof value === 'number',
+          has_photo: !!item?.attachment,
+          has_comment: !!item?.comment,
+        });
+      }
+      return updated;
+    });
   };
 
   const handleNext = () => {
@@ -872,6 +905,15 @@ export const TaskSubmissionPage: React.FC = () => {
 
         sonnerToast.dismiss(loadingToastId);
         sonnerToast.success("Task submitted successfully!");
+
+        captureTaskEvent('Task Submitted (UI)', {
+          task_id: id,
+          platform: 'web',
+          completeness_score: response.question_attended_count
+            ? Math.round((response.question_attended_count / dynamicChecklist.length) * 100)
+            : 0,
+        });
+
         setShowSuccessModal(true);
       }
     } catch (error: any) {
@@ -3165,6 +3207,9 @@ export const TaskSubmissionPage: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
+      {taskEvent && (
+        <PostHogTaskActivity key={taskEvent.key} event={taskEvent.event} properties={taskEvent.properties} />
+      )}
       {/* Header */}
       <div className="mb-4">
         <button
