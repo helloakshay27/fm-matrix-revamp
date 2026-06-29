@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { SlidersHorizontal } from 'lucide-react';
 import { RVehiclesHistoryFilterModal } from '@/components/RVehiclesHistoryFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -184,24 +183,6 @@ export const RVehiclesHistoryDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Vehicle History</h1>
       
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={() => setIsFilterModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-        </Button>
-        <Button 
-          onClick={handleAllVehiclesClick}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-6 py-2 rounded"
-        >
-          All Vehicles
-        </Button>
-      </div>
       {/* Enhanced Table */}
       <EnhancedTable
         data={vehicleHistoryData}
@@ -221,7 +202,7 @@ export const RVehiclesHistoryDashboard = () => {
             <Button 
               onClick={handleAllVehiclesClick}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               All Vehicles
             </Button>

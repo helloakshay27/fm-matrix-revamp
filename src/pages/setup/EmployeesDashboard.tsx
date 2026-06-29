@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface EmployeeData {
   id: string;
@@ -110,68 +111,69 @@ export const EmployeesDashboard = () => {
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Employees</div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">EMPLOYEES</h1>
-            <Button 
+          <h1 className="text-2xl font-bold text-gray-800">EMPLOYEES</h1>
+        </div>
+
+        {/* Table */}
+        <EnhancedTable
+          data={employees}
+          columns={[
+            { key: "actions", label: "Actions", sortable: false, draggable: false, defaultVisible: true, hideable: false },
+            { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
+            { key: "employeeId", label: "Employee ID", sortable: true, draggable: true, defaultVisible: true },
+            { key: "firstName", label: "First Name", sortable: true, draggable: true, defaultVisible: true },
+            { key: "lastName", label: "Last Name", sortable: true, draggable: true, defaultVisible: true },
+            { key: "email", label: "Email Address", sortable: true, draggable: true, defaultVisible: true },
+            { key: "mobile", label: "Mobile No.", sortable: true, draggable: true, defaultVisible: true },
+            { key: "userType", label: "User Type", sortable: true, draggable: true, defaultVisible: true },
+          ] as ColumnConfig[]}
+          storageKey="employees-table"
+          enableSearch={true}
+          pagination={true}
+          pageSize={10}
+          hideTableExport={true}
+          emptyMessage="No employees found"
+          renderCell={(item, columnKey) => {
+            switch (columnKey) {
+              case "actions":
+                return (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="p-1"
+                      onClick={() => handleViewClick(item)}
+                    >
+                      <Eye className="w-4 h-4 text-blue-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="p-1"
+                      onClick={() => handleEditClick(item)}
+                    >
+                      <Edit className="w-4 h-4 text-green-600" />
+                    </Button>
+                  </div>
+                );
+              case "id":
+                return <span className="text-blue-600">{item.id}</span>;
+              case "email":
+                return <span className="text-blue-600 max-w-xs truncate block">{item.email}</span>;
+              default:
+                return item[columnKey as keyof EmployeeData] as React.ReactNode;
+            }
+          }}
+          leftActions={
+            <Button
               onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+              className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
             >
               <Plus className="w-4 h-4" />
               Add
             </Button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-100">
-                <TableHead className="font-semibold text-gray-700">Actions</TableHead>
-                <TableHead className="font-semibold text-gray-700">ID</TableHead>
-                <TableHead className="font-semibold text-gray-700">Employee ID</TableHead>
-                <TableHead className="font-semibold text-gray-700">First Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Last Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Email Address</TableHead>
-                <TableHead className="font-semibold text-gray-700">Mobile No.</TableHead>
-                <TableHead className="font-semibold text-gray-700">User Type</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employees.map((employee) => (
-                <TableRow key={employee.id} className="border-b">
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="p-1"
-                        onClick={() => handleViewClick(employee)}
-                      >
-                        <Eye className="w-4 h-4 text-blue-600" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="p-1"
-                        onClick={() => handleEditClick(employee)}
-                      >
-                        <Edit className="w-4 h-4 text-green-600" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-blue-600">{employee.id}</TableCell>
-                  <TableCell>{employee.employeeId}</TableCell>
-                  <TableCell>{employee.firstName}</TableCell>
-                  <TableCell>{employee.lastName}</TableCell>
-                  <TableCell className="text-blue-600 max-w-xs truncate">{employee.email}</TableCell>
-                  <TableCell>{employee.mobile}</TableCell>
-                  <TableCell>{employee.userType}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+          }
+        />
       </div>
     </div>
   );

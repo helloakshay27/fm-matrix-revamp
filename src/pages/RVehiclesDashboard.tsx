@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, SlidersHorizontal, Edit, Search } from 'lucide-react';
+import { Plus, Download, Edit, Search } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
 import { RVehicleImportModal } from '@/components/RVehicleImportModal';
 import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
@@ -262,39 +262,14 @@ export const RVehiclesDashboard = () => {
   return (
     <div className="p-6 bg-[#F6F4EE] min-h-screen">
       <h1 className="text-2xl font-bold text-[#2D2A26] mb-6">Vehicle Parkings</h1>
-      
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 rounded-lg text-[#DA7756] hover:bg-[#fdf0ea] flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-        <Button 
-          onClick={() => setIsImportModalOpen(true)}
-          className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 rounded-lg text-[#DA7756] hover:bg-[#fdf0ea] flex items-center gap-2"
-        >
-          <Download className="w-4 h-4" />
-          Import
-        </Button>
-        <Button 
-          onClick={() => setIsFilterModalOpen(true)}
-          className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 rounded-lg text-[#DA7756] hover:bg-[#fdf0ea] flex items-center gap-2"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-        </Button>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="flex border-b border-[#e4ddd4] bg-[#F6F4EE] rounded-t-lg overflow-hidden">
+      {/* Tab Navigation - full width */}
+      <div className="flex w-full border-b border-[#e4ddd4] bg-[#F6F4EE] rounded-t-lg overflow-hidden mb-0">
         {['History', 'All', 'In', 'Out'].map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
-            className={`px-6 py-3 text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${
               activeTab === tab
                 ? 'bg-[#DA7756] text-white'
                 : 'bg-[#F2EEE9] text-[#8a7e72] hover:bg-[#ece4db]'
@@ -320,22 +295,24 @@ export const RVehiclesDashboard = () => {
         hideTableExport={false}
         hideColumnsButton={false}
         leftActions={
-          <div className="flex gap-3">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 text-[#DA7756] hover:bg-[#fdf0ea]"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-            <Button 
-              onClick={() => setIsImportModalOpen(true)}
-              className="fm-button-fix border border-[#DA7756] bg-[#fffaf6] px-4 py-2 text-[#DA7756] hover:bg-[#fdf0ea]"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Import
-            </Button>
-          </div>
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </Button>
+        }
+        filterAdjacentActions={
+          <Button
+            onClick={() => setIsImportModalOpen(true)}
+            title="Import"
+            variant="outline"
+            size="sm"
+            className="p-2 h-9 w-9 rounded-lg"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
         }
         onFilterClick={() => setIsFilterModalOpen(true)}
       />
