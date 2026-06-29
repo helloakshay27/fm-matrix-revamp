@@ -114,14 +114,14 @@ export const RosterCalendarDashboard = () => {
         </div>
 
         {/* Filter Button */}
-        <div className="mb-4">
+        <div className="mb-4 flex justify-end">
           <Button
             variant="outline"
             onClick={() => setIsFilterOpen(true)}
-            className="flex items-center gap-2"
+            className="p-2 h-9 w-9 rounded-lg"
+            title="Filters"
           >
             <Filter className="w-4 h-4" />
-            Filters
           </Button>
         </div>
 

@@ -35,7 +35,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         <Button 
           variant="ghost" 
           size="sm"
-          className="fm-button-fix border border-[#da7756] !text-[#da7756] hover:!bg-[#da7756]/10 hover:!text-[#da7756] px-4 py-2P [&_svg]:!text-[#da7756] [&_svg]:!stroke-[#da7756]"
+          className="fm-button-fix border border-[#da7756] !text-[#da7756] hover:!bg-[#da7756]/10 hover:!text-[#da7756] px-4 py-2 rounded-lg [&_svg]:!text-[#da7756] [&_svg]:!stroke-[#da7756]"
           title="Show Columns"
         >
           <Grid3x3 className="w-4 h-4" />

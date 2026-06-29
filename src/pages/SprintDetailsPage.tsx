@@ -2819,10 +2819,10 @@ export const SprintDetailsPage = () => {
         }}
         TransitionProps={{ timeout: { enter: 400, exit: 400 } }}
       >
-        <DialogTitle className="relative !py-5 !px-0 shrink-0">
+        <DialogTitle className="relative !pb-0 !px-0 shrink-0">
           <div className="flex items-center gap-2 px-6">
             <Users size={18} className="text-[#E95420]" />
-            <span className="text-base font-semibold text-gray-800">
+            <span className="text-sm font-medium text-gray-800">
               Sprint Members
             </span>
             {membersSummary.length > 0 && (
@@ -2851,48 +2851,48 @@ export const SprintDetailsPage = () => {
               <p className="text-sm">No members found</p>
             </div>
           ) : (
-            <div className="overflow-auto">
+            <div>
               <table
                 className="w-full text-sm border-collapse"
-                style={{ minWidth: 920 }}
+                style={{ minWidth: 750 }}
               >
                 <thead className="sticky top-0 z-10">
                   {/* Group header row — single consistent dark tone */}
                   <tr>
                     <th
                       rowSpan={2}
-                      className="bg-[#f5f5dc] text-black text-left px-4 py-3 font-semibold text-xs tracking-wide border-r border-slate-300 align-middle whitespace-nowrap"
-                      style={{ minWidth: 190 }}
+                      className="bg-[#f5f5dc] text-black text-left px-2 py-2 font-semibold text-xs tracking-wide border-r border-slate-300 align-middle"
+                      style={{ minWidth: 140 }}
                     >
                       Member
                     </th>
                     <th
-                      colSpan={3}
-                      className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500"
+                      colSpan={2}
+                      className="bg-[#f5f5dc] text-black text-center px-1.5 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-300"
                     >
                       Tasks
                     </th>
                     <th
-                      colSpan={3}
-                      className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500"
+                      colSpan={2}
+                      className="bg-[#f5f5dc] text-black text-center px-1.5 py-2 text-xs tracking-wide border-r border-slate-300 border-l-2 border-l-slate-300"
                     >
                       Issues
                     </th>
                     <th
                       colSpan={2}
-                      className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500"
+                      className="bg-[#f5f5dc] text-black text-center px-1.5 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-300"
                     >
                       Task Minutes
                     </th>
                     <th
                       colSpan={2}
-                      className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500"
+                      className="bg-[#f5f5dc] text-black text-center px-1.5 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-300"
                     >
                       Issue Minutes
                     </th>
                     <th
                       colSpan={2}
-                      className="text-center px-3 py-2 text-xs font-semibold tracking-wide border-l-2 border-l-[#E95420]"
+                      className="text-center px-1.5 py-2 text-xs font-semibold tracking-wide border-l-2 border-l-[#E95420]"
                       style={{ backgroundColor: "#E95420", color: "#fff" }}
                     >
                       Total Minutes
@@ -2901,48 +2901,42 @@ export const SprintDetailsPage = () => {
                   {/* Sub-header row */}
                   <tr className="bg-slate-50 border-b border-slate-200">
                     {/* Tasks */}
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-200 border-l-2 border-l-slate-300 text-center border-t border-t-slate-300">
                       Total
                     </th>
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 text-center whitespace-nowrap uppercase tracking-wider">
-                      Done
-                    </th>
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-300 text-center border-t border-t-slate-300">
                       Completion
                     </th>
                     {/* Issues */}
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-200 border-l-2 border-l-slate-300 text-center border-t border-t-slate-300">
                       Total
                     </th>
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 text-center whitespace-nowrap uppercase tracking-wider">
-                      Done
-                    </th>
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-300 text-center border-t border-t-slate-300">
                       Completion
                     </th>
                     {/* Task Minutes */}
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-200 border-l-2 border-l-slate-300 text-center border-t border-t-slate-300">
                       Effective
                     </th>
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-300 text-center border-t border-t-slate-300">
                       Actual
                     </th>
                     {/* Issue Minutes */}
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-200 border-l-2 border-l-slate-300 text-center border-t border-t-slate-300">
                       Effective
                     </th>
-                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">
+                    <th className="bg-slate-50 text-slate-500 px-1.5 py-1 text-[10px] border-r border-slate-300 text-center border-t border-t-slate-300">
                       Actual
                     </th>
                     {/* Total Minutes */}
                     <th
-                      className="px-3 py-1.5 text-[10px] font-semibold border-r border-orange-200 border-l-2 border-l-[#E95420] text-center whitespace-nowrap uppercase tracking-wider"
+                      className="px-1.5 py-1 text-[10px] border-r border-orange-200 border-l-2 border-l-[#E95420] text-center border-t border-t-slate-300"
                       style={{ backgroundColor: "#fff7f5", color: "#E95420" }}
                     >
                       Effective
                     </th>
                     <th
-                      className="px-3 py-1.5 text-[10px] font-semibold text-center whitespace-nowrap uppercase tracking-wider"
+                      className="px-1.5 py-1 text-[10px] text-center border-t border-t-slate-300"
                       style={{ backgroundColor: "#fff7f5", color: "#E95420" }}
                     >
                       Actual
@@ -2956,8 +2950,8 @@ export const SprintDetailsPage = () => {
                       className={`border-b border-slate-100 transition-colors hover:bg-slate-50/70 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
                     >
                       {/* Member */}
-                      <td className="px-4 py-3 border-r border-slate-100">
-                        <div className="flex items-center gap-2.5">
+                      <td className="px-2 py-2 border-r border-slate-100">
+                        <div className="flex items-center gap-2">
                           <div
                             className="w-8 h-8 rounded-full flex items-center !justify-center text-white text-[11px] font-bold shrink-0 select-none"
                             style={{
@@ -3001,7 +2995,7 @@ export const SprintDetailsPage = () => {
                         return (
                           <>
                             <td
-                              className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                              className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
                               onClick={() => {
                                 setIsMembersOpen(false);
                                 setMemberIssueFilter(undefined);
@@ -3014,7 +3008,7 @@ export const SprintDetailsPage = () => {
                               </span>
                             </td>
                             <td
-                              className="px-3 py-3 text-center border-r border-slate-100 cursor-pointer hover:bg-blue-50"
+                              className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
                               onClick={() => {
                                 setIsMembersOpen(false);
                                 setMemberIssueFilter(undefined);
@@ -3022,22 +3016,15 @@ export const SprintDetailsPage = () => {
                                 setActiveTab("tasks");
                               }}
                             >
-                              <span className="text-[13px] font-medium text-blue-600">
+                              <span className="text-[13px] font-semibold text-blue-600">
                                 {m.completed_tasks}
                               </span>
-                            </td>
-                            <td className="px-3 py-3 text-center border-r border-slate-200">
-                              <div className="flex flex-col items-center gap-1 px-1">
-                                {/* <div className="w-full bg-slate-100 rounded-full h-1.5 min-w-[48px]">
-                                  <div className="h-1.5 rounded-full transition-all" style={{ width: `${taskPct}%`, backgroundColor: taskColor }} />
-                                </div> */}
-                                <span
-                                  className="text-[11px] font-bold"
-                                  style={{ color: taskColor }}
-                                >
-                                  {taskPct}%
-                                </span>
-                              </div>
+                              <span
+                                className="ml-1 text-[11px] font-bold"
+                                style={{ color: taskColor }}
+                              >
+                                ({taskPct}%)
+                              </span>
                             </td>
                           </>
                         );
@@ -3059,7 +3046,7 @@ export const SprintDetailsPage = () => {
                         return (
                           <>
                             <td
-                              className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                              className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
                               onClick={() => {
                                 setIsMembersOpen(false);
                                 setMemberTaskFilter(undefined);
@@ -3072,7 +3059,7 @@ export const SprintDetailsPage = () => {
                               </span>
                             </td>
                             <td
-                              className="px-3 py-3 text-center border-r border-slate-100 cursor-pointer hover:bg-blue-50"
+                              className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
                               onClick={() => {
                                 setIsMembersOpen(false);
                                 setMemberTaskFilter(undefined);
@@ -3080,51 +3067,38 @@ export const SprintDetailsPage = () => {
                                 setActiveTab("issues");
                               }}
                             >
-                              <span className="text-[13px] font-medium text-blue-600">
+                              <span className="text-[13px] font-semibold text-blue-600">
                                 {m.completed_issues}
                               </span>
-                            </td>
-                            <td className="px-3 py-3 text-center border-r border-slate-200">
-                              <div className="flex flex-col items-center gap-1 px-1">
-                                {/* <div className="w-full bg-slate-100 rounded-full h-1.5 min-w-[48px]">
-                                  <div className="h-1.5 rounded-full transition-all" style={{ width: `${issuePct}%`, backgroundColor: issueColor }} />
-                                </div> */}
-                                <span
-                                  className="text-[11px] font-bold"
-                                  style={{ color: issueColor }}
-                                >
-                                  {issuePct}%
-                                </span>
-                              </div>
+                              <span
+                                className="ml-1 text-[11px] font-bold"
+                                style={{ color: issueColor }}
+                              >
+                                ({issuePct}%)
+                              </span>
                             </td>
                           </>
                         );
                       })()}
                       {/* Task Minutes */}
-                      <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 text-[12px] text-gray-500">
+                      <td className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200 text-[11px] text-gray-500">
                         {fmtMin(m.task_effective_minutes)}
                       </td>
-                      <td className="px-3 py-3 text-center border-r border-slate-200 text-[12px] text-gray-500">
+                      <td className="px-1.5 py-2 text-center border-r border-slate-200 text-[11px] text-gray-500">
                         {fmtMin(m.task_actual_minutes)}
                       </td>
                       {/* Issue Minutes */}
-                      <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 text-[12px] text-gray-500">
+                      <td className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200 text-[11px] text-gray-500">
                         {fmtMin(m.issue_effective_minutes)}
                       </td>
-                      <td className="px-3 py-3 text-center border-r border-slate-200 text-[12px] text-gray-500">
+                      <td className="px-1.5 py-2 text-center border-r border-slate-200 text-[11px] text-gray-500">
                         {fmtMin(m.issue_actual_minutes)}
                       </td>
                       {/* Total Minutes */}
-                      <td
-                        className="px-3 py-3 text-center border-r border-orange-100 border-l-2 border-l-[#E95420] text-[12px] font-semibold"
-                        style={{ color: "#E95420", backgroundColor: "#fff9f7" }}
-                      >
+                      <td className="px-1.5 py-2 text-center border-r border-orange-200 border-l-2 border-l-[#E95420] font-semibold text-[11px] text-gray-500">
                         {fmtMin(m.total_effective_minutes)}
                       </td>
-                      <td
-                        className="px-3 py-3 text-center text-[12px] font-semibold"
-                        style={{ color: "#E95420", backgroundColor: "#fff9f7" }}
-                      >
+                      <td className="px-1.5 py-2 text-center font-semibold text-[11px] text-gray-500">
                         {fmtMin(m.total_actual_minutes)}
                       </td>
                     </tr>

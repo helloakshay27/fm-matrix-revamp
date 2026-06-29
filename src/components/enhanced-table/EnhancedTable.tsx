@@ -922,40 +922,13 @@ export function EnhancedTable<T extends Record<string, any>>({
           <div className="hidden sm:flex items-center gap-2">
             {!hideTableSearch &&
               (onSearchChange || !externalSearchTerm || enableGlobalSearch) &&
-              (customSearchInput ? (
-                <div className="relative w-full sm:w-[420px] md:w-[460px] max-w-none">
-                  {isSearching && (
-                    <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
-                  )}
-                  {!isSearching && (
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  )}
-                  <Input
-                    placeholder={searchPlaceholder}
-                    value={effectiveSearchValue}
-                    onChange={(e) => handleSearchInputChange(e.target.value)}
-                    className="pl-10 pr-10"
-                    disabled={isSearching}
-                  />
-                  {effectiveSearchValue && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      disabled={isSearching}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                renderCustomSearchInput()
-              ))}
+              (customSearchInput ? customSearchInput : renderCustomSearchInput())}
 
             {onFilterClick && (
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2 rounded-lg"
                 onClick={onFilterClick}
                 title="Filter"
               >
@@ -965,22 +938,13 @@ export function EnhancedTable<T extends Record<string, any>>({
 
             {filterAdjacentActions}
 
-            {!hideColumnsButton && (
-              <ColumnVisibilityMenu
-                columns={columns}
-                columnVisibility={columnVisibility}
-                onToggleVisibility={handleToggleColumnVisibility}
-                onResetToDefaults={handleResetToDefaults}
-              />
-            )}
-
             {!hideTableExport && enableExport && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleExportClick}
                 disabled={isExporting}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 rounded-lg"
                 title={isExporting ? "Exporting..." : "Export"}
               >
                 {isExporting ? (
@@ -992,6 +956,15 @@ export function EnhancedTable<T extends Record<string, any>>({
                   <Download className="w-4 h-4" />
                 )}
               </Button>
+            )}
+
+            {!hideColumnsButton && (
+              <ColumnVisibilityMenu
+                columns={columns}
+                columnVisibility={columnVisibility}
+                onToggleVisibility={handleToggleColumnVisibility}
+                onResetToDefaults={handleResetToDefaults}
+              />
             )}
           </div>
         </div>

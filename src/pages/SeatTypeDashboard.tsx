@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Plus } from "lucide-react";
 import { AddSeatTypeDialog } from "@/components/AddSeatTypeDialog";
 import { EditSeatTypeDialog } from "@/components/EditSeatTypeDialog";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface SeatType {
   id: number;
@@ -71,56 +72,61 @@ export const SeatTypeDashboard = () => {
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Seat Type</div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">SEAT TYPE</h1>
-            <Button 
+          <h1 className="text-2xl font-bold text-gray-800">SEAT TYPE</h1>
+        </div>
+
+        {/* Table */}
+        <EnhancedTable
+          data={seatTypes}
+          columns={[
+            { key: "actions", label: "Actions", sortable: false, draggable: false, defaultVisible: true },
+            { key: "name", label: "Name", sortable: true, draggable: true, defaultVisible: true },
+            { key: "active", label: "Active / Inactive", sortable: false, draggable: true, defaultVisible: true },
+            { key: "createdOn", label: "Created On", sortable: true, draggable: true, defaultVisible: true },
+          ] as ColumnConfig[]}
+          storageKey="seat-type-table"
+          enableSearch={true}
+          pagination={true}
+          pageSize={10}
+          hideTableExport={true}
+          emptyMessage="No seat types found"
+          renderCell={(item, columnKey) => {
+            switch (columnKey) {
+              case "actions":
+                return (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="p-1"
+                    onClick={() => handleEditSeatType(item)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                );
+              case "active":
+                return (
+                  <Switch
+                    checked={item.active}
+                    onCheckedChange={() => handleToggleActive(item.id)}
+                    className="data-[state=checked]:bg-green-500"
+                  />
+                );
+              case "name":
+                return <span className="font-medium">{item.name}</span>;
+              default:
+                return item[columnKey as keyof SeatType] as React.ReactNode;
+            }
+          }}
+          leftActions={
+            <Button
               onClick={() => setIsAddDialogOpen(true)}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+              className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
             >
               <Plus className="w-4 h-4" />
               Add
             </Button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-700 w-20">Actions</TableHead>
-                <TableHead className="font-semibold text-gray-700">Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Active/ Inactive</TableHead>
-                <TableHead className="font-semibold text-gray-700">Created On</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {seatTypes.map((seat) => (
-                <TableRow key={seat.id} className="border-b">
-                  <TableCell>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="p-1"
-                      onClick={() => handleEditSeatType(seat)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{seat.name}</TableCell>
-                  <TableCell>
-                    <Switch 
-                      checked={seat.active} 
-                      onCheckedChange={() => handleToggleActive(seat.id)}
-                      className="data-[state=checked]:bg-green-500"
-                    />
-                  </TableCell>
-                  <TableCell className="text-gray-600">{seat.createdOn}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+          }
+        />
 
         {/* Add Seat Type Dialog */}
         <AddSeatTypeDialog 

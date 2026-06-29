@@ -30,7 +30,7 @@ export const CheckInMarginDashboard = () => {
         </div>
 
         {/* Form Card */}
-        <Card className="max-w-2xl">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-[#C72030]">Configure Check-in Margin</CardTitle>
           </CardHeader>
@@ -99,7 +99,7 @@ export const CheckInMarginDashboard = () => {
         </Card>
 
         {/* Current Settings Display */}
-        <Card className="max-w-2xl mt-6">
+        <Card className="w-full mt-6">
           <CardHeader>
             <CardTitle className="text-[#C72030]">Current Settings</CardTitle>
           </CardHeader>

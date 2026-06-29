@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle, XCircle, Clock, Users } from "lucide-react";
-import { StatsCard } from "@/components/StatsCard";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 export const SpaceManagementSeatRequestsDashboard = () => {
   const [seatRequests, setSeatRequests] = useState([{
     id: "48823",
@@ -141,7 +141,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
         {/* Statistics Cards */}
        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
   {/* All */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <Users className="w-5 h-5 text-[#D92818]" />
     </div>
@@ -152,7 +152,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
   </div>
 
   {/* Pending */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <Clock className="w-5 h-5 text-[#D92818]" />
     </div>
@@ -163,7 +163,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
   </div>
 
   {/* Approved */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <CheckCircle className="w-5 h-5 text-[#D92818]" />
     </div>
@@ -174,7 +174,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
   </div>
 
   {/* Rejected */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <XCircle className="w-5 h-5 text-[#D92818]" />
     </div>
@@ -187,69 +187,73 @@ export const SpaceManagementSeatRequestsDashboard = () => {
 
 
         {/* Table */}
-        <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-700">ID</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Name</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Requested Date</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Seat Type</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Shift</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Allocation Type</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Count</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {seatRequests.map((request, index) => <TableRow key={`${request.id}-${index}`}>
-                    <TableCell>{request.id}</TableCell>
-                    <TableCell className="text-blue-600">{request.name}</TableCell>
-                    <TableCell>{request.requestedDate}</TableCell>
-                    <TableCell>{request.seatType}</TableCell>
-                    <TableCell>{request.shift}</TableCell>
-                    <TableCell>{request.allocationType}</TableCell>
-                    <TableCell>{request.count}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(request.status)}`}>
-                        {request.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2 items-center">
-                        {request.status === 'Pending' && <>
-                            <Button
-                              size="sm"
-                              className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#fffaf6] px-3 text-xs font-medium text-[#DA7756] hover:bg-[#fdf0ea]"
-                              onClick={() => handleStatusChange(request.id, 'Approved')}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#DA7756] px-3 text-xs font-medium text-white hover:bg-[#c96546]"
-                              onClick={() => handleStatusChange(request.id, 'Rejected')}
-                            >
-                              Reject
-                            </Button>
-                          </>}
-                        {request.status !== 'Pending' && <Button
-                            size="sm"
-                            variant="outline"
-                            className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#fffaf6] px-3 text-xs font-medium text-[#DA7756] hover:bg-[#fdf0ea]"
-                            onClick={() => handleStatusChange(request.id, 'Pending')}
-                          >
-                            Reset
-                          </Button>}
-                      </div>
-                    </TableCell>
-                  </TableRow>)}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        <EnhancedTable
+          data={seatRequests.map((r, i) => ({ ...r, _idx: i }))}
+          columns={[
+            { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
+            { key: "name", label: "Name", sortable: true, draggable: true, defaultVisible: true },
+            { key: "requestedDate", label: "Requested Date", sortable: true, draggable: true, defaultVisible: true },
+            { key: "seatType", label: "Seat Type", sortable: true, draggable: true, defaultVisible: true },
+            { key: "shift", label: "Shift", sortable: true, draggable: true, defaultVisible: true },
+            { key: "allocationType", label: "Allocation Type", sortable: true, draggable: true, defaultVisible: true },
+            { key: "count", label: "Count", sortable: true, draggable: true, defaultVisible: true },
+            { key: "status", label: "Status", sortable: true, draggable: true, defaultVisible: true },
+            { key: "actions", label: "Actions", sortable: false, draggable: false, defaultVisible: true },
+          ] as ColumnConfig[]}
+          storageKey="seat-requests-table"
+          enableSearch={true}
+          pagination={true}
+          pageSize={10}
+          hideTableExport={true}
+          emptyMessage="No seat requests found"
+          renderCell={(item, columnKey) => {
+            switch (columnKey) {
+              case "name":
+                return <span className="text-blue-600">{item.name}</span>;
+              case "status":
+                return (
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)}`}>
+                    {item.status}
+                  </span>
+                );
+              case "actions":
+                return (
+                  <div className="flex gap-2 items-center">
+                    {item.status === 'Pending' && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#fffaf6] px-3 text-xs font-medium text-[#DA7756] hover:bg-[#fdf0ea]"
+                          onClick={() => handleStatusChange(item.id, 'Approved')}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#DA7756] px-3 text-xs font-medium text-white hover:bg-[#c96546]"
+                          onClick={() => handleStatusChange(item.id, 'Rejected')}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    {item.status !== 'Pending' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="fm-button-fix h-8 rounded-md border border-[#DA7756] bg-[#fffaf6] px-3 text-xs font-medium text-[#DA7756] hover:bg-[#fdf0ea]"
+                        onClick={() => handleStatusChange(item.id, 'Pending')}
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                );
+              default:
+                return item[columnKey as keyof typeof item] as React.ReactNode;
+            }
+          }}
+        />
       </div>
     </div>;
 };
