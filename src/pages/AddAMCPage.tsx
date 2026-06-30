@@ -657,12 +657,6 @@ export const AddAMCPage = () => {
       if (!attachments.contracts || attachments.contracts.length === 0) {
         isValid = false;
         toast.error("Please upload at least one AMC Contract.");
-      } else if (
-        !attachments.invoices ||
-        attachments.invoices.length === 0
-      ) {
-        isValid = false;
-        toast.error("Please upload at least one AMC Invoice.");
       }
     }
 
