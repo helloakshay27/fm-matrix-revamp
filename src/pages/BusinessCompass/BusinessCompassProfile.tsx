@@ -1520,11 +1520,18 @@ const BusinessCompassProfile = () => {
   };
 
   // ─── Document handlers ──────────────────────────────────────────────────────
+  const ALLOWED_DOC_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx"];
+
   const handleDocFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      if (!ALLOWED_DOC_EXTENSIONS.includes(ext)) {
+        toast.error("Invalid document format. Allowed formats: JPG, JPEG, PNG, GIF, PDF, DOC, DOCX.");
+        e.target.value = "";
+        return;
+      }
       setDocFile(file);
-      // Pre-fill title from filename if empty
       if (!docTitle.trim()) {
         setDocTitle(file.name.replace(/\.[^/.]+$/, ""));
       }
@@ -1908,7 +1915,7 @@ const BusinessCompassProfile = () => {
   ───────────────────────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-white font-poppins">
-      <div className="p-4 sm:p-5 lg:p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-5 lg:p-6 w-full">
         {/* Page title */}
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-5">
           My Profile
