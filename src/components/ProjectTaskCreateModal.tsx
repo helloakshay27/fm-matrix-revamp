@@ -1260,6 +1260,7 @@ const ProjectTaskCreateModal = ({
   const [attachments, setAttachments] = useState<File[]>([]);
   const [dependentTaskId, setDependentTaskId] = useState("");
   const [projectTasks, setProjectTasks] = useState<any[]>([]);
+  const [dependenciesLoading, setDependenciesLoading] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const startDate = prefillData?.start_date;
     if (!startDate) return null;
@@ -1394,8 +1395,10 @@ const ProjectTaskCreateModal = ({
     const milestoneId = mid || formData.milestone;
     if (!milestoneId) {
       setProjectTasks([]);
+      setDependenciesLoading(false);
       return;
     }
+    setDependenciesLoading(true);
     try {
       const response = await axios.get(
         `https://${baseUrl}/task_managements.json?q[milestone_id_eq]=${milestoneId}`,
@@ -1404,6 +1407,8 @@ const ProjectTaskCreateModal = ({
       setProjectTasks(response.data.task_managements || []);
     } catch (error) {
       console.log(error);
+    } finally {
+      setDependenciesLoading(false);
     }
   }, [baseUrl, token, mid, formData.milestone]);
 
@@ -1445,6 +1450,7 @@ const ProjectTaskCreateModal = ({
       setAttachments([]);
       setDependentTaskId("");
       setProjectTasks([]);
+      fetchProjectTasksForDependency();
     } else {
       setUsers([]);
       setMembers([]);
@@ -1724,6 +1730,7 @@ const ProjectTaskCreateModal = ({
       setNextId(nextId + 1);
       setAttachments([]);
       dispatch(fetchProjectTasks({ baseUrl, token, id: mid ? mid : "" }));
+      fetchProjectTasksForDependency();
     } catch (error) {
       console.error("Error creating task:", error);
       toast.dismiss();
@@ -1937,28 +1944,45 @@ const ProjectTaskCreateModal = ({
         />
 
         <div className="mb-4">
-          <FormControl fullWidth variant="outlined">
-            <InputLabel shrink>Dependent Task (optional)</InputLabel>
-            <Select
-              label="Dependent Task (optional)"
-              name="dependentTaskId"
-              value={dependentTaskId}
-              onChange={(e) => setDependentTaskId(e.target.value)}
-              displayEmpty
-              sx={fieldStyles}
+          {dependenciesLoading ? (
+            <div
+              style={{
+                height: 45,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px dashed #ccc",
+                borderRadius: 4,
+                color: "#888",
+                fontSize: 13,
+              }}
             >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {projectTasks
-                .filter((t: any) => t.id !== (tid ? Number(tid) : undefined))
-                .map((task: any) => (
-                  <MenuItem key={task.id} value={task.id}>
-                    {task.title}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
+              Loading tasks...
+            </div>
+          ) : (
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>Dependent Task (optional)</InputLabel>
+              <Select
+                label="Dependent Task (optional)"
+                name="dependentTaskId"
+                value={dependentTaskId}
+                onChange={(e) => setDependentTaskId(e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="">
+                  <em>Select Task</em>
+                </MenuItem>
+                {projectTasks
+                  .filter((t: any) => t.id !== (tid ? Number(tid) : undefined))
+                  .map((task: any) => (
+                    <MenuItem key={task.id} value={task.id}>
+                      {task.title}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          )}
         </div>
 
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white text-[12px]">
