@@ -159,6 +159,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ClubSidebar />;
     }
 
+    // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
+    if (location.pathname.startsWith("/vendor")) {
+      console.warn("✅ Rendering VendorSidebar");
+      return <VendorSidebar />;
+    }
+
     if (isViSite) {
       console.warn("✅ Rendering ViSidebar");
       return <ViSidebar />;
@@ -249,12 +255,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ActionSidebar />;
     }
 
-    // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
-    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
-      console.warn("✅ Rendering VendorSidebar");
-      return <VendorSidebar />;
-    }
-
     if (selectedCompany?.id === 189) {
       return <ZxSidebar />;
     }
@@ -320,6 +320,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ClubDynamicHeader />;
     }
 
+    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
+    if (location.pathname.startsWith("/vendor")) {
+      return <VendorDynamicHeader />;
+    }
+
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Employees don't need dynamic header, they use EmployeeHeader instead
     if (isEmployeeUser && isLocalhost) {
@@ -356,11 +361,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "abdul.g@gophygital.work"
     ) {
       return <ActionHeader />;
-    }
-
-    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
-    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
-      return <VendorDynamicHeader />;
     }
 
     if (selectedCompany?.id === 189) {
