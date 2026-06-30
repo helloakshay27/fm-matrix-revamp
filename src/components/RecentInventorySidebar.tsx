@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Flag, Eye } from 'lucide-react';
+import { MessageSquare, Flag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AddCommentModal } from './AddCommentModal';
@@ -27,6 +27,9 @@ export const RecentInventorySidebar: React.FC<RecentInventorySidebarProps> = ({
   const [flaggedItems, setFlaggedItems] = useState<Set<string>>(new Set());
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+  });
 
   const recentInventory: InventoryItem[] = [
     {
@@ -134,10 +137,49 @@ export const RecentInventorySidebar: React.FC<RecentInventorySidebarProps> = ({
   };
 
   return (
-    <div className={`bg-background/60 backdrop-blur-sm rounded-xl border border-primary/20 p-6 ${className}`}>
-      <h3 className="text-lg font-semibold mb-4 text-foreground">Recent Inventory</h3>
+    <div
+      className="bg-white border flex flex-col transition-all duration-300"
+      style={{
+        boxShadow: "0px 4px 14.2px 0px #0000001A",
+        width: isCollapsed ? 48 : 350,
+        minWidth: isCollapsed ? 48 : 350,
+        maxWidth: isCollapsed ? 48 : 350,
+        height: "100%",
+        overflow: "hidden",
+      }}
+    >
+      {/* Header */}
+      <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+        {!isCollapsed && (
+          <h3 className="text-base font-semibold" style={{ color: "#c72030" }}>Recent Inventory</h3>
+        )}
+        <button
+          onClick={() => setIsCollapsed((v) => {
+            const next = !v;
+            try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+            return next;
+          })}
+          title={isCollapsed ? "Expand" : "Collapse"}
+          className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+      </div>
 
-      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+      {/* Collapsed vertical label */}
+      {isCollapsed && (
+        <div className="flex-1 flex items-center justify-center">
+          <span
+            className="text-xs font-semibold tracking-widest"
+            style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+          >
+            Recent Inventory
+          </span>
+        </div>
+      )}
+
+      {!isCollapsed && (
+      <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {recentInventory.map((item) => (
           <div
             key={item.id}
@@ -215,6 +257,7 @@ export const RecentInventorySidebar: React.FC<RecentInventorySidebarProps> = ({
           </div>
         ))}
       </div>
+      )}
 
       <AddCommentModal
         open={showCommentModal}

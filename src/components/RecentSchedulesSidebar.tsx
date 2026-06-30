@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, RotateCcw } from 'lucide-react';
+import { Star, MessageSquare, Flag, ChevronLeft, ChevronRight, Building2, User, Globe, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AddCommentModal } from '@/components/AddCommentModal';
 
@@ -100,6 +100,9 @@ export function RecentSchedulesSidebar() {
     scheduleId: ''
   });
   const [flaggedSchedules, setFlaggedSchedules] = useState<Set<string>>(new Set());
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+  });
   const navigate = useNavigate();
 
   const handleAddComment = (scheduleId: string) => {
@@ -127,19 +130,52 @@ export function RecentSchedulesSidebar() {
 
   return (
     <>
-      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+      <div
+        className="bg-white border flex flex-col transition-all duration-300"
+        style={{
+          boxShadow: "0px 4px 14.2px 0px #0000001A",
+          width: isCollapsed ? 48 : 350,
+          minWidth: isCollapsed ? 48 : 350,
+          maxWidth: isCollapsed ? 48 : 350,
+          height: "100%",
+          overflow: "hidden",
+        }}
+      >
         {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-red-600 mb-2">
-            Recent Schedules
-          </h2>
-          <div className="text-sm font-medium text-gray-800">
-            14/07/2025
-          </div>
+        <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+          {!isCollapsed && (
+            <h2 className="text-base font-semibold" style={{ color: "#c72030" }}>
+              Recent Schedules
+            </h2>
+          )}
+          <button
+            onClick={() => setIsCollapsed((v) => {
+              const next = !v;
+              try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+              return next;
+            })}
+            title={isCollapsed ? "Expand" : "Collapse"}
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
-        
+
+        {/* Collapsed vertical label */}
+        {isCollapsed && (
+          <div className="flex-1 flex items-center justify-center">
+            <span
+              className="text-xs font-semibold tracking-widest"
+              style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+            >
+              Recent Schedules
+            </span>
+          </div>
+        )}
+
         {/* Schedules List */}
-        <div className="flex-1 overflow-y-auto space-y-4">
+        {!isCollapsed && (
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {recentSchedules.map((schedule, index) => (
             <div key={`${schedule.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-3 shadow-sm border border-[#C4B89D] border-opacity-60 min-w-0" style={{ borderWidth: '0.6px' }}>
               {/* Header with ID, Star, and Priority */}
@@ -250,6 +286,7 @@ export function RecentSchedulesSidebar() {
             </div>
           ))}
         </div>
+        )}
       </div>
 
       <AddCommentModal 
