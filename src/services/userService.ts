@@ -67,7 +67,8 @@ export interface UserInvitationPayload {
 
 export interface UserInvitationResponse {
   success: boolean;
-  message: string;
+  message?: string;
+  error?: string;
   invitation?: any;
 }
 

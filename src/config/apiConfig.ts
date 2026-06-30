@@ -312,9 +312,9 @@ export const API_CONFIG = {
     KPIS: "/kpis.json",
     USER_SETUP: "/jobs/setup", // Will append /:user_id
     USER_JOURNALS: "/user_journals.json",
-    TEAM_MEMBERS: "/business_compass/team_members",
-    BUSINESS_COMPASS_DEPARTMENTS: "/business_compass/departments",
-    BUSINESS_COMPASS_ROLES: "/business_compass/roles",
+    TEAM_MEMBERS: "/business_compass/team_members.json",
+    BUSINESS_COMPASS_DEPARTMENTS: "/business_compass/departments.json",
+    BUSINESS_COMPASS_ROLES: "/business_compass/roles.json",
     INVITE_USER: "/business_compass/invite_user",
     BULK_INVITE: "/business_compass/bulk_invite",
     PENDING_INVITATIONS: "/business_compass/pending_invitations",
