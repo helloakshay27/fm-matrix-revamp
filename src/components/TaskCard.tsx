@@ -36,8 +36,6 @@ const TaskCard = ({
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    console.log(task)
-
     const [countdown, setCountdown] = useState("");
 
     useEffect(() => {
