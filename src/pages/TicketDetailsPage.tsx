@@ -564,6 +564,12 @@ export const TicketDetailsPage = () => {
   const [isJobSheetModalOpen, setIsJobSheetModalOpen] = useState(false);
   const [jobSheetLoading, setJobSheetLoading] = useState(false);
 
+  // Feedback Modal state
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+
   // Real-time timer states
   const [responseEscalationSeconds, setResponseEscalationSeconds] = useState<number>(0);
   const [resolutionEscalationSeconds, setResolutionEscalationSeconds] = useState<number>(0);
@@ -1558,6 +1564,56 @@ export const TicketDetailsPage = () => {
 
     // Open the job sheet modal
     setIsJobSheetModalOpen(true);
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (!feedbackRating) {
+      toast.error('Please select a rating');
+      return;
+    }
+    setIsSubmittingFeedback(true);
+    try {
+      const payload = {
+        osr_log: {
+          about: 'ComplaintFeedback',
+          about_id: id?.toString(),
+          user_id: null,
+          comment: feedbackComment,
+          rating: feedbackRating.toString(),
+        },
+        osr_booking: {
+          osr_log: {
+            about: 'ComplaintFeedback',
+            about_id: id?.toString(),
+            user_id: null,
+            comment: feedbackComment,
+            rating: feedbackRating.toString(),
+          },
+        },
+      };
+      const response = await fetch(getFullUrl('/crm/create_osr_log.json'), {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        toast.success('Feedback submitted successfully!');
+        setIsFeedbackModalOpen(false);
+        setFeedbackRating(null);
+        setFeedbackComment('');
+        refreshTicketData();
+      } else {
+        const err = await response.json().catch(() => null);
+        toast.error(err?.message || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      toast.error('Failed to submit feedback');
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
   };
 
   // Handle file selection for customer comments
@@ -4265,12 +4321,22 @@ export const TicketDetailsPage = () => {
           <div className="flex items-center gap-3">
             {(activeTab === "details") || (activeTab === "analytics" && activeSubTab === "details") ? (
               // Show Job Sheet button when on Details tab OR when on Analytics > Ticket Details sub-tab
-              <Button
-                onClick={handleJobSheet}
-                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-              >
-                Job Sheet
-              </Button>
+              <>
+                <Button
+                  onClick={handleJobSheet}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  Job Sheet
+                </Button>
+                {isTicketClosed && (
+                  <Button
+                    onClick={() => setIsFeedbackModalOpen(true)}
+                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2"
+                  >
+                    Add Feedback
+                  </Button>
+                )}
+              </>
             ) : (
               // Show Logs, Create Task, and Edit buttons for all other tabs
               <>
@@ -7702,6 +7768,84 @@ export const TicketDetailsPage = () => {
                   </Card>
                 )}
 
+                {/* Feedbacks Card */}
+                {ticketData.feedbacks && Array.isArray(ticketData.feedbacks) && ticketData.feedbacks.length > 0 && (
+                  <Card className="w-full bg-white rounded-lg shadow-sm border">
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <Star className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Feedback
+                      </h3>
+                    </div>
+                    <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
+                      <div className="flex flex-col gap-4">
+                        {ticketData.feedbacks.map((feedback: { id: number; comment?: string; rating?: number; created_at?: string }) => {
+                          const rating = feedback.rating ?? 0;
+                          const emojis = [
+                            { emoji: '😞', label: 'Very Unhappy', activeColor: '#EF4444' },
+                            { emoji: '😕', label: 'Unhappy', activeColor: '#F97316' },
+                            { emoji: '😐', label: 'Neutral', activeColor: '#EAB308' },
+                            { emoji: '🙂', label: 'Happy', activeColor: '#84CC16' },
+                            { emoji: '😄', label: 'Very Happy', activeColor: '#22C55E' },
+                          ];
+                          return (
+                            <div key={feedback.id} className="bg-white rounded-lg border border-[#E5E0D3] p-4 flex flex-col gap-3">
+                              <div className="flex items-center gap-3">
+                                {emojis.map((item, idx) => {
+                                  const isActive = idx < rating;
+                                  return (
+                                    <div key={idx} className="flex flex-col items-center gap-1">
+                                      <span
+                                        style={{
+                                          fontSize: '28px',
+                                          filter: isActive ? 'none' : 'grayscale(100%)',
+                                          opacity: isActive ? 1 : 0.35,
+                                          transition: 'filter 0.2s, opacity 0.2s',
+                                        }}
+                                        title={item.label}
+                                      >
+                                        {item.emoji}
+                                      </span>
+                                      <span
+                                        className="text-[10px] font-medium"
+                                        style={{ color: isActive ? item.activeColor : '#9CA3AF' }}
+                                      >
+                                        {idx + 1}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                                {/* <div className="ml-2 flex items-center gap-1">
+                                  {Array.from({ length: 5 }).map((_, idx) => (
+                                    <Star
+                                      key={idx}
+                                      className="w-4 h-4"
+                                      style={{ color: idx < rating ? '#F59E0B' : '#D1D5DB' }}
+                                      fill={idx < rating ? '#F59E0B' : 'none'}
+                                    />
+                                  ))}
+                                  <span className="text-sm font-semibold text-gray-700 ml-1">{rating}/5</span>
+                                </div> */}
+                              </div>
+                              {feedback.comment && (
+                                <div className="flex items-start gap-2 bg-[#F6F4EE] rounded-md px-3 py-2">
+                                  <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                  <p className="text-sm text-gray-700">{feedback.comment}</p>
+                                </div>
+                              )}
+                              <div className="text-xs text-gray-400">
+                                {formatDateToDDMMYYYY(feedback.created_at)}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {isModalOpen && selectedDoc && (
                   <div
                     className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
@@ -11050,6 +11194,84 @@ export const TicketDetailsPage = () => {
               </Card>
             )}
 
+            {/* Feedbacks Card */}
+            {ticketData.feedbacks && Array.isArray(ticketData.feedbacks) && ticketData.feedbacks.length > 0 && (
+              <Card className="w-full bg-white rounded-lg shadow-sm border">
+                <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Star className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-black">
+                    Feedback
+                  </h3>
+                </div>
+                <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
+                  <div className="flex flex-col gap-4">
+                    {ticketData.feedbacks.map((feedback: { id: number; comment?: string; rating?: number; created_at?: string }) => {
+                      const rating = feedback.rating ?? 0;
+                      const emojis = [
+                        { emoji: '😞', label: 'Very Unhappy', activeColor: '#EF4444' },
+                        { emoji: '😕', label: 'Unhappy', activeColor: '#F97316' },
+                        { emoji: '😐', label: 'Neutral', activeColor: '#EAB308' },
+                        { emoji: '🙂', label: 'Happy', activeColor: '#84CC16' },
+                        { emoji: '😄', label: 'Very Happy', activeColor: '#22C55E' },
+                      ];
+                      return (
+                        <div key={feedback.id} className="bg-white rounded-lg border border-[#E5E0D3] p-4 flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            {emojis.map((item, idx) => {
+                              const isActive = idx < rating;
+                              return (
+                                <div key={idx} className="flex flex-col items-center gap-1">
+                                  <span
+                                    style={{
+                                      fontSize: '28px',
+                                      filter: isActive ? 'none' : 'grayscale(100%)',
+                                      opacity: isActive ? 1 : 0.35,
+                                      transition: 'filter 0.2s, opacity 0.2s',
+                                    }}
+                                    title={item.label}
+                                  >
+                                    {item.emoji}
+                                  </span>
+                                  <span
+                                    className="text-[10px] font-medium"
+                                    style={{ color: isActive ? item.activeColor : '#9CA3AF' }}
+                                  >
+                                    {idx + 1}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            {/* <div className="ml-2 flex items-center gap-1">
+                              {Array.from({ length: 5 }).map((_, idx) => (
+                                <Star
+                                  key={idx}
+                                  className="w-4 h-4"
+                                  style={{ color: idx < rating ? '#F59E0B' : '#D1D5DB' }}
+                                  fill={idx < rating ? '#F59E0B' : 'none'}
+                                />
+                              ))}
+                              <span className="text-sm font-semibold text-gray-700 ml-1">{rating}/5</span>
+                            </div> */}
+                          </div>
+                          {feedback.comment && (
+                            <div className="flex items-start gap-2 bg-[#F6F4EE] rounded-md px-3 py-2">
+                              <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-gray-700">{feedback.comment}</p>
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-400">
+                            {formatDateToDDMMYYYY(feedback.created_at)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="w-full bg-white rounded-lg shadow-sm border">
               {/* Header */}
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
@@ -11981,6 +12203,59 @@ export const TicketDetailsPage = () => {
                   </p>
                 </div>
               )}
+
+              {/* Feedbacks Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                      <MessageSquare className="w-6 h-6 text-[#C72030]" />
+                    </div>
+                    <span>FEEDBACKS</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {ticketData?.feedbacks && ticketData.feedbacks.length > 0 ? (
+                    <div className="space-y-4">
+                      {ticketData.feedbacks.map((fb: { id?: number; rating?: string | number; comment?: string; created_at?: string }, idx: number) => {
+                        const emojiMap: Record<number, string> = { 1: '😢', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
+                        const labelMap: Record<number, string> = { 1: 'Very Dissatisfied', 2: 'Dissatisfied', 3: 'Neutral', 4: 'Satisfied', 5: 'Very Satisfied' };
+                        const rating = Number(fb.rating);
+                        return (
+                          <div key={fb.id || idx} className="flex items-start gap-4 p-4 border rounded-lg bg-gray-50">
+                            <div className="flex flex-col items-center gap-1 min-w-[60px]">
+                              <span className="text-3xl">{emojiMap[rating] || '😐'}</span>
+                              <span className="text-xs text-gray-500 text-center">{labelMap[rating] || '-'}</span>
+                            </div>
+                            <div className="flex-1">
+                              {fb.comment && (
+                                <p className="text-sm text-gray-700">{fb.comment}</p>
+                              )}
+                              {fb.created_at && (
+                                <p className="text-xs text-gray-400 mt-1">{formatDateToDDMMYYYY(fb.created_at)}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
+                      <p className="text-gray-500">No feedbacks available</p>
+                      {isTicketClosed && (
+                        <Button
+                          onClick={() => setIsFeedbackModalOpen(true)}
+                          className="mt-3 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                          size="sm"
+                        >
+                          Add Feedback
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -12488,6 +12763,85 @@ export const TicketDetailsPage = () => {
         jobSheetData={ticketData}
         jobSheetLoading={jobSheetLoading}
       />
+
+      {/* Add Feedback Modal */}
+      {isFeedbackModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="bg-[#C72030] text-white text-xs font-semibold px-3 py-1 rounded">
+                  {ticketData?.issue_status || 'Closed'}
+                </span>
+              </div>
+              <button
+                onClick={() => { setIsFeedbackModalOpen(false); setFeedbackRating(null); setFeedbackComment(''); }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <h2 className="text-center text-xl font-bold text-[#C72030] mb-1">
+              {ticketData?.heading || 'Ticket'}
+            </h2>
+            <p className="text-center text-gray-600 mb-5 text-sm">
+              Please rate your experience with the ticket resolution
+            </p>
+
+            {/* Emoji Rating */}
+            <div className="flex justify-center gap-4 mb-3">
+              {([1, 2, 3, 4, 5] as const).map((val) => {
+                const emojiMap: Record<number, string> = { 1: '😢', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
+                const isSelected = feedbackRating === val;
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFeedbackRating(val)}
+                    className={`text-4xl transition-transform hover:scale-110 ${isSelected ? 'scale-125 drop-shadow-md' : 'opacity-50 grayscale'}`}
+                  >
+                    {emojiMap[val]}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-center text-sm text-gray-500 mb-4">
+              {feedbackRating
+                ? ({ 1: 'Very Dissatisfied', 2: 'Dissatisfied', 3: 'Neutral', 4: 'Satisfied', 5: 'Very Satisfied' } as Record<number, string>)[feedbackRating]
+                : 'Select a rating'}
+            </p>
+
+            {/* Comment */}
+            <textarea
+              className="w-full border border-gray-300 rounded-md p-3 text-sm resize-none focus:outline-none focus:border-[#C72030] mb-5"
+              rows={3}
+              placeholder="Add your feedback comment (optional)"
+              value={feedbackComment}
+              onChange={(e) => setFeedbackComment(e.target.value)}
+            />
+
+            {/* Actions */}
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => { setIsFeedbackModalOpen(false); setFeedbackRating(null); setFeedbackComment(''); }}
+                className="px-6 border-gray-300"
+              >
+                Skip
+              </Button>
+              <Button
+                onClick={handleFeedbackSubmit}
+                disabled={isSubmittingFeedback}
+                className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
+                {isSubmittingFeedback ? 'Submitting...' : 'Submit Rating'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
