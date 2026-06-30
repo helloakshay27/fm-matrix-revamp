@@ -341,10 +341,14 @@ const TeamSetup: React.FC = () => {
         });
         fetchUsers(1); // Refresh list to catch any status changes
       } else {
-        toast.error(res.message || "Failed to send invitation");
+        toast.error(res.error || res.message || "Failed to send invitation");
       }
-    } catch (error) {
-      toast.error("An error occurred while sending invitation");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "An error occurred while sending invitation"
+      );
     } finally {
       setIsInviting(false);
     }

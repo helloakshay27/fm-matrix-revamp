@@ -79,12 +79,13 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { Menu, MenuItem } from "@mui/material";
-import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
-import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
-import AddIssueModal from "@/components/AddIssueModal";
-import EditIssueModal from "@/components/EditIssueModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
-import AddToDoModal from "@/components/AddToDoModal";
+import BCTaskCreateModal from "@/components/BusinessCompass/BCTaskCreateModal";
+import BCIssueCreateModal from "@/components/BusinessCompass/BCIssueCreateModal";
+import BCTodoCreateModal from "@/components/BusinessCompass/BCTodoCreateModal";
+import BCTaskEditModal from "@/components/BusinessCompass/BCTaskEditModal";
+import BCIssueEditModal from "@/components/BusinessCompass/BCIssueEditModal";
+import BCTodoEditModal from "@/components/BusinessCompass/BCTodoEditModal";
 import { TransitionProps } from "@mui/material/transitions";
 import { useNavigate } from "react-router-dom";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
@@ -735,7 +736,7 @@ const WeeklyReports = () => {
                 params.append("for_week", `${year}-W${weekNum}`);
 
                 const response = await fetch(
-                    `${normalizedBaseUrl}/task_managements/my_tasks.json?${params.toString()}`,
+                    `${normalizedBaseUrl}/business_compass/tasks?${params.toString()}`,
                     {
                         headers: {
                             Accept: "application/json",
@@ -777,7 +778,7 @@ const WeeklyReports = () => {
                 params.append("q[responsible_person_id_eq]", String(userId));
 
                 const response = await fetch(
-                    `${normalizedBaseUrl}/issues.json?${params.toString()}`,
+                    `${normalizedBaseUrl}/business_compass/issues?${params.toString()}`,
                     {
                         headers: {
                             Accept: "application/json",
@@ -818,7 +819,7 @@ const WeeklyReports = () => {
                 params.append("for_week", `${year}-W${weekNum}`);
 
                 const response = await fetch(
-                    `${normalizedBaseUrl}/todos.json?${params.toString()}`,
+                    `${normalizedBaseUrl}/business_compass/todos?${params.toString()}`,
                     {
                         headers: {
                             Accept: "application/json",
@@ -866,7 +867,7 @@ const WeeklyReports = () => {
                 };
 
                 const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
-                    fetch(`${normalizedBaseUrl}/task_managements/my_tasks.json?for_week=${forWeek}`, { headers }),
+                    fetch(`${normalizedBaseUrl}/business_compass/tasks?for_week=${forWeek}`, { headers }),
                     fetch(`${normalizedBaseUrl}/issues.json?for_week=${forWeek}&q[responsible_person_id_eq]=${userId}`, { headers }),
                     fetch(`${normalizedBaseUrl}/todos.json?for_week=${forWeek}&q[user_id_eq]=${userId}`, { headers }),
                 ]);
@@ -5532,51 +5533,27 @@ const WeeklyReports = () => {
                 </Tabs>
             </div>
 
-            {openTaskModal && (
-            <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
-                <MuiDialogContent className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
-                    <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
-                        <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
-                        <hr className="border border-[#E95420] mt-4" />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                        <ProjectTaskCreateModal
-                            isEdit={false}
-                            onCloseModal={() => setOpenTaskModal(false)}
-                            prefillData={{
-                                start_date: planPreFillDate ?? currentDateValue,
-                            }}
-                        />
-                    </div>
-                </MuiDialogContent>
-            </MuiDialog>
-            )}
+            <BCTaskCreateModal
+                isOpen={openTaskModal}
+                onClose={() => setOpenTaskModal(false)}
+                onSuccess={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                baseUrl={baseUrl || ""}
+                token={token || ""}
+            />
 
-            {openIssueModal && (
-                <AddIssueModal
-                    openDialog={openIssueModal}
-                    handleCloseDialog={() => setOpenIssueModal(false)}
-                    prefillData={{
-                        start_date: planPreFillDate ?? currentDateValue,
-                    }}
-                />
-            )}
+            <BCIssueCreateModal
+                isOpen={openIssueModal}
+                onClose={() => setOpenIssueModal(false)}
+                onSuccess={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                baseUrl={baseUrl || ""}
+                token={token || ""}
+            />
 
-            {openTodoModal && (
-                <AddToDoModal
-                    isModalOpen={openTodoModal}
-                    setIsModalOpen={() => {
-                        setOpenTodoModal(false);
-                        setTasksIssuesRefreshKey((key) => key + 1);
-                    }}
-                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                    prefillData={{
-                        start_date: planPreFillDate ?? currentDateValue,
-                        // target_date: weekEndDateValue,
-                    }}
-                />
-            )}
+            <BCTodoCreateModal
+                isOpen={openTodoModal}
+                onClose={() => setOpenTodoModal(false)}
+                onSuccess={() => setTasksIssuesRefreshKey((key) => key + 1)}
+            />
 
             {isTodoDetailsModalOpen && (
                 <TodoDetailsModal
@@ -5591,72 +5568,39 @@ const WeeklyReports = () => {
                 />
             )}
 
-            {isEditTaskModalOpen && (
-            <MuiDialog
-                open={isEditTaskModalOpen}
+            <BCTaskEditModal
+                isOpen={isEditTaskModalOpen}
                 onClose={() => {
                     setIsEditTaskModalOpen(false);
                     setEditTaskData(null);
                 }}
-                TransitionComponent={Transition}
-                maxWidth={false}
-            >
-                <MuiDialogContent
-                    className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
-                    sx={{ padding: "0 !important" }}
-                >
-                    <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Edit Task</h3>
-                        <X
-                            className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
-                            onClick={() => {
-                                setIsEditTaskModalOpen(false);
-                                setEditTaskData(null);
-                            }}
-                        />
-                        <hr className="border border-[#E95420] mt-4" />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                        <ProjectTaskEditModal
-                            taskId={editTaskData?.id}
-                            onCloseModal={() => {
-                                setIsEditTaskModalOpen(false);
-                                setEditTaskData(null);
-                                setTasksIssuesRefreshKey((key) => key + 1);
-                            }}
-                        />
-                    </div>
-                </MuiDialogContent>
-            </MuiDialog>
-            )}
+                onSuccess={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                baseUrl={baseUrl || ""}
+                token={token || ""}
+                editData={editTaskData}
+            />
 
-            {isEditIssueModalOpen && (
-                <EditIssueModal
-                    openDialog={isEditIssueModalOpen}
-                    handleCloseDialog={() => {
-                        setIsEditIssueModalOpen(false);
-                        setEditIssueData(null);
-                    }}
-                    issueData={editIssueData}
-                    onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                />
-            )}
+            <BCIssueEditModal
+                isOpen={isEditIssueModalOpen}
+                onClose={() => {
+                    setIsEditIssueModalOpen(false);
+                    setEditIssueData(null);
+                }}
+                onSuccess={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                baseUrl={baseUrl || ""}
+                token={token || ""}
+                editData={editIssueData}
+            />
 
-            {isEditTodoModalOpen && (
-                <AddToDoModal
-                    isModalOpen={isEditTodoModalOpen}
-                    setIsModalOpen={() => {
-                        setIsEditTodoModalOpen(false);
-                        setEditTodoData(null);
-                        setTasksIssuesRefreshKey((key) => key + 1);
-                    }}
-                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                    editingTodo={editTodoData}
-                    isEditMode={!!editTodoData}
-                    prefillData={editTodoData || {}}
-                />
-            )}
+            <BCTodoEditModal
+                isOpen={isEditTodoModalOpen}
+                onClose={() => {
+                    setIsEditTodoModalOpen(false);
+                    setEditTodoData(null);
+                }}
+                onSuccess={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                editData={editTodoData}
+            />
 
             {isOverdueModalOpen && (
                 <OverdueReasonModal
