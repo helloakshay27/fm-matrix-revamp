@@ -1,5 +1,9 @@
 {
   "permissions": {
-    "allow": ["WebFetch(domain:posthog.com)", "Bash(npm uninstall *)"]
+    "allow": [
+      "WebFetch(domain:posthog.com)",
+      "Bash(npm uninstall *)",
+      "Bash(grep -r \"jquery\\\\|jQuery\\\\|\\\\$\\(\" src/ --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" -l)"
+    ]
   }
 }
