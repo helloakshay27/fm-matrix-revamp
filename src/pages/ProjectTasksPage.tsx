@@ -2215,7 +2215,7 @@ const ProjectTasksPage = () => {
             toast.success("Task started successfully");
         } catch (error) {
             console.log(error);
-            toast.error("Failed to start task");
+            toast.error(error.response?.data?.error || "Failed to start task");
         }
     };
 
