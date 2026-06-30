@@ -336,7 +336,12 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          is_vendor: response.is_vendor,
+          supplier_id: response.supplier_id,
         });
+        if (response.supplier_id) {
+          localStorage.setItem("vendor_id", response.supplier_id.toString());
+        }
 
         saveBaseUrl(baseUrl);
         localStorage.setItem("userId", response.id?.toString() || "");
@@ -381,7 +386,12 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          is_vendor: response.is_vendor,
+          supplier_id: response.supplier_id,
         });
+        if (response.supplier_id) {
+          localStorage.setItem("vendor_id", response.supplier_id.toString());
+        }
 
         saveBaseUrl(baseUrl);
         localStorage.setItem("userId", response.id?.toString() || "");
@@ -417,7 +427,12 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
         user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
+        is_vendor: response.is_vendor,
+        supplier_id: response.supplier_id,
       });
+      if (response.supplier_id) {
+        localStorage.setItem("vendor_id", response.supplier_id.toString());
+      }
       saveToken(response.access_token);
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
