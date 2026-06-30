@@ -2252,6 +2252,15 @@ function App() {
                               element={<ChatTaskDetailsPage />}
                             />
                             <Route
+                              path="/business-compass"
+                              element={
+                                <Navigate
+                                  to="/business-compass/dashboard"
+                                  replace
+                                />
+                              }
+                            />
+                            <Route
                               path="/business-compass/profile"
                               element={<BusinessCompassProfile />}
                             />
