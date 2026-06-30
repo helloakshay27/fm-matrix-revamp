@@ -393,8 +393,8 @@ const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
                     cacheKey,
                     async () => {
                         const endpoint = taskType === "my"
-                            ? `${baseURL}/task_managements/my_tasks.json`
-                            : `${baseURL}/task_managements.json`;
+                            ? `${baseURL}/task_managements/kanban.json?q[responsible_person_id_eq]=${localStorage.getItem("userId")}`
+                            : `${baseURL}/task_managements/kanban.json`;
 
                         const response = await axios.get(endpoint, {
                             params,
@@ -402,6 +402,7 @@ const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
                         });
 
                         const data = response.data;
+
                         return data?.task_managements || data?.data?.task_managements || (Array.isArray(data) ? data : []);
                     },
                     2 * 60 * 1000,
@@ -467,8 +468,8 @@ const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
                     });
 
                     // Predecessor links between tasks
-                    if (Array.isArray(task.predecessor_task)) {
-                        task.predecessor_task.flat(Infinity).filter(Boolean).forEach((predId: any) => {
+                    if (Array.isArray(task.predecessor_task_ids)) {
+                        task.predecessor_task_ids.flat(Infinity).filter(Boolean).forEach((predId: any) => {
                             linksData.push({
                                 id: `link-task-${task.id}-pred-${predId}`,
                                 source: `task-${predId}`,
