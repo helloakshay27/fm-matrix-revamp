@@ -949,8 +949,8 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             </div>
 
             {showRecentAssets ? (
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
-                    <div className="lg:col-span-8">
+                <div className="flex flex-col xl:flex-row gap-2 min-h-[calc(100vh-200px)]">
+                    <div className="flex-1 min-w-0">
                         <div className={`space-y-6 ${className}`}>
                             {renderErrorMessages()}
 
@@ -970,8 +970,8 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                         </div>
                     </div>
 
-                    {/* Right Sidebar - Recent Assets (1 column) */}
-                    <div className="lg:col-span-4">
+                    {/* Right Sidebar - Recent Assets */}
+                    <div className="flex-shrink-0 self-stretch">
                         <RecentAssetsSidebar />
                     </div>
                 </div>

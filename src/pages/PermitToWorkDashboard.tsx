@@ -1442,8 +1442,8 @@ export const PermitToWorkDashboard = () => {
           </div>
 
           {/* Grid Layout: Charts (left) + Recent Permits Sidebar (right) */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            <div className="xl:col-span-8 space-y-6">
+          <div className="flex flex-col xl:flex-row gap-6 min-h-[calc(100vh-200px)]">
+            <div className="flex-1 min-w-0 space-y-6">
               {/* Chart Grid — draggable, only show selected charts */}
               <DndContext
             sensors={sensors}
@@ -1506,7 +1506,7 @@ export const PermitToWorkDashboard = () => {
             </div>{/* end xl:col-span-8 */}
 
             {/* Recent Permits Sidebar */}
-            <div className="xl:col-span-4">
+            <div className="flex-shrink-0 self-stretch">
               <RecentPermitsSidebar permits={permits} loading={loading} />
             </div>
           </div>{/* end xl:grid-cols-12 */}

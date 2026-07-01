@@ -811,8 +811,8 @@ export const AttendanceDashboard = () => {
             <div className="flex justify-end">
               <AttendanceSelector onSelectionChange={handleSelectionChange} />
             </div>
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
-              <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+            <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
+              <div className="flex-1 min-w-0 space-y-4 sm:space-y-6">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -1115,7 +1115,7 @@ export const AttendanceDashboard = () => {
                   </SortableContext>
                 </DndContext>
               </div>
-              <div className="xl:col-span-4 order-first xl:order-last">
+              <div className="flex-shrink-0 self-stretch order-first xl:order-last">
                 <RecentAttendanceSidebar />
               </div>
             </div>
