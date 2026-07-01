@@ -1224,7 +1224,6 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
-import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
 import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
@@ -2271,10 +2270,6 @@ function App() {
                             <Route
                               path="/business-compass/daily-report"
                               element={<BusinessCompassDailyReport />}
-                            />
-                            <Route
-                              path="/business-compass/ceo-dashboard"
-                              element={<PATMCeoDashboard />}
                             />
                             <Route
                               path="/business-compass/weekly-report"
@@ -4804,7 +4799,10 @@ function App() {
                               path="/accounting/vendor/edit/:id"
                               element={<EditVendorPage />}
                             ></Route>
-
+                            <Route
+                              path="/vas/ceo-dashboard"
+                              element={<PATMCeoDashboard />}
+                            />
                             <Route
                               path="/vas/projects"
                               element={<ProjectsDashboard />}

@@ -1,11 +1,8 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import axios from "axios";
+import React, { useEffect, useRef } from "react";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { getBaseUrl } from "@/utils/auth";
-import { cache } from "@/utils/cacheUtils";
+import { useGanttTasks, useUpdateGanttTask } from "@/hooks/useGanttChart";
 
 const ganttStyles = `
     .gantt_task_row,
@@ -136,15 +133,152 @@ interface TasksGanttChartProps {
     filters?: Record<string, any>;
 }
 
+function formatDateDMY(dateStr: string) {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+function formatEndDateDMY(dateStr: string) {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + 1);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+function calcDuration(startStr: string, endStr: string) {
+    if (!startStr || !endStr) return 1;
+    const [ds, ms, ys] = startStr.split("-");
+    const [de, me, ye] = endStr.split("-");
+    const start = new Date(`${ys}-${ms}-${ds}`);
+    const end = new Date(`${ye}-${me}-${de}`);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+    const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 1;
+}
+
+function fmtISO(date: Date) {
+    if (!date) return null;
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function fmtEndISO(date: Date) {
+    if (!date) return null;
+    const d = new Date(date);
+    d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
     projectId,
     milestoneId,
     taskType = "all",
     filters = {},
 }) => {
-    const ganttContainer = useRef(null);
+    const ganttContainer = useRef<HTMLDivElement | null>(null);
     const [scale, setScale] = React.useState("week");
     const navigate = useNavigate();
+
+    const { data: rawTasks = [] } = useGanttTasks({
+        projectId,
+        milestoneId,
+        taskType,
+        filters,
+    });
+
+    const updateMutation = useUpdateGanttTask();
+
+    const rawTasksRef = useRef(rawTasks);
+    rawTasksRef.current = rawTasks;
+    const ganttReadyRef = useRef(false);
+
+    function loadGanttData() {
+        if (!ganttReadyRef.current || !ganttContainer.current) return;
+
+        const tasks = rawTasksRef.current;
+        if (!tasks.length) {
+            gantt.clearAll();
+            return;
+        }
+
+        const tasksData: any[] = [];
+        const linksData: any[] = [];
+
+        tasks.forEach((task: any) => {
+            const taskGanttId = `task-${task.id}`;
+            const startStr = formatDateDMY(task.expected_start_date || new Date().toISOString());
+            const endStr = formatEndDateDMY(task.target_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
+
+            tasksData.push({
+                navigationid: task.id,
+                id: taskGanttId,
+                text: task.title || "Untitled Task",
+                start_date: startStr,
+                end_date: endStr,
+                duration: calcDuration(startStr, endStr),
+                progress: (task.completion_percent ?? 0) / 100,
+                completionPercent: task.completion_percent ?? 0,
+                totalSubTasks: task.total_sub_tasks ?? 0,
+                completedSubTasks: task.completed_sub_tasks ?? 0,
+                status: task.status || "open",
+                owner: task.responsible_person?.name || task.responsible_person_name || "",
+                parent: 0,
+                type: "task",
+                open: false,
+            });
+
+            if (Array.isArray(task.predecessor_task_ids)) {
+                task.predecessor_task_ids.flat(Infinity).filter(Boolean).forEach((predId: any) => {
+                    linksData.push({
+                        id: `link-task-${task.id}-pred-${predId}`,
+                        source: `task-${predId}`,
+                        target: taskGanttId,
+                        type: "0",
+                    });
+                });
+            }
+
+            if (Array.isArray(task.sub_tasks_managements)) {
+                task.sub_tasks_managements.forEach((sub: any) => {
+                    const subGanttId = `subtask-${sub.id}`;
+                    const subStart = formatDateDMY(sub.expected_start_date || task.expected_start_date || new Date().toISOString());
+                    const subEnd = formatEndDateDMY(sub.target_date || task.target_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
+
+                    tasksData.push({
+                        navigationid: sub.id,
+                        parentTaskId: task.id,
+                        id: subGanttId,
+                        text: sub.title || "Untitled Subtask",
+                        start_date: subStart,
+                        end_date: subEnd,
+                        duration: calcDuration(subStart, subEnd),
+                        progress: sub.status?.toLowerCase() === "completed" ? 1.0 : 0.0,
+                        status: sub.status || "open",
+                        owner: sub.responsible_person?.name || "",
+                        parent: taskGanttId,
+                        type: "sub_task",
+                    });
+                });
+            }
+        });
+
+        const validTasks = tasksData.filter((t) => t.id && t.text);
+        gantt.clearAll();
+        try {
+            gantt.parse({ data: validTasks, links: linksData });
+            gantt.render();
+            setTimeout(() => gantt.render(), 100);
+        } catch (err) {
+            console.error("Error parsing gantt data:", err);
+        }
+    }
 
     // Navigate to task detail on eye icon click
     useEffect(() => {
@@ -178,6 +312,7 @@ const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
         return () => container?.removeEventListener("click", handleNavigationClick);
     }, [navigate, projectId, milestoneId]);
 
+    // Gantt initialization
     useEffect(() => {
         gantt.config.row_height = 36;
         gantt.config.task_height = 16;
@@ -364,164 +499,12 @@ const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
             };
             gantt.templates.rightside_text = function () { return ""; };
             gantt.init(ganttContainer.current);
+            ganttReadyRef.current = true;
+            loadGanttData();
         } else {
+            ganttReadyRef.current = false;
             return;
         }
-
-        const fetchTasksData = async () => {
-            try {
-                const baseURL = getBaseUrl();
-                const token = localStorage.getItem("token");
-
-                // Build query params
-                const params: Record<string, any> = {
-                    per_page: 500,
-                    page: 1,
-                };
-
-                if (projectId) params["q[project_management_id_eq]"] = projectId;
-                if (milestoneId) params["q[milestone_id_eq]"] = milestoneId;
-
-                // Apply additional filters
-                Object.entries(filters).forEach(([k, v]) => {
-                    params[k] = v;
-                });
-
-                const cacheKey = `tasks_gantt_${projectId || "all"}_${milestoneId || "all"}_${taskType}`;
-
-                const cachedResult = await cache.getOrFetch(
-                    cacheKey,
-                    async () => {
-                        const endpoint = taskType === "my"
-                            ? `${baseURL}/task_managements/kanban.json?q[responsible_person_id_eq]=${localStorage.getItem("userId")}`
-                            : `${baseURL}/task_managements/kanban.json`;
-
-                        const response = await axios.get(endpoint, {
-                            params,
-                            headers: { Authorization: `Bearer ${token}` },
-                        });
-
-                        const data = response.data;
-
-                        return data?.task_managements || data?.data?.task_managements || (Array.isArray(data) ? data : []);
-                    },
-                    2 * 60 * 1000,
-                    10 * 60 * 1000
-                );
-
-                const rawTasks = (cachedResult.data as unknown[]) || [];
-
-                const tasksData: any[] = [];
-                const linksData: any[] = [];
-
-                function formatDateDMY(dateStr: string) {
-                    if (!dateStr) return "";
-                    const date = new Date(dateStr);
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const year = date.getFullYear();
-                    return `${day}-${month}-${year}`;
-                }
-
-                function formatEndDateDMY(dateStr: string) {
-                    if (!dateStr) return "";
-                    const date = new Date(dateStr);
-                    date.setDate(date.getDate() + 1);
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const year = date.getFullYear();
-                    return `${day}-${month}-${year}`;
-                }
-
-                function calcDuration(startStr: string, endStr: string) {
-                    if (!startStr || !endStr) return 1;
-                    const [ds, ms, ys] = startStr.split("-");
-                    const [de, me, ye] = endStr.split("-");
-                    const start = new Date(`${ys}-${ms}-${ds}`);
-                    const end = new Date(`${ye}-${me}-${de}`);
-                    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
-                    const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                    return diff > 0 ? diff : 1;
-                }
-
-                (rawTasks as any[]).forEach((task: any) => {
-                    const taskGanttId = `task-${task.id}`;
-                    const startStr = formatDateDMY(task.expected_start_date || new Date().toISOString());
-                    const endStr = formatEndDateDMY(task.target_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
-
-                    tasksData.push({
-                        navigationid: task.id,
-                        id: taskGanttId,
-                        text: task.title || "Untitled Task",
-                        start_date: startStr,
-                        end_date: endStr,
-                        duration: calcDuration(startStr, endStr),
-                        progress: (task.completion_percent ?? 0) / 100,
-                        completionPercent: task.completion_percent ?? 0,
-                        totalSubTasks: task.total_sub_tasks ?? 0,
-                        completedSubTasks: task.completed_sub_tasks ?? 0,
-                        status: task.status || "open",
-                        owner: task.responsible_person?.name || task.responsible_person_name || "",
-                        parent: 0,
-                        type: "task",
-                        open: false,
-                    });
-
-                    // Predecessor links between tasks
-                    if (Array.isArray(task.predecessor_task_ids)) {
-                        task.predecessor_task_ids.flat(Infinity).filter(Boolean).forEach((predId: any) => {
-                            linksData.push({
-                                id: `link-task-${task.id}-pred-${predId}`,
-                                source: `task-${predId}`,
-                                target: taskGanttId,
-                                type: "0",
-                            });
-                        });
-                    }
-
-                    // Subtasks
-                    if (Array.isArray(task.sub_tasks_managements)) {
-                        task.sub_tasks_managements.forEach((sub: any) => {
-                            const subGanttId = `subtask-${sub.id}`;
-                            const subStart = formatDateDMY(sub.expected_start_date || task.expected_start_date || new Date().toISOString());
-                            const subEnd = formatEndDateDMY(sub.target_date || task.target_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
-
-                            tasksData.push({
-                                navigationid: sub.id,
-                                parentTaskId: task.id,
-                                id: subGanttId,
-                                text: sub.title || "Untitled Subtask",
-                                start_date: subStart,
-                                end_date: subEnd,
-                                duration: calcDuration(subStart, subEnd),
-                                progress: sub.status?.toLowerCase() === "completed" ? 1.0 : 0.0,
-                                status: sub.status || "open",
-                                owner: sub.responsible_person?.name || "",
-                                parent: taskGanttId,
-                                type: "sub_task",
-                            });
-                        });
-                    }
-                });
-
-                gantt.clearAll();
-
-                const validTasks = tasksData.filter((t) => t.id && t.text);
-
-                try {
-                    gantt.parse({ data: validTasks, links: linksData });
-                    gantt.render();
-                    setTimeout(() => gantt.render(), 100);
-                } catch (err) {
-                    console.error("Error parsing gantt data:", err);
-                }
-            } catch (error) {
-                console.error("Error loading tasks for Gantt:", error);
-                toast.error("Failed to load Gantt data");
-            }
-        };
-
-        fetchTasksData();
 
         // Drag-to-update handler
         let isUpdating = false;
@@ -534,22 +517,6 @@ const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
                 updateTimeout = setTimeout(() => {
                     if (isUpdating) return;
                     isUpdating = true;
-
-                    const baseURL = getBaseUrl();
-                    const token = localStorage.getItem("token");
-
-                    function fmtISO(date: Date) {
-                        if (!date) return null;
-                        const d = new Date(date);
-                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                    }
-
-                    function fmtEndISO(date: Date) {
-                        if (!date) return null;
-                        const d = new Date(date);
-                        d.setDate(d.getDate() - 1);
-                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                    }
 
                     let entityId = "";
                     if (taskId.startsWith("task-")) {
@@ -570,34 +537,26 @@ const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
                         },
                     };
 
-                    axios
-                        .put(`${baseURL}/task_managements/${entityId}.json`, payload, {
-                            headers: {
-                                "Content-Type": "application/json",
-                                Authorization: `Bearer ${token}`,
-                            },
-                        })
-                        .then(() => {
-                            toast.success("Task updated successfully!");
-                            cache.invalidatePattern(`tasks_gantt_`);
-                        })
-                        .catch((err) => {
-                            console.error("Error updating task:", err);
-                            toast.error("Failed to update task.");
-                        })
-                        .finally(() => {
-                            isUpdating = false;
-                        });
+                    updateMutation.mutate(
+                        { id: entityId, data: payload },
+                        { onSettled: () => { isUpdating = false; } }
+                    );
                 }, 1000);
             }
         );
 
         return () => {
+            ganttReadyRef.current = false;
             if (taskUpdateHandler) gantt.detachEvent(taskUpdateHandler);
             if (updateTimeout) clearTimeout(updateTimeout);
             if (gantt?.clearAll) gantt.clearAll();
         };
-    }, [scale, projectId, milestoneId, taskType]);
+    }, [scale]);
+
+    // Load data into gantt when query result changes
+    useEffect(() => {
+        loadGanttData();
+    }, [rawTasks]);
 
     return (
         <div style={{ overflowX: "auto", width: "100%" }}>
