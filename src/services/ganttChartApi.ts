@@ -9,8 +9,8 @@ export const fetchGanttTasks = async (
 
   const endpoint =
     taskType === "my"
-      ? `${baseURL}/task_managements/kanban.json?q[responsible_person_id_eq]=${localStorage.getItem("userId")}&order_direction=asc&order_by=created_at`
-      : `${baseURL}/task_managements/kanban.json?order_direction=asc&order_by=created_at`;
+      ? `https://${baseURL}/task_managements/kanban.json?q[responsible_person_id_eq]=${localStorage.getItem("userId")}&order_direction=asc&order_by=created_at`
+      : `https://${baseURL}/task_managements/kanban.json?order_direction=asc&order_by=created_at`;
 
   const response = await axios.get(endpoint, {
     params,
