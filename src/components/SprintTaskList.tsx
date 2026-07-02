@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  Trash,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -58,6 +59,7 @@ export default function SprintTaskList({
   const [users, setUsers] = useState<any[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
 
+  const [unlinkingTaskId, setUnlinkingTaskId] = useState<number | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedResponsible, setSelectedResponsible] = useState<number[]>([]);
@@ -322,6 +324,22 @@ export default function SprintTaskList({
     }
   };
 
+  const handleUnlinkTask = async (taskId: number) => {
+    setUnlinkingTaskId(taskId);
+    try {
+      await axios.delete(`https://${baseUrl}/sprints/${sprintId}/unlink`, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        data: { task_ids: [taskId] },
+      });
+      toast.success("Task unlinked from sprint");
+      fetchTasks();
+    } catch {
+      toast.error("Failed to unlink task");
+    } finally {
+      setUnlinkingTaskId(null);
+    }
+  };
+
   const calcTaskDuration = (
     start?: string,
     end?: string
@@ -417,6 +435,9 @@ export default function SprintTaskList({
           <div className="flex items-center justify-center gap-2">
             <Button size="sm" variant="ghost" className="p-1" onClick={() => navigate(`/vas/tasks/${item.id}`)} title="View Task">
               <Eye className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant="ghost" className="p-1" onClick={() => handleUnlinkTask(item.id)} title="Unlink from Sprint" disabled={unlinkingTaskId === item.id}>
+              {unlinkingTaskId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash className="w-4 h-4" />}
             </Button>
           </div>
         );
