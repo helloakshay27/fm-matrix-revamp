@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Play, Pause, Loader2 } from "lucide-react";
+import { Eye, Play, Pause, Loader2, Trash } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import {
@@ -140,6 +140,7 @@ export default function SprintIssueList({
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [pauseIssueId, setPauseIssueId] = useState<number | null>(null);
   const [isPauseLoading, setIsPauseLoading] = useState(false);
+  const [unlinkingIssueId, setUnlinkingIssueId] = useState<number | null>(null);
   const [issueSearchQuery, setIssueSearchQuery] = useState("");
   const [issueTempSearch, setIssueTempSearch] = useState("");
   const debounceTimerIssue = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -239,6 +240,22 @@ export default function SprintIssueList({
     } catch { toast.error("Failed to pause issue"); } finally { setIsPauseLoading(false); }
   };
 
+  const handleUnlinkIssue = async (issueId: number) => {
+    setUnlinkingIssueId(issueId);
+    try {
+      await axios.delete(`https://${baseUrl}/sprints/${sprintId}/unlink`, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        data: { issue_ids: [issueId] },
+      });
+      toast.success("Issue unlinked from sprint");
+      fetchIssues(appliedFilters, currentPage, issueSearchQuery);
+    } catch {
+      toast.error("Failed to unlink issue");
+    } finally {
+      setUnlinkingIssueId(null);
+    }
+  };
+
   const handleEndIssueSubmit = async (reason: string, iid: number) => {
     setIsPauseLoading(true);
     try {
@@ -255,6 +272,9 @@ export default function SprintIssueList({
         <div className="flex items-center justify-center gap-2">
           <Button size="sm" variant="ghost" className="p-1" onClick={() => navigate(`/vas/issues/${item.id}`)} title="View Issue">
             <Eye className="w-4 h-4" />
+          </Button>
+          <Button size="sm" variant="ghost" className="p-1" onClick={() => handleUnlinkIssue(Number(item.id))} title="Unlink from Sprint" disabled={unlinkingIssueId === Number(item.id)}>
+            {unlinkingIssueId === Number(item.id) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash className="w-4 h-4" />}
           </Button>
         </div>
       );
