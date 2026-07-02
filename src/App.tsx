@@ -1230,6 +1230,7 @@ import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
+import SalesBySalesPersonDetails from "./pages/SalesBySalesPersonDetails.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -3212,6 +3213,18 @@ function App() {
                             <Route
                               path="/accounting/reports/sales-by-sales-person"
                               element={<SalesBySalesPersonReport />}
+                            />
+                            <Route
+                              path="/accounting/reports/sales-by-sales-person/details"
+                              element={<SalesBySalesPersonDetails />}
+                            />
+                            <Route
+                              path="/reports/sales-by-sp"
+                              element={<SalesBySalesPersonReport />}
+                            />
+                            <Route
+                              path="/reports/sales-details-by-sp"
+                              element={<SalesBySalesPersonDetails />}
                             />
                             <Route
                               path="/accounting/reports/sales-summary"
