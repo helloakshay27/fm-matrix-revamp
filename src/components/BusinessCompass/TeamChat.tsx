@@ -8,13 +8,13 @@ const TeamChat = () => {
     return (
         <div className="flex flex-col h-[calc(100vh-280px)] min-h-[600px] bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm mt-6">
             {/* Header Section */}
-            <div className="bg-gradient-to-r from-[#A31616] via-[#630D0D] to-[#000000] p-6 text-white space-y-4 rounded-t-xl">
+            <div className="bg-gradient-to-r from-[#A31616] via-[#630D0D] to-[#000000] p-4 sm:p-6 text-white space-y-4 rounded-t-xl">
                 <div className="flex items-center gap-3">
                     <div className="bg-[#FFFFFF33] p-2.5 rounded-xl">
                         <MessageSquare className="w-6 h-6 fill-white/20" />
                     </div>
-                    <div>
-                        <h2 className="text-xl font-bold leading-tight">Team Chat</h2>
+                    <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold leading-tight">Team Chat</h2>
                         <div className="flex items-center gap-1.5 text-white/70 text-sm mt-0.5">
                             <Users className="w-3.5 h-3.5" />
                             <span>16 members</span>
@@ -32,7 +32,7 @@ const TeamChat = () => {
             </div>
 
             {/* Content Area */}
-            <ScrollArea className="flex-1 p-6 flex flex-col items-center justify-center min-h-[300px]">
+            <ScrollArea className="flex-1 p-4 sm:p-6 flex flex-col items-center justify-center min-h-[300px]">
                 <div className="h-full w-full flex flex-col items-center justify-center text-center space-y-4 py-20">
                     <div className="bg-gray-50 p-6 rounded-2xl">
                         <MessageSquare className="w-12 h-12 text-gray-300" strokeWidth={1.5} />

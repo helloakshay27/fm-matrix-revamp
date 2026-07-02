@@ -2937,63 +2937,91 @@ export const QuotesAdd: React.FC = () => {
                                                 <span className="font-semibold text-gray-700 text-sm">Address</span>
                                                 {addressExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                             </div>
-                                            {addressExpanded && (
-                                                <div className="p-4 space-y-3">
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-                                                            <span>📋</span> Billing Address
-                                                        </div>
-                                                        {customerDetail.billing_address?.address ? (
-                                                            <div className="text-xs text-gray-700 leading-relaxed">
-                                                                <div>{customerDetail.billing_address.address}</div>
-                                                                {customerDetail.billing_address.address_line_two && (
-                                                                    <div>{customerDetail.billing_address.address_line_two}</div>
-                                                                )}
-                                                                <div>
-                                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
-                                                                        .filter(Boolean)
-                                                                        .join(", ")}
-                                                                    {customerDetail.billing_address.pin_code
-                                                                        ? " " + customerDetail.billing_address.pin_code
-                                                                        : ""}
-                                                                </div>
-                                                                {customerDetail.billing_address.country && (
-                                                                    <div>{customerDetail.billing_address.country}</div>
-                                                                )}
+                                            {addressExpanded && (() => {
+                                                const billingAddr = customerDetail.default_billing_address || customerDetail.billing_addresses?.[0] || customerDetail.billing_address || null;
+                                                const shippingAddr = customerDetail.shipping_addresses?.[0] || customerDetail.default_shipping_address || customerDetail.shipping_address || null;
+                                                return (
+                                                    <div className="p-4 space-y-3">
+                                                        <div>
+                                                            <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                                <span>📋</span> Billing Address
                                                             </div>
-                                                        ) : (
-                                                            <div className="text-xs text-gray-400 italic">No billing address provided</div>
-                                                        )}
-                                                    </div>
+                                                            {billingAddr?.address ? (
+                                                                <div className="text-xs text-gray-700 leading-relaxed">
+                                                                    {billingAddr.attention && (
+                                                                        <div className="font-medium">{billingAddr.attention}</div>
+                                                                    )}
+                                                                    <div>{billingAddr.address}</div>
+                                                                    {billingAddr.address_line_two && (
+                                                                        <div>{billingAddr.address_line_two}</div>
+                                                                    )}
+                                                                    {billingAddr.address_line_three && (
+                                                                        <div>{billingAddr.address_line_three}</div>
+                                                                    )}
+                                                                    <div>
+                                                                        {[billingAddr.city, billingAddr.state]
+                                                                            .filter(Boolean)
+                                                                            .join(", ")}
+                                                                        {billingAddr.pin_code
+                                                                            ? " - " + billingAddr.pin_code
+                                                                            : ""}
+                                                                    </div>
+                                                                    {billingAddr.country && (
+                                                                        <div>{billingAddr.country}</div>
+                                                                    )}
+                                                                    {billingAddr.telephone_number && (
+                                                                        <div className="text-gray-500">Ph: {billingAddr.telephone_number}</div>
+                                                                    )}
+                                                                    {billingAddr.fax_number && (
+                                                                        <div className="text-gray-500">Fax: {billingAddr.fax_number}</div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-xs text-gray-400 italic">No billing address provided</div>
+                                                            )}
+                                                        </div>
 
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-                                                            <span>🚚</span> Shipping Address
-                                                        </div>
-                                                        {customerDetail.shipping_address?.address ? (
-                                                            <div className="text-xs text-gray-700 leading-relaxed">
-                                                                <div>{customerDetail.shipping_address.address}</div>
-                                                                {customerDetail.shipping_address.address_line_two && (
-                                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
-                                                                )}
-                                                                <div>
-                                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
-                                                                        .filter(Boolean)
-                                                                        .join(", ")}
-                                                                    {customerDetail.shipping_address.pin_code
-                                                                        ? " " + customerDetail.shipping_address.pin_code
-                                                                        : ""}
-                                                                </div>
-                                                                {customerDetail.shipping_address.country && (
-                                                                    <div>{customerDetail.shipping_address.country}</div>
-                                                                )}
+                                                        <div>
+                                                            <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                                <span>🚚</span> Shipping Address
                                                             </div>
-                                                        ) : (
-                                                            <div className="text-xs text-gray-400 italic">No shipping address provided</div>
-                                                        )}
+                                                            {shippingAddr?.address ? (
+                                                                <div className="text-xs text-gray-700 leading-relaxed">
+                                                                    {shippingAddr.attention && (
+                                                                        <div className="font-medium">{shippingAddr.attention}</div>
+                                                                    )}
+                                                                    <div>{shippingAddr.address}</div>
+                                                                    {shippingAddr.address_line_two && (
+                                                                        <div>{shippingAddr.address_line_two}</div>
+                                                                    )}
+                                                                    {shippingAddr.address_line_three && (
+                                                                        <div>{shippingAddr.address_line_three}</div>
+                                                                    )}
+                                                                    <div>
+                                                                        {[shippingAddr.city, shippingAddr.state]
+                                                                            .filter(Boolean)
+                                                                            .join(", ")}
+                                                                        {shippingAddr.pin_code
+                                                                            ? " - " + shippingAddr.pin_code
+                                                                            : ""}
+                                                                    </div>
+                                                                    {shippingAddr.country && (
+                                                                        <div>{shippingAddr.country}</div>
+                                                                    )}
+                                                                    {shippingAddr.telephone_number && (
+                                                                        <div className="text-gray-500">Ph: {shippingAddr.telephone_number}</div>
+                                                                    )}
+                                                                    {shippingAddr.fax_number && (
+                                                                        <div className="text-gray-500">Fax: {shippingAddr.fax_number}</div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-xs text-gray-400 italic">No shipping address provided</div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 )}

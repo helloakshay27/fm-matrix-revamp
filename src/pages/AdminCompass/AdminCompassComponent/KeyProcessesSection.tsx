@@ -482,6 +482,69 @@ const ThemeStyle = () => (
     .kp-process-card:hover { border-color: #DA7756; box-shadow: 0 4px 12px rgba(218,119,86,0.10); transform: translateY(-1px); }
     .kp-process-card .card-actions { opacity: 0; transition: opacity .15s; }
     .kp-process-card:hover .card-actions { opacity: 1; }
+    @media (max-width: 640px) {
+      .kp-section-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        margin-bottom: 14px !important;
+      }
+      .kp-title-row {
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+      }
+      .kp-title-row .ac-heading {
+        font-size: 14px !important;
+        line-height: 1.15 !important;
+      }
+      .kp-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+      .kp-actions button {
+        width: 100% !important;
+        min-height: 34px !important;
+        justify-content: center !important;
+        padding: 7px 8px !important;
+        font-size: 10px !important;
+        line-height: 1.15 !important;
+        white-space: normal !important;
+      }
+      .kp-action-divider {
+        display: none !important;
+      }
+      .kp-process-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .kp-process-card {
+        min-width: 0 !important;
+        padding: 12px !important;
+      }
+      .kp-process-card:hover {
+        transform: none !important;
+      }
+      .kp-process-card .card-actions {
+        opacity: 1 !important;
+      }
+      /* Card header: let title take its own line so the status badge +
+         edit/delete actions wrap neatly below instead of cramping. */
+      .kp-card-head {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+      }
+      .kp-card-head > span:first-child {
+        width: 100% !important;
+        padding-right: 0 !important;
+        font-size: 14px !important;
+      }
+      .kp-card-head .card-actions button {
+        min-width: 32px !important;
+        min-height: 32px !important;
+      }
+    }
     .kp-checkbox-custom {
       width: 17px; height: 17px;
       border: 1.5px solid #d4d4d4; border-radius: 5px;
@@ -1014,6 +1077,7 @@ export const KeyProcessesSection = () => {
       <div>
         {/* ── Header ── */}
         <div
+          className="kp-section-header"
           style={{
             display: "flex",
             alignItems: "center",
@@ -1021,7 +1085,7 @@ export const KeyProcessesSection = () => {
             marginBottom: 20,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="kp-title-row" style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
                 width: 36,
@@ -1106,7 +1170,7 @@ export const KeyProcessesSection = () => {
             {isFetching && <LoaderIcon />}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="kp-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
               onClick={openCreate}
               style={{
@@ -1134,6 +1198,7 @@ export const KeyProcessesSection = () => {
               <PlusIcon /> Create New
             </button>
             <div
+              className="kp-action-divider"
               style={{ width: 1, height: 16, background: "#e5e7eb" }}
             />
             <button
@@ -1211,6 +1276,7 @@ export const KeyProcessesSection = () => {
 
           {isFetching ? (
             <div
+              className="kp-process-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3,1fr)",
@@ -1268,6 +1334,7 @@ export const KeyProcessesSection = () => {
             </button>
           ) : (
             <div
+              className="kp-process-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3,1fr)",
@@ -1277,6 +1344,7 @@ export const KeyProcessesSection = () => {
               {displayedSops.map((p) => (
                 <div key={p.id} className="kp-process-card">
                   <div
+                    className="kp-card-head"
                     style={{
                       display: "flex",
                       alignItems: "flex-start",

@@ -5,11 +5,11 @@ import TeamDirectory from '@/components/BusinessCompass/TeamDirectory';
 
 const DirectoryAndChat = () => {
     return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
             {/* Header Section */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold text-[#1a1a1a]">Directory and Chat</h1>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a]">Directory and Chat</h1>
                     <p className="text-gray-500 mt-1">Team directory and collaboration</p>
                 </div>
             </div>

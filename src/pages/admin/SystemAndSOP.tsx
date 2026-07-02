@@ -1323,7 +1323,7 @@ function SopFormModal({
             />
           </FieldBox>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldBox label="Department" required>
               <SearchableSelect
                 value={department}
@@ -1474,16 +1474,16 @@ function SopFormModal({
         </div>
 
         <div
-          className="p-5 flex justify-end gap-3 border-t"
+          className="p-4 sm:p-5 flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3 border-t"
           style={{ background: C.cardBg, borderColor: C.primaryBord }}
         >
-          <BtnOutline onClick={onClose} disabled={isSaving}>
+          <BtnOutline onClick={onClose} disabled={isSaving} className="w-full sm:w-auto justify-center">
             Cancel
           </BtnOutline>
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
+            className="w-full sm:w-auto px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center justify-center gap-2 disabled:opacity-60"
             style={{ background: "#1a1a1a", fontFamily: C.font }}
           >
             {isSaving && <LoaderIcon />}{" "}
@@ -2190,7 +2190,7 @@ const SystemAndSOP = () => {
 
       {/* ── Page Header ── */}
       <div
-        className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
+        className="overflow-hidden rounded-2xl border shadow-sm p-4 sm:p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         style={{
           background: "#ffffff",
           borderColor: C.primaryBord,
@@ -2204,7 +2204,7 @@ const SystemAndSOP = () => {
             Monitor your business systems health
           </p>
           <h1
-            className="text-2xl font-black tracking-tight"
+            className="text-xl sm:text-2xl font-black tracking-tight"
             style={{ color: "#111" }}
           >
             Systems &amp; SOPs
@@ -2231,14 +2231,14 @@ const SystemAndSOP = () => {
 
       {/* ── Tab Bar ── */}
       <div
-        className="bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm border"
+        className="bg-white flex w-full sm:w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm border"
         style={{ borderColor: "#f3f4f6" }}
       >
         {(["my", "all"] as SopTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setSopTab(t)}
-            className="py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap"
+            className="flex-1 sm:flex-none py-2 px-4 sm:px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap text-center"
             style={{
               background: sopTab === t ? C.primary : "transparent",
               color: sopTab === t ? "#fff" : "#7b8393",
@@ -2380,7 +2380,7 @@ const SystemAndSOP = () => {
         >
           Filters
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
           <SearchableSelect
             value={filterDept}
             onChange={setFilterDept}

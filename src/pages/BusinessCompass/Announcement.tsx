@@ -58,15 +58,15 @@ function AnnouncementCard({ item }: { item: AnnouncementItem }) {
               <span className="h-1.5 w-1.5 rounded-full bg-neutral-400" />
               {item.categoryLabel}
             </span>
-            <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-neutral-500 sm:ml-2">
+            <span className="flex min-w-0 items-center gap-1.5 text-[12.5px] font-medium text-neutral-500 sm:ml-2">
               <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-              {item.dateLine}
+              <span className="truncate">{item.dateLine}</span>
             </span>
           </div>
 
           {/* Text Content */}
           <div className="space-y-1.5">
-            <h2 className="text-[17px] font-bold leading-snug text-neutral-900 sm:text-lg">
+            <h2 className="text-[17px] font-bold leading-snug text-neutral-900 sm:text-lg break-words">
               {item.title}
             </h2>
             {item.subtitle && (
@@ -74,7 +74,7 @@ function AnnouncementCard({ item }: { item: AnnouncementItem }) {
                 {item.subtitle}
               </p>
             )}
-            <p className="text-[14.5px] leading-relaxed text-neutral-700 mt-2">
+            <p className="text-[14.5px] leading-relaxed text-neutral-700 mt-2 break-words">
               {item.body}
             </p>
             {item.slogan && (
@@ -206,8 +206,8 @@ const Announcement = () => {
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
             <Megaphone className="h-7 w-7 text-white" strokeWidth={2} />
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
+          <div className="min-w-0">
+            <h1 className="text-xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl break-words">
               Announcements
             </h1>
             <p className="mt-1 text-sm font-medium text-neutral-500">

@@ -114,6 +114,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     powered_by_logo: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [patmBcLinked, setPatmBcLinked] = useState(false);
   const [welcomeDescriptions, setWelcomeDescriptions] = useState<WelcomeDescription[]>([
     { description: "", active: false },
   ]);
@@ -287,6 +288,7 @@ const mapDescriptionObjectToArray = (
         setMissionList(
           mapDescriptionObjectToArray(otherConfig?.mission?.description)
         );
+        setPatmBcLinked(otherConfig?.patm_bc_linked === "true");
         setCeoInfo({
           name: otherConfig?.ceo_info?.name || "",
           designation: otherConfig?.ceo_info?.designation || "CEO",
@@ -375,6 +377,7 @@ const mapDescriptionObjectToArray = (
       submitFormData.append("organization[country_id]", formData.country_id);
     }
     submitFormData.append("organization[active]", formData.active.toString());
+    submitFormData.append("organization[other_config][patm_bc_linked]", patmBcLinked.toString());
 
     if (formData.logo) {
       submitFormData.append("organization[logo]", formData.logo);
@@ -529,6 +532,7 @@ if (ceoInfo) {
       logoUrl: null,
       poweredByLogoUrl: null,
     });
+    setPatmBcLinked(false);
     setErrors({});
   };
 
@@ -700,6 +704,21 @@ if (ceoInfo) {
                   </Badge>
                 </div>
               </div>
+            </div>
+
+            {/* PATM Sync Toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mt-4">
+              <div className="space-y-1">
+                <span className="text-sm font-medium">Sync Business Compass to PATM</span>
+                <p className="text-xs text-gray-600">
+                  Enable synchronization between Business Compass and PATM
+                </p>
+              </div>
+              <Switch
+                checked={patmBcLinked}
+                onCheckedChange={setPatmBcLinked}
+                disabled={isSubmitting}
+              />
             </div>
 
             {/* Domain Configuration Section */}

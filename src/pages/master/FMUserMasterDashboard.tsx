@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import debounce from "lodash/debounce";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { getUser } from "@/utils/auth";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define interfaces for data structures
 interface TransformedFMUser {
@@ -115,6 +116,7 @@ export const FMUserMasterDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const user = getUser();
+  const { shouldShow } = useDynamicPermissions();
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const {
     loading,
@@ -701,6 +703,7 @@ export const FMUserMasterDashboard = () => {
   };
 
   const renderActions = (user: TransformedFMUser) => (
+    shouldShow("Admin User", "show") && (
     <Button
       variant="ghost"
       size="sm"
@@ -709,6 +712,7 @@ export const FMUserMasterDashboard = () => {
     >
       <Eye className="w-4 h-4" />
     </Button>
+    )
   );
 
   const renderCell = (user: TransformedFMUser, columnKey: string) => {
@@ -758,7 +762,7 @@ export const FMUserMasterDashboard = () => {
     <>
       <Button
         onClick={() => setShowActionPanel(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2  flex items-center gap-2 border-0"
       >
         <Plus className="w-4 h-4" />
         Action
@@ -836,6 +840,7 @@ export const FMUserMasterDashboard = () => {
           onAdd={handleAddUser}
           onImport={() => setShowImportModal(true)}
           onClearSelection={() => setShowActionPanel(false)}
+          permissionKey="Admin User"
         />
       )}
 

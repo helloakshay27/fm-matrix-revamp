@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, Eye, Edit2, Trash2, Edit } from 'lucide-react';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
@@ -133,6 +134,9 @@ export const ExpenseListPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [accountLedgers, setAccountLedgers] = useState<AccountLedger[]>([]);
     const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deletingExpenseId, setDeletingExpenseId] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
         per_page: 10,
@@ -373,14 +377,15 @@ export const ExpenseListPage: React.FC = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
-                {/* <Button
+                <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(expense.id)}
+                    onClick={() => handleDeleteClick(expense.id)}
                     className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    disabled={deleting}
                 >
                     <Trash2 className="h-4 w-4" />
-                </Button> */}
+                </Button>
             </div>
         ),
         date: (
@@ -430,12 +435,53 @@ export const ExpenseListPage: React.FC = () => {
         navigate(`/accounting/expense/edit/${id}`);
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this expense?')) {
-            console.log('Delete expense:', id);
-            // Add API call here
-            fetchExpenseData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    const handleDeleteClick = (id: number) => {
+        setDeletingExpenseId(id);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (deletingExpenseId === null) return;
+
+        setDeleting(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+
+            const response = await fetch(
+                `${apiUrl}/expenses/${deletingExpenseId}.json?lock_account_id=${lock_account_id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.ok) {
+                sonnerToast.success('Expense deleted successfully');
+                setDeleteConfirmOpen(false);
+                setDeletingExpenseId(null);
+                // Refresh the list
+                const newPage = expenseData.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+                fetchExpenseData(newPage, perPage, debouncedSearchQuery, appliedFilters);
+            } else {
+                sonnerToast.error('Failed to delete expense');
+            }
+        } catch (error) {
+            console.error('Error deleting expense:', error);
+            sonnerToast.error('Error deleting expense');
+        } finally {
+            setDeleting(false);
         }
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteConfirmOpen(false);
+        setDeletingExpenseId(null);
     };
 
     return (
@@ -479,6 +525,22 @@ export const ExpenseListPage: React.FC = () => {
                     onPerPageChange={handlePerPageChange}
                 />
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteConfirmOpen} onClose={handleDeleteCancel}>
+                <DialogTitle>Delete Expense</DialogTitle>
+                <DialogContent>
+                    <p>Are you sure you want to delete this expense? This action cannot be undone.</p>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDeleteCancel} variant="outline">
+                        No
+                    </Button>
+                    <Button onClick={handleDeleteConfirm} disabled={deleting} className="text-red-600 hover:bg-red-50">
+                        {deleting ? 'Deleting...' : 'Yes, Delete'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 };

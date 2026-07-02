@@ -60,7 +60,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const location = useLocation();
-  const currentUser = getUser();
+  const [currentUser, setCurrentUser] = useState(getUser);
+  useEffect(() => {
+    setCurrentUser(getUser());
+  }, [location.pathname]);
   const userEmail = currentUser?.email || "No email";
   const org_id = localStorage.getItem("org_id");
   const hostname = window.location.hostname;
@@ -159,8 +162,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ClubSidebar />;
     }
 
-    // Check if user is in Vendor Module route - render VendorSidebar
-    if (location.pathname.startsWith("/vendor")) {
+    // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
       console.warn("✅ Rendering VendorSidebar");
       return <VendorSidebar />;
     }
@@ -236,6 +239,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "1" ||
       org_id === "10" ||
       org_id === "3" ||
+      org_id === "67" ||
       userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -312,17 +316,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null;
     }
 
+    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      return <VendorDynamicHeader />;
+    }
+
     if (isViSite) {
       return <ViDynamicHeader />;
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
       return <ClubDynamicHeader />;
-    }
-
-    // Check if user is in Vendor Module route - render VendorDynamicHeader
-    if (location.pathname.startsWith("/vendor")) {
-      return <VendorDynamicHeader />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -345,6 +349,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "1" ||
       org_id === "10" ||
       org_id === "3" ||
+      org_id === "67" ||
       userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -548,7 +553,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>

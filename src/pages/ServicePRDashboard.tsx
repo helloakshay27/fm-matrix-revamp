@@ -32,6 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -124,6 +125,7 @@ const columns: ColumnConfig[] = [
 export const ServicePRDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions()
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const location = useLocation();
@@ -160,14 +162,14 @@ export const ServicePRDashboard = () => {
     [key: string]: boolean;
   }>({});
 
- const applyResponse = (response: any) => {
-  setServicePR(response.work_orders);
-  setPagination((prev) => ({
-    ...prev,
-    total_count: response.total_count,
-    total_pages: response.total_pages,
-  }));
-};
+  const applyResponse = (response: any) => {
+    setServicePR(response.work_orders);
+    setPagination((prev) => ({
+      ...prev,
+      total_count: response.total_count,
+      total_pages: response.total_pages,
+    }));
+  };
 
   const fetchData = async (filterParams: Record<string, any> = {}) => {
     const page: number = filterParams.page ?? pagination.current_page;
@@ -215,7 +217,7 @@ export const ServicePRDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData({ 
+    fetchData({
       page: urlPage,
       search: initialSearch,
       reference_number: initialFilters.referenceNumber,
@@ -234,7 +236,7 @@ export const ServicePRDashboard = () => {
     if (filters.prNumber) params.set("prNumber", filters.prNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
     if (filters.approvalStatus && filters.approvalStatus !== "Select") params.set("approvalStatus", filters.approvalStatus);
-    
+
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
 
@@ -376,20 +378,25 @@ export const ServicePRDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/service-pr/details/${item.id}`, {
-            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-          });
-        }}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      {item.can_edit && (
+      {
+        shouldShow("Service PR", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/finance/service-pr/details/${item.id}`, {
+                state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+              });
+            }}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {shouldShow("Service PR", "update") && item.can_edit && (
         <Button
           size="sm"
           variant="ghost"
@@ -414,6 +421,8 @@ export const ServicePRDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
+      {/* {
+        shouldShow("Service PR", "create") && ( */}
       <Button
         className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
         onClick={() => navigate("/finance/service-pr/add")}
@@ -421,6 +430,9 @@ export const ServicePRDashboard = () => {
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
+      {/* )
+      } */}
+
     </div>
   );
 
@@ -437,21 +449,21 @@ export const ServicePRDashboard = () => {
     </Button>
   );
 
- const handlePageChange = async (page: number) => {
-  if (
-    page < 1 ||
-    page > pagination.total_pages ||
-    page === pagination.current_page ||
-    loading
-  ) {
-    return;
-  }
+  const handlePageChange = async (page: number) => {
+    if (
+      page < 1 ||
+      page > pagination.total_pages ||
+      page === pagination.current_page ||
+      loading
+    ) {
+      return;
+    }
 
-  navigate(`${location.pathname}?page=${page}`, { replace: true });
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
 
-  try {
-    setPagination((prev) => ({ ...prev, current_page: page }));
-    await fetchData({
+    try {
+      setPagination((prev) => ({ ...prev, current_page: page }));
+      await fetchData({
         page,
         reference_number: filters.referenceNumber,
         external_id: filters.prNumber,

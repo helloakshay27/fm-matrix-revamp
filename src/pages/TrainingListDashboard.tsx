@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Mock data for training
 const mockTrainings = [
@@ -92,6 +93,7 @@ const getStatusColor = (status: string) => {
 };
 
 export const TrainingListDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -153,13 +155,15 @@ export const TrainingListDashboard = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
             <div className="flex items-center gap-2">
-              <Button
-                onClick={handleAddTraining}
-                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Schedule Training
-              </Button>
+              {shouldShow("Training List", "create") && (
+                <Button
+                  onClick={handleAddTraining}
+                  className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Schedule Training
+                </Button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -217,13 +221,15 @@ export const TrainingListDashboard = () => {
                     <TableCell>{training.attendees}/{training.maxCapacity}</TableCell>
                     <TableCell>{training.completionRate}%</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewTraining(training.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
+                      {shouldShow("Training List", "show") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewTraining(training.id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

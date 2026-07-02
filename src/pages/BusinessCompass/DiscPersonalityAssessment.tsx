@@ -656,7 +656,7 @@ function DiscProfileReport({
       className="w-full space-y-3"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <div className="rounded-[14px] border border-[#ddd8d1] bg-white p-5">
+      <div className="rounded-[14px] border border-[#ddd8d1] bg-white p-4 sm:p-5">
         {showRetake && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <button
@@ -782,7 +782,7 @@ function DiscProfileReport({
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-x-10 gap-y-5 px-7 py-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-4 py-4 sm:grid-cols-4 sm:gap-x-10 sm:px-7">
           {DISC_ORDER.map((L) => (
             <DiscDonut
               key={L}
@@ -796,7 +796,7 @@ function DiscProfileReport({
         <p className="text-center text-[11px] font-medium text-[#aaa49d]">
           Your DISC Profile Visualisation
         </p>
-        <div className="px-7 pb-5 pt-2">
+        <div className="px-4 pb-5 pt-2 sm:px-7">
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -955,8 +955,8 @@ function DiscProfileReport({
           </div>
         </div>
         <div className="p-5">
-          <div className="overflow-hidden">
-            <table className="w-full text-left text-[13px]">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left text-[13px]">
               <thead>
                 <tr className="rounded-[6px] bg-[#f7f4ef]">
                   <th className="w-[260px] rounded-l-[6px] px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#9a958f]">
@@ -1177,7 +1177,7 @@ function TeamProfilesTabContent({
           />
         </div>
         <Select value={discFilter} onValueChange={setDiscFilter}>
-          <SelectTrigger className="h-10 w-[104px] rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none">
+          <SelectTrigger className="h-10 w-full rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none sm:w-[104px]">
             <SelectValue placeholder="All type" />
           </SelectTrigger>
           <SelectContent>
@@ -1189,7 +1189,7 @@ function TeamProfilesTabContent({
           </SelectContent>
         </Select>
         <Select value={deptFilter} onValueChange={setDeptFilter}>
-          <SelectTrigger className="h-10 w-[142px] rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none">
+          <SelectTrigger className="h-10 w-full rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none sm:w-[142px]">
             <SelectValue placeholder="All department" />
           </SelectTrigger>
           <SelectContent>
@@ -1727,12 +1727,12 @@ const DiscPersonalityAssessment = () => {
 
   return (
     <div
-      className="min-h-[calc(100vh-5rem)] w-full bg-white px-8 py-8"
+      className="min-h-[calc(100vh-5rem)] w-full bg-white px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <div className="w-full space-y-7">
         {/* Page Header */}
-        <header className="flex items-center justify-between gap-4">
+        <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <div className="grid h-10 w-10 shrink-0 grid-cols-2 gap-0.5">
               {[
@@ -1753,7 +1753,7 @@ const DiscPersonalityAssessment = () => {
               ))}
             </div>
             <div>
-              <h1 className="text-[24px] font-extrabold leading-tight tracking-tight text-[#111827]">
+              <h1 className="text-[20px] font-extrabold leading-tight tracking-tight text-[#111827] sm:text-[24px]">
                 DISC Personality Assessment
               </h1>
               <p className="mt-1 text-[13px] font-medium text-[#64748b]">
@@ -1771,7 +1771,7 @@ const DiscPersonalityAssessment = () => {
           }}
           className="w-full"
         >
-          <TabsList className="inline-flex h-11 w-auto items-center justify-start gap-1 rounded-full border border-[#edf0f4] bg-white p-1 shadow-[0_6px_16px_rgba(15,23,42,0.06)]">
+          <TabsList className="flex h-9 w-full max-w-full items-center justify-between gap-0.5 rounded-full border border-[#edf0f4] bg-white p-0.5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] sm:inline-flex sm:h-11 sm:w-auto sm:justify-start sm:gap-1 sm:p-1">
             {[
               { value: "report", icon: Gauge, label: "Assessment" },
               { value: "profile", icon: UserRound, label: "Your report" },
@@ -1781,12 +1781,12 @@ const DiscPersonalityAssessment = () => {
                 key={t.value}
                 value={t.value}
                 className={cn(
-                  "h-9 gap-2 rounded-full px-4 text-[13px] font-semibold text-[#111827] transition-all",
+                  "inline-flex h-8 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full px-1.5 text-[10px] font-semibold text-[#111827] transition-all sm:h-9 sm:flex-none sm:gap-2 sm:px-4 sm:text-[13px]",
                   "data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm",
                   "data-[state=inactive]:hover:bg-[#fff7f4]"
                 )}
               >
-                <t.icon className="h-4 w-4 shrink-0" />
+                <t.icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                 {t.label}
               </TabsTrigger>
             ))}
@@ -1799,7 +1799,7 @@ const DiscPersonalityAssessment = () => {
           >
             {assessmentStarted ? (
               <div className="space-y-5">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
                   <p className="text-[12px] font-medium text-[#6d6d6d]">
                     Answer all questions to discover your profile
                   </p>

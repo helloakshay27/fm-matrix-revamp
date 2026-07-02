@@ -28,7 +28,7 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
       toast.error('Please select a file first');
       return;
     }
-    
+
     if (type === 'import') {
       await handleImport();
     } else {
@@ -40,17 +40,17 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
 
   const handleImport = async () => {
     if (!selectedFile) return;
-    
+
     try {
       setIsUploading(true);
       console.log('Importing waste generation file:', selectedFile.name);
-      
+
       // Create FormData with the required field name
       const formData = new FormData();
       formData.append('pms_waste_generation_file', selectedFile);
-      
+// waste generatui
       const importUrl = getFullUrl('/pms/waste_generations/waste_generation_import.json');
-      
+
       const response = await fetch(importUrl, {
         method: 'POST',
         headers: {
@@ -70,8 +70,8 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
           } else if (errorData.message) {
             errorMessage = errorData.message;
           } else if (errorData.errors) {
-            errorMessage = Array.isArray(errorData.errors) 
-              ? errorData.errors.join(', ') 
+            errorMessage = Array.isArray(errorData.errors)
+              ? errorData.errors.join(', ')
               : JSON.stringify(errorData.errors);
           }
         } catch (parseError) {
@@ -89,7 +89,7 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
 
       // Check if response is JSON or binary data
       const contentType = response.headers.get('content-type');
-      
+
       if (contentType && contentType.includes('application/json')) {
         const result = await response.json();
         console.log('Import successful:', result);
@@ -98,7 +98,7 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
         // Response is likely a file (Excel/binary), which means import was successful
         console.log('Import successful - received file response');
         toast.success('Waste generation data imported successfully!');
-        
+
         // If it's a downloadable file, handle the download
         if (contentType && (contentType.includes('application/vnd.openxmlformats') || contentType.includes('application/vnd.ms-excel'))) {
           const blob = await response.blob();
@@ -112,10 +112,10 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
           window.URL.revokeObjectURL(url);
         }
       }
-      
+
       setSelectedFile(null);
       onClose();
-      
+
     } catch (error) {
       console.error('Import error:', error);
       toast.error(`Failed to import waste generation data: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -127,9 +127,9 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
   const handleDownloadSample = async () => {
     try {
       console.log('Downloading waste generation sample format');
-      
-      const sampleUrl = getFullUrl('/assets/Waste Bulk.xlsx');
-      
+
+      const sampleUrl = getFullUrl('/Waste Bulk.xlsx');
+
       const response = await fetch(sampleUrl, {
         method: 'GET',
         headers: {
@@ -143,21 +143,21 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
 
       // Get the blob data
       const blob = await response.blob();
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = 'Waste.xlsx';
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Sample format downloaded successfully!');
-      
+
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download sample format. Please try again.');
@@ -170,7 +170,7 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
         <DialogHeader>
           <DialogTitle>Bulk {type === 'import' ? 'Upload' : 'Update'}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">

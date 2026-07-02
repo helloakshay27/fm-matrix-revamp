@@ -383,7 +383,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const handleSampleDownload = async () => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/assets/milestone_import.xlsx`,
+                `https://${baseUrl}/milestone_import.xlsx`,
                 {
                     responseType: 'blob',
                     headers: {

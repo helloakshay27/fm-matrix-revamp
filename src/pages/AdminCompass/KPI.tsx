@@ -2221,7 +2221,7 @@ const KPI = () => {
         background: T.pageBg,
         color: T.textMain,
         fontFamily: T.font,
-        padding: "24px 16px",
+        padding: "16px 12px",
         boxSizing: "border-box",
       }}
     >
@@ -2539,24 +2539,34 @@ const KPI = () => {
           .kpi-summary-divider { display: none; }
           .kpi-summary-item { flex: 0 0 calc(50% - 12px); align-items: flex-start; }
         }
+        @media (min-width: 640px) {
+          .kpi-root-inner { padding: 0; }
+          .kpi-header-body { padding: 20px 24px; }
+        }
         @media (max-width: 640px) {
-          .kpi-root-inner { gap: 14px; }
-          .kpi-header-body { padding: 16px 18px; gap: 14px; }
+          .kpi-root-inner { gap: 12px; }
+          .kpi-header-body { padding: 14px 14px; gap: 12px; }
           .kpi-header-left { gap: 10px; }
-          .kpi-header-icon { width: 44px; height: 44px; border-radius: 12px; }
-          .kpi-header-actions { width: 100%; justify-content: flex-start; }
-          .kpi-btn-ghost, .kpi-btn-primary { flex: 1; justify-content: center; padding: 9px 12px; font-size: 12px; }
-          .kpi-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-          .kpi-stat-card-inner { padding: 14px 14px 10px; gap: 10px; }
-          .kpi-stat-icon { width: 40px; height: 40px; border-radius: 11px; }
-          .kpi-stat-value { font-size: 26px; }
-          .kpi-summary-strip { padding: 12px 14px; }
+          .kpi-header-icon { width: 40px; height: 40px; border-radius: 11px; }
+          .kpi-header-actions { width: 100%; justify-content: stretch; }
+          .kpi-btn-ghost, .kpi-btn-primary { flex: 1; justify-content: center; padding: 9px 10px; font-size: 12px; }
+          .kpi-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+          .kpi-stat-card-inner { padding: 12px 12px 8px; gap: 10px; }
+          .kpi-stat-icon { width: 38px; height: 38px; border-radius: 10px; }
+          .kpi-stat-label { font-size: 9px; }
+          .kpi-stat-value { font-size: 24px; }
+          .kpi-stat-sub { font-size: 9px; }
+          .kpi-summary-strip { padding: 10px 12px; }
           .kpi-summary-item { flex: 0 0 100%; align-items: flex-start; padding: 0; }
+          .kpi-section-label { font-size: 10px; }
+          .kpi-tab-bar { padding: 4px 4px; }
         }
         @media (max-width: 380px) {
-          .kpi-stat-card-inner { padding: 12px; gap: 8px; }
-          .kpi-stat-icon { width: 36px; height: 36px; }
-          .kpi-stat-value { font-size: 22px; }
+          .kpi-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+          .kpi-stat-card-inner { padding: 10px; gap: 8px; }
+          .kpi-stat-icon { width: 32px; height: 32px; }
+          .kpi-stat-value { font-size: 20px; }
+          .kpi-header-body { padding: 12px 12px; }
         }
       `}</style>
 
@@ -2592,7 +2602,7 @@ const KPI = () => {
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <h1 style={{ fontSize: 20, fontWeight: 900, color: T.textMain, margin: 0, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                  <h1 style={{ fontSize: "clamp(15px, 4vw, 20px)", fontWeight: 900, color: T.textMain, margin: 0, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
                     KPI Dashboard
                   </h1>
                   {isLoading ? (
@@ -2605,7 +2615,7 @@ const KPI = () => {
                     </span>
                   )}
                 </div>
-                <p style={{ margin: "3px 0 0", fontSize: 12, color: T.textMuted, fontWeight: 500 }}>
+                <p style={{ margin: "3px 0 0", fontSize: "clamp(10px, 2.5vw, 12px)", color: T.textMuted, fontWeight: 500 }}>
                   Monitor and manage your key performance indicators
                 </p>
               </div>
@@ -2776,7 +2786,7 @@ const KPI = () => {
           className="w-full"
         >
           <div className="kpi-tab-bar">
-            <TabsList className="flex h-auto w-full items-center justify-start gap-1 rounded-xl border-0 bg-transparent p-0 shadow-none [&>button]:flex-1 [&>button]:justify-center">
+            <TabsList className="flex h-auto w-max min-w-full items-center justify-start gap-1 rounded-xl border-0 bg-transparent p-0 shadow-none">
 
               <TabsTrigger value="KPI Management" className="group h-9 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold text-neutral-500 transition-all hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756] data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm">
                 <BarChart3 size={13} style={{ marginRight: 5, display: "inline" }} />

@@ -1133,7 +1133,13 @@ import {
   Select,
   TextField,
   Button,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
+import { EditOutlined, Close as CloseIcon } from "@mui/icons-material";
 import { Receipt, Calendar, FileText, CreditCard } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 
@@ -1339,6 +1345,19 @@ const NewRecurringExpensePage: React.FC = () => {
   const [gstDetails, setGstDetails] = useState<any[]>([]);
   const [selectedGstDetailId, setSelectedGstDetailId] = useState<any>(null);
 
+  // ── GSTIN edit modals (Picker + Manage) ───────────────────────────────────
+  const [gstPickerModalOpen, setGstPickerModalOpen] = useState(false);
+  const [gstManageModalOpen, setGstManageModalOpen] = useState(false);
+  const [showNewGstForm, setShowNewGstForm] = useState(false);
+  const [editingGstDetailId, setEditingGstDetailId] = useState<any>(null);
+  const [newGstForm, setNewGstForm] = useState({
+    gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: ''
+  });
+
+  const selectedGstDetail = gstDetails.find(
+    (g) => String(g.id) === String(selectedGstDetailId)
+  ) || gstDetails.find((g) => g.primary) || gstDetails[0] || null;
+
   // ── API data ──────────────────────────────────────────────────────────────
   const [accountLedgers, setAccountLedgers] = useState<AccountLedger[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -1460,6 +1479,42 @@ const NewRecurringExpensePage: React.FC = () => {
   // Vendor detail — same as ExpenseCreatePage
   // ─────────────────────────────────────────────────────────────────────────
 
+  // const fetchVendorDetail = async (vendorId: string) => {
+  //   if (!vendorId) {
+  //     setVendorDetail(null);
+  //     setGstDetails([]);
+  //     setSelectedGstDetailId(null);
+  //     setGstTreatment("");
+  //     setSourceOfSupply("");
+  //     setGstin("");
+  //     return;
+  //   }
+  //   const apiUrl = getApiUrl();
+  //   const token = localStorage.getItem("token");
+  //   setVendorDetailLoading(true);
+  //   try {
+  //     const res = await axios.get(
+  //       `${apiUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+  //     );
+  //     const data = res.data?.supplier || res.data;
+  //     setVendorDetail(data);
+  //     if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
+  //     const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+  //     setGstDetails(nextGst);
+  //     const primaryGst =
+  //       nextGst.find((g) => g.primary) || nextGst[0] || data.primary_gst_detail || null;
+  //     if (primaryGst) {
+  //       setSelectedGstDetailId(primaryGst.id ?? null);
+  //       if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
+  //       if (primaryGst.gstin) setGstin(primaryGst.gstin);
+  //     }
+  //   } catch {
+  //     sonnerToast.error("Failed to load vendor details");
+  //   } finally {
+  //     setVendorDetailLoading(false);
+  //   }
+  // };
+
   const fetchVendorDetail = async (vendorId: string) => {
     if (!vendorId) {
       setVendorDetail(null);
@@ -1472,6 +1527,16 @@ const NewRecurringExpensePage: React.FC = () => {
     }
     const apiUrl = getApiUrl();
     const token = localStorage.getItem("token");
+
+    // Reset previous vendor's GST state immediately, before the new
+    // request resolves, so stale values never linger on screen.
+    setVendorDetail(null);
+    setGstDetails([]);
+    setSelectedGstDetailId(null);
+    setGstTreatment("");
+    setSourceOfSupply("");
+    setGstin("");
+
     setVendorDetailLoading(true);
     try {
       const res = await axios.get(
@@ -1479,31 +1544,94 @@ const NewRecurringExpensePage: React.FC = () => {
       );
       const data = res.data?.supplier || res.data;
       setVendorDetail(data);
-      if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
+
+      // Always set (with fallback), never skip — guarantees new vendor's
+      // value (even if empty) overwrites the old one.
+      setGstTreatment(data.gst_preference ? normalizeGstTreatment(data.gst_preference) : "");
+
       const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
       setGstDetails(nextGst);
       const primaryGst =
         nextGst.find((g) => g.primary) || nextGst[0] || data.primary_gst_detail || null;
-      if (primaryGst) {
-        setSelectedGstDetailId(primaryGst.id ?? null);
-        if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
-        if (primaryGst.gstin) setGstin(primaryGst.gstin);
-      }
+
+      setSelectedGstDetailId(primaryGst?.id ?? null);
+      setSourceOfSupply(primaryGst?.place_of_supply || "");
+      setGstin(primaryGst?.gstin || "");
     } catch {
       sonnerToast.error("Failed to load vendor details");
+      // Keep the reset state — don't show old vendor's data on failure.
     } finally {
       setVendorDetailLoading(false);
     }
   };
-
   const handleVendorChange = (vendorId: string) => {
     setVendor(vendorId);
     fetchVendorDetail(vendorId);
   };
 
+  const handleGstinDropdownChange = (value: any) => {
+    setSelectedGstDetailId(value);
+    const selected = gstDetails.find((g) => String(g.id) === String(value));
+    if (selected?.gstin !== undefined) setGstin(selected.gstin || '');
+    if (selected?.place_of_supply) setSourceOfSupply(selected.place_of_supply);
+    setGstPickerModalOpen(false);
+  };
+
+  const handleSaveAndSelectGst = async () => {
+    if (!vendor || !newGstForm.gstin || !newGstForm.place_of_supply) {
+      sonnerToast.error('GSTIN and Place of Supply are required');
+      return;
+    }
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+    const normalized = newGstForm.gstin.toUpperCase().trim();
+    if (!gstinRegex.test(normalized)) {
+      sonnerToast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
+      return;
+    }
+    const apiUrl = getApiUrl();
+    const token = localStorage.getItem('token');
+    const gstAttr: any = {
+      ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+      gstin: normalized,
+      place_of_supply: newGstForm.place_of_supply,
+      business_legal_name: newGstForm.business_legal_name || '',
+      business_trade_name: newGstForm.business_trade_name || '',
+    };
+    try {
+      await axios.put(
+        `${apiUrl}/pms/suppliers/${vendor}.json?access_token=${token}`,
+        { pms_supplier: { gst_details_attributes: [gstAttr] } }
+      );
+      setShowNewGstForm(false);
+      setEditingGstDetailId(null);
+      setGstManageModalOpen(false);
+      sonnerToast.success('Tax information saved');
+      await fetchVendorDetail(vendor);
+    } catch {
+      sonnerToast.error('Failed to save tax information');
+    }
+  };
+
   // ─────────────────────────────────────────────────────────────────────────
   // Tax helpers — same as ExpenseCreatePage
   // ─────────────────────────────────────────────────────────────────────────
+
+  const calculateTaxForAmount = (
+    amountVal: number,
+    taxTypeVal: string,
+    taxGroupIdVal: string | number | null
+  ) => {
+    if (taxTypeVal !== "tax_group" || !taxGroupIdVal) return 0;
+    const group = taxGroups.find((g) => String(g.id) === String(taxGroupIdVal));
+    if (!group || !Array.isArray(group.tax_rates)) return 0;
+    return group.tax_rates.reduce((sum: number, rate: any) => {
+      const pct = Number(rate.rate) || 0;
+      return sum + (amountVal * pct) / 100;
+    }, 0);
+  };
+
+  // ✅ Auto-calculated tax amount for the recurring expense view
+  const taxAmount = calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
 
   const getLedgerTaxDefaults = (ledger: AccountLedger | undefined) => {
     if (!ledger) return { taxType: "", taxGroupId: null, taxExemptionId: null };
@@ -2046,17 +2174,17 @@ const NewRecurringExpensePage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            {/* Vendor GSTIN — auto-populated from vendor */}
+            {/* Vendor GSTIN — auto-populated from vendor, editable via picker/manage modals */}
             <div>
               <label className="block text-sm font-medium mb-2">Vendor GSTIN</label>
-              <TextField
-                value={gstin}
-                onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                fullWidth
-                placeholder="e.g. 22AAAAA0000A1Z5"
-                inputProps={{ maxLength: 15 }}
-                sx={fieldStyles}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-800 font-medium">
+                  {gstin || selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
+                </span>
+                <IconButton size="small" onClick={() => setGstPickerModalOpen(true)} disabled={!vendor}>
+                  <EditOutlined fontSize="small" className="text-blue-500" />
+                </IconButton>
+              </div>
             </div>
 
             {/* Source of Supply — auto-populated from vendor's primary GST */}
@@ -2157,6 +2285,15 @@ const NewRecurringExpensePage: React.FC = () => {
                 </Select>
               </FormControl>
             </div>
+
+            {/* ✅ Tax Amount — read-only calculation */}
+            {taxType === "tax_group" && taxGroupId && (
+              <div className="p-3 bg-blue-50 rounded-md border border-blue-100">
+                <p className="text-sm text-gray-700">
+                  Tax Amount = ₹<span className="font-semibold text-blue-600">{taxAmount.toFixed(2)}</span>
+                </p>
+              </div>
+            )}
 
             {/* Exemption Reason — only when non_taxable; wired to exemptions API */}
             {taxType === "non_taxable" && (
@@ -2345,6 +2482,190 @@ const NewRecurringExpensePage: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* GSTIN Picker Modal */}
+      <Dialog open={gstPickerModalOpen} onClose={() => setGstPickerModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogContent className="!p-0">
+          <div className="max-h-[240px] overflow-y-auto">
+            {gstDetails.length === 0 && (
+              <div className="px-4 py-6 text-center text-sm text-gray-400">No GST details found</div>
+            )}
+            {gstDetails.map((gst) => (
+              <button
+                key={gst.id}
+                type="button"
+                className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''
+                  }`}
+                onClick={() => handleGstinDropdownChange(gst.id)}
+              >
+                {gst.gstin || '(No GSTIN)'} — {gst.place_of_supply}
+                {gst.primary && <span className="ml-2 text-xs text-green-600 italic">(Primary)</span>}
+              </button>
+            ))}
+          </div>
+          <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+            <button
+              type="button"
+              className="text-blue-600 text-sm"
+              onClick={() => {
+                setGstPickerModalOpen(false);
+                setShowNewGstForm(false);
+                setEditingGstDetailId(null);
+                setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
+                setGstManageModalOpen(true);
+              }}
+            >
+              ⚙ Manage Tax Informations
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* GST Manage Modal */}
+      <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Manage Tax Informations
+          <IconButton size="small" onClick={() => setGstManageModalOpen(false)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <div className="space-y-4">
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setEditingGstDetailId(null);
+                setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
+                setShowNewGstForm(true);
+              }}
+              sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}
+            >
+              Add New Tax Information
+            </Button>
+
+            {showNewGstForm && (
+              <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TextField
+                  label="GSTIN*"
+                  fullWidth
+                  size="small"
+                  value={newGstForm.gstin}
+                  onChange={(e) => setNewGstForm((p) => ({ ...p, gstin: e.target.value.toUpperCase() }))}
+                  error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                  helperText={
+                    newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)
+                      ? 'Invalid GSTIN. e.g. 27AAAAA1234A1Z5'
+                      : ''
+                  }
+                  inputProps={{ maxLength: 15 }}
+                />
+                <TextField
+                  label="Place of Supply*"
+                  select
+                  fullWidth
+                  size="small"
+                  value={newGstForm.place_of_supply}
+                  onChange={(e) => setNewGstForm((p) => ({ ...p, place_of_supply: e.target.value }))}
+                >
+                  <MenuItem value="">Select</MenuItem>
+                  {INDIAN_STATES.map((s) => (
+                    <MenuItem key={s} value={s}>{s}</MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  label="Business Legal Name"
+                  fullWidth
+                  size="small"
+                  value={newGstForm.business_legal_name}
+                  onChange={(e) => setNewGstForm((p) => ({ ...p, business_legal_name: e.target.value }))}
+                />
+                <TextField
+                  label="Business Trade Name"
+                  fullWidth
+                  size="small"
+                  value={newGstForm.business_trade_name}
+                  onChange={(e) => setNewGstForm((p) => ({ ...p, business_trade_name: e.target.value }))}
+                />
+                <div className="md:col-span-2 flex gap-2">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleSaveAndSelectGst}
+                    sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}
+                  >
+                    {editingGstDetailId ? 'Save' : 'Save and Select'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      setShowNewGstForm(false);
+                      setEditingGstDetailId(null);
+                    }}
+                    sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="border border-gray-200 rounded-md overflow-hidden">
+              <div className="grid grid-cols-4 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2">
+                <div>GSTIN</div><div>PLACE OF SUPPLY</div><div>LEGAL NAME</div><div></div>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto">
+                {gstDetails.map((gst) => (
+                  <div
+                    key={gst.id}
+                    className={`grid grid-cols-4 px-4 py-2 text-sm border-t border-gray-100 cursor-pointer hover:bg-gray-50 ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''
+                      }`}
+                    onClick={() => handleGstinDropdownChange(gst.id)}
+                  >
+                    <div>
+                      {gst.gstin || '—'}
+                      {gst.primary && <div className="text-green-600 text-xs italic">(Primary)</div>}
+                    </div>
+                    <div>{gst.place_of_supply || '—'}</div>
+                    <div>{gst.business_legal_name || '—'}</div>
+                    <div className="flex justify-end gap-1">
+                      {!gst.primary && (
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingGstDetailId(gst.id);
+                            setNewGstForm({
+                              gstin: gst.gstin,
+                              place_of_supply: gst.place_of_supply,
+                              business_legal_name: gst.business_legal_name || '',
+                              business_trade_name: gst.business_trade_name || '',
+                            });
+                            setShowNewGstForm(true);
+                          }}
+                        >
+                          <EditOutlined fontSize="small" />
+                        </IconButton>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setGstManageModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

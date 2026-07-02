@@ -194,9 +194,10 @@ export const CustomersDetails = () => {
                         </Button>
                         <div className="flex items-center gap-2">
                             <Button
-                                variant="outline"
+                                // variant="outline"
                                 onClick={handleEditClick}
-                                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                                className="bg-[#C72030] hover:bg-[#A01020] text-white"
                             >
                                 Edit
                             </Button>
@@ -374,6 +375,7 @@ export const CustomersDetails = () => {
                                             <th className="px-3 py-2 text-left rounded-l-lg">Bill No</th>
                                             <th className="px-3 py-2 text-left">Bill Date</th>
                                             <th className="px-3 py-2 text-left">Due Date</th>
+                                            <th className="px-3 py-2 text-left">Type</th>
                                             <th className="px-3 py-2 text-left rounded-r-lg">Amount</th>
                                         </tr>
                                     </thead>
@@ -391,6 +393,7 @@ export const CustomersDetails = () => {
                                                         ? new Date(item.due_date).toLocaleDateString("en-GB")
                                                         : "-"}
                                                 </td>
+                                                <td className="px-3 py-2 capitalize">{item.account_type || "-"}</td>
                                                 <td className="px-3 py-2 font-medium">
                                                     ₹ {item.amount || 0}
                                                 </td>

@@ -29,7 +29,6 @@ const FaceEnrollmentPanel: React.FC<FaceEnrollmentPanelProps> = ({
   const [hasProfile, setHasProfile] = useState(() => hasLocalFaceProfile());
   const [message, setMessage] = useState("Initializing face authentication.");
   const [capturedImage, setCapturedImage] = useState("");
-  const [apiResult, setApiResult] = useState("");
   const currentUser = getCurrentFaceAuthUser();
 
   const startCamera = useCallback(async () => {
@@ -138,7 +137,6 @@ const FaceEnrollmentPanel: React.FC<FaceEnrollmentPanelProps> = ({
       setCapturedImage(base64Face);
       setHasProfile(true);
       setMessage(result.message || "Face enrolled successfully.");
-      setApiResult(JSON.stringify(result));
       toast.success(result.message || "Face enrolled successfully.");
       onEnrollmentSuccess?.();
     } catch (err) {
@@ -211,12 +209,6 @@ const FaceEnrollmentPanel: React.FC<FaceEnrollmentPanelProps> = ({
                 className="h-36 w-full object-cover"
                 style={{ transform: "scaleX(-1)" }}
               />
-            </div>
-          )}
-
-          {apiResult && (
-            <div className="break-all rounded-md border border-[#C4B89D]/50 bg-[#F6F4EE] p-3 text-[10px] leading-relaxed text-[#2C2C2C]/70">
-              {apiResult}
             </div>
           )}
 

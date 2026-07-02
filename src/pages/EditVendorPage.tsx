@@ -245,7 +245,7 @@ export const EditVendorPage = () => {
     const [complianceAttachments, setComplianceAttachments] = useState<File[]>([]);
     const [otherAttachments, setOtherAttachments] = useState<File[]>([]);
     const [openingBalances, setOpeningBalances] = useState([
-        { id: null as number | null, billNo: '', date: '', dueDate: '', amount: '' }
+        { id: null as number | null, billNo: '', date: '', dueDate: '', accountType: 'Bill', amount: '' }
     ]);
     const [loadingVendor, setLoadingVendor] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
@@ -365,7 +365,8 @@ export const EditVendorPage = () => {
                             billNo: row.bill_no || '',
                             date: row.date || '',
                             dueDate: row.due_date || '',
-                            amount: row.amount != null ? String(row.amount) : '',
+                            accountType: row.account_type || 'Bill',
+                            amount: row.amount != null ? String(Math.abs(Number(row.amount))) : '',
                         }))
                     );
                 }
@@ -676,13 +677,16 @@ export const EditVendorPage = () => {
         openingBalances.forEach((row, index) => {
             if (row.billNo || row.date || row.dueDate || row.amount) {
                 const prefix = `pms_supplier[opening_balance_details_attributes][${index}]`;
+                const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
+                const signedAmount = row.accountType === 'Vendor credit' ? -absAmount : absAmount;
                 if (row.id) {
                     apiFormData.append(`${prefix}[id]`, String(row.id));
                 }
                 apiFormData.append(`${prefix}[bill_no]`, row.billNo || '');
                 apiFormData.append(`${prefix}[date]`, row.date || '');
                 apiFormData.append(`${prefix}[due_date]`, row.dueDate || '');
-                apiFormData.append(`${prefix}[amount]`, row.amount || '');
+                apiFormData.append(`${prefix}[account_type]`, row.accountType || 'Bill');
+                apiFormData.append(`${prefix}[amount]`, String(signedAmount));
             }
         });
 
@@ -691,7 +695,7 @@ export const EditVendorPage = () => {
         try {
             await vendorService.updateVendor(id, apiFormData);
             toast.success('Vendor updated successfully!');
-            navigate('/maintenance/vendor');
+            navigate('/accounting/vendor');
         } catch (error: any) {
             if (error.status === 422 && error.validationErrors) {
                 const validationErrors = error.validationErrors;
@@ -1144,22 +1148,41 @@ export const EditVendorPage = () => {
                                                 sx={{ flex: 1 }}
                                             />
                                             <TextField
+                                                select
+                                                label="Type"
+                                                size="small"
+                                                value={row.accountType || 'Bill'}
+                                                onChange={(e) => {
+                                                    const updated = [...openingBalances];
+                                                    updated[index].accountType = e.target.value;
+                                                    setOpeningBalances(updated);
+                                                }}
+                                                sx={{ flex: 1 }}
+                                            >
+                                                <MenuItem value="Bill">Bill</MenuItem>
+                                                <MenuItem value="Vendor credit">Vendor Credit</MenuItem>
+                                            </TextField>
+                                            <TextField
                                                 label="Amount"
                                                 placeholder="Enter amount"
-                                                type="number"
                                                 size="small"
                                                 value={row.amount}
                                                 onChange={(e) => {
                                                     const updated = [...openingBalances];
-                                                    updated[index].amount = e.target.value;
+                                                    updated[index].amount = e.target.value.replace(/^-/, '');
                                                     setOpeningBalances(updated);
+                                                }}
+                                                InputProps={{
+                                                    startAdornment: row.accountType === 'Vendor credit' && row.amount !== ''
+                                                        ? <span style={{ marginRight: 2 }}>-</span>
+                                                        : null,
                                                 }}
                                                 sx={{ flex: 1 }}
                                             />
                                             <IconButton
                                                 onClick={() => {
                                                     if (index === openingBalances.length - 1) {
-                                                        setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', amount: '' }]);
+                                                        setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', accountType: 'Bill', amount: '' }]);
                                                     } else {
                                                         setOpeningBalances(openingBalances.filter((_, i) => i !== index));
                                                     }
@@ -1547,14 +1570,14 @@ export const EditVendorPage = () => {
             <div className="min-h-screen bg-background p-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center gap-4 mb-6">
-                        <Button variant="ghost" size="icon" onClick={() => navigate('/maintenance/vendor')}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate('/accounting/vendor')}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </div>
                     <div className="border-red-200 bg-red-50 rounded-lg p-6">
                         <h2 className="text-lg font-semibold text-red-800 mb-2">Error Loading Vendor</h2>
                         <p className="text-red-700 mb-4">{fetchError}</p>
-                        <Button onClick={() => navigate('/maintenance/vendor')} variant="outline">Back to Vendor List</Button>
+                        <Button onClick={() => navigate('/accounting/vendor')} variant="outline">Back to Vendor List</Button>
                     </div>
                 </div>
             </div>
@@ -1566,7 +1589,7 @@ export const EditVendorPage = () => {
             <div className="mb-6">
                 <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                     <button
-                        onClick={() => navigate('/maintenance/vendor')}
+                        onClick={() => navigate('/accounting/vendor')}
                         className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
                         aria-label="Go back"
                     >

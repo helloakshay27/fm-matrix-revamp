@@ -458,16 +458,27 @@ const normalizeImageUrl = (url: string): string => {
   return url;
 };
 
+const EMPTY_OVERVIEW_MEDIA: OverviewMedia = { images: [], videos: [] };
+
 const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   const url = `${BASE_URL}/business_compass/overview_media`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
+
+  // Endpoint may not be deployed on every environment (e.g. live). A 404 — or a
+  // non-JSON (HTML) error page — should not break the page: overview media is
+  // optional, so treat it as "no media" instead of surfacing a raw error.
+  const looksLikeHtml = /^\s*<(?:!doctype|html)/i.test(rawText);
+  if (res.status === 404 || (!res.ok && looksLikeHtml)) {
+    return EMPTY_OVERVIEW_MEDIA;
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
   let json: any;
   try {
     json = JSON.parse(rawText);
   } catch {
-    json = {};
+    // Successful but non-JSON response — nothing usable, degrade gracefully.
+    return EMPTY_OVERVIEW_MEDIA;
   }
   const parseMediaArray = (
     arr: any[],
@@ -3926,7 +3937,7 @@ const BusinessPlanAndGoles = () => {
             <button
               key={tab.key}
               onClick={() => setActiveMainTab(tab.key)}
-              className={`py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
+              className={`py-2 px-5 sm:px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap`}
               style={{
                 background: isActive ? C.primary : "transparent",
                 color: isActive ? "#fff" : "#7b8393"
@@ -5715,3 +5726,19 @@ const BusinessPlanAndGoles = () => {
 };
 
 export default BusinessPlanAndGoles;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

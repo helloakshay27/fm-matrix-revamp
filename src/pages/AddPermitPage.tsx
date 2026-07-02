@@ -1634,8 +1634,8 @@ export const AddPermitPage = () => {
                           className="mr-3 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                         />
                         <span className={`text-sm font-medium ${permitData.permitType === permitType.id.toString()
-                          ? 'text-[#C72030]'
-                          : 'text-gray-700'
+                          ? '#000000'
+                          : '#374151'
                           }`}>
                           {permitType.name}
                         </span>

@@ -450,11 +450,11 @@ const SectionLoader: React.FC<{
 }> = ({ loading, children, className }) => {
   return (
     <div className={`relative h-full flex flex-col ${className ?? ""}`}>
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative z-0">
         {children}
       </div>
       {loading && (
-        <div className="absolute inset-0 z-10 rounded-lg bg-white flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 z-20 rounded-lg bg-white flex items-center justify-center pointer-events-none">
           <div className="h-8 w-8 rounded-full border-2 border-gray-200 border-t-[#C72030] animate-spin" />
         </div>
       )}

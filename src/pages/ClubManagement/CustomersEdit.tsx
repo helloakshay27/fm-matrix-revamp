@@ -1003,7 +1003,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     const addRow = () => {
         setOpeningBalances([
             ...openingBalances,
-            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", amount: "" }
+            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", account_type: "Invoice", amount: "" }
         ]);
     };
 
@@ -1015,7 +1015,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     return (
         <div>
             {openingBalances?.map((row, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-3">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-3">
 
                     <TextField
                         label="Bill No"
@@ -1046,12 +1046,32 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                     />
 
                     <TextField
+                        select
+                        label="Type"
+                        value={row.account_type || "Invoice"}
+                        onChange={(e) => handleChange(index, "account_type", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    >
+                        <MenuItem value="Invoice">Invoice</MenuItem>
+                        <MenuItem value="Credit note">Credit Note</MenuItem>
+                    </TextField>
+
+                    <TextField
                         label="Amount"
                         placeholder="Enter amount"
                         value={row.amount}
-                        onChange={(e) => handleChange(index, "amount", e.target.value)}
+                        onChange={(e) => {
+                            const raw = e.target.value.replace(/^-/, "");
+                            handleChange(index, "amount", raw);
+                        }}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            startAdornment: row.account_type === "Credit note" && row.amount !== ""
+                                ? <span style={{ marginRight: 2 }}>-</span>
+                                : null,
+                        }}
                     />
 
                     <div className="flex items-center gap-2">
@@ -1322,6 +1342,7 @@ const CustomersEdit = () => {
     // React.useEffect(() => {
     //     fetchPaymentTerms();
     // }, [fetchPaymentTerms]);
+
     const navigate = useNavigate();
     const { id } = useParams();
     const isEdit = !!id;
@@ -1368,33 +1389,35 @@ const CustomersEdit = () => {
                     lock_account_ledger_id: data.lock_account_ledger_id || "",
                 }));
 
-                if (data.billing_address) {
+                const billingAddr = data.billing_addresses?.[0] || data.billing_address || null;
+                if (billingAddr) {
                     setBilling({
-                        attention: data.billing_address.attention || "",
-                        country: data.billing_address.country || "",
-                        street1: data.billing_address.address || "",
-                        street2: data.billing_address.address_line_two || "",
-                        city: data.billing_address.city || "",
-                        state: data.billing_address.state || "",
-                        pincode: data.billing_address.pin_code || "",
-                        phone: data.billing_address.telephone_number || "",
-                        fax: data.billing_address.fax_number || "",
+                        attention: billingAddr.attention || "",
+                        country: billingAddr.country || "",
+                        street1: billingAddr.address || "",
+                        street2: billingAddr.address_line_two || "",
+                        city: billingAddr.city || "",
+                        state: billingAddr.state || "",
+                        pincode: billingAddr.pin_code || "",
+                        phone: billingAddr.telephone_number || "",
+                        fax: billingAddr.fax_number || "",
                     });
                 }
 
-                if (data.shipping_address) {
+                const shippingAddr = data.shipping_addresses?.[0] || data.shipping_address || null;
+                if (shippingAddr) {
                     setShipping({
-                        attention: data.shipping_address.attention || "",
-                        country: data.shipping_address.country || "",
-                        street1: data.shipping_address.address || "",
-                        street2: data.shipping_address.address_line_two || "",
-                        city: data.shipping_address.city || "",
-                        state: data.shipping_address.state || "",
-                        pincode: data.shipping_address.pin_code || "",
-                        phone: data.shipping_address.telephone_number || "",
-                        fax: data.shipping_address.fax_number || "",
-                        mobile: data.shipping_address.mobile || "",
-                        email: data.shipping_address.email || "",
+                        attention: shippingAddr.attention || "",
+                        country: shippingAddr.country || "",
+                        street1: shippingAddr.address || "",
+                        street2: shippingAddr.address_line_two || "",
+                        city: shippingAddr.city || "",
+                        state: shippingAddr.state || "",
+                        pincode: shippingAddr.pin_code || "",
+                        phone: shippingAddr.telephone_number || "",
+                        fax: shippingAddr.fax_number || "",
+                        mobile: shippingAddr.mobile || "",
+                        email: shippingAddr.email || "",
                     });
                 }
 
@@ -1416,18 +1439,25 @@ const CustomersEdit = () => {
                         bill_no: ob.bill_no || "",
                         date: ob.date || new Date().toISOString().split('T')[0],
                         due_date: ob.due_date || "",
-                        amount: ob.amount || ""
+                        account_type: ob.account_type || "Invoice",
+                        amount: ob.amount != null ? Math.abs(Number(ob.amount)).toString() : ""
                     })));
                 }
 
                 setEditIds({
-                    billingId: data.billing_address?.id || null,
-                    shippingId: data.shipping_address?.id || null,
+                    billingId: (data.billing_addresses?.[0] || data.billing_address)?.id || null,
+                    shippingId: (data.shipping_addresses?.[0] || data.shipping_address)?.id || null,
                     primaryGstDetailId: data.primary_gst_detail?.id || null,
                 });
                 
-                if (data.payment_term) {
-                    setSelectedTerm(data.payment_term.name || "");
+                console.log("payment_term:", data.payment_term, "payment_term_id:", data.payment_term_id);
+                const rawTermId = data.payment_term_id || data.payment_term?.id || null;
+                if (rawTermId) setFetchedPaymentTermId(Number(rawTermId));
+
+                if (data.payment_term?.name) {
+                    setSelectedTerm(data.payment_term.name);
+                } else if (rawTermId) {
+                    setPendingPaymentTermId(Number(rawTermId));
                 }
             }
         } catch (err) {
@@ -1528,6 +1558,7 @@ const CustomersEdit = () => {
             bill_no: "",
             date: new Date().toISOString().split('T')[0],
             due_date: "",
+            account_type: "Invoice",
             amount: ""
         }
     ]);
@@ -1537,9 +1568,22 @@ const CustomersEdit = () => {
 
     // PAYMENT TERM
     const [selectedTerm, setSelectedTerm] = useState("");
+    const [pendingPaymentTermId, setPendingPaymentTermId] = useState<number | null>(null);
+    const [fetchedPaymentTermId, setFetchedPaymentTermId] = useState<number | null>(null);
 
     // PAYMENT TERM
     const [paymentTerms, setPaymentTerms] = React.useState([]);
+
+    React.useEffect(() => {
+        if (pendingPaymentTermId && paymentTerms.length > 0) {
+            const term = (paymentTerms as any[]).find((pt: any) => Number(pt.id) === Number(pendingPaymentTermId));
+            console.log("Resolving pendingPaymentTermId:", pendingPaymentTermId, "found:", term);
+            if (term) {
+                setSelectedTerm(term.name);
+                setPendingPaymentTermId(null);
+            }
+        }
+    }, [pendingPaymentTermId, paymentTerms]);
 
     const [loading, setLoading] = useState(false);
 
@@ -1576,10 +1620,15 @@ const CustomersEdit = () => {
             if (value.length > 10) return;
         }
 
-        // ── GSTIN: auto-uppercase ──
+        // ── GSTIN: auto-uppercase + auto-extract PAN ──
         if (name === 'gstin') {
             value = value.toUpperCase();
             if (value.length > 15) return;
+            // Auto-extract PAN from GSTIN (characters 3–12, i.e. index 2–11)
+            // e.g. GSTIN 27ABCDE1234F1Z5 → PAN ABCDE1234F
+            const extractedPan = value.length >= 12 ? value.substring(2, 12) : '';
+            setForm((p) => ({ ...p, gstin: value, pan: extractedPan }));
+            return;
         }
 
         // ── Opening Balance: numeric only, allow up to 2 decimal places ──
@@ -1695,8 +1744,8 @@ const CustomersEdit = () => {
         const lock_account_id = localStorage.getItem("lock_account_id");
 
         // Get payment term id
-        const paymentTerm = paymentTerms.find(pt => pt.name === selectedTerm);
-        const payment_term_id = paymentTerm ? paymentTerm.id : null;
+        const paymentTerm = (paymentTerms as any[]).find((pt: any) => pt.name === selectedTerm);
+        const payment_term_id = paymentTerm ? paymentTerm.id : (fetchedPaymentTermId || null);
 
         // Use lifted billing, shipping, contactPersons, remarks state
         const billingPayload = {
@@ -1745,12 +1794,17 @@ const CustomersEdit = () => {
 
         const openingBalancePayload = openingBalances
             .filter(row => row.bill_no || row.amount) // skip empty rows
-            .map(row => ({
-                bill_no: row.bill_no || null,
-                date: row.date || null,
-                due_date: row.due_date || null,
-                amount: row.amount ? Number(row.amount) : 0
-            }));
+            .map(row => {
+                const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
+                const signedAmount = row.account_type === "Credit note" ? -absAmount : absAmount;
+                return {
+                    bill_no: row.bill_no || null,
+                    date: row.date || null,
+                    due_date: row.due_date || null,
+                    account_type: row.account_type || "Invoice",
+                    amount: signedAmount,
+                };
+            });
 
         // Use lifted remarks state
         const remarksPayload = remarks || '';

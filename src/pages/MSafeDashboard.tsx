@@ -17,11 +17,13 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 
 interface ApiPagination { current_page: number; total_pages: number; total_count: number }
 
 export const MSafeDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const location = useLocation()
   const dispatch = useAppDispatch();
@@ -299,14 +301,16 @@ useEffect(() => {
   const renderActions = (user: FMUser) =>
   (
     <div className="flex items-center justify-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate(`/safety/m-safe/user/${user.id}`, { state: { user } })}
-        className="h-8 w-8 p-0"
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
+      {shouldShow("M Safe", "show") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/safety/m-safe/user/${user.id}`, { state: { user } })}
+          className="h-8 w-8 p-0"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 

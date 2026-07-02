@@ -14,6 +14,7 @@ import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters } from '../services/wasteGenerationAPI';
 import { useLayout } from '@/contexts/LayoutContext';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { format, subYears } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -153,6 +154,7 @@ const SiteDetailModal: React.FC<SiteDetailModalProps> = ({ siteName, siteData, o
 const UtilityWasteGenerationDashboard = () => {
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useLayout();
+  const { shouldShow } = useDynamicPermissions();
   const panelRef = useRef<HTMLDivElement>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -344,7 +346,7 @@ useEffect(() => {
                 { key: 'wg_date', label: 'Waste Date' },
               ]}
               renderCell={(item: WasteGeneration, key) => {
-                if (key === 'actions') return <Button variant="ghost" onClick={() => handleView(item.id)}><Eye className="h-4 w-4" /></Button>;
+                if (key === 'actions') return shouldShow("Waste Generation", "show") ? <Button variant="ghost" onClick={() => handleView(item.id)}><Eye className="h-4 w-4" /></Button> : null;
                 if (key === 'vendor') return item.vendor?.company_name || 'N/A';
                 if (key === 'category') return item.category?.category_name || 'N/A';
                 return item[key] || 'N/A';
@@ -353,9 +355,11 @@ useEffect(() => {
               onSearchChange={setSearchTerm}
               onFilterClick={() => setIsFilterOpen(true)}
               leftActions={
-                <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
-                  <Plus className="w-4 h-4 mr-2" /> Action
-                </Button>
+                shouldShow("Waste Generation", "show") ? (
+                  <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
+                    <Plus className="w-4 h-4 mr-2" /> Action
+                  </Button>
+                ) : undefined
               }
             />
           </TabsContent>

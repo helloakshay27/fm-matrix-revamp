@@ -10,6 +10,7 @@ import { useNavigate ,useLocation} from "react-router-dom";
 import { format } from "date-fns";
 import axios from "axios";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const columns: ColumnConfig[] = [
   {
@@ -141,6 +142,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const CRMCustomersDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -328,17 +330,22 @@ case "enable_sites":
   };
 
   const renderActions = (item: any) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => navigate(`/crm/customers/${item.id}`)}
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
+    <>
+      {shouldShow("Customers", "show") && (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(`/crm/customers/${item.id}`)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      )}
+    </>
   );
 
   const leftActions = (
     <>
+      {shouldShow("Customers", "create") && (
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
         onClick={() => navigate("/crm/customers/add")}
@@ -346,6 +353,7 @@ case "enable_sites":
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
+      )}
     </>
   );
 

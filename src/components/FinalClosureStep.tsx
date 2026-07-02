@@ -905,12 +905,12 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       <div className="bg-[#EDE8DC] rounded-lg overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <h3 className="font-bold text-gray-900 text-base">Corrective Actions</h3>
-          <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
+          {/* <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
             Open
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
             </svg>
-          </button>
+          </button> */}
         </div>
 
         <div className="bg-white mx-3 mb-3 rounded-lg p-4 space-y-4">
@@ -1004,12 +1004,12 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       <div className="bg-[#EDE8DC] rounded-lg overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <h3 className="font-bold text-gray-900 text-base">Preventive Actions</h3>
-          <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
+          {/* <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
             Open
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
             </svg>
-          </button>
+          </button> */}
         </div>
 
         <div className="bg-white mx-3 mb-3 rounded-lg p-4 space-y-4">

@@ -38,6 +38,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface Permission {
   name: string;
@@ -58,6 +59,8 @@ interface Role {
 
 export const RoleDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
   const dispatch = useAppDispatch();
   const { roles, loading, error, updating } = useAppSelector(
     (state) => state.roleWithModules
@@ -578,6 +581,7 @@ export const RoleDashboard = () => {
             Manage user roles and their access permissions across modules
           </p>
         </div>
+        {shouldShow("Role","create")&&(
         <Button
           onClick={handleAddRole}
           className="bg-[#C72030] hover:bg-[#A11D2A] text-white shadow-sm"
@@ -585,6 +589,7 @@ export const RoleDashboard = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add New Role
         </Button>
+        )}
       </div>
 
       <div className="flex flex-col xl:flex-row gap-6">
@@ -653,7 +658,7 @@ export const RoleDashboard = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                {!isEditMode ? (
+                {!isEditMode && shouldShow("Role","update")? (
                   <Button
                     onClick={() => setIsEditMode(true)}
                     variant="outline"

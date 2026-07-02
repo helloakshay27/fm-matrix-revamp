@@ -49,7 +49,7 @@ const IssueFilterModal = ({
                     selectedCreators: [],
                     selectedProjects: [],
                     selectedTags: [],
-                    dates: { startDate: "", endDate: "" },
+                    dates: { startDate: "", endDate: "", completedAt: "" },
                     statusSearch: "",
                     typeSearch: "",
                     assigneeSearch: "",
@@ -67,7 +67,7 @@ const IssueFilterModal = ({
                 selectedCreators: [],
                 selectedProjects: [],
                 selectedTags: [],
-                dates: { startDate: "", endDate: "" },
+                dates: { startDate: "", endDate: "", completedAt: "" },
                 statusSearch: "",
                 typeSearch: "",
                 assigneeSearch: "",
@@ -151,7 +151,8 @@ const IssueFilterModal = ({
             projectSearch ||
             tagSearch ||
             dates.startDate ||
-            dates.endDate
+            dates.endDate ||
+            dates.completedAt
         ) {
             localStorage.setItem("issueFilters", JSON.stringify(filters));
         }
@@ -183,6 +184,7 @@ const IssueFilterModal = ({
         tags: false,
         startDate: false,
         endDate: false,
+        completedAt: false,
     });
 
     const toggleDropdown = (key: string) => {
@@ -200,6 +202,7 @@ const IssueFilterModal = ({
                 project: false,
                 startDate: false,
                 endDate: false,
+                completedAt: false,
                 tags: false,
                 [key]: true,
             };
@@ -287,7 +290,7 @@ const IssueFilterModal = ({
         setCreatorSearch("");
         setProjectSearch("");
         setTagSearch("");
-        setDates({ startDate: "", endDate: "" });
+        setDates({ startDate: "", endDate: "", completedAt: "" });
         localStorage.removeItem("issueFilters");
 
         // Build empty filter query to clear all filters
@@ -299,8 +302,12 @@ const IssueFilterModal = ({
             "q[created_by_id_in][]": [],
             "q[project_management_id_in][]": [],
             "q[tags_id_in][]": [],
-            "q[start_date_eq]": "",
-            "q[end_date_eq]": "",
+            "q[start_date_gteq]": "",
+            "q[start_date_lteq]": "",
+            "q[end_date_gteq]": "",
+            "q[end_date_lteq]": "",
+            "q[completed_at_gteq]": "",
+            "q[completed_at_lteq]": "",
         };
         const emptyQueryString = qs.stringify(emptyFilters, {
             arrayFormat: "repeat",
@@ -326,9 +333,19 @@ const IssueFilterModal = ({
             "q[created_by_id_in][]": selectedCreators,
             "q[project_management_id_in][]": selectedProjects,
             "q[task_tags_company_tag_id_in][]": selectedTags,
-            "q[start_date_eq]": dates.startDate || "",
-            "q[end_date_eq]": dates.endDate || "",
         };
+        if (dates.startDate) {
+            newFilters["q[start_date_gteq]"] = `${dates.startDate} 00:00:00`;
+            newFilters["q[start_date_lteq]"] = `${dates.startDate} 23:59:59`;
+        }
+        if (dates.endDate) {
+            newFilters["q[end_date_gteq]"] = `${dates.endDate} 00:00:00`;
+            newFilters["q[end_date_lteq]"] = `${dates.endDate} 23:59:59`;
+        }
+        if (dates.completedAt) {
+            newFilters["q[completed_at_gteq]"] = `${dates.completedAt} 00:00:00`;
+            newFilters["q[completed_at_lteq]"] = `${dates.completedAt} 23:59:59`;
+        }
         const queryString = qs.stringify(newFilters, { arrayFormat: "repeat" });
         onApplyFilters?.(queryString);
         closeModal();
@@ -669,6 +686,81 @@ const IssueFilterModal = ({
                                     setSelectedCreators,
                                     creatorSearch
                                 )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Start Date */}
+                    <div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("startDate")}
+                        >
+                            <span className="font-medium text-sm select-none">Start Date</span>
+                            {dropdowns.startDate ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.startDate && (
+                            <div className="mt-4">
+                                <input
+                                    type="date"
+                                    value={dates.startDate}
+                                    onChange={(e) => setDates({ ...dates, startDate: e.target.value })}
+                                    className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* End Date */}
+                    <div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("endDate")}
+                        >
+                            <span className="font-medium text-sm select-none">End Date</span>
+                            {dropdowns.endDate ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.endDate && (
+                            <div className="mt-4">
+                                <input
+                                    type="date"
+                                    value={dates.endDate}
+                                    onChange={(e) => setDates({ ...dates, endDate: e.target.value })}
+                                    className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Completed At */}
+                    <div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("completedAt")}
+                        >
+                            <span className="font-medium text-sm select-none">Completed At</span>
+                            {dropdowns.completedAt ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.completedAt && (
+                            <div className="mt-4">
+                                <input
+                                    type="date"
+                                    value={dates.completedAt}
+                                    onChange={(e) => setDates({ ...dates, completedAt: e.target.value })}
+                                    className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
+                                />
                             </div>
                         )}
                     </div>

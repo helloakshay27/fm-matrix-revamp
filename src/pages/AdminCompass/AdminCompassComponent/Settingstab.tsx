@@ -300,7 +300,7 @@ const MeetingConfigModal = ({
                   className={cn(
                     "px-4 py-2 rounded-[12px] text-xs font-bold transition-all border",
                     form.meeting_days.includes(day)
-                      ? "bg-[#1A1A1A] text-white border-[#1A1A1A]"
+                      ? "bg-[#DA7756] text-white border-[#DA7756]"
                       : "bg-white text-[#8C8580] border-[#F0EBE8] hover:bg-[#FCFAFA] hover:text-[#1A1A1A]"
                   )}
                 >
@@ -426,7 +426,7 @@ const MeetingConfigModal = ({
             onClick={handleSubmit}
             disabled={isLoading}
             className={cn(
-              "px-6 py-2.5 bg-[#1A1A1A] text-white rounded-[16px] text-sm font-bold hover:bg-black transition-colors shadow-sm",
+              "px-6 py-2.5 bg-[#DA7756] text-white rounded-[16px] text-sm font-bold hover:bg-[#C96546] transition-colors shadow-sm",
               isLoading && "opacity-50 pointer-events-none"
             )}
           >
@@ -740,7 +740,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
                     isActive && isToday
                       ? "bg-[#DA7756] text-white ring-2 ring-offset-1 ring-[#DA7756]"
                       : isActive
-                        ? "bg-[#1A1A1A] text-white"
+                        ? "bg-[#DA7756] text-white"
                         : isToday
                           ? "bg-[#FCFAFA] border-2 border-[#DA7756] text-[#DA7756]"
                           : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
@@ -857,7 +857,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
         {/* Default badge */}
         {(config.isDefault || config.is_default) && (
           <div className="mt-5 flex">
-            <span className="bg-[#1A1A1A] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
+            <span className="bg-[#DA7756] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
               Default Meeting
             </span>
           </div>
@@ -1010,7 +1010,7 @@ const SettingsTab = () => {
           </div>
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 bg-white border border-[#F0EBE8] text-[#1A1A1A] hover:bg-gray-50 px-5 py-2.5 rounded-[16px] text-sm font-bold shadow-sm transition-all"
+            className="flex items-center gap-2 bg-[#DA7756] border border-[#DA7756] text-white hover:bg-[#C96546] px-5 py-2.5 rounded-[16px] text-sm font-bold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" /> New Meeting
           </button>
@@ -1116,7 +1116,7 @@ const SettingsTab = () => {
               </div>
               <button
                 onClick={handleCreate}
-                className="flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-3 rounded-[16px] text-sm font-bold shadow-sm hover:bg-black transition-all"
+                className="flex items-center gap-2 bg-[#DA7756] text-white px-6 py-3 rounded-[16px] text-sm font-bold shadow-sm hover:bg-[#C96546] transition-all"
               >
                 <Plus className="w-4 h-4" /> Create Your First Meeting
               </button>

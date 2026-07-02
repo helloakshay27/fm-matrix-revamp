@@ -1673,7 +1673,7 @@ const UserSelectReceived = ({
           setSearch(e.target.value);
           setOpen(true);
         }}
-        className="h-10 w-[168px] rounded-[10px] border border-[#e7eaf0] bg-white px-4 text-[13px] font-medium text-[#111827] shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="h-10 w-full sm:w-[168px] rounded-[10px] border border-[#e7eaf0] bg-white px-4 text-[13px] font-medium text-[#111827] shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ paddingRight: "36px", fontFamily: "inherit" }}
       />
       <div
@@ -2087,7 +2087,7 @@ function GivenFeedbackList({
       {/* Search and Filter Row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-center gap-3">
-          <div className="relative w-full max-w-[238px]">
+          <div className="relative w-full sm:max-w-[238px]">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748b]"
               aria-hidden
@@ -2200,7 +2200,7 @@ function GivenFeedbackList({
               >
                 <div
                   className={cn(
-                    "flex items-center gap-4 px-5 py-3.5",
+                    "flex items-center gap-3 px-3 py-3.5 sm:gap-4 sm:px-5",
                     expanded && "border-b border-[#edf0f4]"
                   )}
                 >
@@ -2265,7 +2265,7 @@ function GivenFeedbackList({
                 </div>
 
                 {expanded && (
-                  <div className="feedback-collapse-panel overflow-hidden px-5 pb-5">
+                  <div className="feedback-collapse-panel overflow-hidden px-3 pb-4 sm:px-5 sm:pb-5">
                     {isLoadingDetail ? (
                       <div className="flex items-center gap-2 py-5 text-xs text-neutral-400">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -2297,7 +2297,7 @@ function GivenFeedbackList({
                             <div
                               key={panel.label}
                               className={cn(
-                                "min-h-[184px] rounded-[14px] px-4 py-4",
+                                "rounded-[14px] px-4 py-4 lg:min-h-[184px]",
                                 panel.bg
                               )}
                             >
@@ -2527,7 +2527,7 @@ function EditFeedbackModal({
 
   return (
     <div className="feedback-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
-      <div className="feedback-modal-card relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-xl">
+      <div className="feedback-modal-card relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-[18px] bg-white p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between px-1">
           <h2 className="text-[17px] font-bold text-[#111827]">Edit Feedback</h2>
           <button
@@ -2964,20 +2964,20 @@ function FeedbackPage() {
 
   return (
     <div
-      className="min-h-[calc(100vh-5rem)] bg-white px-8 py-7"
+      className="min-h-[calc(100vh-5rem)] bg-white px-4 py-5 sm:px-6 lg:px-8 lg:py-7"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <style>{FEEDBACK_ANIMATION_STYLES}</style>
       <div className="w-full max-w-[1020px] space-y-6">
-        <header className="flex items-start gap-4">
+        <header className="flex items-start gap-3 sm:gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f7f7f6]">
             <MessageSquare
               className="h-4 w-4 text-[#ef6f4f]"
               strokeWidth={2}
             />
           </div>
-          <div>
-            <h1 className="text-[24px] font-extrabold leading-tight tracking-tight text-[#111827]">
+          <div className="min-w-0">
+            <h1 className="text-[20px] sm:text-[24px] font-extrabold leading-tight tracking-tight text-[#111827]">
               Team Feedback
             </h1>
             <p className="mt-1 text-[13px] font-medium text-[#64748b]">
@@ -2992,16 +2992,16 @@ function FeedbackPage() {
           onValueChange={(v) => setFeedbackTab(v as any)}
           className="w-full"
         >
-          <TabsList className="inline-flex h-11 w-auto items-center justify-start gap-1 rounded-full border border-[#edf0f4] bg-white p-1 shadow-[0_6px_16px_rgba(15,23,42,0.06)]">
+          <TabsList className="flex h-9 w-full max-w-full items-center justify-between gap-0.5 rounded-full border border-[#edf0f4] bg-white p-0.5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] sm:inline-flex sm:h-11 sm:w-auto sm:justify-start sm:gap-1 sm:p-1">
             <TabsTrigger
               value="received"
-              className="h-9 rounded-full px-4 text-[13px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
+              className="inline-flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[10px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252] sm:h-9 sm:flex-none sm:px-4 sm:text-[13px]"
             >
-              <Inbox className="mr-2 h-4 w-4" />
+              <Inbox className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
               Received
               {receivedBadgeCount > 0 && (
                 <span
-                  className="ml-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[10px] font-extrabold text-[#e77252]"
+                  className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[9px] font-extrabold text-[#e77252] sm:ml-2 sm:text-[10px]"
                 >
                   {receivedBadgeCount}
                 </span>
@@ -3009,13 +3009,13 @@ function FeedbackPage() {
             </TabsTrigger>
             <TabsTrigger
               value="given"
-              className="h-9 rounded-full px-4 text-[13px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
+              className="inline-flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[10px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252] sm:h-9 sm:flex-none sm:px-4 sm:text-[13px]"
             >
-              <Send className="mr-2 h-4 w-4" />
+              <Send className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
               Given
               {givenFeedback.length > 0 && (
                 <span
-                  className="ml-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[10px] font-extrabold text-[#e77252]"
+                  className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[9px] font-extrabold text-[#e77252] sm:ml-2 sm:text-[10px]"
                 >
                   {givenFeedback.length}
                 </span>
@@ -3023,9 +3023,9 @@ function FeedbackPage() {
             </TabsTrigger>
             <TabsTrigger
               value="give"
-              className="h-9 rounded-full px-4 text-[13px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252]"
+              className="inline-flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[10px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252] sm:h-9 sm:flex-none sm:px-4 sm:text-[13px]"
             >
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
               Give Feedback
             </TabsTrigger>
           </TabsList>
@@ -3035,7 +3035,7 @@ function FeedbackPage() {
             className="feedback-tab-panel mt-6 space-y-4 focus-visible:outline-none"
           >
             <div className="space-y-5">
-              <div className="inline-flex items-center gap-3 rounded-[14px] bg-[#f5f2eb] p-2">
+              <div className="flex w-full flex-col items-stretch gap-2 rounded-[14px] bg-[#f5f2eb] p-2 sm:inline-flex sm:w-auto sm:flex-row sm:items-center sm:gap-3">
                 <span className="pl-2 text-[13px] font-medium text-[#111827]">
                   View feedback for:
                 </span>

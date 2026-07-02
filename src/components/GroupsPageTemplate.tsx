@@ -7,6 +7,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import { SelectionPanel } from './water-asset-details/PannelTab';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface Group {
   id: number;
@@ -31,6 +32,7 @@ interface GroupsPageTemplateProps {
   groupType: string;
   importApiEndpoint?: string;
   downloadSampleUrl?: string;
+  permissionKey?: string;
 }
 
 export const GroupsPageTemplate = ({
@@ -41,7 +43,9 @@ export const GroupsPageTemplate = ({
   groupType,
   importApiEndpoint,
   downloadSampleUrl,
+  permissionKey = "Asset Group & Sub Group",
 }: GroupsPageTemplateProps) => {
+  const { shouldShow } = useDynamicPermissions();
   const [groups, setGroups] = useState<Group[]>([]);
   const [subGroups, setSubGroups] = useState<SubGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -305,11 +309,11 @@ export const GroupsPageTemplate = ({
   };
 
   const selectionActions = [
-    {
+    ...(shouldShow(permissionKey, "create") ? [{
       label: 'Add Subgroup',
       icon: Plus,
       onClick: () => setAddSubGroupOpen(true),
-    },
+    }] : []),
     ...(downloadSampleUrl ? [{
       label: 'Download Sample',
       icon: Download,
@@ -340,6 +344,7 @@ export const GroupsPageTemplate = ({
             onImport={() => setBulkUploadOpen(true)}
             actions={selectionActions}
             onClearSelection={() => setShowActionPanel(false)}
+            permissionKey={permissionKey}
           />
         )}
 

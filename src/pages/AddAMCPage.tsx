@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -23,6 +23,41 @@ interface Service {
   id: string | number;
   service_name: string;
 }
+
+interface FrequencyConfig {
+  frequency: string;
+  description: string;
+  active: boolean;
+  timeSetupData: {
+    hourMode: string;
+    minuteMode: string;
+    dayMode: string;
+    monthMode: string;
+    selectedHours: string[];
+    selectedMinutes: string[];
+    selectedWeekdays: string[];
+    selectedDays: string[];
+    selectedMonths: string[];
+    betweenMinuteStart: string;
+    betweenMinuteEnd: string;
+    betweenMonthStart: string;
+    betweenMonthEnd: string;
+  };
+}
+
+const FREQUENCY_OPTIONS = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'half-yearly', label: 'Half Yearly' },
+  { value: 'yearly', label: 'Yearly' },
+];
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  'half-yearly': 'Half Yearly',
+  yearly: 'Yearly',
+};
 
 const MAX_ATTACHMENT_SIZE_MB = 20;
 const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
@@ -72,6 +107,8 @@ export const AddAMCPage = () => {
   const [assetOptions, setAssetOptions] = useState<any[]>([]);
   const [assetQuery, setAssetQuery] = useState('');
   const [assetSearchLoading, setAssetSearchLoading] = useState(false);
+  const [indivGroupFilter, setIndivGroupFilter] = useState('');
+  const [indivSubGroupFilter, setIndivSubGroupFilter] = useState('');
   const [assetMenuId] = useState(() => `asset-menu-${Math.random().toString(36).slice(2)}`);
   const [supplierDisplayLabel, setSupplierDisplayLabel] = useState('');
   // Technician state
@@ -147,6 +184,10 @@ export const AddAMCPage = () => {
     betweenMonthEnd: 'December'
   };
   const [timeSetupData, setTimeSetupData] = useState(initialTimeSetupState);
+
+  const [selectedFrequencies, setSelectedFrequencies] = useState<string[]>([]);
+  const [frequencyConfigs, setFrequencyConfigs] = useState<FrequencyConfig[]>([]);
+  const [activeFrequencyTab, setActiveFrequencyTab] = useState(0);
 
   const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
@@ -371,8 +412,8 @@ export const AddAMCPage = () => {
       .then(data => {
         const templates = Array.isArray(data) ? data
           : Array.isArray(data?.templates) ? data.templates
-          : Array.isArray(data?.custom_forms) ? data.custom_forms
-          : [];
+            : Array.isArray(data?.custom_forms) ? data.custom_forms
+              : [];
         setChecklistTemplates(templates);
       })
       .catch(() => toast.error('Failed to fetch checklist templates'))
@@ -557,6 +598,22 @@ export const AddAMCPage = () => {
       if (!formData.firstService) {
         newErrors.firstService = 'Please select a first service date.';
         isValid = false;
+      }
+
+      if (formData.firstService) {
+        const firstServiceDate = new Date(formData.firstService);
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+
+        if (firstServiceDate < startDate) {
+          newErrors.firstService =
+            'First Service Date cannot be before Start Date.';
+          isValid = false;
+        } else if (firstServiceDate > endDate) {
+          newErrors.firstService =
+            'First Service Date cannot be after End Date.';
+          isValid = false;
+        }
       }
       if (!formData.cost) {
         newErrors.cost = 'Please enter the cost.';
@@ -1022,6 +1079,19 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[checklist_type]', formData.details === 'Asset' ? "Asset" : "Service");
     sendData.append('pms_asset_amc[time_expression]', buildCronExpression());
 
+    // Primary frequency (first selected)
+    if (selectedFrequencies.length > 0) {
+      sendData.append('pms_asset_amc[amc_frequency]', selectedFrequencies[0]);
+    }
+
+    // Per-frequency cron configurations
+    frequencyConfigs.forEach((cfg, idx) => {
+      sendData.append(`frequency_configs[${idx}][frequency]`, cfg.frequency);
+      sendData.append(`frequency_configs[${idx}][description]`, cfg.description);
+      sendData.append(`frequency_configs[${idx}][active]`, String(cfg.active));
+      sendData.append(`frequency_configs[${idx}][cron_expression]`, buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState));
+    });
+
     sendData.append('pms_asset_amc[amc_details_type]', formData.type.toLowerCase()); // Add amc_details_type parameter
 
     if (action === 'schedule') {
@@ -1247,82 +1317,125 @@ export const AddAMCPage = () => {
     fetchAsset();
   }, []);
 
+  // Keep frequencyConfigs in sync when selectedFrequencies changes
+  useEffect(() => {
+    setFrequencyConfigs(prev => {
+      return selectedFrequencies.map(freq => {
+        const existing = prev.find(c => c.frequency === freq);
+        return existing || {
+          frequency: freq,
+          description: '',
+          active: true,
+          timeSetupData: { ...initialTimeSetupState },
+        };
+      });
+    });
+    setActiveFrequencyTab(0);
+  }, [selectedFrequencies]);
+
   console.log(assetList)
 
   const buildCronExpression = () => {
+    const MONTH_MAP: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+    };
+    // Standard cron weekday: 0=Sunday, 1=Monday … 6=Saturday
+    const WEEKDAY_MAP: Record<string, string> = {
+      Sunday: '0', Monday: '1', Tuesday: '2', Wednesday: '3',
+      Thursday: '4', Friday: '5', Saturday: '6',
+    };
+
     let minute = '*';
     let hour = '*';
-    let dayOfMonth = '?';
+    let dayOfMonth = '*';
     let month = '*';
-    let dayOfWeek = '?';
+    let dayOfWeek = '*';
 
+    // Minutes
     if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length > 0) {
       minute = timeSetupData.selectedMinutes.join(',');
     } else if (timeSetupData.minuteMode === 'between') {
-      const start = parseInt(timeSetupData.betweenMinuteStart, 10);
-      const end = parseInt(timeSetupData.betweenMinuteEnd, 10);
-      if (!Number.isNaN(start) && !Number.isNaN(end)) {
-        minute = `${start}-${end}`;
-      }
+      const s = parseInt(timeSetupData.betweenMinuteStart, 10);
+      const e = parseInt(timeSetupData.betweenMinuteEnd, 10);
+      if (!Number.isNaN(s) && !Number.isNaN(e)) minute = `${s}-${e}`;
     }
 
+    // Hours — keep leading zeros as stored ("09", "12")
     if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length > 0) {
       hour = timeSetupData.selectedHours.join(',');
     }
 
+    // Day
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
-      const weekdayMap: Record<string, string> = {
-        'Sunday': '1',
-        'Monday': '2',
-        'Tuesday': '3',
-        'Wednesday': '4',
-        'Thursday': '5',
-        'Friday': '6',
-        'Saturday': '7'
-      };
-      dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).join(',');
-      dayOfMonth = '?';
+      dayOfWeek = timeSetupData.selectedWeekdays.map(d => WEEKDAY_MAP[d]).join(',');
+      // dayOfMonth stays '*'
     } else if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length > 0) {
-      dayOfMonth = timeSetupData.selectedDays.join(',');
-      dayOfWeek = '?';
+      // Strip leading zeros: "01" → "1", "15" → "15"
+      dayOfMonth = timeSetupData.selectedDays.map(d => parseInt(d, 10).toString()).join(',');
+      // dayOfWeek stays '*'
     }
 
+    // Month
     if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length > 0) {
-      const monthMap: Record<string, string> = {
-        'January': '1',
-        'February': '2',
-        'March': '3',
-        'April': '4',
-        'May': '5',
-        'June': '6',
-        'July': '7',
-        'August': '8',
-        'September': '9',
-        'October': '10',
-        'November': '11',
-        'December': '12'
-      };
-      month = timeSetupData.selectedMonths.map(m => monthMap[m]).join(',');
+      month = timeSetupData.selectedMonths.map(m => MONTH_MAP[m].toString()).join(',');
     } else if (timeSetupData.monthMode === 'between') {
-      const monthMap: Record<string, number> = {
-        'January': 1,
-        'February': 2,
-        'March': 3,
-        'April': 4,
-        'May': 5,
-        'June': 6,
-        'July': 7,
-        'August': 8,
-        'September': 9,
-        'October': 10,
-        'November': 11,
-        'December': 12
-      };
-      const startMonth = monthMap[timeSetupData.betweenMonthStart];
-      const endMonth = monthMap[timeSetupData.betweenMonthEnd];
-      if (startMonth && endMonth) {
-        month = `${startMonth}-${endMonth}`;
-      }
+      const s = MONTH_MAP[timeSetupData.betweenMonthStart];
+      const e = MONTH_MAP[timeSetupData.betweenMonthEnd];
+      if (s && e) month = `${s}-${e}`;
+    }
+
+    return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+  };
+
+  const buildCronFromTimeData = (data: typeof initialTimeSetupState): string => {
+    const MONTH_MAP: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+    };
+    // Standard cron weekday: 0=Sunday, 1=Monday … 6=Saturday
+    const WEEKDAY_MAP: Record<string, string> = {
+      Sunday: '0', Monday: '1', Tuesday: '2', Wednesday: '3',
+      Thursday: '4', Friday: '5', Saturday: '6',
+    };
+
+    let minute = '*';
+    let hour = '*';
+    let dayOfMonth = '*';
+    let month = '*';
+    let dayOfWeek = '*';
+
+    // Minutes
+    if (data.minuteMode === 'specific' && data.selectedMinutes.length > 0) {
+      minute = data.selectedMinutes.join(',');
+    } else if (data.minuteMode === 'between') {
+      const s = parseInt(data.betweenMinuteStart, 10);
+      const e = parseInt(data.betweenMinuteEnd, 10);
+      if (!Number.isNaN(s) && !Number.isNaN(e)) minute = `${s}-${e}`;
+    }
+
+    // Hours — keep leading zeros as stored ("09", "12")
+    if (data.hourMode === 'specific' && data.selectedHours.length > 0) {
+      hour = data.selectedHours.join(',');
+    }
+
+    // Day
+    if (data.dayMode === 'weekdays' && data.selectedWeekdays.length > 0) {
+      dayOfWeek = data.selectedWeekdays.map(d => WEEKDAY_MAP[d]).join(',');
+      // dayOfMonth stays '*'
+    } else if (data.dayMode === 'specific' && data.selectedDays.length > 0) {
+      // Strip leading zeros: "01" → "1", "15" → "15"
+      dayOfMonth = data.selectedDays.map(d => parseInt(d, 10).toString()).join(',');
+      // dayOfWeek stays '*'
+    }
+
+    // Month
+    if (data.monthMode === 'specific' && data.selectedMonths.length > 0) {
+      month = data.selectedMonths.map(m => MONTH_MAP[m].toString()).join(',');
+    } else if (data.monthMode === 'between') {
+      const s = MONTH_MAP[data.betweenMonthStart];
+      const e = MONTH_MAP[data.betweenMonthEnd];
+      if (s && e) month = `${s}-${e}`;
     }
 
     return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
@@ -1509,7 +1622,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Asset"
                             checked={formData.details === 'Asset'}
                             readOnly
@@ -1522,7 +1635,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Service"
                             checked={formData.details === 'Service'}
                             readOnly
@@ -1541,7 +1654,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Comprehensive"
                             checked={formData.amcType === 'Comprehensive'}
                             readOnly
@@ -1554,7 +1667,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Non-Comprehensive"
                             checked={formData.amcType === 'Non-Comprehensive'}
                             readOnly
@@ -1573,7 +1686,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Individual"
                             checked={formData.type === 'Individual'}
                             readOnly
@@ -1586,7 +1699,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Group"
                             checked={formData.type === 'Group'}
                             readOnly
@@ -1815,7 +1928,7 @@ export const AddAMCPage = () => {
                         sx={{ mb: 3 }}
                       />
 
-                      <TextField
+                      {/* <TextField
                         disabled
                         label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
                         type="date"
@@ -1823,6 +1936,25 @@ export const AddAMCPage = () => {
                         value={formData.firstService || ''}
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 3 }}
+                      /> */}
+
+                      <TextField
+                        label={
+                          <span>
+                            First Service Date <span style={{ color: 'red' }}>*</span>
+                          </span>
+                        }
+                        type="date"
+                        fullWidth
+                        value={formData.firstService}
+                        onChange={(e) => handleInputChange('firstService', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: formData.startDate || undefined,
+                          max: formData.endDate || undefined,
+                        }}
+                        error={!!errors.firstService}
+                        helperText={errors.firstService}
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
@@ -1851,6 +1983,7 @@ export const AddAMCPage = () => {
                         fullWidth
                         value={formData.cost}
                         sx={{ mb: 3 }}
+
                       />
 
                       <TextField
@@ -2010,7 +2143,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Asset"
                           checked={formData.details === 'Asset'}
                           readOnly
@@ -2023,7 +2156,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Service"
                           checked={formData.details === 'Service'}
                           readOnly
@@ -2042,7 +2175,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Comprehensive"
                           checked={formData.amcType === 'Comprehensive'}
                           readOnly
@@ -2055,7 +2188,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Non-Comprehensive"
                           checked={formData.amcType === 'Non-Comprehensive'}
                           readOnly
@@ -2074,7 +2207,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Individual"
                           checked={formData.type === 'Individual'}
                           readOnly
@@ -2087,7 +2220,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Group"
                           checked={formData.type === 'Group'}
                           readOnly
@@ -2381,14 +2514,22 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
+                      label="Assets Per Day"
+                      placeholder="Enter Assets Per Day"
+                      type="number"
+                      fullWidth
+                      value={formData.assetsPerDay}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled
                       label="Remarks"
                       placeholder="Enter Remarks"
                       fullWidth
                       value={formData.remarks}
                       sx={{ mb: 3 }}
                     />
-
-                    <div></div>
                   </div>
                 </CardContent>
               </Card>
@@ -2415,14 +2556,49 @@ export const AddAMCPage = () => {
                 background: '#FFF',
                 boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
               }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
-                      SCHEDULE
-                    </CardTitle>
-                  </CardHeader> */}
-                <CardContent className="p-4">
-                  <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                <CardContent className="p-0">
+                  {frequencyConfigs.length > 0 ? (
+                    <>
+                      {/* Frequency tabs */}
+                      <div className="flex border-b border-gray-200 overflow-x-auto">
+                        {frequencyConfigs.map((cfg, idx) => (
+                          <button
+                            key={cfg.frequency}
+                            type="button"
+                            onClick={() => setActiveFrequencyTab(idx)}
+                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                              activeFrequencyTab === idx
+                                ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
+                                : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
+                            }`}
+                          >
+                            {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                          </button>
+                        ))}
+                      </div>
+                      {frequencyConfigs.map((cfg, idx) => idx !== activeFrequencyTab ? null : (
+                        <div key={cfg.frequency} className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            {cfg.description && (
+                              <span className="text-sm text-gray-600">{cfg.description}</span>
+                            )}
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {cfg.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                            <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                            <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                          </div>
+                          <TimeSetupStep data={cfg.timeSetupData as typeof initialTimeSetupState} hideTitle disabled showEditButton={false} />
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="p-4">
+                      <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -2775,6 +2951,45 @@ export const AddAMCPage = () => {
                           )}
                         </div>
 
+                        {/* Group / SubGroup filters */}
+                        {(() => {
+                          const uniqueGroups = Array.from(new Set(assetOptions.map((a: any) => a.asset_group).filter(Boolean))) as string[];
+                          const uniqueSubGroups = Array.from(new Set(
+                            assetOptions
+                              .filter((a: any) => !indivGroupFilter || a.asset_group === indivGroupFilter)
+                              .map((a: any) => a.asset_sub_group)
+                              .filter(Boolean)
+                          )) as string[];
+                          return (
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
+                                <select
+                                  value={indivGroupFilter}
+                                  onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
+                                  disabled={isSubmitting}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
+                                >
+                                  <option value="">All Groups</option>
+                                  {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
+                                <select
+                                  value={indivSubGroupFilter}
+                                  onChange={e => setIndivSubGroupFilter(e.target.value)}
+                                  disabled={isSubmitting || !indivGroupFilter}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-400"
+                                >
+                                  <option value="">All Sub Groups</option>
+                                  {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {/* Search */}
                         <div className="relative mb-3">
                           <input
@@ -2802,10 +3017,10 @@ export const AddAMCPage = () => {
                                   <input
                                     type="checkbox"
                                     style={{ accentColor: '#C72030' }}
-                                    disabled={isSubmitting || assetOptions.length === 0}
-                                    checked={assetOptions.length > 0 && assetOptions.every(a => formData.asset_ids.includes(Number(a.id)))}
+                                    disabled={isSubmitting || assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length === 0}
+                                    checked={assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length > 0 && assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).every((a: any) => formData.asset_ids.includes(Number(a.id)))}
                                     onChange={e => {
-                                      const filteredIds = assetOptions.map(a => Number(a.id));
+                                      const filteredIds = assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).map((a: any) => Number(a.id));
                                       setFormData(prev => ({
                                         ...prev,
                                         asset_ids: e.target.checked
@@ -2818,25 +3033,36 @@ export const AddAMCPage = () => {
                                 </th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Name</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Manufacturer</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Ext. Ref. ID</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Equipment ID</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Group</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Sub Group</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Building</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Wing</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Area</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Floor</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Room</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Criticality</th>
+
                               </tr>
                             </thead>
                             <tbody>
-                              {assetOptions.length === 0 ? (
-                                <tr>
-                                  <td colSpan={7} className="px-3 py-8 text-center text-gray-400 text-sm">
-                                    {assetSearchLoading
-                                      ? 'Searching…'
-                                      : assetQuery.length > 0 && assetQuery.length < 3
-                                      ? 'Type at least 3 characters to search'
-                                      : 'No assets found'}
-                                  </td>
-                                </tr>
-                              ) : (
-                                assetOptions.map((asset: any) => {
+                              {(() => {
+                                const displayAssets = assetOptions.filter((a: any) =>
+                                  (!indivGroupFilter || a.asset_group === indivGroupFilter) &&
+                                  (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)
+                                );
+                                if (displayAssets.length === 0) return (
+                                  <tr>
+                                    <td colSpan={12} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                      {assetSearchLoading
+                                        ? 'Searching…'
+                                        : assetQuery.length > 0 && assetQuery.length < 3
+                                          ? 'Type at least 3 characters to search'
+                                          : 'No assets found'}
+                                    </td>
+                                  </tr>
+                                );
+                                return displayAssets.map((asset: any) => {
                                   const isChecked = formData.asset_ids.includes(Number(asset.id));
                                   return (
                                     <tr
@@ -2859,20 +3085,25 @@ export const AddAMCPage = () => {
                                           type="checkbox"
                                           style={{ accentColor: '#C72030' }}
                                           checked={isChecked}
-                                          onChange={() => {}}
+                                          onChange={() => { }}
                                           disabled={isSubmitting}
                                         />
                                       </td>
                                       <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id  || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.asset_group || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.asset_sub_group || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.wing || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.area || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.floor || '-'}</td>
                                       <td className="px-3 py-2 text-gray-600">{asset.location?.room || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.criticality || '-'}</td>
                                     </tr>
                                   );
-                                })
-                              )}
+                                });
+                              })()}
                             </tbody>
                           </table>
                         </div>
@@ -2989,239 +3220,239 @@ export const AddAMCPage = () => {
 
 
 
-<FormControl fullWidth error={!!errors.service_ids}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Services <span style={{ color: "#C72030" }}>*</span>
-  </Typography>
+                      <FormControl fullWidth error={!!errors.service_ids}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Services <span style={{ color: "#C72030" }}>*</span>
+                        </Typography>
 
-  <Select
-    isMulti
-    options={(services || []).map((item) => ({
-      value: item.id,
-      label: item.service_name,
-    }))}
-    value={(services || [])
-      .filter((item) =>
-        formData.service_ids.includes(item.id)
-      )
-      .map((item) => ({
-        value: item.id,
-        label: item.service_name,
-      }))}
-    onChange={(selected: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        service_ids: selected
-          ? selected.map((item: any) => item.value)
-          : [],
-      }));
+                        <Select
+                          isMulti
+                          options={(services || []).map((item) => ({
+                            value: item.id,
+                            label: item.service_name,
+                          }))}
+                          value={(services || [])
+                            .filter((item) =>
+                              formData.service_ids.includes(item.id)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.service_name,
+                            }))}
+                          onChange={(selected: any) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              service_ids: selected
+                                ? selected.map((item: any) => item.value)
+                                : [],
+                            }));
 
-      setErrors((prev: any) => ({
-        ...prev,
-        service_ids: "",
-      }));
-    }}
-    isClearable
-    closeMenuOnSelect={false}
-    hideSelectedOptions={false}
-    placeholder="Search Services"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.service_ids
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                            setErrors((prev: any) => ({
+                              ...prev,
+                              service_ids: "",
+                            }));
+                          }}
+                          isClearable
+                          closeMenuOnSelect={false}
+                          hideSelectedOptions={false}
+                          placeholder="Search Services"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.service_ids
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                            // option: (base, state) => ({
+                            //   ...base,
+                            //   backgroundColor: state.isFocused
+                            //     ? "rgba(199,32,48,0.08)"
+                            //     : "#fff",
+                            //   color: "#000",
+                            //   cursor: "pointer",
+                            // }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff" // faint blue on hover
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                            placeholder: (base) => ({
+                              ...base,
+                              color: "#999",
+                            }),
 
-      multiValue: (base) => ({
-        ...base,
-        backgroundColor: "rgba(199,32,48,0.08)",
-      }),
+                            multiValue: (base) => ({
+                              ...base,
+                              backgroundColor: "rgba(199,32,48,0.08)",
+                            }),
 
-      multiValueLabel: (base) => ({
-        ...base,
-        color: "#C72030",
-        fontWeight: 500,
-      }),
+                            multiValueLabel: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              fontWeight: 500,
+                            }),
 
-      multiValueRemove: (base) => ({
-        ...base,
-        color: "#C72030",
-        ":hover": {
-          backgroundColor: "#C72030",
-          color: "#fff",
-        },
-      }),
-    }}
-  />
+                            multiValueRemove: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              ":hover": {
+                                backgroundColor: "#C72030",
+                                color: "#fff",
+                              },
+                            }),
+                          }}
+                        />
 
-  {errors.service_ids && (
-    <FormHelperText>
-      {errors.service_ids}
-    </FormHelperText>
-  )}
-</FormControl>
+                        {errors.service_ids && (
+                          <FormHelperText>
+                            {errors.service_ids}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
                     )}
 
 
 
 
 
-{supplierField}
+                    {supplierField}
 
 
 
 
 
 
-                  
 
 
-<FormControl fullWidth error={!!errors.technician}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Technician
-  </Typography>
 
-  <Select
-    options={(technicianOptions || []).map((item) => ({
-      value: item.id,
-      label: item.full_name || item.name,
-    }))}
-    value={
-      (technicianOptions || [])
-        .filter(
-          (item) =>
-            String(item.id) ===
-            String(formData.technician)
-        )
-        .map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))[0] || null
-    }
-    onChange={(selected: any) => {
-      handleInputChange(
-        "technician",
-        selected ? String(selected.value) : ""
-      );
+                    <FormControl fullWidth error={!!errors.technician}>
+                      <Typography
+                        sx={{
+                          fontSize: "14px",
+                          mb: 1,
+                          fontWeight: 500,
+                          color: "#444",
+                        }}
+                      >
+                        Technician
+                      </Typography>
 
-      setErrors((prev: any) => ({
-        ...prev,
-        technician: "",
-      }));
-    }}
-    isDisabled={
-      loading || techniciansLoading || isSubmitting
-    }
-    isClearable
-    placeholder="Search Technician"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.technician
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                      <Select
+                        options={(technicianOptions || []).map((item) => ({
+                          value: item.id,
+                          label: item.full_name || item.name,
+                        }))}
+                        value={
+                          (technicianOptions || [])
+                            .filter(
+                              (item) =>
+                                String(item.id) ===
+                                String(formData.technician)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.full_name || item.name,
+                            }))[0] || null
+                        }
+                        onChange={(selected: any) => {
+                          handleInputChange(
+                            "technician",
+                            selected ? String(selected.value) : ""
+                          );
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                          setErrors((prev: any) => ({
+                            ...prev,
+                            technician: "",
+                          }));
+                        }}
+                        isDisabled={
+                          loading || techniciansLoading || isSubmitting
+                        }
+                        isClearable
+                        placeholder="Search Technician"
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            minHeight: "56px",
+                            borderRadius: "4px",
+                            borderColor: errors.technician
+                              ? "#d32f2f"
+                              : state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                            boxShadow: "none",
+                            "&:hover": {
+                              borderColor: "#C72030",
+                            },
+                          }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
+                          menu: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+
+                          // option: (base, state) => ({
+                          //   ...base,
+                          //   backgroundColor: state.isFocused
+                          //     ? "rgba(199,32,48,0.08)"
+                          //     : "#fff",
+                          //   color: "#000",
+                          //   cursor: "pointer",
+                          // }),
 
 
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused
+                              ? "#eff6ff" // faint blue on hover
+                              : "#fff",
+                            color: "#000",
+                            cursor: "pointer",
+                          }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: "#999",
+                          }),
 
-      singleValue: (base) => ({
-        ...base,
-        color: "#000",
-      }),
-    }}
-  />
+                          singleValue: (base) => ({
+                            ...base,
+                            color: "#000",
+                          }),
+                        }}
+                      />
 
-  {errors.technician && (
-    <FormHelperText>
-      {errors.technician}
-    </FormHelperText>
-  )}
-</FormControl>
+                      {errors.technician && (
+                        <FormHelperText>
+                          {errors.technician}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
                   </>
                 ) : (
                   // <>
@@ -3303,237 +3534,237 @@ export const AddAMCPage = () => {
                   // </>
 
 
-<>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    {/* Group */}
-    <FormControl fullWidth error={!!errors.group}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Group
-      </Typography>
+                      {/* Group */}
+                      <FormControl fullWidth error={!!errors.group}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Group
+                        </Typography>
 
-      <Select
-        options={(assetGroups || []).map((group) => ({
-          value: group.id,
-          label: group.name,
-        }))}
-        value={
-          (assetGroups || [])
-            .filter(
-              (group) =>
-                String(group.id) === String(formData.group)
-            )
-            .map((group) => ({
-              value: group.id,
-              label: group.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleGroupChange(
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={loading || isSubmitting}
-        placeholder="Search Group"
-        isClearable
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: errors.group
-              ? "#d32f2f"
-              : state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(assetGroups || []).map((group) => ({
+                            value: group.id,
+                            label: group.name,
+                          }))}
+                          value={
+                            (assetGroups || [])
+                              .filter(
+                                (group) =>
+                                  String(group.id) === String(formData.group)
+                              )
+                              .map((group) => ({
+                                value: group.id,
+                                label: group.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleGroupChange(
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={loading || isSubmitting}
+                          placeholder="Search Group"
+                          isClearable
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.group
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.group && (
-        <FormHelperText>
-          {errors.group}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.group && (
+                          <FormHelperText>
+                            {errors.group}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-    {/* SubGroup */}
-    <FormControl fullWidth>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        SubGroup
-      </Typography>
+                      {/* SubGroup */}
+                      <FormControl fullWidth>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          SubGroup
+                        </Typography>
 
-      <Select
-        options={(subGroups || []).map((subGroup) => ({
-          value: subGroup.id,
-          label: subGroup.name,
-        }))}
-        value={
-          (subGroups || [])
-            .filter(
-              (subGroup) =>
-                String(subGroup.id) === String(formData.subgroup)
-            )
-            .map((subGroup) => ({
-              value: subGroup.id,
-              label: subGroup.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "subgroup",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          !formData.group || loading || isSubmitting
-        }
-        isClearable
-        placeholder="Search SubGroup"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(subGroups || []).map((subGroup) => ({
+                            value: subGroup.id,
+                            label: subGroup.name,
+                          }))}
+                          value={
+                            (subGroups || [])
+                              .filter(
+                                (subGroup) =>
+                                  String(subGroup.id) === String(formData.subgroup)
+                              )
+                              .map((subGroup) => ({
+                                value: subGroup.id,
+                                label: subGroup.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "subgroup",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            !formData.group || loading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search SubGroup"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
-    </FormControl>
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
+                      </FormControl>
 
-    {supplierField}
+                      {supplierField}
 
-    {/* Technician */}
-    <FormControl fullWidth error={!!errors.technician}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Technician
-      </Typography>
+                      {/* Technician */}
+                      <FormControl fullWidth error={!!errors.technician}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Technician
+                        </Typography>
 
-      <Select
-        options={(technicianOptions || []).map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))}
-        value={
-          (technicianOptions || [])
-            .filter(
-              (item) =>
-                String(item.id) === String(formData.technician)
-            )
-            .map((item) => ({
-              value: item.id,
-              label: item.full_name || item.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "technician",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          loading || techniciansLoading || isSubmitting
-        }
-        isClearable
-        placeholder="Search Technician"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(technicianOptions || []).map((item) => ({
+                            value: item.id,
+                            label: item.full_name || item.name,
+                          }))}
+                          value={
+                            (technicianOptions || [])
+                              .filter(
+                                (item) =>
+                                  String(item.id) === String(formData.technician)
+                              )
+                              .map((item) => ({
+                                value: item.id,
+                                label: item.full_name || item.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "technician",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            loading || techniciansLoading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search Technician"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.technician && (
-        <FormHelperText>
-          {errors.technician}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.technician && (
+                          <FormHelperText>
+                            {errors.technician}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-  </div>
-</>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -3581,7 +3812,12 @@ export const AddAMCPage = () => {
                     placeholder="Enter Contract Name"
                     fullWidth
                     value={formData.contractName}
-                    onChange={e => handleInputChange('contractName', e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (!/[0-9]/.test(val)) {
+                        handleInputChange('contractName', val);
+                      }
+                    }}
                     error={!!errors.contractName}
                     helperText={errors.contractName}
                     sx={{ mb: 3 }}
@@ -3656,6 +3892,11 @@ export const AddAMCPage = () => {
                     fullWidth
                     value={formData.cost}
                     onChange={e => handleInputChange('cost', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     error={!!errors.cost}
                     helperText={errors.cost}
                     sx={{ mb: 3 }}
@@ -3673,6 +3914,11 @@ export const AddAMCPage = () => {
                       const value = e.target.value;
                       if (/^\d*$/.test(value)) {
                         handleInputChange('noOfVisits', value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
                       }
                     }}
                     error={!!errors.noOfVisits}
@@ -3693,6 +3939,11 @@ export const AddAMCPage = () => {
                         handleInputChange('assetsPerDay', value);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     sx={{ mb: 3 }}
                   />
 
@@ -3705,6 +3956,51 @@ export const AddAMCPage = () => {
                     onChange={e => handleInputChange('remarks', e.target.value)}
                     sx={{ mb: 3 }}
                   />
+
+                  {/* AMC Frequency multi-select */}
+                  <div className="md:col-span-3">
+                    <FormControl fullWidth>
+                      <Typography sx={{ fontSize: '14px', mb: 1, fontWeight: 500, color: '#444' }}>
+                        AMC Frequency
+                      </Typography>
+                      <Select
+                        isMulti
+                        options={FREQUENCY_OPTIONS}
+                        value={FREQUENCY_OPTIONS.filter(o => selectedFrequencies.includes(o.value))}
+                        onChange={(selected: any) => {
+                          setSelectedFrequencies(selected ? selected.map((s: any) => s.value) : []);
+                        }}
+                        isClearable
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        placeholder="Select Frequencies (optional)"
+                        isDisabled={isSubmitting}
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            minHeight: '40px',
+                            borderRadius: '4px',
+                            borderColor: state.isFocused ? '#C72030' : '#c4c4c4',
+                            boxShadow: 'none',
+                            '&:hover': { borderColor: '#C72030' },
+                          }),
+                          menu: (base) => ({ ...base, zIndex: 9999 }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused ? '#eff6ff' : '#fff',
+                            color: '#000',
+                            cursor: 'pointer',
+                          }),
+                          multiValue: (base) => ({ ...base, backgroundColor: 'rgba(199,32,48,0.08)' }),
+                          multiValueLabel: (base) => ({ ...base, color: '#C72030', fontWeight: 500 }),
+                          multiValueRemove: (base) => ({
+                            ...base, color: '#C72030',
+                            ':hover': { backgroundColor: '#C72030', color: '#fff' },
+                          }),
+                        }}
+                      />
+                    </FormControl>
+                  </div>
 
                 </div>
               </CardContent>
@@ -3736,70 +4032,124 @@ export const AddAMCPage = () => {
                 Schedule
               </h2>
             </div>
-            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
-              <CardContent className="p-4">
-                {/* Selected time summary */}
-                {(() => {
-                  const joinOrAll = (arr: string[], map?: Record<string, string>) => {
-                    if (!arr || arr.length === 0) return 'All';
-                    const vals = map ? arr.map(v => map[v] ?? v) : arr;
-                    return vals.join(', ');
-                  };
-                  const weekdayMap: Record<string, string> = {
-                    'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed', 'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat', 'Sunday': 'Sun'
-                  };
-                  const monthMap: Record<string, string> = {
-                    'January': 'Jan', 'February': 'Feb', 'March': 'Mar', 'April': 'Apr', 'May': 'May', 'June': 'Jun', 'July': 'Jul', 'August': 'Aug', 'September': 'Sep', 'October': 'Oct', 'November': 'Nov', 'December': 'Dec'
-                  };
-                  const hours = timeSetupData.hourMode === 'specific' ? joinOrAll(timeSetupData.selectedHours) : 'All';
-                  const minutes = timeSetupData.minuteMode === 'specific' ? joinOrAll(timeSetupData.selectedMinutes) : `${timeSetupData.betweenMinuteStart}-${timeSetupData.betweenMinuteEnd}`;
-                  const days = timeSetupData.dayMode === 'weekdays' ? joinOrAll(timeSetupData.selectedWeekdays, weekdayMap)
-                    : (timeSetupData.dayMode === 'specific' ? joinOrAll(timeSetupData.selectedDays) : 'All');
-                  const months = timeSetupData.monthMode === 'specific' ? joinOrAll(timeSetupData.selectedMonths, monthMap)
-                    : (timeSetupData.monthMode === 'between' ? `${monthMap[timeSetupData.betweenMonthStart]}-${monthMap[timeSetupData.betweenMonthEnd]}` : 'All');
-                  return (
-                    <div className="mb-3 text-sm text-[#1a1a1a]">
-                      <div><span className="font-semibold">Hours:</span> {hours}</div>
-                      <div><span className="font-semibold">Minutes:</span> {minutes}</div>
-                      <div><span className="font-semibold">Days:</span> {days}</div>
-                      <div><span className="font-semibold">Months:</span> {months}</div>
-                      <div className="mt-1"><span className="font-semibold">Cron:</span> {buildCronExpression()}</div>
+            {/* If frequencies are selected, show one tab per frequency; otherwise show the default single setup */}
+            {frequencyConfigs.length > 0 ? (
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)' }}>
+                <CardContent className="p-0">
+                  {/* Frequency tabs */}
+                  <div className="flex border-b border-gray-200 overflow-x-auto">
+                    {frequencyConfigs.map((cfg, idx) => (
+                      <button
+                        key={cfg.frequency}
+                        type="button"
+                        onClick={() => setActiveFrequencyTab(idx)}
+                        className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                          activeFrequencyTab === idx
+                            ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
+                            : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
+                        }`}
+                      >
+                        {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                      </button>
+                    ))}
+                  </div>
+
+                  {frequencyConfigs.map((cfg, idx) => (
+                    <div key={cfg.frequency} className={idx === activeFrequencyTab ? 'block p-4' : 'hidden'}>
+                      {/* Description + Active toggle row */}
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex-1">
+                          <TextField
+                            label="Description"
+                            placeholder={`Description for ${FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}`}
+                            fullWidth
+                            size="small"
+                            value={cfg.description}
+                            disabled={isSubmitting}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, description: val } : c));
+                            }}
+                          />
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                          <span className="text-sm font-medium text-[#1a1a1a]">Active</span>
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={cfg.active}
+                              onChange={e => {
+                                const val = e.target.checked;
+                                setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, active: val } : c));
+                              }}
+                            />
+                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Cron preview */}
+                      <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                        <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                        <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                      </div>
+
+                      <TimeSetupStep
+                        data={cfg.timeSetupData as typeof initialTimeSetupState}
+                        onChange={(field, value) => {
+                          setFrequencyConfigs(prev => prev.map((c, i) =>
+                            i === idx ? { ...c, timeSetupData: { ...c.timeSetupData, [field]: value } } : c
+                          ));
+                        }}
+                        hideTitle
+                      />
                     </div>
-                  );
-                })()}
-                <TimeSetupStep
-                  data={timeSetupData}
-                  onChange={(field, value) => {
-                    setTimeSetupData(prev => ({ ...prev, [field]: value }));
-                  }}
-                  hideTitle
-                />
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
+                borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
+              }}>
+                <CardContent className="p-4">
+                  <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                    <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                    <span className="font-mono text-[#C72030]">{buildCronExpression()}</span>
+                  </div>
+                  <TimeSetupStep
+                    data={timeSetupData}
+                    onChange={(field, value) => {
+                      setTimeSetupData(prev => ({ ...prev, [field]: value }));
+                    }}
+                    hideTitle
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Create Checklist */}
             <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
               <CardContent className="p-4">
                 {/* Toggle */}
                 <div className="flex items-center gap-3 mb-4">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={createChecklist}
-                      onChange={e => {
-                        setCreateChecklist(e.target.checked);
-                        if (!e.target.checked) {
-                          setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
-                        }
-                      }}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
-                  </label>
+                  <Switch
+                    checked={createChecklist}
+                    onChange={(e) => {
+                      setCreateChecklist(e.target.checked);
+                      if (!e.target.checked) {
+                        setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#C72030',
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#C72030',
+                      },
+                    }}
+                  />
                   <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
                 </div>
 

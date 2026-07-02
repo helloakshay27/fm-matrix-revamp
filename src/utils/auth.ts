@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Authentication utility functions
+import posthog from "posthog-js";
 export interface User {
   id: number;
   email: string;
@@ -14,6 +15,8 @@ export interface User {
   spree_api_key?: string;
   is_login?: boolean;
   access_token?: string;
+  is_vendor?: boolean;
+  supplier_id?: number;
   number_verified?: number | boolean;
   lock_role?: {
     id: number;
@@ -40,6 +43,8 @@ export interface LoginResponse {
   firstname: string;
   lastname: string;
   access_token: string;
+  is_vendor?: boolean;
+  supplier_id?: number;
   verified?: boolean; // OTP verification status
   mobile?: string;
   latitude?: number;
@@ -232,6 +237,7 @@ export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.BASE_URL);
   localStorage.clear();
+  posthog.reset();
 };
 const hostname = window.location.hostname;
 
@@ -240,7 +246,7 @@ const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work");
+  hostname.includes("community.gophygital.work")
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
@@ -255,7 +261,7 @@ const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
 const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
 
-const isClubSite = hostname.includes("club.lockated.com");
+const isClubSite = hostname.includes("club.lockated.com")
 
 const isPanchshilClubSite =
   // hostname.includes("club.lockated.com");

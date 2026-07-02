@@ -27,9 +27,10 @@ import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   // State for deactivate modal (must be inside component)
   const [deactivateModal, setDeactivateModal] = useState<{ open: boolean; scheduleId: string | null }>({ open: false, scheduleId: null });
   const [deactivateOption, setDeactivateOption] = useState<'upcoming' | 'all'>('upcoming');
@@ -451,32 +452,48 @@ export const ScheduleListDashboard = () => {
     setShowActionPanel((prev) => !prev);
   };
 
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-2 sm:gap-3">
-      <Button 
+ const renderCustomActions = () => (
+  <div className="flex flex-wrap gap-2 sm:gap-3">
+    {shouldShow("Schedule", "create") && (
+      <Button
         onClick={handleActionClick}
         className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
       </Button>
-    </div>
-  );
+    )}
+  </div>
+);
   const renderCell = (item: TransformedScheduleData, columnKey: string) => {
     console.log("Rendering cell for column:", columnKey, "with item:", item);
     
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item)} title="Edit Schedule">
-            <Edit className="w-4 h-4" />
-          </Button>
+          {shouldShow("Schedule", "update") && (
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={() => handleEditSchedule(item)}
+    title="Edit Schedule"
+  >
+    <Edit className="w-4 h-4" />
+  </Button>
+)}
           <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item)} title="Clone Schedule">
             <Copy className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)} title="View Schedule">
-            <Eye className="w-4 h-4" />
-          </Button>
+         {shouldShow("Schedule", "show") && (
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={() => handleViewSchedule(item)}
+    title="View Schedule"
+  >
+    <Eye className="w-4 h-4" />
+  </Button>
+)}
         </div>
       );
     }

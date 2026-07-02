@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
     Calendar,
     Info,
@@ -31,6 +32,7 @@ import {
     ListTodo,
     Play,
     Pause,
+    Sparkles,
 } from "lucide-react";
 import {
     addDays,
@@ -148,48 +150,26 @@ const badgePoints =
     "shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[11px] font-bold text-[#343066] hover:bg-[#ddd8ff]";
 
 const weeklyAiSuggestionStyles = `
-@keyframes weeklyAiSuggestionColorSweep {
-  0%, 100% {
-    background-position: 100% 50%;
-    border-color: transparent;
-    box-shadow: 0 0 0 rgb(var(--score-accent) / 0);
-  }
-  45% {
-    background-position: 0% 50%;
-    border-color: rgb(var(--score-accent) / 0.34);
-    box-shadow: 0 8px 18px rgb(var(--score-accent) / 0.14);
-  }
+@keyframes aiSuggestionColorMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-@keyframes weeklyAiSuggestionTextPulse {
-  0%, 100% {
-    color: #DA7756;
-  }
-  45% {
-    color: rgb(var(--score-accent) / 1);
-  }
+@keyframes aiSuggestionBorderFlow {
+  0%, 100% { border-color: rgba(218, 119, 86, 0.55); }
+  33%      { border-color: rgba(129, 106, 229, 0.55); }
+  66%      { border-color: rgba(49, 130, 206, 0.55); }
 }
 
 .weekly-ai-suggestions-card {
-  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--score-accent) / 0.16) 100%);
+  background-image: linear-gradient(120deg, #ffffff 0%, #fff4ef 22%, #f2ecff 45%, #ebf4ff 68%, #ffffff 100%);
   background-size: 220% 220%;
-  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
-}
-
-.weekly-ai-suggestions-text {
-  animation: weeklyAiSuggestionTextPulse 2.6s ease-in-out infinite;
-}
-
-.weekly-ai-suggestion-item {
-  background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, rgb(var(--suggestion-accent) / 0.16) 100%);
-  background-size: 220% 220%;
-  animation: weeklyAiSuggestionColorSweep 2.6s ease-in-out infinite;
+  animation: aiSuggestionColorMove 7s ease-in-out infinite, aiSuggestionBorderFlow 6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weekly-ai-suggestions-card,
-  .weekly-ai-suggestions-text,
-  .weekly-ai-suggestion-item {
+  .weekly-ai-suggestions-card {
     animation: none;
   }
 }
@@ -323,95 +303,6 @@ const weeklyHistoryTypeBadgeMeta = {
     notes: { label: "Notes", className: "border-[#e2e5ea] bg-[#f8fafc] text-[#64748b]" },
 } as const;
 
-const getWeeklyHistorySourceId = (item: any) => {
-    let rawId =
-        item?.source_id ??
-        item?.sourceId ??
-        item?.originalData?.source_id ??
-        item?.originalData?.sourceId ??
-        item?.originalData?.id;
-
-    if ((rawId === null || rawId === undefined || rawId === "") && /^(nw-)?(task|issue|todo)-/i.test(String(item?.id || ""))) {
-        rawId = item.id;
-    }
-
-    if (rawId === null || rawId === undefined || rawId === "") return null;
-    const cleanedId = String(rawId).replace(/^(nw-)?(task|issue|todo)-/i, "");
-    return cleanedId || rawId;
-};
-
-const getWeeklyHistorySourceRecord = (item: any) => {
-    const sourceId = getWeeklyHistorySourceId(item);
-    const sourceType = getWeeklyHistoryItemType(item);
-    return item?.originalData || {
-        ...item,
-        id: sourceId,
-        source_id: sourceId,
-        source_type: sourceType === "notes" ? item?.source_type : sourceType,
-        title: item?.title || item?.text || getWeeklyHistoryItemText(item),
-    };
-};
-
-const normalizeWeeklyHistoryTodoForEdit = (item: any, details: any = null) => {
-    const sourceId = getWeeklyHistorySourceId(item);
-    const sourceRecord = getWeeklyHistorySourceRecord(item);
-    const raw =
-        details?.todo ||
-        details?.data?.todo ||
-        details?.data?.todos?.[0] ||
-        details?.todos?.[0] ||
-        details?.data ||
-        details ||
-        sourceRecord ||
-        item ||
-        {};
-    const fallback = sourceRecord || item || {};
-    const priority = raw.priority || fallback.priority || "";
-
-    return {
-        ...fallback,
-        ...raw,
-        id: raw.id ?? sourceId,
-        title:
-            raw.title ||
-            raw.name ||
-            raw.heading ||
-            fallback.title ||
-            fallback.text ||
-            getWeeklyHistoryItemText(item),
-        description:
-            raw.description ||
-            raw.body ||
-            fallback.description ||
-            fallback.body ||
-            "",
-        target_date:
-            raw.target_date ||
-            raw.due_date ||
-            raw.end_date ||
-            raw.date ||
-            raw.start_date ||
-            fallback.target_date ||
-            fallback.due_date ||
-            fallback.end_date ||
-            fallback.start_date ||
-            fallback.plan_for_date ||
-            null,
-        user_id:
-            raw.user_id ||
-            raw.responsible_person_id ||
-            raw.assigned_to_id ||
-            raw.user?.id ||
-            raw.responsible_person?.id ||
-            fallback.user_id ||
-            fallback.responsible_person_id ||
-            fallback.responsible_person?.id ||
-            "",
-        priority: ["P1", "P2", "P3", "P4"].includes(String(priority)) ? priority : "",
-        status: raw.status || fallback.status || "open",
-    };
-};
-
 
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
 
@@ -493,6 +384,14 @@ const getOverdueLabel = (targetDate?: string) => {
     return `${m}m overdue`;
 };
 
+const cleanReportText = (value: unknown) =>
+    String(value ?? "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<\/?[^>]+>/g, "")
+        .trim();
+
 const WeeklyReports = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -564,6 +463,16 @@ const WeeklyReports = () => {
     const [starredWins, setStarredWins] = React.useState<Record<number, boolean>>(
         {}
     );
+
+    const autoAddedTitles = useMemo(() => {
+        const titles = new Set<string>();
+        mergedTasksIssues
+            .filter((item: any) => ["completed", "closed", "done"].includes(item.status))
+            .forEach((item: any) => {
+                titles.add(cleanReportText(item.title || "").toLowerCase());
+            });
+        return titles;
+    }, [mergedTasksIssues]);
 
     const [dayPlans, setDayPlans] = React.useState<
         Record<string, { id: string; text: string; starred?: boolean; source_id?: any; source_type?: string; originalData?: any }[]>
@@ -680,68 +589,6 @@ const WeeklyReports = () => {
             ? raw
             : `https://${raw}`;
     }, [baseUrl]);
-
-    const fetchWeeklyHistoryTodo = React.useCallback(async (todoId: any) => {
-        if (!todoId || !normalizedBaseUrl) return null;
-
-        try {
-            const response = await fetch(`${normalizedBaseUrl}/todos/${todoId}.json`, {
-                headers: {
-                    Accept: "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-            });
-            if (!response.ok) return null;
-
-            const json = await response.json();
-            return (
-                json?.todo ||
-                json?.data?.todo ||
-                json?.data?.todos?.[0] ||
-                json?.todos?.[0] ||
-                json?.data ||
-                json
-            );
-        } catch (error) {
-            console.error("Failed to fetch weekly history todo:", error);
-            return null;
-        }
-    }, [normalizedBaseUrl, token]);
-
-    const handleViewWeeklyHistoryItem = React.useCallback(async (item: any) => {
-        const sourceType = getWeeklyHistoryItemType(item);
-        const sourceId = getWeeklyHistorySourceId(item);
-        if (sourceType === "notes" || !sourceId) return;
-
-        if (sourceType === "todo") {
-            const todoDetails = await fetchWeeklyHistoryTodo(sourceId);
-            setSelectedTodo(normalizeWeeklyHistoryTodoForEdit(item, todoDetails));
-            setIsTodoDetailsModalOpen(true);
-            return;
-        }
-
-        navigate(sourceType === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
-    }, [fetchWeeklyHistoryTodo, navigate]);
-
-    const handleEditWeeklyHistoryItem = React.useCallback(async (item: any) => {
-        const sourceType = getWeeklyHistoryItemType(item);
-        const sourceId = getWeeklyHistorySourceId(item);
-        if (sourceType === "notes" || !sourceId) return;
-
-        const sourceRecord = getWeeklyHistorySourceRecord(item);
-        if (sourceType === "task") {
-            setEditTaskData(sourceRecord);
-            setIsEditTaskModalOpen(true);
-        } else if (sourceType === "issue") {
-            setEditIssueData(sourceRecord);
-            setIsEditIssueModalOpen(true);
-        } else if (sourceType === "todo") {
-            const todoDetails = await fetchWeeklyHistoryTodo(sourceId);
-            setEditTodoData(normalizeWeeklyHistoryTodoForEdit(item, todoDetails));
-            setIsEditTodoModalOpen(true);
-        }
-    }, [fetchWeeklyHistoryTodo]);
-
     const weekDraftKey = React.useMemo(
         () =>
             `business-compass-weekly-report-draft:${userId || "guest"}:${format(weekStart, "yyyy-MM-dd")}`,
@@ -863,7 +710,7 @@ const WeeklyReports = () => {
                         const json = await res.json();
                         const record = json.task_management || json.issue || json.todo || json;
                         newData[`${source_type}:${source_id}`] = record;
-                    } catch {}
+                    } catch { }
                 })
             );
             if (Object.keys(newData).length > 0) {
@@ -2829,6 +2676,7 @@ const WeeklyReports = () => {
                                 .map((w, index) => ({
                                     title: w,
                                     is_starred: starredWins[index] ?? false,
+                                    date: winDates[index] || new Date().toISOString().slice(0, 10),
                                 }))
                                 .filter(
                                     (item, index) =>
@@ -3064,16 +2912,81 @@ const WeeklyReports = () => {
         });
     };
 
+    const weeklyAiSuggestions = [
+        {
+            tone: "red",
+            title: `${overdueSuggestionItems.length || 3} Overdue Tasks`,
+            actionLabel: "View Tasks",
+            description:
+                "Overdue items from last week need attention. Reschedule or complete them to avoid further delays.",
+            Icon: AlertCircle,
+            action: scrollToTasksIssuesSection,
+        },
+        {
+            tone: "green",
+            title: "Boost Accomplishments",
+            actionLabel: "Add Tasks",
+            description:
+                "Your rate is 55% today - completing 2 more logged tasks will push you past the 75% target.",
+            Icon: TrendingUp,
+            action: scrollToAccomplishmentsSection,
+        },
+        {
+            tone: "orange",
+            title: "Fill Your Daily Plan",
+            actionLabel: "Open Plan",
+            description:
+                "0/6 planning items completed. Set strategic priorities now before the day ends.",
+            Icon: Clock,
+            action: scrollToPlanSection,
+        },
+        {
+            tone: "purple",
+            title: "Assign Task Timings",
+            actionLabel: "Set Timing",
+            description:
+                "0/4 timing slots set. Adding time estimates improves your score and planning accuracy.",
+            Icon: Clock,
+            action: scrollToPlanSection,
+        },
+    ];
+
+    const weeklyAiToneStyles: Record<
+        string,
+        { icon: string; action: string; iconBg: string }
+    > = {
+        red: {
+            icon: "text-[#ef4444]",
+            action: "text-[#ef6b62]",
+            iconBg: "bg-[#fff1f0]",
+        },
+        green: {
+            icon: "text-[#29b881]",
+            action: "text-[#23c989]",
+            iconBg: "bg-[#eefbf5]",
+        },
+        orange: {
+            icon: "text-[#f59e0b]",
+            action: "text-[#f28a4b]",
+            iconBg: "bg-[#fff6eb]",
+        },
+        purple: {
+            icon: "text-[#7567d9]",
+            action: "text-[#9586e8]",
+            iconBg: "bg-[#f3f1ff]",
+        },
+    };
+
     return (
-        <div className="mb-5 bg-white px-4 pt-6 pb-0 sm:px-6">
+        <div className="bc-daily-page w-full max-w-full overflow-x-hidden">
             <style>{weeklyAiSuggestionStyles}</style>
             {addTaskOpen && (
                 <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
             )}
-            <div className="mx-auto max-w-[1420px] space-y-5 font-poppins text-[#111111]">
+            <div className="space-y-5 px-4 py-4 sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-[#111111]">
+                        <h1 className="text-2xl sm:text-[30px] font-bold leading-tight tracking-tight text-[#111111]">
                             Weekly Report
                         </h1>
                         <p className="mt-2 text-sm text-[#72717a]">
@@ -3142,7 +3055,7 @@ const WeeklyReports = () => {
                             }
                             className="inline-flex h-11 items-center rounded-[10px] border border-[#DA7756] bg-white px-5 text-sm font-semibold text-[#DA7756] transition-colors hover:bg-[#fff6f2]"
                         >
-                            {activeTab === "history" ? "Submit Review" : "Review History"}
+                            {activeTab === "history" ? "Back to Report" : "Review History"}
                         </button>
                     </div>
                 </div>
@@ -3164,7 +3077,76 @@ const WeeklyReports = () => {
                     </TabsList>
 
                     <TabsContent value="submit" className="mb-0 mt-0 space-y-5 pb-0 [&>*:last-child]:mb-0">
-                      
+                        <div
+                            className="weekly-ai-suggestions-card overflow-hidden rounded-[16px] border border-[#e9ddf6]"
+                            style={{
+                                boxShadow:
+                                    "-10px 12px 24px rgba(218,119,86,0.16), 8px 10px 24px rgba(129,106,229,0.13)",
+                            }}
+                        >
+                            <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] bg-[#DA7756] text-white">
+                                        <Sparkles size={12} />
+                                    </span>
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <span className="whitespace-nowrap text-[12px] font-bold leading-none text-[#1f1f1f]">
+                                            AI Suggestions
+                                        </span>
+                                        <span className="truncate text-[10px] font-medium text-[#57545f]">
+                                            - Focus areas to improve your weekly report
+                                        </span>
+                                    </div>
+                                </div>
+                                <span className="shrink-0 rounded-full bg-[#e8e3ff] px-3 py-1 text-[9px] font-bold leading-none text-[#6b5eca]">
+                                    4 insights
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
+                                {weeklyAiSuggestions.map((suggestion) => {
+                                    const tone = weeklyAiToneStyles[suggestion.tone];
+                                    const SuggestionIcon = suggestion.Icon;
+
+                                    return (
+                                        <div
+                                            key={suggestion.title}
+                                            className="min-h-[90px] rounded-[10px] border border-[#eceef4] bg-white px-3 py-3.5"
+                                        >
+                                            <div className="mb-1.5 flex items-center justify-between gap-2">
+                                                <div className="flex min-w-0 items-center gap-1.5">
+                                                    <span
+                                                        className={cn(
+                                                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                                                            tone.iconBg,
+                                                            tone.icon
+                                                        )}
+                                                    >
+                                                        <SuggestionIcon size={10} />
+                                                    </span>
+                                                    <span className="truncate text-[10px] font-bold leading-none text-[#2f2c34]">
+                                                        {suggestion.title}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={suggestion.action}
+                                                    className={cn(
+                                                        "shrink-0 text-[9px] font-medium leading-none hover:underline",
+                                                        tone.action
+                                                    )}
+                                                >
+                                                    {suggestion.actionLabel} &gt;
+                                                </button>
+                                            </div>
+                                            <p className="line-clamp-2 text-[10px] font-medium leading-[1.35] text-[#706d78]">
+                                                {suggestion.description}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
                         {/* Past Weeks KPIs */}
                         <Card ref={planSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
@@ -3191,8 +3173,8 @@ const WeeklyReports = () => {
                                 </Badge>
                             </div>
 
-                            <div className="overflow-x-auto border-t border-neutral-100">
-                                <table className="w-full text-left border-collapse">
+                            <div className="w-full max-w-full overflow-x-auto border-t border-neutral-100">
+                                <table className="w-full min-w-[640px] text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-neutral-100">
                                             <th className="px-6 py-4 text-xs font-bold text-neutral-500 uppercase tracking-wider min-w-[200px] whitespace-nowrap">
@@ -3337,24 +3319,24 @@ const WeeklyReports = () => {
                         <Card ref={accomplishmentsSectionRef} className={cn("flex h-full scroll-mt-24 flex-col overflow-hidden", cardChrome)}>
                             <div
                                 className={cn(
-                                    "flex items-center justify-between",
+                                    "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
                                     sectionHeader
                                 )}
                             >
-                                <div className="flex items-center gap-2">
-                                    <Trophy className="h-5 w-5 text-[#DA7756]" />
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <Trophy className="h-5 w-5 shrink-0 text-[#DA7756]" />
                                     <h3 className="font-bold text-neutral-900">
                                         Weekly Accomplishments
                                     </h3>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
                                     <Badge className={badgePoints}>
                                         {weeklyScore.breakdown.achievements}/6 pts
                                     </Badge>
                                     <Button
                                         type="button"
                                         onClick={handleAddWin}
-                                        className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                        className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
                                     >
                                         <Plus size={14} />
                                         Add Item
@@ -3379,7 +3361,8 @@ const WeeklyReports = () => {
                                         className="group relative flex items-start gap-3 rounded-[10px] border border-transparent bg-[#f8e9e5] p-3 shadow-none"
                                     >
                                         <Checkbox
-                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                            style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                            className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                                             checked={checkedWins[index] ?? true}
                                             onCheckedChange={(checked) =>
                                                 setCheckedWins((prev) => ({
@@ -3430,34 +3413,33 @@ const WeeklyReports = () => {
                                     </div>
                                 ))}
 
-                                {(() => {
-                                    const completedItems = mergedTasksIssues.filter((item: any) =>
-                                        ["completed", "closed", "done"].includes(item.status)
-                                    );
-                                    const groups: Record<string, { kind: "item" | "win"; data?: any; winIndex?: number }[]> = {};
-                                    const noDateItems: { kind: "item" | "win"; data?: any; winIndex?: number }[] = [];
-                                    completedItems.forEach((item: any) => {
-                                        const raw = item.originalData?.completed_at || item.originalData?.updated_at;
-                                        if (raw) {
-                                            const key = raw.slice(0, 10);
-                                            if (!groups[key]) groups[key] = [];
-                                            groups[key].push({ kind: "item", data: item });
-                                        } else {
-                                            noDateItems.push({ kind: "item", data: item });
-                                        }
-                                    });
-                                    wins.forEach((_, index) => {
-                                        const date = winDates[index];
-                                        if (date) {
+                                    {(() => {
+                                        const completedItems = mergedTasksIssues.filter((item: any) =>
+                                            ["completed", "closed", "done"].includes(item.status)
+                                        );
+                                        const groups: Record<string, { kind: "item" | "win"; data?: any; winIndex?: number }[]> = {};
+                                        const noDateItems: { kind: "item" | "win"; data?: any; winIndex?: number }[] = [];
+                                        completedItems.forEach((item: any) => {
+                                            const raw = item.originalData?.completed_at || item.originalData?.updated_at;
+                                            if (raw) {
+                                                const key = raw.slice(0, 10);
+                                                if (!groups[key]) groups[key] = [];
+                                                groups[key].push({ kind: "item", data: item });
+                                            } else {
+                                                noDateItems.push({ kind: "item", data: item });
+                                            }
+                                        });
+                                        wins.forEach((win, index) => {
+                                            if (autoAddedTitles.has(cleanReportText(win).toLowerCase())) return;
+                                            const date = winDates[index] || new Date().toISOString().slice(0, 10);
                                             if (!groups[date]) groups[date] = [];
                                             groups[date].push({ kind: "win", winIndex: index });
-                                        }
-                                    });
+                                        });
                                     const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
                                     const renderItem = (item: any) => (
                                         <div
                                             key={`completed-${item.id}`}
-                                            className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
+                                            className="group relative flex flex-wrap items-start gap-2 sm:gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-3 sm:p-4 shadow-sm"
                                         >
                                             <Checkbox
                                                 checked
@@ -3467,7 +3449,8 @@ const WeeklyReports = () => {
                                                         label: `reopen this ${item.type} (status will change to open)`,
                                                     });
                                                 }}
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
                                             />
                                             <button
                                                 type="button"
@@ -3489,8 +3472,8 @@ const WeeklyReports = () => {
                                                     )}
                                                 />
                                             </button>
-                                            <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60">
+                                            <div className="flex-1 flex flex-col gap-1 min-w-[150px] basis-[160px]">
+                                                <p className="text-sm text-neutral-700 pt-0.5 line-through opacity-60 break-words">
                                                     {item.title}
                                                 </p>
                                                 {(() => {
@@ -3594,7 +3577,8 @@ const WeeklyReports = () => {
                                             className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                         >
                                             <Checkbox
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                className="mt-1 shrink-0 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                                                 checked={checkedWins[winIndex] ?? true}
                                                 onCheckedChange={(checked) =>
                                                     setCheckedWins((prev) => ({ ...prev, [winIndex]: !!checked }))
@@ -3725,9 +3709,9 @@ const WeeklyReports = () => {
                                     );
                                 })()}
 
-                            </div>
+                                </div>
 
-                            <div className="mt-auto space-y-4 border-t border-neutral-100 px-5 py-4">
+                                <div className="mt-auto space-y-4 border-t border-neutral-100 px-5 py-4">
                                     {selectedFileNames.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {selectedFileNames.map((name, i) => (
@@ -3752,12 +3736,12 @@ const WeeklyReports = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
-                                            <Info className="h-3.5 w-3.5 text-emerald-600" />
+                                            <Info className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                                             <span>Limits: Images 2MB, Others 5MB</span>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
                                             <span className="text-[10px] font-bold text-neutral-400">
                                                 {uploadedFilesCount}/5
                                             </span>
@@ -3780,16 +3764,16 @@ const WeeklyReports = () => {
                                             </Button>
                                         </div>
                                     </div>
-                            </div>
-                        </Card>
+                                </div>
+                            </Card>
 
                         {/* Tasks & Issues */}
                         <Card ref={tasksIssuesSectionRef} className={cn("scroll-mt-24 overflow-hidden", cardChrome)}>
                             <div className="p-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <div className="space-y-2">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0 space-y-2">
                                         <div className="flex items-center gap-3">
-                                            <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                            <CheckSquare className="h-6 w-6 shrink-0 text-[#DA7756]" />
                                             <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                                                 Tasks,Issues & To Do's
                                             </h3>
@@ -3878,12 +3862,12 @@ const WeeklyReports = () => {
                                             </Badge>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-4">
                                         <Badge className={badgePoints}>
                                             {taskIssueCounts.completed}/20 PTS
                                         </Badge>
                                         <Button
-                                            className={cn("h-10 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
+                                            className={cn("h-10 shrink-0 rounded-[10px] px-4 text-sm font-semibold", btnOutline)}
                                             onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
                                         >
                                             <Plus size={14} />
@@ -3898,160 +3882,160 @@ const WeeklyReports = () => {
                                     No open tasks or issues.
                                 </p> */}
 
-                                {tasksLoading || issuesLoading || todosLoading ? (
-                                    <div className="flex flex-col items-center justify-center text-center py-10">
-                                        <Loader2
-                                            size={40}
-                                            className="text-[#b91c1c]/30 animate-spin mb-3"
-                                        />
-                                        <p className="text-sm font-bold text-gray-500">
-                                            Loading tasks and issues...
-                                        </p>
-                                    </div>
-                                ) : mergedTasksIssues.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center text-center py-10">
-                                        <div className="flex flex-col items-center gap-3 opacity-30">
-                                            <CheckSquare
+                                    {tasksLoading || issuesLoading || todosLoading ? (
+                                        <div className="flex flex-col items-center justify-center text-center py-10">
+                                            <Loader2
                                                 size={40}
-                                                className="text-[#DA7756]/20"
+                                                className="text-[#b91c1c]/30 animate-spin mb-3"
                                             />
-                                            <p className="text-base font-bold text-gray-400 tracking-tight">
-                                                No open tasks or issues
+                                            <p className="text-sm font-bold text-gray-500">
+                                                Loading tasks and issues...
                                             </p>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="space-y-3 max-h-[320px] overflow-y-auto pr-1"
-                                        ref={scrollContainerRef}
-                                    >
-                                        {(
-                                            [
-                                                {
-                                                    key: "overdue",
-                                                    label: "Overdue",
-                                                    statuses: ["overdue", "overdued"],
-                                                    colorClass: "text-red-700",
-                                                    bgItem: "bg-red-50/60 border-red-200",
-                                                    headerBg: "bg-red-50 hover:bg-red-100",
-                                                    pillBg: "bg-red-100 text-red-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: true,
-                                                },
-                                                {
-                                                    key: "in_progress",
-                                                    label: "In Progress",
-                                                    statuses: ["in_progress", "started"],
-                                                    colorClass: "text-sky-700",
-                                                    bgItem: "bg-sky-50/60 border-sky-200",
-                                                    headerBg: "bg-sky-50 hover:bg-sky-100",
-                                                    pillBg: "bg-sky-100 text-sky-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "pending",
-                                                    label: "Open",
-                                                    statuses: ["open", "pending"],
-                                                    colorClass: "text-slate-600",
-                                                    bgItem: "bg-slate-50/60 border-slate-200",
-                                                    headerBg: "bg-slate-50 hover:bg-slate-100",
-                                                    pillBg: "bg-slate-100 text-slate-600",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "on_hold",
-                                                    label: "On Hold",
-                                                    statuses: ["on_hold"],
-                                                    colorClass: "text-orange-700",
-                                                    bgItem: "bg-orange-50/60 border-orange-200",
-                                                    headerBg: "bg-orange-50 hover:bg-orange-100",
-                                                    pillBg: "bg-orange-100 text-orange-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                                {
-                                                    key: "reopened",
-                                                    label: "Reopened",
-                                                    statuses: ["reopen", "reopened"],
-                                                    colorClass: "text-purple-700",
-                                                    bgItem: "bg-purple-50/60 border-purple-200",
-                                                    headerBg: "bg-purple-50 hover:bg-purple-100",
-                                                    pillBg: "bg-purple-100 text-purple-700",
-                                                    showAddToNextWeek: true,
-                                                    showBulkAdd: false,
-                                                },
-                                            ] as const
-                                        ).map((group) => {
-                                            const items = mergedTasksIssues.filter((item: any) =>
-                                                (group.statuses as readonly string[]).includes(item.status)
-                                            );
-                                            if (items.length === 0) return null;
-                                            const isCollapsed = collapsedGroups.has(group.key);
+                                    ) : mergedTasksIssues.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center text-center py-10">
+                                            <div className="flex flex-col items-center gap-3 opacity-30">
+                                                <CheckSquare
+                                                    size={40}
+                                                    className="text-[#DA7756]/20"
+                                                />
+                                                <p className="text-base font-bold text-gray-400 tracking-tight">
+                                                    No open tasks or issues
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="space-y-3 max-h-[320px] overflow-y-auto pr-1"
+                                            ref={scrollContainerRef}
+                                        >
+                                            {(
+                                                [
+                                                    {
+                                                        key: "overdue",
+                                                        label: "Overdue",
+                                                        statuses: ["overdue", "overdued"],
+                                                        colorClass: "text-red-700",
+                                                        bgItem: "bg-red-50/60 border-red-200",
+                                                        headerBg: "bg-red-50 hover:bg-red-100",
+                                                        pillBg: "bg-red-100 text-red-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: true,
+                                                    },
+                                                    {
+                                                        key: "in_progress",
+                                                        label: "In Progress",
+                                                        statuses: ["in_progress", "started"],
+                                                        colorClass: "text-sky-700",
+                                                        bgItem: "bg-sky-50/60 border-sky-200",
+                                                        headerBg: "bg-sky-50 hover:bg-sky-100",
+                                                        pillBg: "bg-sky-100 text-sky-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "pending",
+                                                        label: "Open",
+                                                        statuses: ["open", "pending"],
+                                                        colorClass: "text-slate-600",
+                                                        bgItem: "bg-slate-50/60 border-slate-200",
+                                                        headerBg: "bg-slate-50 hover:bg-slate-100",
+                                                        pillBg: "bg-slate-100 text-slate-600",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "on_hold",
+                                                        label: "On Hold",
+                                                        statuses: ["on_hold"],
+                                                        colorClass: "text-orange-700",
+                                                        bgItem: "bg-orange-50/60 border-orange-200",
+                                                        headerBg: "bg-orange-50 hover:bg-orange-100",
+                                                        pillBg: "bg-orange-100 text-orange-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                    {
+                                                        key: "reopened",
+                                                        label: "Reopened",
+                                                        statuses: ["reopen", "reopened"],
+                                                        colorClass: "text-purple-700",
+                                                        bgItem: "bg-purple-50/60 border-purple-200",
+                                                        headerBg: "bg-purple-50 hover:bg-purple-100",
+                                                        pillBg: "bg-purple-100 text-purple-700",
+                                                        showAddToNextWeek: true,
+                                                        showBulkAdd: false,
+                                                    },
+                                                ] as const
+                                            ).map((group) => {
+                                                const items = mergedTasksIssues.filter((item: any) =>
+                                                    (group.statuses as readonly string[]).includes(item.status)
+                                                );
+                                                if (items.length === 0) return null;
+                                                const isCollapsed = collapsedGroups.has(group.key);
 
-                                            return (
-                                                <div key={group.key}>
-                                                    <button
-                                                        className={cn(
-                                                            "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
-                                                            group.headerBg
-                                                        )}
-                                                        onClick={() => openOnlyTaskIssueGroup(group.key)}
-                                                    >
-                                                        <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
-                                                            {group.label}
-                                                        </span>
-                                                        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
-                                                            {items.length}
-                                                        </span>
-                                                        <ChevronRight
-                                                            size={14}
+                                                return (
+                                                    <div key={group.key}>
+                                                        <button
                                                             className={cn(
-                                                                "transition-transform duration-200 ml-1",
-                                                                group.colorClass,
-                                                                !isCollapsed && "rotate-90"
+                                                                "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
+                                                                group.headerBg
                                                             )}
-                                                        />
-                                                    </button>
+                                                            onClick={() => openOnlyTaskIssueGroup(group.key)}
+                                                        >
+                                                            <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
+                                                                {group.label}
+                                                            </span>
+                                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
+                                                                {items.length}
+                                                            </span>
+                                                            <ChevronRight
+                                                                size={14}
+                                                                className={cn(
+                                                                    "transition-transform duration-200 ml-1",
+                                                                    group.colorClass,
+                                                                    !isCollapsed && "rotate-90"
+                                                                )}
+                                                            />
+                                                        </button>
 
-                                                    {!isCollapsed && (
-                                                        <div className="space-y-1.5 pl-1">
-                                                            {items.map((item: any) => {
-                                                                const d = item.originalData;
-                                                                const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                                                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                                                                const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                                        {!isCollapsed && (
+                                                            <div className="space-y-1.5 pl-1">
+                                                                {items.map((item: any) => {
+                                                                    const d = item.originalData;
+                                                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
 
-                                                                let issueEffort: string | null = null;
-                                                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                                                    const totalMin = d.issue_allocation_times.reduce(
-                                                                        (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                                                    );
-                                                                    if (totalMin > 0) {
-                                                                        const h = Math.floor(totalMin / 60);
-                                                                        const m = totalMin % 60;
-                                                                        issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                                    let issueEffort: string | null = null;
+                                                                    if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                                                        const totalMin = d.issue_allocation_times.reduce(
+                                                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                                                        );
+                                                                        if (totalMin > 0) {
+                                                                            const h = Math.floor(totalMin / 60);
+                                                                            const m = totalMin % 60;
+                                                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                                                        }
                                                                     }
-                                                                }
 
-                                                                let timeLeftLabel: string | null = null;
-                                                                if (item.type === "issue" && d?.end_date && !overdueLabel) {
-                                                                    const now = new Date();
-                                                                    const end = new Date(d.end_date);
-                                                                    end.setHours(23, 59, 59, 999);
-                                                                    const diff = end.getTime() - now.getTime();
-                                                                    if (diff > 0) {
-                                                                        const days = Math.floor(diff / 86400000);
-                                                                        const hrs = Math.floor((diff % 86400000) / 3600000);
-                                                                        const mins = Math.floor((diff % 3600000) / 60000);
-                                                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
-                                                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
-                                                                        else timeLeftLabel = `${mins}m left`;
+                                                                    let timeLeftLabel: string | null = null;
+                                                                    if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                                                        const now = new Date();
+                                                                        const end = new Date(d.end_date);
+                                                                        end.setHours(23, 59, 59, 999);
+                                                                        const diff = end.getTime() - now.getTime();
+                                                                        if (diff > 0) {
+                                                                            const days = Math.floor(diff / 86400000);
+                                                                            const hrs = Math.floor((diff % 86400000) / 3600000);
+                                                                            const mins = Math.floor((diff % 3600000) / 60000);
+                                                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                                            else timeLeftLabel = `${mins}m left`;
+                                                                        }
                                                                     }
-                                                                }
 
-                                                                const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                                                    const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
 
                                                                 return (
                                                                     <div
@@ -4062,7 +4046,7 @@ const WeeklyReports = () => {
                                                                         )}
                                                                     >
                                                                         {/* Controls row */}
-                                                                        <div className="flex items-center gap-2 p-2.5">
+                                                                        <div className="flex flex-wrap items-center gap-2 p-2.5">
                                                                             <Checkbox
                                                                                 checked={
                                                                                     selectedTasksIssues[item.id] ||
@@ -4087,7 +4071,8 @@ const WeeklyReports = () => {
                                                                                         }));
                                                                                     }
                                                                                 }}
-                                                                                className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                                                                style={{ height: 16, width: 16, minHeight: 16, maxHeight: 16, flex: "0 0 auto" }}
+                                                                                className="self-center rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
                                                                             />
                                                                             <button
                                                                                 onClick={() => {
@@ -4170,7 +4155,7 @@ const WeeklyReports = () => {
                                                                             )}>
                                                                                 {item.type}
                                                                             </span>
-                                                                            <div className="flex-1 min-w-0">
+                                                                            <div className="flex-1 min-w-[90px] basis-[120px]">
                                                                                 <p className={cn(
                                                                                     "text-sm font-medium truncate",
                                                                                     (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
@@ -4203,7 +4188,7 @@ const WeeklyReports = () => {
                                                                                             "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                                                                             planWeekOpenItemId === item.id
                                                                                                 ? "bg-[#DA7756] border-[#DA7756] text-white"
-                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                                                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                                                                         )}
                                                                                         title="Add to next week plan"
                                                                                     >
@@ -4313,7 +4298,18 @@ const WeeklyReports = () => {
                             <div className="max-h-[360px] overflow-y-auto px-5 pb-5 pr-4">
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                                     {upcomingDays.map((day) => (
-                                        <div key={day.key} className="flex min-h-[230px] min-w-0 flex-col rounded-[10px] bg-white p-4">
+                                        <div
+                                            key={day.key}
+                                            className="flex min-h-[230px] min-w-0 flex-col rounded-[10px] bg-white p-4"
+                                            onDragOver={(event) => event.preventDefault()}
+                                            onDrop={(event) =>
+                                                handlePlanDrop(
+                                                    event,
+                                                    day.key,
+                                                    dayPlans[day.key]?.length ?? 0
+                                                )
+                                            }
+                                        >
                                             <div
                                                 className={cn(
                                                     "flex items-center justify-between",
@@ -4344,7 +4340,7 @@ const WeeklyReports = () => {
                                                 )}
                                             </div>
                                             <div
-                                                className="mt-3 space-y-2"
+                                                className="mt-3 flex-1 space-y-2"
                                                 onDragOver={(event) => event.preventDefault()}
                                                 onDrop={(event) =>
                                                     handlePlanDrop(
@@ -4419,49 +4415,49 @@ const WeeklyReports = () => {
                                                                         />
                                                                     </button>
                                                                     <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (item.type === "task") {
-                                                                                setEditTaskData(item.originalData);
-                                                                                setIsEditTaskModalOpen(true);
-                                                                            } else if (item.type === "issue") {
-                                                                                setEditIssueData(item.originalData);
-                                                                                setIsEditIssueModalOpen(true);
-                                                                            } else if (item.type === "todo") {
-                                                                                setEditTodoData(item.originalData);
-                                                                                setIsEditTodoModalOpen(true);
-                                                                            }
-                                                                        }}
-                                                                        className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                        title={`Edit ${item.type}`}
-                                                                    >
-                                                                        <Pencil className="h-3 w-3" />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (item.type === "todo") {
-                                                                                setSelectedTodo(item.originalData);
-                                                                                setIsTodoDetailsModalOpen(true);
-                                                                            } else {
-                                                                                navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
-                                                                            }
-                                                                        }}
-                                                                        className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                        title={`View ${item.type}`}
-                                                                    >
-                                                                        <Eye className="h-3 w-3" />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => hideNextWeekScheduledItem(item)}
-                                                                        className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
-                                                                    >
-                                                                        <X className="h-3 w-3" />
-                                                                    </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (item.type === "task") {
+                                                                                    setEditTaskData(item.originalData);
+                                                                                    setIsEditTaskModalOpen(true);
+                                                                                } else if (item.type === "issue") {
+                                                                                    setEditIssueData(item.originalData);
+                                                                                    setIsEditIssueModalOpen(true);
+                                                                                } else if (item.type === "todo") {
+                                                                                    setEditTodoData(item.originalData);
+                                                                                    setIsEditTodoModalOpen(true);
+                                                                                }
+                                                                            }}
+                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                            title={`Edit ${item.type}`}
+                                                                        >
+                                                                            <Pencil className="h-3 w-3" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (item.type === "todo") {
+                                                                                    setSelectedTodo(item.originalData);
+                                                                                    setIsTodoDetailsModalOpen(true);
+                                                                                } else {
+                                                                                    navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`);
+                                                                                }
+                                                                            }}
+                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                            title={`View ${item.type}`}
+                                                                        >
+                                                                            <Eye className="h-3 w-3" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => hideNextWeekScheduledItem(item)}
+                                                                            className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        >
+                                                                            <X className="h-3 w-3" />
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                                 <p className="min-w-0 text-xs font-medium leading-5 text-gray-600 [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
@@ -4483,7 +4479,7 @@ const WeeklyReports = () => {
                                                         const matchById = (item: any) =>
                                                             item.type === planObj.source_type &&
                                                             (String(item.originalData?.id) === String(planObj.source_id) ||
-                                                             String(item.id) === String(planObj.source_id));
+                                                                String(item.id) === String(planObj.source_id));
                                                         const sourceItem = planObj.source_type
                                                             ? (nextWeekScheduledItems.find(matchById) || mergedTasksIssues.find(matchById))
                                                             : null;
@@ -4494,118 +4490,118 @@ const WeeklyReports = () => {
                                                         const priority = rawData?.priority || sourceItem?.priority;
                                                         const sourceId = rawData?.id || planObj.source_id;
                                                         return (
-                                                        <div
-                                                            key={planObj.id}
-                                                            id={`plan-${planObj.id}`}
-                                                            draggable
-                                                            className="relative cursor-grab rounded-[10px] border border-[#e6e9ef] bg-white px-2.5 pb-8 pt-2 shadow-sm transition-all active:cursor-grabbing hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
-                                                            onDragStart={(event) =>
-                                                                handlePlanDragStart(event, day.key, index)
-                                                            }
-                                                            onDragOver={(event) => event.preventDefault()}
-                                                            onDrop={(event) => handlePlanDrop(event, day.key, index)}
-                                                        >
-                                                            <div className="absolute right-2 top-2 flex items-center gap-1">
-                                                                <span className={cn(
-                                                                    "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
-                                                                    planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-700"
-                                                                )}>
-                                                                    {planObj.source_type === "todo" ? "To Do" : planObj.source_type || "Note"}
-                                                                </span>
-                                                                {priority && (
-                                                                    <span
-                                                                        className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
-                                                                        style={{
-                                                                            backgroundColor: priority === "High" ? "#fee2e2" : priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                            color: priority === "High" ? "#991b1b" : priority === "Medium" ? "#92400e" : "#166534",
-                                                                        }}
-                                                                    >
-                                                                        {priority}
+                                                            <div
+                                                                key={planObj.id}
+                                                                id={`plan-${planObj.id}`}
+                                                                draggable
+                                                                className="relative cursor-grab rounded-[10px] border border-[#e6e9ef] bg-white px-2.5 pb-8 pt-2 shadow-sm transition-all active:cursor-grabbing hover:bg-[#f9fafb] hover:border-[#DA7756]/30"
+                                                                onDragStart={(event) =>
+                                                                    handlePlanDragStart(event, day.key, index)
+                                                                }
+                                                                onDragOver={(event) => event.preventDefault()}
+                                                                onDrop={(event) => handlePlanDrop(event, day.key, index)}
+                                                            >
+                                                                <div className="absolute right-2 top-2 flex items-center gap-1">
+                                                                    <span className={cn(
+                                                                        "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
+                                                                        planObj.source_type === "task" ? "bg-[#DA7756] text-white" : planObj.source_type === "issue" ? "bg-violet-600 text-white" : planObj.source_type === "todo" ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-700"
+                                                                    )}>
+                                                                        {planObj.source_type === "todo" ? "To Do" : planObj.source_type || "Note"}
                                                                     </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="mb-2 flex min-w-0 items-center gap-1.5 pr-24">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleTogglePlanStar(day.key, index)}
-                                                                    className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
-                                                                    title={planObj.starred ? "Unstar" : "Star this priority"}
-                                                                >
-                                                                    <Star
-                                                                        strokeWidth={planObj.starred ? 0 : 1.8}
-                                                                        className={cn(
-                                                                            "h-4 w-4 transition-colors duration-200",
-                                                                            planObj.starred
-                                                                                ? "fill-[#f6c343] text-[#f6c343]"
-                                                                                : "fill-transparent text-[#cfd6df] hover:text-[#f6c343]"
-                                                                        )}
-                                                                    />
-                                                                </button>
-                                                                <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
-                                                                    {planObj.source_type && sourceId && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                if (planObj.source_type === "task") {
-                                                                                    setEditTaskData(rawData);
-                                                                                    setIsEditTaskModalOpen(true);
-                                                                                } else if (planObj.source_type === "issue") {
-                                                                                    setEditIssueData(rawData);
-                                                                                    setIsEditIssueModalOpen(true);
-                                                                                } else if (planObj.source_type === "todo") {
-                                                                                    setEditTodoData(rawData);
-                                                                                    setIsEditTodoModalOpen(true);
-                                                                                }
+                                                                    {priority && (
+                                                                        <span
+                                                                            className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                                                                            style={{
+                                                                                backgroundColor: priority === "High" ? "#fee2e2" : priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                                                                color: priority === "High" ? "#991b1b" : priority === "Medium" ? "#92400e" : "#166534",
                                                                             }}
-                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                            title={`Edit ${planObj.source_type}`}
                                                                         >
-                                                                            <Pencil className="h-3 w-3" />
-                                                                        </button>
+                                                                            {priority}
+                                                                        </span>
                                                                     )}
-                                                                    {planObj.source_type && sourceId && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                if (planObj.source_type === "todo") {
-                                                                                    setSelectedTodo(rawData);
-                                                                                    setIsTodoDetailsModalOpen(true);
-                                                                                } else {
-                                                                                    navigate(planObj.source_type === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
-                                                                                }
-                                                                            }}
-                                                                            className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
-                                                                            title={`View ${planObj.source_type}`}
-                                                                        >
-                                                                            <Eye className="h-3 w-3" />
-                                                                        </button>
-                                                                    )}
+                                                                </div>
+                                                                <div className="mb-2 flex min-w-0 items-center gap-1.5 pr-24">
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => handleRemovePlan(day.key, index)}
-                                                                        className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        onClick={() => handleTogglePlanStar(day.key, index)}
+                                                                        className="shrink-0 transition-transform duration-150 active:scale-110 focus:outline-none"
+                                                                        title={planObj.starred ? "Unstar" : "Star this priority"}
                                                                     >
-                                                                        <X className="h-3 w-3" />
+                                                                        <Star
+                                                                            strokeWidth={planObj.starred ? 0 : 1.8}
+                                                                            className={cn(
+                                                                                "h-4 w-4 transition-colors duration-200",
+                                                                                planObj.starred
+                                                                                    ? "fill-[#f6c343] text-[#f6c343]"
+                                                                                    : "fill-transparent text-[#cfd6df] hover:text-[#f6c343]"
+                                                                            )}
+                                                                        />
                                                                     </button>
+                                                                    <div className="absolute bottom-2 right-2 z-20 flex shrink-0 items-center gap-0.5">
+                                                                        {planObj.source_type && sourceId && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (planObj.source_type === "task") {
+                                                                                        setEditTaskData(rawData);
+                                                                                        setIsEditTaskModalOpen(true);
+                                                                                    } else if (planObj.source_type === "issue") {
+                                                                                        setEditIssueData(rawData);
+                                                                                        setIsEditIssueModalOpen(true);
+                                                                                    } else if (planObj.source_type === "todo") {
+                                                                                        setEditTodoData(rawData);
+                                                                                        setIsEditTodoModalOpen(true);
+                                                                                    }
+                                                                                }}
+                                                                                className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                                title={`Edit ${planObj.source_type}`}
+                                                                            >
+                                                                                <Pencil className="h-3 w-3" />
+                                                                            </button>
+                                                                        )}
+                                                                        {planObj.source_type && sourceId && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (planObj.source_type === "todo") {
+                                                                                        setSelectedTodo(rawData);
+                                                                                        setIsTodoDetailsModalOpen(true);
+                                                                                    } else {
+                                                                                        navigate(planObj.source_type === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+                                                                                    }
+                                                                                }}
+                                                                                className="rounded-md p-1 text-[#6b7280] hover:bg-[#fef6f4] hover:text-[#DA7756] transition-colors"
+                                                                                title={`View ${planObj.source_type}`}
+                                                                            >
+                                                                                <Eye className="h-3 w-3" />
+                                                                            </button>
+                                                                        )}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleRemovePlan(day.key, index)}
+                                                                            className="rounded-md p-1 text-[#9ca3af] hover:bg-red-50 hover:text-red-600"
+                                                                        >
+                                                                            <X className="h-3 w-3" />
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
+                                                                {planObj.source_type ? (
+                                                                    <p className="min-w-0 text-xs font-medium leading-5 text-gray-700 cursor-not-allowed select-none [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
+                                                                        {planObj.text}
+                                                                    </p>
+                                                                ) : (
+                                                                    <AutoSizingTextarea
+                                                                        value={planObj.text}
+                                                                        onChange={(value: string) =>
+                                                                            handlePlanChange(day.key, index, value)
+                                                                        }
+                                                                        placeholder="Add note..."
+                                                                        className="min-h-[20px] resize-none bg-transparent border-none p-0 text-xs font-medium leading-5 text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
+                                                                    />
+                                                                )}
                                                             </div>
-                                                            {planObj.source_type ? (
-                                                                <p className="min-w-0 text-xs font-medium leading-5 text-gray-700 cursor-not-allowed select-none [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
-                                                                    {planObj.text}
-                                                                </p>
-                                                            ) : (
-                                                                <AutoSizingTextarea
-                                                                    value={planObj.text}
-                                                                    onChange={(value: string) =>
-                                                                        handlePlanChange(day.key, index, value)
-                                                                    }
-                                                                    placeholder="Add note..."
-                                                                    className="min-h-[20px] resize-none bg-transparent border-none p-0 text-xs font-medium leading-5 text-gray-700 placeholder:text-gray-400 outline-none focus:ring-0"
-                                                                />
-                                                            )}
-                                                        </div>
                                                         );
                                                     })}
                                             </div>
@@ -4765,237 +4761,237 @@ const WeeklyReports = () => {
                         </Card>
 
                         <div className="grid items-stretch gap-4 lg:grid-cols-[1.12fr_0.88fr]">
-                        {/* Remarks */}
-                        <Card
-                            role="region"
-                            aria-label="Remarks"
-                            onMouseDown={handleRemarksAreaActivate}
-                            className={cn(
-                                "flex h-full flex-col overflow-hidden rounded-[16px] border bg-[#f4f2ed] p-4 shadow-none transition-colors duration-200",
-                                remarkVisual.border,
-                                remarkVisual.bg
-                            )}
-                        >
-                            <div className="mb-3 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <MessageSquare
-                                        className="h-4 w-4 shrink-0"
-                                        style={{ color: accentEmphasis }}
-                                    />
-                                    <h3 className="text-sm font-bold text-[#111111]">Remarks</h3>
+                            {/* Remarks */}
+                            <Card
+                                role="region"
+                                aria-label="Remarks"
+                                onMouseDown={handleRemarksAreaActivate}
+                                className={cn(
+                                    "flex h-full flex-col overflow-hidden rounded-[16px] border bg-[#f4f2ed] p-4 shadow-none transition-colors duration-200",
+                                    remarkVisual.border,
+                                    remarkVisual.bg
+                                )}
+                            >
+                                <div className="mb-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <MessageSquare
+                                            className="h-4 w-4 shrink-0"
+                                            style={{ color: accentEmphasis }}
+                                        />
+                                        <h3 className="text-sm font-bold text-[#111111]">Remarks</h3>
+                                    </div>
+                                    <Badge
+                                        className="border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]"
+                                    >
+                                        {weeklyScore.breakdown.remarks}/14 Pts
+                                    </Badge>
                                 </div>
-                                <Badge
-                                    className="border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]"
-                                >
-                                    {weeklyScore.breakdown.remarks}/14 Pts
-                                </Badge>
-                            </div>
-                            <div className="space-y-2.5">
-                                <div className="flex flex-wrap gap-2">
-                                    {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
-                                        (id) => {
-                                            const meta = REMARK_CHIP_META[id];
-                                            const isActive = activeRemarkChip === id;
-                                            return (
-                                                <button
-                                                    key={id}
-                                                    type="button"
-                                                    aria-pressed={isActive}
-                                                    onClick={() => handleRemarkChipClick(id)}
-                                                    className={cn(
-                                                        "inline-flex h-8 items-center rounded-[8px] border px-4 text-[11px] font-medium transition-colors [&>svg]:hidden",
-                                                        "active:scale-[0.98] active:brightness-95",
-                                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
-                                                        isActive ? meta.chipActive : meta.chipInactive
-                                                    )}
-                                                >
-                                                    {id === "breakthrough" && (
-                                                        <Activity
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "breakdown" && (
-                                                        <TrendingUp
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "employeeFeedback" && (
-                                                        <User
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "clientFeedback" && (
-                                                        <Users
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {id === "remark" && (
-                                                        <Smile
-                                                            className={cn(
-                                                                "mr-1.5 h-4 w-4 shrink-0",
-                                                                isActive ? "text-white" : "text-neutral-500"
-                                                            )}
-                                                        />
-                                                    )}
-                                                    {meta.label}
-                                                </button>
-                                            );
+                                <div className="space-y-2.5">
+                                    <div className="flex flex-wrap gap-2">
+                                        {(Object.keys(REMARK_CHIP_META) as RemarkChipId[]).map(
+                                            (id) => {
+                                                const meta = REMARK_CHIP_META[id];
+                                                const isActive = activeRemarkChip === id;
+                                                return (
+                                                    <button
+                                                        key={id}
+                                                        type="button"
+                                                        aria-pressed={isActive}
+                                                        onClick={() => handleRemarkChipClick(id)}
+                                                        className={cn(
+                                                            "inline-flex h-8 items-center rounded-[8px] border px-4 text-[11px] font-medium transition-colors [&>svg]:hidden",
+                                                            "active:scale-[0.98] active:brightness-95",
+                                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 focus-visible:ring-offset-2",
+                                                            isActive ? meta.chipActive : meta.chipInactive
+                                                        )}
+                                                    >
+                                                        {id === "breakthrough" && (
+                                                            <Activity
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "breakdown" && (
+                                                            <TrendingUp
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "employeeFeedback" && (
+                                                            <User
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "clientFeedback" && (
+                                                            <Users
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {id === "remark" && (
+                                                            <Smile
+                                                                className={cn(
+                                                                    "mr-1.5 h-4 w-4 shrink-0",
+                                                                    isActive ? "text-white" : "text-neutral-500"
+                                                                )}
+                                                            />
+                                                        )}
+                                                        {meta.label}
+                                                    </button>
+                                                );
+                                            }
+                                        )}
+                                    </div>
+                                    <Textarea
+                                        ref={remarksTextareaRef}
+                                        value={remarksText}
+                                        onChange={(e) => setRemarksText(e.target.value)}
+                                        onFocus={handleRemarksAreaActivate}
+                                        placeholder={
+                                            activeRemarkChip
+                                                ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
+                                                : "Add your remark..."
                                         }
+                                        className="min-h-[86px] resize-none rounded-[10px] border border-neutral-200 bg-white px-4 py-3 text-xs shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddRemark}
+                                        className={cn("ml-auto flex h-7 w-fit rounded-[7px] px-3.5 text-[10px] font-medium", btnOutline)}
+                                    >
+                                        <Plus className="mr-1 h-3 w-3" />
+                                        Add{" "}
+                                        {activeRemarkChip
+                                            ? REMARK_CHIP_META[activeRemarkChip].label
+                                            : "Remark"}
+                                    </Button>
+
+                                    {remarksList.length > 0 && (
+                                        <div className={cn(
+                                            "mt-4 pt-4 space-y-2 border-t border-dashed border-neutral-200 pr-2",
+                                            remarksList.length > 1 ? "max-h-[120px] overflow-y-auto" : ""
+                                        )}>
+                                            {remarksList.map((remark, index) => {
+                                                const isBreakdown = remark.type === "breakdown";
+                                                const isBreakthrough = remark.type === "breakthrough";
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className={cn(
+                                                            "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
+                                                            isBreakdown
+                                                                ? "bg-red-50 border-red-200 text-red-900"
+                                                                : isBreakthrough
+                                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                                                                    : "bg-white border-neutral-200 text-neutral-800"
+                                                        )}
+                                                    >
+                                                        {remark.type === "breakdown" ? (
+                                                            <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
+                                                        ) : remark.type === "breakthrough" ? (
+                                                            <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
+                                                        ) : remark.type === "employeeFeedback" ? (
+                                                            <User className="h-4 w-4 text-blue-500 mt-0.5" />
+                                                        ) : remark.type === "clientFeedback" ? (
+                                                            <Users className="h-4 w-4 text-purple-500 mt-0.5" />
+                                                        ) : remark.type === "remark" ? (
+                                                            <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
+                                                        ) : (
+                                                            <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
+                                                        )}
+                                                        <div className="flex-1 space-y-1">
+                                                            {remark.type && (
+                                                                <p className="text-xs font-bold">
+                                                                    {REMARK_CHIP_META[remark.type as RemarkChipId]
+                                                                        ?.label || remark.type}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-sm whitespace-pre-wrap">
+                                                                {remark.text}
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveRemark(index)}
+                                                            className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                 </div>
-                                <Textarea
-                                    ref={remarksTextareaRef}
-                                    value={remarksText}
-                                    onChange={(e) => setRemarksText(e.target.value)}
-                                    onFocus={handleRemarksAreaActivate}
-                                    placeholder={
-                                        activeRemarkChip
-                                            ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...`
-                                            : "Add your remark..."
-                                    }
-                                    className="min-h-[86px] resize-none rounded-[10px] border border-neutral-200 bg-white px-4 py-3 text-xs shadow-none outline-none ring-offset-2 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                                />
-                                <Button
-                                    type="button"
-                                    onClick={handleAddRemark}
-                                    className={cn("ml-auto flex h-7 w-fit rounded-[7px] px-3.5 text-[10px] font-medium", btnOutline)}
-                                >
-                                    <Plus className="mr-1 h-3 w-3" />
-                                    Add{" "}
-                                    {activeRemarkChip
-                                        ? REMARK_CHIP_META[activeRemarkChip].label
-                                        : "Remark"}
-                                </Button>
+                            </Card>
 
-                                {remarksList.length > 0 && (
-                                    <div className={cn(
-                                        "mt-4 pt-4 space-y-2 border-t border-dashed border-neutral-200 pr-2",
-                                        remarksList.length > 1 ? "max-h-[120px] overflow-y-auto" : ""
-                                    )}>
-                                        {remarksList.map((remark, index) => {
-                                            const isBreakdown = remark.type === "breakdown";
-                                            const isBreakthrough = remark.type === "breakthrough";
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className={cn(
-                                                        "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
-                                                        isBreakdown
-                                                            ? "bg-red-50 border-red-200 text-red-900"
-                                                            : isBreakthrough
-                                                                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                                                                : "bg-white border-neutral-200 text-neutral-800"
-                                                    )}
-                                                >
-                                                    {remark.type === "breakdown" ? (
-                                                        <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
-                                                    ) : remark.type === "breakthrough" ? (
-                                                        <Activity className="h-4 w-4 text-emerald-500 mt-0.5" />
-                                                    ) : remark.type === "employeeFeedback" ? (
-                                                        <User className="h-4 w-4 text-blue-500 mt-0.5" />
-                                                    ) : remark.type === "clientFeedback" ? (
-                                                        <Users className="h-4 w-4 text-purple-500 mt-0.5" />
-                                                    ) : remark.type === "remark" ? (
-                                                        <Smile className="h-4 w-4 text-orange-500 mt-0.5" />
-                                                    ) : (
-                                                        <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
-                                                    )}
-                                                    <div className="flex-1 space-y-1">
-                                                        {remark.type && (
-                                                            <p className="text-xs font-bold">
-                                                                {REMARK_CHIP_META[remark.type as RemarkChipId]
-                                                                    ?.label || remark.type}
-                                                            </p>
-                                                        )}
-                                                        <p className="text-sm whitespace-pre-wrap">
-                                                            {remark.text}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveRemark(index)}
-                                                        className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
-
-                        {/* Automated Weekly Score Preview */}
-                        <div className="flex flex-col gap-4">
-                            <Card className={cn("flex flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
-                            <div className="mb-3 flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                    <Target className="h-4 w-4 shrink-0 text-[#111111]" />
-                                    <h4 className="text-sm font-bold leading-none text-[#111111]">
-                                        Live Score Preview
-                                    </h4>
-                                </div>
-                                <Badge className="shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]">
-                                    {formatLiveScore(weeklyScore.total)}/100 Pts
-                                </Badge>
-                            </div>
-
-                            <div className="mb-2.5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                                {liveScoreRows.map((stat) => (
-                                    <div
-                                        key={stat.label}
-                                        className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
-                                    >
-                                        <div className="sr-only">
-                                            {stat.icon}
+                            {/* Automated Weekly Score Preview */}
+                            <div className="flex flex-col gap-4">
+                                <Card className={cn("flex flex-col rounded-[16px] px-4 pb-3 pt-4", cardChrome)}>
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <Target className="h-4 w-4 shrink-0 text-[#111111]" />
+                                            <h4 className="text-sm font-bold leading-none text-[#111111]">
+                                                Live Score Preview
+                                            </h4>
                                         </div>
-                                        <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
-                                            {stat.label}
-                                        </p>
-                                        <p
-                                            className="text-[22px] font-bold leading-none text-[#DA7756]"
-                                        >
-                                            {formatLiveScore(stat.score)}/{stat.max}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-
-
-                        </Card>
-
-                            <div className="mb-0 flex items-start gap-2.5 shrink-0 rounded-[12px] border border-[#efcdbf] bg-[#f6e8df] px-3 py-2.5 shadow-none sm:items-center">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#DA7756] text-white">
-                                    <Star className="h-4 w-4 fill-white text-white" />
-                                </div>
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h4 className="text-sm font-bold leading-tight text-[#2f2f2f]">
-                                            Bonus Opportunity!
-                                        </h4>
-                                        <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-black text-white hover:bg-[#DA7756]">
-                                            + 05 pts
+                                        <Badge className="shrink-0 whitespace-nowrap border-0 bg-[#ddd8ff] px-3 py-1 text-[10px] font-bold text-[#343066] hover:bg-[#ddd8ff]">
+                                            {formatLiveScore(weeklyScore.total)}/100 Pts
                                         </Badge>
                                     </div>
-                                    <p className="mt-0 text-xs leading-tight text-[#6f625c]">
-                                        Submit within the week window to earn bonus points.
-                                    </p>
+
+                                    <div className="mb-2.5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                        {liveScoreRows.map((stat) => (
+                                            <div
+                                                key={stat.label}
+                                                className="flex h-[60px] min-w-0 flex-col items-center justify-center rounded-[7px] border border-transparent bg-white px-2 text-center shadow-none"
+                                            >
+                                                <div className="sr-only">
+                                                    {stat.icon}
+                                                </div>
+                                                <p className="mb-1 text-[10px] font-medium leading-tight text-[#3c3f48]">
+                                                    {stat.label}
+                                                </p>
+                                                <p
+                                                    className="text-[22px] font-bold leading-none text-[#DA7756]"
+                                                >
+                                                    {formatLiveScore(stat.score)}/{stat.max}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+
+                                </Card>
+
+                                <div className="mb-0 flex items-start gap-2.5 shrink-0 rounded-[12px] border border-[#efcdbf] bg-[#f6e8df] px-3 py-2.5 shadow-none sm:items-center">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#DA7756] text-white">
+                                        <Star className="h-4 w-4 fill-white text-white" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h4 className="text-sm font-bold leading-tight text-[#2f2f2f]">
+                                                Bonus Opportunity!
+                                            </h4>
+                                            <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-black text-white hover:bg-[#DA7756]">
+                                                + 05 pts
+                                            </Badge>
+                                        </div>
+                                        <p className="mt-0 text-xs leading-tight text-[#6f625c]">
+                                            Submit within the week window to earn bonus points.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         </div>
 
                         <button
@@ -5022,7 +5018,7 @@ const WeeklyReports = () => {
                             )}
                         </button>
 
-                        <div className="mt-4 w-full overflow-hidden rounded-[14px] border border-[#f1dcd4] bg-[#fffafa] shadow-none">
+                        <div className="mt-4 mb-6 w-full overflow-hidden rounded-[14px] border border-[#f1dcd4] bg-[#fffafa] shadow-none">
                             <button
                                 type="button"
                                 onClick={() => setIsScoreBreakdownOpen((open) => !open)}
@@ -5332,10 +5328,7 @@ const WeeklyReports = () => {
                                                     <div className="flex-1 space-y-3 p-4">
                                                         {achievements.length > 0 ? (
                                                             achievements.map((w: any, i: number) => {
-                                                                const sourceType = getWeeklyHistoryItemType(w);
-                                                                const sourceId = getWeeklyHistorySourceId(w);
-                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[sourceType];
-                                                                const canOpenSource = sourceType !== "notes" && !!sourceId;
+                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(w)];
                                                                 return (
                                                                     <div
                                                                         key={i}
@@ -5347,43 +5340,15 @@ const WeeklyReports = () => {
                                                                                 {getWeeklyHistoryItemText(w)}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="flex shrink-0 items-center gap-1">
-                                                                            <Badge
-                                                                                variant="outline"
-                                                                                className={cn(
-                                                                                    "whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
-                                                                                    typeMeta.className
-                                                                                )}
-                                                                            >
-                                                                                {typeMeta.label}
-                                                                            </Badge>
-                                                                            {canOpenSource && (
-                                                                                <>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={(event) => {
-                                                                                            event.stopPropagation();
-                                                                                            handleViewWeeklyHistoryItem(w);
-                                                                                        }}
-                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-white/70 hover:text-[#DA7756]"
-                                                                                        title={`View ${typeMeta.label}`}
-                                                                                    >
-                                                                                        <Eye className="h-3.5 w-3.5" />
-                                                                                    </button>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={(event) => {
-                                                                                            event.stopPropagation();
-                                                                                            handleEditWeeklyHistoryItem(w);
-                                                                                        }}
-                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-white/70 hover:text-[#DA7756]"
-                                                                                        title={`Edit ${typeMeta.label}`}
-                                                                                    >
-                                                                                        <Pencil className="h-3.5 w-3.5" />
-                                                                                    </button>
-                                                                                </>
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={cn(
+                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                typeMeta.className
                                                                             )}
-                                                                        </div>
+                                                                        >
+                                                                            {typeMeta.label}
+                                                                        </Badge>
                                                                     </div>
                                                                 );
                                                             })
@@ -5418,10 +5383,7 @@ const WeeklyReports = () => {
                                                                         </div>
                                                                         <div className="space-y-2 pl-1">
                                                                             {dayTasks.map((t: any, i: number) => {
-                                                                                const sourceType = getWeeklyHistoryItemType(t);
-                                                                                const sourceId = getWeeklyHistorySourceId(t);
-                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[sourceType];
-                                                                                const canOpenSource = sourceType !== "notes" && !!sourceId;
+                                                                                const typeMeta = weeklyHistoryTypeBadgeMeta[getWeeklyHistoryItemType(t)];
                                                                                 return (
                                                                                     <div
                                                                                         key={i}
@@ -5433,43 +5395,15 @@ const WeeklyReports = () => {
                                                                                                 {getWeeklyHistoryItemText(t)}
                                                                                             </span>
                                                                                         </div>
-                                                                                        <div className="flex shrink-0 items-center gap-1">
-                                                                                            <Badge
-                                                                                                variant="outline"
-                                                                                                className={cn(
-                                                                                                    "whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
-                                                                                                    typeMeta.className
-                                                                                                )}
-                                                                                            >
-                                                                                                {typeMeta.label}
-                                                                                            </Badge>
-                                                                                            {canOpenSource && (
-                                                                                                <>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        onClick={(event) => {
-                                                                                                            event.stopPropagation();
-                                                                                                            handleViewWeeklyHistoryItem(t);
-                                                                                                        }}
-                                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-[#fef6f4] hover:text-[#DA7756]"
-                                                                                                        title={`View ${typeMeta.label}`}
-                                                                                                    >
-                                                                                                        <Eye className="h-3.5 w-3.5" />
-                                                                                                    </button>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        onClick={(event) => {
-                                                                                                            event.stopPropagation();
-                                                                                                            handleEditWeeklyHistoryItem(t);
-                                                                                                        }}
-                                                                                                        className="rounded-md p-1 text-[#6b7280] transition-colors hover:bg-[#fef6f4] hover:text-[#DA7756]"
-                                                                                                        title={`Edit ${typeMeta.label}`}
-                                                                                                    >
-                                                                                                        <Pencil className="h-3.5 w-3.5" />
-                                                                                                    </button>
-                                                                                                </>
+                                                                                        <Badge
+                                                                                            variant="outline"
+                                                                                            className={cn(
+                                                                                                "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                                                                                typeMeta.className
                                                                                             )}
-                                                                                        </div>
+                                                                                        >
+                                                                                            {typeMeta.label}
+                                                                                        </Badge>
                                                                                     </div>
                                                                                 );
                                                                             })}
@@ -5483,12 +5417,12 @@ const WeeklyReports = () => {
                                                                 ? reportData.upcoming_week_plan[0] || {}
                                                                 : reportData.upcoming_week_plan || {}
                                                         ).flat().length === 0 && (
-                                                            <div className="py-6 text-center">
-                                                                <p className="text-sm italic text-neutral-400">
-                                                                    No priorities recorded for next week
-                                                                </p>
-                                                            </div>
-                                                        )}
+                                                                <div className="py-6 text-center">
+                                                                    <p className="text-sm italic text-neutral-400">
+                                                                        No priorities recorded for next week
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -5600,7 +5534,7 @@ const WeeklyReports = () => {
 
             {openTaskModal && (
             <MuiDialog open={openTaskModal} onClose={() => setOpenTaskModal(false)} TransitionComponent={Transition} maxWidth={false}>
-                <MuiDialogContent className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
+                <MuiDialogContent className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto" style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }} sx={{ padding: "0 !important" }}>
                     <div className="sticky top-0 bg-white z-10">
                         <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
                         <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={() => setOpenTaskModal(false)} />
@@ -5620,41 +5554,41 @@ const WeeklyReports = () => {
             )}
 
             {openIssueModal && (
-            <AddIssueModal
-                openDialog={openIssueModal}
-                handleCloseDialog={() => setOpenIssueModal(false)}
-                prefillData={{
-                    start_date: planPreFillDate ?? currentDateValue,
-                }}
-            />
+                <AddIssueModal
+                    openDialog={openIssueModal}
+                    handleCloseDialog={() => setOpenIssueModal(false)}
+                    prefillData={{
+                        start_date: planPreFillDate ?? currentDateValue,
+                    }}
+                />
             )}
 
             {openTodoModal && (
-            <AddToDoModal
-                isModalOpen={openTodoModal}
-                setIsModalOpen={() => {
-                    setOpenTodoModal(false);
-                    setTasksIssuesRefreshKey((key) => key + 1);
-                }}
-                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                prefillData={{
-                    start_date: planPreFillDate ?? currentDateValue,
-                    // target_date: weekEndDateValue,
-                }}
-            />
+                <AddToDoModal
+                    isModalOpen={openTodoModal}
+                    setIsModalOpen={() => {
+                        setOpenTodoModal(false);
+                        setTasksIssuesRefreshKey((key) => key + 1);
+                    }}
+                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                    prefillData={{
+                        start_date: planPreFillDate ?? currentDateValue,
+                        // target_date: weekEndDateValue,
+                    }}
+                />
             )}
 
             {isTodoDetailsModalOpen && (
-            <TodoDetailsModal
-                isModalOpen={isTodoDetailsModalOpen}
-                setIsModalOpen={setIsTodoDetailsModalOpen}
-                todo={selectedTodo}
-                onEditClick={() => {
-                    setIsTodoDetailsModalOpen(false);
-                    setEditTodoData(selectedTodo);
-                    setIsEditTodoModalOpen(true);
-                }}
-            />
+                <TodoDetailsModal
+                    isModalOpen={isTodoDetailsModalOpen}
+                    setIsModalOpen={setIsTodoDetailsModalOpen}
+                    todo={selectedTodo}
+                    onEditClick={() => {
+                        setIsTodoDetailsModalOpen(false);
+                        setEditTodoData(selectedTodo);
+                        setIsEditTodoModalOpen(true);
+                    }}
+                />
             )}
 
             {isEditTaskModalOpen && (
@@ -5668,7 +5602,7 @@ const WeeklyReports = () => {
                 maxWidth={false}
             >
                 <MuiDialogContent
-                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    className="w-full sm:w-3/4 lg:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
                     style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
                     sx={{ padding: "0 !important" }}
                 >
@@ -5698,58 +5632,58 @@ const WeeklyReports = () => {
             )}
 
             {isEditIssueModalOpen && (
-            <EditIssueModal
-                openDialog={isEditIssueModalOpen}
-                handleCloseDialog={() => {
-                    setIsEditIssueModalOpen(false);
-                    setEditIssueData(null);
-                }}
-                issueData={editIssueData}
-                onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
-            />
+                <EditIssueModal
+                    openDialog={isEditIssueModalOpen}
+                    handleCloseDialog={() => {
+                        setIsEditIssueModalOpen(false);
+                        setEditIssueData(null);
+                    }}
+                    issueData={editIssueData}
+                    onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                />
             )}
 
             {isEditTodoModalOpen && (
-            <AddToDoModal
-                isModalOpen={isEditTodoModalOpen}
-                setIsModalOpen={() => {
-                    setIsEditTodoModalOpen(false);
-                    setEditTodoData(null);
-                    setTasksIssuesRefreshKey((key) => key + 1);
-                }}
-                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
-                editingTodo={editTodoData}
-                isEditMode={!!editTodoData}
-                prefillData={editTodoData || {}}
-            />
+                <AddToDoModal
+                    isModalOpen={isEditTodoModalOpen}
+                    setIsModalOpen={() => {
+                        setIsEditTodoModalOpen(false);
+                        setEditTodoData(null);
+                        setTasksIssuesRefreshKey((key) => key + 1);
+                    }}
+                    getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                    editingTodo={editTodoData}
+                    isEditMode={!!editTodoData}
+                    prefillData={editTodoData || {}}
+                />
             )}
 
             {isOverdueModalOpen && (
-            <OverdueReasonModal
-                isOpen={isOverdueModalOpen}
-                onClose={() => {
-                    setIsOverdueModalOpen(false);
-                    setOverdueItem(null);
-                    setOverdueReason("");
-                }}
-                reason={overdueReason}
-                setReason={setOverdueReason}
-                onSubmit={handleOverdueReasonSubmit}
-                isLoading={isOverdueLoading}
-            />
+                <OverdueReasonModal
+                    isOpen={isOverdueModalOpen}
+                    onClose={() => {
+                        setIsOverdueModalOpen(false);
+                        setOverdueItem(null);
+                        setOverdueReason("");
+                    }}
+                    reason={overdueReason}
+                    setReason={setOverdueReason}
+                    onSubmit={handleOverdueReasonSubmit}
+                    isLoading={isOverdueLoading}
+                />
             )}
 
             {isPauseModalOpen && (
-            <PauseReasonModal
-                isOpen={isPauseModalOpen}
-                onClose={() => {
-                    setIsPauseModalOpen(false);
-                    setPauseTaskId(null);
-                }}
-                onSubmit={handlePauseTaskSubmit}
-                isLoading={isPauseLoading}
-                taskId={pauseTaskId}
-            />
+                <PauseReasonModal
+                    isOpen={isPauseModalOpen}
+                    onClose={() => {
+                        setIsPauseModalOpen(false);
+                        setPauseTaskId(null);
+                    }}
+                    onSubmit={handlePauseTaskSubmit}
+                    isLoading={isPauseLoading}
+                    taskId={pauseTaskId}
+                />
             )}
 
             {selectedSop && (
@@ -5759,7 +5693,7 @@ const WeeklyReports = () => {
                     if (!open) setSelectedSopId(null);
                 }}
             >
-                <DialogContent className="max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
+                <DialogContent className="max-h-[88vh] w-[95vw] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
                     {selectedSop && (
                         <div className="flex max-h-[88vh] flex-col">
                             <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
@@ -5792,434 +5726,434 @@ const WeeklyReports = () => {
                                 </div>
                             </DialogHeader>
 
-                            <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                                                <Activity className="h-4 w-4" />
+                                <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                                    <Activity className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Health</p>
+                                                    <p className="mt-0.5 text-xl font-bold text-neutral-900">
+                                                        {Number(selectedSop.health_score ?? 0)}%
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Health</p>
-                                                <p className="mt-0.5 text-xl font-bold text-neutral-900">
-                                                    {Number(selectedSop.health_score ?? 0)}%
+                                        </div>
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                                    <Users className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Department</p>
+                                                    <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                        {formatSopValue(selectedSop.department_name)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                                                    <User className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold uppercase text-neutral-500">Assignee</p>
+                                                    <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                        {formatSopValue(selectedSop.assignee_name)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                        <p className="text-xs font-semibold uppercase text-neutral-500">Description</p>
+                                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-800">
+                                            {formatSopValue(selectedSop.description)}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        {[
+                                            ["Created By", selectedSop.created_by_name],
+                                            ["Updated By", selectedSop.updated_by_name],
+                                            ["Created At", formatSopDate(selectedSop.created_at)],
+                                            ["Updated At", formatSopDate(selectedSop.updated_at)],
+                                        ].map(([label, value]) => (
+                                            <div
+                                                key={label}
+                                                className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm"
+                                            >
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    {label}
+                                                </p>
+                                                <p className="mt-1 break-words text-sm font-semibold text-neutral-900">
+                                                    {formatSopValue(value)}
                                                 </p>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
+
                                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                                <Users className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Department</p>
-                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
-                                                    {formatSopValue(selectedSop.department_name)}
-                                                </p>
-                                            </div>
-                                        </div>
+                                        <p className="text-xs font-semibold uppercase text-neutral-500">
+                                            Documentation URL
+                                        </p>
+                                        {selectedSop.documentation_url ? (
+                                            <a
+                                                href={selectedSop.documentation_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-2 block break-all text-sm font-semibold text-[#DA7756] hover:underline"
+                                            >
+                                                {selectedSop.documentation_url}
+                                            </a>
+                                        ) : (
+                                            <p className="mt-2 text-sm text-neutral-600">Not available</p>
+                                        )}
                                     </div>
+
                                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                                                <User className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold uppercase text-neutral-500">Assignee</p>
-                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
-                                                    {formatSopValue(selectedSop.assignee_name)}
-                                                </p>
-                                            </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-xs font-semibold uppercase text-neutral-500">KPIs</p>
+                                            <Badge className="rounded-full border-0 bg-neutral-100 text-neutral-700 hover:bg-neutral-100">
+                                                {Array.isArray(selectedSop.kpis) ? selectedSop.kpis.length : 0}
+                                            </Badge>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase text-neutral-500">Description</p>
-                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-800">
-                                        {formatSopValue(selectedSop.description)}
-                                    </p>
-                                </div>
-
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {[
-                                        ["Created By", selectedSop.created_by_name],
-                                        ["Updated By", selectedSop.updated_by_name],
-                                        ["Created At", formatSopDate(selectedSop.created_at)],
-                                        ["Updated At", formatSopDate(selectedSop.updated_at)],
-                                    ].map(([label, value]) => (
-                                        <div
-                                            key={label}
-                                            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm"
-                                        >
-                                            <p className="text-xs font-semibold uppercase text-neutral-500">
-                                                {label}
-                                            </p>
-                                            <p className="mt-1 break-words text-sm font-semibold text-neutral-900">
-                                                {formatSopValue(value)}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase text-neutral-500">
-                                        Documentation URL
-                                    </p>
-                                    {selectedSop.documentation_url ? (
-                                        <a
-                                            href={selectedSop.documentation_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="mt-2 block break-all text-sm font-semibold text-[#DA7756] hover:underline"
-                                        >
-                                            {selectedSop.documentation_url}
-                                        </a>
-                                    ) : (
-                                        <p className="mt-2 text-sm text-neutral-600">Not available</p>
-                                    )}
-                                </div>
-
-                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <p className="text-xs font-semibold uppercase text-neutral-500">KPIs</p>
-                                        <Badge className="rounded-full border-0 bg-neutral-100 text-neutral-700 hover:bg-neutral-100">
-                                            {Array.isArray(selectedSop.kpis) ? selectedSop.kpis.length : 0}
-                                        </Badge>
-                                    </div>
-                                    {Array.isArray(selectedSop.kpis) && selectedSop.kpis.length > 0 ? (
-                                        <div className="mt-3 space-y-2">
-                                            {selectedSop.kpis.map((kpi: any) => (
-                                                <div
-                                                    key={kpi.id ?? `${kpi.kpi_id}-${kpi.position}`}
-                                                    className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
-                                                >
-                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                                        <div className="min-w-0">
-                                                            <p className="text-sm font-bold text-neutral-900">
-                                                                {formatSopValue(kpi.kpi_name)}
-                                                            </p>
-                                                            <p className="text-xs text-neutral-500">
-                                                                {formatSopValue(kpi.kpi_category)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-neutral-600">
-                                                            <span className="rounded-full bg-white px-2.5 py-1 capitalize text-neutral-700">
-                                                                {formatSopValue(kpi.kpi_frequency)}
-                                                            </span>
+                                        {Array.isArray(selectedSop.kpis) && selectedSop.kpis.length > 0 ? (
+                                            <div className="mt-3 space-y-2">
+                                                {selectedSop.kpis.map((kpi: any) => (
+                                                    <div
+                                                        key={kpi.id ?? `${kpi.kpi_id}-${kpi.position}`}
+                                                        className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
+                                                    >
+                                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-bold text-neutral-900">
+                                                                    {formatSopValue(kpi.kpi_name)}
+                                                                </p>
+                                                                <p className="text-xs text-neutral-500">
+                                                                    {formatSopValue(kpi.kpi_category)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2 text-xs font-semibold text-neutral-600">
+                                                                <span className="rounded-full bg-white px-2.5 py-1 capitalize text-neutral-700">
+                                                                    {formatSopValue(kpi.kpi_frequency)}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="mt-3 text-sm text-neutral-600">No KPIs linked.</p>
-                                    )}
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="mt-3 text-sm text-neutral-600">No KPIs linked.</p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <DialogFooter className="border-t border-neutral-200 bg-white px-6 py-4">
-                                <Button
-                                    type="button"
-                                    className={cn("h-10 rounded-lg px-5", btnPrimary)}
-                                    onClick={() => setSelectedSopId(null)}
-                                >
-                                    Close
-                                </Button>
-                            </DialogFooter>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+                                <DialogFooter className="border-t border-neutral-200 bg-white px-6 py-4">
+                                    <Button
+                                        type="button"
+                                        className={cn("h-10 rounded-lg px-5", btnPrimary)}
+                                        onClick={() => setSelectedSopId(null)}
+                                    >
+                                        Close
+                                    </Button>
+                                </DialogFooter>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
             )}
 
             {taskIssueMenuAnchor && (
-            <Menu
-                anchorEl={taskIssueMenuAnchor}
-                open={Boolean(taskIssueMenuAnchor)}
-                onClose={() => setTaskIssueMenuAnchor(null)}
-                disableScrollLock
-                slotProps={{
-                    paper: {
-                        sx: {
+                <Menu
+                    anchorEl={taskIssueMenuAnchor}
+                    open={Boolean(taskIssueMenuAnchor)}
+                    onClose={() => setTaskIssueMenuAnchor(null)}
+                    disableScrollLock
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                borderRadius: "12px",
+                                boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                                minWidth: "240px",
+                                overflow: "visible",
+                                maxHeight: "none",
+                                mt: 1,
+                            },
+                        },
+                        list: {
+                            sx: {
+                                py: 0.5,
+                                overflow: "visible",
+                                maxHeight: "none",
+                            },
+                        },
+                    }}
+                    sx={{
+                        "& .MuiPaper-root": {
                             borderRadius: "12px",
                             boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
                             minWidth: "240px",
                             overflow: "visible",
-                            maxHeight: "none",
-                            mt: 1,
-                        },
-                    },
-                    list: {
-                        sx: {
-                            py: 0.5,
-                            overflow: "visible",
-                            maxHeight: "none",
-                        },
-                    },
-                }}
-                sx={{
-                    "& .MuiPaper-root": {
-                        borderRadius: "12px",
-                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "240px",
-                        overflow: "visible",
-                        maxHeight: "none !important",
-                        "&::before": {
-                            content: '""',
-                            display: "block",
-                            position: "absolute",
-                            top: -8,
-                            right: 20,
-                            width: 12,
-                            height: 12,
-                            backgroundColor: "#ffffff",
-                            transform: "translateY(-50%) rotate(45deg)",
-                            zIndex: 0,
-                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
-                        },
-                    },
-                }}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenTaskModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "6px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
+                            maxHeight: "none !important",
+                            "&::before": {
+                                content: '""',
+                                display: "block",
+                                position: "absolute",
+                                top: -8,
+                                right: 20,
+                                width: 12,
+                                height: 12,
+                                backgroundColor: "#ffffff",
+                                transform: "translateY(-50%) rotate(45deg)",
+                                zIndex: 0,
+                                boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                            },
                         },
                     }}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <CheckSquare size={18} className="text-blue-600" />
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenTaskModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "6px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <CheckSquare size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Create a new task
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Create a new task
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenIssueModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 6px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef2f2",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-red-50 rounded-lg">
+                                <AlertCircle size={18} className="text-red-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Report a problem
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenIssueModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 6px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef2f2",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-red-50 rounded-lg">
-                            <AlertCircle size={18} className="text-red-600" />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setPlanPreFillDate(null);
+                            setOpenTodoModal(true);
+                            setTaskIssueMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fffbeb",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-amber-50 rounded-lg">
+                                <ListTodo size={18} className="text-amber-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Add a quick follow-up
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Report a problem
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setPlanPreFillDate(null);
-                        setOpenTodoModal(true);
-                        setTaskIssueMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fffbeb",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-amber-50 rounded-lg">
-                            <ListTodo size={18} className="text-amber-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                Add a quick follow-up
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-            </Menu>
+                    </MenuItem>
+                </Menu>
             )}
 
             {/* Day plan dropdown menu */}
             {dayPlanMenuAnchor && (
-            <Menu
-                anchorEl={dayPlanMenuAnchor?.el}
-                open={Boolean(dayPlanMenuAnchor)}
-                onClose={() => setDayPlanMenuAnchor(null)}
-                sx={{
-                    "& .MuiPaper-root": {
-                        borderRadius: "12px",
-                        boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "220px",
-                        overflow: "visible",
-                        "&::before": {
-                            content: '""',
-                            display: "block",
-                            position: "absolute",
-                            top: -8,
-                            right: 20,
-                            width: 12,
-                            height: 12,
-                            backgroundColor: "#ffffff",
-                            transform: "translateY(-50%) rotate(45deg)",
-                            zIndex: 0,
-                            boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
-                        },
-                    },
-                }}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
-                        setDayPlanMenuAnchor(null);
-                    }}
+                <Menu
+                    anchorEl={dayPlanMenuAnchor?.el}
+                    open={Boolean(dayPlanMenuAnchor)}
+                    onClose={() => setDayPlanMenuAnchor(null)}
                     sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "8px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
+                        "& .MuiPaper-root": {
+                            borderRadius: "12px",
+                            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                            minWidth: "220px",
+                            overflow: "visible",
+                            "&::before": {
+                                content: '""',
+                                display: "block",
+                                position: "absolute",
+                                top: -8,
+                                right: 20,
+                                width: 12,
+                                height: 12,
+                                backgroundColor: "#ffffff",
+                                transform: "translateY(-50%) rotate(45deg)",
+                                zIndex: 0,
+                                boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+                            },
                         },
                     }}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <Plus size={18} className="text-blue-600" />
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) handleAddPlan(dayPlanMenuAnchor.dayKey);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "8px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <Plus size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Note</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Note</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenTaskModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#f0f4ff",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <CheckSquare size={18} className="text-blue-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Task</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenTaskModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#f0f4ff",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <CheckSquare size={18} className="text-blue-600" />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenIssueModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 4px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef2f2",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-red-50 rounded-lg">
+                                <AlertCircle size={18} className="text-red-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Task</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
+                            setOpenTodoModal(true);
+                            setDayPlanMenuAnchor(null);
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            margin: "4px 8px 8px 8px",
+                            borderRadius: "10px",
+                            "&:hover": {
+                                backgroundColor: "#fef9f0",
+                                transform: "translateX(4px)",
+                            },
+                        }}
+                    >
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-amber-50 rounded-lg">
+                                <ListTodo size={18} className="text-amber-600" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {dayPlanMenuAnchor?.dayKey ?? "this day"}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenIssueModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 4px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef2f2",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-red-50 rounded-lg">
-                            <AlertCircle size={18} className="text-red-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Issue</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        if (dayPlanMenuAnchor) setPlanPreFillDate(dayPlanMenuAnchor.date);
-                        setOpenTodoModal(true);
-                        setDayPlanMenuAnchor(null);
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        margin: "4px 8px 8px 8px",
-                        borderRadius: "10px",
-                        "&:hover": {
-                            backgroundColor: "#fef9f0",
-                            transform: "translateX(4px)",
-                        },
-                    }}
-                >
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-amber-50 rounded-lg">
-                            <ListTodo size={18} className="text-amber-600" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
-                            <span className="text-xs text-gray-500 font-medium">
-                                {dayPlanMenuAnchor?.dayKey ?? "this day"}
-                            </span>
-                        </div>
-                    </div>
-                </MenuItem>
-            </Menu>
+                    </MenuItem>
+                </Menu>
             )}
 
             {showClosureModal && (
@@ -6284,7 +6218,7 @@ const WeeklyReports = () => {
                         <label className="text-sm font-bold text-[#1a1a1a]">
                             Attach Files (Optional)
                         </label>
-                        <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
                             <div className="space-y-0.5">
                                 <p className="text-xs font-bold text-green-600">
                                     {closureAttachments.length}/5
@@ -6368,7 +6302,7 @@ const WeeklyReports = () => {
                             ) : (
                                 <>
                                     <CheckCircle2 size={16} />
-                                    Mark Closed
+                                    Mark Closed 
                                 </>
                             )}
                         </Button>
@@ -6378,12 +6312,19 @@ const WeeklyReports = () => {
             )}
 
             {/* Task completion confirmation modal */}
-            {pendingConfirmAction && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                                <AlertCircle size={20} className="text-amber-600" />
+            {pendingConfirmAction && createPortal(
+                <>
+                    <div
+                        onClick={() => setPendingConfirmAction(null)}
+                        style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 9998 }}
+                    />
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6"
+                        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, width: "min(280px, calc(100vw - 32px))", maxHeight: "calc(100vh - 32px)", overflowY: "auto" }}
+                    >
+                        <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                <AlertCircle size={18} className="text-amber-600" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
@@ -6410,7 +6351,8 @@ const WeeklyReports = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </>,
+                document.body
             )}
         </div>
     );
