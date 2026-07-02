@@ -1199,7 +1199,7 @@ export const AmenityBookingEditPage = () => {
           <div>
             <h2 className="text-lg font-semibold mb-4">Payment Method<span className="text-red-500"> *</span></h2>
             {facilityDetails && (
-              <RadioGroup value={paymentMethod} onValueChange={() => {}} className="space-y-3">
+              <RadioGroup value={paymentMethod} onValueChange={(val) => setPaymentMethod(val)} className="space-y-3">
                 {facilityDetails.postpaid === 1 && (
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="postpaid" id="edit_postpaid" />
