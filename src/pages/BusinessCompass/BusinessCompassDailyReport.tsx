@@ -511,6 +511,13 @@ const BusinessCompassDailyReport: React.FC = () => {
     null
   );
   const [playingTaskIds, setPlayingTaskIds] = useState<Set<number>>(new Set());
+  const [pauseIssueId, setPauseIssueId] = useState<number | null>(null);
+  const [pendingPlayIssueId, setPendingPlayIssueId] = useState<number | null>(
+    null
+  );
+  const [pendingPauseIssueId, setPendingPauseIssueId] = useState<number | null>(
+    null
+  );
   const [pendingReopenItem, setPendingReopenItem] = useState<any>(null);
   const [reopenReason, setReopenReason] = useState("");
   const [isReopenLoading, setIsReopenLoading] = useState(false);
@@ -852,7 +859,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     },
   });
 
-  const { data: issuesData, isLoading: issuesLoading } = useBusinessCompassIssues({
+  const { data: issuesData, isLoading: issuesLoading, refetch: refetchIssues } = useBusinessCompassIssues({
     page: currentIssuesPage,
     filters: myIssuesFilter,
     enabled: !!token && !!userId,
@@ -1735,7 +1742,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     setPlayingTaskIds((prev) => new Set(prev).add(taskId));
     try {
       await axios.put(
-        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        `https://${baseUrl}/business_compass/tasks/${taskId}/update_status.json`,
         { status: "started" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1758,7 +1765,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     setIsPauseLoading(true);
     try {
       await axios.put(
-        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        `https://${baseUrl}/business_compass/tasks/${taskId}/update_status.json`,
         { status: "stopped" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1783,6 +1790,64 @@ const BusinessCompassDailyReport: React.FC = () => {
       console.error("Failed to pause task:", error);
       toast.error(
         `Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`
+      );
+    } finally {
+      setIsPauseLoading(false);
+    }
+  };
+
+  const handlePlayIssue = async (issueId: number) => {
+    setPlayingTaskIds((prev) => new Set(prev).add(issueId));
+    try {
+      await axios.put(
+        `https://${baseUrl}/business_compass/issues/${issueId}/update_status.json`,
+        { status: "started" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Issue started successfully");
+      refetchIssues();
+    } catch (error) {
+      console.error("Failed to start issue:", error);
+      toast.error("Failed to start issue");
+    } finally {
+      setPlayingTaskIds((prev) => {
+        const next = new Set(prev);
+        next.delete(issueId);
+        return next;
+      });
+    }
+  };
+
+  const handlePauseIssueSubmit = async (reason: string, issueId: number) => {
+    if (!issueId) return;
+    setIsPauseLoading(true);
+    try {
+      await axios.put(
+        `https://${baseUrl}/business_compass/issues/${issueId}/update_status.json`,
+        { status: "stopped" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await axios.post(
+        `https://${baseUrl}/comments.json`,
+        {
+          comment: {
+            body: `Paused with reason: ${reason}`,
+            commentable_id: issueId,
+            commentable_type: "Issue",
+            commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
+            active: true,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Issue paused successfully");
+      setIsPauseModalOpen(false);
+      setPauseIssueId(null);
+      refetchIssues();
+    } catch (error) {
+      console.error("Failed to pause issue:", error);
+      toast.error(
+        `Failed to pause issue: ${error?.response?.data?.error || error?.message || "Server error"}`
       );
     } finally {
       setIsPauseLoading(false);
@@ -4932,6 +4997,57 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                 )}
                                               </button>
                                             ))}
+                                          {item.type === "issue" &&
+                                            item.status !== "completed" &&
+                                            item.status !== "closed" &&
+                                            (item.originalData?.is_started ? (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPauseIssueId(
+                                                    item.originalData.id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Pause issue"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData.id
+                                                )}
+                                              >
+                                                <Pause
+                                                  size={14}
+                                                  className="text-red-500"
+                                                />
+                                              </button>
+                                            ) : (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPlayIssueId(
+                                                    item.originalData.id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Start issue"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData.id
+                                                )}
+                                              >
+                                                {playingTaskIds.has(
+                                                  item.originalData.id
+                                                ) ? (
+                                                  <Loader2
+                                                    size={14}
+                                                    className="text-green-600 animate-spin"
+                                                  />
+                                                ) : (
+                                                  <Play
+                                                    size={14}
+                                                    className="text-green-600"
+                                                  />
+                                                )}
+                                              </button>
+                                            ))}
                                           {item.type === "todo" &&
                                             item.originalData
                                               ?.task_management_id &&
@@ -5045,7 +5161,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                               addedToTomorrowIds.has(item.id)
                                                 ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100"
                                             )}
                                             title={
                                               addedToTomorrowIds.has(item.id)
@@ -5520,6 +5636,58 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                     </button>
                                                   ))}
 
+                                                {/* Play/Pause for issues */}
+                                                {item.type === "issue" &&
+                                                  item.status !== "completed" &&
+                                                  item.status !== "closed" &&
+                                                  (item.originalData?.is_started ? (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPauseIssueId(
+                                                          item.originalData.id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Pause issue"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData.id
+                                                      )}
+                                                    >
+                                                      <Pause
+                                                        size={14}
+                                                        className="text-red-500"
+                                                      />
+                                                    </button>
+                                                  ) : (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPlayIssueId(
+                                                          item.originalData.id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Start issue"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData.id
+                                                      )}
+                                                    >
+                                                      {playingTaskIds.has(
+                                                        item.originalData.id
+                                                      ) ? (
+                                                        <Loader2
+                                                          size={14}
+                                                          className="text-green-600 animate-spin"
+                                                        />
+                                                      ) : (
+                                                        <Play
+                                                          size={14}
+                                                          className="text-green-600"
+                                                        />
+                                                      )}
+                                                    </button>
+                                                  ))}
                                                 {/* Play/Pause for todos linked to tasks */}
                                                 {item.type === "todo" &&
                                                   item.originalData
@@ -5642,7 +5810,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                       "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                                       addedToTomorrowIds.has(item.id)
                                                         ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                        : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                                        : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100"
                                                     )}
                                                     title={
                                                       addedToTomorrowIds.has(item.id)
@@ -7563,6 +7731,47 @@ const BusinessCompassDailyReport: React.FC = () => {
         </ModalPortal>
       )}
 
+      {/* Start Issue Confirmation */}
+      {pendingPlayIssueId !== null && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <Play size={18} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Are you sure?
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    This will start the issue.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPlayIssueId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = pendingPlayIssueId;
+                    setPendingPlayIssueId(null);
+                    handlePlayIssue(id);
+                  }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                >
+                  Start
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
       {/* Pause Task Confirmation */}
       {pendingPauseTaskId !== null && (
         <ModalPortal>
@@ -7605,16 +7814,60 @@ const BusinessCompassDailyReport: React.FC = () => {
         </ModalPortal>
       )}
 
+      {/* Pause Issue Confirmation */}
+      {pendingPauseIssueId !== null && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <Pause size={18} className="text-red-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Are you sure?
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    This will pause the issue.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPauseIssueId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = pendingPauseIssueId;
+                    setPendingPauseIssueId(null);
+                    setPauseIssueId(id);
+                    setIsPauseModalOpen(true);
+                  }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+                >
+                  Pause
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
       {/* Pause Reason Modal */}
       <PauseReasonModal
         isOpen={isPauseModalOpen}
         onClose={() => {
           setIsPauseModalOpen(false);
           setPauseTaskId(null);
+          setPauseIssueId(null);
         }}
-        onSubmit={handlePauseTaskSubmit}
+        onSubmit={pauseIssueId ? handlePauseIssueSubmit : handlePauseTaskSubmit}
         isLoading={isPauseLoading}
-        taskId={pauseTaskId}
+        taskId={pauseIssueId || pauseTaskId}
+        entityType={pauseIssueId ? "issue" : "task"}
       />
 
       {/* Confirm Action Modal */}
@@ -7728,8 +7981,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   );
 };
 
-const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, entityType = "task" }) => {
   const [reason, setReason] = useState("");
+  const label = entityType === "issue" ? "Issue" : "Task";
 
   useEffect(() => {
     if (!isOpen) setReason("");
@@ -7737,7 +7991,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 
   const handleSubmit = () => {
     if (!reason.trim()) {
-      toast.error("Please enter a reason for pausing the task");
+      toast.error(`Please enter a reason for pausing the ${label.toLowerCase()}`);
       return;
     }
     onSubmit(reason, taskId);
@@ -7751,11 +8005,10 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
         <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 shadow-xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
-            <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
+            <h2 className="text-lg font-bold text-gray-900">{`Pause ${label}`}</h2>
           </div>
           <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-            Please provide a reason for pausing this task. This will help track
-            the pause history.
+            {`Please provide a reason for pausing this ${label.toLowerCase()}. This will help track the pause history.`}
           </p>
           <div className="mb-6">
             <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
@@ -7764,7 +8017,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Enter reason for pausing this task..."
+              placeholder={`Enter reason for pausing this ${label.toLowerCase()}...`}
               className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
               rows={4}
               disabled={isLoading}
@@ -7783,7 +8036,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
               disabled={isLoading}
               className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
             >
-              {isLoading ? "Processing..." : "Pause Task"}
+              {isLoading ? "Processing..." : `Pause ${label}`}
             </button>
           </div>
         </div>
