@@ -1207,7 +1207,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       {
         id,
         text: "",
-        completed: false,
+        completed: true,
         starred: false,
         fromYesterday: false,
       },
@@ -5419,7 +5419,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   group.headerBg
                                 )}
                                 onClick={() =>
-                                  openOnlyTaskIssueGroup(group.key)
+                                  setCollapsedGroups((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(group.key))
+                                      next.delete(group.key);
+                                    else next.add(group.key);
+                                    return next;
+                                  })
                                 }
                               >
                                 <span
