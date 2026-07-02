@@ -4386,7 +4386,7 @@ export const AddAMCPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoice <span style={{ color: 'red' }}>*</span></label>
+                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoice </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
                       <input
                         type="file"
