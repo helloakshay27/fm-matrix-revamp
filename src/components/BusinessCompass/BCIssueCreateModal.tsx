@@ -58,6 +58,8 @@ interface BCIssueCreateModalProps {
   onSuccess?: () => void;
   baseUrl: string;
   token: string;
+  prefilledDate?: { year: number; month: number; date: number };
+  dateResetKey?: number;
 }
 
 const globalPriorityOptions = [
@@ -267,11 +269,15 @@ const SimpleIssueForm = ({
   token,
   onClose,
   onSuccess,
+  prefilledDate,
+  dateResetKey,
 }: {
   baseUrl: string;
   token: string;
   onClose: () => void;
   onSuccess?: () => void;
+  prefilledDate?: { year: number; month: number; date: number };
+  dateResetKey?: number;
 }) => {
   const [users, setUsers] = useState<any[]>([]);
   const [issueTypes, setIssueTypes] = useState<any[]>([]);
@@ -286,9 +292,19 @@ const SimpleIssueForm = ({
   const [files, setFiles] = useState<File[]>([]);
 
   const [startDate, setStartDate] = useState<any>(() => {
+    if (prefilledDate) return prefilledDate;
     const t = new Date();
     return { year: t.getFullYear(), month: t.getMonth(), date: t.getDate() };
   });
+
+  useEffect(() => {
+    if (prefilledDate) {
+      setStartDate(prefilledDate);
+    } else {
+      const t = new Date();
+      setStartDate({ year: t.getFullYear(), month: t.getMonth(), date: t.getDate() });
+    }
+  }, [dateResetKey]);
   const [endDate, setEndDate] = useState<any>(null);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -845,6 +861,8 @@ const BCIssueCreateModal = ({
   onSuccess,
   baseUrl,
   token,
+  prefilledDate,
+  dateResetKey,
 }: BCIssueCreateModalProps) => {
   return (
     <Dialog
@@ -884,6 +902,8 @@ const BCIssueCreateModal = ({
           token={token}
           onClose={onClose}
           onSuccess={onSuccess}
+          prefilledDate={prefilledDate}
+          dateResetKey={dateResetKey}
         />
       </DialogContent>
     </Dialog>
