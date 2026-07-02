@@ -87,7 +87,7 @@ export const MobileSurveyLanding: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [surveyData, setSurveyData] = useState<SurveyMapping | null>(null);
 
-  const isOigComingSoonDomain = surveyData?.site_id === 2893;
+  const isOigComingSoonDomain = surveyData?.site_id === 28931111111;
 
   // Survey flow states
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
