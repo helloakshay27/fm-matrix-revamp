@@ -2702,7 +2702,7 @@ export const AddAMCPage = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices <span style={{ color: 'red' }}>*</span></label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices </label>
                       <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 min-h-[200px]">
                         {attachments.invoices.length > 0 ? (
                           <div className="flex flex-wrap gap-3">
