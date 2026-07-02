@@ -488,6 +488,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isTaskCreateModalOpen, setIsTaskCreateModalOpen] = useState(false);
   const [isIssueCreateModalOpen, setIsIssueCreateModalOpen] = useState(false);
   const [isTodoCreateModalOpen, setIsTodoCreateModalOpen] = useState(false);
+  const [planDateResetKey, setPlanDateResetKey] = useState(0);
+  const [isFromPlan, setIsFromPlan] = useState(false);
   const [planningMenuAnchor, setPlanningMenuAnchor] =
     useState<null | HTMLElement>(null);
   const [showClosureModal, setShowClosureModal] = useState(false);
@@ -7290,7 +7292,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <MenuItem
-          onClick={() => { setTaskIssueMenuAnchor(null); setIsTaskCreateModalOpen(true); }}
+          onClick={() => { setTaskIssueMenuAnchor(null); setIsFromPlan(false); setIsTaskCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -7315,7 +7317,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => { setTaskIssueMenuAnchor(null); setIsIssueCreateModalOpen(true); }}
+          onClick={() => { setTaskIssueMenuAnchor(null); setIsFromPlan(false); setIsIssueCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -7340,7 +7342,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => { setTaskIssueMenuAnchor(null); setIsTodoCreateModalOpen(true); }}
+          onClick={() => { setTaskIssueMenuAnchor(null); setIsFromPlan(false); setIsTodoCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -7423,7 +7425,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => setPlanningMenuAnchor(null)}
+          onClick={() => { setPlanningMenuAnchor(null); setIsFromPlan(true); setPlanDateResetKey(k => k + 1); setIsTaskCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -7448,7 +7450,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => { setPlanningMenuAnchor(null); setIsIssueCreateModalOpen(true); }}
+          onClick={() => { setPlanningMenuAnchor(null); setIsFromPlan(true); setPlanDateResetKey(k => k + 1); setIsIssueCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -7473,7 +7475,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => { setPlanningMenuAnchor(null); setIsTodoCreateModalOpen(true); }}
+          onClick={() => { setPlanningMenuAnchor(null); setIsFromPlan(true); setPlanDateResetKey(k => k + 1); setIsTodoCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -7572,30 +7574,42 @@ const BusinessCompassDailyReport: React.FC = () => {
         }}
       />
 
-      {/* Create Task Modal */}
-      <BCTaskCreateModal
-        isOpen={isTaskCreateModalOpen}
-        onClose={() => setIsTaskCreateModalOpen(false)}
-        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
-        baseUrl={baseUrl || ""}
-        token={token || ""}
-      />
+      {/* Compute next working day for plan modals */}
+      {(() => {
+        const nextDayStr = getNextWorkingDay(startDate);
+        const nextDayDate = new Date(nextDayStr);
+        const nextDayObj = { year: nextDayDate.getFullYear(), month: nextDayDate.getMonth(), date: nextDayDate.getDate() };
 
-      {/* Create Issue Modal */}
-      <BCIssueCreateModal
-        isOpen={isIssueCreateModalOpen}
-        onClose={() => setIsIssueCreateModalOpen(false)}
-        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
-        baseUrl={baseUrl || ""}
-        token={token || ""}
-      />
-
-      {/* Create Todo Modal */}
-      <BCTodoCreateModal
-        isOpen={isTodoCreateModalOpen}
-        onClose={() => setIsTodoCreateModalOpen(false)}
-        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
-      />
+        return (
+          <>
+            <BCTaskCreateModal
+              isOpen={isTaskCreateModalOpen}
+              onClose={() => { setIsFromPlan(false); setIsTaskCreateModalOpen(false); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              baseUrl={baseUrl || ""}
+              token={token || ""}
+              prefilledDate={isFromPlan ? nextDayObj : undefined}
+              dateResetKey={planDateResetKey}
+            />
+            <BCIssueCreateModal
+              isOpen={isIssueCreateModalOpen}
+              onClose={() => { setIsFromPlan(false); setIsIssueCreateModalOpen(false); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              baseUrl={baseUrl || ""}
+              token={token || ""}
+              prefilledDate={isFromPlan ? nextDayObj : undefined}
+              dateResetKey={planDateResetKey}
+            />
+            <BCTodoCreateModal
+              isOpen={isTodoCreateModalOpen}
+              onClose={() => { setIsFromPlan(false); setIsTodoCreateModalOpen(false); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              prefilledDate={isFromPlan ? nextDayStr : undefined}
+              dateResetKey={planDateResetKey}
+            />
+          </>
+        );
+      })()}
 
       {/* Edit Task Modal */}
       <BCTaskEditModal

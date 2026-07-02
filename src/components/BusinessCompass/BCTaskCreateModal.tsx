@@ -311,6 +311,8 @@ interface BCTaskCreateModalProps {
   onSuccess?: () => void;
   baseUrl: string;
   token: string;
+  prefilledDate?: { year: number; month: number; date: number };
+  dateResetKey?: number;
 }
 
 const SimpleTaskForm = ({
@@ -318,11 +320,15 @@ const SimpleTaskForm = ({
   token,
   onClose,
   onSuccess,
+  prefilledDate,
+  dateResetKey,
 }: {
   baseUrl: string;
   token: string;
   onClose: () => void;
   onSuccess?: () => void;
+  prefilledDate?: { year: number; month: number; date: number };
+  dateResetKey?: number;
 }) => {
   const [users, setUsers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -341,9 +347,19 @@ const SimpleTaskForm = ({
 
   /* ── dates ── */
   const [startDate, setStartDate] = useState<any>(() => {
+    if (prefilledDate) return prefilledDate;
     const t = new Date();
     return { year: t.getFullYear(), month: t.getMonth(), date: t.getDate() };
   });
+
+  useEffect(() => {
+    if (prefilledDate) {
+      setStartDate(prefilledDate);
+    } else {
+      const t = new Date();
+      setStartDate({ year: t.getFullYear(), month: t.getMonth(), date: t.getDate() });
+    }
+  }, [dateResetKey]);
   const [endDate, setEndDate] = useState<any>(null);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -921,6 +937,8 @@ const BCTaskCreateModal = ({
   onSuccess,
   baseUrl,
   token,
+  prefilledDate,
+  dateResetKey,
 }: BCTaskCreateModalProps) => {
   return (
     <Dialog
@@ -962,6 +980,8 @@ const BCTaskCreateModal = ({
             token={token}
             onClose={onClose}
             onSuccess={onSuccess}
+            prefilledDate={prefilledDate}
+            dateResetKey={dateResetKey}
           />
         </div>
       </DialogContent>
