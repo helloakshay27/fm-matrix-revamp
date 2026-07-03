@@ -97,7 +97,7 @@ export default function PATMCeoDashboard() {
 
         {/* TAB CONTENT */}
         {activeTab === 'overview' && <OverviewTab fromDate={fromDate} toDate={toDate} />}
-        {activeTab === 'delivery' && <DeliveryTab />}
+        {activeTab === 'delivery' && <DeliveryTab fromDate={fromDate} toDate={toDate} />}
         {activeTab === 'team' && <TeamTab />}
       </div>
 
