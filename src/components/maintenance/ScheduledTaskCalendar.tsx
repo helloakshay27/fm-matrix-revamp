@@ -42,10 +42,11 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   // Helper function to get default date range (today to one week ago)
+  // Default date range = current financial year (Apr 1 – Mar 31)
   const getDefaultDateRange = () => {
     const today = new Date();
-    const oneWeekAgo = new Date(today);
-    oneWeekAgo.setDate(today.getDate() - 7);
+    const fyStartYear = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
+    const fyEndYear = fyStartYear + 1;
 
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
@@ -55,8 +56,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     };
 
     return {
-      dateFrom: formatDate(oneWeekAgo),
-      dateTo: formatDate(today)
+      dateFrom: formatDate(new Date(fyStartYear, 3, 1)),  // Apr 1
+      dateTo: formatDate(new Date(fyEndYear, 2, 31)),     // Mar 31
     };
   };
 
@@ -85,7 +86,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     return {
       dateFrom: defaultRange.dateFrom,
       dateTo: defaultRange.dateTo,
-      's[task_custom_form_schedule_type_eq]': '', // Always empty
+      's[task_custom_form_schedule_type_eq]': 'AMC',
       's[task_task_of_eq]': '' // Always empty
     };
   });
@@ -726,12 +727,24 @@ const YearlyView: React.FC<{
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<any[]>([]);
 
+  // Pre-index events by date key (YYYY-MM-DD) so day lookups are O(1)
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, any[]>();
+    events.forEach(e => {
+      const key = moment(e.start).format('YYYY-MM-DD');
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(e);
+    });
+    return map;
+  }, [events]);
+
   // Generate 12 months dynamically based on the date range
   const months = useMemo(() => {
     const monthsArray = [];
     const start = moment(startDate);
     const end = moment(endDate);
-    
+    const today = moment().format('YYYY-MM-DD');
+
     // Get the first day of the start month
     let current = start.clone().startOf('month');
     const endMonth = end.clone().endOf('month');
@@ -753,19 +766,15 @@ const YearlyView: React.FC<{
           days: []
         });
 
-        // Generate days for this week
+        // Generate days for this week — O(1) event lookup via pre-built map
         for (let d = 0; d < 7; d++) {
           const day = currentWeek.clone().add(d, 'days');
-          const dayEvents = events.filter(e => {
-            const eventDate = moment(e.start);
-            return eventDate.isSame(day, 'day');
-          });
-
+          const dayKey = day.format('YYYY-MM-DD');
           weeks[weeks.length - 1].days.push({
             date: day.clone(),
             isCurrentMonth: day.month() === monthStart.month(),
-            isToday: day.isSame(moment(), 'day'),
-            events: dayEvents
+            isToday: dayKey === today,
+            events: eventsByDate.get(dayKey) || []
           });
         }
 
@@ -781,16 +790,16 @@ const YearlyView: React.FC<{
         year: monthStart.year(),
         weeks
       });
-      
+
       // Move to next month
       current.add(1, 'month');
-      
+
       // Limit to 12 months maximum for display
       if (monthsArray.length >= 12) break;
     }
-    
+
     return monthsArray;
-  }, [events, startDate, endDate]);
+  }, [eventsByDate, startDate, endDate]);
 
   const handleDayHover = (day: any, event: React.MouseEvent) => {
     // Disabled hover tooltip - only show on click
@@ -845,16 +854,20 @@ const YearlyView: React.FC<{
                 {month.weeks.map((week, weekIndex) => (
                   <div key={weekIndex} className="grid grid-cols-7 gap-1">
                     {week.days.map((day, dayIndex) => {
+                      // Hide days that belong to previous/next months — keep grid slot empty
+                      if (!day.isCurrentMonth) {
+                        return <div key={dayIndex} className="min-h-[28px]" />;
+                      }
+
                       const hasEvents = day.events.length > 0;
                       const dayKey = day.date.format('YYYY-MM-DD');
-                      const isHovered = hoveredDay === dayKey;
 
                       return (
                         <div
                           key={dayIndex}
                           className={`
                             relative text-xs text-center py-1 cursor-pointer rounded min-h-[28px] flex items-center justify-center
-                            ${day.isCurrentMonth ? 'text-gray-800' : 'text-gray-400'}
+                            text-gray-800
                             ${day.isToday ? 'bg-blue-500 text-white font-bold ring-2 ring-blue-200' : ''}
                             ${hasEvents && !day.isToday ? 'bg-blue-100 text-blue-800 font-medium' : ''}
                             ${hasEvents ? 'hover:bg-blue-200 hover:shadow-md' : 'hover:bg-gray-100'}
@@ -865,7 +878,7 @@ const YearlyView: React.FC<{
                         >
                           {day.date.date()}
 
-                          {/* Enhanced Event Count Badge - Only show when there are events */}
+                          {/* Event Count Badge */}
                           {hasEvents && (
                             <div className="absolute -top-1 -right-1">
                               <div className={`
@@ -1143,12 +1156,11 @@ const YearlyView: React.FC<{
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison function for memo
-  // Only re-render if events, startDate, or endDate actually change
+  // Re-render only when events array reference, count, or date range changes
   return (
+    prevProps.events === nextProps.events &&
     prevProps.events.length === nextProps.events.length &&
     prevProps.startDate.getTime() === nextProps.startDate.getTime() &&
-    prevProps.endDate.getTime() === nextProps.endDate.getTime() &&
-    JSON.stringify(prevProps.events) === JSON.stringify(nextProps.events)
+    prevProps.endDate.getTime() === nextProps.endDate.getTime()
   );
 });
