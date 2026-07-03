@@ -1,7 +1,6 @@
 import React, { useState, useRef, forwardRef, useEffect, useMemo } from "react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
-  Lightbulb,
   X,
   ChevronRight,
   Calendar as CalendarIcon,
@@ -49,24 +48,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import "./BusinessCompass.css";
-import AddTaskOrIssueModal from "@/components/BusinessCompass/AddTaskOrIssueModal";
+import BCTaskCreateModal from "@/components/BusinessCompass/BCTaskCreateModal";
+import BCIssueCreateModal from "@/components/BusinessCompass/BCIssueCreateModal";
 import { getBaseUrl, getToken } from "@/utils/auth";
 import { calculateLivePreviewScore } from "@/utils/scoreCalculation";
 import axios from "axios";
-import { useTasks } from "@/hooks/useTasks";
-import { useIssues } from "@/hooks/useIssues";
+import { useBusinessCompassIssues } from "@/hooks/useBusinessCompassIssues";
+import { useBusinessCompassTasks } from "@/hooks/useBusinessCompassTasks";
+import { useBusinessCompassTodos } from "@/hooks/useBusinessCompassTodos";
 import { Dialog, DialogContent, Slide, Menu, MenuItem } from "@mui/material";
-import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
-import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
-import { TransitionProps } from "@mui/material/transitions";
-import AddIssueModal from "@/components/AddIssueModal";
-import EditIssueModal from "@/components/EditIssueModal";
-import AddToDoModal from "@/components/AddToDoModal";
+import BCTaskEditModal from "@/components/BusinessCompass/BCTaskEditModal";
+import BCIssueEditModal from "@/components/BusinessCompass/BCIssueEditModal";
+import BCTodoEditModal from "@/components/BusinessCompass/BCTodoEditModal";
+import BCTodoCreateModal from "@/components/BusinessCompass/BCTodoCreateModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { createPortal } from "react-dom";
+import { TransitionProps } from "@mui/material/transitions";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -298,13 +298,71 @@ const AiSparkleIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// ── Constants ───────────────────────────────────────────────────────
+const COMPLETED_STATUSES = new Set(["completed", "closed", "done"]);
+const isCompleted = (status: string) => COMPLETED_STATUSES.has(status);
+
+// ── Pure utility functions ──────────────────────────────────────────
+const fmtDate = (d?: string) => {
+  if (!d) return null;
+  const dt = new Date(d);
+  return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
+};
+
+const fmtHours = (h?: number) => {
+  if (!h) return null;
+  if (h < 1) return `${Math.round(h * 60)}m`;
+  const wh = Math.floor(h);
+  const m = Math.round((h - wh) * 60);
+  return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
+};
+
+const getOverdueLabel = (targetDate?: string) => {
+  if (!targetDate) return null;
+  const now = new Date();
+  const end = new Date(targetDate);
+  end.setHours(23, 59, 59, 999);
+  const diff = end.getTime() - now.getTime();
+  if (diff > 0) return null;
+  const abs = Math.abs(diff);
+  const d = Math.floor(abs / 86400000);
+  const h = Math.floor((abs % 86400000) / 3600000);
+  const m = Math.floor((abs % 3600000) / 60000);
+  if (d > 0) return `${d}d ${h}h overdue`;
+  if (h > 0) return `${h}h ${m}m overdue`;
+  return `${m}m overdue`;
+};
+
+const isDateOverdue = (dateStr: string | undefined) => {
+  if (!dateStr) return false;
+  const itemDate = new Date(dateStr);
+  const today = new Date();
+  itemDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return itemDate < today;
+};
+
+const isImageFile = (fileName: string, contentType: string) => {
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"];
+  const lowerFileName = fileName.toLowerCase();
+  return contentType.startsWith("image/") || imageExtensions.some((ext) => lowerFileName.endsWith(ext));
+};
+
+const getPriorityClass = (priority?: string) => {
+  if (priority === "High") return "bc-priority-high";
+  if (priority === "Medium") return "bc-priority-medium";
+  return "bc-priority-low";
+};
+
+const extractRealId = (prefixedId: string) =>
+  Number(prefixedId.replace("task-", "").replace("issue-", "").replace("todo-", ""));
+
 const BusinessCompassDailyReport: React.FC = () => {
+  const isPATMSynced = false;
   const navigate = useNavigate();
   const now = new Date();
   const [selectedDate, setSelectedDate] = useState(now.getDate().toString());
   const [startDate, setStartDate] = useState(now.toLocaleDateString("en-CA"));
-  const [isBannerVisible, setIsBannerVisible] = useState(true);
-  const [isBannerExpanded, setIsBannerExpanded] = useState(false);
   const [selfRating, setSelfRating] = useState([2]);
   const [isAbsent, setIsAbsent] = useState(false);
   const [absenceReason, setAbsenceReason] = useState("");
@@ -345,10 +403,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const closureFileInputRef = useRef<HTMLInputElement>(null);
-  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
-  const [openTaskModal, setOpenTaskModal] = useState(false);
-  const [openIssueModal, setOpenIssueModal] = useState(false);
-  const [openTodoModal, setOpenTodoModal] = useState(false);
   const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
   const [editTaskData, setEditTaskData] = useState<any>(null);
   const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
@@ -431,9 +485,13 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
     useState<null | HTMLElement>(null);
+  const [isTaskCreateModalOpen, setIsTaskCreateModalOpen] = useState(false);
+  const [isIssueCreateModalOpen, setIsIssueCreateModalOpen] = useState(false);
+  const [isTodoCreateModalOpen, setIsTodoCreateModalOpen] = useState(false);
+  const [planDateResetKey, setPlanDateResetKey] = useState(0);
+  const [isFromPlan, setIsFromPlan] = useState(false);
   const [planningMenuAnchor, setPlanningMenuAnchor] =
     useState<null | HTMLElement>(null);
-  const [preFillDate, setPreFillDate] = useState<string | null>(null);
   const [showClosureModal, setShowClosureModal] = useState(false);
   const [closureItem, setClosureItem] = useState<any>(null);
   const [closureRemarks, setClosureRemarks] = useState("");
@@ -455,6 +513,13 @@ const BusinessCompassDailyReport: React.FC = () => {
     null
   );
   const [playingTaskIds, setPlayingTaskIds] = useState<Set<number>>(new Set());
+  const [pauseIssueId, setPauseIssueId] = useState<number | null>(null);
+  const [pendingPlayIssueId, setPendingPlayIssueId] = useState<number | null>(
+    null
+  );
+  const [pendingPauseIssueId, setPendingPauseIssueId] = useState<number | null>(
+    null
+  );
   const [pendingReopenItem, setPendingReopenItem] = useState<any>(null);
   const [reopenReason, setReopenReason] = useState("");
   const [isReopenLoading, setIsReopenLoading] = useState(false);
@@ -487,8 +552,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
-  const [todosData, setTodosData] = useState<any>(null);
-  const [todosLoading, setTodosLoading] = useState(false);
   const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>(
     []
   );
@@ -532,61 +595,15 @@ const BusinessCompassDailyReport: React.FC = () => {
       .catch(() => { });
   }, []);
 
-  // Fetch todos with same date and completed filter as tasks and issues
-
-  const fetchTasks = async () => {
+  const fetchTasks = () => {
     if (!baseUrl || !token || !userId) return;
-
-    try {
-      // Reset pagination for fresh fetch
-      setCurrentTasksPage(1);
-      // Tasks are fetched via the useTasks hook with currentTasksPage
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    }
+    setCurrentTasksPage(1);
   };
 
-  const fetchIssues = async () => {
+  const fetchIssues = () => {
     if (!baseUrl || !token || !userId) return;
-
-    try {
-      // Reset pagination for fresh fetch
-      setCurrentIssuesPage(1);
-      // Issues are fetched via the useIssues hook with currentIssuesPage
-    } catch (error) {
-      console.error("Error fetching issues:", error);
-    }
+    setCurrentIssuesPage(1);
   };
-
-  const fetchTodos = async () => {
-    if (!baseUrl || !token || !userId) return;
-
-    try {
-      setTodosLoading(true);
-      // Build query parameters for todos - filter by date and include both open and completed
-      const queryParams = new URLSearchParams();
-      queryParams.append("q[user_id_eq]", userId.toString());
-      queryParams.append("for_date", startDate);
-
-      const url = `https://${baseUrl}/todos.json?${queryParams.toString()}`;
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setTodosData(response.data);
-    } catch (error) {
-      console.error("Error fetching todos:", error);
-      setTodosData(null);
-    } finally {
-      setTodosLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTodos();
-  }, [startDate, baseUrl, token, userId]);
 
   const isRosterHoliday = (date: Date): boolean => {
     const jsDay = date.getDay();
@@ -640,7 +657,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const headers = { Authorization: `Bearer ${token}` };
       const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
-        axios.get(`https://${baseUrl}/task_managements.json?${tasksParams}`, {
+        axios.get(`https://${baseUrl}/business_compass/tasks?${tasksParams}`, {
           headers,
         }),
         axios.get(`https://${baseUrl}/issues.json?${issuesParams}`, {
@@ -661,9 +678,6 @@ const BusinessCompassDailyReport: React.FC = () => {
           : [];
       const todos =
         todosRes.status === "fulfilled" ? todosRes.value.data?.todos || [] : [];
-
-      const isCompleted = (status: string) =>
-        status === "completed" || status === "closed" || status === "done";
 
       const combined = [
         ...tasks
@@ -840,31 +854,35 @@ const BusinessCompassDailyReport: React.FC = () => {
     data: tasksData,
     isLoading: tasksLoading,
     refetch: refetchTasks,
-  } = useTasks({
-    taskType: "my",
+  } = useBusinessCompassTasks({
     page: currentTasksPage,
     filters: {
       for_date: startDate,
     },
   });
 
-  const { data: issuesData, isLoading: issuesLoading } = useIssues({
-    baseUrl,
-    token,
+  const { data: issuesData, isLoading: issuesLoading, refetch: refetchIssues } = useBusinessCompassIssues({
     page: currentIssuesPage,
     filters: myIssuesFilter,
     enabled: !!token && !!userId,
   });
 
+  const { data: todosData, isLoading: todosLoading, refetch: refetchTodos } = useBusinessCompassTodos({
+    page: 1,
+    filters: {
+      for_date: startDate,
+      "q[user_id_eq]": userId?.toString() || "",
+    },
+    enabled: !!token && !!userId,
+  });
+
   useEffect(() => {
-    const tasks =
-      tasksData?.data?.task_managements || tasksData?.task_managements || [];
+    const tasks = tasksData?.tasks || [];
     const issues = issuesData?.issues || [];
     const todos = todosData?.todos || [];
 
-    const tasksPagination =
-      tasksData?.data?.pagination || tasksData?.pagination;
-    const issuesPagination = issuesData?.pagination;
+    const tasksPagination = tasksData?.meta;
+    const issuesPagination = issuesData?.meta;
 
     setHasMoreTasks(currentTasksPage < (tasksPagination?.total_pages || 1));
     setHasMoreIssues(currentIssuesPage < (issuesPagination?.total_pages || 1));
@@ -1008,52 +1026,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   ]);
 
   const taskIssueCounts = useMemo(() => {
-    const completed = mergedTasksIssues.filter(
-      (item) => item.status === "completed" || item.status === "closed"
-    ).length;
-    const isPlayedOrStarted = (item: any) =>
-      item.originalData?.is_started ||
-      item.is_started ||
-      playingTaskIds.has(item.originalData?.id);
-    const open = mergedTasksIssues.filter(
-      (item) =>
-        (item.status === "open" || item.status === "reopen") &&
-        !isPlayedOrStarted(item)
-    ).length;
-    const overdue = mergedTasksIssues.filter(
-      (item) => item.status === "overdue" || item.status === "overdued"
-    ).length;
-    const onHold = mergedTasksIssues.filter(
-      (item) => item.status === "on_hold"
-    ).length;
-    const inProgress = mergedTasksIssues.filter(
-      (item) =>
-        item.status === "in_progress" ||
-        (isPlayedOrStarted(item) &&
-          ["open", "pending"].includes(item.status))
-    ).length;
-    const tasks = mergedTasksIssues.filter(
-      (item) => item.type === "task"
-    ).length;
-    const issues = mergedTasksIssues.filter(
-      (item) => item.type === "issue"
-    ).length;
-    const todos = mergedTasksIssues.filter(
-      (item) => item.type === "todo"
-    ).length;
-
-    return {
-      completed,
-      open,
-      overdue,
-      onHold,
-      inProgress,
-      tasks,
-      issues,
-      todos,
-      total: mergedTasksIssues.length,
-    };
-  }, [mergedTasksIssues]);
+    let completed = 0, open = 0, overdue = 0, onHold = 0, inProgress = 0, tasks = 0, issues = 0, todos = 0;
+    for (const item of mergedTasksIssues) {
+      const st = item.status;
+      const isPlayed = item.originalData?.is_started || item.is_started || playingTaskIds.has(item.originalData?.id);
+      if (st === "completed" || st === "closed") completed++;
+      else if (st === "overdue" || st === "overdued") overdue++;
+      else if (st === "on_hold") onHold++;
+      else if (st === "in_progress" || (["open", "pending"].includes(st) && isPlayed)) inProgress++;
+      else if ((st === "open" || st === "reopen") && !isPlayed) open++;
+      if (item.type === "task") tasks++;
+      else if (item.type === "issue") issues++;
+      else if (item.type === "todo") todos++;
+    }
+    return { completed, open, overdue, onHold, inProgress, tasks, issues, todos, total: mergedTasksIssues.length };
+  }, [mergedTasksIssues, playingTaskIds]);
 
   const openOnlyTaskIssueGroup = (activeKey: TaskIssueGroupKey) => {
     setCollapsedGroups((prev) => {
@@ -1213,23 +1200,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     if (startDate) fetchKpis();
   }, [startDate]);
 
-  const isImageFile = (fileName: string, contentType: string) => {
-    const imageExtensions = [
-      ".jpg",
-      ".jpeg",
-      ".png",
-      ".gif",
-      ".webp",
-      ".svg",
-      ".bmp",
-    ];
-    const lowerFileName = fileName.toLowerCase();
-    return (
-      contentType.startsWith("image/") ||
-      imageExtensions.some((ext) => lowerFileName.endsWith(ext))
-    );
-  };
-
   const addAccomplishment = () => {
     markDraftDirty();
     const id = Date.now().toString();
@@ -1237,21 +1207,18 @@ const BusinessCompassDailyReport: React.FC = () => {
       {
         id,
         text: "",
-        completed: false,
+        completed: true,
         starred: false,
         fromYesterday: false,
       },
       ...accomplishments,
-    ]);
-    setPlanningItems((prev) => [
-      ...prev,
-      { id: `from-accom-${id}`, text: "", starred: false },
     ]);
   };
 
   const removeAccomplishment = (id: string) => {
     markDraftDirty();
     setAccomplishments(accomplishments.filter((a) => a.id !== id));
+    setPlanningItems((prev) => prev.filter((p) => p.id !== `from-accom-${id}`));
   };
 
   const toggleAccomplishment = (id: string) => {
@@ -1263,24 +1230,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       )
     );
     // When unchecking a manually added item, mirror it into Plan for Tomorrow
-    if (item && item.completed) {
-      const text = cleanReportText(item.text);
-      const alreadyInPlan = planningItems.some(
-        (p) => cleanReportText(p.text).toLowerCase() === text.toLowerCase()
-      );
-      if (text && !alreadyInPlan) {
-        setPlanningItems((prev) => [
-          ...prev,
-          { id: `from-accom-${id}`, text: item.text, starred: item.starred },
-        ]);
-      }
-    }
-    // When checking a manually added item, remove it from Plan for Tomorrow
-    if (item && !item.completed) {
-      setPlanningItems((prev) =>
-        prev.filter((p) => p.id !== `from-accom-${id}`)
-      );
-    }
+
   };
 
   const toggleStar = (id: string) => {
@@ -1507,10 +1457,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isTask = closureItem.type === "task";
       const isTodo = closureItem.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = closureItem.id
-        .replace("task-", "")
-        .replace("issue-", "")
-        .replace("todo-", "");
+      const realId = extractRealId(closureItem.id);
 
       setMergedTasksIssues((prev) =>
         prev.map((item) =>
@@ -1591,54 +1538,13 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
-  const fmtDate = (d?: string) => {
-    if (!d) return null;
-    const dt = new Date(d);
-    return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
-  };
-  const fmtHours = (h?: number) => {
-    if (!h) return null;
-    if (h < 1) return `${Math.round(h * 60)}m`;
-    const wh = Math.floor(h);
-    const m = Math.round((h - wh) * 60);
-    return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
-  };
-  const getOverdueLabel = (targetDate?: string) => {
-    if (!targetDate) return null;
-    const now = new Date();
-    const end = new Date(targetDate);
-    end.setHours(23, 59, 59, 999);
-    const diff = end.getTime() - now.getTime();
-    if (diff > 0) return null;
-    const abs = Math.abs(diff);
-    const d = Math.floor(abs / 86400000);
-    const h = Math.floor((abs % 86400000) / 3600000);
-    const m = Math.floor((abs % 3600000) / 60000);
-    if (d > 0) return `${d}d ${h}h overdue`;
-    if (h > 0) return `${h}h ${m}m overdue`;
-    return `${m}m overdue`;
-  };
-
-  // Check if date is overdue
-  const isDateOverdue = (dateStr: string | undefined) => {
-    if (!dateStr) return false;
-    const itemDate = new Date(dateStr);
-    const today = new Date();
-    itemDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    return itemDate < today;
-  };
-
   // Handle item completion with overdue check
   const handleCompleteItem = async (item: any) => {
     try {
       const isTask = item.type === "task";
       const isTodo = item.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = item.id
-        .replace("task-", "")
-        .replace("issue-", "")
-        .replace("todo-", "");
+      const realId = extractRealId(item.id);
       const targetDate =
         item.originalData?.target_date || item.originalData?.due_date;
 
@@ -1689,10 +1595,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const handleRevertToOpen = async (item: any, reason: string) => {
-    const realId = item.id
-      .replace("task-", "")
-      .replace("issue-", "")
-      .replace("todo-", "");
+    const realId = extractRealId(item.id);
     const urlBase = `https://${baseUrl}`;
     const isTask = item.type === "task";
     const isTodo = item.type === "todo";
@@ -1775,10 +1678,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isTask = item.type === "task";
       const isTodo = item.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = item.id
-        .replace("task-", "")
-        .replace("issue-", "")
-        .replace("todo-", "");
+      const realId = extractRealId(item.id);
       const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
 
       // Complete the item
@@ -1844,7 +1744,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     setPlayingTaskIds((prev) => new Set(prev).add(taskId));
     try {
       await axios.put(
-        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        `https://${baseUrl}/business_compass/tasks/${taskId}/update_status.json`,
         { status: "started" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1867,7 +1767,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     setIsPauseLoading(true);
     try {
       await axios.put(
-        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        `https://${baseUrl}/business_compass/tasks/${taskId}/update_status.json`,
         { status: "stopped" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1892,6 +1792,64 @@ const BusinessCompassDailyReport: React.FC = () => {
       console.error("Failed to pause task:", error);
       toast.error(
         `Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`
+      );
+    } finally {
+      setIsPauseLoading(false);
+    }
+  };
+
+  const handlePlayIssue = async (issueId: number) => {
+    setPlayingTaskIds((prev) => new Set(prev).add(issueId));
+    try {
+      await axios.put(
+        `https://${baseUrl}/business_compass/issues/${issueId}/update_status.json`,
+        { status: "started" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Issue started successfully");
+      refetchIssues();
+    } catch (error) {
+      console.error("Failed to start issue:", error);
+      toast.error("Failed to start issue");
+    } finally {
+      setPlayingTaskIds((prev) => {
+        const next = new Set(prev);
+        next.delete(issueId);
+        return next;
+      });
+    }
+  };
+
+  const handlePauseIssueSubmit = async (reason: string, issueId: number) => {
+    if (!issueId) return;
+    setIsPauseLoading(true);
+    try {
+      await axios.put(
+        `https://${baseUrl}/business_compass/issues/${issueId}/update_status.json`,
+        { status: "stopped" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await axios.post(
+        `https://${baseUrl}/comments.json`,
+        {
+          comment: {
+            body: `Paused with reason: ${reason}`,
+            commentable_id: issueId,
+            commentable_type: "Issue",
+            commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
+            active: true,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Issue paused successfully");
+      setIsPauseModalOpen(false);
+      setPauseIssueId(null);
+      refetchIssues();
+    } catch (error) {
+      console.error("Failed to pause issue:", error);
+      toast.error(
+        `Failed to pause issue: ${error?.response?.data?.error || error?.message || "Server error"}`
       );
     } finally {
       setIsPauseLoading(false);
@@ -2262,16 +2220,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   }, [startDate, rosterWorkingDays]);
 
-  // Get next working day's date in YYYY-MM-DD format for APIs
-  const getNextDayDate = () => {
-    const nextDate = new Date(startDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    while (isRosterHoliday(nextDate)) {
-      nextDate.setDate(nextDate.getDate() + 1);
-    }
-    return nextDate.toLocaleDateString("en-CA");
-  };
-
   React.useEffect(() => {
     canPersistDraftRef.current = false;
     draftDirtyRef.current = false;
@@ -2552,7 +2500,6 @@ const BusinessCompassDailyReport: React.FC = () => {
         today.getMonth() + 1
       ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-      // queryParams.append("q[start_date_gteq]", startDate);
       queryParams.append("q[start_date_lteq]", todayDate);
 
       const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
@@ -2691,16 +2638,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           : {}),
       }))
       .filter((p) => p.title !== "");
-    const uncheckedAccomplishmentPlan = visibleAccomplishments
-      .filter((a) => !a.completed)
-      .map((a) => ({
-        title: cleanReportText(a.text),
-        is_starred: a.starred,
-      }))
-      .filter((p) => p.title !== "");
     const tomorrowPlanPayload = [
       ...manualTomorrowPlan,
-      ...uncheckedAccomplishmentPlan,
     ]
       .filter((item) => item.title.trim() !== "")
       .filter((item, index, arr) => {
@@ -3103,20 +3042,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
   }, [mergedTasksIssues, taskStatusFilter]);
 
-  const getTaskTypeIcon = (type: string) => {
-    if (type === "issue")
-      return <AlertTriangle size={14} className="text-[#e7848e] shrink-0" />;
-    if (type === "todo")
-      return <FileText size={14} className="text-[#6B9BCC] shrink-0" />;
-    return <LayoutGrid size={14} className="text-[#DA7756] shrink-0" />;
-  };
-
-  const getPriorityClass = (priority?: string) => {
-    if (priority === "High") return "bc-priority-high";
-    if (priority === "Medium") return "bc-priority-medium";
-    return "bc-priority-low";
-  };
-
   const submitDateLabel = useMemo(() => {
     const d = new Date(`${startDate}T00:00:00`);
     if (isNaN(d.getTime()))
@@ -3126,115 +3051,6 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   return (
     <div className="bc-daily-page space-y-6 w-full max-w-full overflow-x-hidden">
-      {/* Interactive Info Banner Card */}
-      {/* {isBannerVisible && (
-        <Card
-          className={cn(
-            "bg-[#eff6ff] border-blue-200 rounded-[12px] shadow-sm overflow-hidden border transition-all duration-300",
-            isBannerExpanded ? "max-h-[1000px]" : "max-h-[80px]"
-          )}
-        >
-          <CardContent className="p-0">
-            <div
-              className="p-4 flex items-center gap-4 cursor-pointer hover:bg-blue-100/50 transition-colors"
-              onClick={() => setIsBannerExpanded(!isBannerExpanded)}
-            >
-              <div className="bg-[#2563eb] text-white p-2.5 rounded-[8px] flex items-center justify-center shadow-sm">
-                <Lightbulb size={20} />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-[#1e3a8a] text-sm tracking-tight">
-                  How to Fill Your Daily Report
-                </h4>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "text-blue-500 h-8 w-8 hover:bg-blue-100 rounded-full border-none transition-transform duration-200",
-                    isBannerExpanded && "rotate-180"
-                  )}
-                >
-                  <ChevronRight size={18} className="rotate-90" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-400 h-8 w-8 hover:bg-gray-100 rounded-full border-none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsBannerVisible(false);
-                  }}
-                >
-                  <X size={18} />
-                </Button>
-              </div>
-            </div>
-
-            {isBannerExpanded && (
-              <div className="px-16 pb-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="space-y-2">
-                  <h5 className="text-sm font-bold text-[#1e3a8a]">
-                    How to use:
-                  </h5>
-                  <ul className="space-y-2 text-xs text-[#1e3a8a]/70 font-medium list-disc pl-4">
-                    <li>
-                      Fill your daily report at the end of each workday to track
-                      accomplishments and challenges.
-                    </li>
-                    <li>
-                      Rate your day honestly (1-10) - this helps identify
-                      patterns in your productivity.
-                    </li>
-                    <li>
-                      List 3-5 key accomplishments from today and check off
-                      completed items from yesterday's plan.
-                    </li>
-                    <li>
-                      Mention challenges you faced - your manager can provide
-                      support and remove blockers.
-                    </li>
-                    <li>
-                      Plan tomorrow's priorities - this helps you start the next
-                      day with clarity.
-                    </li>
-                  </ul>
-                </div>
-                <div className="space-y-2">
-                  <h5 className="text-sm font-bold text-[#1e3a8a] flex items-center gap-2">
-                    💡 Best Practices:
-                  </h5>
-                  <ul className="space-y-2 text-xs text-[#1e3a8a]/70 font-medium">
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 font-bold">✓</span>
-                      <span>
-                        Be specific in accomplishments - 'Completed X project'
-                        not just 'worked on projects'
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 font-bold">✓</span>
-                      <span>
-                        Tag team members in challenges when you need their help
-                        using @mentions
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 font-bold">✓</span>
-                      <span>
-                        Keep tomorrow's plan realistic - 3-5 key priorities is
-                        better than a long list
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )} */}
-
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -3560,9 +3376,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
                         <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
                           <div className="flex items-center gap-3">
-                            {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
                             <TrendingUp className="h-5 w-5 text-[#DA7756]" />
-                            {/* </div> */}
                             <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                               Daily KPIs
                             </h3>
@@ -3723,6 +3537,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </div>
                             )}
 
+                          {/* ── Yesterday icon legend ── */}
+                          {/* {visibleAccomplishments.some((item) => item.fromYesterday) && (
+                            <div className="flex items-center gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-[6px] px-2.5 py-1.5">
+                              <CalendarIcon size={10} className="shrink-0" />
+                              <span>= This item was carried over from yesterday</span>
+                            </div>
+                          )} */}
+
                           {/* ── Manual accomplishment items ── */}
                           {visibleAccomplishments.map((item) => (
                             <div
@@ -3740,7 +3562,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   "border-amber-300 bg-amber-50/30"
                                 )}
                               >
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
                                   <div
                                     className={cn(
                                       "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
@@ -3783,12 +3605,47 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     }
                                     placeholder="Describe your accomplishment..."
                                     className={cn(
-                                      "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
+                                      "flex-1 min-w-0 bg-transparent border-none outline-none text-sm font-medium transition-all",
                                       item.completed
                                         ? "text-gray-400 line-through"
                                         : "text-gray-700"
                                     )}
                                   />
+
+                                  {!item.completed && (() => {
+                                    const planItemId = `from-accom-${item.id}`;
+                                    const inPlan = planningItems.some(p => p.id === planItemId);
+                                    return (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (inPlan) {
+                                            setPlanningItems((prev) =>
+                                              prev.filter((p) => p.id !== planItemId)
+                                            );
+                                          } else {
+                                            const text = cleanReportText(item.text);
+                                            if (text) {
+                                              setPlanningItems((prev) => [
+                                                ...prev,
+                                                { id: planItemId, text: item.text, starred: false },
+                                              ]);
+                                            }
+                                          }
+                                          markDraftDirty();
+                                        }}
+                                        className={cn(
+                                          "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                          inPlan
+                                            ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                            : "opacity-0 group-hover:opacity-100 bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5"
+                                        )}
+                                        title={inPlan ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                      >
+                                        {inPlan ? "Added ✓" : "+ Tomorrow"}
+                                      </button>
+                                    );
+                                  })()}
 
                                   <Button
                                     variant="ghost"
@@ -3802,18 +3659,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   </Button>
                                 </div>
 
-                                {item.fromYesterday && (
-                                  <div className="pl-10 pt-0.5">
-                                    <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                      <CalendarIcon size={10} />
-                                      From Yesterday
+                                {/* {item.fromYesterday && (
+                                  <div className="flex items-center pt-1 flex-wrap">
+                                    <span className="pt-0.5">
+                                      <span
+                                        className="inline-flex items-center justify-center bg-amber-100 text-amber-700 border border-amber-200 rounded-[5px] h-5 w-5"
+                                        title="This item is from yesterday"
+                                      >
+                                        <CalendarIcon size={10} />
+                                      </span>
                                     </span>
-                                  </div>
-                                )}
-
-                                {item.completed && (
-                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                    <span className="ml-4 flex items-center gap-1 text-[10px] text-gray-400">
                                       <CalendarIcon
                                         size={9}
                                         className="shrink-0"
@@ -3821,7 +3677,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       {fmtDate(startDate)}
                                     </span>
                                   </div>
-                                )}
+                                )} */}
                               </div>
                             </div>
                           ))}
@@ -3996,15 +3852,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             {completedDate}
                                           </span>
                                         )}
-                                        {/* {dueDate && (
-                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                            <CalendarIcon
-                                              size={9}
-                                              className="shrink-0"
-                                            />
-                                            Due: {dueDate}
-                                          </span>
-                                        )} */}
                                         {effortEst && (
                                           <span className="flex items-center gap-1 text-[10px] text-gray-400">
                                             <Clock
@@ -4570,13 +4417,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           (tomorrowFetchDone &&
                             dedupedTomorrowItems.length > 0)) && (
                             <div className="mb-4">
-                              {/* {planningItems.length > 0 && (
-                          <div className="flex items-center gap-3 py-2 mb-3">
-                            <div className="flex-1 h-px bg-gray-100" />
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Next Day</span>
-                            <div className="flex-1 h-px bg-gray-100" />
-                          </div>
-                        )} */}
                               {tomorrowScheduledLoading ? (
                                 <div className="flex items-center gap-2 py-3 text-gray-300">
                                   <Loader2
@@ -5159,6 +4999,57 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                 )}
                                               </button>
                                             ))}
+                                          {item.type === "issue" &&
+                                            item.status !== "completed" &&
+                                            item.status !== "closed" &&
+                                            (item.originalData?.is_started ? (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPauseIssueId(
+                                                    item.originalData.id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Pause issue"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData.id
+                                                )}
+                                              >
+                                                <Pause
+                                                  size={14}
+                                                  className="text-red-500"
+                                                />
+                                              </button>
+                                            ) : (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingPlayIssueId(
+                                                    item.originalData.id
+                                                  );
+                                                }}
+                                                className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                title="Start issue"
+                                                disabled={playingTaskIds.has(
+                                                  item.originalData.id
+                                                )}
+                                              >
+                                                {playingTaskIds.has(
+                                                  item.originalData.id
+                                                ) ? (
+                                                  <Loader2
+                                                    size={14}
+                                                    className="text-green-600 animate-spin"
+                                                  />
+                                                ) : (
+                                                  <Play
+                                                    size={14}
+                                                    className="text-green-600"
+                                                  />
+                                                )}
+                                              </button>
+                                            ))}
                                           {item.type === "todo" &&
                                             item.originalData
                                               ?.task_management_id &&
@@ -5272,7 +5163,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                               addedToTomorrowIds.has(item.id)
                                                 ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100"
                                             )}
                                             title={
                                               addedToTomorrowIds.has(item.id)
@@ -5293,10 +5184,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             d?.due_date ||
                                             d?.end_date
                                           );
-                                          const effortEst = fmtHours(
-                                            d?.total_allocated_hours ||
-                                            d?.estimated_hour
-                                          );
+                                          const effortEst = d.effort_duration;
                                           const overdueLabel = getOverdueLabel(
                                             d?.target_date ||
                                             d?.due_date ||
@@ -5531,7 +5419,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   group.headerBg
                                 )}
                                 onClick={() =>
-                                  openOnlyTaskIssueGroup(group.key)
+                                  setCollapsedGroups((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(group.key))
+                                      next.delete(group.key);
+                                    else next.add(group.key);
+                                    return next;
+                                  })
                                 }
                               >
                                 <span
@@ -5573,438 +5467,515 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                               {/* Group items */}
                               {!isCollapsed && (
-                                <div className="space-y-1.5 pl-1">
-                                  {items.map((item: any) => (
-                                    <div
-                                      key={item.id}
-                                      className={cn(
-                                        "flex flex-col rounded-[10px] border transition-all group",
-                                        group.bgItem
-                                      )}
-                                    >
-                                      <div className="flex flex-wrap items-center gap-2 p-2.5">
-                                        <Checkbox
-                                          checked={
-                                            selectedTasksIssues[item.id] ||
-                                            item.status === "completed" ||
-                                            item.status === "closed"
-                                          }
-                                          onCheckedChange={(checked) => {
-                                            if (
-                                              checked &&
-                                              item.status !== "completed" &&
-                                              item.status !== "closed"
-                                            ) {
-                                              setPendingConfirmAction({
-                                                fn: () =>
-                                                  handleCompleteItem(item),
-                                                label: `complete this ${item.type}`,
-                                              });
-                                            } else {
-                                              markDraftDirty();
-                                              setSelectedTasksIssues(
-                                                (prev) => ({
-                                                  ...prev,
-                                                  [item.id]: checked as boolean,
-                                                })
-                                              );
-                                            }
-                                          }}
-                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                        />
-
-                                        <button
-                                          onClick={() => {
-                                            if (item.type === "todo") {
-                                              setSelectedTodo(
-                                                item.originalData
-                                              );
-                                              setIsDetailsModalOpen(true);
-                                            } else {
-                                              navigate(
-                                                item.type === "task"
-                                                  ? `/vas/tasks/${item.originalData?.id}`
-                                                  : `/vas/issues/${item.originalData?.id}`
-                                              );
-                                            }
-                                          }}
-                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                          title={`View ${item.type} details`}
-                                        >
-                                          <Eye
-                                            size={14}
-                                            className="text-[#DA7756]"
-                                          />
-                                        </button>
-
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (item.type === "task") {
-                                              setEditTaskData(
-                                                item.originalData
-                                              );
-                                              setIsEditTaskModalOpen(true);
-                                            } else if (item.type === "issue") {
-                                              setEditIssueData(
-                                                item.originalData
-                                              );
-                                              setIsEditIssueModalOpen(true);
-                                            } else if (item.type === "todo") {
-                                              setEditTodoData(
-                                                item.originalData
-                                              );
-                                              setIsEditTodoModalOpen(true);
-                                            }
-                                          }}
-                                          className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                          title={`Edit ${item.type}`}
-                                        >
-                                          <Pencil size={13} />
-                                        </button>
-
-                                        {/* Play/Pause for tasks */}
-                                        {item.type === "task" &&
-                                          item.status !== "completed" &&
-                                          item.status !== "closed" &&
-                                          (item.originalData?.is_started ? (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setPendingPauseTaskId(
-                                                  item.originalData.id
-                                                );
-                                              }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Pause task"
-                                              disabled={playingTaskIds.has(
-                                                item.originalData.id
-                                              )}
-                                            >
-                                              <Pause
-                                                size={14}
-                                                className="text-red-500"
-                                              />
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setPendingPlayTaskId(
-                                                  item.originalData.id
-                                                );
-                                              }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Start task"
-                                              disabled={playingTaskIds.has(
-                                                item.originalData.id
-                                              )}
-                                            >
-                                              {playingTaskIds.has(
-                                                item.originalData.id
-                                              ) ? (
-                                                <Loader2
-                                                  size={14}
-                                                  className="text-green-600 animate-spin"
-                                                />
-                                              ) : (
-                                                <Play
-                                                  size={14}
-                                                  className="text-green-600"
-                                                />
-                                              )}
-                                            </button>
-                                          ))}
-
-                                        {/* Play/Pause for todos linked to tasks */}
-                                        {item.type === "todo" &&
-                                          item.originalData
-                                            ?.task_management_id &&
-                                          item.status !== "completed" &&
-                                          item.status !== "closed" &&
-                                          (item.originalData?.task_management
-                                            ?.is_started ? (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setPendingPauseTaskId(
-                                                  item.originalData
-                                                    .task_management_id
-                                                );
-                                              }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Pause task"
-                                              disabled={playingTaskIds.has(
-                                                item.originalData
-                                                  .task_management_id
-                                              )}
-                                            >
-                                              <Pause
-                                                size={14}
-                                                className="text-red-500"
-                                              />
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setPendingPlayTaskId(
-                                                  item.originalData
-                                                    .task_management_id
-                                                );
-                                              }}
-                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                              title="Start task"
-                                              disabled={playingTaskIds.has(
-                                                item.originalData
-                                                  .task_management_id
-                                              )}
-                                            >
-                                              {playingTaskIds.has(
-                                                item.originalData
-                                                  .task_management_id
-                                              ) ? (
-                                                <Loader2
-                                                  size={14}
-                                                  className="text-green-600 animate-spin"
-                                                />
-                                              ) : (
-                                                <Play
-                                                  size={14}
-                                                  className="text-green-600"
-                                                />
-                                              )}
-                                            </button>
-                                          ))}
-
-                                        {/* Type badge */}
-                                        <span
-                                          className={cn(
-                                            "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                            item.type === "task"
-                                              ? "bg-[#DA7756] text-white"
-                                              : item.type === "issue"
-                                                ? "bg-violet-600 text-white"
-                                                : "bg-amber-500 text-white"
-                                          )}
-                                        >
-                                          {item.type}
-                                        </span>
-
-                                        {/* Title + status */}
-                                        <div className="flex-1 min-w-[90px] basis-[120px]">
-                                          <p
-                                            className={cn(
-                                              "text-sm font-medium truncate",
-                                              (item.status === "completed" ||
-                                                item.status === "closed") &&
-                                              "line-through opacity-60"
-                                            )}
-                                          >
-                                            {item.title}
-                                          </p>
-                                        </div>
-
-                                        {/* Priority badge */}
-                                        <span
-                                          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                          style={{
-                                            backgroundColor:
-                                              item.priority === "High"
-                                                ? "#fee2e2"
-                                                : item.priority === "Medium"
-                                                  ? "#fef3c7"
-                                                  : "#dcfce7",
-                                            color:
-                                              item.priority === "High"
-                                                ? "#991b1b"
-                                                : item.priority === "Medium"
-                                                  ? "#92400e"
-                                                  : "#166534",
-                                          }}
-                                        >
-                                          {item.priority}
-                                        </span>
-
-                                        {/* Add to Tomorrow button */}
-                                        {group.showAddToTomorrow && (
-                                          <button
-                                            onClick={() =>
-                                              addedToTomorrowIds.has(item.id)
-                                                ? removeItemFromTomorrow(item)
-                                                : addItemToTomorrow(item)
-                                            }
-                                            className={cn(
-                                              "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                              addedToTomorrowIds.has(item.id)
-                                                ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                                            )}
-                                            title={
-                                              addedToTomorrowIds.has(item.id)
-                                                ? "Remove from tomorrow's plan"
-                                                : "Add to tomorrow's plan"
-                                            }
-                                          >
-                                            {addedToTomorrowIds.has(item.id)
-                                              ? "Added ✓"
-                                              : "+ Tomorrow"}
-                                          </button>
-                                        )}
-                                      </div>
-                                      {/* end inner controls row */}
-
-                                      {/* Info row */}
-                                      {(() => {
-                                        const d = item.originalData;
-                                        const endDate = fmtDate(
-                                          d?.target_date ||
-                                          d?.due_date ||
-                                          d?.end_date
-                                        );
-                                        const effortEst = fmtHours(
-                                          d?.total_allocated_hours ||
-                                          d?.estimated_hour
-                                        );
-                                        const overdueLabel = getOverdueLabel(
-                                          d?.target_date ||
-                                          d?.due_date ||
-                                          d?.end_date
-                                        );
-
-                                        // Issue: effort duration from issue_allocation_times
-                                        let issueEffort: string | null = null;
-                                        if (
-                                          item.type === "issue" &&
-                                          Array.isArray(
-                                            d?.issue_allocation_times
-                                          ) &&
-                                          d.issue_allocation_times.length > 0
-                                        ) {
-                                          const totalMin =
-                                            d.issue_allocation_times.reduce(
-                                              (sum: number, t: any) =>
-                                                sum + t.hours * 60 + t.minutes,
-                                              0
-                                            );
-                                          if (totalMin > 0) {
-                                            const h = Math.floor(totalMin / 60);
-                                            const m = totalMin % 60;
-                                            issueEffort =
-                                              h > 0 && m > 0
-                                                ? `${h}h ${m}m`
-                                                : h > 0
-                                                  ? `${h}h`
-                                                  : `${m}m`;
-                                          }
-                                        }
-
-                                        // Issue: time left (when not overdue) from end_date
-                                        let timeLeftLabel: string | null = null;
-                                        if (
-                                          item.type === "issue" &&
-                                          d?.end_date &&
-                                          !overdueLabel
-                                        ) {
-                                          const now = new Date();
-                                          const end = new Date(d.end_date);
-                                          end.setHours(23, 59, 59, 999);
-                                          const diff =
-                                            end.getTime() - now.getTime();
-                                          if (diff > 0) {
-                                            const days = Math.floor(
-                                              diff / 86400000
-                                            );
-                                            const hrs = Math.floor(
-                                              (diff % 86400000) / 3600000
-                                            );
-                                            const mins = Math.floor(
-                                              (diff % 3600000) / 60000
-                                            );
-                                            if (days > 0)
-                                              timeLeftLabel = `${days}d ${hrs}h left`;
-                                            else if (hrs > 0)
-                                              timeLeftLabel = `${hrs}h ${mins}m left`;
-                                            else
-                                              timeLeftLabel = `${mins}m left`;
-                                          }
-                                        }
-
-                                        const hasInfo =
-                                          endDate ||
-                                          effortEst ||
-                                          issueEffort ||
-                                          timeLeftLabel ||
-                                          (item.type === "task" &&
-                                            d?.active_time_till_now);
-                                        if (!hasInfo) return null;
-                                        return (
-                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
-                                            {endDate && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <CalendarIcon
-                                                  size={9}
-                                                  className="shrink-0"
-                                                />
-                                                {endDate}
-                                              </span>
-                                            )}
-                                            {overdueLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                <AlertCircle
-                                                  size={9}
-                                                  className="shrink-0"
-                                                />
-                                                {overdueLabel}
-                                              </span>
-                                            )}
-                                            {timeLeftLabel && (
-                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
-                                                <Clock
-                                                  size={9}
-                                                  className="shrink-0"
-                                                />
-                                                {timeLeftLabel}
-                                              </span>
-                                            )}
-                                            {effortEst && (
-                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                <Clock
-                                                  size={9}
-                                                  className="shrink-0"
-                                                />
-                                                Est: {effortEst}
-                                              </span>
-                                            )}
-                                            {issueEffort && (
-                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
-                                                <Zap
-                                                  size={9}
-                                                  className="shrink-0"
-                                                />
-                                                Effort: {issueEffort}
-                                              </span>
-                                            )}
-                                            {item.type === "task" &&
-                                              d?.active_time_till_now && (
-                                                <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                  <Zap
-                                                    size={9}
-                                                    className="shrink-0"
-                                                  />
-                                                  <ActiveTimer
-                                                    activeTimeTillNow={
-                                                      d.active_time_till_now
-                                                    }
-                                                    isStarted={d.is_started}
-                                                  />
-                                                </span>
-                                              )}
+                                <div className="space-y-2 pl-1">
+                                  {(() => {
+                                    const getEndDate = (item: any) =>
+                                      item.originalData?.target_date ||
+                                      item.originalData?.due_date ||
+                                      item.originalData?.end_date ||
+                                      null;
+                                    const grouped = items.reduce(
+                                      (acc: Record<string, any[]>, item: any) => {
+                                        const date = getEndDate(item) || "no-date";
+                                        if (!acc[date]) acc[date] = [];
+                                        acc[date].push(item);
+                                        return acc;
+                                      },
+                                      {} as Record<string, any[]>
+                                    );
+                                    const sortedDates = Object.keys(grouped).sort((a, b) => {
+                                      if (a === "no-date") return 1;
+                                      if (b === "no-date") return -1;
+                                      return new Date(b).getTime() - new Date(a).getTime();
+                                    });
+                                    return sortedDates.map((date) => (
+                                      <div key={date}>
+                                        {date !== "no-date" && (
+                                          <div className="flex items-center gap-1.5 px-1 py-1">
+                                            <CalendarIcon size={10} className="text-gray-400 shrink-0" />
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                              {fmtDate(date)}
+                                            </span>
+                                            <span className="text-[9px] font-bold text-gray-300 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                              {grouped[date].length}
+                                            </span>
                                           </div>
-                                        );
-                                      })()}
-                                    </div>
-                                  ))}
+                                        )}
+                                        <div className="space-y-1.5">
+                                          {grouped[date].map((item: any) => (
+                                            <div
+                                              key={item.id}
+                                              className={cn(
+                                                "flex flex-col rounded-[10px] border transition-all group",
+                                                group.bgItem
+                                              )}
+                                            >
+                                              <div className="flex flex-wrap items-center gap-2 p-2.5">
+                                                <Checkbox
+                                                  checked={
+                                                    selectedTasksIssues[item.id] ||
+                                                    item.status === "completed" ||
+                                                    item.status === "closed"
+                                                  }
+                                                  onCheckedChange={(checked) => {
+                                                    if (
+                                                      checked &&
+                                                      item.status !== "completed" &&
+                                                      item.status !== "closed"
+                                                    ) {
+                                                      setPendingConfirmAction({
+                                                        fn: () =>
+                                                          handleCompleteItem(item),
+                                                        label: `complete this ${item.type}`,
+                                                      });
+                                                    } else {
+                                                      markDraftDirty();
+                                                      setSelectedTasksIssues(
+                                                        (prev) => ({
+                                                          ...prev,
+                                                          [item.id]: checked as boolean,
+                                                        })
+                                                      );
+                                                    }
+                                                  }}
+                                                  className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                                />
+
+                                                <button
+                                                  onClick={() => {
+                                                    if (item.type === "todo") {
+                                                      setSelectedTodo(
+                                                        item.originalData
+                                                      );
+                                                      setIsDetailsModalOpen(true);
+                                                    } else {
+                                                      navigate(
+                                                        item.type === "task"
+                                                          ? `/vas/tasks/${item.originalData?.id}`
+                                                          : `/vas/issues/${item.originalData?.id}`
+                                                      );
+                                                    }
+                                                  }}
+                                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                                  title={`View ${item.type} details`}
+                                                >
+                                                  <Eye
+                                                    size={14}
+                                                    className="text-[#DA7756]"
+                                                  />
+                                                </button>
+
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (item.type === "task") {
+                                                      setEditTaskData(
+                                                        item.originalData
+                                                      );
+                                                      setIsEditTaskModalOpen(true);
+                                                    } else if (item.type === "issue") {
+                                                      setEditIssueData(
+                                                        item.originalData
+                                                      );
+                                                      setIsEditIssueModalOpen(true);
+                                                    } else if (item.type === "todo") {
+                                                      setEditTodoData(
+                                                        item.originalData
+                                                      );
+                                                      setIsEditTodoModalOpen(true);
+                                                    }
+                                                  }}
+                                                  className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                                  title={`Edit ${item.type}`}
+                                                >
+                                                  <Pencil size={13} />
+                                                </button>
+
+                                                {/* Play/Pause for tasks */}
+                                                {item.type === "task" &&
+                                                  item.status !== "completed" &&
+                                                  item.status !== "closed" &&
+                                                  (item.originalData?.is_started ? (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPauseTaskId(
+                                                          item.originalData.id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Pause task"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData.id
+                                                      )}
+                                                    >
+                                                      <Pause
+                                                        size={14}
+                                                        className="text-red-500"
+                                                      />
+                                                    </button>
+                                                  ) : (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPlayTaskId(
+                                                          item.originalData.id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Start task"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData.id
+                                                      )}
+                                                    >
+                                                      {playingTaskIds.has(
+                                                        item.originalData.id
+                                                      ) ? (
+                                                        <Loader2
+                                                          size={14}
+                                                          className="text-green-600 animate-spin"
+                                                        />
+                                                      ) : (
+                                                        <Play
+                                                          size={14}
+                                                          className="text-green-600"
+                                                        />
+                                                      )}
+                                                    </button>
+                                                  ))}
+
+                                                {/* Play/Pause for issues */}
+                                                {item.type === "issue" &&
+                                                  item.status !== "completed" &&
+                                                  item.status !== "closed" &&
+                                                  (item.originalData?.is_started ? (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPauseIssueId(
+                                                          item.originalData.id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Pause issue"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData.id
+                                                      )}
+                                                    >
+                                                      <Pause
+                                                        size={14}
+                                                        className="text-red-500"
+                                                      />
+                                                    </button>
+                                                  ) : (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPlayIssueId(
+                                                          item.originalData.id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Start issue"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData.id
+                                                      )}
+                                                    >
+                                                      {playingTaskIds.has(
+                                                        item.originalData.id
+                                                      ) ? (
+                                                        <Loader2
+                                                          size={14}
+                                                          className="text-green-600 animate-spin"
+                                                        />
+                                                      ) : (
+                                                        <Play
+                                                          size={14}
+                                                          className="text-green-600"
+                                                        />
+                                                      )}
+                                                    </button>
+                                                  ))}
+                                                {/* Play/Pause for todos linked to tasks */}
+                                                {item.type === "todo" &&
+                                                  item.originalData
+                                                    ?.task_management_id &&
+                                                  item.status !== "completed" &&
+                                                  item.status !== "closed" &&
+                                                  (item.originalData?.task_management
+                                                    ?.is_started ? (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPauseTaskId(
+                                                          item.originalData
+                                                            .task_management_id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Pause task"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData
+                                                          .task_management_id
+                                                      )}
+                                                    >
+                                                      <Pause
+                                                        size={14}
+                                                        className="text-red-500"
+                                                      />
+                                                    </button>
+                                                  ) : (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingPlayTaskId(
+                                                          item.originalData
+                                                            .task_management_id
+                                                        );
+                                                      }}
+                                                      className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                                      title="Start task"
+                                                      disabled={playingTaskIds.has(
+                                                        item.originalData
+                                                          .task_management_id
+                                                      )}
+                                                    >
+                                                      {playingTaskIds.has(
+                                                        item.originalData
+                                                          .task_management_id
+                                                      ) ? (
+                                                        <Loader2
+                                                          size={14}
+                                                          className="text-green-600 animate-spin"
+                                                        />
+                                                      ) : (
+                                                        <Play
+                                                          size={14}
+                                                          className="text-green-600"
+                                                        />
+                                                      )}
+                                                    </button>
+                                                  ))}
+
+                                                {/* Type badge */}
+                                                <span
+                                                  className={cn(
+                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                                    item.type === "task"
+                                                      ? "bg-[#DA7756] text-white"
+                                                      : item.type === "issue"
+                                                        ? "bg-violet-600 text-white"
+                                                        : "bg-amber-500 text-white"
+                                                  )}
+                                                >
+                                                  {item.type}
+                                                </span>
+
+                                                {/* Title + status */}
+                                                <div className="flex-1 min-w-[90px] basis-[120px]">
+                                                  <p
+                                                    className={cn(
+                                                      "text-sm font-medium truncate",
+                                                      (item.status === "completed" ||
+                                                        item.status === "closed") &&
+                                                      "line-through opacity-60"
+                                                    )}
+                                                  >
+                                                    {item.title}
+                                                  </p>
+                                                </div>
+
+                                                {/* Priority badge */}
+                                                <span
+                                                  className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                                  style={{
+                                                    backgroundColor:
+                                                      item.priority === "High"
+                                                        ? "#fee2e2"
+                                                        : item.priority === "Medium"
+                                                          ? "#fef3c7"
+                                                          : "#dcfce7",
+                                                    color:
+                                                      item.priority === "High"
+                                                        ? "#991b1b"
+                                                        : item.priority === "Medium"
+                                                          ? "#92400e"
+                                                          : "#166534",
+                                                  }}
+                                                >
+                                                  {item.priority}
+                                                </span>
+
+                                                {/* Add to Tomorrow button */}
+                                                {group.showAddToTomorrow && (
+                                                  <button
+                                                    onClick={() =>
+                                                      addedToTomorrowIds.has(item.id)
+                                                        ? removeItemFromTomorrow(item)
+                                                        : addItemToTomorrow(item)
+                                                    }
+                                                    className={cn(
+                                                      "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                                      addedToTomorrowIds.has(item.id)
+                                                        ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                                        : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100"
+                                                    )}
+                                                    title={
+                                                      addedToTomorrowIds.has(item.id)
+                                                        ? "Remove from tomorrow's plan"
+                                                        : "Add to tomorrow's plan"
+                                                    }
+                                                  >
+                                                    {addedToTomorrowIds.has(item.id)
+                                                      ? "Added ✓"
+                                                      : "+ Tomorrow"}
+                                                  </button>
+                                                )}
+                                              </div>
+                                              {/* end inner controls row */}
+
+                                              {/* Info row */}
+                                              {(() => {
+                                                const d = item.originalData;
+                                                const endDate = fmtDate(
+                                                  d?.target_date ||
+                                                  d?.due_date ||
+                                                  d?.end_date
+                                                );
+                                                const effortEst = d.effort_duration;
+                                                const overdueLabel = getOverdueLabel(
+                                                  d?.target_date ||
+                                                  d?.due_date ||
+                                                  d?.end_date
+                                                );
+
+                                                // Issue: effort duration from issue_allocation_times
+                                                let issueEffort: string | null = null;
+                                                if (
+                                                  item.type === "issue" &&
+                                                  Array.isArray(
+                                                    d?.issue_allocation_times
+                                                  ) &&
+                                                  d.issue_allocation_times.length > 0
+                                                ) {
+                                                  const totalMin =
+                                                    d.issue_allocation_times.reduce(
+                                                      (sum: number, t: any) =>
+                                                        sum + t.hours * 60 + t.minutes,
+                                                      0
+                                                    );
+                                                  if (totalMin > 0) {
+                                                    const h = Math.floor(totalMin / 60);
+                                                    const m = totalMin % 60;
+                                                    issueEffort =
+                                                      h > 0 && m > 0
+                                                        ? `${h}h ${m}m`
+                                                        : h > 0
+                                                          ? `${h}h`
+                                                          : `${m}m`;
+                                                  }
+                                                }
+
+                                                // Issue: time left (when not overdue) from end_date
+                                                let timeLeftLabel: string | null = null;
+                                                if (
+                                                  item.type === "issue" &&
+                                                  d?.end_date &&
+                                                  !overdueLabel
+                                                ) {
+                                                  const now = new Date();
+                                                  const end = new Date(d.end_date);
+                                                  end.setHours(23, 59, 59, 999);
+                                                  const diff =
+                                                    end.getTime() - now.getTime();
+                                                  if (diff > 0) {
+                                                    const days = Math.floor(
+                                                      diff / 86400000
+                                                    );
+                                                    const hrs = Math.floor(
+                                                      (diff % 86400000) / 3600000
+                                                    );
+                                                    const mins = Math.floor(
+                                                      (diff % 3600000) / 60000
+                                                    );
+                                                    if (days > 0)
+                                                      timeLeftLabel = `${days}d ${hrs}h left`;
+                                                    else if (hrs > 0)
+                                                      timeLeftLabel = `${hrs}h ${mins}m left`;
+                                                    else
+                                                      timeLeftLabel = `${mins}m left`;
+                                                  }
+                                                }
+
+                                                const hasInfo =
+                                                  effortEst ||
+                                                  issueEffort ||
+                                                  timeLeftLabel ||
+                                                  (item.type === "task" &&
+                                                    d?.active_time_till_now);
+                                                if (!hasInfo) return null;
+                                                return (
+                                                  <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                                    {overdueLabel && (
+                                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                        <AlertCircle
+                                                          size={9}
+                                                          className="shrink-0"
+                                                        />
+                                                        {overdueLabel}
+                                                      </span>
+                                                    )}
+                                                    {timeLeftLabel && (
+                                                      <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                        <Clock
+                                                          size={9}
+                                                          className="shrink-0"
+                                                        />
+                                                        {timeLeftLabel}
+                                                      </span>
+                                                    )}
+                                                    {effortEst && (
+                                                      <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                        <Clock
+                                                          size={9}
+                                                          className="shrink-0"
+                                                        />
+                                                        Est: {effortEst}
+                                                      </span>
+                                                    )}
+                                                    {issueEffort && (
+                                                      <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                        <Zap
+                                                          size={9}
+                                                          className="shrink-0"
+                                                        />
+                                                        Effort: {issueEffort}
+                                                      </span>
+                                                    )}
+                                                    {item.type === "task" &&
+                                                      d?.active_time_till_now && (
+                                                        <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                          <Zap
+                                                            size={9}
+                                                            className="shrink-0"
+                                                          />
+                                                          <ActiveTimer
+                                                            activeTimeTillNow={
+                                                              d.active_time_till_now
+                                                            }
+                                                            isStarted={d.is_started}
+                                                          />
+                                                        </span>
+                                                      )}
+                                                  </div>
+                                                );
+                                              })()}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ));
+                                  })()}
                                 </div>
                               )}
                             </div>
@@ -6025,181 +5996,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* <div className="px-5 py-3 border-b border-gray-100 flex flex-wrap gap-2">
-                    {(
-                      [
-                        { key: "open" as const, label: "Opened", count: taskIssueCounts.open, cls: "bc-task-filter-open" },
-                        { key: "overdue" as const, label: "Over Due", count: taskIssueCounts.overdue, cls: "bc-task-filter-overdue" },
-                        { key: "in_progress" as const, label: "In Progress", count: taskIssueCounts.inProgress, cls: "bc-task-filter-progress" },
-                        { key: "on_hold" as const, label: "On Hold", count: taskIssueCounts.onHold, cls: "bc-task-filter-hold" },
-                      ]
-                    ).map((tab) => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        className={cn(
-                          "bc-task-filter-tab",
-                          taskStatusFilter === tab.key
-                            ? tab.cls
-                            : tab.key === "open"
-                              ? "text-[#2563eb] bg-[#eff6ff]/60 border border-[#bfdbfe]/50"
-                              : tab.key === "overdue"
-                                ? "text-[#e7848e] border border-[#e7848e]/30 bg-white"
-                                : tab.key === "in_progress"
-                                  ? "text-[#DA7756] border border-[#DA7756]/30 bg-white"
-                                  : "text-gray-500 bg-white border border-gray-200"
-                        )}
-                        onClick={() => setTaskStatusFilter(tab.key)}
-                      >
-                        {tab.label}
-                        {tab.count > 0 && (
-                          <span className="ml-1 opacity-70">({tab.count})</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="bc-daily-card-body p-0 flex-1 flex flex-col">
-                    {tasksLoading || issuesLoading ? (
-                      <div className="flex flex-col items-center justify-center text-center py-10">
-                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
-                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
-                      </div>
-                    ) : mergedTasksIssues.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center text-center py-10">
-                        <div className="flex flex-col items-center gap-3 opacity-30">
-                          <CheckSquare size={40} className="text-[#DA7756]/20" />
-                          <p className="text-base font-bold text-gray-400 tracking-tight">No open tasks or issues</p>
-                        </div>
-                      </div>
-                    ) : filteredTasksForTable.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center text-center py-10">
-                        <p className="text-sm font-medium text-gray-400">
-                          No items in this category
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex-1 overflow-y-auto overflow-x-auto" ref={scrollContainerRef}>
-                        <table className="bc-tasks-table min-w-[480px]">
-                          <thead>
-                            <tr>
-                              <th>
-                                Task / Issue / To Do&apos;s ({filteredTasksForTable.length})
-                              </th>
-                              <th>Priority</th>
-                              <th>Target Date</th>
-                              <th className="text-center w-16">Completed</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredTasksForTable.map((item: any) => {
-                              const d = item.originalData;
-                              const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                              const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
-                              const isDone = item.status === "completed" || item.status === "closed";
-                              return (
-                                <tr key={item.id} className="group">
-                                  <td>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      {getTaskTypeIcon(item.type)}
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          if (item.type === "todo") {
-                                            setSelectedTodo(item.originalData);
-                                            setIsDetailsModalOpen(true);
-                                          } else {
-                                            navigate(
-                                              item.type === "task"
-                                                ? `/vas/tasks/${item.originalData?.id}`
-                                                : `/vas/issues/${item.originalData?.id}`
-                                            );
-                                          }
-                                        }}
-                                        className={cn(
-                                          "text-left text-sm font-medium truncate hover:text-[#DA7756] transition-colors",
-                                          isDone && "line-through opacity-60"
-                                        )}
-                                      >
-                                        {item.title}
-                                      </button>
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <span className={getPriorityClass(item.priority)}>
-                                      {item.priority || "—"}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <div className="flex flex-col gap-0.5">
-                                      <span className="text-xs text-gray-600">{endDate || "—"}</span>
-                                      {overdueLabel && (
-                                        <span className="text-[10px] font-semibold text-red-600">
-                                          Over Due
-                                        </span>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="text-center">
-                                    <Checkbox
-                                      checked={selectedTasksIssues[item.id] || isDone}
-                                      onCheckedChange={(checked) => {
-                                        if (checked && !isDone) {
-                                          setPendingConfirmAction({
-                                            fn: () => handleCompleteItem(item),
-                                            label: `complete this ${item.type}`,
-                                          });
-                                        } else {
-                                          markDraftDirty();
-                                          setSelectedTasksIssues((prev) => ({
-                                            ...prev,
-                                            [item.id]: checked as boolean,
-                                          }));
-                                        }
-                                      }}
-                                      className="h-4 w-4 rounded border-gray-300 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
-                                    />
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                        {isLoadingMore && (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
-                            <p className="text-xs text-gray-500 font-medium">Loading more...</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div className="bc-tasks-legend">
-                      <span className="bc-tasks-legend-item">
-                        <LayoutGrid size={12} className="text-[#DA7756]" /> Task
-                      </span>
-                      <span className="bc-tasks-legend-item">
-                        <AlertTriangle size={12} className="text-[#e7848e]" /> Issue
-                      </span>
-                      <span className="bc-tasks-legend-item">
-                        <FileText size={12} className="text-[#6B9BCC]" /> To Do
-                      </span>
-                    </div>
-                  </div> */}
                 </div>
-
-                {/* Bottom Tip Banner */}
-                {/* <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
-                  <div className="bg-white p-1.5 rounded-full shadow-inner border border-[#fef08a]">
-                    <Lightbulb size={18} className="text-[#ca8a04]" />
-                  </div>
-                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
-                    <span className="font-bold text-[#ca8a04]">
-                      Delegate or Delete:
-                    </span>{" "}
-                    Look at your list. What doesn't actually need doing?
-                  </p>
-                </div> */}
               </div>
             </div>
 
@@ -6286,409 +6083,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                 />
               </div>
             )}
-
-            {/* Detailed Score Calculation - collapsible */}
-            {/* {!isAbsent && !isScoreInfoExpanded && (
-              <div className="mt-4 space-y-4">
-                <div className="bc-daily-card">
-                  <div className="bc-daily-card-body">
-                    <div className="pt-2 border-t border-[#DA7756]/10">
-                      <div
-                        className="flex items-center justify-between text-gray-400 group cursor-pointer hover:text-[#DA7756] transition-colors"
-                        onClick={() =>
-                          setIsDetailedScoreExpanded(!isDetailedScoreExpanded)
-                        }
-                      >
-                        <span className="text-xs font-bold tracking-tight">
-                          Detailed Score Calculation{" "}
-                          <span className="font-medium opacity-60">
-                            (Click here to{" "}
-                            {isDetailedScoreExpanded ? "collapse" : "expand"})
-                          </span>
-                        </span>
-                        <ChevronRight
-                          size={18}
-                          className={cn(
-                            "transition-transform duration-300",
-                            isDetailedScoreExpanded ? "-rotate-90" : "rotate-90"
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {isDetailedScoreExpanded && (
-                      <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Target size={16} className="text-green-600" />
-                              <span className="text-xs font-black text-green-900 uppercase tracking-widest">
-                                Daily KPI Achievement
-                              </span>
-                            </div>
-                            <span className="text-xs font-black text-green-600">
-                              {dailyScore.kpiScore}/
-                              {dailyScore.details.kpi.maxPoints} pts
-                            </span>
-                          </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-green-50">
-                            {dailyScore.details.kpi.hasKPIs ? (
-                              <>
-                                {dailyScore.details.kpi.kpis.map(
-                                  (kpi: any, idx: number) => (
-                                    <div
-                                      key={idx}
-                                      className="flex items-center justify-between text-[11px] font-bold text-gray-500"
-                                    >
-                                      <span>• {kpi.name}:</span>
-                                      <span className="text-gray-900">
-                                        {kpi.achievement.toFixed(1)}% ={" "}
-                                        {kpi.points.toFixed(2)} pts
-                                      </span>
-                                    </div>
-                                  )
-                                )}
-                                <div className="flex items-center justify-between text-[11px] font-black text-green-900 pt-1 border-t border-gray-50">
-                                  <span>Average Achievement:</span>
-                                  <span>
-                                    {dailyScore.details.kpi.averageAchievement.toFixed(
-                                      1
-                                    )}
-                                    %
-                                  </span>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-[11px] font-bold text-gray-500 italic">
-                                No KPIs for this date
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <ListTodo size={16} className="text-purple-600" />
-                              <span className="text-xs font-black text-purple-900 uppercase tracking-widest">
-                                Accomplishments
-                              </span>
-                            </div>
-                            <span className="text-xs font-black text-purple-600">
-                              {dailyScore.accomplishmentsScore}/
-                              {dailyScore.details.accomplishments.maxPoints} pts
-                            </span>
-                          </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
-                            {dailyScore.details.accomplishments.itemBreakdown &&
-                            dailyScore.details.accomplishments.itemBreakdown
-                              .length > 0 ? (
-                              <div className="space-y-1.5">
-                                {dailyScore.details.accomplishments.itemBreakdown.map(
-                                  (item) => {
-                                    const completedPoints = item.completed
-                                      ? 3
-                                      : 0;
-                                    const starPoints =
-                                      item.completed && item.starred ? 2 : 0;
-
-                                    return (
-                                      <div
-                                        key={item.id}
-                                        className="rounded-[10px] border border-purple-100 bg-white px-3 py-2 text-[10px] font-bold text-gray-600"
-                                      >
-                                        <div className="flex items-center justify-between gap-3">
-                                          <span className="min-w-0 flex-1 truncate text-gray-700">
-                                            {item.text}
-                                          </span>
-                                          <span className="shrink-0 font-black text-purple-700">
-                                            {item.points} pts
-                                          </span>
-                                        </div>
-                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[9px] text-gray-500">
-                                          <span>
-                                            Completed: {completedPoints} pts
-                                          </span>
-                                          {starPoints > 0 && (
-                                            <span className="flex items-center gap-1 text-[#b45309]">
-                                              <Star
-                                                size={10}
-                                                className="fill-[#eab308] text-[#eab308]"
-                                              />
-                                              Star: +{starPoints} pts
-                                            </span>
-                                          )}
-                                          <span className="font-black text-purple-700">
-                                            Running total:{" "}
-                                            {item.cumulativePoints} pts
-                                          </span>
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-                                )}
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                                  <span>• Completed items:</span>
-                                  <span className="text-gray-900">
-                                    {
-                                      dailyScore.details.accomplishments
-                                        .completedItems
-                                    }
-                                    /
-                                    {
-                                      dailyScore.details.accomplishments
-                                        .totalItems
-                                    }{" "}
-                                    items
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                                  <span>• Completion rate:</span>
-                                  <span className="text-gray-900">
-                                    {dailyScore.details.accomplishments.completionPercentage.toFixed(
-                                      0
-                                    )}
-                                    %
-                                  </span>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex items-center justify-between text-[11px] font-black text-purple-900 pt-1 border-t border-gray-50">
-                              <span>Total earned:</span>
-                              <span>
-                                {dailyScore.accomplishmentsScore} pts (max{" "}
-                                {dailyScore.details.accomplishments.maxPoints})
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <CheckSquare
-                                size={16}
-                                className="text-[#ea580c]"
-                              />
-                              <span className="text-xs font-black text-[#ea580c] uppercase tracking-widest">
-                                Tasks, Issues & Todos
-                              </span>
-                            </div>
-                            <span className="text-xs font-black text-[#ea580c]">
-                              {dailyScore.tasksIssuesScore}/
-                              {dailyScore.details.tasksIssues.maxPoints} pts
-                            </span>
-                          </div>
-                          <div className="bg-slate-50/50 rounded-[12px] border border-slate-100 p-4 space-y-3">
-                            <p className="text-[11px] font-black text-[#1e40af] uppercase tracking-widest mb-2">
-                              Score Calculation:
-                            </p>
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                                <span className="flex items-center gap-2">
-                                  <CheckCircle2
-                                    size={12}
-                                    className="text-green-500"
-                                  />{" "}
-                                  Closed On Time (
-                                  {
-                                    dailyScore.details.tasksIssues
-                                      .closedOnTimeCount
-                                  }{" "}
-                                  × 5 pts)
-                                </span>
-                                <span className="text-green-600">
-                                  +
-                                  {dailyScore.details.tasksIssues
-                                    .closedOnTimeCount * 5}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                                <span className="flex items-center gap-2">
-                                  <Clock
-                                    size={12}
-                                    className="text-orange-500"
-                                  />{" "}
-                                  Closed Late (
-                                  {
-                                    dailyScore.details.tasksIssues
-                                      .closedLateCount
-                                  }{" "}
-                                  × 2 pts)
-                                </span>
-                                <span className="text-orange-600">
-                                  +
-                                  {dailyScore.details.tasksIssues
-                                    .closedLateCount * 2}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                                <span className="flex items-center gap-2">
-                                  <TrendingUp
-                                    size={12}
-                                    className="text-blue-500"
-                                  />{" "}
-                                  New Issues (
-                                  {
-                                    dailyScore.details.tasksIssues
-                                      .newIssuesCount
-                                  }{" "}
-                                  × 2 pts, max 10)
-                                </span>
-                                <span className="text-blue-600">
-                                  +
-                                  {Math.min(
-                                    dailyScore.details.tasksIssues
-                                      .newIssuesCount * 2,
-                                    10
-                                  )}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-100">
-                                <span>Subtotal (Positive)</span>
-                                <span>
-                                  +
-                                  {
-                                    dailyScore.details.tasksIssues
-                                      .positivePoints
-                                  }
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-[11px] font-bold text-red-500">
-                                <span className="flex items-center gap-2">
-                                  <AlertCircle
-                                    size={12}
-                                    className="text-red-500"
-                                  />{" "}
-                                  Overdue Penalty (
-                                  {dailyScore.details.tasksIssues.overdueCount}{" "}
-                                  × 5 pts, max -15)
-                                </span>
-                                <span>
-                                  {dailyScore.details.tasksIssues.penaltyPoints}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-200">
-                                <span className="text-sm">Final Score</span>
-                                <span className="text-[#ea580c]">
-                                  {dailyScore.tasksIssuesScore}/
-                                  {dailyScore.details.tasksIssues.maxPoints} pts
-                                </span>
-                              </div>
-                            </div>
-                            <p className="text-[9px] text-gray-400 font-medium italic mt-2 leading-relaxed">
-                              Note: Only tasks/issues closed on the report day
-                              or new issues reported on that day are counted.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <CalendarCheck
-                                size={16}
-                                className="text-blue-600"
-                              />
-                              <span className="text-xs font-black text-blue-900 uppercase tracking-widest">
-                                Planning for Next Day
-                              </span>
-                            </div>
-                            <span className="text-xs font-black text-blue-600">
-                              {dailyScore.planningScore}/
-                              {dailyScore.details.planning.maxPoints} pts
-                            </span>
-                          </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
-                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span>• Plan items:</span>
-                              <span className="text-gray-900">
-                                {dailyScore.details.planning.regularItems} × 2
-                                pts ={" "}
-                                {dailyScore.details.planning.regularItems * 2}{" "}
-                                pts
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span className="flex items-center gap-2">
-                                •{" "}
-                                <Star
-                                  size={12}
-                                  className="text-[#eab308] fill-[#eab308]"
-                                />{" "}
-                                Star bonus:
-                              </span>
-                              <span className="text-gray-900">
-                                {dailyScore.details.planning.starredItems} × 1
-                                pts ={" "}
-                                {dailyScore.details.planning.starredItems * 1}{" "}
-                                pts
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px] font-black text-blue-900 pt-1 border-t border-gray-50">
-                              <span>Total earned:</span>
-                              <span>
-                                {dailyScore.planningScore}/
-                                {dailyScore.details.planning.maxPoints} pts
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Clock size={16} className="text-orange-600" />
-                              <span className="text-xs font-black text-orange-900 uppercase tracking-widest">
-                                Submission Timing
-                              </span>
-                            </div>
-                            <span className="text-xs font-black text-orange-600">
-                              {dailyScore.timingScore}/
-                              {dailyScore.details.timing.maxPoints} pts
-                            </span>
-                          </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-orange-50">
-                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span>• Submission Time:</span>
-                              <span className="text-gray-900 font-bold">
-                                {dailyScore.details.timing.submissionTime}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span>• Points Awarded:</span>
-                              <span className="text-orange-600 font-bold">
-                                {dailyScore.timingScore} pts
-                              </span>
-                            </div>
-                            <p className="text-[9px] text-gray-400 font-medium italic pt-2 border-t border-gray-100">
-                              Note: Submission timing score is calculated based
-                              on when the report is actually submitted.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex justify-center mt-4">
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-[#DA7756]/5 px-4 py-1.5 rounded-full">
-                        <Zap
-                          size={12}
-                          className="text-orange-700 fill-orange-700"
-                        />
-                        <span>
-                          This is a live preview. Final score calculated after
-                          submission.
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )} */}
 
             {isScoreInfoExpanded && (
               <div className="mt-4">
@@ -7261,44 +6655,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           )}
 
-                        {/* {report.report_data?.tasks_issues &&
-                          report.report_data.tasks_issues.filter((item: any) => item.status === "completed").length > 0 && (
-                            <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
-                              <div className="flex items-center gap-2 mb-3">
-                                <CheckSquare
-                                  size={14}
-                                  className="text-[#DA7756]"
-                                />
-                                <span className="text-xs font-bold text-[#1a1a1a]">
-                                  Completed Tasks & Issues
-                                </span>
-                              </div>
-                              <div className="space-y-2">
-                                {report.report_data.tasks_issues
-                                  .filter((item: any) => item.status === "completed")
-                                  .map(
-                                    (item: any, idx: number) => (
-                                      <div
-                                        key={idx}
-                                        className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2"
-                                      >
-                                        <span className="text-red-600 font-bold mt-0.5">
-                                          ✓
-                                        </span>
-                                        <span className="text-sm text-gray-700">
-                                          {item.name ||
-                                            item.title ||
-                                            item.originalData?.title ||
-                                            item.originalData?.name ||
-                                            "Unnamed Item"}
-                                        </span>
-                                      </div>
-                                    )
-                                  )}
-                              </div>
-                            </div>
-                          )} */}
-
                         {!report.is_absent && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bc-history-section-card">
                             <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
@@ -7344,18 +6700,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       >
                                         <div className="flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all border-[#DA7756]/10 bg-[#DA7756]/10">
                                           <div className="flex items-center gap-2">
-                                            {/* <div className="h-6 w-6 rounded-[6px] flex items-center justify-center shrink-0 bg-[#DA7756] border-2 border-[#DA7756]">
-                                              <Check size={14} className="text-white" />
-                                            </div>
-                                            <Star
-                                              size={18}
-                                              className={cn(
-                                                "shrink-0",
-                                                (ach.star || ach.is_starred)
-                                                  ? "text-[#eab308] fill-[#eab308]"
-                                                  : "text-[#DA7756]/70"
-                                              )}
-                                            /> */}
                                             {(sourceType || sourceId) && (
                                               <>
                                                 <button
@@ -7444,12 +6788,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                     {completedDate}
                                                   </span>
                                                 )}
-                                                {/* {dueDate && (
-                                                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                                                    <CalendarIcon size={9} className="shrink-0" />
-                                                    Due: {dueDate}
-                                                  </span>
-                                                )} */}
                                                 {effortEst && (
                                                   <span className="flex items-center gap-1 text-[10px] text-gray-400">
                                                     <Clock size={9} className="shrink-0" />
@@ -7532,15 +6870,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       >
                                         <div className="flex flex-col overflow-hidden bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] hover:border-[#DA7756]/30 transition-all">
                                           <div className="flex min-w-0 items-center gap-2">
-                                            {/* <Star
-                                              size={18}
-                                              className={cn(
-                                                "shrink-0",
-                                                task.is_starred
-                                                  ? "text-[#eab308] fill-[#eab308]"
-                                                  : "text-gray-300"
-                                              )}
-                                            /> */}
                                             {(sourceType || sourceId) && (
                                               <>
                                                 <button
@@ -7785,109 +7114,6 @@ const BusinessCompassDailyReport: React.FC = () => {
         </Tabs>
       </div>
 
-      <Dialog
-        open={openTaskModal}
-        onClose={() => setOpenTaskModal(false)}
-        TransitionComponent={Transition}
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: { xs: "100vw", md: "50vw" },
-            maxWidth: "none",
-            height: "100vh",
-            maxHeight: "100vh",
-            margin: 0,
-            borderRadius: 0,
-            position: "fixed",
-            right: 0,
-            top: 0,
-          },
-        }}
-      >
-        <DialogContent
-          className="fixed right-0 top-0 w-full rounded-none bg-[#fff] text-sm overflow-y-auto"
-          style={{
-            margin: 0,
-            maxHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-          }}
-          sx={{ padding: "0 !important" }}
-        >
-          <div className="sticky top-0 bg-white z-10">
-            <h3 className="text-[14px] font-medium text-center mt-8">
-              Add Tasks
-            </h3>
-            <X
-              className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
-              onClick={() => setOpenTaskModal(false)}
-            />
-            <hr className="border border-[#E95420] mt-4" />
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <ProjectTaskCreateModal
-              isEdit={false}
-              onCloseModal={() => {
-                setOpenTaskModal(false);
-                setPreFillDate(null);
-              }}
-              prefillData={{
-                title: "",
-                description: "",
-                responsible_person: {
-                  id: localStorage.getItem("user")
-                    ? JSON.parse(localStorage.getItem("user") || "{}").id
-                    : "",
-                },
-                tags: [],
-                start_date: preFillDate,
-                target_date: preFillDate,
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <AddIssueModal
-        openDialog={openIssueModal}
-        handleCloseDialog={() => {
-          setOpenIssueModal(false);
-          setPreFillDate(null);
-        }}
-        prefillData={{
-          title: "",
-          description: "",
-          responsible_person: {
-            id: localStorage.getItem("user")
-              ? JSON.parse(localStorage.getItem("user") || "{}").id
-              : "",
-          },
-          tags: [],
-          start_date: preFillDate,
-          target_date: preFillDate,
-        }}
-      />
-
-      <AddToDoModal
-        isModalOpen={openTodoModal}
-        setIsModalOpen={() => {
-          setOpenTodoModal(false);
-          setPreFillDate(null);
-        }}
-        getTodos={fetchTodos}
-        prefillData={{
-          title: "",
-          description: "",
-          responsible_person: {
-            id: localStorage.getItem("user")
-              ? JSON.parse(localStorage.getItem("user") || "{}").id
-              : "",
-          },
-          tags: [],
-          start_date: preFillDate,
-        }}
-      />
-
       {/* Closure Remarks Modal */}
       <Dialog
         open={showClosureModal}
@@ -8042,6 +7268,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         </div>
       </Dialog>
 
+
       <Menu
         anchorEl={taskIssueMenuAnchor}
         open={Boolean(taskIssueMenuAnchor)}
@@ -8071,10 +7298,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <MenuItem
-          onClick={() => {
-            setOpenTaskModal(true);
-            setTaskIssueMenuAnchor(null);
-          }}
+          onClick={() => { setTaskIssueMenuAnchor(null); setIsFromPlan(false); setIsTaskCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -8099,10 +7323,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => {
-            setOpenIssueModal(true);
-            setTaskIssueMenuAnchor(null);
-          }}
+          onClick={() => { setTaskIssueMenuAnchor(null); setIsFromPlan(false); setIsIssueCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -8127,10 +7348,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => {
-            setOpenTodoModal(true);
-            setTaskIssueMenuAnchor(null);
-          }}
+          onClick={() => { setTaskIssueMenuAnchor(null); setIsFromPlan(false); setIsTodoCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -8213,11 +7431,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => {
-            setPreFillDate(getNextDayDate());
-            setOpenTaskModal(true);
-            setPlanningMenuAnchor(null);
-          }}
+          onClick={() => { setPlanningMenuAnchor(null); setIsFromPlan(true); setPlanDateResetKey(k => k + 1); setIsTaskCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -8242,11 +7456,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => {
-            setPreFillDate(getNextDayDate());
-            setOpenIssueModal(true);
-            setPlanningMenuAnchor(null);
-          }}
+          onClick={() => { setPlanningMenuAnchor(null); setIsFromPlan(true); setPlanDateResetKey(k => k + 1); setIsIssueCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -8271,11 +7481,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </MenuItem>
         <MenuItem
-          onClick={() => {
-            setPreFillDate(getNextDayDate());
-            setOpenTodoModal(true);
-            setPlanningMenuAnchor(null);
-          }}
+          onClick={() => { setPlanningMenuAnchor(null); setIsFromPlan(true); setPlanDateResetKey(k => k + 1); setIsTodoCreateModalOpen(true); }}
           sx={{
             py: 1.5,
             px: 2,
@@ -8374,84 +7580,78 @@ const BusinessCompassDailyReport: React.FC = () => {
         }}
       />
 
+      {/* Compute next working day for plan modals */}
+      {(() => {
+        const nextDayStr = getNextWorkingDay(startDate);
+        const nextDayDate = new Date(nextDayStr);
+        const nextDayObj = { year: nextDayDate.getFullYear(), month: nextDayDate.getMonth(), date: nextDayDate.getDate() };
+
+        return (
+          <>
+            <BCTaskCreateModal
+              isOpen={isTaskCreateModalOpen}
+              onClose={() => { setIsFromPlan(false); setIsTaskCreateModalOpen(false); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              baseUrl={baseUrl || ""}
+              token={token || ""}
+              prefilledDate={isFromPlan ? nextDayObj : undefined}
+              dateResetKey={planDateResetKey}
+            />
+            <BCIssueCreateModal
+              isOpen={isIssueCreateModalOpen}
+              onClose={() => { setIsFromPlan(false); setIsIssueCreateModalOpen(false); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              baseUrl={baseUrl || ""}
+              token={token || ""}
+              prefilledDate={isFromPlan ? nextDayObj : undefined}
+              dateResetKey={planDateResetKey}
+            />
+            <BCTodoCreateModal
+              isOpen={isTodoCreateModalOpen}
+              onClose={() => { setIsFromPlan(false); setIsTodoCreateModalOpen(false); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              prefilledDate={isFromPlan ? nextDayStr : undefined}
+              dateResetKey={planDateResetKey}
+            />
+          </>
+        );
+      })()}
+
       {/* Edit Task Modal */}
-      <Dialog
-        open={isEditTaskModalOpen}
+      <BCTaskEditModal
+        isOpen={isEditTaskModalOpen}
         onClose={() => {
           setIsEditTaskModalOpen(false);
           setEditTaskData(null);
         }}
-        TransitionComponent={Transition}
-        maxWidth={false}
-      >
-        <DialogContent
-          className="w-full sm:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-          style={{
-            margin: 0,
-            maxHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-          }}
-          sx={{
-            padding: "0 !important",
-            "& .MuiDialogContent-root": {
-              padding: "0 !important",
-              overflow: "auto",
-            },
-          }}
-        >
-          <div className="sticky top-0 bg-white z-10">
-            <h3 className="text-[14px] font-medium text-center mt-8">
-              Edit Task
-            </h3>
-            <X
-              className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
-              onClick={() => {
-                setIsEditTaskModalOpen(false);
-                setEditTaskData(null);
-              }}
-            />
-            <hr className="border border-[#E95420] mt-4" />
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            <ProjectTaskEditModal
-              taskId={editTaskData?.id}
-              onCloseModal={() => {
-                setIsEditTaskModalOpen(false);
-                setEditTaskData(null);
-                fetchTasks();
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
+        baseUrl={baseUrl || ""}
+        token={token || ""}
+        editData={editTaskData}
+      />
 
       {/* Edit Issue Modal */}
-      <EditIssueModal
-        openDialog={isEditIssueModalOpen}
-        handleCloseDialog={() => {
+      <BCIssueEditModal
+        isOpen={isEditIssueModalOpen}
+        onClose={() => {
           setIsEditIssueModalOpen(false);
           setEditIssueData(null);
         }}
-        issueData={editIssueData}
-        onIssueUpdated={() => {
-          fetchIssues();
-        }}
+        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
+        baseUrl={baseUrl || ""}
+        token={token || ""}
+        editData={editIssueData}
       />
 
       {/* Edit Todo Modal */}
-      <AddToDoModal
-        isModalOpen={isEditTodoModalOpen}
-        setIsModalOpen={() => {
+      <BCTodoEditModal
+        isOpen={isEditTodoModalOpen}
+        onClose={() => {
           setIsEditTodoModalOpen(false);
           setEditTodoData(null);
-          fetchTodos();
         }}
-        getTodos={fetchTodos}
-        editingTodo={editTodoData}
-        isEditMode={!!editTodoData}
-        prefillData={editTodoData || {}}
+        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
+        editData={editTodoData}
       />
 
       {/* Reopen Reason Modal */}
@@ -8551,6 +7751,47 @@ const BusinessCompassDailyReport: React.FC = () => {
         </ModalPortal>
       )}
 
+      {/* Start Issue Confirmation */}
+      {pendingPlayIssueId !== null && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <Play size={18} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Are you sure?
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    This will start the issue.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPlayIssueId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = pendingPlayIssueId;
+                    setPendingPlayIssueId(null);
+                    handlePlayIssue(id);
+                  }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                >
+                  Start
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
       {/* Pause Task Confirmation */}
       {pendingPauseTaskId !== null && (
         <ModalPortal>
@@ -8593,16 +7834,60 @@ const BusinessCompassDailyReport: React.FC = () => {
         </ModalPortal>
       )}
 
+      {/* Pause Issue Confirmation */}
+      {pendingPauseIssueId !== null && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:py-8">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <Pause size={18} className="text-red-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Are you sure?
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    This will pause the issue.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setPendingPauseIssueId(null)}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const id = pendingPauseIssueId;
+                    setPendingPauseIssueId(null);
+                    setPauseIssueId(id);
+                    setIsPauseModalOpen(true);
+                  }}
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+                >
+                  Pause
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
       {/* Pause Reason Modal */}
       <PauseReasonModal
         isOpen={isPauseModalOpen}
         onClose={() => {
           setIsPauseModalOpen(false);
           setPauseTaskId(null);
+          setPauseIssueId(null);
         }}
-        onSubmit={handlePauseTaskSubmit}
+        onSubmit={pauseIssueId ? handlePauseIssueSubmit : handlePauseTaskSubmit}
         isLoading={isPauseLoading}
-        taskId={pauseTaskId}
+        taskId={pauseIssueId || pauseTaskId}
+        entityType={pauseIssueId ? "issue" : "task"}
       />
 
       {/* Confirm Action Modal */}
@@ -8716,8 +8001,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   );
 };
 
-const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, entityType = "task" }) => {
   const [reason, setReason] = useState("");
+  const label = entityType === "issue" ? "Issue" : "Task";
 
   useEffect(() => {
     if (!isOpen) setReason("");
@@ -8725,7 +8011,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 
   const handleSubmit = () => {
     if (!reason.trim()) {
-      toast.error("Please enter a reason for pausing the task");
+      toast.error(`Please enter a reason for pausing the ${label.toLowerCase()}`);
       return;
     }
     onSubmit(reason, taskId);
@@ -8739,11 +8025,10 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
         <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 shadow-xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
-            <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
+            <h2 className="text-lg font-bold text-gray-900">{`Pause ${label}`}</h2>
           </div>
           <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-            Please provide a reason for pausing this task. This will help track
-            the pause history.
+            {`Please provide a reason for pausing this ${label.toLowerCase()}. This will help track the pause history.`}
           </p>
           <div className="mb-6">
             <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
@@ -8752,7 +8037,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Enter reason for pausing this task..."
+              placeholder={`Enter reason for pausing this ${label.toLowerCase()}...`}
               className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
               rows={4}
               disabled={isLoading}
@@ -8771,7 +8056,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
               disabled={isLoading}
               className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
             >
-              {isLoading ? "Processing..." : "Pause Task"}
+              {isLoading ? "Processing..." : `Pause ${label}`}
             </button>
           </div>
         </div>

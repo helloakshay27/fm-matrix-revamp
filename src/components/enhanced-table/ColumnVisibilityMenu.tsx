@@ -133,7 +133,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 flex items-center gap-2"
+          className="h-9 w-9 min-h-9 p-0 flex items-center justify-center rounded-lg border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
           title="Columns"
         >
           <Grid3x3 className="w-4 h-4" />

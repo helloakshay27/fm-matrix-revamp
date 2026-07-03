@@ -92,10 +92,12 @@ export const VendorPermitsPage = () => {
         });
       }
 
+      const pg = data?.pagination;
       setPagination((prev) => ({
         ...prev,
-        total_count: data?.total_count || formatted.length,
-        total_pages: data?.total_pages || 1,
+        current_page: pg?.current_page ?? prev.current_page,
+        total_count: pg?.total_count ?? data?.total_count ?? formatted.length,
+        total_pages: pg?.total_pages ?? data?.total_pages ?? 1,
       }));
     } catch (error: any) {
       console.error(error);
@@ -272,27 +274,71 @@ export const VendorPermitsPage = () => {
         />
       </div>
 
-      <div className="flex justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink isActive>1</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      {pagination.total_pages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-gray-500">
+            Showing page {pagination.current_page} of {pagination.total_pages} ({pagination.total_count} total)
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(pagination.current_page - 1)}
+                  className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+
+              {/* First page */}
+              {pagination.current_page > 3 && (
+                <>
+                  <PaginationItem>
+                    <PaginationLink className="cursor-pointer" onClick={() => handlePageChange(1)}>1</PaginationLink>
+                  </PaginationItem>
+                  {pagination.current_page > 4 && (
+                    <PaginationItem><span className="px-2 text-gray-400">…</span></PaginationItem>
+                  )}
+                </>
+              )}
+
+              {/* Pages around current */}
+              {Array.from({ length: pagination.total_pages }, (_, i) => i + 1)
+                .filter(p => p >= pagination.current_page - 2 && p <= pagination.current_page + 2)
+                .map(p => (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      isActive={p === pagination.current_page}
+                      className={p === pagination.current_page ? "pointer-events-none" : "cursor-pointer"}
+                      onClick={() => handlePageChange(p)}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+              {/* Last page */}
+              {pagination.current_page < pagination.total_pages - 2 && (
+                <>
+                  {pagination.current_page < pagination.total_pages - 3 && (
+                    <PaginationItem><span className="px-2 text-gray-400">…</span></PaginationItem>
+                  )}
+                  <PaginationItem>
+                    <PaginationLink className="cursor-pointer" onClick={() => handlePageChange(pagination.total_pages)}>
+                      {pagination.total_pages}
+                    </PaginationLink>
+                  </PaginationItem>
+                </>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(pagination.current_page + 1)}
+                  className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 };

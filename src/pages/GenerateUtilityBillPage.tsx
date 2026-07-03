@@ -310,40 +310,40 @@ export const GenerateUtilityBillPage = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-white min-h-screen">
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">Utility &gt; Generate Bill</div>
+      <div className="text-sm text-[#6B6258]">Utility &gt; Generate Bill</div>
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={handleCancel} className="text-gray-600 hover:text-gray-900 p-2">
+        <Button variant="ghost" size="sm" onClick={handleCancel} className="text-[#6B6258] hover:text-[#2D2A26] p-2">
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="font-semibold text-2xl text-gray-900">Utility Billing Calculation</h1>
+        <h1 className="font-semibold text-2xl text-[#2D2A26]">Utility Billing Calculation</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* ── STEP 1 ── */}
-        <Card className="border border-gray-200 shadow-sm">
-          <CardHeader className="bg-[#f6f4ee] border-b px-6 py-4">
+        <Card className="border-0 bg-white !shadow-none" style={{ boxShadow: 'none' }}>
+          <CardHeader className="bg-white border-b border-[#e4ddd4] px-6 py-4">
             <div className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#C72030] text-white text-sm font-bold">1</span>
-              <CardTitle className="text-base font-semibold text-gray-800">Select Filters & Utility Type</CardTitle>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#DA7756] text-white text-sm font-bold">1</span>
+              <CardTitle className="text-base font-semibold text-[#22201d]">Select Filters & Utility Type</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
 
             {/* Utility Type */}
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-3">Utility Type</p>
+              <p className="text-sm font-medium text-[#4a453f] mb-3">Utility Type</p>
               <RadioGroup row value={formData.utilityType} onChange={handleUtilityTypeChange} className="flex gap-4">
                 <FormControlLabel
                   value="EB"
                   control={<Radio size="small" />}
                   label={
-                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'EB' ? 'bg-purple-100 border-purple-400' : 'bg-white border-gray-200'}`}>
-                      <Zap className="w-5 h-5 text-purple-600" />
+                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'EB' ? 'bg-[#fdf0ea] border-[#DA7756]' : 'bg-white border-[#ddd6cc]'}`}>
+                      <Zap className="w-5 h-5 text-[#DA7756]" />
                       <span className="font-medium text-sm">EB</span>
                     </div>
                   }
@@ -352,8 +352,8 @@ export const GenerateUtilityBillPage = () => {
                   value="DG"
                   control={<Radio size="small" />}
                   label={
-                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'DG' ? 'bg-purple-100 border-purple-400' : 'bg-white border-gray-200'}`}>
-                      <Database className="w-5 h-5 text-purple-600" />
+                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'DG' ? 'bg-[#fdf0ea] border-[#DA7756]' : 'bg-white border-[#ddd6cc]'}`}>
+                      <Database className="w-5 h-5 text-[#DA7756]" />
                       <span className="font-medium text-sm">DG</span>
                     </div>
                   }
@@ -362,8 +362,8 @@ export const GenerateUtilityBillPage = () => {
                   value="Water"
                   control={<Radio size="small" />}
                   label={
-                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'Water' ? 'bg-purple-100 border-purple-400' : 'bg-white border-gray-200'}`}>
-                      <Droplets className="w-5 h-5 text-purple-600" />
+                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'Water' ? 'bg-[#fdf0ea] border-[#DA7756]' : 'bg-white border-[#ddd6cc]'}`}>
+                      <Droplets className="w-5 h-5 text-[#DA7756]" />
                       <span className="font-medium text-sm">Water</span>
                     </div>
                   }
@@ -371,7 +371,7 @@ export const GenerateUtilityBillPage = () => {
               </RadioGroup>
             </div>
 
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-[#e5ddd2]" />
 
             {/* Row 1: From Date | To Date | Select KIOSK | Kiosk Consumption | Consumption as per EB */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -382,7 +382,7 @@ export const GenerateUtilityBillPage = () => {
                 onChange={(e) => handleInputChange('fromDate', e.target.value)}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#f6f4ee' } }}
+                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
               />
               <TextField
                 label="To Date"
@@ -391,7 +391,7 @@ export const GenerateUtilityBillPage = () => {
                 onChange={(e) => handleInputChange('toDate', e.target.value)}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#f6f4ee' } }}
+                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
               />
               <FormControl fullWidth>
                 <InputLabel id="kiosk-label">Select KIOSK</InputLabel>
@@ -402,7 +402,7 @@ export const GenerateUtilityBillPage = () => {
                   onChange={(e) => handleKioskChange(e.target.value as string)}
                   label="Select KIOSK"
                   disabled={kiosksLoading}
-                  sx={{ height: '45px', backgroundColor: '#f6f4ee' }}
+                  sx={{ height: '45px', backgroundColor: '#ffffff' }}
                 >
                   {kiosksLoading ? <MenuItem disabled>Loading...</MenuItem> : kiosks.map(([name, id]) => (
                     <MenuItem key={id} value={String(id)}>{name}</MenuItem>
@@ -415,7 +415,7 @@ export const GenerateUtilityBillPage = () => {
                 disabled
                 fullWidth
                 placeholder="Auto-filled"
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#f0f0f0' } }}
+                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
               />
               <TextField
                 label={formData.utilityType === 'DG' ? 'Consumption as per DG' : formData.utilityType === 'Water' ? 'Consumption as per Water (KL)' : 'Consumption as per EB'}
@@ -426,7 +426,7 @@ export const GenerateUtilityBillPage = () => {
                 placeholder="Enter numeric value"
                 fullWidth
                 required
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#f6f4ee' } }}
+                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
               />
             </div>
 
@@ -441,7 +441,7 @@ export const GenerateUtilityBillPage = () => {
                   onChange={(e) => { handleSelectChange(e); handleInputChange('wing', ''); fetchWings(e.target.value as string); }}
                   label="Select Tower"
                   disabled={buildingsLoading}
-                  sx={{ height: '45px', backgroundColor: '#f6f4ee' }}
+                  sx={{ height: '45px', backgroundColor: '#ffffff' }}
                 >
                   {buildingsLoading ? <MenuItem disabled>Loading...</MenuItem> : buildings.map((b) => (
                     <MenuItem key={b.id} value={String(b.id)}>{b.name}</MenuItem>
@@ -457,7 +457,7 @@ export const GenerateUtilityBillPage = () => {
                   onChange={handleSelectChange}
                   label="Select Wing"
                   disabled={wingsLoading || !formData.tower}
-                  sx={{ height: '45px', backgroundColor: '#f6f4ee' }}
+                  sx={{ height: '45px', backgroundColor: '#ffffff' }}
                 >
                   {wingsLoading ? <MenuItem disabled>Loading...</MenuItem>
                     : wings.length === 0 ? <MenuItem disabled>No wings available</MenuItem>
@@ -479,7 +479,7 @@ export const GenerateUtilityBillPage = () => {
                 placeholder="Enter numeric value"
                 fullWidth
                 required
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#f6f4ee' } }}
+                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#faf7f3' } }}
               />
 
             </div>
@@ -490,7 +490,7 @@ export const GenerateUtilityBillPage = () => {
                 type="button"
                 onClick={handleGenerateAdjustmentFactor}
                 disabled={resultsLoading}
-                className="h-[45px] px-10 bg-[#C72030] hover:bg-[#A01B29] text-white rounded-none font-medium flex items-center gap-2"
+                className="fm-button-fix fm-button-brand h-[45px] px-10 rounded-lg font-medium flex items-center gap-2"
               >
                 {resultsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 Generate Adjustment Factor
@@ -501,13 +501,13 @@ export const GenerateUtilityBillPage = () => {
         </Card>
 
         {/* ── STEP 2 ── */}
-        <Card className={`border shadow-sm transition-all ${formData.totalConsumption ? 'border-green-300' : 'border-gray-200 opacity-60'}`}>
-          <CardHeader className="bg-[#f6f4ee] border-b px-6 py-4">
+        <Card className={`border-0 bg-white !shadow-none transition-all ${formData.totalConsumption ? 'border-green-300' : ''}`} style={{ boxShadow: 'none' }}>
+          <CardHeader className="bg-white border-b border-[#e4ddd4] px-6 py-4">
             <div className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#C72030] text-white text-sm font-bold">2</span>
-              <CardTitle className="text-base font-semibold text-gray-800">Review & Submit</CardTitle>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#DA7756] text-white text-sm font-bold">2</span>
+              <CardTitle className="text-base font-semibold text-[#22201d]">Review & Submit</CardTitle>
               {!formData.totalConsumption && (
-                <span className="text-xs text-gray-400 ml-2">— complete Step 1 first</span>
+                <span className="text-xs text-[#8f8579] ml-2">— complete Step 1 first</span>
               )}
             </div>
           </CardHeader>
@@ -515,37 +515,37 @@ export const GenerateUtilityBillPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Adjustment Factor</p>
-                <div className="h-[45px] flex items-center px-4 bg-gray-50 border border-gray-200 rounded text-gray-800 font-semibold text-sm">
-                  {formData.adjustment || <span className="text-gray-400">Auto-filled after Step 1</span>}
+                <p className="text-xs font-medium text-[#4a453f] mb-1">Adjustment Factor</p>
+                <div className="h-[45px] flex items-center px-4 bg-white border border-[#e0d6cb] rounded text-[#22201d] font-semibold text-sm">
+                  {formData.adjustment || <span className="text-[#8f8579]">Auto-filled after Step 1</span>}
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">{formData.utilityType === 'Water' ? 'Rate Per KL' : 'Rate Per KWH'}</p>
+                <p className="text-xs font-medium text-[#4a453f] mb-1">{formData.utilityType === 'Water' ? 'Rate Per KL' : 'Rate Per KWH'}</p>
                 <input
                   type="number"
                   value={formData.ratePerKWH}
                   onChange={(e) => handleInputChange('ratePerKWH', e.target.value)}
                   placeholder="Enter rate"
                   required
-                  className="h-[45px] w-full px-4 bg-gray-50 border border-gray-200 rounded text-gray-800 font-semibold text-sm outline-none focus:border-gray-400 focus:bg-white transition-colors"
+                  className="h-[45px] w-full px-4 bg-white border border-[#e0d6cb] rounded text-[#22201d] font-semibold text-sm outline-none focus:border-[#DA7756] focus:bg-white transition-colors"
                 />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Transmission Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${transmissionLoss ? (parseFloat(transmissionLoss) >= 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700') : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
+                <p className="text-xs font-medium text-[#4a453f] mb-1">Transmission Loss</p>
+                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${transmissionLoss ? (parseFloat(transmissionLoss) >= 0 ? 'bg-[#fdf0ea] border-[#f0c0ad] text-[#8c4c36]' : 'bg-green-50 border-green-200 text-green-700') : 'bg-white border-[#e0d6cb] text-[#8f8579]'}`}>
                   {transmissionLoss ? transmissionLoss : 'Auto-filled after Step 1'}
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Consumption Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${consumptionLoss ? (parseFloat(consumptionLoss) >= 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700') : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
+                <p className="text-xs font-medium text-[#4a453f] mb-1">Consumption Loss</p>
+                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${consumptionLoss ? (parseFloat(consumptionLoss) >= 0 ? 'bg-[#fdf0ea] border-[#f0c0ad] text-[#8c4c36]' : 'bg-green-50 border-green-200 text-green-700') : 'bg-white border-[#e0d6cb] text-[#8f8579]'}`}>
                   {consumptionLoss ? consumptionLoss : 'Auto-filled after Step 1'}
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Total Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${totalLoss ? (parseFloat(totalLoss) >= 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700') : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
+                <p className="text-xs font-medium text-[#4a453f] mb-1">Total Loss</p>
+                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${totalLoss ? (parseFloat(totalLoss) >= 0 ? 'bg-[#fdf0ea] border-[#f0c0ad] text-[#8c4c36]' : 'bg-green-50 border-green-200 text-green-700') : 'bg-white border-[#e0d6cb] text-[#8f8579]'}`}>
                   {totalLoss ? totalLoss : 'Auto-filled after Step 1'}
                 </div>
               </div>
@@ -576,7 +576,7 @@ export const GenerateUtilityBillPage = () => {
               <Button
                 type="submit"
                 disabled={!formData.totalConsumption || resultsLoading}
-                className="h-[45px] px-10 bg-[#C72030] hover:bg-[#A01B29] text-white rounded-none font-medium flex items-center gap-2"
+                className="fm-button-fix fm-button-brand-solid h-[45px] px-10 rounded-lg font-medium flex items-center gap-2"
               >
                 Submit
               </Button>
@@ -589,7 +589,7 @@ export const GenerateUtilityBillPage = () => {
       {/* Results Table */}
       {resultsLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-7 h-7 animate-spin text-[#C72030]" />
+          <Loader2 className="w-7 h-7 animate-spin text-[#DA7756]" />
         </div>
       ) : results.length > 0 && (
         <>
@@ -608,7 +608,7 @@ export const GenerateUtilityBillPage = () => {
           <div className="flex justify-start">
             <Button
               onClick={handleGenerateUtilityConsumption}
-              className="bg-[#C72030] hover:bg-[#A01B29] text-white px-6 h-[45px] rounded-none font-medium"
+              className="fm-button-fix fm-button-brand px-6 h-[45px] rounded-lg font-medium"
             >
               Generate Utility Consumption
             </Button>

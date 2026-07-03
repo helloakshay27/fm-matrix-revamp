@@ -1224,13 +1224,13 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
-import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
 import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
+import SalesBySalesPersonDetails from "./pages/SalesBySalesPersonDetails.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -2252,6 +2252,15 @@ function App() {
                               element={<ChatTaskDetailsPage />}
                             />
                             <Route
+                              path="/business-compass"
+                              element={
+                                <Navigate
+                                  to="/business-compass/dashboard"
+                                  replace
+                                />
+                              }
+                            />
+                            <Route
                               path="/business-compass/profile"
                               element={<BusinessCompassProfile />}
                             />
@@ -2262,10 +2271,6 @@ function App() {
                             <Route
                               path="/business-compass/daily-report"
                               element={<BusinessCompassDailyReport />}
-                            />
-                            <Route
-                              path="/business-compass/ceo-dashboard"
-                              element={<PATMCeoDashboard />}
                             />
                             <Route
                               path="/business-compass/weekly-report"
@@ -3220,6 +3225,18 @@ function App() {
                             <Route
                               path="/accounting/reports/sales-by-sales-person"
                               element={<SalesBySalesPersonReport />}
+                            />
+                            <Route
+                              path="/accounting/reports/sales-by-sales-person/details"
+                              element={<SalesBySalesPersonDetails />}
+                            />
+                            <Route
+                              path="/reports/sales-by-sp"
+                              element={<SalesBySalesPersonReport />}
+                            />
+                            <Route
+                              path="/reports/sales-details-by-sp"
+                              element={<SalesBySalesPersonDetails />}
                             />
                             <Route
                               path="/accounting/reports/sales-summary"
@@ -4807,7 +4824,10 @@ function App() {
                               path="/accounting/vendor/edit/:id"
                               element={<EditVendorPage />}
                             ></Route>
-
+                            <Route
+                              path="/vas/ceo-dashboard"
+                              element={<PATMCeoDashboard />}
+                            />
                             <Route
                               path="/vas/projects"
                               element={<ProjectsDashboard />}

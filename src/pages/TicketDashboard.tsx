@@ -1536,9 +1536,9 @@ export const TicketDashboard = () => {
             </div>
 
             {/* Main Analytics Layout */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
+            <div className="flex flex-col xl:flex-row gap-2 min-h-[calc(100vh-200px)]">
               {/* Left Section - Charts */}
-              <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+              <div className="flex-1 min-w-0 space-y-4 sm:space-y-6">
                 {/* All Charts with Drag and Drop */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
@@ -1692,7 +1692,7 @@ export const TicketDashboard = () => {
               </div>
 
               {/* Right Sidebar - Recent Tickets */}
-              <div className="xl:col-span-4 order-first xl:order-last">
+              <div className="flex-shrink-0 self-stretch order-first xl:order-last">
                 <RecentTicketsSidebar onTicketUpdate={refreshTicketsAndSummary} />
               </div>
             </div>

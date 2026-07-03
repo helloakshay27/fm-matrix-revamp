@@ -76,6 +76,7 @@ interface CategoryApiResponse {
       created_at: string;
       updated_at: string;
     }>;
+    customer_enabled: boolean | null;
     complaint_worker?: {
       id: number;
       society_id: number;
@@ -137,6 +138,7 @@ export const CategoryTypeTab: React.FC = () => {
   const [selectedEngineers, setSelectedEngineers] = useState<number[]>([]);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
+  const [customerEnabled, setCustomerEnabled] = useState(false);
   const [accountData, setAccountData] = useState<{
     id?: string;
     company_id?: number;
@@ -149,6 +151,7 @@ export const CategoryTypeTab: React.FC = () => {
   const [editIconFile, setEditIconFile] = useState<File | null>(null);
   const [editVendorEmailEnabled, setEditVendorEmailEnabled] = useState(false);
   const [editVendorEmails, setEditVendorEmails] = useState<string[]>(['']);
+  const [editCustomerEnabled, setEditCustomerEnabled] = useState(false);
   const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
 
   const form = useForm<CategoryFormData>({
@@ -284,7 +287,7 @@ export const CategoryTypeTab: React.FC = () => {
     const data: CategoryFormData = {
       categoryName: categoryNameInput.value.trim(),
       responseTime: responseTimeInput.value.trim(),
-      customerEnabled: false, // or get from checkbox if needed
+      customerEnabled: customerEnabled,
       siteId: formValues.siteId,
       engineerIds: formValues.engineerIds || [],
     };
@@ -397,6 +400,7 @@ export const CategoryTypeTab: React.FC = () => {
         setVendorEmails(['']);
         setIconFile(null);
         setVendorEmailEnabled(false);
+        setCustomerEnabled(false);
         
         // Auto-populate form with company_id again
         form.setValue('siteId', accountData?.company_id?.toString() || '');
@@ -509,6 +513,7 @@ export const CategoryTypeTab: React.FC = () => {
     }
     
     setEditIconFile(null);
+    setEditCustomerEnabled(!!category.customer_enabled);
     setEditVendorEmailEnabled(category.category_email?.length > 0);
     setEditVendorEmails(category.category_email?.length > 0 ? category.category_email.map(e => e.email) : ['']);
     
@@ -574,11 +579,10 @@ export const CategoryTypeTab: React.FC = () => {
       // Get form values from the edit modal inputs
       const categoryNameInput = document.querySelector('#edit-category-name') as HTMLInputElement;
       const responseTimeInput = document.querySelector('#edit-response-time') as HTMLInputElement;
-      const customerEnabledInput = document.querySelector('#edit-customer-enabled') as HTMLInputElement;
-      
+
       // Helpdesk category data
       submitFormData.append('helpdesk_category[name]', categoryNameInput?.value || editingCategory.name);
-      submitFormData.append('helpdesk_category[customer_enabled]', customerEnabledInput?.checked ? '1' : '0');
+      submitFormData.append('helpdesk_category[customer_enabled]', editCustomerEnabled ? '1' : '0');
       submitFormData.append('helpdesk_category[tat]', responseTimeInput?.value || editingCategory.tat);
       
       // Add icon if a new one is selected
@@ -765,6 +769,7 @@ export const CategoryTypeTab: React.FC = () => {
     { key: 'assign_to_names', label: 'Assignee', sortable: false },
     { key: 'tat', label: 'Response Time', sortable: false },
     { key: 'category_email', label: 'Vendor Email', sortable: false },
+    { key: 'customer_enabled', label: 'Customer Enabled', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
     // { key: 'selected_icon_url', label: 'Selected Icon', sortable: false },
   ];
@@ -805,8 +810,16 @@ export const CategoryTypeTab: React.FC = () => {
       case 'tat':
         return item.tat || '--';
       case 'category_email':
-        return item.category_email?.length ? 
+        return item.category_email?.length ?
           item.category_email.map(emailObj => emailObj.email).join(', ') : '--';
+      case 'customer_enabled':
+        return (
+          <Checkbox
+            checked={!!item.customer_enabled}
+            disabled
+            className="mx-auto"
+          />
+        );
       case 'icon_url':
         return item.icon_url ? (
           <img 
@@ -1085,6 +1098,14 @@ export const CategoryTypeTab: React.FC = () => {
                   <label className="text-sm font-medium">Enable Vendor Email</label>
                 </div>
 
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={customerEnabled}
+                    onCheckedChange={(checked) => setCustomerEnabled(!!checked)}
+                  />
+                  <label className="text-sm font-medium">Customer Enabled</label>
+                </div>
+
                 {vendorEmailEnabled && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -1315,10 +1336,14 @@ export const CategoryTypeTab: React.FC = () => {
                 </div>
               </div>
 
-              {/* <div className="flex items-center space-x-3">
-                <Checkbox id="edit-customer-enabled" />
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="edit-customer-enabled"
+                  checked={editCustomerEnabled}
+                  onCheckedChange={(checked) => setEditCustomerEnabled(!!checked)}
+                />
                 <label htmlFor="edit-customer-enabled" className="text-sm font-medium">Customer Enabled</label>
-              </div> */}
+              </div>
 
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">

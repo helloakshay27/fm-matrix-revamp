@@ -110,6 +110,7 @@ interface Item {
     taxRate: number;
     amount: number;
     account_id: number;
+    account_name?: string;
     // fields used by the tax dropdown (tax groups/exemptions)
     item_tax_type?: string;
     tax_group_id?: number | null;
@@ -442,6 +443,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     rate: Number(item.purchase_rate ?? item.rate ?? 0),
                     description: item.sale_description || item.description || '',
                     account: item.purchase_lock_account_ledger_id || '',
+                    account_name: item.purchase_lock_account_ledger_name || '',
                     sku: item.sku || '',
                     tax_preference: item.tax_preference || '',
                     tax_exemption_id: item.tax_exemption_id || null,
@@ -1559,6 +1561,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 rate: Number(selectedItem.rate) || 0,
                 description: selectedItem.description || '',
                 account_id: selectedItem.account || '',
+                account_name: selectedItem.account_name || '',
                 item_tax_type: newItemTaxType,
                 tax_group_id: newTaxGroupId,
                 tax_exemption_id: selectedItem.tax_preference === 'non_taxable' ? selectedItem.tax_exemption_id : null,
@@ -2326,6 +2329,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                             rate: selected.rate || 0,
                                                             description: selected.description || '',
                                                             account_id: String((selected as any).account || ''),
+                                                            account_name: (selected as any).account_name || '',
                                                             item_tax_type: selected.tax_preference === 'non_taxable' ? 'non_taxable'
                                                                 : selected.tax_preference === 'taxable' ? (isSameState ? 'tax_group' : 'tax_rate')
                                                                     : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
@@ -2356,10 +2360,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                     <Select
                                                         value={String(item.account_id || '')}
                                                         onChange={(e) => {
-                                                            updateItem(index, 'account_id', e.target.value);
-                                                            // Optional: if you need to store account name as well
-                                                            // const selectedAccount = accountLedgers.find(acc => acc.id === e.target.value);
-                                                            // updateItem(index, 'account_name', selectedAccount?.name);
+                                                            const selectedId = e.target.value;
+                                                            const allLedgers = accountGroups.length > 0
+                                                                ? accountGroups.flatMap((group: any) => group.ledgers || [])
+                                                                : accountLedgers;
+                                                            const selectedLedger = allLedgers.find((ledger: any) => String(ledger.id) === String(selectedId));
+                                                            updateItemFields(index, {
+                                                                account_id: selectedId,
+                                                                account_name: selectedLedger?.name || '',
+                                                            });
                                                         }}
                                                         displayEmpty
                                                         size="small"
@@ -2367,6 +2376,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         {console.log('item.account_id:', item.account_id, 'accountGroups:', accountGroups)}
 
                                                         <MenuItem value="">Select Account</MenuItem>
+                                                        {item.account_id && item.account_name &&
+                                                            !(accountGroups.length > 0
+                                                                ? accountGroups.some((group: any) => (group.ledgers || []).some((ledger: any) => String(ledger.id) === String(item.account_id)))
+                                                                : accountLedgers.some((ledger: any) => String(ledger.id) === String(item.account_id))) && (
+                                                                <MenuItem value={String(item.account_id)}>{item.account_name}</MenuItem>
+                                                            )}
                                                         {/* if accountGroups is populated, render grouped dropdown like BillsAdd.tsx */}
                                                         {accountGroups.length > 0
                                                             ? accountGroups.map((group) =>

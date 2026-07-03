@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -28,9 +28,23 @@ import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, Pagi
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
+
+type ScheduleEvent = React.ComponentProps<typeof PostHogScheduleActivity>['event'];
+
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const scheduleEventKeyRef = useRef(0);
+  const [scheduleEvent, setScheduleEvent] = useState<{
+    key: number;
+    event: ScheduleEvent;
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  const captureScheduleEvent = (event: ScheduleEvent, properties?: Record<string, unknown>) => {
+    setScheduleEvent({ key: ++scheduleEventKeyRef.current, event, properties });
+  };
   // State for deactivate modal (must be inside component)
   const [deactivateModal, setDeactivateModal] = useState<{ open: boolean; scheduleId: string | null }>({ open: false, scheduleId: null });
   const [deactivateOption, setDeactivateOption] = useState<'upcoming' | 'all'>('upcoming');
@@ -229,6 +243,12 @@ export const ScheduleListDashboard = () => {
   console.log('Processed schedules:', schedules);
   console.log('Search Query State:', { searchQuery, debouncedSearchQuery });
   console.log('Pagination info:', { currentPage, totalPages, totalCount });
+
+
+  const handleImportClick = () => {
+    captureScheduleEvent('Schedule Import Opened');
+    setShowImportModal(true);
+  };
 
   function formatDateDDMMYYYY(dateString: string): string {
     const date = new Date(dateString);
@@ -835,7 +855,7 @@ export const ScheduleListDashboard = () => {
           actions={selectionActions}
           // onAdd={handleAddSchedule}
           onClearSelection={() => setShowActionPanel(false)}
-          onImport={() => setShowImportModal(true)}
+          onImport={handleImportClick}
         />
       )}
 
@@ -1007,6 +1027,10 @@ export const ScheduleListDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
+      <PostHogScheduleActivity event="Schedule List Viewed" />
+      {scheduleEvent && (
+        <PostHogScheduleActivity key={scheduleEvent.key} event={scheduleEvent.event} properties={scheduleEvent.properties} />
+      )}
       {/* Sonner Toaster for notifications */}
       <Toaster position="top-right" richColors closeButton />
       {/* Deactivate Checklist Modal */}

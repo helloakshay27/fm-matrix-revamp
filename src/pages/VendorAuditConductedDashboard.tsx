@@ -1,10 +1,11 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect, useRef, Fragment } from "react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
+import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
 import {
   Pagination,
   PaginationContent,
@@ -46,6 +47,12 @@ export const VendorAuditConductedDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Report opened" } | null>(null);
+  const auditEventKeyRef = useRef(0);
+  const captureAuditEvent = (event: "Report opened") => {
+    auditEventKeyRef.current += 1;
+    setAuditEvent({ key: auditEventKeyRef.current, event });
+  };
 
   useEffect(() => {
     fetchAuditsConducted();
@@ -93,6 +100,7 @@ export const VendorAuditConductedDashboard = () => {
       const blob = new Blob([response.data], { type: "application/pdf" });
       const blobUrl = window.URL.createObjectURL(blob);
       window.open(blobUrl, "_blank");
+      captureAuditEvent("Report opened");
 
       // Clean up the blob URL after a delay
       setTimeout(() => {
@@ -254,6 +262,10 @@ export const VendorAuditConductedDashboard = () => {
 
   return (
     <div className="p-6">
+      <PostHogAuditActivity event="Audit Conducted List Viewed" />
+      {auditEvent && (
+        <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} />
+      )}
       <div className="mb-6">
         <div>
           <p className="text-[#1a1a1a] opacity-70 mb-2">

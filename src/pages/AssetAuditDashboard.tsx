@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2, Eye, ClipboardList } from 'lucide-react';
 import {
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/pagination';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { PostHogAuditActivity } from '@/components/PostHogAuditActivity';
 
 // Debounce utility
 const debounce = (func: (...args: any[]) => void, wait: number) => {
@@ -123,6 +124,12 @@ export const AssetAuditDashboard = () => {
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Audit Filter Applied" } | null>(null);
+  const auditEventKeyRef = useRef(0);
+  const captureAuditEvent = (event: "Audit Filter Applied") => {
+    auditEventKeyRef.current += 1;
+    setAuditEvent({ key: auditEventKeyRef.current, event });
+  };
 
   // Fetch data from API
   const fetchAudits = async (page: number = 1, filters: FilterParams = {}, statusFilter: string = '', search: string = '') => {
@@ -298,6 +305,9 @@ export const AssetAuditDashboard = () => {
   const handleApplyFilters = (filters: FilterParams) => {
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when applying filters
+    if (Object.keys(filters).length > 0) {
+      captureAuditEvent("Audit Filter Applied");
+    }
   };
 
   // const debouncedFetchData = useCallback(
@@ -833,6 +843,10 @@ export const AssetAuditDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <PostHogAuditActivity event="Audit Conducted List Viewed" properties={{ list_type: "asset_audit" }} />
+      {auditEvent && (
+        <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} />
+      )}
       <div className="p-6">
 
         {/* Breadcrumb */}

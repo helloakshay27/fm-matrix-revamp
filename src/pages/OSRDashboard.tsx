@@ -255,20 +255,19 @@ export const OSRDashboard = () => {
     </Button>
   );
 
-  // Left actions - buttons on the left side
+  // Header actions — shown on the left of the table toolbar (same row as search)
   const leftActions = (
-    <div className="flex items-center gap-2">
-      <Button 
+    <div className="flex items-center gap-3">
+      <Button
         onClick={handleGenerateReceipt}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
+        className="fm-button-fix fm-button-brand-solid px-4 py-2 rounded-lg flex items-center gap-2"
       >
         <FileText className="w-4 h-4" />
         Generate Receipt
       </Button>
-      
-      <Button 
+      <Button
         onClick={() => setShowCreateModal(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
+        className="fm-button-fix fm-button-brand-solid px-4 py-2 rounded-lg flex items-center gap-2"
       >
         <Plus className="w-4 h-4" />
         Add
@@ -278,29 +277,28 @@ export const OSRDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">OSR</h1>
-      <div className="bg-white rounded-lg border border-gray-200">
-        {/* EnhancedTaskTable with integrated toolbar */}
-        <EnhancedTaskTable
-          data={filteredData}
-          columns={columns}
-          renderCell={renderCell}
-          renderActions={renderActions}
-          enableSearch={true}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search"
-          leftActions={leftActions}
-          onFilterClick={() => setShowFilterModal(true)}
-          hideColumnsButton={false}
-          hideTableSearch={false}
-          hideTableExport={true}
-          storageKey="osr-dashboard"
-          emptyMessage="No OSR records found"
-          getItemId={(item) => item.id}
-          toolbarClassName="bg-white"
-        />
-      </div>
+      <h1 className="text-2xl font-bold text-[#2D2A26] mb-6">OSR</h1>
+
+      {/* EnhancedTaskTable with integrated toolbar */}
+      <EnhancedTaskTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search"
+        leftActions={leftActions}
+        onFilterClick={() => setShowFilterModal(true)}
+        hideColumnsButton={false}
+        hideTableSearch={false}
+        hideTableExport={true}
+        storageKey="osr-dashboard"
+        emptyMessage="No OSR records found"
+        getItemId={(item) => item.id}
+        toolbarClassName="items-center"
+      />
 
       {/* Create Schedule Modal */}
       <CreateScheduleModal

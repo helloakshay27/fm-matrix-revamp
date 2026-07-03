@@ -122,27 +122,20 @@ export const RVehiclesOutDashboard = () => {
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>vehicle parkings</span>
-          <span>&gt;</span>
-          <span>Vehicle Parkings</span>
-        </div>
-        
         <h1 className="text-2xl font-bold text-gray-900 mb-6">VEHICLE PARKINGS</h1>
         
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex w-full border-b border-[#e4ddd4] bg-[#F6F4EE] rounded-t-lg overflow-hidden">
             {['History', 'All', 'In', 'Out'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => handleTabClick(tab)}
-                className={`px-6 py-3 text-sm font-medium transition-colors ${
+                className={`flex-1 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? 'text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-[#DA7756] text-white'
+                    : 'bg-[#F2EEE9] text-[#8a7e72] hover:bg-[#ece4db]'
                 }`}
-                style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
               >
                 {tab}
               </button>

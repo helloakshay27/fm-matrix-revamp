@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SalesReport {
   id: number | null;
@@ -17,6 +18,7 @@ interface SalesReport {
 }
 
 const SalesBySalesPersonReport = () => {
+  const navigate = useNavigate();
   const [salesData, setSalesData] = useState<SalesReport[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +114,16 @@ const SalesBySalesPersonReport = () => {
     }
 
     fetchSalesReport(filters.fromDate, filters.toDate);
+  };
+
+  const handleRowClick = (row: SalesReport) => {
+    const params = new URLSearchParams({
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+      salesperson_id: String(row.id ?? ""),
+      salesperson_name: row.name,
+    });
+    navigate(`/reports/sales-details-by-sp?${params.toString()}`);
   };
 
 
@@ -246,7 +258,7 @@ const SalesBySalesPersonReport = () => {
 
                 <tr key={index} className="border-t hover:bg-gray-50">
 
-                  <td className="p-3 text-blue-600">{row.name}</td>
+                  <td className="p-3 text-blue-600 cursor-pointer hover:underline" onClick={() => handleRowClick(row)}>{row.name}</td>
 
                   <td className="p-3 text-center">{row.invoice_count}</td>
 

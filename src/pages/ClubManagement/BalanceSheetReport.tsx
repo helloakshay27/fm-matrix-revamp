@@ -12,6 +12,7 @@ interface Ledger {
   ledger_name: string;
   total: number;
   fixed_type: string | null;
+  is_drill_down_supported?: boolean;
 }
 
 interface ChildGroup {
@@ -147,6 +148,9 @@ const BalanceSheetReport: React.FC = () => {
 
     // render ledgers
     group.ledgers?.forEach((ledger) => {
+      const drillDownSupported = ledger?.is_drill_down_supported === true;
+      const targetUrl = `/accounting/reports/balance-sheet/details/${ledger.ledger_id}${drillDownSupported ? '?is_drill_down_supported=true' : ''}`;
+
       rows.push(
         <tr key={`ledger-${ledger.ledger_id}`}>
 
@@ -158,12 +162,13 @@ const BalanceSheetReport: React.FC = () => {
             className="border border-gray-300 px-4 py-3 font-normal"
             style={{ paddingLeft: `${(level + 1) * 20}px` }}
           >
-            <span
-              className="text-blue-700 cursor-pointer hover:underline"
-              onClick={() => navigate(`/accounting/reports/balance-sheet/details/${ledger.ledger_id}`)}
+            <a
+              href={targetUrl}
+              className={`text-blue-700 ${drillDownSupported ? 'underline' : ''}`}
+              onClick={(e) => { e.preventDefault(); navigate(targetUrl); }}
             >
               {ledger.ledger_name}
-            </span>
+            </a>
           </td>
 
           <td className="border border-gray-300 px-4 py-3 text-right">
@@ -208,14 +213,19 @@ const BalanceSheetReport: React.FC = () => {
             style={{ paddingLeft: `${indent}px` }}
           >
             {isLedger ? (
-              <span
-                className="text-blue-600 cursor-pointer hover:underline"
-                onClick={() =>
-                  navigate(`/accounting/reports/balance-sheet/details/${node.ledger_id}`)
-                }
-              >
-                {node.name}
-              </span>
+              (() => {
+                const drillDownSupported = node.is_drill_down_supported === true;
+                const targetUrl = `/accounting/reports/balance-sheet/details/${node.ledger_id}${drillDownSupported ? '?is_drill_down_supported=true' : ''}`;
+                return (
+                  <a
+                    href={targetUrl}
+                    className={`text-blue-600 ${drillDownSupported ? 'underline' : ''}`}
+                    onClick={(e) => { e.preventDefault(); navigate(targetUrl); }}
+                  >
+                    {node.name}
+                  </a>
+                );
+              })()
             ) : (
               node.name
             )}

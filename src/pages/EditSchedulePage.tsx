@@ -1,5 +1,6 @@
 'use strict';
 import React, { useState, useEffect } from 'react';
+import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -4280,6 +4281,7 @@ export const EditSchedulePage = () => {
 
   return (
     <Box sx={{ p: 3, maxWidth: '100%', margin: '0 auto' }}>
+      <PostHogScheduleActivity event="Schedule Detail Viewed" />
       {/* Header */}
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 600, color: '#1a1a1a' }}>
         Edit Schedule

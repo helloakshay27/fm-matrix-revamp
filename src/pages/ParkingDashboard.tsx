@@ -282,7 +282,7 @@ const ParkingDashboard = () => {
               <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <stat.icon
                   className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: '#C72030' }}
+                  style={{ color: '#DA7756' }}
                 />
               </div>
               <div className="flex flex-col min-w-0">
@@ -304,7 +304,7 @@ const ParkingDashboard = () => {
         <div className="flex gap-2">
           {shouldShow("Parking","create")&&(
           <Button 
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
+            className="bg-[#2D2A26] hover:bg-[#1f1c19] text-white px-4 py-2 rounded-none border-none shadow-none" 
             onClick={handleActionClick}
           >
              <Plus className="w-4 h-4 mr-2" />
@@ -317,7 +317,7 @@ const ParkingDashboard = () => {
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8a7e72] w-4 h-4" />
             <Input
               placeholder="Search clients..."
               value={searchTerm}

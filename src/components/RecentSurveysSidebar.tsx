@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Users, ArrowRight, RefreshCw } from 'lucide-react';
+import { Clock, Users, ArrowRight, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ticketManagementAPI } from '../services/ticketManagementAPI';
 import { toast } from 'sonner';
 
@@ -53,6 +53,9 @@ export const RecentSurveysSidebar: React.FC = () => {
     const navigate = useNavigate();
     const [recentSurveys, setRecentSurveys] = useState<RecentSurvey[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+        try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+    });
 
 
     const fetchRecentSurveys = async () => {
@@ -156,20 +159,49 @@ export const RecentSurveysSidebar: React.FC = () => {
     };
 
     return (
-        <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Responses</h3>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={fetchRecentSurveys}
-                    disabled={isLoading}
-                    className="text-gray-500 hover:text-gray-700"
+        <div
+            className="bg-white border flex flex-col transition-all duration-300"
+            style={{
+                boxShadow: "0px 4px 14.2px 0px #0000001A",
+                width: isCollapsed ? 48 : 350,
+                minWidth: isCollapsed ? 48 : 350,
+                maxWidth: isCollapsed ? 48 : 350,
+                height: "100%",
+                overflow: "hidden",
+            }}
+        >
+            {/* Header */}
+            <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+                {!isCollapsed && (
+                    <h3 className="text-base font-semibold" style={{ color: "#c72030" }}>Recent Responses</h3>
+                )}
+                <button
+                    onClick={() => setIsCollapsed((v) => {
+                        const next = !v;
+                        try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+                        return next;
+                    })}
+                    title={isCollapsed ? "Expand" : "Collapse"}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
                 >
-                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                </Button>
+                    {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                </button>
             </div>
 
+            {/* Collapsed vertical label */}
+            {isCollapsed && (
+                <div className="flex-1 flex items-center justify-center">
+                    <span
+                        className="text-xs font-semibold tracking-widest"
+                        style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+                    >
+                        Recent Responses
+                    </span>
+                </div>
+            )}
+
+            {!isCollapsed && (
+            <div className="flex-1 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {isLoading ? (
                 <div className="space-y-4">
                     {[...Array(3)].map((_, index) => (
@@ -247,8 +279,8 @@ export const RecentSurveysSidebar: React.FC = () => {
                     })}
                 </div>
             )}
-
-           
+            </div>
+            )}
         </div>
     );
 };

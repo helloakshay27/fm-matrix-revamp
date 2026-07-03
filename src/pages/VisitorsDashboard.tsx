@@ -50,117 +50,87 @@ const getCurrentSiteId = (): number => {
 
 
 // API Service using apiConfig
-const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string, searchTerm?: string) => {
+const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, filters?: VisitorFilters, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.UNEXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
 
-    // Add query parameters
     const urlWithParams = new URL(url);
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
 
-    // Add person to meet filter if provided
-    if (personToMeetId && personToMeetId !== 'all') {
-      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
-      console.log('✅ Added person to meet filter:', personToMeetId);
-    } else {
-      console.log('❌ No person to meet filter applied. PersonToMeetId:', personToMeetId);
-    }
+    if (filters?.hostId) urlWithParams.searchParams.append('host_id', filters.hostId);
+    if (filters?.visitorName) urlWithParams.searchParams.append('q[guest_name_cont]', filters.visitorName);
+    if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
+    if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
+    if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
 
-    // Add dynamic search filter if provided
-    if (searchTerm && searchTerm.trim() !== '') {
+    if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
-      console.log('✅ Added search filter:', searchTerm);
     }
-
-    console.log('🚀 Final URL for unexpected visitors:', urlWithParams.toString());
-    console.log('🚀 Full API call being made to:', urlWithParams.href);
 
     const response = await fetch(urlWithParams.toString(), options);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch unexpected visitors: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Response received:', data);
-    return data;
+    if (!response.ok) throw new Error(`Failed to fetch unexpected visitors: ${response.status}`);
+    return await response.json();
   } catch (error) {
     console.error('❌ Error fetching unexpected visitors:', error);
     throw error;
   }
 };
 
-const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20, searchTerm?: string) => {
+const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20, filters?: VisitorFilters, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.VISITOR_HISTORY);
     const options = getAuthenticatedFetchOptions();
 
-    // Add query parameters
     const urlWithParams = new URL(url);
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
 
-    // Add dynamic search filter if provided
-    if (searchTerm && searchTerm.trim() !== '') {
-      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
-      console.log('✅ Added search filter to visitor history:', searchTerm);
-    }
+    if (filters?.hostId) urlWithParams.searchParams.append('host_id', filters.hostId);
+    if (filters?.visitorName) urlWithParams.searchParams.append('q[guest_name_cont]', filters.visitorName);
+    if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
+    if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
+    if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
 
-    console.log('🚀 Fetching visitor history from:', urlWithParams.toString());
+    if (searchTerm?.trim()) {
+      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
+    }
 
     const response = await fetch(urlWithParams.toString(), options);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch visitor history: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Visitor history response received:', data);
-    return data;
+    if (!response.ok) throw new Error(`Failed to fetch visitor history: ${response.status}`);
+    return await response.json();
   } catch (error) {
     console.error('❌ Error fetching visitor history:', error);
     throw error;
   }
 };
 
-const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string, searchTerm?: string) => {
+const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, filters?: VisitorFilters, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.EXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
 
-    // Add query parameters
     const urlWithParams = new URL(url);
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
 
-    // Add person to meet filter if provided
-    if (personToMeetId && personToMeetId !== 'all') {
-      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
-    }
+    if (filters?.hostId) urlWithParams.searchParams.append('host_id', filters.hostId);
+    if (filters?.visitorName) urlWithParams.searchParams.append('q[guest_name_cont]', filters.visitorName);
+    if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
+    if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
+    if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
 
-    // Add dynamic search filter if provided
-    if (searchTerm && searchTerm.trim() !== '') {
+    if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
-      console.log('✅ Added search filter to expected visitors:', searchTerm);
     }
-
-    console.log('🚀 Final URL for expected visitors:', urlWithParams.toString());
-    console.log('🚀 Full API call being made to:', urlWithParams.href);
 
     const response = await fetch(urlWithParams.toString(), options);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch expected visitors: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Expected visitors response received:', data);
-    return data;
+    if (!response.ok) throw new Error(`Failed to fetch expected visitors: ${response.status}`);
+    return await response.json();
   } catch (error) {
     console.error('❌ Error fetching expected visitors:', error);
     throw error;
@@ -317,12 +287,7 @@ export const VisitorsDashboard = () => {
     setLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = unexpectedFilters.personToMeet;
-      console.log('🔍 Unexpected visitor filters:', unexpectedFilters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getUnexpectedVisitors(siteId, page, 20, unexpectedFilters, searchTerm);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -342,12 +307,7 @@ export const VisitorsDashboard = () => {
     setLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = filters?.personToMeet;
-      console.log('🔍 Applying filters directly:', filters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getUnexpectedVisitors(siteId, page, 20, filters, searchTerm);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -367,12 +327,7 @@ export const VisitorsDashboard = () => {
     setExpectedLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = expectedFilters.personToMeet;
-      console.log('🔍 Expected visitor filters:', expectedFilters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getExpectedVisitors(siteId, page, 20, expectedFilters, searchTerm);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -392,12 +347,7 @@ export const VisitorsDashboard = () => {
     setExpectedLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = filters?.personToMeet;
-      console.log('🔍 Applying filters to expected visitors:', filters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getExpectedVisitors(siteId, page, 20, filters, searchTerm);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -413,14 +363,12 @@ export const VisitorsDashboard = () => {
   };
 
   // Fetch visitor history
-  const fetchVisitorHistory = useCallback(async (page: number = 1, searchTerm?: string) => {
+  const fetchVisitorHistory = useCallback(async (page: number = 1, filters?: VisitorFilters, searchTerm?: string) => {
     setHistoryLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      console.log('🔍 Using site ID for visitor history:', siteId);
-      console.log('🔍 SearchTerm being passed to visitor history:', searchTerm);
-      const data = await getVisitorHistory(siteId, page, 20, searchTerm);
-     setVisitorHistoryData(data.visitors || []);
+      const data = await getVisitorHistory(siteId, page, 20, filters, searchTerm);
+      setVisitorHistoryData(data.visitors || []);
       setHistoryPagination(prev => ({
         ...prev,
         totalPages: data.pagination?.total_pages || 1,
@@ -485,57 +433,40 @@ export const VisitorsDashboard = () => {
   };
 
   const handleFilterApply = (filters: VisitorFilters) => {
-    console.log('🔧 Filter apply called with:', filters);
-    console.log('🔧 Active visitor type:', activeVisitorType);
-    console.log('🔧 Main tab:', mainTab);
     setVisitorFilters(filters);
     setIsFilterOpen(false);
 
-    // Set filters based on the active tab and visitor type
     if (mainTab === 'visitor') {
-      // For visitor history table
-      console.log('🔧 Setting visitor history filters:', filters);
-      fetchVisitorHistory(1); // Refresh history with filters if needed
+      fetchVisitorHistory(1, filters, searchTerm || undefined);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      console.log('🔧 Setting unexpected visitor filters:', filters);
       setUnexpectedFilters(filters);
       fetchUnexpectedVisitorsWithFilters(1, filters);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      console.log('🔧 Setting expected visitor filters:', filters);
       setExpectedFilters(filters);
       fetchExpectedVisitorsWithFilters(1, filters);
-    }
-    else if (visitorSubTab === 'visitor-out') {
+    } else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
-      fetchVisitorHistory();
+      fetchVisitorHistory(1, filters, searchTerm || undefined);
     }
   };
 
   const handleFilterReset = () => {
-    console.log('🔧 Filter reset called');
-    console.log('🔧 Active visitor type:', activeVisitorType);
-    console.log('🔧 Main tab:', mainTab);
     setVisitorFilters({});
     setIsFilterOpen(false);
 
-    // Reset filters based on the active tab and visitor type
     if (mainTab === 'visitor') {
-      // For visitor history table
-      console.log('🔧 Resetting visitor history filters');
-      fetchVisitorHistory(1); // Refresh history without filters
+      fetchVisitorHistory(1, {}, searchTerm || undefined);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      console.log('🔧 Resetting unexpected visitor filters');
       setUnexpectedFilters({});
       fetchUnexpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      console.log('🔧 Resetting expected visitor filters');
       setExpectedFilters({});
       fetchExpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
-      fetchVisitorHistory();
+      fetchVisitorHistory(1, {}, searchTerm || undefined);
     }
   };
 
@@ -1033,48 +964,31 @@ export const VisitorsDashboard = () => {
   // Debounced search effect - this triggers API calls when search term changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      console.log('🔍 Debounced search triggered with term:', searchTerm);
-
       if (mainTab === 'visitor') {
         if (visitorSubTab === 'history') {
-          console.log('📞 Calling fetchVisitorHistory with search term:', searchTerm);
-          fetchVisitorHistory(1, searchTerm);
+          fetchVisitorHistory(1, visitorFilters, searchTerm || undefined);
         } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-          console.log('📞 Calling fetchUnexpectedVisitors with search term:', searchTerm);
           fetchUnexpectedVisitors(1, searchTerm);
         } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-          console.log('📞 Calling fetchExpectedVisitors with search term:', searchTerm);
           fetchExpectedVisitors(1, searchTerm);
         } else if (visitorSubTab === 'visitor-out') {
-          console.log('📞 Calling fetchVisitorsOut with search term:', searchTerm);
           fetchVisitorsOut(1, searchTerm);
         }
       }
-    }, 300); // Reduced to 300ms for faster response
+    }, 300);
 
-    return () => {
-      console.log('🔍 Clearing search timeout');
-      clearTimeout(timeoutId);
-    };
-  }, [searchTerm, mainTab, visitorSubTab, activeVisitorType, fetchExpectedVisitors, fetchUnexpectedVisitors, fetchVisitorHistory, fetchVisitorsOut]);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, mainTab, visitorSubTab, activeVisitorType, visitorFilters, fetchExpectedVisitors, fetchUnexpectedVisitors, fetchVisitorHistory, fetchVisitorsOut]);
 
   const handleSearch = () => {
-    console.log('🔍 Manual search triggered for:', searchTerm);
-    console.log('📍 Current tab state - mainTab:', mainTab, 'visitorSubTab:', visitorSubTab, 'activeVisitorType:', activeVisitorType);
-
-    // Trigger immediate search
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
-        console.log('📞 Manual call to fetchVisitorHistory');
-        fetchVisitorHistory(1, searchTerm);
+        fetchVisitorHistory(1, visitorFilters, searchTerm || undefined);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-        console.log('📞 Manual call to fetchUnexpectedVisitors');
         fetchUnexpectedVisitors(1, searchTerm);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-        console.log('📞 Manual call to fetchExpectedVisitors');
         fetchExpectedVisitors(1, searchTerm);
       } else if (visitorSubTab === 'visitor-out') {
-        console.log('📞 Manual call to fetchVisitorsOut');
         fetchVisitorsOut(1, searchTerm);
       }
     }
@@ -1082,11 +996,9 @@ export const VisitorsDashboard = () => {
 
   const handleReset = () => {
     setSearchTerm('');
-    console.log('Search reset');
-    // Trigger search with empty term
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
-        fetchVisitorHistory(1, '');
+        fetchVisitorHistory(1, visitorFilters, undefined);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
         fetchUnexpectedVisitors(1, '');
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
@@ -1655,7 +1567,7 @@ const handlePageChange = (page: number) => {
     setHistoryPagination(prev => ({ ...prev, currentPage: page }));
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
-        fetchVisitorHistory(page, searchTerm);
+        fetchVisitorHistory(page, visitorFilters, searchTerm || undefined);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
         fetchUnexpectedVisitors(page, searchTerm);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
@@ -1976,7 +1888,7 @@ const handlePageChange = (page: number) => {
         onClose={() => setIsFilterOpen(false)}
         onApplyFilters={handleFilterApply}
         onResetFilters={handleFilterReset}
-        currentFilters={activeVisitorType === 'unexpected' ? unexpectedFilters : expectedFilters}
+        currentFilters={mainTab === 'visitor' ? visitorFilters : (activeVisitorType === 'unexpected' ? unexpectedFilters : expectedFilters)}
       />
 
       {/* Visitor Selection Panel */}

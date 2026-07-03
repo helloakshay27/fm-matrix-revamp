@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { BreakdownModal } from "@/components/BreakdownModal";
 import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { PostHogAssetActivity } from "@/components/PostHogAssetActivity";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -48,6 +49,12 @@ export const AssetDetailsPage = () => {
   const [showEnable, setShowEnable] = useState(false);
   const [activeTab, setActiveTab] = useState("asset-info");
   const [isPrintingQR, setIsPrintingQR] = useState(false);
+  const [assetDetailEvent, setAssetDetailEvent] = useState<{ key: number; event: "Asset Tab Viewed" | "Asset QR Viewed" | "Asset Status Inline-Edited"; properties?: Record<string, unknown> } | null>(null);
+  const assetDetailEventKeyRef = useRef(0);
+  const captureAssetDetailEvent = (event: "Asset Tab Viewed" | "Asset QR Viewed" | "Asset Status Inline-Edited", properties?: Record<string, unknown>) => {
+    assetDetailEventKeyRef.current += 1;
+    setAssetDetailEvent({ key: assetDetailEventKeyRef.current, event, properties });
+  };
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -184,6 +191,10 @@ export const AssetDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
+      <PostHogAssetActivity event="Asset Detail Viewed" />
+      {assetDetailEvent && (
+        <PostHogAssetActivity key={assetDetailEvent.key} event={assetDetailEvent.event} properties={assetDetailEvent.properties} />
+      )}
       {/* Header */}
       <div className="mb-6">
         <button
@@ -205,7 +216,7 @@ export const AssetDetailsPage = () => {
                 <StatusBadge
                   status={assetData.status || "-"}
                   assetId={assetData.id}
-                  onStatusUpdate={refreshAssetData}
+                  onStatusUpdate={async () => { await refreshAssetData(); captureAssetDetailEvent("Asset Status Inline-Edited"); }}
                   onBreakdownSelect={() => setIsBreakdownModalOpen(true)}
                 />
               </div>
@@ -228,7 +239,7 @@ export const AssetDetailsPage = () => {
                 Checklist
               </Button> */}
               <Button
-                onClick={() => setIsQRModalOpen(true)}
+                onClick={() => { setIsQRModalOpen(true); captureAssetDetailEvent("Asset QR Viewed"); }}
                 className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
               >
                 <svg
@@ -286,7 +297,7 @@ export const AssetDetailsPage = () => {
 
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Tabs defaultValue="asset-info" className="w-full" onValueChange={setActiveTab}>
+        <Tabs defaultValue="asset-info" className="w-full" onValueChange={(tab) => { setActiveTab(tab); captureAssetDetailEvent("Asset Tab Viewed", { tab_name: tab }); }}>
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
               value="asset-info"

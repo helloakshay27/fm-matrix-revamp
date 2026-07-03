@@ -4,6 +4,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
 
 interface ScheduleItem {
   id: number;
@@ -140,6 +141,7 @@ export const VendorAuditScheduledDashboard = () => {
 
   return (
     <div className="p-6">
+      <PostHogAuditActivity event="Audit Schedule List Viewed" />
       <div className="mb-6">
         <div>
 

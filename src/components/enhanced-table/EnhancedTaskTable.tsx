@@ -141,6 +141,7 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
+  onColumnCustomise?: () => void;
   handleExport?: (columnVisibility?: Record<string, boolean>) => void;
   toolbarClassName?: string;
   tableWrapperClassName?: string;
@@ -187,6 +188,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
+  onColumnCustomise,
   toolbarClassName,
   tableWrapperClassName,
   headerCellClassName,
@@ -294,6 +296,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         JSON.stringify(updatedVisibility)
       );
     }
+    onColumnCustomise?.();
   };
 
   // Use API search results or filter data based on search term
@@ -352,6 +355,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           JSON.stringify(newOrder)
         );
       }
+      onColumnCustomise?.();
     }
   };
 
@@ -506,7 +510,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
         <div className="flex items-center gap-2">
           {!hideTableSearch && enableSearch && (
-            <div className="relative max-w-sm">
+            <div className="relative w-[300px] max-w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
@@ -516,7 +520,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                     : searchInput
                 }
                 onChange={(e) => handleSearchInputChange(e.target.value)}
-                className="pl-10 pr-10"
+                className="h-9 pl-10 pr-10 rounded-lg border-gray-300 bg-white text-[#2D2A26] placeholder:text-[#8a7e72]"
               />
               {(externalSearchTerm !== undefined
                 ? externalSearchTerm
@@ -535,7 +539,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
             <Button
               variant="ghost"
               size="sm"
-              className="fm-button-fix !h-9 !w-9 !min-h-9 !p-0 !bg-white hover:!bg-white !border !border-[#DA7756] !text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+              className="fm-button-fix !h-9 !w-9 !min-h-9 !p-0 !bg-[#fffaf6] hover:!bg-[#fdf0ea] !border !border-[#DA7756] !text-[#DA7756] !rounded-lg [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
@@ -559,7 +563,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                             exportFileName
                           )
               }
-              className="flex items-center gap-2"
+              className="h-9 w-9 min-h-9 p-0 flex items-center justify-center rounded-lg border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
             >
               <Download className="w-4 h-4" />
             </Button>

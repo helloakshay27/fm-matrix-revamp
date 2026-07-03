@@ -16,12 +16,29 @@ function fmtDate(d: string) {
   return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function monthDateRange() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const from = `${y}-${m}-01`;
+  const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+  const to = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+  return { from, to };
+}
+
+function fmtMonthLabel(from: string, to: string) {
+  const f = fmtDate(from);
+  const t = fmtDate(to);
+  return `This Month · ${f} – ${t}`;
+}
+
 export default function PATMCeoDashboard() {
+  const { from, to } = monthDateRange();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [activePreset, setActivePreset] = useState('This Month');
-  const [fromDate, setFromDate] = useState('2026-05-01');
-  const [toDate, setToDate] = useState('2026-05-31');
-  const [activeLabel, setActiveLabel] = useState('This Month · 01 May – 31 May 2026');
+  const [fromDate, setFromDate] = useState(from);
+  const [toDate, setToDate] = useState(to);
+  const [activeLabel, setActiveLabel] = useState(fmtMonthLabel(from, to));
   const [aiOpen, setAiOpen] = useState(false);
 
   function handlePreset(label: string, from: string, to: string) {
@@ -61,7 +78,7 @@ export default function PATMCeoDashboard() {
           onApply={handleApply}
         />
 
-        <KpiStrip />
+        <KpiStrip fromDate={fromDate} toDate={toDate} />
 
         <StickyActionBar />
 
@@ -79,8 +96,8 @@ export default function PATMCeoDashboard() {
         </div>
 
         {/* TAB CONTENT */}
-        {activeTab === 'overview' && <OverviewTab />}
-        {activeTab === 'delivery' && <DeliveryTab />}
+        {activeTab === 'overview' && <OverviewTab fromDate={fromDate} toDate={toDate} />}
+        {activeTab === 'delivery' && <DeliveryTab fromDate={fromDate} toDate={toDate} />}
         {activeTab === 'team' && <TeamTab />}
       </div>
 

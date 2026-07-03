@@ -66,7 +66,7 @@ const EditCRMWalletPointExpiry = () => {
     };
 
     return (
-        <div className="p-[30px] min-h-screen bg-transparent">
+        <div className="p-[30px] min-h-screen bg-[#F6F4EE]">
             <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
                 <CardHeader
                     className="bg-[#F6F4EE]"
@@ -80,7 +80,7 @@ const EditCRMWalletPointExpiry = () => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent
-                    className="px-[50px] py-[25px] bg-[#F6F7F7]"
+                    className="px-[50px] py-[25px] bg-white"
                     style={{ border: "1px solid #D9D9D9" }}
                 >
                     <TextField
@@ -95,10 +95,10 @@ const EditCRMWalletPointExpiry = () => {
                         margin="normal"
                         sx={{
                             "& .MuiOutlinedInput-root": {
-                                background: "#F6F7F7 !important",
+                                    background: "#ffffff !important",
                             },
                             "& .MuiInputLabel-root": {
-                                background: "#F6F7F7 !important",
+                                    background: "#ffffff !important",
                             },
                         }}
                     />
@@ -119,10 +119,10 @@ const EditCRMWalletPointExpiry = () => {
                             margin="normal"
                             sx={{
                                 "& .MuiOutlinedInput-root": {
-                                    background: "#F6F7F7 !important",
+                                    background: "#ffffff !important",
                                 },
                                 "& .MuiInputLabel-root": {
-                                    background: "#F6F7F7 !important",
+                                    background: "#ffffff !important",
                                 },
                             }}
                         >
@@ -147,10 +147,10 @@ const EditCRMWalletPointExpiry = () => {
                             margin="normal"
                             sx={{
                                 "& .MuiOutlinedInput-root": {
-                                    background: "#F6F7F7 !important",
+                                    background: "#ffffff !important",
                                 },
                                 "& .MuiInputLabel-root": {
-                                    background: "#F6F7F7 !important",
+                                    background: "#ffffff !important",
                                 },
                             }}
                         >
@@ -172,8 +172,7 @@ const EditCRMWalletPointExpiry = () => {
                         setShowRuleCreateAlert(true);
                         setButtonClick("submit");
                     }}
-                    style={{ backgroundColor: "#C72030" }}
-                    className="text-white hover:bg-[#C72030]/90"
+                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
                 >
                     Update Rule
                 </Button>
@@ -183,7 +182,7 @@ const EditCRMWalletPointExpiry = () => {
                         setButtonClick("cancel");
                     }}
                     variant="outline"
-                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    className="fm-button-fix border-[#DA7756] text-[#DA7756] hover:bg-[#fdf0ea] px-4 py-2"
                 >
                     Cancel
                 </Button>

@@ -35,6 +35,7 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import {
     ChartNoAxesColumn,
+    ChartNoAxesGantt,
     ChevronDown,
     Eye,
     List,
@@ -79,6 +80,7 @@ import axios from "axios";
 import { baseClient } from "@/utils/withoutTokenBase";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { CommonImportModal } from "@/components/CommonImportModal";
+import TasksGanttChart from "@/components/TasksGanttChart";
 import { useSearchParams } from "react-router-dom";
 
 const Transition = forwardRef(function Transition(
@@ -424,7 +426,7 @@ const PauseReasonModal = ({
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                <h2 className="fm-button-fix fm-button-brand px-4 py-2">
                     Reason for Pause/End
                 </h2>
 
@@ -443,7 +445,7 @@ const PauseReasonModal = ({
                     <Button
                         onClick={handleEndTask}
                         disabled={isLoading}
-                        className="px-4 py-2 !bg-red-600 !text-white rounded-md !hover:bg-red-700 disabled:opacity-50"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                     >
                         {isLoading ? "Submitting..." : "End Task"}
                     </Button>
@@ -454,7 +456,7 @@ const PauseReasonModal = ({
                         <Button
                             onClick={handleSubmit}
                             disabled={isLoading}
-                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                            className="fm-button-fix fm-button-brand px-4 py-2"
                         >
                             {isLoading ? "Submitting..." : "Pause Task"}
                         </Button>
@@ -630,7 +632,7 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                     >
                         {isLoading ? "Submitting..." : "Submit"}
                     </Button>
@@ -762,9 +764,9 @@ const ProjectTasksPage = () => {
     const [projectName, setProjectName] = useState<string>("");
     const [milestoneName, setMilestoneName] = useState<string>("");
     const [openTaskModal, setOpenTaskModal] = useState(false);
-    const [selectedView, setSelectedView] = useState<"Kanban" | "List">(() => {
+    const [selectedView, setSelectedView] = useState<"Kanban" | "List" | "Gantt">(() => {
         const saved = localStorage.getItem("taskPageViewPreference");
-        return (saved as "Kanban" | "List") || "List";
+        return (saved as "Kanban" | "List" | "Gantt") || "List";
     });
     const [isOpen, setIsOpen] = useState(false);
     const [openStatusOptions, setOpenStatusOptions] = useState(false);
@@ -1030,7 +1032,7 @@ const ProjectTasksPage = () => {
             });
         }
 
-        const urlView = (searchParams.get("view") || "List") as "Kanban" | "List";
+        const urlView = (searchParams.get("view") || "List") as "Kanban" | "List" | "Gantt";
         if (urlView !== selectedView) {
             setSelectedView(urlView);
         }
@@ -2213,7 +2215,7 @@ const ProjectTasksPage = () => {
             toast.success("Task started successfully");
         } catch (error) {
             console.log(error);
-            toast.error("Failed to start task");
+            toast.error(error.response?.data?.error || "Failed to start task");
         }
     };
 
@@ -2846,6 +2848,8 @@ const ProjectTasksPage = () => {
                     <span className="text-[#C72030] font-medium flex items-center gap-1">
                         {selectedView === "Kanban" ? (
                             <ChartNoAxesColumn className="w-3.5 h-3.5 rotate-180 text-[#C72030]" />
+                        ) : selectedView === "Gantt" ? (
+                            <ChartNoAxesGantt className="w-3.5 h-3.5 rotate-180 text-[#C72030]" />
                         ) : (
                             <List className="w-3.5 h-3.5 text-[#C72030]" />
                         )}
@@ -2857,6 +2861,18 @@ const ProjectTasksPage = () => {
                 {isOpen && (
                     <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[150px]">
                         <div className="py-2">
+                            <button
+                                onClick={() => {
+                                    setSelectedView("Gantt");
+                                    setIsOpen(false);
+                                }}
+                                className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                            >
+                                <div className="w-4 flex justify-center">
+                                    <ChartNoAxesGantt className="rotate-180 text-[#C72030]" />
+                                </div>
+                                <span className="text-gray-700">Gantt</span>
+                            </button>
                             <button
                                 onClick={() => {
                                     setSelectedView("Kanban");
@@ -2922,6 +2938,106 @@ const ProjectTasksPage = () => {
         </div>
     );
 
+    if (selectedView === "Gantt") {
+        return (
+            <div className="p-3 sm:p-6">
+                {location.pathname.includes("projects") && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate(-1)}
+                        className="px-0 mb-2"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back
+                    </Button>
+                )}
+                <div className="flex items-center justify-between mb-4">
+                    <Button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        onClick={handleOpenDialog}
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add
+                    </Button>
+                    <div className="relative" ref={viewDropdownRef}>
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                        >
+                            <span className="text-[#C72030] font-medium flex items-center gap-2">
+                                <ChartNoAxesGantt className="w-4 h-4 rotate-180 text-[#C72030]" />
+                                {selectedView}
+                            </span>
+                            <ChevronDown className="w-4 h-4 text-gray-600" />
+                        </button>
+                        {isOpen && (
+                            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                                <div className="py-2">
+                                    <button
+                                        onClick={() => { setSelectedView("Gantt"); setIsOpen(false); }}
+                                        className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                    >
+                                        <div className="w-4 flex justify-center">
+                                            <ChartNoAxesGantt className="rotate-180 text-[#C72030]" />
+                                        </div>
+                                        <span className="text-gray-700">Gantt</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { setSelectedView("Kanban"); setIsOpen(false); }}
+                                        className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                    >
+                                        <div className="w-4 flex justify-center">
+                                            <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
+                                        </div>
+                                        <span className="text-gray-700">Kanban</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { setSelectedView("List"); setIsOpen(false); }}
+                                        className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                    >
+                                        <div className="w-4 flex justify-center">
+                                            <List className="w-4 h-4 text-[#C72030]" />
+                                        </div>
+                                        <span className="text-gray-700">List</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <TasksGanttChart
+                    projectId={projectId}
+                    milestoneId={mid}
+                    taskType={taskType}
+                    filters={buildFilters()}
+                />
+
+                <Dialog
+                    open={openTaskModal}
+                    onClose={handleCloseModal}
+                    TransitionComponent={Transition}
+                    maxWidth={false}
+                >
+                    <DialogContent
+                        className="w-full sm:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                        style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                        sx={{ padding: "0 !important", "& .MuiDialogContent-root": { padding: "0 !important", overflow: "auto" } }}
+                    >
+                        <div className="sticky top-0 bg-white z-10">
+                            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+                            <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={handleCloseModal} />
+                            <hr className="border border-[#E95420] mt-4" />
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            <ProjectTaskCreateModal isEdit={false} onCloseModal={handleCloseModal} />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        );
+    }
+
     if (selectedView === "Kanban") {
         return (
             <div className="p-3 sm:p-6">
@@ -2978,6 +3094,8 @@ const ProjectTasksPage = () => {
                                 <span className="text-[#C72030] font-medium flex items-center gap-2">
                                     {selectedView === "Kanban" ? (
                                         <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+                                    ) : selectedView === "Gantt" ? (
+                                        <ChartNoAxesGantt className="w-4 h-4 rotate-180 text-[#C72030]" />
                                     ) : (
                                         <List className="w-4 h-4 text-[#C72030]" />
                                     )}
@@ -2989,6 +3107,18 @@ const ProjectTasksPage = () => {
                             {isOpen && (
                                 <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
                                     <div className="py-2">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedView("Gantt");
+                                                setIsOpen(false);
+                                            }}
+                                            className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                        >
+                                            <div className="w-4 flex justify-center">
+                                                <ChartNoAxesGantt className="rotate-180 text-[#C72030]" />
+                                            </div>
+                                            <span className="text-gray-700">Gantt</span>
+                                        </button>
                                         <button
                                             onClick={() => {
                                                 setSelectedView("Kanban");

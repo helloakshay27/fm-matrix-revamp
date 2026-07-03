@@ -413,7 +413,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/employee/company-hub-new");
         break;
       case "Business Compass":
-        navigate("/business-compass");
+        navigate("/business-compass/profile");
         break;
       default:
         break;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -18,6 +18,41 @@ const getTransactionRoute = (transactionType: string, transactionId: any): strin
     return null;
 };
 
+const getOpeningStockLedgerRows = (payload: any): any[] => {
+    if (Array.isArray(payload)) return payload;
+
+    const candidates = [
+        payload?.rows,
+        payload?.opening_stock_ledger,
+        payload?.opening_stock_ledgers,
+        payload?.opening_stock_ledger_records,
+        payload?.records,
+        payload?.transaction_records,
+        payload?.ledger_records,
+        payload?.data,
+    ];
+
+    const rows = candidates.find(Array.isArray);
+    return rows || [];
+};
+
+const formatAmount = (value: any) => {
+    if (value === null || value === undefined || value === "") return "-";
+    const numberValue = Number(value);
+    return Number.isNaN(numberValue) ? String(value) : numberValue.toFixed(2);
+};
+
+const getDrillDownRoute = (transaction: any): string | null => {
+    const route = getTransactionRoute(transaction.transaction_type, transaction.transaction_id);
+    if (route) return route;
+
+    if (transaction.is_drill_down_supported === true && transaction.transaction_id) {
+        return `/accounting/transactions/details/${transaction.transaction_id}`;
+    }
+
+    return null;
+};
+
 export const ProfitAndLossDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -26,20 +61,39 @@ export const ProfitAndLossDetails = () => {
     const token = localStorage.getItem("token");
     const lock_account_id = localStorage.getItem("lock_account_id");
 
+    const location = useLocation();
     const [loading, setLoading] = useState(false);
     const [ledgerLoading, setLedgerLoading] = useState(false);
+    const [openingStockLoading, setOpeningStockLoading] = useState(false);
     const [ledgerDetails, setLedgerDetails] = useState<any | null>(null);
     const [accountName, setAccountName] = useState("");
     const [accountType, setAccountType] = useState("");
     const [closingBalance, setClosingBalance] = useState(0);
     const [description, setDescription] = useState("");
     const [transactions, setTransactions] = useState<any[]>([]);
+    const [openingStockLedgerRows, setOpeningStockLedgerRows] = useState<any[]>([]);
     const [date, setDate] = useState("");
+
+    const showOpeningStockLedger = new URLSearchParams(location.search).get("is_drill_down_supported") === "true";
 
     // Fetch ledger details from correct API
     const formatDate = (dateString: string) => {
         if (!dateString) return "-";
-        return new Date(dateString).toLocaleDateString("en-GB", {
+
+        const normalized = dateString.trim();
+        let dateObj: Date | null = null;
+
+        // support dd-mm-yyyy and yyyy-mm-dd
+        const dmyMatch = normalized.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (dmyMatch) {
+            const [, d, m, y] = dmyMatch;
+            dateObj = new Date(`${y}-${m}-${d}`);
+        } else {
+            dateObj = new Date(normalized);
+        }
+
+        if (Number.isNaN(dateObj?.getTime())) return normalized;
+        return dateObj.toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -73,6 +127,7 @@ export const ProfitAndLossDetails = () => {
                     credit: r.tr_type === "cr" ? r.amount : 0,
                     amount: r.amount || 0,
                     transaction_id: r.transaction_detail?.id || null,
+                    is_drill_down_supported: r.is_drill_down_supported === true || r.transaction_detail?.is_drill_down_supported === true,
                 }))
                 : [];
 
@@ -90,6 +145,28 @@ export const ProfitAndLossDetails = () => {
             setLedgerDetails(null);
         } finally {
             setLedgerLoading(false);
+        }
+    };
+
+    const fetchOpeningStockLedger = async () => {
+        if (!baseUrl || !token || !lock_account_id) return;
+
+        setOpeningStockLoading(true);
+        try {
+            const res = await axios.get(
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/opening_stock_ledger.json`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            const rows = res.data?.rows || getOpeningStockLedgerRows(res.data);
+            setOpeningStockLedgerRows(rows);
+        } catch (err) {
+            console.error(err);
+            setOpeningStockLedgerRows([]);
+        } finally {
+            setOpeningStockLoading(false);
         }
     };
 
@@ -134,8 +211,11 @@ export const ProfitAndLossDetails = () => {
 
     useEffect(() => {
         fetchLedgerDetails();
+        if (showOpeningStockLedger) {
+            fetchOpeningStockLedger();
+        }
         // fetchAccountDetails();
-    }, [id]);
+    }, [id, showOpeningStockLedger]);
 
     if (loading || ledgerLoading) {
         return (
@@ -203,6 +283,7 @@ export const ProfitAndLossDetails = () => {
             </div> */}
 
             {/* Recent Transactions */}
+            <div className="space-y-6">
             <div className="border rounded-md">
                 <div className="flex justify-center items-center px-4 py-3 border-b bg-gray-50">
                     <h1 className="font-medium text-gray-800">Account  Transactions</h1>
@@ -268,20 +349,20 @@ export const ProfitAndLossDetails = () => {
                                         <td className="border border-gray-300 px-4 py-3">{t.reference_number}</td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.debit ? (
-                                                (() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
+                                                (() => { const route = getDrillDownRoute(t); return route ? (
                                                     <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.debit).toFixed(2)}</span>
                                                 ) : `₹${Number(t.debit).toFixed(2)}`; })()
                                             ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.credit ? (
-                                                (() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
+                                                (() => { const route = getDrillDownRoute(t); return route ? (
                                                     <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.credit).toFixed(2)}</span>
                                                 ) : `₹${Number(t.credit).toFixed(2)}`; })()
                                             ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right font-medium">
-                                            {(() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
+                                            {(() => { const route = getDrillDownRoute(t); return route ? (
                                                 <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.amount).toFixed(2)}</span>
                                             ) : `₹${Number(t.amount).toFixed(2)}`; })()}
                                         </td>
@@ -299,6 +380,53 @@ export const ProfitAndLossDetails = () => {
                 </div>
 
             </div >
+            {showOpeningStockLedger && (
+            <div className="border rounded-md">
+                <div className="flex justify-center items-center px-4 py-3 border-b bg-gray-50">
+                    <h1 className="font-medium text-gray-800">Opening Stock Ledger</h1>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                        <thead>
+                            <tr className="bg-[#E5E0D3]">
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Date</th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Transaction Type</th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Item Name</th>
+                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Qty</th>
+                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Rate</th>
+                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {openingStockLedgerRows.map((row, i) => (
+                                    <tr key={row.id || `${row.item_name || ''}-${i}`} className="hover:bg-gray-50">
+                                        <td className="border border-gray-300 px-4 py-3 whitespace-nowrap">
+                                            {formatDate(row.date || row.transaction_date || row.created_at)}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3 text-gray-700">
+                                            {row.transaction_type || "-"}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            {row.item_name || row.ledger_name || row.account_name || "-"}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">
+                                            {formatAmount(row.qty)}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">
+                                            {formatAmount(row.rate)}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right font-medium">
+                                            {formatAmount(row.value)}
+                                        </td>
+                                    </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            )}
+            </div>
         </div >
     );
 };

@@ -125,7 +125,7 @@ export const ShiftDashboard = () => {
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Adds
+              Add
             </Button>
           </div>
         </div>

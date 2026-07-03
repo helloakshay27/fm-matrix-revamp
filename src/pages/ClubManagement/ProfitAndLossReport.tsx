@@ -11,6 +11,7 @@ interface Ledger {
   total: number;
   account_code?: string;
   fixed_type: string | null;
+  is_drill_down_supported?: boolean;
 }
 
 // interface Group {
@@ -83,22 +84,25 @@ const ProfitAndLossReport: React.FC = () => {
       // Ledgers
       if (group.ledgers) {
         group.ledgers.forEach((ledger: any) => {
+          const drillDownSupported = ledger?.is_drill_down_supported === true;
+          const targetUrl = `/accounting/reports/profit-and-loss/details/${ledger.ledger_id}${drillDownSupported ? '?is_drill_down_supported=true' : ''}`;
+
           rows.push(
             <tr key={`ledger-${ledger.ledger_id}`} className="hover:bg-gray-50">
               <td
                 className="border px-4 py-2"
                 style={{ paddingLeft: `${(depth + 1) * 10}px` }}
               >
-                <span
-                  className="text-blue-600 cursor-pointer hover:underline"
-                  onClick={() =>
-                    navigate(
-                      `/accounting/reports/profit-and-loss/details/${ledger.ledger_id}`
-                    )
-                  }
+                <a
+                  href={targetUrl}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigate(targetUrl);
+                  }}
+                  className="font-medium text-blue-600 underline"
                 >
                   {ledger.ledger_name}
-                </span>
+                </a>
               </td>
               <td className="border px-4 py-2">
                 {ledger.account_code || "-"}

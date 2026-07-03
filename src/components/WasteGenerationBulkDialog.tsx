@@ -48,7 +48,7 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
       // Create FormData with the required field name
       const formData = new FormData();
       formData.append('pms_waste_generation_file', selectedFile);
-
+// waste generatui
       const importUrl = getFullUrl('/pms/waste_generations/waste_generation_import.json');
 
       const response = await fetch(importUrl, {

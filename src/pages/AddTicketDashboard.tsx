@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PostHogTicketActivity } from '@/components/PostHogTicketActivity';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -287,6 +288,17 @@ const getUserProfileFromAlternativeAPI = async () => {
 
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
+
+  const [ticketEvent, setTicketEvent] = useState<{
+    event: "Ticket Create Form Opened" | "ticket creation successful" | "ticket abandoned";
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  useEffect(() => {
+    if (ticketEvent?.event === 'ticket abandoned') {
+      navigate(-1);
+    }
+  }, [ticketEvent, navigate]);
 
   // Form state
   const [onBehalfOf, setOnBehalfOf] = useState('self');
@@ -1024,6 +1036,10 @@ export const AddTicketDashboard = () => {
     }
   };
 
+  const handleCancel = () => {
+    setTicketEvent({ event: 'ticket abandoned' });
+  };
+
   // Handle form submission
   const handleSubmit = async () => {
     // Validation
@@ -1127,6 +1143,8 @@ export const AddTicketDashboard = () => {
         ? `Ticket created successfully - ${ticketNumber}`
         : "Ticket created successfully!");
 
+      setTicketEvent({ event: 'ticket creation successful', properties: { ticket_number: ticketNumber } });
+
       // navigate('/maintenance/ticket');
       const currentPath = window.location.pathname;
 
@@ -1175,6 +1193,10 @@ export const AddTicketDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      <PostHogTicketActivity key="Ticket Create Form Opened" event="Ticket Create Form Opened" />
+      {ticketEvent && (
+        <PostHogTicketActivity key={ticketEvent.event} event={ticketEvent.event} properties={ticketEvent.properties} />
+      )}
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
@@ -1898,7 +1920,7 @@ export const AddTicketDashboard = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(-1)}
+            onClick={handleCancel}
             className="fm-button-fix border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
           >
             Cancel
