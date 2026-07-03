@@ -3,17 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { 
+import {
   Plus, Upload, Eye, Trash2, Loader2, X, BarChart3,
-  Calendar, Filter, RefreshCw, Leaf, Activity, Download 
+  Calendar, Filter, RefreshCw, Leaf, Activity, Download,
+  Droplets, Percent, Package
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
-import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters } from '../services/wasteGenerationAPI';
+import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters, WasteGenerationCounts } from '../services/wasteGenerationAPI';
 import { useLayout } from '@/contexts/LayoutContext';
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { API_CONFIG, getAuthHeader, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { format, subYears } from 'date-fns';
 import {
@@ -166,6 +167,7 @@ const UtilityWasteGenerationDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilters, setActiveFilters] = useState<WasteGenerationFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [listCounts, setListCounts] = useState<WasteGenerationCounts | null>(null);
 
   // ── Analytics States ─────────────────────────────────────────────────────
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -180,7 +182,7 @@ const UtilityWasteGenerationDashboard = () => {
 
   // KPI card data
   const [kpiData, setKpiData] = useState<{
-    total_waste: number; total_recycled: number; dry_waste: number; hazardous_waste: number;
+    total_waste: number; total_recycled: number; dry_waste: number; hazardous_waste: number; wet_waste?: number;
   } | null>(null);
   const [kpiLoading, setKpiLoading] = useState(false);
 
@@ -296,6 +298,7 @@ useEffect(() => {
       setIsLoading(true);
       const response = await fetchWasteGenerations(page, filters);
       setWasteGenerations(response.waste_generations || []);
+      if (response.counts) setListCounts(response.counts);
     } catch (err) {
       setWasteGenerations([]);
     } finally {
@@ -311,6 +314,35 @@ useEffect(() => {
   const handleActionClick = () => setShowActionPanel(!showActionPanel);
   const handleClearSelection = () => setShowActionPanel(false);
   const handleApplyFilters = (filters: WasteGenerationFilters) => { setActiveFilters(filters); setCurrentPage(1); };
+
+  const handleExport = async (filters: WasteGenerationFilters) => {
+    try {
+      const queryParts: string[] = [];
+      if (filters.commodity_id_eq) queryParts.push(`q[commodity_id_eq]=${encodeURIComponent(filters.commodity_id_eq)}`);
+      if (filters.category_id_eq) queryParts.push(`q[category_id_eq]=${encodeURIComponent(filters.category_id_eq)}`);
+      if (filters.date_range) queryParts.push(`q[date_range]=${encodeURIComponent(filters.date_range)}`);
+      if (filters.created_by_firstname_or_lastname_cont) queryParts.push(`q[created_by_firstname_or_lastname_cont]=${encodeURIComponent(filters.created_by_firstname_or_lastname_cont)}`);
+      if (filters.entity_id_eq) queryParts.push(`q[entity_id_eq]=${encodeURIComponent(filters.entity_id_eq)}`);
+      if (filters.resource_type_eq) queryParts.push(`q[resource_type_eq]=${encodeURIComponent(filters.resource_type_eq)}`);
+      if (filters.status_eq) queryParts.push(`q[status_eq]=${encodeURIComponent(filters.status_eq)}`);
+      if (filters.devise_id_cont) queryParts.push(`q[devise_id_cont]=${encodeURIComponent(filters.devise_id_cont)}`);
+      const queryString = queryParts.join('&');
+      const url = getFullUrl(`/pms/waste_generations.xlsx?${queryString}`);
+      const response = await fetch(url, getAuthenticatedFetchOptions('GET'));
+      if (!response.ok) { toast.error('Export failed'); return; }
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'waste_generations.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Data exported successfully!');
+    } catch { toast.error('Export failed'); }
+  };
+
   const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
 
   if (isLoading && wasteGenerations.length === 0) return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
@@ -334,22 +366,97 @@ useEffect(() => {
           </TabsList>
 
           {/* ===================== LIST TAB ===================== */}
-          <TabsContent value="list" className="mt-6">
+          <TabsContent value="list" className="mt-6 space-y-6">
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                {
+                  label: 'Total Waste',
+                  value: listCounts ? `${listCounts.total_waste.toLocaleString('en-IN')} KG` : '—',
+                  icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Total Recycled',
+                  value: listCounts ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
+                  icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Recycling %',
+                  value: listCounts ? `${listCounts.recycling_percentage}%` : '—',
+                  icon: <Percent className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Dry Waste',
+                  value: listCounts ? `${listCounts.dry_waste.toLocaleString('en-IN')} KG` : '—',
+                  icon: <Package className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Hazardous Waste',
+                  value: listCounts ? `${listCounts.hazardous_waste.toLocaleString('en-IN')} KG` : '—',
+                  icon: <Activity className="w-6 h-6 text-[#C72030]" />,
+                },
+              ].map((card, i) => (
+                <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
+                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+                    {isLoading ? <Loader2 className="animate-spin w-6 h-6 text-[#C72030]" /> : card.icon}
+                  </div>
+                  <div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">{isLoading ? '…' : card.value}</div>
+                    <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Table */}
             <EnhancedTable
               data={wasteGenerations}
               columns={[
                 { key: 'actions', label: 'Actions' },
-                { key: 'location_details', label: 'Location' },
-                { key: 'vendor', label: 'Vendor' },
-                { key: 'category', label: 'Category' },
-                { key: 'waste_unit', label: 'Generated (KG)' },
-                { key: 'wg_date', label: 'Waste Date' },
+                { key: 'id', label: 'ID' },
+                { key: 'date', label: 'Date' },
+                { key: 'time', label: 'Time' },
+                { key: 'user_type', label: 'User Type' },
+                { key: 'client_name', label: 'Client / Tenant Name' },
+                { key: 'user_name', label: 'User Name' },
+                { key: 'email', label: 'Email Id' },
+                { key: 'waste_category', label: 'Waste Category' },
+                { key: 'waste_subcategory', label: 'Waste Subcategory' },
+                { key: 'no_of_bags', label: 'No. of Bags' },
+                { key: 'total_weight', label: 'Total Weight (KG)' },
+                { key: 'device_name', label: 'Device Name / Tab ID' },
+                { key: 'status', label: 'Status' },
+                { key: 'entry_source', label: 'Entry Source' },
+                { key: 'recycled_pct', label: 'Recycled %' },
               ]}
-              renderCell={(item: WasteGeneration, key) => {
+              renderCell={(item: WasteGeneration, key: string) => {
                 if (key === 'actions') return shouldShow("Waste Generation", "show") ? <Button variant="ghost" onClick={() => handleView(item.id)}><Eye className="h-4 w-4" /></Button> : null;
-                if (key === 'vendor') return item.vendor?.company_name || 'N/A';
-                if (key === 'category') return item.category?.category_name || 'N/A';
-                return item[key] || 'N/A';
+                if (key === 'id') return item.id ?? '-';
+                if (key === 'date') return item.wg_date ? item.wg_date.split('T')[0] : '-';
+                if (key === 'time') {
+                  if (item.created_at) {
+                    try { return new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
+                    catch { return '-'; }
+                  }
+                  return '-';
+                }
+                if (key === 'user_type') return item.user_type || item.resource_type || '-';
+                if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
+                if (key === 'user_name') return item.user_name || item.created_by?.full_name || '-';
+                if (key === 'email') return item.created_by?.email || '-';
+                if (key === 'waste_category') return item.category?.category_name || '-';
+                if (key === 'waste_subcategory') return item.commodity?.category_name || '-';
+                if (key === 'no_of_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
+                if (key === 'total_weight') return item.waste_unit != null ? `${item.waste_unit} KG` : '-';
+                if (key === 'device_name') return item.device_id != null ? item.device_id.toString() : '-';
+                if (key === 'status') return item.status || '-';
+                if (key === 'entry_source') return (item as Record<string, unknown>).entry_source as string || '-';
+                if (key === 'recycled_pct') {
+                  const pct = item.waste_unit > 0 ? Math.round((item.recycled_unit / item.waste_unit) * 100) : 0;
+                  return `${pct}%`;
+                }
+                return '-';
               }}
               getItemId={(item) => item.id.toString()}
               onSearchChange={setSearchTerm}
@@ -442,7 +549,7 @@ useEffect(() => {
         </div>
       )}
 
-      <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} onExport={() => {}} />
+      <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} onExport={handleExport} />
       <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
   <AssetAnalyticsFilterDialog
   isOpen={isAnalyticsFilterOpen}
