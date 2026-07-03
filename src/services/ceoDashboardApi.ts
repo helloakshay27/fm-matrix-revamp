@@ -44,8 +44,8 @@ export const fetchCeoDashboardOverallSummary = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardOverallSummaryResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/overall_summary.json`,
@@ -67,8 +67,8 @@ export const fetchCeoDashboardPortfolioHealth = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardPortfolioHealthResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/portfolio_health.json`,
@@ -90,8 +90,8 @@ export const fetchCeoDashboardProjectTypeClassification = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardProjectTypeClassificationResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/project_type_classification.json`,
@@ -113,8 +113,8 @@ export const fetchCeoDashboardProjectMatrix = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardProjectMatrixResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/project_matrix.json`,
@@ -136,8 +136,8 @@ export const fetchCeoDashboardDepartmentHealthScorecard = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardDepartmentHealthScorecardResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/department_health_scorecard.json`,
@@ -159,8 +159,8 @@ export const fetchCeoDashboardSprintHealthDetailed = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardSprintHealthDetailedResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/sprint_health_detailed.json`,
@@ -182,8 +182,8 @@ export const fetchCeoDashboardDeliveryAccountability = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardDeliveryAccountabilityResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/delivery_accountability.json`,
@@ -205,8 +205,8 @@ export const fetchCeoDashboardProjectInactivityAlert = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardProjectInactivityAlertResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/project_inactivity_alert.json`,
@@ -228,8 +228,8 @@ export const fetchCeoDashboardBacklogAndIssues = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardBacklogAndIssuesResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/backlog_and_issues.json`,
@@ -251,8 +251,8 @@ export const fetchCeoDashboardIssueResolution = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardIssueResolutionResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/issue_resolution.json`,
@@ -274,8 +274,8 @@ export const fetchCeoDashboardMomEffectiveness = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardMomEffectivenessResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/mom_effectiveness.json`,
@@ -297,8 +297,8 @@ export const fetchCeoDashboardEfficiencyOverview = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardEfficiencyOverviewResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/efficiency_overview.json`,
@@ -320,8 +320,8 @@ export const fetchCeoDashboardPeopleAlerts = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardPeopleAlertsResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/people_alerts.json`,
@@ -343,8 +343,8 @@ export const fetchCeoDashboardEffortAndOverdue = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardEffortAndOverdueResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/effort_and_overdue.json`,
@@ -366,8 +366,8 @@ export const fetchCeoDashboardPersonWiseAgeingMatrix = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardPersonWiseAgeingMatrixResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/person_wise_ageing_matrix.json`,
@@ -389,8 +389,8 @@ export const fetchCeoDashboardPerPersonBreakdown = async (
   const token = getToken();
 
   const params: Record<string, string> = {};
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
+  if (fromDate) params.date_from = fromDate;
+  if (toDate) params.date_to = toDate;
 
   const response = await axios.get<CeoDashboardPerPersonBreakdownResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/per_person_breakdown.json`,
