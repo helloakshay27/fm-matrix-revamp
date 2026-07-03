@@ -23,6 +23,16 @@ import type {
   CeoDashboardIssueResolutionResponse,
   CeoDashboardMomEffectiveness,
   CeoDashboardMomEffectivenessResponse,
+  CeoDashboardEfficiencyOverview,
+  CeoDashboardEfficiencyOverviewResponse,
+  CeoDashboardPeopleAlerts,
+  CeoDashboardPeopleAlertsResponse,
+  CeoDashboardEffortAndOverdue,
+  CeoDashboardEffortAndOverdueResponse,
+  CeoDashboardPersonWiseAgeingMatrix,
+  CeoDashboardPersonWiseAgeingMatrixResponse,
+  CeoDashboardPerPersonBreakdown,
+  CeoDashboardPerPersonBreakdownResponse,
 } from "@/types/ceoDashboard";
 
 const CEO_DASHBOARD_BASE_URL = localStorage.getItem("baseUrl")
@@ -269,6 +279,121 @@ export const fetchCeoDashboardMomEffectiveness = async (
 
   const response = await axios.get<CeoDashboardMomEffectivenessResponse>(
     `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/mom_effectiveness.json`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params,
+    }
+  );
+
+  return response.data.data;
+};
+
+export const fetchCeoDashboardEfficiencyOverview = async (
+  fromDate?: string,
+  toDate?: string
+): Promise<CeoDashboardEfficiencyOverview> => {
+  const token = getToken();
+
+  const params: Record<string, string> = {};
+  if (fromDate) params.from_date = fromDate;
+  if (toDate) params.to_date = toDate;
+
+  const response = await axios.get<CeoDashboardEfficiencyOverviewResponse>(
+    `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/efficiency_overview.json`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params,
+    }
+  );
+
+  return response.data.data;
+};
+
+export const fetchCeoDashboardPeopleAlerts = async (
+  fromDate?: string,
+  toDate?: string
+): Promise<CeoDashboardPeopleAlerts> => {
+  const token = getToken();
+
+  const params: Record<string, string> = {};
+  if (fromDate) params.from_date = fromDate;
+  if (toDate) params.to_date = toDate;
+
+  const response = await axios.get<CeoDashboardPeopleAlertsResponse>(
+    `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/people_alerts.json`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params,
+    }
+  );
+
+  return response.data.data;
+};
+
+export const fetchCeoDashboardEffortAndOverdue = async (
+  fromDate?: string,
+  toDate?: string
+): Promise<CeoDashboardEffortAndOverdue> => {
+  const token = getToken();
+
+  const params: Record<string, string> = {};
+  if (fromDate) params.from_date = fromDate;
+  if (toDate) params.to_date = toDate;
+
+  const response = await axios.get<CeoDashboardEffortAndOverdueResponse>(
+    `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/effort_and_overdue.json`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params,
+    }
+  );
+
+  return response.data.data;
+};
+
+export const fetchCeoDashboardPersonWiseAgeingMatrix = async (
+  fromDate?: string,
+  toDate?: string
+): Promise<CeoDashboardPersonWiseAgeingMatrix> => {
+  const token = getToken();
+
+  const params: Record<string, string> = {};
+  if (fromDate) params.from_date = fromDate;
+  if (toDate) params.to_date = toDate;
+
+  const response = await axios.get<CeoDashboardPersonWiseAgeingMatrixResponse>(
+    `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/person_wise_ageing_matrix.json`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params,
+    }
+  );
+
+  return response.data.data;
+};
+
+export const fetchCeoDashboardPerPersonBreakdown = async (
+  fromDate?: string,
+  toDate?: string
+): Promise<CeoDashboardPerPersonBreakdown> => {
+  const token = getToken();
+
+  const params: Record<string, string> = {};
+  if (fromDate) params.from_date = fromDate;
+  if (toDate) params.to_date = toDate;
+
+  const response = await axios.get<CeoDashboardPerPersonBreakdownResponse>(
+    `https://${CEO_DASHBOARD_BASE_URL}/ceo_dashboard/per_person_breakdown.json`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

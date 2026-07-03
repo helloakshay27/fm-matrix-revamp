@@ -529,3 +529,307 @@ export interface CeoDashboardMomEffectivenessResponse {
     generated_at: string;
   };
 }
+
+export interface CeoDashboardExecutionScore {
+  score: number;
+  out_of: number;
+  label: string;
+  factors: string;
+}
+
+export interface CeoDashboardTaskCompletion {
+  percentage: number;
+  completed: number;
+  total: number;
+}
+
+export interface CeoDashboardOverdueRate {
+  percentage: number;
+  overdue: number;
+  total: number;
+}
+
+export interface CeoDashboardEstimationCoverage {
+  percentage: number;
+  with_hours: number;
+  total: number;
+}
+
+export interface CeoDashboardMomFollowThrough {
+  percentage: number;
+  followed: number;
+  total: number;
+}
+
+export interface CeoDashboardProcessGap {
+  recurring_count: number;
+  total: number;
+  percentage: number;
+  message: string;
+}
+
+export interface CeoDashboardEfficiencyOverview {
+  execution_score: CeoDashboardExecutionScore;
+  task_completion: CeoDashboardTaskCompletion;
+  avg_cycle_time_days: number;
+  overdue_rate: CeoDashboardOverdueRate;
+  estimation_coverage: CeoDashboardEstimationCoverage;
+  mom_follow_through: CeoDashboardMomFollowThrough;
+  process_gap: CeoDashboardProcessGap;
+}
+
+export interface CeoDashboardEfficiencyOverviewResponse {
+  status: string;
+  data: CeoDashboardEfficiencyOverview;
+  meta: {
+    filters_applied: Record<string, string>;
+    generated_at: string;
+  };
+}
+
+export interface CeoDashboardOverdueOwner {
+  rank: number;
+  name: string;
+  overdue_count: number;
+}
+
+export interface CeoDashboardTopOverdueOwners {
+  title: string;
+  owners: CeoDashboardOverdueOwner[];
+  warning_box: CeoDashboardWarningBox;
+}
+
+export interface CeoDashboardZeroWorkPerson {
+  name: string;
+  initials: string;
+  department: string;
+  badge: string;
+}
+
+export interface CeoDashboardZeroWork {
+  title: string;
+  description: string;
+  people: CeoDashboardZeroWorkPerson[];
+}
+
+export interface CeoDashboardZeroVelocityPerson {
+  name: string;
+  initials: string;
+  department: string;
+  tasks_assigned: number;
+  open_tasks: number;
+  todos: number;
+  issues: number;
+  completed_this_month: number;
+  badge: string;
+  subtitle: string;
+}
+
+export interface CeoDashboardZeroVelocity {
+  title: string;
+  description: string;
+  people: CeoDashboardZeroVelocityPerson[];
+  warning_box: CeoDashboardWarningBox;
+}
+
+export interface CeoDashboardWorkHolder {
+  name: string;
+  open_tasks: number;
+  percentage: number;
+  risk: string;
+}
+
+export interface CeoDashboardRestOfTeam {
+  label: string;
+  percentage: number;
+  risk: string;
+}
+
+export interface CeoDashboardConcentrationChartPoint {
+  name: string;
+  percentage: number;
+}
+
+export interface CeoDashboardWorkConcentrationRisk {
+  title: string;
+  description: string;
+  top_holders: CeoDashboardWorkHolder[];
+  rest_of_team: CeoDashboardRestOfTeam;
+  chart_data: CeoDashboardConcentrationChartPoint[];
+  total_open_tasks: number;
+  warning_box: CeoDashboardWarningBox;
+}
+
+export interface CeoDashboardPeopleAlerts {
+  top_overdue_owners: CeoDashboardTopOverdueOwners;
+  zero_work: CeoDashboardZeroWork;
+  zero_velocity: CeoDashboardZeroVelocity;
+  work_concentration_risk: CeoDashboardWorkConcentrationRisk;
+}
+
+export interface CeoDashboardPeopleAlertsResponse {
+  status: string;
+  data: CeoDashboardPeopleAlerts;
+  meta: {
+    filters_applied: Record<string, string>;
+    generated_at: string;
+  };
+}
+
+export interface CeoDashboardEffortChartPoint {
+  name: string;
+  estimated_hrs: number;
+  actual_hrs: number;
+}
+
+export interface CeoDashboardEffortOutlier {
+  user_id: number;
+  name: string;
+  estimated_hrs: number;
+  actual_hrs: number;
+  diff: number;
+  diff_label: string;
+  badge: string;
+}
+
+export interface CeoDashboardEffortAccuracy {
+  title: string;
+  chart_data: CeoDashboardEffortChartPoint[];
+  outliers: CeoDashboardEffortOutlier[];
+  warning_box: CeoDashboardWarningBox;
+}
+
+export interface CeoDashboardOverdueAgeBucket {
+  bucket: string;
+  count: number;
+  percentage: number;
+}
+
+export interface CeoDashboardOverdueTrendPoint {
+  label: string;
+  count: number;
+}
+
+export interface CeoDashboardOverdueTrendPanel {
+  title: string;
+  chart_data: CeoDashboardOverdueTrendPoint[];
+  warning_box: CeoDashboardWarningBox;
+}
+
+export interface CeoDashboardOverdueAgeTrend {
+  title: string;
+  total_overdue: number;
+  age_buckets: CeoDashboardOverdueAgeBucket[];
+  trend_panel: CeoDashboardOverdueTrendPanel;
+}
+
+export interface CeoDashboardEffortAndOverdue {
+  effort_accuracy: CeoDashboardEffortAccuracy;
+  overdue_age_trend: CeoDashboardOverdueAgeTrend;
+}
+
+export interface CeoDashboardEffortAndOverdueResponse {
+  status: string;
+  data: CeoDashboardEffortAndOverdue;
+  meta: {
+    filters_applied: Record<string, string>;
+    generated_at: string;
+  };
+}
+
+export interface CeoDashboardAgeingBuckets {
+  bucket_1_day: number;
+  bucket_2_7_days: number;
+  bucket_8_15_days: number;
+  bucket_16_30_days: number;
+  bucket_30_plus_days: number;
+  total_overdue: number;
+}
+
+export interface CeoDashboardAgeingRow extends CeoDashboardAgeingBuckets {
+  user_id: number;
+  name: string;
+}
+
+export interface CeoDashboardAgeingOthers extends CeoDashboardAgeingBuckets {
+  label: string;
+  person_count: number;
+}
+
+export interface CeoDashboardPersonWiseAgeingMatrix {
+  title: string;
+  description: string;
+  rows: CeoDashboardAgeingRow[];
+  others: CeoDashboardAgeingOthers;
+  grand_total: CeoDashboardAgeingBuckets;
+}
+
+export interface CeoDashboardPersonWiseAgeingMatrixResponse {
+  status: string;
+  data: CeoDashboardPersonWiseAgeingMatrix;
+  meta: {
+    filters_applied: Record<string, string>;
+    generated_at: string;
+  };
+}
+
+export interface CeoDashboardPersonTaskStats {
+  open: number;
+  in_progress: number;
+  done: number;
+  overdue: number;
+}
+
+export interface CeoDashboardPersonTodoStats {
+  open: number;
+  done: number;
+  overdue: number;
+}
+
+export interface CeoDashboardPersonIssueStats {
+  open: number;
+}
+
+export interface CeoDashboardPersonDoneRecently {
+  count: number;
+  type: string;
+  title: string;
+  completed_at: string;
+}
+
+export interface CeoDashboardPersonOverdueItem {
+  type: string;
+  title: string;
+  due_date: string;
+}
+
+export interface CeoDashboardBreakdownMember {
+  user_id: number;
+  name: string;
+  department: string;
+  status_indicator: string;
+  tasks: CeoDashboardPersonTaskStats;
+  todos: CeoDashboardPersonTodoStats;
+  issues: CeoDashboardPersonIssueStats;
+  done_recently: CeoDashboardPersonDoneRecently | null;
+  top_overdue: CeoDashboardPersonOverdueItem[];
+}
+
+export interface CeoDashboardBreakdownDepartment {
+  department_name: string;
+  member_count: number;
+  members: CeoDashboardBreakdownMember[];
+}
+
+export interface CeoDashboardPerPersonBreakdown {
+  departments: CeoDashboardBreakdownDepartment[];
+}
+
+export interface CeoDashboardPerPersonBreakdownResponse {
+  status: string;
+  data: CeoDashboardPerPersonBreakdown;
+  meta: {
+    filters_applied: Record<string, string>;
+    generated_at: string;
+  };
+}
