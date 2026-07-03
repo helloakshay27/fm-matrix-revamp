@@ -1,4 +1,11 @@
 import ChartCanvas from '../ChartCanvas';
+import { useCeoDashboardSprintHealthDetailed } from '@/hooks/useCeoDashboardSprintHealthDetailed';
+import { useCeoDashboardDeliveryAccountability } from '@/hooks/useCeoDashboardDeliveryAccountability';
+import { useCeoDashboardProjectInactivityAlert } from '@/hooks/useCeoDashboardProjectInactivityAlert';
+import { useCeoDashboardBacklogAndIssues } from '@/hooks/useCeoDashboardBacklogAndIssues';
+import { useCeoDashboardIssueResolution } from '@/hooks/useCeoDashboardIssueResolution';
+import { useCeoDashboardMomEffectiveness } from '@/hooks/useCeoDashboardMomEffectiveness';
+import type { CeoDashboardSprintRow, CeoDashboardActiveSprint } from '@/types/ceoDashboard';
 
 const ok = '#108C72', warn = '#EDC488', err = '#E7848E', dark = '#2C2C2C',
   lav = '#CECBF6', blue = '#6B9BCC', grid = 'rgba(197,184,157,0.22)', green = '#798C5E', terra = '#DA7756';
@@ -15,7 +22,214 @@ const baseOpts = (legend = false) => ({
   },
 });
 
-export default function DeliveryTab() {
+function normalizeKey(value: string) {
+  return value.toLowerCase().replace(/[_\s]+/g, ' ').trim();
+}
+
+const SPRINT_STATUS_BADGE: Record<string, string> = {
+  active: 'bg',
+  completed: 'bg',
+  open: 'bw',
+  overrunning: 'bw',
+  started: 'bw',
+  'in progress': 'bd',
+};
+
+const SPRINT_ACTION_BADGE: Record<string, string> = {
+  keep: 'bg',
+  'close it': 'bw',
+  abandon: 'br',
+  delete: 'br',
+};
+
+function statusBadgeClass(status: string) {
+  return SPRINT_STATUS_BADGE[normalizeKey(status)] ?? 'bd';
+}
+
+function actionBadgeClass(action: string) {
+  return SPRINT_ACTION_BADGE[normalizeKey(action)] ?? 'bd';
+}
+
+function overrunColor(overrun: string) {
+  if (/day/i.test(overrun)) return '#E7848E';
+  if (overrun === 'Completed' || overrun === 'On time') return '#108C72';
+  return 'var(--sub)';
+}
+
+function completionColor(pct: number | undefined) {
+  if (pct === undefined || Number.isNaN(pct)) return 'var(--sub)';
+  if (pct >= 70) return '#108C72';
+  if (pct >= 40) return '#8B6914';
+  return '#C0303D';
+}
+
+function parsePercentage(pct: string) {
+  const n = parseFloat(pct);
+  return Number.isNaN(n) ? undefined : n;
+}
+
+function formatDateRange(start: string, end: string) {
+  const fmt = (d: string, withYear: boolean) => {
+    const dt = new Date(`${d}T00:00:00`);
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: withYear ? 'numeric' : undefined });
+  };
+  return `${fmt(start, false)} → ${fmt(end, true)}`;
+}
+
+function SprintHistoryTableRow({ row }: { row: CeoDashboardSprintRow }) {
+  return (
+    <tr>
+      <td style={{ fontWeight: 600 }}>{row.name}</td>
+      <td><span className={`badge ${statusBadgeClass(row.status)}`}>{row.status}</span></td>
+      <td style={{ color: overrunColor(row.overrun), fontWeight: 600 }}>{row.overrun}</td>
+      <td><span className={`badge ${actionBadgeClass(row.action)}`}>{row.action}</span></td>
+      <td style={{ color: completionColor(parsePercentage(row.completion_percentage)), fontWeight: 700 }}>{row.completion_percentage}</td>
+    </tr>
+  );
+}
+
+function ActiveSprintCard({ sprint }: { sprint: CeoDashboardActiveSprint }) {
+  const isActive = normalizeKey(sprint.status) === 'active';
+  const borderColor = isActive ? '#108C7240' : '#EDC48855';
+  const insightBg = isActive ? '#108C7212' : '#E7848E12';
+  const insightBorder = isActive ? '#108C72' : '#E7848E';
+  const insightTitleColor = isActive ? '#108C72' : '#C0303D';
+
+  return (
+    <div className="sprint-card" style={{ borderColor, marginTop: 8 }}>
+      <div className="sprint-hd">
+        <div className="sprint-title">{sprint.name}</div>
+        <span className={`badge ${statusBadgeClass(sprint.status)}`}>{sprint.status}</span>
+      </div>
+      <div className="sprint-meta">
+        <span>Owner: {sprint.owner}</span>
+        <span>{formatDateRange(sprint.start_date, sprint.end_date)}</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
+        <span style={{ color: 'var(--sub)' }}>Tasks</span>
+        <span style={{ fontWeight: 600 }}>{sprint.tasks_done} of {sprint.tasks_total} done</span>
+      </div>
+      <div className="progress">
+        <div className="progress-fill" style={{ width: `${sprint.completion_percentage}%`, background: completionColor(sprint.completion_percentage) }} />
+      </div>
+      {sprint.warning_box && (
+        <div className="insight" style={{ background: insightBg, borderColor: insightBorder, marginTop: 8 }}>
+          <div className="i-lbl" style={{ color: insightTitleColor }}>{sprint.warning_box.title}</div>
+          <div className="i-txt">{sprint.warning_box.description}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const MILESTONE_BAR_COLOR: Record<string, string> = {
+  open: lav,
+  'in progress': warn,
+  completed: ok,
+  'on hold': dark + '44',
+};
+
+const MILESTONE_LINE_COLOR: Record<string, string> = {
+  open: lav,
+  'in progress': warn,
+  completed: '#C0303D',
+  'on hold': dark + '66',
+};
+
+function formatStatusLabel(status: string) {
+  return status.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+const CHART_PALETTE = [err, ok + 'bb', blue, warn, lav, terra, ok, err + '88', warn + 'aa', lav + 'cc', dark + '44'];
+
+function paletteColor(i: number) {
+  return CHART_PALETTE[i % CHART_PALETTE.length];
+}
+
+const ESCALATION_BUCKET_COLOR = ['#EDC488', '#E7848E', '#C0303D', '#8B0000'];
+const ESCALATION_VALUE_COLOR = ['#8B6914', '#C0303D', '#C0303D', '#8B0000'];
+
+const SOURCE_RANK_COLOR = [err, err, warn, warn];
+
+const MOM_STATUS_COLOR: Record<string, string> = {
+  'No Status': err + '88',
+  Completed: ok,
+  Open: warn,
+  'In Progress': blue,
+  Other: dark + '44',
+};
+
+const MOM_STATUS_TEXT_COLOR: Record<string, string> = {
+  'No Status': '#C0303D',
+  Completed: '#0A7A6A',
+  Open: '#8B6914',
+};
+
+function momBarColor(count: number, max: number) {
+  if (count === 0) return err;
+  if (count === max) return ok;
+  return warn;
+}
+
+interface DeliveryTabProps {
+  fromDate?: string;
+  toDate?: string;
+}
+
+export default function DeliveryTab({ fromDate, toDate }: DeliveryTabProps) {
+  const {
+    data: sprintHealth,
+    isLoading: isSprintHealthLoading,
+    isError: isSprintHealthError,
+  } = useCeoDashboardSprintHealthDetailed(fromDate, toDate);
+  const {
+    data: deliveryAccountability,
+    isLoading: isDeliveryAccountabilityLoading,
+    isError: isDeliveryAccountabilityError,
+  } = useCeoDashboardDeliveryAccountability(fromDate, toDate);
+  const {
+    data: projectInactivityAlert,
+    isLoading: isProjectInactivityLoading,
+    isError: isProjectInactivityError,
+  } = useCeoDashboardProjectInactivityAlert(fromDate, toDate);
+  const {
+    data: backlogAndIssues,
+    isLoading: isBacklogLoading,
+    isError: isBacklogError,
+  } = useCeoDashboardBacklogAndIssues(fromDate, toDate);
+
+  const deadlineCoverage = deliveryAccountability?.deadline_coverage;
+  const milestoneHealth = deliveryAccountability?.milestone_health;
+  const zeroActivity = projectInactivityAlert?.zero_activity;
+  const lowActivity = projectInactivityAlert?.low_activity;
+  const backlogSummary = backlogAndIssues?.summary_bar;
+  const createdVsCompleted = backlogAndIssues?.created_vs_completed_panel;
+  const velocityPanel = backlogAndIssues?.weekly_completion_velocity_panel;
+
+  const {
+    data: issueResolution,
+    isLoading: isIssueResolutionLoading,
+    isError: isIssueResolutionError,
+  } = useCeoDashboardIssueResolution(fromDate, toDate);
+
+  const issueSummary = issueResolution?.summary;
+  const avgDaysPanel = issueResolution?.avg_days_to_resolve_panel;
+  const escalationPanel = issueResolution?.issues_open_30_plus_escalation_risk_panel;
+  const issuesByTypePanel = issueResolution?.issues_by_type_top_sources_panel;
+  const overduePanel = issueResolution?.overdue_tasks_reopened_issues_panel;
+  const escalationMaxCount = escalationPanel ? Math.max(...escalationPanel.chart_data.map((d) => d.count), 1) : 1;
+
+  const {
+    data: momEffectiveness,
+    isLoading: isMomEffectivenessLoading,
+    isError: isMomEffectivenessError,
+  } = useCeoDashboardMomEffectiveness(fromDate, toDate);
+
+  const momConductedPanel = momEffectiveness?.mom_conducted_panel;
+  const momStatusPanel = momEffectiveness?.status_breakdown_panel;
+  const momFollowThroughPanel = momEffectiveness?.follow_through_panel;
+  const momMaxCount = momConductedPanel ? Math.max(...momConductedPanel.chart_data.map((d) => d.count), 1) : 1;
+
   return (
     <div>
       {/* SPRINT HEALTH */}
@@ -23,68 +237,43 @@ export default function DeliveryTab() {
         <div className="sec-hd">
           <div className="sec-lbl">Sprint Health</div>
           <div className="sec-line" />
-          <span style={{ fontSize: 10, color: '#C0303D', paddingLeft: 8 }}>
-            ⚠ 7 of 9 sprints never closed — corrupting all velocity data
-          </span>
+          {sprintHealth?.top_warning && (
+            <span style={{ fontSize: 10, color: '#C0303D', paddingLeft: 8 }}>
+              ⚠ {sprintHealth.top_warning}
+            </span>
+          )}
         </div>
+        {isSprintHealthLoading && (
+          <div className="card" style={{ fontSize: 12, color: 'var(--sub)' }}>Loading sprint health…</div>
+        )}
+        {isSprintHealthError && (
+          <div className="card" style={{ fontSize: 12, color: '#C0303D' }}>Failed to load sprint health data</div>
+        )}
+        {!isSprintHealthLoading && !isSprintHealthError && (
         <div className="g g2">
           <div className="card">
             <div className="ct">Active sprints</div>
-            <div className="sprint-card" style={{ borderColor: '#108C7240' }}>
-              <div className="sprint-hd">
-                <div className="sprint-title">Sprint 9 — PATM Enhancement</div>
-                <span className="badge bg">Active</span>
-              </div>
-              <div className="sprint-meta">
-                <span>Owner: Gayatri Gaikwad</span>
-                <span>May 5 → May 8, 2026</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
-                <span style={{ color: 'var(--sub)' }}>Tasks</span>
-                <span style={{ fontWeight: 600 }}>7 of 12 done</span>
-              </div>
-              <div className="progress">
-                <div className="progress-fill" style={{ width: '58%', background: '#108C72' }} />
-              </div>
-              <div className="insight" style={{ background: '#108C7212', borderColor: '#108C72', marginTop: 8 }}>
-                <div className="i-lbl" style={{ color: '#108C72' }}>58% · 1 day left — 5 tasks to close</div>
-                <div className="i-txt">Gayatri needs to prioritise these today to close on time.</div>
-              </div>
-            </div>
-            <div className="sprint-card" style={{ borderColor: '#EDC48855', marginTop: 8 }}>
-              <div className="sprint-hd">
-                <div className="sprint-title">Sprint 8 — Pulse</div>
-                <span className="badge bw">Overrunning</span>
-              </div>
-              <div className="sprint-meta">
-                <span>Owner: Sadanand Gupta</span>
-                <span>Jan 15 → Jan 15, 2026</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
-                <span style={{ color: 'var(--sub)' }}>Overrun</span>
-                <span style={{ fontWeight: 600, color: '#E7848E' }}>111 days past end</span>
-              </div>
-              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 8 }}>
-                <div className="i-lbl" style={{ color: '#C0303D' }}>Close or extend with new date — corrupting metrics</div>
-                <div className="i-txt">Move remaining tasks to Sprint 9 or set a hard new end date today.</div>
-              </div>
-            </div>
+            {sprintHealth?.active_sprints.length ? (
+              sprintHealth.active_sprints.map((sprint) => <ActiveSprintCard key={sprint.id} sprint={sprint} />)
+            ) : (
+              <div style={{ fontSize: 11, color: 'var(--sub)', padding: '10px 0' }}>No active sprints</div>
+            )}
           </div>
           <div className="card">
             <div className="ct">Sprint history — full picture</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
               <div className="card-sm" style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#C0303D' }}>7</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#C0303D' }}>{sprintHealth?.summary_cards.abandoned_test}</div>
                 <div style={{ fontSize: 10, color: 'var(--sub)' }}>Abandoned / Test</div>
                 <div style={{ fontSize: 9, color: '#C0303D', fontWeight: 600 }}>Never closed</div>
               </div>
               <div className="card-sm" style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#EDC488' }}>1</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#EDC488' }}>{sprintHealth?.summary_cards.active_sprints}</div>
                 <div style={{ fontSize: 10, color: 'var(--sub)' }}>Active Sprint</div>
                 <div style={{ fontSize: 9, color: '#8B6914', fontWeight: 600 }}>In progress</div>
               </div>
               <div className="card-sm" style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#108C72' }}>1</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#108C72' }}>{sprintHealth?.summary_cards.completed}</div>
                 <div style={{ fontSize: 10, color: 'var(--sub)' }}>Completed</div>
                 <div style={{ fontSize: 9, color: '#108C72', fontWeight: 600 }}>Properly closed</div>
               </div>
@@ -100,31 +289,20 @@ export default function DeliveryTab() {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { name: 'Sprint 9 · PATM', status: 'Active', badgeClass: 'bg', overrun: 'On time', overrunColor: '#108C72', action: '✓ Keep', actionClass: 'bg', pct: '58%', pctColor: '#108C72' },
-                  { name: 'Sprint 8 · Pulse', status: 'Open', badgeClass: 'bw', overrun: '111 days', overrunColor: '#E7848E', action: 'Close it', actionClass: 'bw', pct: '40%', pctColor: '#8B6914' },
-                  { name: 'Sprint 7 · Sprint 1', status: 'Started', badgeClass: 'bw', overrun: '404 days', overrunColor: '#E7848E', action: 'Abandon', actionClass: 'br', pct: '25%', pctColor: '#C0303D' },
-                  { name: 'Sprint 6 · Test11', status: 'Open', badgeClass: 'bd', overrun: '430 days', overrunColor: '#E7848E', action: 'Delete', actionClass: 'br', pct: '0%', pctColor: 'var(--sub)' },
-                  { name: 'Sprint 5 · Testing', status: 'Open', badgeClass: 'bd', overrun: '437 days', overrunColor: '#E7848E', action: 'Delete', actionClass: 'br', pct: '5%', pctColor: 'var(--sub)' },
-                  { name: 'Sprint 4 · AKSHAY', status: 'In progress', badgeClass: 'bd', overrun: 'Invalid date', overrunColor: 'var(--sub)', action: 'Delete', actionClass: 'br', pct: '—', pctColor: 'var(--sub)' },
-                  { name: 'Sprint 3 · New Sprint', status: 'In progress', badgeClass: 'bd', overrun: 'Invalid date', overrunColor: 'var(--sub)', action: 'Delete', actionClass: 'br', pct: '—', pctColor: 'var(--sub)' },
-                ].map((s) => (
-                  <tr key={s.name}>
-                    <td style={{ fontWeight: 600 }}>{s.name}</td>
-                    <td><span className={`badge ${s.badgeClass}`}>{s.status}</span></td>
-                    <td style={{ color: s.overrunColor, fontWeight: 600 }}>{s.overrun}</td>
-                    <td><span className={`badge ${s.actionClass}`}>{s.action}</span></td>
-                    <td style={{ color: s.pctColor, fontWeight: 700 }}>{s.pct}</td>
-                  </tr>
+                {sprintHealth?.sprint_history.map((row) => (
+                  <SprintHistoryTableRow key={row.id} row={row} />
                 ))}
               </tbody>
             </table>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>7 open sprints corrupting all velocity data</div>
-              <div className="i-txt">Close Sprints 3–8 today. Until then burn-down and velocity are meaningless.</div>
-            </div>
+            {sprintHealth?.bottom_warning && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{sprintHealth.bottom_warning.title}</div>
+                <div className="i-txt">{sprintHealth.bottom_warning.description}</div>
+              </div>
+            )}
           </div>
         </div>
+        )}
       </div>
 
       {/* DELIVERY ACCOUNTABILITY */}
@@ -132,86 +310,118 @@ export default function DeliveryTab() {
         <div className="sec-hd">
           <div className="sec-lbl">Delivery Accountability</div>
           <div className="sec-line" />
-          <span style={{ fontSize: 10, color: '#C0303D', paddingLeft: 8 }}>⚠ Most projects have no end date set</span>
+          {deadlineCoverage && deadlineCoverage.no_end_date_count > 0 && (
+            <span style={{ fontSize: 10, color: '#C0303D', paddingLeft: 8 }}>⚠ Most projects have no end date set</span>
+          )}
         </div>
+        {isDeliveryAccountabilityLoading && (
+          <div className="card" style={{ fontSize: 12, color: 'var(--sub)' }}>Loading delivery accountability…</div>
+        )}
+        {isDeliveryAccountabilityError && (
+          <div className="card" style={{ fontSize: 12, color: '#C0303D' }}>Failed to load delivery accountability data</div>
+        )}
+        {!isDeliveryAccountabilityLoading && !isDeliveryAccountabilityError && (
         <div className="g g2" style={{ marginBottom: 12 }}>
           <div className="card">
             <div className="ct">Project deadline coverage</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
               {[
-                { val: '27', label: 'No end date set', sub: '69% of projects', color: '#C0303D' },
-                { val: '12', label: 'Have end date', sub: '31% of projects', color: '#0A7A6A' },
-                { val: '0%', label: 'Avg completion', sub: 'Most show NULL', color: '#C0303D' },
+                { val: `${deadlineCoverage?.no_end_date_count ?? '—'}`, label: 'No end date set', sub: `${deadlineCoverage?.no_end_date_percentage ?? 0}% of projects`, color: '#C0303D' },
+                { val: `${deadlineCoverage?.have_end_date_count ?? '—'}`, label: 'Have end date', sub: `${deadlineCoverage?.have_end_date_percentage ?? 0}% of projects`, color: '#0A7A6A' },
+                { val: `${deadlineCoverage?.avg_completion ?? 0}%`, label: 'Avg completion', sub: '', color: '#C0303D' },
               ].map((item) => (
                 <div key={item.label} style={{ textAlign: 'center', padding: 12, background: 'var(--bg)', border: '1px solid var(--divider)', borderRadius: 'var(--r10)' }}>
                   <div style={{ fontSize: 22, fontWeight: 700, color: item.color }}>{item.val}</div>
                   <div style={{ fontSize: 10, color: 'var(--sub)' }}>{item.label}</div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: item.color }}>{item.sub}</div>
+                  {item.sub && <div style={{ fontSize: 10, fontWeight: 600, color: item.color }}>{item.sub}</div>}
                 </div>
               ))}
             </div>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--dark)', marginBottom: 8 }}>Longest running active projects with no end date:</div>
-            {[
-              { name: 'Runwal Connect', started: 'Started Jan 2023', note: '2+ years · no deadline', color: '#C0303D' },
-              { name: 'Internal Products', started: 'Started Dec 2023', note: '17 months · no deadline', color: '#C0303D' },
-              { name: 'Dashboard Developments', started: 'Started Dec 2023', note: '17 months · no deadline', color: '#8B6914' },
-              { name: 'FM Matrix App Revamp', started: 'Started Feb 2024', note: 'High priority · no deadline', color: '#8B6914' },
-              { name: 'Snag 360 App Revamp', started: 'Started May 2024', note: 'High priority · no deadline', color: '#8B6914' },
-            ].map((p, i) => (
-              <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderBottom: i < 4 ? '1px solid var(--divider)' : 'none' }}>
-                <span style={{ fontWeight: 600, color: p.color }}>{p.name}</span>
-                <span style={{ color: 'var(--sub)' }}>{p.started}</span>
-                <span style={{ color: p.color, fontWeight: 600 }}>{p.note}</span>
+            {deadlineCoverage?.longest_running_projects.length ? (
+              deadlineCoverage.longest_running_projects.map((p, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderBottom: i < deadlineCoverage.longest_running_projects.length - 1 ? '1px solid var(--divider)' : 'none' }}>
+                  <span style={{ fontWeight: 600, color: '#C0303D' }}>{String((p as any).name ?? (p as any).project ?? 'Unknown project')}</span>
+                  <span style={{ color: 'var(--sub)' }}>{String((p as any).started ?? (p as any).start_date ?? '')}</span>
+                  <span style={{ color: '#C0303D', fontWeight: 600 }}>{String((p as any).note ?? (p as any).description ?? '')}</span>
+                </div>
+              ))
+            ) : (
+              <div style={{ fontSize: 11, color: 'var(--sub)', padding: '6px 0' }}>All active projects have an end date set</div>
+            )}
+            {deadlineCoverage?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 12 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{deadlineCoverage.warning_box.title}</div>
+                <div className="i-txt">{deadlineCoverage.warning_box.description}</div>
               </div>
-            ))}
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 12 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>No deadline = no accountability</div>
-              <div className="i-txt">69% of active projects have no end date. You cannot measure delivery performance without target dates. This week: every High priority project must get an end date set in PATM.</div>
-            </div>
+            )}
           </div>
           <div className="card">
             <div className="ct">Milestone health — completion vs status</div>
             <div style={{ height: 160 }}>
-              <ChartCanvas id="milestoneChart" config={{
-                type: 'bar',
-                data: {
-                  labels: ['Open', 'In Progress', 'Completed', 'On Hold'],
-                  datasets: [
-                    { label: 'Count', data: [298, 1161, 142, 15], backgroundColor: [lav, warn, ok, dark + '44'], borderRadius: 4, yAxisID: 'y' },
-                    { label: 'Avg Completion %', data: [0, 9.5, 49, 7.6], backgroundColor: 'transparent', borderColor: [lav, warn, '#C0303D', dark + '66'], borderWidth: 2, type: 'line', yAxisID: 'y1', pointRadius: 5, tension: 0.3 },
-                  ],
-                },
-                options: {
-                  responsive: true, maintainAspectRatio: false,
-                  plugins: { legend: { display: true, position: 'top', labels: { font: { size: 9 }, boxWidth: 8, padding: 6, color: dark } } },
-                  scales: {
-                    x: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green } },
-                    y: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green }, position: 'left' },
-                    y1: { grid: { display: false }, ticks: { font: { size: 9 }, color: green }, position: 'right', max: 100, min: 0 },
+              <ChartCanvas
+                key={`milestoneChart-${milestoneHealth?.chart_data.map((d) => `${d.status}:${d.count}:${d.avg_completion}`).join(',')}`}
+                id="milestoneChart"
+                config={{
+                  type: 'bar',
+                  data: {
+                    labels: milestoneHealth?.chart_data.map((d) => formatStatusLabel(d.status)) ?? [],
+                    datasets: [
+                      {
+                        label: 'Count',
+                        data: milestoneHealth?.chart_data.map((d) => d.count) ?? [],
+                        backgroundColor: milestoneHealth?.chart_data.map((d) => MILESTONE_BAR_COLOR[d.status.toLowerCase()] ?? grid) ?? [],
+                        borderRadius: 4,
+                        yAxisID: 'y',
+                      },
+                      {
+                        label: 'Avg Completion %',
+                        data: milestoneHealth?.chart_data.map((d) => d.avg_completion) ?? [],
+                        backgroundColor: 'transparent',
+                        borderColor: milestoneHealth?.chart_data.map((d) => MILESTONE_LINE_COLOR[d.status.toLowerCase()] ?? grid) ?? [],
+                        borderWidth: 2,
+                        type: 'line',
+                        yAxisID: 'y1',
+                        pointRadius: 5,
+                        tension: 0.3,
+                      },
+                    ],
                   },
-                },
-              } as any} />
+                  options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top', labels: { font: { size: 9 }, boxWidth: 8, padding: 6, color: dark } } },
+                    scales: {
+                      x: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green } },
+                      y: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green }, position: 'left' },
+                      y1: { grid: { display: false }, ticks: { font: { size: 9 }, color: green }, position: 'right', max: 100, min: 0 },
+                    },
+                  },
+                } as any}
+              />
             </div>
             <div style={{ marginTop: 12 }}>
-              {[
-                { label: 'Open milestones', val: '298', sub: 'avg 0% complete', valColor: '' },
-                { label: 'In Progress', val: '1,161', sub: 'avg 9.5% complete', valColor: '#8B6914' },
-                { label: 'Marked Complete ⚠', val: '142', sub: 'avg only 49% done', valColor: '#C0303D', labelColor: '#C0303D' },
-                { label: 'On Hold', val: '15', sub: 'avg 7.6% complete', valColor: '' },
-              ].map((r, i) => (
-                <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderBottom: i < 3 ? '1px solid var(--divider)' : 'none' }}>
-                  <span style={{ color: (r as any).labelColor || 'var(--dark)', fontWeight: (r as any).labelColor ? 600 : 400 }}>{r.label}</span>
-                  <span style={{ fontWeight: 700, color: r.valColor || 'var(--dark)' }}>{r.val}</span>
-                  <span style={{ color: r.valColor || 'var(--sub)' }}>{r.sub}</span>
-                </div>
-              ))}
+              {milestoneHealth?.chart_data.map((d, i, arr) => {
+                const isCompleted = d.status.toLowerCase() === 'completed';
+                return (
+                  <div key={d.status} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--divider)' : 'none' }}>
+                    <span style={{ color: isCompleted ? '#C0303D' : 'var(--dark)', fontWeight: isCompleted ? 600 : 400 }}>
+                      {formatStatusLabel(d.status)}{isCompleted ? ' ⚠' : ''}
+                    </span>
+                    <span style={{ fontWeight: 700, color: isCompleted ? '#C0303D' : 'var(--dark)' }}>{d.count.toLocaleString('en-IN')}</span>
+                    <span style={{ color: isCompleted ? '#C0303D' : 'var(--sub)' }}>avg {d.avg_completion}% complete</span>
+                  </div>
+                );
+              })}
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>142 milestones "completed" at only 49% — false closure</div>
-              <div className="i-txt">Milestones are being marked complete before they are actually done. This inflates progress metrics. Audit and reopen these milestones this week.</div>
-            </div>
+            {milestoneHealth?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{milestoneHealth.warning_box.title}</div>
+                <div className="i-txt">{milestoneHealth.warning_box.description}</div>
+              </div>
+            )}
           </div>
         </div>
+        )}
       </div>
 
       {/* PROJECT INACTIVITY ALERT */}
@@ -221,56 +431,58 @@ export default function DeliveryTab() {
           <div className="sec-line" />
           <span style={{ fontSize: 10, color: '#C0303D', paddingLeft: 8 }}>Projects marked Active but no work logged recently</span>
         </div>
+        {isProjectInactivityLoading && (
+          <div className="card" style={{ fontSize: 12, color: 'var(--sub)' }}>Loading project inactivity alert…</div>
+        )}
+        {isProjectInactivityError && (
+          <div className="card" style={{ fontSize: 12, color: '#C0303D' }}>Failed to load project inactivity alert data</div>
+        )}
+        {!isProjectInactivityLoading && !isProjectInactivityError && (
         <div className="g g2">
           <div className="card">
-            <div className="ct">🚨 Zero activity — 7+ days (Critical Projects)</div>
-            {[
-              { name: 'Parking', sub: 'Critical · Started 2023 · No end date', days: '29 days' },
-              { name: 'PTW (Permit to Work)', sub: 'Critical · Started 2024 · No end date', days: '29 days' },
-              { name: 'GoPhygital.work (Corporate)', sub: 'Critical · Active since 2024', days: '22 days' },
-              { name: 'MSafe', sub: 'Critical · Active since 2024', days: '18 days' },
-            ].map((p, i) => (
-              <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < 3 ? '1px solid var(--divider)' : 'none' }}>
+            <div className="ct">🚨 {zeroActivity?.title}</div>
+            {zeroActivity?.projects.map((p, i, arr) => (
+              <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--divider)' : 'none' }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#C0303D' }}>{p.name}</div>
-                  <div style={{ fontSize: 10, color: 'var(--sub)' }}>{p.sub}</div>
+                  <div style={{ fontSize: 10, color: 'var(--sub)' }}>{p.subtitle}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#C0303D' }}>{p.days}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#C0303D' }}>{p.days_since_last_activity} days</div>
                   <div style={{ fontSize: 10, color: 'var(--sub)' }}>since last activity</div>
                 </div>
               </div>
             ))}
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>Active status ≠ active work</div>
-              <div className="i-txt">These projects are marked Active in PATM but no tasks have been created or updated recently. Either mark them On Hold or assign an owner to restart work this week.</div>
-            </div>
+            {zeroActivity?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{zeroActivity.warning_box.title}</div>
+                <div className="i-txt">{zeroActivity.warning_box.description}</div>
+              </div>
+            )}
           </div>
           <div className="card">
-            <div className="ct">⚠️ Low activity — 15–30 days (At Risk Projects)</div>
-            {[
-              { name: 'Runwal Connect', sub: 'Active since Jan 2023 · 2+ years', days: '42 days' },
-              { name: 'ERP Procurement', sub: 'Active since Jan 2024', days: '31 days' },
-              { name: 'Vi My Workspace Stepathon', sub: 'Active since Mar 2024', days: '28 days' },
-              { name: 'ZS Associates POC', sub: 'Active since Apr 2024', days: '17 days' },
-            ].map((p, i) => (
-              <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < 3 ? '1px solid var(--divider)' : 'none' }}>
+            <div className="ct">⚠️ {lowActivity?.title}</div>
+            {lowActivity?.projects.map((p, i, arr) => (
+              <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--divider)' : 'none' }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#8B6914' }}>{p.name}</div>
-                  <div style={{ fontSize: 10, color: 'var(--sub)' }}>{p.sub}</div>
+                  <div style={{ fontSize: 10, color: 'var(--sub)' }}>{p.subtitle}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B6914' }}>{p.days}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B6914' }}>{p.days_since_last_task} days</div>
                   <div style={{ fontSize: 10, color: 'var(--sub)' }}>since last task</div>
                 </div>
               </div>
             ))}
-            <div className="insight" style={{ background: '#EDC48818', borderColor: '#EDC488', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#8B6914' }}>8 projects inactive 15–30 days</div>
-              <div className="i-txt">Review each — either they are genuinely on hold (update status) or they need to be reactivated with a clear owner and deadline this sprint.</div>
-            </div>
+            {lowActivity?.warning_box && (
+              <div className="insight" style={{ background: '#EDC48818', borderColor: '#EDC488', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#8B6914' }}>{lowActivity.warning_box.title}</div>
+                <div className="i-txt">{lowActivity.warning_box.description}</div>
+              </div>
+            )}
           </div>
         </div>
+        )}
       </div>
 
       {/* BACKLOG & ISSUES */}
@@ -278,13 +490,23 @@ export default function DeliveryTab() {
         <div className="sec-hd">
           <div className="sec-lbl">Backlog &amp; Issues</div>
           <div className="sec-line" />
-          <span style={{ fontSize: 10, color: '#C0303D', paddingLeft: 8 }}>Creating 38% more work than completing every week</span>
+          {backlogSummary?.net_growth_trend_text && (
+            <span style={{ fontSize: 10, color: '#C0303D', paddingLeft: 8 }}>{backlogSummary.net_growth_trend_text}</span>
+          )}
         </div>
+        {isBacklogLoading && (
+          <div className="card" style={{ fontSize: 12, color: 'var(--sub)' }}>Loading backlog &amp; issues…</div>
+        )}
+        {isBacklogError && (
+          <div className="card" style={{ fontSize: 12, color: '#C0303D' }}>Failed to load backlog &amp; issues data</div>
+        )}
+        {!isBacklogLoading && !isBacklogError && (
+        <>
         <div className="g g3" style={{ marginBottom: 12 }}>
           {[
-            { label: 'Avg Created / Week', val: '447', color: '#C0303D' },
-            { label: 'Avg Completed / Week', val: '325', color: '#8B6914' },
-            { label: 'Net Growth / Week', val: '+122 ↑', color: '#C0303D', bg: '#E7848E10', border: '#E7848E55', labelColor: '#C0303D' },
+            { label: 'Avg Created / Week', val: `${backlogSummary?.avg_created_per_week ?? '—'}`, color: '#C0303D' },
+            { label: 'Avg Completed / Week', val: `${backlogSummary?.avg_completed_per_week ?? '—'}`, color: '#8B6914' },
+            { label: 'Net Growth / Week', val: `${(backlogSummary?.net_growth_per_week ?? 0) >= 0 ? '+' : ''}${backlogSummary?.net_growth_per_week ?? 0} ↑`, color: '#C0303D', bg: '#E7848E10', border: '#E7848E55', labelColor: '#C0303D' },
           ].map((k) => (
             <div key={k.label} className="card-sm" style={{ textAlign: 'center', padding: 14, background: (k as any).bg, borderColor: (k as any).border }}>
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: (k as any).labelColor || 'var(--sub)', marginBottom: 6 }}>{k.label}</div>
@@ -294,57 +516,85 @@ export default function DeliveryTab() {
         </div>
         <div className="g g2">
           <div className="card">
-            <div className="ct">Created vs Completed — last 9 weeks</div>
+            <div className="ct">{createdVsCompleted?.title ?? 'Created vs Completed'}</div>
             <div style={{ height: 180 }}>
-              <ChartCanvas id="backlogRaceChart" config={{
-                type: 'bar',
-                data: {
-                  labels: ['Wk12', 'Wk13', 'Wk14', 'Wk15', 'Wk16', 'Wk17', 'Wk18', 'Wk19', 'Wk20'],
-                  datasets: [
-                    { label: 'Created', data: [180, 420, 510, 380, 360, 410, 290, 340, 310], backgroundColor: err + '88', borderRadius: 3 },
-                    { label: 'Completed', data: [33, 355, 440, 279, 281, 312, 713, 288, 228], backgroundColor: ok + '88', borderRadius: 3 },
-                  ],
-                },
-                options: baseOpts(true),
-              } as any} />
+              <ChartCanvas
+                key={`backlogRaceChart-${createdVsCompleted?.chart_data.map((d) => `${d.week}:${d.created}:${d.completed}`).join(',')}`}
+                id="backlogRaceChart"
+                config={{
+                  type: 'bar',
+                  data: {
+                    labels: createdVsCompleted?.chart_data.map((d) => d.week) ?? [],
+                    datasets: [
+                      { label: 'Created', data: createdVsCompleted?.chart_data.map((d) => d.created) ?? [], backgroundColor: err + '88', borderRadius: 3 },
+                      { label: 'Completed', data: createdVsCompleted?.chart_data.map((d) => d.completed) ?? [], backgroundColor: ok + '88', borderRadius: 3 },
+                    ],
+                  },
+                  options: baseOpts(true),
+                } as any}
+              />
             </div>
             <div style={{ marginTop: 12 }}>
-              <div className="row"><span className="rn">Wk18 anomaly (bulk close)</span><span className="rv" style={{ color: '#8B6914' }}>713 closed · 51d avg age</span></div>
-              <div className="row"><span className="rn">Open tasks today vs 9 weeks ago</span><span className="rv" style={{ color: '#C0303D' }}>14,758 (+958)</span></div>
-              <div className="row"><span className="rn">Overdue today vs 9 weeks ago</span><span className="rv" style={{ color: '#C0303D' }}>2,192 (+352)</span></div>
+              {createdVsCompleted?.metrics.anomaly && (
+                <div className="row"><span className="rn">{createdVsCompleted.metrics.anomaly.label}</span><span className="rv" style={{ color: '#8B6914' }}>{createdVsCompleted.metrics.anomaly.value}</span></div>
+              )}
+              {createdVsCompleted?.metrics.open_tasks && (
+                <div className="row"><span className="rn">{createdVsCompleted.metrics.open_tasks.label}</span><span className="rv" style={{ color: '#C0303D' }}>{createdVsCompleted.metrics.open_tasks.value}</span></div>
+              )}
+              {createdVsCompleted?.metrics.overdue_tasks && (
+                <div className="row"><span className="rn">{createdVsCompleted.metrics.overdue_tasks.label}</span><span className="rv" style={{ color: '#C0303D' }}>{createdVsCompleted.metrics.overdue_tasks.value}</span></div>
+              )}
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>At current pace backlog grows ~500 tasks/month</div>
-              <div className="i-txt">Without a task freeze on non-critical work, the overdue count will exceed 3,000 by end of June. Freeze non-critical creation for 2 weeks. Focus team on clearing, not creating.</div>
-            </div>
+            {createdVsCompleted?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{createdVsCompleted.warning_box.title}</div>
+                <div className="i-txt">{createdVsCompleted.warning_box.description}</div>
+              </div>
+            )}
           </div>
           <div className="card">
-            <div className="ct">Weekly completion velocity — is the team improving?</div>
+            <div className="ct">{velocityPanel?.title ?? 'Weekly completion velocity'}</div>
             <div style={{ height: 180 }}>
-              <ChartCanvas id="velocityChart" config={{
-                type: 'line',
-                data: {
-                  labels: ['Wk12', 'Wk13', 'Wk14', 'Wk15', 'Wk16', 'Wk17', 'Wk18', 'Wk19', 'Wk20'],
-                  datasets: [
-                    { label: 'Tasks Completed', data: [33, 355, 440, 279, 281, 312, 713, 288, 228], borderColor: ok, backgroundColor: ok + '18', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: ok, borderWidth: 2 },
-                    { label: 'Target (500/wk)', data: [500, 500, 500, 500, 500, 500, 500, 500, 500], borderColor: warn, backgroundColor: 'transparent', borderDash: [6, 3], pointRadius: 0, borderWidth: 1.5 },
-                  ],
-                },
-                options: baseOpts(true),
-              } as any} />
+              <ChartCanvas
+                key={`velocityChart-${velocityPanel?.chart_data.map((d) => `${d.week}:${d.completed}:${d.target}`).join(',')}`}
+                id="velocityChart"
+                config={{
+                  type: 'line',
+                  data: {
+                    labels: velocityPanel?.chart_data.map((d) => d.week) ?? [],
+                    datasets: [
+                      { label: 'Tasks Completed', data: velocityPanel?.chart_data.map((d) => d.completed) ?? [], borderColor: ok, backgroundColor: ok + '18', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: ok, borderWidth: 2 },
+                      { label: 'Target', data: velocityPanel?.chart_data.map((d) => d.target) ?? [], borderColor: warn, backgroundColor: 'transparent', borderDash: [6, 3], pointRadius: 0, borderWidth: 1.5 },
+                    ],
+                  },
+                  options: baseOpts(true),
+                } as any}
+              />
             </div>
             <div style={{ marginTop: 12 }}>
-              <div className="row"><span className="rn">Best week (Wk18 bulk close)</span><span className="rv" style={{ color: '#108C72' }}>713 completed</span></div>
-              <div className="row"><span className="rn">Avg weekly completion (excl. Wk18)</span><span className="rv" style={{ color: '#8B6914' }}>325 tasks</span></div>
-              <div className="row"><span className="rn">Trend direction</span><span className="rv" style={{ color: '#C0303D' }}>↓ Declining</span></div>
-              <div className="row"><span className="rn">Target to clear backlog by Jun</span><span className="rv" style={{ color: '#C0303D' }}>500+ / week needed</span></div>
+              {velocityPanel?.metrics.best_week && (
+                <div className="row"><span className="rn">{velocityPanel.metrics.best_week.label}</span><span className="rv" style={{ color: '#108C72' }}>{velocityPanel.metrics.best_week.value}</span></div>
+              )}
+              {velocityPanel?.metrics.avg_completion && (
+                <div className="row"><span className="rn">{velocityPanel.metrics.avg_completion.label}</span><span className="rv" style={{ color: '#8B6914' }}>{velocityPanel.metrics.avg_completion.value}</span></div>
+              )}
+              {velocityPanel?.metrics.trend_direction && (
+                <div className="row"><span className="rn">{velocityPanel.metrics.trend_direction.label}</span><span className="rv" style={{ color: '#C0303D' }}>{velocityPanel.metrics.trend_direction.value}</span></div>
+              )}
+              {velocityPanel?.metrics.target_to_clear && (
+                <div className="row"><span className="rn">{velocityPanel.metrics.target_to_clear.label}</span><span className="rv" style={{ color: '#C0303D' }}>{velocityPanel.metrics.target_to_clear.value}</span></div>
+              )}
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>Completion velocity is declining week-on-week</div>
-              <div className="i-txt">The team needs to complete 500+ tasks per week to start reducing the backlog. Current average is 325. The gap is widening, not closing.</div>
-            </div>
+            {velocityPanel?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{velocityPanel.warning_box.title}</div>
+                <div className="i-txt">{velocityPanel.warning_box.description}</div>
+              </div>
+            )}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* ISSUE RESOLUTION */}
@@ -352,92 +602,141 @@ export default function DeliveryTab() {
         <div className="sec-hd">
           <div className="sec-lbl">Issue Resolution</div>
           <div className="sec-line" />
-          <span style={{ fontSize: 10, color: 'var(--sub)', paddingLeft: 8 }}>1,852 issues total · 175 open · 31 reopened</span>
+          {issueSummary && (
+            <span style={{ fontSize: 10, color: 'var(--sub)', paddingLeft: 8 }}>
+              {issueSummary.total_issues.toLocaleString('en-IN')} issues total · {issueSummary.open_issues.toLocaleString('en-IN')} open · {issueSummary.reopened_issues.toLocaleString('en-IN')} reopened
+            </span>
+          )}
         </div>
+        {isIssueResolutionLoading && (
+          <div className="card" style={{ fontSize: 12, color: 'var(--sub)' }}>Loading issue resolution…</div>
+        )}
+        {isIssueResolutionError && (
+          <div className="card" style={{ fontSize: 12, color: '#C0303D' }}>Failed to load issue resolution data</div>
+        )}
+        {!isIssueResolutionLoading && !isIssueResolutionError && (
+        <>
         <div className="g g2" style={{ marginBottom: 12 }}>
           <div className="card">
-            <div className="ct">Avg days to resolve — monthly trend</div>
+            <div className="ct">{avgDaysPanel?.title ?? 'Avg days to resolve — monthly trend'}</div>
             <div style={{ height: 160 }}>
-              <ChartCanvas id="issueResChart" config={{
-                type: 'line',
-                data: {
-                  labels: ['Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26', 'May 26'],
-                  datasets: [{ label: 'Avg days to resolve', data: [12.4, 10.8, 9.2, 8.1, 7.6, 8.4], borderColor: warn, backgroundColor: warn + '22', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: warn, borderWidth: 2 }],
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green } }, y: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green }, min: 0 } } },
-              } as any} />
+              <ChartCanvas
+                key={`issueResChart-${avgDaysPanel?.chart_data.map((d) => `${d.month}:${d.avg_days}`).join(',')}`}
+                id="issueResChart"
+                config={{
+                  type: 'line',
+                  data: {
+                    labels: avgDaysPanel?.chart_data.map((d) => d.month) ?? [],
+                    datasets: [{ label: 'Avg days to resolve', data: avgDaysPanel?.chart_data.map((d) => d.avg_days) ?? [], borderColor: warn, backgroundColor: warn + '22', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: warn, borderWidth: 2 }],
+                  },
+                  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green } }, y: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green }, min: 0 } } },
+                } as any}
+              />
             </div>
             <div style={{ marginTop: 12 }}>
-              <div className="row"><span className="rn">Avg resolution time this month</span><span className="rv" style={{ color: '#8B6914' }}>8.4 days</span></div>
-              <div className="row"><span className="rn">Fastest resolution</span><span className="rv" style={{ color: '#108C72' }}>Same day (0d)</span></div>
-              <div className="row"><span className="rn">Slowest resolution</span><span className="rv" style={{ color: '#C0303D' }}>105 days</span></div>
-              <div className="row"><span className="rn">Issues open 30+ days</span><span className="rv" style={{ color: '#C0303D' }}>49 issues</span></div>
+              {avgDaysPanel?.metrics.avg_resolution_time_this_month && (
+                <div className="row"><span className="rn">{avgDaysPanel.metrics.avg_resolution_time_this_month.label}</span><span className="rv" style={{ color: '#8B6914' }}>{avgDaysPanel.metrics.avg_resolution_time_this_month.value}</span></div>
+              )}
+              {avgDaysPanel?.metrics.fastest_resolution && (
+                <div className="row"><span className="rn">{avgDaysPanel.metrics.fastest_resolution.label}</span><span className="rv" style={{ color: '#108C72' }}>{avgDaysPanel.metrics.fastest_resolution.value}</span></div>
+              )}
+              {avgDaysPanel?.metrics.slowest_resolution && (
+                <div className="row"><span className="rn">{avgDaysPanel.metrics.slowest_resolution.label}</span><span className="rv" style={{ color: '#C0303D' }}>{avgDaysPanel.metrics.slowest_resolution.value}</span></div>
+              )}
+              {avgDaysPanel?.metrics.issues_open_30_plus_days && (
+                <div className="row"><span className="rn">{avgDaysPanel.metrics.issues_open_30_plus_days.label}</span><span className="rv" style={{ color: '#C0303D' }}>{avgDaysPanel.metrics.issues_open_30_plus_days.value}</span></div>
+              )}
             </div>
           </div>
           <div className="card">
-            <div className="ct">Issues by type + top sources</div>
+            <div className="ct">{issuesByTypePanel?.title ?? 'Issues by type + top sources'}</div>
             <div style={{ height: 140 }}>
-              <ChartCanvas id="issueType" config={{
-                type: 'bar',
-                data: { labels: ['Bug', 'Enhancement', 'UI', 'Functional'], datasets: [{ data: [312, 428, 186, 131], backgroundColor: [err, ok + 'bb', blue, warn], borderRadius: 4 }] },
-                options: baseOpts(false),
-              } as any} />
+              <ChartCanvas
+                key={`issueType-${issuesByTypePanel?.chart_data.map((d) => `${d.type}:${d.count}`).join(',')}`}
+                id="issueType"
+                config={{
+                  type: 'bar',
+                  data: {
+                    labels: issuesByTypePanel?.chart_data.map((d) => d.type) ?? [],
+                    datasets: [{ data: issuesByTypePanel?.chart_data.map((d) => d.count) ?? [], backgroundColor: issuesByTypePanel?.chart_data.map((_, i) => paletteColor(i)) ?? [], borderRadius: 4 }],
+                  },
+                  options: baseOpts(false),
+                } as any}
+              />
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>Bug ratio at 30% — healthy benchmark is under 15%</div>
-              <div className="i-txt">Freeze new features and run a focused QA sprint this week.</div>
-            </div>
+            {issuesByTypePanel?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{issuesByTypePanel.warning_box.title}</div>
+                <div className="i-txt">{issuesByTypePanel.warning_box.description}</div>
+              </div>
+            )}
             <div style={{ marginTop: 12 }}>
-              <div className="ct-sm">Top 5 issue sources</div>
-              {[['Hi Society', '#E7848E', '284'], ['FM Matrix', '#E7848E', '218'], ['Projects & Task Mgmt', '#EDC488', '142'], ['Club Management', '#EDC488', '98'], ['Incident Management', '', '74']].map(([name, color, val]) => (
-                <div key={name} className="row"><span className="rn">{name}</span><span className="rv" style={{ color: color || 'var(--dark)' }}>{val}</span></div>
+              <div className="ct-sm">Top issue sources</div>
+              {issuesByTypePanel?.top_issue_sources.map((s, i) => (
+                <div key={s.source} className="row"><span className="rn">{s.source}</span><span className="rv" style={{ color: SOURCE_RANK_COLOR[i] || 'var(--dark)' }}>{s.count}</span></div>
               ))}
             </div>
           </div>
         </div>
         <div className="g g2">
           <div className="card">
-            <div className="ct">Issues open 30+ days — escalation risk</div>
-            {[
-              { label: '30–45 days', w: '55%', color: '#EDC488', val: 27, valColor: '#8B6914' },
-              { label: '45–60 days', w: '25%', color: '#E7848E', val: 12, valColor: '#C0303D' },
-              { label: '60–90 days', w: '14%', color: '#C0303D', val: 7, valColor: '#C0303D' },
-              { label: '90+ days', w: '6%', color: '#8B0000', val: 3, valColor: '#8B0000' },
-            ].map((r, i) => (
-              <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < 3 ? '1px solid var(--divider)' : 'none', fontSize: 11 }}>
-                <div style={{ width: 70, fontSize: 10, color: 'var(--sub)' }}>{r.label}</div>
+            <div className="ct">{escalationPanel?.title ?? 'Issues open 30+ days — escalation risk'}</div>
+            {escalationPanel?.chart_data.map((r, i) => (
+              <div key={r.bucket} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < escalationPanel.chart_data.length - 1 ? '1px solid var(--divider)' : 'none', fontSize: 11 }}>
+                <div style={{ width: 70, fontSize: 10, color: 'var(--sub)' }}>{r.bucket}</div>
                 <div style={{ flex: 1, height: 8, background: 'var(--divider)', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ width: r.w, height: 8, background: r.color, borderRadius: 4 }} />
+                  <div style={{ width: `${(r.count / escalationMaxCount) * 100}%`, height: 8, background: ESCALATION_BUCKET_COLOR[i % ESCALATION_BUCKET_COLOR.length], borderRadius: 4 }} />
                 </div>
-                <div style={{ fontWeight: 700, color: r.valColor, width: 30, textAlign: 'right' }}>{r.val}</div>
+                <div style={{ fontWeight: 700, color: ESCALATION_VALUE_COLOR[i % ESCALATION_VALUE_COLOR.length], width: 30, textAlign: 'right' }}>{r.count}</div>
               </div>
             ))}
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 12 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>49 issues open 30+ days — client escalation risk</div>
-              <div className="i-txt">Assign a dedicated owner to the 3 issues open 90+ days and resolve this sprint.</div>
-            </div>
+            {escalationPanel?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 12 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{escalationPanel.warning_box.title}</div>
+                <div className="i-txt">{escalationPanel.warning_box.description}</div>
+              </div>
+            )}
           </div>
           <div className="card">
-            <div className="ct">Overdue tasks by project + reopened issues</div>
+            <div className="ct">{overduePanel?.title ?? 'Overdue tasks by project + reopened issues'}</div>
             <div style={{ height: 140 }}>
-              <ChartCanvas id="overdueByProj" config={{
-                type: 'bar',
-                data: { labels: ['Hi Society', 'FM Matrix', 'Club Mgmt', 'PATM', 'Incident', 'HSE App'], datasets: [{ data: [94, 68, 42, 28, 16, 8], backgroundColor: [err, err + 'bb', warn, warn + 'aa', lav, ok + '66'], borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { titleFont: { size: 11 }, bodyFont: { size: 10 } } }, scales: { x: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green } }, y: { grid: { display: false }, ticks: { font: { size: 9 }, color: green } } } },
-              } as any} />
+              <ChartCanvas
+                key={`overdueByProj-${overduePanel?.chart_data.map((d) => `${d.project}:${d.count}`).join(',')}`}
+                id="overdueByProj"
+                config={{
+                  type: 'bar',
+                  data: {
+                    labels: overduePanel?.chart_data.map((d) => d.project) ?? [],
+                    datasets: [{ data: overduePanel?.chart_data.map((d) => d.count) ?? [], backgroundColor: overduePanel?.chart_data.map((_, i) => paletteColor(i)) ?? [], borderRadius: 4 }],
+                  },
+                  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { titleFont: { size: 11 }, bodyFont: { size: 10 } } }, scales: { x: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green } }, y: { grid: { display: false }, ticks: { font: { size: 9 }, color: green } } } },
+                } as any}
+              />
             </div>
-            <div className="insight" style={{ background: '#EDC48815', borderColor: '#EDC488', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#8B6914' }}>Hi Society has the most overdue — live client product</div>
-              <div className="i-txt">Overdue tasks here are a direct client retention risk.</div>
-            </div>
+            {overduePanel?.warning_box && (
+              <div className="insight" style={{ background: '#EDC48815', borderColor: '#EDC488', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#8B6914' }}>{overduePanel.warning_box.title}</div>
+                <div className="i-txt">{overduePanel.warning_box.description}</div>
+              </div>
+            )}
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8, color: 'var(--dark)' }}>Reopened issues (31) — recurring problems:</div>
-              <div style={{ fontSize: 11, padding: '5px 0', borderBottom: '1px solid var(--divider)' }}>🔄 Hi Society Revamp — reopened 3x</div>
-              <div style={{ fontSize: 11, padding: '5px 0', borderBottom: '1px solid var(--divider)' }}>🔄 Panchshil Connect Events — reopened 2x</div>
-              <div style={{ fontSize: 11, padding: '5px 0' }}>🔄 FM Matrix Password Reset — reopened 2x</div>
+              <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8, color: 'var(--dark)' }}>
+                Reopened issues ({issueSummary?.reopened_issues ?? 0}) — recurring problems:
+              </div>
+              {overduePanel?.reopened_issues.length ? (
+                overduePanel.reopened_issues.map((r, i, arr) => (
+                  <div key={i} style={{ fontSize: 11, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--divider)' : 'none' }}>
+                    🔄 {String((r as any).name ?? (r as any).title ?? 'Unknown issue')} — reopened {String((r as any).reopen_count ?? (r as any).count ?? '')}x
+                  </div>
+                ))
+              ) : (
+                <div style={{ fontSize: 11, color: 'var(--sub)' }}>No reopened issues</div>
+              )}
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* MOM EFFECTIVENESS */}
@@ -447,68 +746,102 @@ export default function DeliveryTab() {
           <div className="sec-line" />
           <span style={{ fontSize: 10, color: 'var(--sub)', paddingLeft: 8 }}>Are meetings turning into action? · 6-month trend</span>
         </div>
+        {isMomEffectivenessLoading && (
+          <div className="card" style={{ fontSize: 12, color: 'var(--sub)' }}>Loading MoM effectiveness…</div>
+        )}
+        {isMomEffectivenessError && (
+          <div className="card" style={{ fontSize: 12, color: '#C0303D' }}>Failed to load MoM effectiveness data</div>
+        )}
+        {!isMomEffectivenessLoading && !isMomEffectivenessError && (
         <div className="g g3">
           <div className="card">
-            <div className="ct">MoM conducted — last 6 months</div>
+            <div className="ct">{momConductedPanel?.title ?? 'MoM conducted — last 6 months'}</div>
             <div style={{ height: 140 }}>
-              <ChartCanvas id="momChart" config={{
-                type: 'bar',
-                data: { labels: ['Oct 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Jun 26', 'Dec 26'], datasets: [{ data: [2, 15, 3, 1, 1, 1], backgroundColor: [ok, ok, warn, err, err, err], borderRadius: 4 }] },
-                options: baseOpts(false),
-              } as any} />
+              <ChartCanvas
+                key={`momChart-${momConductedPanel?.chart_data.map((d) => `${d.month}:${d.count}`).join(',')}`}
+                id="momChart"
+                config={{
+                  type: 'bar',
+                  data: {
+                    labels: momConductedPanel?.chart_data.map((d) => d.month) ?? [],
+                    datasets: [{ data: momConductedPanel?.chart_data.map((d) => d.count) ?? [], backgroundColor: momConductedPanel?.chart_data.map((d) => momBarColor(d.count, momMaxCount)) ?? [], borderRadius: 4 }],
+                  },
+                  options: baseOpts(false),
+                } as any}
+              />
             </div>
             <div style={{ marginTop: 10 }}>
-              {[['Dec 2025', '#0A7A6A', '15 MoMs'], ['Jan 2026', '', '3 MoMs'], ['Feb 2026', '', '1 MoM'], ['Jun 2026', '', '1 MoM'], ['Dec 2026', '', '1 MoM']].map(([label, color, val]) => (
-                <div key={label} className="row"><span className="rn">{label}</span><span className="rv" style={{ color: color || 'var(--dark)' }}>{val}</span></div>
+              {momConductedPanel?.chart_data.map((d) => (
+                <div key={d.month} className="row">
+                  <span className="rn">{d.full_month}</span>
+                  <span className="rv" style={{ color: d.count === momMaxCount && d.count > 0 ? '#0A7A6A' : 'var(--dark)' }}>{d.count} {d.count === 1 ? 'MoM' : 'MoMs'}</span>
+                </div>
               ))}
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>MoM usage collapsed after Dec 2025</div>
-              <div className="i-txt">Only 6 MoMs recorded in 2026. Either meetings stopped or the team stopped recording them in PATM. Both are problems.</div>
-            </div>
+            {momConductedPanel?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{momConductedPanel.warning_box.title}</div>
+                <div className="i-txt">{momConductedPanel.warning_box.description}</div>
+              </div>
+            )}
           </div>
           <div className="card">
-            <div className="ct">MoM action items — status breakdown</div>
+            <div className="ct">{momStatusPanel?.title ?? 'MoM action items — status breakdown'}</div>
             <div style={{ height: 140 }}>
-              <ChartCanvas id="momTaskChart" config={{
-                type: 'doughnut',
-                data: { labels: ['No Status', 'Completed', 'Open', 'In Progress', 'Other'], datasets: [{ data: [3546, 547, 468, 406, 4], backgroundColor: [err + '88', ok, warn, blue, dark + '44'], borderWidth: 0, hoverOffset: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { display: true, position: 'right', labels: { font: { size: 9 }, boxWidth: 8, padding: 6, color: dark } } } },
-              } as any} />
+              <ChartCanvas
+                key={`momTaskChart-${momStatusPanel?.chart_data.map((d) => `${d.status}:${d.count}`).join(',')}`}
+                id="momTaskChart"
+                config={{
+                  type: 'doughnut',
+                  data: {
+                    labels: momStatusPanel?.chart_data.map((d) => d.status) ?? [],
+                    datasets: [{ data: momStatusPanel?.chart_data.map((d) => d.count) ?? [], backgroundColor: momStatusPanel?.chart_data.map((d) => MOM_STATUS_COLOR[d.status] ?? grid) ?? [], borderWidth: 0, hoverOffset: 4 }],
+                  },
+                  options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { display: true, position: 'right', labels: { font: { size: 9 }, boxWidth: 8, padding: 6, color: dark } } } },
+                } as any}
+              />
             </div>
             <div style={{ marginTop: 10 }}>
-              {[['No status set', '#C0303D', '3,546 (71%)'], ['Completed', '#0A7A6A', '547 (11%)'], ['Open', '#8B6914', '468 (9%)'], ['In Progress', '', '406 (8%)']].map(([label, color, val]) => (
-                <div key={label as string} className="row"><span className="rn">{label}</span><span className="rv" style={{ color: color as string || 'var(--dark)' }}>{val}</span></div>
+              {momStatusPanel?.chart_data.map((d) => (
+                <div key={d.status} className="row">
+                  <span className="rn">{d.status}</span>
+                  <span className="rv" style={{ color: MOM_STATUS_TEXT_COLOR[d.status] || 'var(--dark)' }}>{d.count.toLocaleString('en-IN')} ({d.percentage}%)</span>
+                </div>
               ))}
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>71% of meeting action items have no status</div>
-              <div className="i-txt">3,546 action items raised in meetings are floating with no owner. Make status mandatory when creating MoM tasks.</div>
-            </div>
+            {momStatusPanel?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{momStatusPanel.warning_box.title}</div>
+                <div className="i-txt">{momStatusPanel.warning_box.description}</div>
+              </div>
+            )}
           </div>
           <div className="card">
-            <div className="ct">MoM follow-through rate</div>
+            <div className="ct">{momFollowThroughPanel?.title ?? 'MoM follow-through rate'}</div>
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <div style={{ fontSize: 48, fontWeight: 700, color: '#C0303D', lineHeight: 1 }}>11%</div>
-              <div style={{ fontSize: 12, color: 'var(--sub)', marginTop: 6 }}>of action items completed</div>
+              <div style={{ fontSize: 48, fontWeight: 700, color: '#C0303D', lineHeight: 1 }}>{momFollowThroughPanel?.completion_percentage}%</div>
+              <div style={{ fontSize: 12, color: 'var(--sub)', marginTop: 6 }}>{momFollowThroughPanel?.completion_rate_text}</div>
               <div style={{ background: '#E7848E20', border: '1px solid #E7848E55', borderRadius: 'var(--r100)', padding: '5px 16px', display: 'inline-block', marginTop: 10, fontSize: 12, fontWeight: 700, color: '#C0303D' }}>
-                🔴 Critical — Target 80%+
+                {(momFollowThroughPanel?.completion_percentage ?? 0) >= 80 ? '✅' : '🔴'} {momFollowThroughPanel?.badge}
               </div>
             </div>
             <div style={{ height: 6, background: 'var(--divider)', borderRadius: 3, overflow: 'hidden', margin: '0 16px 16px' }}>
-              <div style={{ width: '11%', height: 6, background: '#E7848E', borderRadius: 3 }} />
+              <div style={{ width: `${momFollowThroughPanel?.completion_percentage ?? 0}%`, height: 6, background: '#E7848E', borderRadius: 3 }} />
             </div>
             <div style={{ padding: '0 4px' }}>
-              <div className="row"><span className="rn">Action items raised total</span><span className="rv">4,970</span></div>
-              <div className="row"><span className="rn">Completed</span><span className="rv" style={{ color: '#0A7A6A' }}>547</span></div>
-              <div className="row"><span className="rn">No status (lost)</span><span className="rv" style={{ color: '#C0303D' }}>3,546</span></div>
+              <div className="row"><span className="rn">Action items raised total</span><span className="rv">{momFollowThroughPanel?.metrics.action_items_raised_total.toLocaleString('en-IN')}</span></div>
+              <div className="row"><span className="rn">Completed</span><span className="rv" style={{ color: '#0A7A6A' }}>{momFollowThroughPanel?.metrics.completed.toLocaleString('en-IN')}</span></div>
+              <div className="row"><span className="rn">No status (lost)</span><span className="rv" style={{ color: '#C0303D' }}>{momFollowThroughPanel?.metrics.no_status_lost.toLocaleString('en-IN')}</span></div>
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>Meetings are not producing tracked action</div>
-              <div className="i-txt">Only 11% of what is decided in meetings gets done. The MoM workflow exists in PATM — the team is not using it. Needs a process mandate.</div>
-            </div>
+            {momFollowThroughPanel?.warning_box && (
+              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
+                <div className="i-lbl" style={{ color: '#C0303D' }}>{momFollowThroughPanel.warning_box.title}</div>
+                <div className="i-txt">{momFollowThroughPanel.warning_box.description}</div>
+              </div>
+            )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

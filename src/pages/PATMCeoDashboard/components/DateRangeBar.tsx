@@ -9,14 +9,34 @@ interface DateRangeBarProps {
   onApply: () => void;
 }
 
-const PRESETS = [
-  { label: 'Today', from: '2026-05-07', to: '2026-05-07' },
-  { label: 'This Week', from: '2026-05-05', to: '2026-05-11' },
-  { label: 'This Month', from: '2026-05-01', to: '2026-05-31' },
-  { label: 'Last Month', from: '2026-04-01', to: '2026-04-30' },
-  { label: 'Last 3 Months', from: '2026-02-01', to: '2026-05-07' },
-  { label: 'All Time', from: '2023-01-01', to: '2026-05-07' },
-];
+function pad(n: number) { return String(n).padStart(2, '0'); }
+
+function fmtDateStr(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function computePresets() {
+  const now = new Date();
+  const today = fmtDateStr(now);
+  const weekStart = new Date(now);
+  const day = weekStart.getDay();
+  weekStart.setDate(weekStart.getDate() - (day === 0 ? 6 : day - 1));
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  return [
+    { label: 'Today', from: today, to: today },
+    { label: 'This Week', from: fmtDateStr(weekStart), to: fmtDateStr(weekEnd) },
+    { label: 'This Month', from: fmtDateStr(monthStart), to: fmtDateStr(monthEnd) },
+    { label: 'Last Month', from: fmtDateStr(lastMonthStart), to: fmtDateStr(lastMonthEnd) },
+    { label: 'Last 3 Months', from: fmtDateStr(threeMonthsAgo), to: today },
+    { label: 'All Time', from: '2023-01-01', to: today },
+  ];
+}
 
 export default function DateRangeBar({
   activePreset,
@@ -32,7 +52,7 @@ export default function DateRangeBar({
     <div className="dr-bar">
       <div className="dr-label">Period</div>
       <div className="dr-presets">
-        {PRESETS.map((p) => (
+        {computePresets().map((p) => (
           <button
             key={p.label}
             className={`dr-chip${activePreset === p.label ? ' active' : ''}`}

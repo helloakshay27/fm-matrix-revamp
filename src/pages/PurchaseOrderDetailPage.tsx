@@ -862,28 +862,19 @@ export const PurchaseOrderDetailPage = () => {
                 const items = resolveItems(purchaseOrder);
                 if (!items.length) return null;
 
-                // Pricing values
-                const subTotal =
-                  purchaseOrder.sub_total_amount ??
-                  purchaseOrder.sub_total ??
-                  purchaseOrder.net_amount ??
-                  items.reduce((s, i) => s + i.total_value, 0);
-
-                const discountAmt = purchaseOrder.tax?.discount ?? 0;
+                const subTotal = purchaseOrder.sub_total ?? purchaseOrder.sub_total_amount ?? 0;
                 const discountPct = purchaseOrder.tax?.tax_percentage ?? 0;
+                const discountAmt = purchaseOrder.tax?.discount ?? 0;
 
-                const cgstRows = aggregateTax(items, "cgst");
-                const sgstRows = aggregateTax(items, "sgst");
-                const igstRows = aggregateTax(items, "igst");
+                // Single tax row, just like the Bill page: name from the first item's tax_group, amount from total_taxable_amount
+                const taxGroupName = items[0]?.tax_group?.name ?? null;
+                const taxGroupRate = items[0]?.tax_group?.rate ?? null;
+                const taxAmount = purchaseOrder.total_taxable_amount ?? 0;
 
-                const tdsAmt =
-                  purchaseOrder.lock_account_tax_amount ??
-                  purchaseOrder.tax?.tax_value ??
-                  0;
                 const tdsLabel = purchaseOrder.tax?.tax_type ?? "TDS";
+                const tdsAmt = purchaseOrder.lock_account_tax_amount ?? purchaseOrder.tax?.tax_value ?? 0;
 
                 const adjustment = purchaseOrder.tax?.adjustment ?? 0;
-
                 const grandTotal =
                   purchaseOrder.total_amount_formatted ??
                   purchaseOrder.total_amount?.toFixed(2) ??
@@ -898,72 +889,41 @@ export const PurchaseOrderDetailPage = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {/* Item Table */}
                       <div className="border border-border rounded-lg overflow-hidden">
                         <Table>
                           <TableHeader>
-                            <TableRow style={{ backgroundColor: "rgba(50,50,50,1)" }}>
-                              <TableHead className="text-black font-semibold w-10">#</TableHead>
-                              <TableHead className="text-black font-semibold">
-                                Item &amp; Description
-                              </TableHead>
-                              <TableHead className="text-black font-semibold text-right">
-                                Qty
-                              </TableHead>
-                              <TableHead className="text-black font-semibold text-right">
-                                Rate
-                              </TableHead>
-                              <TableHead className="text-black font-semibold text-right">
-                                Amount
-                              </TableHead>
+                            <TableRow className="bg-muted/50">
+                              <TableHead>Item Details</TableHead>
+                              <TableHead className="text-right">Quantity</TableHead>
+                              <TableHead className="text-right">Rate</TableHead>
+                              <TableHead className="text-right">Tax</TableHead>
+                              <TableHead className="text-right">Amount</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {items.map((item, idx) => (
-                              <TableRow key={item.id} className="border-b last:border-0">
-                                {/* # */}
-                                <TableCell className="text-muted-foreground text-sm align-top">
-                                  {idx + 1}
-                                </TableCell>
-
-                                {/* Item & Description */}
-                                <TableCell className="align-top">
-                                  <p className="font-semibold text-sm">
-                                    {item.inventory?.name ?? item.prod_desc ?? "N/A"}
-                                  </p>
-                                  {item.inventory?.name && item.prod_desc && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">
+                            {items.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell>
+                                  <div>
+                                    <p className="font-semibold">
+                                      {item.inventory?.name ?? "N/A"}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
                                       {item.prod_desc}
                                     </p>
-                                  )}
+                                  </div>
                                 </TableCell>
-
-                                {/* Qty + unit */}
-                                {/* <TableCell className="text-right align-top">
-                                  <span className="block">{item.quantity}</span>
-                                  {item.unit && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {item.unit}
-                                    </span>
-                                  )}
-                                </TableCell> */}
-                                <TableCell className="text-right align-top">
-                                  {item.quantity}
-                                  {item.unit && (
-                                    <span className="block text-xs text-muted-foreground">
-                                      {item.unit}
-                                    </span>
-                                  )}
+                                <TableCell className="text-right">
+                                  {item.quantity} {item.unit || ""}
                                 </TableCell>
-
-                                {/* Rate */}
-                                <TableCell className="text-right align-top">
-                                  ₹{item.rate.toFixed(2)}
+                                <TableCell className="text-right">
+                                  ₹{Number(item.rate).toFixed(2)}
                                 </TableCell>
-
-                                {/* Amount */}
-                                <TableCell className="text-right font-semibold align-top">
-                                  ₹{item.total_value.toFixed(2)}
+                                <TableCell className="text-right">
+                                  {item.tax_group?.name ?? "-"}
+                                </TableCell>
+                                <TableCell className="text-right font-semibold">
+                                  ₹{Number(item.total_value).toFixed(2)}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -973,110 +933,64 @@ export const PurchaseOrderDetailPage = () => {
 
                       {/* Pricing Summary */}
                       <div className="mt-6 flex justify-end">
-                        <div className="w-full max-w-md border border-border rounded-lg overflow-hidden bg-white">
-                          {/* Sub Total */}
-                          <div className="flex justify-between items-center px-6 py-3 border-b">
-                            <span className="text-sm text-muted-foreground">Sub Total</span>
-                            <span className="font-semibold">₹{subTotal.toFixed(2)}</span>
+                        <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Sub Total
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{Number(subTotal).toFixed(2)}
+                            </span>
                           </div>
 
-                          {/* Discount — hidden when 0 */}
-                          {discountAmt > 0 && (
-                            <div className="flex justify-between items-center px-6 py-3 border-b">
-                              <span className="text-sm text-muted-foreground">
-                                Discount{discountPct > 0 ? ` (${discountPct}%)` : ""}
-                              </span>
-                              <span className="font-semibold text-red-600">
-                                (-) ₹{discountAmt.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Discount ({discountPct}%)
+                            </span>
+                            <span className="font-semibold text-base text-red-600">
+                              -₹{Number(discountAmt).toFixed(2)}
+                            </span>
+                          </div>
 
-                          {/* CGST rows — one per unique rate */}
-                          {cgstRows.map(({ rate, amount }) => (
-                            <div
-                              key={`cgst-${rate}`}
-                              className="flex justify-between items-center px-6 py-3 border-b"
-                            >
-                              <span className="text-sm text-muted-foreground">
-                                CGST ({rate}%)
-                              </span>
-                              <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-
-                          {/* SGST rows */}
-                          {sgstRows.map(({ rate, amount }) => (
-                            <div
-                              key={`sgst-${rate}`}
-                              className="flex justify-between items-center px-6 py-3 border-b"
-                            >
-                              <span className="text-sm text-muted-foreground">
-                                SGST ({rate}%)
-                              </span>
-                              <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-
-                          {/* IGST rows */}
-                          {igstRows.map(({ rate, amount }) => (
-                            <div
-                              key={`igst-${rate}`}
-                              className="flex justify-between items-center px-6 py-3 border-b"
-                            >
-                              <span className="text-sm text-muted-foreground">
-                                IGST ({rate}%)
-                              </span>
-                              <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-
-                          {/* Amount Withheld / TDS — red negative, hidden when 0 */}
-                          {tdsAmt > 0 && (
-                            <div className="flex justify-between items-center px-6 py-3 border-b">
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Amount Withheld
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  ({tdsLabel})
-                                </p>
+                          {!(
+                            purchaseOrder?.reverse_charge === true ||
+                            purchaseOrder?.reverse_charge === "true"
+                          ) &&
+                            taxGroupName && (
+                              <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {taxGroupName} {taxGroupRate != null ? `(${taxGroupRate}%)` : ""}
+                                </span>
+                                <span className="font-semibold text-base">
+                                  ₹{Number(taxAmount).toFixed(2)}
+                                </span>
                               </div>
-                              <span className="font-semibold text-red-600">
-                                (-) ₹{tdsAmt.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
+                            )}
 
-                          {/* Adjustment — hidden when 0 */}
-                          {adjustment !== 0 && (
-                            <div className="flex justify-between items-center px-6 py-3 border-b">
-                              <span className="text-sm text-muted-foreground">
-                                Adjustment
-                              </span>
-                              <span className="font-semibold">
-                                ₹{adjustment.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Grand Total — always from backend */}
-                          <div className="flex justify-between items-center px-6 py-4 border-t">
-                            <span className="font-bold text-base">Total</span>
-                            <span className="font-bold text-xl">₹{grandTotal}</span>
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {tdsLabel?.toUpperCase()}
+                            </span>
+                            <span className="font-semibold text-base text-red-600">
+                              -₹{Number(tdsAmt).toFixed(2)}
+                            </span>
                           </div>
 
-                          {/* Amount in Words */}
-                          {purchaseOrder.amount_in_words && (
-                            <div className="px-6 py-3 border-t bg-muted/30">
-                              <p className="text-xs text-muted-foreground">
-                                Amount in Words:
-                              </p>
-                              <p className="text-sm font-medium">
-                                {purchaseOrder.amount_in_words}
-                              </p>
-                            </div>
-                          )}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Adjustment
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{Number(adjustment).toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-primary text-2xl">
+                              ₹{grandTotal}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
