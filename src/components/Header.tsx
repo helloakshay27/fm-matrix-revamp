@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import posthog from "posthog-js";
 import recessLogo from "../assets/recess-logo";
 import {
   Bell,
@@ -130,6 +131,20 @@ export const Header = () => {
       localStorage.setItem("selectedSiteName", selectedSite.name);
     }
   }, [selectedSite]);
+
+  // Identify the current user in PostHog with org/company/site context so these
+  // properties attach to the person and every subsequent event. Runs on mount
+  // (values read from localStorage) and whenever the company/site changes.
+  useEffect(() => {
+    const uid = getUser()?.id;
+    if (!uid) return;
+    posthog.identify(String(uid), {
+      organization_name: localStorage.getItem("selectedOrg") ?? undefined,
+      company_name: localStorage.getItem("selectedCompany") ?? undefined,
+      site_name: localStorage.getItem("selectedSiteName") ?? undefined,
+      email: getUser()?.email ?? undefined,
+    });
+  }, [selectedCompany, selectedSite]);
 
   // Get user data from localStorage
   const user = getUser() || {
