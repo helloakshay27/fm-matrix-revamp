@@ -255,6 +255,7 @@ export const MobileSurveyLanding: React.FC = () => {
       case "smiley":
         return selectedRating !== null;
       case "date":
+      case "time":
         return currentQuestionValue.trim() !== "";
       default:
         return true;
@@ -2615,6 +2616,44 @@ export const MobileSurveyLanding: React.FC = () => {
                           <div className="mt-4">
                             <input
                               type="date"
+                              value={currentQuestionValue}
+                              onChange={(e) =>
+                                setCurrentQuestionValue(e.target.value)
+                              }
+                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
+                              const answerData = saveCurrentAnswer();
+                              if (isSingleQuestion) {
+                                handleSingleQuestionSubmit(answerData);
+                              } else {
+                                handleNextQuestion();
+                              }
+                            }}
+                            disabled={!isCurrentAnswerValid()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                          >
+                            {(surveyData?.snag_checklist?.questions_count ??
+                              0) === 1
+                              ? "Submit Survey"
+                              : "Continue"}
+                          </button>
+                        </>
+                      )}
+
+                      {/* Time Question */}
+                      {currentQuestion.qtype === "time" && (
+                        <>
+                          <div className="mt-4">
+                            <input
+                              type="time"
                               value={currentQuestionValue}
                               onChange={(e) =>
                                 setCurrentQuestionValue(e.target.value)

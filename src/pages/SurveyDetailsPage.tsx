@@ -351,7 +351,9 @@ export const SurveyDetailsPage = () => {
                                           ? "bg-purple-100 text-purple-800"
                                           : question.qtype === "description"
                                             ? "bg-indigo-100 text-indigo-800"
-                                            : "bg-gray-100 text-gray-800"
+                                            : question.qtype === "date" || question.qtype === "time"
+                                              ? "bg-teal-100 text-teal-800"
+                                              : "bg-gray-100 text-gray-800"
                                 }
                               `}
                               >
@@ -366,7 +368,11 @@ export const SurveyDetailsPage = () => {
                                         ? "Emoji"
                                         : question.qtype === "description"
                                           ? "Description"
-                                          : question.qtype || "Unknown"}
+                                          : question.qtype === "date"
+                                            ? "Date"
+                                            : question.qtype === "time"
+                                              ? "Time"
+                                              : question.qtype || "Unknown"}
                               </span>
                               {question.quest_mandatory && (
                                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
@@ -411,7 +417,9 @@ export const SurveyDetailsPage = () => {
                                                 ? "Checkbox"
                                                 : question.qtype === "date"
                                                   ? "Date"
-                                                  : "Unknown Type"
+                                                  : question.qtype === "time"
+                                                    ? "Time"
+                                                    : "Unknown Type"
                                   }
                                   disabled
                                 >
@@ -439,6 +447,9 @@ export const SurveyDetailsPage = () => {
                                     </SelectItem>
                                     <SelectItem value="Date">
                                       Date
+                                    </SelectItem>
+                                    <SelectItem value="Time">
+                                      Time
                                     </SelectItem>
                                   </SelectContent>
                                 </Select>
