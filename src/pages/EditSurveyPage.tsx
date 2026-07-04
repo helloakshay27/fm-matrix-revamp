@@ -448,7 +448,9 @@ export const EditSurveyPage = () => {
                   ? "checkbox"
                   : q.qtype === "date"
                     ? "date"
-                    : q.qtype === "input"
+                    : q.qtype === "time"
+                      ? "time"
+                      : q.qtype === "input"
                       ? "input-box"
                       : q.qtype === "input_box"
                         ? "input-box"
@@ -1117,7 +1119,9 @@ export const EditSurveyPage = () => {
               ? "checkbox"
               : question.answerType === "date"
                 ? "date"
-                : question.answerType === "input-box"
+                : question.answerType === "time"
+                  ? "time"
+                  : question.answerType === "input-box"
                   ? "input_box"
                   : question.answerType === "rating"
                     ? "rating"
@@ -1736,6 +1740,7 @@ export const EditSurveyPage = () => {
                             <SelectItem value="input-box">Input Box</SelectItem>
                              <SelectItem value="checkbox">Checkbox</SelectItem>
                              <SelectItem value="date">Date</SelectItem>
+                             <SelectItem value="time">Time</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
