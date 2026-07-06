@@ -960,6 +960,8 @@ const EditFolderPage = lazy(() => import("./pages/EditFolderPage").then(m => ({ 
 const OnlyOfficeEditorPage = lazy(() => import("./pages/OnlyOfficeEditorPage").then(m => ({ default: m.OnlyOfficeEditorPage })));
 
 const DocumentShareLinkPage = lazy(() => import("./pages/DocumentShareLinkPage").then(m => ({ default: m.DocumentShareLinkPage })));
+const BookingWebviewPage = lazy(() => import("./pages/BookingWebviewPage").then(m => ({ default: m.BookingWebviewPage })));
+const BookingConfirmedPage = lazy(() => import("./pages/BookingConfirmedPage").then(m => ({ default: m.BookingConfirmedPage })));
 const GroupConversation = lazy(() => import("./components/GroupConversation"));
 const ChannelTasksAll = lazy(() => import("./pages/ChannelTasksAll"));
 const ChatTaskDetailsPage = lazy(() => import("./pages/ChatTaskDetailsPage"));
@@ -1693,6 +1695,14 @@ function App() {
                           <Route
                             path="/documents/editor/:documentId"
                             element={<OnlyOfficePublicEditorPage />}
+                          />
+                          <Route
+                            path="/booking/:token"
+                            element={<BookingWebviewPage />}
+                          />
+                          <Route
+                            path="/booking/:token/confirmed"
+                            element={<BookingConfirmedPage />}
                           />
 
                           {/* Backend Routes */}
