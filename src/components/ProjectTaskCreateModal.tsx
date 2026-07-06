@@ -1261,6 +1261,7 @@ const ProjectTaskCreateModal = ({
   const [dependentTaskId, setDependentTaskId] = useState("");
   const [projectTasks, setProjectTasks] = useState<any[]>([]);
   const [dependenciesLoading, setDependenciesLoading] = useState(false);
+  const getUsersRef = useRef(0);
   const [startDate, setStartDate] = useState(() => {
     const startDate = prefillData?.start_date;
     if (!startDate) return null;
@@ -1348,6 +1349,7 @@ const ProjectTaskCreateModal = ({
   };
 
   const getUsers = async () => {
+    const requestId = ++getUsersRef.current;
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
@@ -1357,6 +1359,7 @@ const ProjectTaskCreateModal = ({
           },
         }
       );
+      if (requestId !== getUsersRef.current) return;
       // Filter out any undefined/null users and map roles
       const validUsers = (response.data.users || [])
         .filter((user: any) => user && user.id)
@@ -1373,6 +1376,7 @@ const ProjectTaskCreateModal = ({
       const shouldAddPrefilledUser =
         prefilledResponsiblePerson?.id &&
         !validUsers.some((user: any) => user.id === prefilledResponsiblePerson.id);
+      if (requestId !== getUsersRef.current) return;
       setUsers(
         shouldAddPrefilledUser
           ? [
@@ -1386,8 +1390,10 @@ const ProjectTaskCreateModal = ({
           : validUsers
       );
     } catch (error) {
-      console.log(error);
-      toast.error(error);
+      if (requestId === getUsersRef.current) {
+        console.log(error);
+        toast.error(error);
+      }
     }
   };
 
@@ -1464,25 +1470,27 @@ const ProjectTaskCreateModal = ({
   );
 
   useEffect(() => {
-    if (project && typeof project === "object" && "project_team" in project) {
+    if (id && project && typeof project === "object" && "project_team" in project) {
       const projectWithTeam = project as any;
-      const members = [];
+      const extracted = [];
 
       projectWithTeam?.project_team?.project_team_members?.forEach(
         (member: any) => {
           if (member?.user) {
-            members.push(member.user);
+            extracted.push(member.user);
           }
         }
       );
 
       if (projectWithTeam?.project_team?.team_lead) {
-        members.push(projectWithTeam.project_team.team_lead);
+        extracted.push(projectWithTeam.project_team.team_lead);
       }
 
-      setMembers(members);
+      setMembers(extracted);
+    } else {
+      setMembers([]);
     }
-  }, [project]);
+  }, [project, id]);
 
   useEffect(() => {
     if (isEdit && task) {
@@ -1867,7 +1875,7 @@ const ProjectTaskCreateModal = ({
             isReadOnly={true}
             project={project}
             milestone={milestone}
-            users={members.length > 0 ? members : users}
+            users={id && members.length > 0 ? members : users}
             tags={tags}
             prevTags={prevTags}
             setPrevTags={setPrevTags}
@@ -1903,7 +1911,7 @@ const ProjectTaskCreateModal = ({
             isReadOnly={false}
             project={project}
             milestone={milestone}
-            users={members.length > 0 ? members : users}
+            users={id && members.length > 0 ? members : users}
             tags={tags}
             prevTags={prevTags}
             setPrevTags={setPrevTags}
