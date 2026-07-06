@@ -449,6 +449,15 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
     }, []);
 
     React.useEffect(() => {
+        if (ledgers.length > 0 && !form.lock_account_ledger_id) {
+            const defaultLedger = ledgers[0];
+            if (defaultLedger?.id) {
+                setForm((prev: any) => ({ ...prev, lock_account_ledger_id: defaultLedger.id }));
+            }
+        }
+    }, [ledgers, form.lock_account_ledger_id, setForm]);
+
+    React.useEffect(() => {
         if (showConfig) {
             setEditTerms(paymentTerms.map(term => ({ id: term.id, name: term.name, days: term.days })));
         }

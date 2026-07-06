@@ -54,6 +54,14 @@ export const FormViewAllQuestions: React.FC<FormViewAllQuestionsProps> = ({
         });
     };
 
+    const handleTimeChange = (questionId: number, value: string) => {
+        onAnswerChange(questionId, {
+            qtype: "time",
+            value: value,
+            comments: "",
+        });
+    };
+
     const handleRatingSelect = (questionId: number, rating: number, question: SurveyQuestion) => {
         onAnswerChange(questionId, {
             qtype: "rating",
@@ -104,6 +112,7 @@ export const FormViewAllQuestions: React.FC<FormViewAllQuestionsProps> = ({
                 case "text":
                 case "description":
                 case "date":
+                case "time":
                     return answer.value && answer.value.toString().trim() !== "";
                 case "rating":
                 case "emoji":
@@ -223,6 +232,16 @@ export const FormViewAllQuestions: React.FC<FormViewAllQuestionsProps> = ({
                                     type="date"
                                     value={answer?.value?.toString() || ""}
                                     onChange={(e) => handleDateChange(question.id, e.target.value)}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                />
+                            )}
+
+                            {/* Time */}
+                            {question.qtype === "time" && (
+                                <input
+                                    type="time"
+                                    value={answer?.value?.toString() || ""}
+                                    onChange={(e) => handleTimeChange(question.id, e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                 />
                             )}

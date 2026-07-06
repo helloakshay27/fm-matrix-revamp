@@ -1,8 +1,24 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+
+const getClosingStockRows = (payload: any): any[] => {
+    if (Array.isArray(payload)) return payload;
+
+    const candidates = [
+        payload?.rows,
+        payload?.closing_stock_ledger,
+        payload?.closing_stock_ledgers,
+        payload?.closing_stock_ledger_records,
+        payload?.records,
+        payload?.data,
+    ];
+
+    const rows = candidates.find(Array.isArray);
+    return rows || [];
+};
 
 const getTransactionRoute = (transactionType: string, transactionId: any): string | null => {
     if (!transactionId) return null;
@@ -25,6 +41,7 @@ export const BalanceSheetDetails = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 
+    const location = useLocation();
     const [loading, setLoading] = useState(false);
     const [ledgerLoading, setLedgerLoading] = useState(false);
     const [ledgerDetails, setLedgerDetails] = useState<any | null>(null);
@@ -33,17 +50,61 @@ export const BalanceSheetDetails = () => {
     const [closingBalance, setClosingBalance] = useState(0);
     const [description, setDescription] = useState("");
     const [transactions, setTransactions] = useState<any[]>([]);
+    const [closingStockLoading, setClosingStockLoading] = useState(false);
+    const [closingStockRows, setClosingStockRows] = useState<any[]>([]);
+    const [closingStockMeta, setClosingStockMeta] = useState<{ as_of_date?: string; closing_qty?: number; closing_value?: number } | null>(null);
     const [date, setDate] = useState("");
     const lock_account_id = localStorage.getItem("lock_account_id");
+
+    const showClosingStockLedger = new URLSearchParams(location.search).get("is_drill_down_supported") === "true";
 
     // Fetch ledger details from correct API
     const formatDate = (dateString: string) => {
         if (!dateString) return "-";
-        return new Date(dateString).toLocaleDateString("en-GB", {
+
+        const normalized = dateString.trim();
+        const ddmmyyyyMatch = /^([0-3]\d)-([0-1]\d)-([0-9]{4})$/.exec(normalized);
+        if (ddmmyyyyMatch) {
+            const [, day, month, year] = ddmmyyyyMatch;
+            return `${day}-${month}-${year}`;
+        }
+
+        const parsed = new Date(normalized);
+        if (isNaN(parsed.getTime())) {
+            return "-";
+        }
+
+        return parsed.toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
         });
+    };
+
+    const fetchClosingStockLedger = async () => {
+        if (!baseUrl || !token || !lock_account_id) return;
+
+        setClosingStockLoading(true);
+        try {
+            const res = await axios.get(
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/closing_stock_ledger.json`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const rows = getClosingStockRows(res.data);
+            setClosingStockRows(rows);
+            setClosingStockMeta({
+                as_of_date: res.data?.as_of_date,
+                closing_qty: res.data?.closing_qty,
+                closing_value: res.data?.closing_value,
+            });
+        } catch (err) {
+            console.error(err);
+            setClosingStockRows([]);
+            setClosingStockMeta(null);
+        } finally {
+            setClosingStockLoading(false);
+        }
     };
     const fetchLedgerDetails = async () => {
         setLedgerLoading(true);
@@ -134,6 +195,9 @@ export const BalanceSheetDetails = () => {
 
     useEffect(() => {
         fetchLedgerDetails();
+        if (showClosingStockLedger) {
+            fetchClosingStockLedger();
+        }
         // fetchAccountDetails();
     }, [id]);
 
@@ -297,8 +361,69 @@ export const BalanceSheetDetails = () => {
                         </tbody>
                     </table>
                 </div>
+            </div>
 
-            </div >
+            {showClosingStockLedger && (
+                <div className="border rounded-md mt-8">
+                    <div className="flex justify-between items-center px-4 py-3 border-b bg-gray-50">
+                        <div>
+                            <h2 className="font-medium text-gray-800">Closing Stock Ledger</h2>
+                            {closingStockMeta?.as_of_date && (
+                                <p className="text-sm text-gray-500">As of {formatDate(closingStockMeta.as_of_date)}</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-[#E5E0D3]">
+                                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Date</th>
+                                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Transaction Type</th>
+                                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Item Name</th>
+                                    <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Qty</th>
+                                    <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Rate</th>
+                                    <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Value</th>
+                                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Transaction#</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {closingStockLoading ? (
+                                    <tr>
+                                        <td colSpan={7} className="text-center py-4 text-gray-500">Loading closing stock ledger...</td>
+                                    </tr>
+                                ) : closingStockRows.length > 0 ? (
+                                    closingStockRows.map((row, i) => (
+                                        <tr key={row.id || `${row.item_name || ''}-${i}`} className="hover:bg-gray-50">
+                                            <td className="border border-gray-300 px-4 py-3 whitespace-nowrap">{formatDate(row.date || row.transaction_date)}</td>
+                                            <td className="border border-gray-300 px-4 py-3">{row.transaction_type || '-'}</td>
+                                            <td className="border border-gray-300 px-4 py-3">{row.item_name || row.ledger_name || '-'}</td>
+                                            <td className="border border-gray-300 px-4 py-3 text-right">{row.qty != null ? Number(row.qty).toFixed(2) : '-'}</td>
+                                            <td className="border border-gray-300 px-4 py-3 text-right">{row.rate != null ? Number(row.rate).toFixed(2) : '-'}</td>
+                                            <td className="border border-gray-300 px-4 py-3 text-right">{row.value != null ? Number(row.value).toFixed(2) : '-'}</td>
+                                            <td className="border border-gray-300 px-4 py-3">{row.transaction_number || '-'}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={7} className="text-center py-6 text-gray-400">No closing stock ledger entries</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                            {closingStockMeta && (
+                                <tfoot>
+                                    <tr className="bg-gray-100 font-semibold">
+                                        <td className="border border-gray-300 px-4 py-3" colSpan={3}>Totals</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">{closingStockMeta.closing_qty != null ? Number(closingStockMeta.closing_qty).toFixed(2) : '-'}</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">-</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">{closingStockMeta.closing_value != null ? Number(closingStockMeta.closing_value).toFixed(2) : '-'}</td>
+                                        <td className="border border-gray-300 px-4 py-3">&nbsp;</td>
+                                    </tr>
+                                </tfoot>
+                            )}
+                        </table>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
