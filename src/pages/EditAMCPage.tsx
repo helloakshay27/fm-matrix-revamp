@@ -314,8 +314,8 @@ export const EditAMCPage = () => {
           ? 'Asset'
           : resourceDetailType;
       const coverageType =
-        data.amc_type === 'Non-Comprehensive' || data.amc_type === 'Comprehensive'
-          ? data.amc_type
+        data.pms_amc_type === 'Non-Comprehensive' || data.pms_amc_type === 'Comprehensive'
+          ? data.pms_amc_type
           : data.coverage_type || data.amc_coverage_type || 'Comprehensive';
       const isGroupType = data.amc_details_type === 'group';
 

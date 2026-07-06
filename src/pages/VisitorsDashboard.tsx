@@ -5,14 +5,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag } from 'lucide-react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { ColumnVisibilityMenu } from '@/components/ColumnVisibilityDropdown';
+
 import { VisitorSelectionPanel } from '@/components/VisitorSelectionPanel';
 import { ActionSelectionPanel } from '@/components/ActionSelectionPanel';
 import {
@@ -229,21 +229,6 @@ export const VisitorsDashboard = () => {
       totalEntries: 0,
       perPage: 20
     };
-  });
-
-  // Column visibility state for visitor history table
-  const [visitorHistoryColumnVisibility, setVisitorHistoryColumnVisibility] = useState<Record<string, boolean>>({
-    action: true,
-    visitor_image: true,
-    guest_name: true,
-    guest_number: true,
-    primary_host: true,
-    visit_purpose: true,
-    guest_from: true,
-    visitor_type: true,
-    status: true,
-    check_in_time: true,
-    check_out_time: true,
   });
 
   // Mock visitor data for expected visitors
@@ -1407,34 +1392,6 @@ export const VisitorsDashboard = () => {
     }
   };
 
-  // Column visibility handlers for visitor history table
-  const handleVisitorHistoryColumnToggle = (columnKey: string) => {
-    setVisitorHistoryColumnVisibility(prev => ({
-      ...prev,
-      [columnKey]: !prev[columnKey]
-    }));
-  };
-
-  const handleVisitorHistoryColumnReset = () => {
-    setVisitorHistoryColumnVisibility({
-      action: true,
-      visitor_image: true,
-      guest_name: true,
-      guest_number: true,
-      primary_host: true,
-      visit_purpose: true,
-      guest_from: true,
-      visitor_type: true,
-      status: true,
-      check_in_time: true,
-    });
-  };
-
-  // Filter visible columns for visitor history
-  const visibleVisitorHistoryColumns = visitorHistoryColumns.filter(
-    column => visitorHistoryColumnVisibility[column.key] !== false
-  );
-
   const renderPaginationItems = () => {
     const items = [];
     const totalPages = historyPagination.totalPages;
@@ -1752,7 +1709,7 @@ const handlePageChange = (page: number) => {
                   renderCell={renderVisitorOutCell}
                   enableSearch={true}
                   enableSelection={false}
-                  // enableExport={true}
+                  enableExport={true}
                   enablePagination={true}
                   pagination={visitorsOutPagination}
                   onPageChange={fetchVisitorsOut}
@@ -1782,7 +1739,7 @@ const handlePageChange = (page: number) => {
             {/* Visitor History Table - Direct display without sub-tabs */}
             <EnhancedTable
               data={visitorHistoryData}
-              columns={visibleVisitorHistoryColumns}
+              columns={visitorHistoryColumns}
               selectable={true}
               renderCell={renderVisitorHistoryCell}
               enableSearch={true}
@@ -1798,14 +1755,14 @@ const handlePageChange = (page: number) => {
               }
               onSelectAll={handleSelectAll}
               getItemId={visitor => visitor.id.toString()}
-              // enableExport={true}
+              enableExport={true}
+              hideTableExport={false}
               handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
               searchPlaceholder="Search visitors..."
-              hideColumnsButton={true}
               onFilterClick={handleFilterOpen}
               leftActions={
                 <div className="flex gap-3">
@@ -1820,25 +1777,7 @@ const handlePageChange = (page: number) => {
                   )}
                 </div>
               }
-              rightActions={
-                <div className="flex gap-2">
-                  {/* Export Button */}
-                  {/* <Button
-                    onClick={handleExport}
-                    variant="outline"
-                    size="sm"
-                    className="h-9 px-3 bg-white hover:bg-gray-50 border-gray-300"
-                  >
-                    <Download className="w-4 h-4 " />
-                  </Button> */}
-                  <ColumnVisibilityMenu
-                    columns={visitorHistoryColumns}
-                    columnVisibility={visitorHistoryColumnVisibility}
-                    onToggleVisibility={handleVisitorHistoryColumnToggle}
-                    onResetToDefaults={handleVisitorHistoryColumnReset}
-                  />
-                </div>
-              }
+              rightActions={null}
             />
 
             {/* Pagination */}

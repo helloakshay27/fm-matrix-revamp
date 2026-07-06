@@ -13,6 +13,7 @@ const BookingCalenderView = () => {
 
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
+    const isPulsePath = window.location.pathname.startsWith('/pulse/amenity');
 
     // Initialize today's date
     const today = new Date();
@@ -289,6 +290,18 @@ const BookingCalenderView = () => {
 
     const selectedDateInfo = dates.find((d) => d.date === selectedDate);
 
+    const selectionActions = [
+        ...(isPulsePath
+            ? [
+                {
+                    label: 'Add Previous',
+                    icon: Plus,
+                    onClick: () => navigate('/pulse/amenity/previous-booking/add'),
+                },
+            ]
+            : []),
+    ];
+
     return (
         <div className="pt-2 space-y-6">
             {/* Header Controls */}
@@ -297,10 +310,10 @@ const BookingCalenderView = () => {
                     {shouldShow( "Bookings","create")&&(
                     <Button
                         className="fm-button-fix fm-button-brand px-4 py-2"
-                        onClick={handleAddBooking}
+                        onClick={() => setShowActionPanel(true)}
                     >
                         <Plus className="w-4 h-4" />
-                        Add
+                        Action
                     </Button>)}
 
                     <RadioGroup row value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
@@ -339,7 +352,11 @@ const BookingCalenderView = () => {
             </div>
 
             {showActionPanel && (
-                <SelectionPanel onAdd={handleAddBooking} onClearSelection={() => setShowActionPanel(false)} />
+                <SelectionPanel
+                    actions={selectionActions}
+                    onAdd={handleAddBooking}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
             )}
 
             {/* Calendar Container */}
