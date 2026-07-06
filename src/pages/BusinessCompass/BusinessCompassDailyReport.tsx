@@ -1073,6 +1073,23 @@ const BusinessCompassDailyReport: React.FC = () => {
     });
   };
 
+  // Derive which task/issue IDs are already in the "Plan for Tomorrow" list
+  const addedToTomorrowIds = useMemo(() => {
+    const ids = new Set<string>();
+    mergedTasksIssues.forEach((item) => {
+      const text = cleanReportText(item.title || "").toLowerCase();
+      if (
+        text &&
+        planningItems.some(
+          (p) => cleanReportText(p.text).toLowerCase() === text
+        )
+      ) {
+        ids.add(item.id);
+      }
+    });
+    return ids;
+  }, [mergedTasksIssues, planningItems]);
+
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
     return mergedTasksIssues.filter(
@@ -1081,9 +1098,10 @@ const BusinessCompassDailyReport: React.FC = () => {
           item.status === "closed" ||
           item.status === "done") &&
         !hiddenAutoIds.has(item.id) &&
-        !!(item.title || "").trim()
+        !!(item.title || "").trim() &&
+        !addedToTomorrowIds.has(item.id)
     );
-  }, [mergedTasksIssues, startDate, hiddenAutoIds]);
+  }, [mergedTasksIssues, startDate, hiddenAutoIds, addedToTomorrowIds]);
 
   // Filter manual accomplishments to exclude items already shown in the auto-added section.
   // This prevents duplicates when a saved report's payload (which merged auto+manual) is reloaded.
@@ -1105,23 +1123,6 @@ const BusinessCompassDailyReport: React.FC = () => {
       return a.completed ? 1 : -1;
     });
   }, [accomplishments, autoAddedAccomplishments]);
-
-  // Derive which task/issue IDs are already in the "Plan for Tomorrow" list
-  const addedToTomorrowIds = useMemo(() => {
-    const ids = new Set<string>();
-    mergedTasksIssues.forEach((item) => {
-      const text = cleanReportText(item.title || "").toLowerCase();
-      if (
-        text &&
-        planningItems.some(
-          (p) => cleanReportText(p.text).toLowerCase() === text
-        )
-      ) {
-        ids.add(item.id);
-      }
-    });
-    return ids;
-  }, [mergedTasksIssues, planningItems]);
 
   // Next-day scheduled items shown as lightweight rows; starred selections live in planningItems.
   const dedupedTomorrowItems = useMemo(() => {
@@ -1302,6 +1303,16 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const removePlanningItem = (id: string) => {
     markDraftDirty();
+    if (id.startsWith("from-accom-")) {
+      const originalId = id.replace("from-accom-", "");
+      const planItem = planningItems.find(p => p.id === id);
+      if (planItem && !accomplishments.some(a => a.id === originalId)) {
+        setAccomplishments((prev) => [
+          ...prev,
+          { id: originalId, text: planItem.text, completed: false, starred: false },
+        ]);
+      }
+    }
     setPlanningItems(planningItems.filter((p) => p.id !== id));
   };
 
@@ -3790,6 +3801,47 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     )}
                                   />
 
+                                  {!item.completed && (() => {
+                                    const planItemId = `from-accom-${item.id}`;
+                                    const inPlan = planningItems.some(p => p.id === planItemId);
+                                    return (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (inPlan) {
+                                            setPlanningItems((prev) =>
+                                              prev.filter((p) => p.id !== planItemId)
+                                            );
+                                            if (!accomplishments.some(a => a.id === item.id)) {
+                                              setAccomplishments((prev) => [...prev, item]);
+                                            }
+                                          } else {
+                                            setAccomplishments((prev) =>
+                                              prev.filter((a) => a.id !== item.id)
+                                            );
+                                            const text = cleanReportText(item.text);
+                                            if (text) {
+                                              setPlanningItems((prev) => [
+                                                ...prev,
+                                                { id: planItemId, text: item.text, starred: false },
+                                              ]);
+                                            }
+                                          }
+                                          markDraftDirty();
+                                        }}
+                                        className={cn(
+                                          "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                          inPlan
+                                            ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                            : "opacity-0 group-hover:opacity-100 bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5"
+                                        )}
+                                        title={inPlan ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                      >
+                                        {inPlan ? "Added ✓" : "+ Tomorrow"}
+                                      </button>
+                                    );
+                                  })()}
+
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -3943,6 +3995,31 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       title={`Edit ${item.type}`}
                                     >
                                       <Pencil size={13} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        const alreadyInPlan = addedToTomorrowIds.has(item.id);
+                                        if (alreadyInPlan) {
+                                          removeItemFromTomorrow(item);
+                                        } else {
+                                          addItemToTomorrow(item);
+                                        }
+                                      }}
+                                      className={cn(
+                                        "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                        addedToTomorrowIds.has(item.id)
+                                          ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                          : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100"
+                                      )}
+                                      title={
+                                        addedToTomorrowIds.has(item.id)
+                                          ? "Remove from tomorrow's plan"
+                                          : "Add to tomorrow's plan"
+                                      }
+                                    >
+                                      {addedToTomorrowIds.has(item.id)
+                                        ? "Added ✓"
+                                        : "+ Tomorrow"}
                                     </button>
                                   </div>
                                   {(() => {
@@ -5516,6 +5593,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 (group.statuses as readonly string[]).includes(
                                   effectiveStatus
                                 ) && !(yesterdaySourceIds.has(item.id) && !isPlayedOrStarted)
+                                && !addedToTomorrowIds.has(item.id)
                               );
                             }
                           );
