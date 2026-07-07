@@ -1060,6 +1060,23 @@ const BusinessCompassDailyReport: React.FC = () => {
     });
   };
 
+  // Derive which task/issue IDs are already in the "Plan for Tomorrow" list
+  const addedToTomorrowIds = useMemo(() => {
+    const ids = new Set<string>();
+    mergedTasksIssues.forEach((item) => {
+      const text = cleanReportText(item.title || "").toLowerCase();
+      if (
+        text &&
+        planningItems.some(
+          (p) => cleanReportText(p.text).toLowerCase() === text
+        )
+      ) {
+        ids.add(item.id);
+      }
+    });
+    return ids;
+  }, [mergedTasksIssues, planningItems]);
+
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
     return mergedTasksIssues.filter(
@@ -1068,9 +1085,10 @@ const BusinessCompassDailyReport: React.FC = () => {
           item.status === "closed" ||
           item.status === "done") &&
         !hiddenAutoIds.has(item.id) &&
-        !!(item.title || "").trim()
+        !!(item.title || "").trim() &&
+        !addedToTomorrowIds.has(item.id)
     );
-  }, [mergedTasksIssues, startDate, hiddenAutoIds]);
+  }, [mergedTasksIssues, startDate, hiddenAutoIds, addedToTomorrowIds]);
 
   // Filter manual accomplishments to exclude items already shown in the auto-added section.
   // This prevents duplicates when a saved report's payload (which merged auto+manual) is reloaded.
@@ -1092,23 +1110,6 @@ const BusinessCompassDailyReport: React.FC = () => {
       return a.completed ? 1 : -1;
     });
   }, [accomplishments, autoAddedAccomplishments]);
-
-  // Derive which task/issue IDs are already in the "Plan for Tomorrow" list
-  const addedToTomorrowIds = useMemo(() => {
-    const ids = new Set<string>();
-    mergedTasksIssues.forEach((item) => {
-      const text = cleanReportText(item.title || "").toLowerCase();
-      if (
-        text &&
-        planningItems.some(
-          (p) => cleanReportText(p.text).toLowerCase() === text
-        )
-      ) {
-        ids.add(item.id);
-      }
-    });
-    return ids;
-  }, [mergedTasksIssues, planningItems]);
 
   // Next-day scheduled items shown as lightweight rows; starred selections live in planningItems.
   const dedupedTomorrowItems = useMemo(() => {
@@ -1252,6 +1253,16 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const removePlanningItem = (id: string) => {
     markDraftDirty();
+    if (id.startsWith("from-accom-")) {
+      const originalId = id.replace("from-accom-", "");
+      const planItem = planningItems.find(p => p.id === id);
+      if (planItem && !accomplishments.some(a => a.id === originalId)) {
+        setAccomplishments((prev) => [
+          ...prev,
+          { id: originalId, text: planItem.text, completed: false, starred: false },
+        ]);
+      }
+    }
     setPlanningItems(planningItems.filter((p) => p.id !== id));
   };
 
@@ -3623,7 +3634,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             setPlanningItems((prev) =>
                                               prev.filter((p) => p.id !== planItemId)
                                             );
+                                            if (!accomplishments.some(a => a.id === item.id)) {
+                                              setAccomplishments((prev) => [...prev, item]);
+                                            }
                                           } else {
+                                            setAccomplishments((prev) =>
+                                              prev.filter((a) => a.id !== item.id)
+                                            );
                                             const text = cleanReportText(item.text);
                                             if (text) {
                                               setPlanningItems((prev) => [
@@ -5404,6 +5421,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 (group.statuses as readonly string[]).includes(
                                   effectiveStatus
                                 ) && !(yesterdaySourceIds.has(item.id) && !isPlayedOrStarted)
+                                && !addedToTomorrowIds.has(item.id)
                               );
                             }
                           );

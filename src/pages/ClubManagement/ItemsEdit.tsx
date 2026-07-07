@@ -129,6 +129,7 @@ const ItemsEdit = () => {
     const [taxSettings, setTaxSettings] = useState<any | null>(null);
     const [intraTaxes, setIntraTaxes] = useState<TaxGroup[]>([]);
     const [interTaxes, setInterTaxes] = useState<TaxRate[]>([]);
+    const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([]);
     const [intraSearch, setIntraSearch] = useState("");
     const [interSearch, setInterSearch] = useState("");
     const [form, setForm] = useState({
@@ -196,6 +197,45 @@ const ItemsEdit = () => {
         };
         fetchPurchaseAccountGroups();
     }, [baseUrl, token, lock_account_id]);
+
+    React.useEffect(() => {
+        const fetchUnits = async () => {
+            if (!baseUrl || !token) {
+                setUnitOptions([]);
+                return;
+            }
+
+            try {
+                const res = await axios.get(`https://${baseUrl}/erp_uoms.json?lock_account_id=${lock_account_id}&active=true`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                const rawUnits = Array.isArray(res.data)
+                    ? res.data
+                    : res.data?.units || res.data?.data || [];
+
+                const options = rawUnits
+                    .map((unit: any) => {
+                        const value = unit.short_name ?? unit.code ?? unit.name ?? "";
+                        const label = unit.name
+                            ? unit.short_name
+                                ? `${unit.name} - ${unit.short_name}`
+                                : unit.name
+                            : value;
+                        return value ? { value, label } : null;
+                    })
+                    .filter(Boolean) as { value: string; label: string }[];
+
+                setUnitOptions(options);
+            } catch (e) {
+                console.error("Failed to fetch usage units:", e);
+                setUnitOptions([]);
+            }
+        };
+
+        fetchUnits();
+    }, [baseUrl, token]);
+
     useEffect(() => {
         const fetchTaxData = async () => {
             const [settingsRes, groupRes, rateRes] = await Promise.allSettled([
@@ -659,16 +699,11 @@ const ItemsEdit = () => {
                                 onChange={handleChange}
                             >
                                 <MenuItem value="" disabled>Select unit</MenuItem>
-                                <MenuItem value="box">BOX - box</MenuItem>
-                                <MenuItem value="cm">CMS - cm</MenuItem>
-                                <MenuItem value="dz">DOZ - dz</MenuItem>
-                                <MenuItem value="ft">FTS - ft</MenuItem>
-                                <MenuItem value="g">GMS - g</MenuItem>
-                                <MenuItem value="in">INC - in</MenuItem>
-                                <MenuItem value="kg">KGS - kg</MenuItem>
-                                <MenuItem value="km">KME - km</MenuItem>
-                                <MenuItem value="lb">LBS - lb</MenuItem>
-                                <MenuItem value="mg">MGS - mg</MenuItem>
+                                {unitOptions.map((unit) => (
+                                    <MenuItem key={unit.value} value={unit.value}>
+                                        {unit.label}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
 
