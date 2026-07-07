@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,6 +42,20 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
+    key: 'approved_status',
+    label: 'Approved Status',
+    sortable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: 'last_approved_by',
+    label: 'Last Approved By',
+    sortable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
     key: 'wo_number',
     label: 'W.O. Number',
     sortable: true,
@@ -65,20 +79,6 @@ const columns: ColumnConfig[] = [
   {
     key: 'total_invoice_amount',
     label: 'Total Invoice Amount',
-    sortable: true,
-    defaultVisible: true,
-    draggable: true,
-  },
-  {
-    key: 'last_approved_by',
-    label: 'Last Approved By',
-    sortable: true,
-    defaultVisible: true,
-    draggable: true,
-  },
-  {
-    key: 'approved_status',
-    label: 'Approved Status',
     sortable: true,
     defaultVisible: true,
     draggable: true,
@@ -201,6 +201,7 @@ export const InvoicesDashboard = () => {
     invoiceNumber: urlParams.get("invoiceNumber") || "",
     invoiceDate: urlParams.get("invoiceDate") || "",
     supplierName: urlParams.get("supplierName") || "",
+    woNumber: urlParams.get("woNumber") || "",
   };
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -223,6 +224,7 @@ export const InvoicesDashboard = () => {
         invoice_number: filters.invoiceNumber,
         invoice_date: filters.invoiceDate,
         supplier_name: filters.supplierName,
+        wo_number: filters.woNumber,
       })).unwrap();
       setInvoicesData(response.work_order_invoices);
       setPagination((prev) => ({
@@ -248,9 +250,20 @@ export const InvoicesDashboard = () => {
     if (appliedFilters.invoiceNumber) params.set("invoiceNumber", appliedFilters.invoiceNumber);
     if (appliedFilters.invoiceDate) params.set("invoiceDate", appliedFilters.invoiceDate);
     if (appliedFilters.supplierName) params.set("supplierName", appliedFilters.supplierName);
+    if (appliedFilters.woNumber) params.set("woNumber", appliedFilters.woNumber);
 
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchTerm, appliedFilters, navigate]);
+
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchTerm(query);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      fetchData(1, appliedFilters, query);
+    }, 500);
+  }, [appliedFilters]);
 
   const handleFilterApply = (filters: typeof appliedFilters) => {
     setAppliedFilters(filters);
@@ -448,7 +461,8 @@ export const InvoicesDashboard = () => {
         storageKey="invoices-dashboard"
         emptyMessage="No invoices found matching your criteria"
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
+        disableClientSearch={true}
         searchPlaceholder="Search..."
         loading={loading}
         onFilterClick={() => setIsFilterDialogOpen(true)}
