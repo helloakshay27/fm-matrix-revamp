@@ -103,6 +103,15 @@ interface Technician {
   email: string;
 }
 
+interface VisitAttachment {
+  id?: number;
+  document?: string;
+  document_url?: string;
+  filename?: string;
+  document_file_name?: string;
+  [key: string]: any;
+}
+
 interface AmcVisitLog {
   id: number;
   visit_number: number;
@@ -112,13 +121,8 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
-  // Added optional attachment to align with runtime usage (visit.attachment?.document / id)
-  attachment?: {
-    id?: number;
-    document?: string; // image URL or file URL
-    document_url?: string; // sometimes APIs use document_url
-    [key: string]: any; // allow extra backend-provided fields
-  } | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
 }
 
 interface VisitLogEntry {
@@ -131,12 +135,8 @@ interface VisitLogEntry {
   remarks?: string | null;
   assets_covered?: string[] | null;
   technician?: Technician | null;
-  attachment?: {
-    id?: number;
-    document?: string;
-    document_url?: string;
-    [key: string]: any;
-  } | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
 }
 
 interface FrequencyVisitGroup {
@@ -1737,11 +1737,45 @@ export const AMCDetailsPage = () => {
                                               ) : <span className="text-gray-400 text-sm">—</span>}
                                             </TableCell>
                                             <TableCell>
-                                              {visit.attachment?.document || visit.attachment?.document_url ? (
-                                                <a href={visit.attachment.document || visit.attachment.document_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
-                                                  <FileText className="w-4 h-4" />View
-                                                </a>
-                                              ) : <span className="text-gray-400 text-sm">—</span>}
+                                              {(() => {
+                                                const list: VisitAttachment[] = [
+                                                  ...(visit.attachments || []),
+                                                  ...(visit.attachment ? [visit.attachment] : []),
+                                                ].filter((a) => a?.document || a?.document_url);
+                                                if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+                                                return (
+                                                  <div className="flex flex-col gap-1">
+                                                    {list.map((a, ai) => {
+                                                      const url  = a.document || a.document_url || '';
+                                                      const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                                      return (
+                                                        <div key={a.id ?? ai} className="flex items-center gap-2">
+                                                          <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
+                                                            <FileText className="w-3.5 h-3.5" />{name}
+                                                          </a>
+                                                          <button
+                                                            title="Download"
+                                                            className="text-gray-500 hover:text-[#C72030]"
+                                                            onClick={async () => {
+                                                              try {
+                                                                const token = localStorage.getItem('token');
+                                                                const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                                const blob = await res.blob();
+                                                                const blobUrl = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }));
+                                                                const el = document.createElement('a'); el.href = blobUrl; el.download = name;
+                                                                document.body.appendChild(el); el.click(); el.remove();
+                                                                URL.revokeObjectURL(blobUrl);
+                                                              } catch { window.open(url, '_blank'); }
+                                                            }}
+                                                          >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                                          </button>
+                                                        </div>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                );
+                                              })()}
                                             </TableCell>
                                           </TableRow>
                                         );
@@ -1880,19 +1914,45 @@ export const AMCDetailsPage = () => {
                                   })()}
                                 </TableCell>
                                 <TableCell>
-                                  {visit.attachment?.document || visit.attachment?.document_url ? (
-                                    <a
-                                      href={visit.attachment.document || visit.attachment.document_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
-                                    >
-                                      <FileText className="w-4 h-4" />
-                                      View
-                                    </a>
-                                  ) : (
-                                    <span className="text-gray-400 text-sm">—</span>
-                                  )}
+                                  {(() => {
+                                    const list: VisitAttachment[] = [
+                                      ...(visit.attachments || []),
+                                      ...(visit.attachment ? [visit.attachment] : []),
+                                    ].filter((a) => a?.document || a?.document_url);
+                                    if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+                                    return (
+                                      <div className="flex flex-col gap-1">
+                                        {list.map((a, ai) => {
+                                          const url  = a.document || a.document_url || '';
+                                          const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                          return (
+                                            <div key={a.id ?? ai} className="flex items-center gap-2">
+                                              <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
+                                                <FileText className="w-3.5 h-3.5" />{name}
+                                              </a>
+                                              <button
+                                                title="Download"
+                                                className="text-gray-500 hover:text-[#C72030]"
+                                                onClick={async () => {
+                                                  try {
+                                                    const token = localStorage.getItem('token');
+                                                    const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                    const blob = await res.blob();
+                                                    const blobUrl = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }));
+                                                    const el = document.createElement('a'); el.href = blobUrl; el.download = name;
+                                                    document.body.appendChild(el); el.click(); el.remove();
+                                                    URL.revokeObjectURL(blobUrl);
+                                                  } catch { window.open(url, '_blank'); }
+                                                }}
+                                              >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                              </button>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    );
+                                  })()}
                                 </TableCell>
                               </TableRow>
                             );
