@@ -98,7 +98,7 @@ export const AddGRNDashboard = () => {
     invoiceAmount: "",
     paymentMode: "",
     invoiceDate: "",
-    postingDate: "",
+    postingDate: new Date().toISOString().split('T')[0],
     otherExpense: "",
     loadingExpense: "",
     adjustmentAmount: "",
@@ -654,7 +654,7 @@ export const AddGRNDashboard = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: fieldStyles, readOnly: true }}
               sx={{ mt: 1 }}
             />
 
@@ -805,6 +805,7 @@ export const AddGRNDashboard = () => {
                     )
                   }
                   displayEmpty
+                  disabled={grnDetails.purchaseOrder > 0}
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
@@ -921,15 +922,17 @@ export const AddGRNDashboard = () => {
                 value={item.cgstRate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "cgstRate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 
@@ -955,15 +958,17 @@ export const AddGRNDashboard = () => {
                 value={item.sgstRate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "sgstRate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 
@@ -989,15 +994,17 @@ export const AddGRNDashboard = () => {
                 value={item.igstRate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "igstRate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 
