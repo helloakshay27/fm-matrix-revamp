@@ -71,6 +71,92 @@ function ChatLoader() {
   );
 };
 
+function WavingBot() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+      <style>{`
+        @keyframes aiBotBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes aiBotWave { 0%, 100% { transform: rotate(0deg); } 20% { transform: rotate(-24deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-24deg); } 80% { transform: rotate(4deg); } }
+        @keyframes aiBotBlink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+        @keyframes aiBotBubble { 0%, 100% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(-4px); opacity: 0.9; } }
+        @keyframes aiBotTwinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+        @keyframes aiBotPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.7; } }
+        .ai-bot-body { animation: aiBotBob 2.6s ease-in-out infinite; }
+        .ai-bot-arm-wave { animation: aiBotWave 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: 15% 85%; }
+        .ai-bot-eye { animation: aiBotBlink 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+        .ai-bot-bubble { animation: aiBotBubble 2.6s ease-in-out infinite; }
+        .ai-bot-star { animation: aiBotTwinkle 2s ease-in-out infinite; }
+        .ai-bot-antenna-tip { animation: aiBotPulse 2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+        /* theme.css token mapping */
+        .ai-bot-fill-primary { fill: var(--color-primary); }
+        .ai-bot-fill-primary-dark { fill: var(--color-primary); fill: color-mix(in srgb, var(--color-primary) 72%, #000); }
+        .ai-bot-fill-primary-light { fill: var(--color-primary); fill: color-mix(in srgb, var(--color-primary) 75%, #fff); }
+        .ai-bot-stroke-primary { stroke: var(--color-primary); }
+        .ai-bot-face-screen { fill: #2c2c2c; }
+        .ai-bot-glow { fill: var(--color-success); }
+        .ai-bot-glow-stroke { stroke: var(--color-success); }
+        .ai-bot-accent { fill: var(--color-warning); }
+        .ai-bot-star-purple { fill: var(--color-secondary-purple); }
+        .ai-bot-bubble-bg { fill: var(--color-card-white); }
+        .ai-bot-bubble-text { fill: var(--color-primary); }
+      `}</style>
+      <svg width="170" height="160" viewBox="0 0 220 200" fill="none" aria-hidden="true">
+        {/* ground shadow */}
+        <ellipse cx="108" cy="189" rx="46" ry="6" fill="rgba(0,0,0,0.25)" />
+
+        {/* sparkles */}
+        <path className="ai-bot-star ai-bot-accent" d="M34 60l2.5 5.5L42 68l-5.5 2.5L34 76l-2.5-5.5L26 68l5.5-2.5z" />
+        <path className="ai-bot-star ai-bot-star-purple" style={{ animationDelay: "0.7s" }} d="M190 120l2 4.5 4.5 2-4.5 2-2 4.5-2-4.5-4.5-2 4.5-2z" />
+        <path className="ai-bot-star ai-bot-star-purple" style={{ animationDelay: "1.3s" }} d="M40 130l1.8 4 4 1.8-4 1.8-1.8 4-1.8-4-4-1.8 4-1.8z" />
+
+        {/* speech bubble */}
+        <g className="ai-bot-bubble">
+          <rect className="ai-bot-bubble-bg ai-bot-stroke-primary" x="158" y="14" width="52" height="32" rx="12" strokeWidth="2.5" />
+          <path className="ai-bot-bubble-bg ai-bot-stroke-primary" d="M166 44l-6 12 16-8z" strokeWidth="2.5" strokeLinejoin="round" />
+          <text className="ai-bot-bubble-text" x="184" y="36" textAnchor="middle" fontSize="17" fontWeight="800" fontFamily="inherit">Hi!</text>
+        </g>
+
+        <g className="ai-bot-body">
+          {/* antenna */}
+          <rect className="ai-bot-fill-primary" x="106" y="20" width="4" height="18" rx="2" />
+          <circle className="ai-bot-antenna-tip ai-bot-accent" cx="108" cy="16" r="7" />
+
+          {/* waving arm (behind body, pivots at shoulder) */}
+          <g className="ai-bot-arm-wave">
+            <path className="ai-bot-stroke-primary" d="M138 116 Q156 108 162 90" strokeWidth="11" strokeLinecap="round" fill="none" />
+            <circle className="ai-bot-fill-primary-light" cx="163" cy="85" r="8" />
+          </g>
+
+          {/* static arm */}
+          <path className="ai-bot-stroke-primary" d="M82 116 Q66 124 62 140" strokeWidth="11" strokeLinecap="round" fill="none" />
+          <circle className="ai-bot-fill-primary-light" cx="61" cy="144" r="8" />
+
+          {/* ears */}
+          <rect className="ai-bot-fill-primary-dark" x="56" y="56" width="12" height="24" rx="6" />
+          <rect className="ai-bot-fill-primary-dark" x="150" y="56" width="12" height="24" rx="6" />
+
+          {/* head */}
+          <rect className="ai-bot-fill-primary" x="64" y="38" width="90" height="60" rx="18" />
+          <rect className="ai-bot-face-screen" x="76" y="48" width="66" height="40" rx="12" />
+          <circle className="ai-bot-eye ai-bot-glow" cx="96" cy="64" r="5.5" />
+          <circle className="ai-bot-eye ai-bot-glow" cx="122" cy="64" r="5.5" />
+          <path className="ai-bot-glow-stroke" d="M100 74 Q109 82 118 74" strokeWidth="3" strokeLinecap="round" fill="none" />
+
+          {/* body */}
+          <rect className="ai-bot-fill-primary" x="82" y="102" width="56" height="56" rx="15" />
+          <path className="ai-bot-accent" d="M113 112l-10 18h7l-4 16 12-20h-8l6-14z" />
+
+          {/* legs + feet */}
+          <rect className="ai-bot-fill-primary-dark" x="90" y="156" width="11" height="16" rx="5" />
+          <rect className="ai-bot-fill-primary-dark" x="119" y="156" width="11" height="16" rx="5" />
+          <rect className="ai-bot-fill-primary" x="82" y="170" width="26" height="11" rx="5.5" />
+          <rect className="ai-bot-fill-primary" x="112" y="170" width="26" height="11" rx="5.5" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 type Message = { role: "bot" | "user"; text: string; time: string; durationMs?: number };
 
 function now() {
@@ -88,9 +174,10 @@ function formatDuration(ms: number) {
 interface AiBotProps {
   isOpen: boolean;
   onToggle: () => void;
+  externalQuote?: { greeting?: string; quotes?: string } | null;
 }
 
-export default function AiBot({ isOpen, onToggle }: AiBotProps) {
+export default function AiBot({ isOpen, onToggle, externalQuote }: AiBotProps) {
   const [apiKey, setApiKey] = useState("");
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -103,6 +190,8 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
   const historyRef = useRef<{ role: string; content: string }[]>([]);
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}") || {};
   const baseUrl = localStorage.getItem("baseUrl");
+  const [showExternalQuote, setShowExternalQuote] = useState(false);
+
 
   function getCurrentUserId() {
     const userIdFromStorage =
@@ -165,6 +254,11 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
     return "";
   }
 
+  // show the external quote card when modal opens and there's a quote
+  useEffect(() => {
+    setShowExternalQuote(!!externalQuote && isOpen);
+  }, [externalQuote, isOpen]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -188,6 +282,8 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
     if (isLoading || !text.trim()) return;
     const requestStartTime = Date.now();
     const userMsg: Message = { role: "user", text, time: now() };
+    // hide external quote card once user starts messaging
+    setShowExternalQuote(false);
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setShowSuggestions(false);
@@ -415,6 +511,19 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
           }}
         >
           <div className="ai-messages" id="aiMessages">
+            {externalQuote && isOpen && showExternalQuote && messages.length === 0 && (
+              <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '12px 0' }}>
+                <div style={{ maxWidth: 640, width: '100%', textAlign: 'center' }}>
+                  <WavingBot />
+                  {externalQuote.greeting && (
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: 8 }}>{externalQuote.greeting}</div>
+                  )}
+                  {externalQuote.quotes && (
+                    <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', fontStyle: 'italic' }}>&quot;{externalQuote.quotes}&quot;</div>
+                  )}
+                </div>
+              </div>
+            )}
             {/* Intro */}
             {/* <div className="ai-msg bot">
               <div className="ai-msg-avatar bot">✦</div>
