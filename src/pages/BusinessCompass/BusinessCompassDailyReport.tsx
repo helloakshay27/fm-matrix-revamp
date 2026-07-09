@@ -1244,10 +1244,6 @@ const BusinessCompassDailyReport: React.FC = () => {
       },
       ...accomplishments,
     ]);
-    setPlanningItems((prev) => [
-      ...prev,
-      { id: `from-accom-${id}`, text: "", starred: false },
-    ]);
   };
 
   const removeAccomplishment = (id: string) => {
@@ -1264,24 +1260,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       )
     );
     // When unchecking a manually added item, mirror it into Plan for Tomorrow
-    if (item && item.completed) {
-      const text = cleanReportText(item.text);
-      const alreadyInPlan = planningItems.some(
-        (p) => cleanReportText(p.text).toLowerCase() === text.toLowerCase()
-      );
-      if (text && !alreadyInPlan) {
-        setPlanningItems((prev) => [
-          ...prev,
-          { id: `from-accom-${id}`, text: item.text, starred: item.starred },
-        ]);
-      }
-    }
-    // When checking a manually added item, remove it from Plan for Tomorrow
-    if (item && !item.completed) {
-      setPlanningItems((prev) =>
-        prev.filter((p) => p.id !== `from-accom-${id}`)
-      );
-    }
+
   };
 
   const toggleStar = (id: string) => {
@@ -3751,7 +3730,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   "border-amber-300 bg-amber-50/30"
                                 )}
                               >
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
                                   <div
                                     className={cn(
                                       "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
@@ -3794,7 +3773,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     }
                                     placeholder="Describe your accomplishment..."
                                     className={cn(
-                                      "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
+                                      "flex-1 min-w-0 bg-transparent border-none outline-none text-sm font-medium transition-all",
                                       item.completed
                                         ? "text-gray-400 line-through"
                                         : "text-gray-700"
@@ -3854,18 +3833,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   </Button>
                                 </div>
 
-                                {item.fromYesterday && (
-                                  <div className="pl-10 pt-0.5">
-                                    <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
-                                      <CalendarIcon size={10} />
-                                      From Yesterday
+                                {/* {item.fromYesterday && (
+                                  <div className="flex items-center pt-1 flex-wrap">
+                                    <span className="pt-0.5">
+                                      <span
+                                        className="inline-flex items-center justify-center bg-amber-100 text-amber-700 border border-amber-200 rounded-[5px] h-5 w-5"
+                                        title="This item is from yesterday"
+                                      >
+                                        <CalendarIcon size={10} />
+                                      </span>
                                     </span>
-                                  </div>
-                                )}
-
-                                {item.completed && (
-                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                    <span className="ml-4 flex items-center gap-1 text-[10px] text-gray-400">
                                       <CalendarIcon
                                         size={9}
                                         className="shrink-0"
@@ -3873,7 +3851,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       {fmtDate(startDate)}
                                     </span>
                                   </div>
-                                )}
+                                )} */}
                               </div>
                             </div>
                           ))}
