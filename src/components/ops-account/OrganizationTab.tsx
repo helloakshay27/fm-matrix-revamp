@@ -198,7 +198,8 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       "dev@lockated.com",
       "atharv.karnekar@lockated.com",
       "sumitra.patil@lockated.com",
-      "testpulse1@panchshil.com"
+      "testpulse1@panchshil.com",
+      "anjali.lungare@lockated.com"
     ];
     setCanEditOrganization(allowedEmails.includes(userEmail));
   };
@@ -479,8 +480,8 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
         <button
           onClick={() => org?.id && org?.active && handleView(org.id)}
           className={`p-1 rounded ${org?.active
-              ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
-              : "text-gray-400 cursor-not-allowed"
+            ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
+            : "text-gray-400 cursor-not-allowed"
             }`}
           title={org?.active ? "View" : "Inactive organization - View disabled"}
           disabled={!org?.id || !org?.active}
