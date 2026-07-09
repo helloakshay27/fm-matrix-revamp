@@ -2065,7 +2065,7 @@ export const AddAMCPage = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices</label>
+                        <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents</label>
                         <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 text-center">
                           <p className="text-sm text-gray-600">
                             {attachments.invoices.length} file(s) uploaded
@@ -2577,11 +2577,10 @@ export const AddAMCPage = () => {
                             key={cfg.frequency}
                             type="button"
                             onClick={() => setActiveFrequencyTab(idx)}
-                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                              activeFrequencyTab === idx
+                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${activeFrequencyTab === idx
                                 ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
                                 : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
-                            }`}
+                              }`}
                           >
                             {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
                           </button>
@@ -4049,11 +4048,10 @@ export const AddAMCPage = () => {
                         key={cfg.frequency}
                         type="button"
                         onClick={() => setActiveFrequencyTab(idx)}
-                        className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                          activeFrequencyTab === idx
+                        className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${activeFrequencyTab === idx
                             ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
                             : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
-                        }`}
+                          }`}
                       >
                         {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
                       </button>
@@ -4839,7 +4837,7 @@ export const AddAMCPage = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">AMC Invoices</label>
+                            <label className="block text-sm font-medium mb-2 text-gray-600">Other Documents</label>
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-100">
                               <p className="text-sm text-gray-500">
                                 {attachments.invoices.length} file(s) uploaded
