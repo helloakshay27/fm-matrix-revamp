@@ -35,13 +35,54 @@ KEY METRICS:
 
 Your job: Answer Chetan sir's questions directly and helpfully. Be concise (2–4 sentences). Always end with the single most important action if applicable.`;
 
-type Message = { role: "bot" | "user"; text: string; time: string };
+const phrases = ["Fetching", "Thinking", "Generating results"];
+
+function ChatLoader() {
+  const [i, setI] = useState(0);
+  const [secs, setSecs] = useState(0);
+
+  useEffect(() => {
+    const phraseTimer = setInterval(() => setI((prev) => (prev + 1) % phrases.length), 1400);
+    const secTimer = setInterval(() => setSecs((prev) => prev + 1), 1000);
+    return () => {
+      clearInterval(phraseTimer);
+      clearInterval(secTimer);
+    };
+  }, []);
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-white font-semibold">
+          <span>{phrases[i]}</span>
+          <span className="text-[10px] text-neutral-400">{secs}s</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        {[0, 1, 2].map((d) => (
+          <span
+            key={d}
+            className="w-1 h-1 rounded-full bg-white/60 animate-bounce"
+            style={{ animationDelay: `${d * 0.15}s` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+type Message = { role: "bot" | "user"; text: string; time: string; durationMs?: number };
 
 function now() {
   return new Date().toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatDuration(ms: number) {
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1).replace(/\.0$/, "")}s`;
 }
 
 interface AiBotProps {
@@ -145,6 +186,7 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
 
   async function send(text: string) {
     if (isLoading || !text.trim()) return;
+    const requestStartTime = Date.now();
     const userMsg: Message = { role: "user", text, time: now() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
@@ -173,7 +215,12 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
       const reply = extractReplyText(response.data) || "No response received.";
       setMessages((prev) => [
         ...prev,
-        { role: "bot", text: reply, time: now() },
+        {
+          role: "bot",
+          text: reply,
+          time: now(),
+          durationMs: Date.now() - requestStartTime,
+        },
       ]);
       historyRef.current.push({ role: "assistant", content: reply });
       if (historyRef.current.length > 16)
@@ -192,7 +239,12 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
 
       setMessages((prev) => [
         ...prev,
-        { role: "bot", text: "⚠️ " + msg, time: now() },
+        {
+          role: "bot",
+          text: "⚠️ " + msg,
+          time: now(),
+          durationMs: Date.now() - requestStartTime,
+        },
       ]);
     }
 
@@ -384,7 +436,14 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
                     className="ai-msg-bubble"
                     dangerouslySetInnerHTML={{ __html: formatText(m.text) }}
                   />
-                  <div className="ai-msg-time">{m.time}</div>
+                  <div className="ai-msg-meta">
+                    <div className="ai-msg-time">{m.time}</div>
+                    {m.role === "bot" && m.durationMs != null && (
+                      <div className="ai-msg-duration">
+                        Generated in {formatDuration(m.durationMs)}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -392,13 +451,9 @@ export default function AiBot({ isOpen, onToggle }: AiBotProps) {
             {isLoading && (
               <div className="ai-msg bot">
                 <div className="ai-msg-avatar bot">✦</div>
-                <div className="ai-msg-bubble" style={{ padding: "8px 14px" }}>
-                  <div className="ai-dot-pulse">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                </div>
+                {/* <div> */}
+                <ChatLoader />
+                {/* </div> */}
               </div>
             )}
             <div ref={messagesEndRef} />
