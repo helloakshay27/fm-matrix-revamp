@@ -39,7 +39,6 @@ interface WasteGenerationFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (filters: WasteGenerationFilters) => void;
-  onExport: (filters: WasteGenerationFilters) => void;
 }
 
 const USER_TYPE_OPTIONS = [
@@ -64,7 +63,6 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   isOpen,
   onClose,
   onApplyFilters,
-  onExport,
 }) => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
 
@@ -183,12 +181,6 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     }
     onApplyFilters(buildApiFilters());
     toast.success('Filters applied successfully!');
-    onClose();
-  };
-
-  const handleExport = () => {
-    onExport(buildApiFilters());
-    toast.success('Data exported successfully!');
     onClose();
   };
 
@@ -362,13 +354,6 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
               className="rounded-none px-8 text-white shadow-none hover:bg-[#A01B26]"
             >
               Submit
-            </Button>
-            <Button
-              onClick={handleExport}
-              style={{ backgroundColor: '#C72030' }}
-              className="rounded-none px-8 text-white shadow-none hover:bg-[#A01B26]"
-            >
-              Export
             </Button>
             <Button
               onClick={handleReset}

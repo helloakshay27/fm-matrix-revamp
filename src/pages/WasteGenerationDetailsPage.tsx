@@ -12,6 +12,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import {
   fetchWasteGenerationById,
   WasteGeneration,
 } from "../services/wasteGenerationAPI";
@@ -156,7 +164,7 @@ export const WasteGenerationDetailsPage = () => {
               Edit
             </Button>
           )}
-          {shouldShow("Waste Generation", "destroy") && (
+          {/* {shouldShow("Waste Generation", "destroy") && (
             <Button
               size="sm"
               onClick={handleDelete}
@@ -165,7 +173,7 @@ export const WasteGenerationDetailsPage = () => {
               <Trash className="w-4 h-4 mr-2" />
               Delete
             </Button>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -292,7 +300,7 @@ export const WasteGenerationDetailsPage = () => {
 
           {/* Bag Details Tab */}
           <TabsContent value="bag-details" className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+            <div className="grid grid-cols-1 gap-8 text-sm">
               <div className="space-y-4">
                 <InfoRow
                   label="Category"
@@ -306,6 +314,46 @@ export const WasteGenerationDetailsPage = () => {
                   label="No. of Bags"
                   value={wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined}
                 />
+                {wasteData.waste_bag_details && wasteData.waste_bag_details.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                      Waste Bag Details
+                    </h4>
+                    <div className="border border-gray-200 rounded-md overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gray-50">
+                            <TableHead>Bag</TableHead>
+                            <TableHead>Weight</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {wasteData.waste_bag_details.map((bag: unknown, idx: number) => {
+                            const bagObj = bag as Record<string, unknown>;
+                            const weightEntry = Object.entries(bagObj).find(([key]) =>
+                              /value|weight/i.test(key)
+                            );
+                            const weightVal = weightEntry ? weightEntry[1] : undefined;
+                            const displayWeight =
+                              weightVal !== null && weightVal !== undefined && !isNaN(Number(weightVal))
+                                ? `${Number(weightVal)} Kg`
+                                : String(weightVal ?? "-");
+                            return (
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium text-gray-900">
+                                  Bag {idx + 1}
+                                </TableCell>
+                                <TableCell className="text-gray-900">
+                                  {displayWeight}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
                 <InfoRow
                   label="Device"
                   value={wasteData.device_id != null ? wasteData.device_id.toString() : undefined}
@@ -314,34 +362,6 @@ export const WasteGenerationDetailsPage = () => {
                   label="Status"
                   value={wasteData.status || undefined}
                 />
-              </div>
-              <div className="space-y-4">
-                {wasteData.waste_bag_details && wasteData.waste_bag_details.length > 0 && (
-                  <div className="col-span-full">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                      Waste Bag Details
-                    </h4>
-                    <div className="space-y-2">
-                      {wasteData.waste_bag_details.map((bag: unknown, idx: number) => {
-                        const bagObj = bag as Record<string, unknown>;
-                        return (
-                          <div
-                            key={idx}
-                            className="border border-gray-200 rounded-md p-3"
-                          >
-                            {Object.entries(bagObj).map(([key, val]) => (
-                              <InfoRow
-                                key={key}
-                                label={key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                                value={String(val)}
-                              />
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </TabsContent>
