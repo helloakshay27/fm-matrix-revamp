@@ -109,6 +109,7 @@ export const AddBookingSetupClubPage = () => {
     isRequest: false,
     active: "1",
     department: "",
+    location: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
@@ -528,6 +529,11 @@ export const AddBookingSetupClubPage = () => {
         formData.active
       );
 
+      // Include optional location if provided
+      if (formData.location && String(formData.location).trim()) {
+        formDataToSend.append("facility_setup[location]", String(formData.location).trim());
+      }
+
       // Find department ID from selected department name
       // if (formData.department) {
       //   formDataToSend.append(
@@ -915,6 +921,14 @@ export const AddBookingSetupClubPage = () => {
                     },
                     shrink: true,
                   }}
+                />
+                <TextField
+                  label="Location"
+                  placeholder="Enter Location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
                 />
                 {/* <FormControl>
                   <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
