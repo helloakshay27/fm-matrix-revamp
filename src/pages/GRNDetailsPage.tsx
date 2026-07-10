@@ -190,6 +190,7 @@ export const GRNDetailsPage = () => {
   const supplier = grnDetails.supplier || {};
   const billingAddress = purchaseOrder.billing_address || {};
   const approvalStatus = grnDetails.approval_status || {};
+  const canEdit = grnDetails.user_permissions?.can_edit === true;
 
   const handlePrint = async () => {
     setPrinting(true)
@@ -405,6 +406,16 @@ export const GRNDetailsPage = () => {
           GRN DETAILS
         </h1>
         <div className="flex gap-2 flex-wrap">
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300"
+              onClick={() => navigate(`/finance/grn-srn/edit/${id}`)}
+            >
+              Edit
+            </Button>
+          )}
           {sendToSap && (
             <Button
               size="sm"
