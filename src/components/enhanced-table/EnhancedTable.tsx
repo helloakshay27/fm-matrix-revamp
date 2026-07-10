@@ -815,7 +815,8 @@ export function EnhancedTable<T extends Record<string, any>>({
       handleExport(columnVisibility);
     } else {
       // Fallback to CSV export
-      exportToExcel(data, columns, exportFileName);
+      const exportColumns = columns.filter(col => col.key !== 'action' && col.key !== 'actions');
+      exportToExcel(data, exportColumns, exportFileName);
     }
   };
 

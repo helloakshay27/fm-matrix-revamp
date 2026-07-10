@@ -559,7 +559,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         ? handleExport(columnVisibility)
                         : exportToExcel(
                             filteredData,
-                            visibleColumns,
+                            visibleColumns.filter(col => col.key !== 'action' && col.key !== 'actions'),
                             exportFileName
                           )
               }

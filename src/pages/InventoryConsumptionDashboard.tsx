@@ -194,12 +194,13 @@ const InventoryConsumptionDashboard = () => {
   // Define table columns for expanded view (API response)
   const expandedColumns: ColumnConfig[] = [
     { key: 'action', label: 'Action', sortable: false, draggable: false, defaultVisible: true },
-    { key: 'name', label: 'Name', sortable: true, draggable: false, defaultVisible: true },
     { key: 'category', label: 'Category', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'quantity', label: 'Content Quantity', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'cost', label: 'Cost', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'consumption', label: 'Consumed', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'total_cost', label: 'Amount', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'name', label: 'Item Name', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'unit', label: 'Unit', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'quantity', label: 'Available Stock', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'consumption', label: 'Consumed Quantity', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'cost', label: 'Unit Cost (₹)', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'total_cost', label: 'Consumption Cost (₹)', sortable: true, draggable: false, defaultVisible: true },
   ];
 
   // Render cell content for expanded table
@@ -380,37 +381,6 @@ const InventoryConsumptionDashboard = () => {
     navigate(`/maintenance/inventory-consumption/view/${item.id}?start_date=${start}&end_date=${end}`);
   };
 
-  // Add small '(Consumed)' label beneath the Amount header (without changing EnhancedTable)
-  useEffect(() => {
-    if (!expandedCategory) return;
-    let tries = 0;
-    const maxTries = 12; // ~1.2s total
-    const attempt = () => {
-      const categorySection = document.getElementById(`category-${expandedMonth}-${expandedCategory}`);
-      if (!categorySection) return false;
-      const headers = categorySection.querySelectorAll('thead th');
-      for (const th of Array.from(headers)) {
-        const text = th.textContent?.trim() || '';
-        if (text.startsWith('Amount') && !th.querySelector('.consumed-sub-label')) {
-          const sub = document.createElement('div');
-          sub.className = 'consumed-sub-label text-[10px] text-gray-500 leading-none';
-          sub.textContent = '(Consumed)';
-          th.appendChild(sub);
-          return true;
-        }
-      }
-      return false;
-    };
-    // Try immediately and then retry until table header present
-    if (attempt()) return;
-    const interval = setInterval(() => {
-      tries++;
-      if (attempt() || tries >= maxTries) {
-        clearInterval(interval);
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [expandedMonth, expandedCategory, categoryData]);
 
   return (
     <div className="p-6 space-y-6">
