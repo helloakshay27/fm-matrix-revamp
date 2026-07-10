@@ -114,6 +114,7 @@ export const EditBookingSetupClubPage = () => {
         isRequest: false,
         active: "",
         department: "",
+        location: "",
         appKey: "",
         postpaid: false,
         prepaid: false,
@@ -258,6 +259,7 @@ export const EditBookingSetupClubPage = () => {
             setFormData(prev => ({
                 ...prev,
                 facilityName: responseData.fac_name,
+                location: responseData.location || "",
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
                 active: responseData.active,
@@ -708,6 +710,10 @@ export const EditBookingSetupClubPage = () => {
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
+            // Include optional location if provided
+            if (formData.location && String(formData.location).trim()) {
+                formDataToSend.append("facility_setup[location]", String(formData.location).trim());
+            }
             // if (formData.department) {
             //     formDataToSend.append(
             //         "facility_setup[department_id]",
@@ -1159,6 +1165,13 @@ export const EditBookingSetupClubPage = () => {
                                     onChange={(e) =>
                                         setFormData({ ...formData, facilityName: e.target.value })
                                     }
+                                    variant="outlined"
+                                />
+                                <TextField
+                                    label="Location (optional)"
+                                    placeholder="Enter Location"
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                     variant="outlined"
                                 />
                                 {/* <FormControl>
