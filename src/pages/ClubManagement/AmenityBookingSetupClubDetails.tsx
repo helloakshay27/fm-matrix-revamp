@@ -147,6 +147,7 @@ export const BookingSetupDetailClubPage = () => {
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
+    location: "",
     slots: [
       {
         startTime: { hour: "00", minute: "00" },
@@ -374,6 +375,7 @@ export const BookingSetupDetailClubPage = () => {
         }, {}) || {},
         seaterInfo: response.seater_info,
         floorInfo: response.location_info,
+        location: response.location || "",
         sharedContentInfo: response.shared_content,
         slots: response.facility_slots?.map((slot) => ({
           startTime: { hour: slot.facility_slot.start_hour, minute: slot.facility_slot.start_min },
@@ -664,13 +666,13 @@ export const BookingSetupDetailClubPage = () => {
                   {formData.isBookable ? "Bookable" : formData.isRequest ? "Request" : "-"}
                 </span>
               </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Department</span>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Location</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.department ? departments.find(d => d.id === formData.department)?.department_name || "-" : "-"}
+                  {formData.location || "-"}
                 </span>
-              </div> */}
+              </div>
             </div>
           </div>
 
