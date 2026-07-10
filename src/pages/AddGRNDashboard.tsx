@@ -903,15 +903,17 @@ export const AddGRNDashboard = () => {
                 value={item.rate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "rate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 

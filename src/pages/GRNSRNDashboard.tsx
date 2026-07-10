@@ -308,7 +308,7 @@ export const GRNSRNDashboard = () => {
           <Eye className="w-4 h-4" />
         </Button>
       )}
-      {shouldShow("GRN/ SRN", "update") && item.approved_status === 'Pending' && (
+      {shouldShow("GRN/ SRN", "update") && item.can_edit === true && (
         <Button
           size="sm"
           variant="ghost"
