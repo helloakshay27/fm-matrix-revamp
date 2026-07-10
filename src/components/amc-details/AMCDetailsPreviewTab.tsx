@@ -1257,6 +1257,8 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                       className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activePreviewFreqTab
                         ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
                     >
                       {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
