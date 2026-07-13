@@ -2681,16 +2681,23 @@ const BusinessCompassDailyReport: React.FC = () => {
           : {}),
       }))
       .filter((p) => p.title !== "");
-    const uncheckedAccomplishmentPlan = visibleAccomplishments
-      .filter((a) => !a.completed)
-      .map((a) => ({
-        title: cleanReportText(a.text),
-        is_starred: a.starred,
-      }))
-      .filter((p) => p.title !== "");
+
+    // Include scheduled items for next working day that aren't already in planningItems
+    const scheduledPlanItems = dedupedTomorrowItems
+      .filter((item) =>
+        !planningItems.some((p) => planningItemMatchesSourceItem(p, item))
+      )
+      .map((item) => ({
+        title: cleanReportText(item.title),
+        is_starred: false,
+        source_id: item.originalData?.id ?? null,
+        source_type: item.type ?? null,
+        originalData: item.originalData,
+      }));
+
     const tomorrowPlanPayload = [
       ...manualTomorrowPlan,
-      ...uncheckedAccomplishmentPlan,
+      ...scheduledPlanItems,
     ]
       .filter((item) => item.title.trim() !== "")
       .filter((item, index, arr) => {
