@@ -96,7 +96,10 @@ export const AddPermitPage = () => {
     comment: '',
 
     // Attachments
-    attachments: null as File | null
+    attachments: null as File | null,
+
+    // Supplier user
+    supplierUser: '',
   });
 
   // State for user account loading
@@ -123,6 +126,10 @@ export const AddPermitPage = () => {
   // State for Suppliers/Vendors data
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
+  // State for Supplier Users data
+  const [supplierUsers, setSupplierUsers] = useState<{ id: number; firstname: string; lastname: string }[]>([]);
+  const [loadingSupplierUsers, setLoadingSupplierUsers] = useState(false);
 
   // State for buildings data
   const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([]);
@@ -286,6 +293,30 @@ export const AddPermitPage = () => {
       toast.error('Failed to fetch suppliers');
     } finally {
       setLoadingSuppliers(false);
+    }
+  };
+
+  // Fetch users for a supplier
+  const fetchSupplierUsers = async (supplierId: string) => {
+    if (!supplierId) {
+      setSupplierUsers([]);
+      return;
+    }
+    try {
+      setLoadingSupplierUsers(true);
+      const url = getFullUrl(`/pms/suppliers/get_user_details_for_supplier.json?supplier_id=${supplierId}`);
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      const users = Array.isArray(data) ? data : (data.users || []);
+      setSupplierUsers(users.map((u: any) => ({ id: u.id, firstname: u.firstname || '', lastname: u.lastname || '' })));
+    } catch (error) {
+      console.error('Error fetching supplier users:', error);
+      toast.error('Failed to fetch supplier users');
+      setSupplierUsers([]);
+    } finally {
+      setLoadingSupplierUsers(false);
     }
   };
 
@@ -1150,6 +1181,11 @@ export const AddPermitPage = () => {
         formData.append('pms_permit[vendor_id]', permitData.vendor);
       }
 
+      // Vendor User ID
+      if (permitData.supplierUser) {
+        formData.append('pms_permit[vendor_user_id]', permitData.supplierUser);
+      }
+
       // Permit details (activities) with nested attributes
       activities.forEach((activity, index) => {
         if (activity.activity && activity.subActivity && activity.categoryOfHazards) {
@@ -1827,14 +1863,18 @@ export const AddPermitPage = () => {
               <MuiSelect
                 label="Vendor"
                 value={permitData.vendor}
-                onChange={(e) => handleInputChange('vendor', e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPermitData(prev => ({ ...prev, vendor: val, supplierUser: '' }));
+                  setSupplierUsers([]);
+                  fetchSupplierUsers(val);
+                }}
                 displayEmpty
                 sx={fieldStyles}
                 MenuProps={menuProps}
                 disabled={loadingSuppliers}
               >
                 <MenuItem value="">
-                  {/* <em>{loadingSuppliers ? 'Loading suppliers...' : 'Select Vendor'}</em> */}
                 </MenuItem>
                 {suppliers.map((supplier) => (
                   <MenuItem key={supplier.id} value={supplier.id}>
@@ -1843,6 +1883,32 @@ export const AddPermitPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
+
+            {permitData.vendor && (
+              <FormControl fullWidth variant="outlined">
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
+                  Supplier User
+                </InputLabel>
+                <MuiSelect
+                  label="Supplier User"
+                  value={permitData.supplierUser}
+                  onChange={(e) => handleInputChange('supplierUser', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={menuProps}
+                  disabled={loadingSupplierUsers}
+                >
+                  <MenuItem value="">
+                    <em>{loadingSupplierUsers ? 'Loading users...' : 'Select User'}</em>
+                  </MenuItem>
+                  {supplierUsers.map((user) => (
+                    <MenuItem key={user.id} value={user.id.toString()}>
+                      {`${user.firstname} ${user.lastname}`.trim()}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            )}
 
             {/* <TextField
               label="Comment (Optional)"

@@ -156,6 +156,7 @@ interface ApprovalLevel {
 }
 
 interface Permit {
+    vender_user_name: any;
     id: number;
     reference_number: string;
     permit_type: string;
@@ -1764,7 +1765,16 @@ export const PermitDetails = () => {
                             <Field label="Mobile" value={permitData.permit.created_by.mobile} />
                         </div>
                         <div className="space-y-4">
-                            <Field label="Vendor Company" value={permitData.permit.vendor?.company_name || "N/A"} />
+                            <Field
+                                label="Vendor Company"
+                                value={
+                                    permitData.permit.vendor?.company_name
+                                        ? permitData.permit.vender_user_name
+                                            ? `${permitData.permit.vendor.company_name} (${permitData.permit.vender_user_name})`
+                                            : permitData.permit.vendor.company_name
+                                        : "N/A"
+                                }
+                            />
                             {/* <Field label="External Vendor Name" value={permitData.permit.external_vendor_name || "N/A"} /> */}
                         </div>
                     </div>
