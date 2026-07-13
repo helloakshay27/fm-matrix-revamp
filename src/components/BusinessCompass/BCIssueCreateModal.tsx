@@ -449,8 +449,8 @@ const SimpleIssueForm = ({
 
   return (
     <form className="pb-20 overflow-y-auto text-[12px]" onSubmit={handleSubmit}>
-      <div id="addIssue" className="pr-3 max-w-[95%] mx-auto">
-        <div className="relative bg-white p-3 sm:p-4">
+      <div id="addIssue" className="max-w-[95%] mx-auto">
+        <div className="relative bg-white py-3">
           {/* Issue Title */}
           <div className="mb-1">
             <SpeechInput
