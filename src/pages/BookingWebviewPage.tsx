@@ -61,7 +61,8 @@ export const BookingWebviewPage = () => {
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [bookerName, setBookerName] = useState("");
   const [bookerEmail, setBookerEmail] = useState("");
-  const [provider, setProvider] = useState<"google" | "outlook">("google");
+  const [provider, setProvider] = useState<"google" | "outlook" | "zimbra">("google");
+  const [zimbraPassword, setZimbraPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -93,6 +94,10 @@ export const BookingWebviewPage = () => {
       toast.error("Please enter your name and email");
       return;
     }
+    if (provider === "zimbra" && !zimbraPassword.trim()) {
+      toast.error("Please enter your Zimbra password");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -102,10 +107,16 @@ export const BookingWebviewPage = () => {
         provider,
         start_time: selectedSlot.start_time,
         end_time: selectedSlot.end_time,
+        ...(provider === "zimbra" ? { zimbra_password: zimbraPassword } : {}),
       });
 
-      // Leaving the SPA here is expected — connect_url is a real OAuth consent redirect.
-      window.location.href = response.data.connect_url;
+      // Leaving the SPA here is expected in both cases:
+      // - google/outlook: connect_url is a real OAuth consent redirect, the
+      //   booking finalizes once the visitor comes back through the callback.
+      // - zimbra: no OAuth round-trip — the booking is already confirmed by
+      //   this response, confirmation_url just lands them on our own
+      //   /booking/:token/confirmed page.
+      window.location.href = response.data.connect_url ?? response.data.confirmation_url;
     } catch (err: any) {
       const message =
         err?.response?.data?.error ||
@@ -238,7 +249,7 @@ export const BookingWebviewPage = () => {
                 <Label>Which calendar should this be added to?</Label>
                 <RadioGroup
                   value={provider}
-                  onValueChange={(v) => setProvider(v as "google" | "outlook")}
+                  onValueChange={(v) => setProvider(v as "google" | "outlook" | "zimbra")}
                   className="flex gap-6"
                 >
                   <div className="flex items-center gap-2">
@@ -249,11 +260,30 @@ export const BookingWebviewPage = () => {
                     <RadioGroupItem value="outlook" id="provider_outlook" />
                     <Label htmlFor="provider_outlook" className="font-normal">Outlook</Label>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="zimbra" id="provider_zimbra" />
+                    <Label htmlFor="provider_zimbra" className="font-normal">Zimbra</Label>
+                  </div>
                 </RadioGroup>
-                <p className="text-xs text-[#2c2c2c]/50">
-                  You'll be asked to briefly sign in so the invite can be created on your own calendar,
-                  with {data.owner_name} added as a guest.
-                </p>
+                {provider === "zimbra" ? (
+                  <>
+                    <Input
+                      type="password"
+                      value={zimbraPassword}
+                      onChange={(e) => setZimbraPassword(e.target.value)}
+                      placeholder="Zimbra password"
+                    />
+                    <p className="text-xs text-[#2c2c2c]/50">
+                      Zimbra has no sign-in redirect, so the invite is created on your calendar
+                      immediately using these credentials, which are saved to connect your account.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-[#2c2c2c]/50">
+                    You'll be asked to briefly sign in so the invite can be created on your own calendar,
+                    with {data.owner_name} added as a guest.
+                  </p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <Button variant="outline" onClick={() => setSelectedSlot(null)} disabled={submitting}>
