@@ -78,6 +78,9 @@ export const TaskSubmissionPage: React.FC = () => {
     ticketsRaised: 0,
   });
 
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [loadedDraftData, setLoadedDraftData] = useState<any>(null);
+
   // File upload refs
   const beforePhotoRef = useRef<HTMLInputElement>(null);
   const afterPhotoRef = useRef<HTMLInputElement>(null);
@@ -547,10 +550,12 @@ export const TaskSubmissionPage: React.FC = () => {
     // This preserves data when navigating between steps
   };
 
+  const draftLoadedRef = useRef(false);
+
   // Initialize checklist data when task details are loaded
   useEffect(() => {
-    if (taskDetails && dynamicChecklist.length > 0) {
-      const initialChecklist = dynamicChecklist.reduce((acc, item) => {
+    if (taskDetails && dynamicChecklist.length > 0 && !draftLoadedRef.current) {
+      let initialChecklist = dynamicChecklist.reduce((acc, item) => {
         acc[item.id] = {
           value: item.type === "checkbox" ? [] : "",
           comment: "",
@@ -560,8 +565,54 @@ export const TaskSubmissionPage: React.FC = () => {
       }, {} as { [key: string]: { value: any; comment: string; attachment: File | null } });
 
       setFormData((prev) => ({ ...prev, checklist: initialChecklist }));
+
+      try {
+        const draftStr = localStorage.getItem(`task_draft_${id}`);
+        if (draftStr) {
+          const draftData = JSON.parse(draftStr);
+          if (draftData && draftData.formData && draftData.formData.checklist) {
+            setLoadedDraftData(draftData);
+            setShowDraftModal(true);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+      }
+
+      draftLoadedRef.current = true;
     }
-  }, [taskDetails]);
+  }, [taskDetails, id]);
+
+  const handleContinueWithDraft = () => {
+    if (loadedDraftData) {
+      setFormData(prev => {
+        const updatedChecklist = { ...prev.checklist };
+        Object.keys(loadedDraftData.formData.checklist).forEach((key) => {
+          if (updatedChecklist[key]) {
+            const draftItem = loadedDraftData.formData.checklist[key];
+            updatedChecklist[key].value = draftItem.value !== undefined ? draftItem.value : updatedChecklist[key].value;
+            updatedChecklist[key].comment = draftItem.comment || updatedChecklist[key].comment;
+          }
+        });
+        return { ...prev, checklist: updatedChecklist };
+      });
+      if (loadedDraftData.currentStep) {
+        setCurrentStep(loadedDraftData.currentStep);
+      }
+      if (loadedDraftData.completedSteps) {
+        setCompletedSteps(loadedDraftData.completedSteps);
+      }
+    }
+    setShowDraftModal(false);
+    sonnerToast.info("Draft restored! Continue from where you left off.");
+  };
+
+  const handleStartFresh = () => {
+    localStorage.removeItem(`task_draft_${id}`);
+    setShowDraftModal(false);
+    setLoadedDraftData(null);
+    sonnerToast.info("Starting fresh! Previous draft has been cleared.");
+  };
 
   // Auto-mark steps as completed when they have valid data
   useEffect(() => {
@@ -3342,6 +3393,37 @@ export const TaskSubmissionPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Draft Modal */}
+      <Dialog open={showDraftModal} onOpenChange={setShowDraftModal}>
+        <DialogContent className="sm:max-w-md rounded-none font-sans">
+          <DialogHeader className="bg-[#da7756] text-white p-4 -m-6 mb-4">
+            <DialogTitle className="text-white font-semibold text-lg">
+              Draft Found
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Typography variant="body2" className="text-gray-800 text-sm">
+              We found a saved draft from your previous session. Would you like to continue with the saved draft or start fresh?
+            </Typography>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleStartFresh}
+              className="bg-[#f5f5f5] text-[#666] border-none hover:bg-gray-200 rounded"
+            >
+              Start Fresh
+            </Button>
+            <Button
+              onClick={handleContinueWithDraft}
+              className="bg-[#C72030] text-white hover:bg-[#B11E2A] rounded"
+            >
+              Continue with Draft
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Success Modal */}
       <TaskSubmissionSuccessModal
