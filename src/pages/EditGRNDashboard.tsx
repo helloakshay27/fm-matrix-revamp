@@ -253,6 +253,17 @@ export const EditGRNDashboard = () => {
             document_file_name: att.filename,
           })) || []
         );
+
+        if (grn.purchase_order_id) {
+          try {
+            const supplierResponse = await dispatch(
+              fetchSupplierDetails({ baseUrl, token, id: grn.purchase_order_id })
+            ).unwrap();
+            setSuppliers([{ id: String(supplierResponse.id), name: supplierResponse.company_name }]);
+          } catch (_) {
+            // fall back to full suppliers list already loaded
+          }
+        }
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch GRN details.");
@@ -976,17 +987,19 @@ export const EditGRNDashboard = () => {
                   type="number"
                   placeholder="Expected Quantity"
                   value={item.expectedQuantity}
-                  onChange={(e) =>
-                    handleInventoryChange(
-                      index,
-                      "expectedQuantity",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => {
+                    if (!grnDetails.purchaseOrder) {
+                      handleInventoryChange(index, "expectedQuantity", e.target.value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{
+                    sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                    readOnly: grnDetails.purchaseOrder > 0,
+                  }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1006,6 +1019,7 @@ export const EditGRNDashboard = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1025,6 +1039,7 @@ export const EditGRNDashboard = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1044,6 +1059,7 @@ export const EditGRNDashboard = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1101,6 +1117,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1137,6 +1154,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1173,6 +1191,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1207,6 +1226,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1222,6 +1242,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1237,6 +1258,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1252,6 +1274,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
               </div>
