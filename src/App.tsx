@@ -216,6 +216,7 @@ const PermitChecklistList = lazy(() => import("./pages/PermitChecklistList").the
 const PermitChecklistDetails = lazy(() => import("./pages/PermitChecklistDetails").then(m => ({ default: m.PermitChecklistDetails })));
 const EditPermitChecklist = lazy(() => import("./pages/EditPermitCheklist").then(m => ({ default: m.EditPermitChecklist })));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
+const BusinessCardSetupPage = lazy(() => import("./pages/admin/BusinessCardSetupPage"));
 const EmployeeOfTheMonthSetup = lazy(() => import("./pages/EmployeeOfTheMonthSetup"));
 const AnnouncementsSetup = lazy(() => import("./pages/AnnouncementsSetup"));
 const TeamSetup = lazy(() => import("./pages/settings/company-hub/team-setup"));
@@ -1779,6 +1780,10 @@ function App() {
                             <Route
                               path="admin/disc-report"
                               element={<DiscReport />}
+                            />
+                            <Route
+                              path="admin/business-card-setup"
+                              element={<BusinessCardSetupPage />}
                             />
 
                             <Route
