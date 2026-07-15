@@ -1231,6 +1231,11 @@ import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
 import SalesBySalesPersonDetails from "./pages/SalesBySalesPersonDetails.tsx";
+import BusinessCompassTasksPage from "./pages/BusinessCompass/BusinessCompassTasksPage.tsx";
+import BusinessCompassTaskDetailsPage from "./pages/BusinessCompass/BusinessCompassTaskDetailsPage.tsx";
+import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIssuesPage.tsx";
+import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
+import BusinessCompassTodoPage from "./pages/BusinessCompass/BusinessCompassTodoPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -2282,23 +2287,23 @@ function App() {
                           /> */}
                             <Route
                               path="/business-compass/tasks"
-                              element={<ProjectTasksPage />}
+                              element={<BusinessCompassTasksPage />}
                             />
                             <Route
                               path="/business-compass/tasks/:taskId"
-                              element={<ProjectTaskDetails />}
+                              element={<BusinessCompassTaskDetailsPage />}
                             />
                             <Route
                               path="/business-compass/issues"
-                              element={<IssuesListPage />}
+                              element={<BusinessCompassIssuesPage />}
                             />
                             <Route
                               path="/business-compass/issues/:id"
-                              element={<IssueDetailsPage />}
+                              element={<BusinessCompassIssueDetailsPage />}
                             />
                             <Route
                               path="/business-compass/todo"
-                              element={<Todo />}
+                              element={<BusinessCompassTodoPage />}
                             />
                             <Route
                               path="/business-compass/channels"
@@ -2686,15 +2691,15 @@ function App() {
                             />
                             <Route
                               path="/crm/broadcast"
-                              element={<BroadcastDashboard />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <ClubBroadcastDashboard /> : <BroadcastDashboard />}
                             />
                             <Route
                               path="/crm/broadcast/add"
-                              element={<AddBroadcastPage />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <AddClubBroadcastPage /> : <AddBroadcastPage />}
                             />
                             <Route
                               path="/crm/broadcast/details/:id"
-                              element={<BroadcastDetailsPage />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <ClubBroadcastDetailsPage /> : <BroadcastDetailsPage />}
                             />
                             <Route path="/crm/polls" element={<CRMPollsPage />} />
                             <Route

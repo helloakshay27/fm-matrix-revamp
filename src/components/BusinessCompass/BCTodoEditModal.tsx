@@ -60,9 +60,10 @@ const BCTodoEditModal = ({ isOpen, onClose, onSuccess, editData }: BCTodoEditMod
     }, [isListening, transcript, activeId, baseValue]);
 
     const priorityOptions = [
-        { value: 'low', label: 'Low' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'high', label: 'High' },
+        { value: 'P1', label: 'Q1: Urgent & Important' },
+        { value: 'P2', label: 'Q2: Important, Not Urgent' },
+        { value: 'P3', label: 'Q3: Urgent, Not Important' },
+        { value: 'P4', label: 'Q4: Not Urgent or Important' },
     ];
 
     useEffect(() => {
@@ -75,7 +76,7 @@ const BCTodoEditModal = ({ isOpen, onClose, onSuccess, editData }: BCTodoEditMod
                 setDate('');
             }
             setSelectedResponsiblePerson(editData.responsible_person_id || userId || '');
-            setPriority(editData.priority?.toLowerCase() || '');
+            setPriority(editData.priority || '');
             setIsEditorReady(true);
         }
     }, [isOpen, editData, userId]);

@@ -1,0 +1,1294 @@
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+    useUpdateIssue,
+    useImportIssues,
+    useDownloadSampleIssueFile,
+} from "@/hooks/useIssues";
+import { useBusinessCompassIssues } from "@/hooks/useBusinessCompassIssues";
+import { Button } from "@/components/ui/button";
+import { Plus, Eye, ChevronDown, X, Play, Pause } from "lucide-react";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
+import { toast } from "sonner";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import BCIssueCreateModal from "@/components/BusinessCompass/BCIssueCreateModal";
+import IssueFilterModal from "@/components/IssueFilterModal";
+import {
+    FormControl,
+    MenuItem,
+    Select,
+    Switch,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+} from "@mui/material";
+import axios from "axios";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { CommonImportModal } from "@/components/CommonImportModal";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useLayout } from "@/contexts/LayoutContext";
+
+interface Issue {
+    id?: string;
+    title?: string;
+    description?: string;
+    issue_type?: string;
+    priority?: string;
+    status?: string;
+    assigned_to?: string;
+    created_at?: string;
+    updated_at?: string;
+    start_date?: string;
+    due_date?: string;
+    effort_duration?: string;
+    comment?: string;
+    is_started?: boolean;
+    active_time_till_now?: { hours: number; minutes: number; seconds: number };
+}
+
+const columns: ColumnConfig[] = [
+    {
+        key: "actions",
+        label: "Actions",
+        sortable: false,
+        draggable: false,
+        defaultVisible: true,
+    },
+    {
+        key: "id",
+        label: "ID",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "title",
+        label: "Title",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "issue_type",
+        label: "Type",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "priority",
+        label: "Priority",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "assigned_to",
+        label: "Responsible Person",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "start_date",
+        label: "Start Date",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "due_date",
+        label: "End Date",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "started_time",
+        label: "Actual Efforts Taken",
+        sortable: false,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "effort_duration",
+        label: "Efforts Duration",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "comment",
+        label: "Comment",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+];
+
+const ISSUSE_STATUS = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "reopen", label: "Reopen" },
+    { value: "closed", label: "Closed" },
+    { value: "overdue", label: "Overdued" },
+];
+
+const IssuePauseModal = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    onEndIssue,
+    isLoading,
+    issueId,
+}: any) => {
+    const [reason, setReason] = useState("");
+
+    useEffect(() => {
+        if (!isOpen) setReason("");
+    }, [isOpen]);
+
+    const handlePause = () => {
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for pausing");
+            return;
+        }
+        onSubmit(reason, issueId);
+    };
+
+    const handleEnd = () => {
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for ending");
+            return;
+        }
+        onEndIssue(reason, issueId);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Pause/End
+                </h2>
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+                <div className="flex gap-3 justify-between flex-wrap">
+                    <Button
+                        onClick={handleEnd}
+                        disabled={isLoading}
+                        className="px-4 py-2 !bg-red-600 !text-white rounded-md disabled:opacity-50"
+                    >
+                        {isLoading ? "Submitting..." : "End Issue"}
+                    </Button>
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handlePause}
+                            disabled={isLoading}
+                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                        >
+                            {isLoading ? "Submitting..." : "Pause Issue"}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Responsible Person Change Modal Component
+const ResponsiblePersonReasonModal = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    isLoading,
+    taskId,
+    pendingResponsiblePersonId = null,
+    users = [],
+}: any) => {
+    const [reason, setReason] = useState("");
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason("");
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for changing the responsible person");
+            return;
+        }
+        if (taskId && pendingResponsiblePersonId) {
+            onSubmit(reason, taskId, pendingResponsiblePersonId);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Responsible Person Change
+                </h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for changing responsible person..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                        {isLoading ? "Submitting..." : "Change Responsible Person"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const BusinessCompassIssuesPage = () => {
+    const { setCurrentSection } = useLayout();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+
+    const initSearch = searchParams.get("search") || "";
+    const initFilters = searchParams.get("filters") || "";
+    const initMyIssues = searchParams.get("myIssues") !== "false";
+
+    useEffect(() => {
+        setCurrentSection("Business Compass");
+    }, [setCurrentSection]);
+
+    const updateQueryParams = useCallback(
+        (
+            updates: Record<string, string | number | boolean | null | undefined>,
+            replace = false
+        ) => {
+            const params = new URLSearchParams(searchParams);
+
+            Object.entries(updates).forEach(([key, value]) => {
+                if (value === undefined || value === null || value === "") {
+                    params.delete(key);
+                } else {
+                    params.set(key, String(value));
+                }
+            });
+
+            setSearchParams(params, { replace });
+        },
+        [searchParams, setSearchParams]
+    );
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState(initSearch);
+    const [tempSearchQuery, setTempSearchQuery] = useState(initSearch);
+    const [appliedFilters, setAppliedFilters] = useState(initFilters);
+    const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(initMyIssues);
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+    const [showActionPanel, setShowActionPanel] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [importErrors, setImportErrors] = useState<
+        Array<{ row: number; errors: string[] }>
+    >([]);
+    const [importResults, setImportResults] = useState({ created: 0, failed: 0 });
+
+    const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+    const [pauseIssueId, setPauseIssueId] = useState<number | null>(null);
+    const [isPauseLoading, setIsPauseLoading] = useState(false);
+
+    const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+    const [responsibleTaskId, setResponsibleTaskId] = useState<string | null>(
+        null
+    );
+    const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<
+        string | null
+    >(null);
+    const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
+
+    // Sync myIssuesOnly to URL
+    useEffect(() => {
+        updateQueryParams(
+            {
+                myIssues: showMyIssuesOnly ? undefined : "false",
+            },
+            true
+        );
+    }, [showMyIssuesOnly, updateQueryParams]);
+
+    // Sync URL changes to component state (browser back/forward/pasted URL)
+    useEffect(() => {
+        const urlSearch = searchParams.get("search") || "";
+        const urlFilters = searchParams.get("filters") || "";
+        const urlMyIssues = searchParams.get("myIssues") !== "false";
+
+        if (urlSearch !== searchQuery) {
+            setSearchQuery(urlSearch);
+            setTempSearchQuery(urlSearch);
+        }
+        if (urlFilters !== appliedFilters) {
+            setAppliedFilters(urlFilters);
+        }
+        if (urlMyIssues !== showMyIssuesOnly) {
+            setShowMyIssuesOnly(urlMyIssues);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
+    // Debounced search effect
+    useEffect(() => {
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(() => {
+            setSearchQuery(tempSearchQuery);
+            setCurrentPage(1);
+            updateQueryParams(
+                {
+                    search: tempSearchQuery || undefined,
+                },
+                true
+            );
+        }, 500);
+
+        return () => {
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tempSearchQuery]);
+
+    // Build filter string based on current state
+    let filterString = "";
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const myIssuesFilter = user.id
+        ? `q[responsible_person_id_eq]=${user.id.toString()}`
+        : "";
+
+    if (appliedFilters !== "") {
+        filterString = appliedFilters;
+        if (showMyIssuesOnly && myIssuesFilter) {
+            filterString = `${filterString}&${myIssuesFilter}`;
+        }
+    } else if (showMyIssuesOnly) {
+        filterString = myIssuesFilter;
+    }
+
+    // TanStack Query hook for fetching Business Compass issues
+    const {
+        data: issuesData,
+        isLoading,
+        isFetching,
+        refetch: refetchIssues,
+    } = useBusinessCompassIssues({
+        page: currentPage,
+        filters: filterString,
+        enabled: !!token,
+    });
+
+    const rawIssues = issuesData?.issues || [];
+    const pagination = {
+        current_page:
+            issuesData?.meta?.current_page ||
+            issuesData?.pagination?.current_page ||
+            1,
+        total_count:
+            issuesData?.meta?.total_count ||
+            issuesData?.pagination?.total_count ||
+            0,
+        total_pages:
+            issuesData?.meta?.total_pages ||
+            issuesData?.pagination?.total_pages ||
+            0,
+    };
+
+    // Mutations (Issue is a shared resource, so the generic issue endpoints apply)
+    const updateMutation = useUpdateIssue();
+    const importMutation = useImportIssues();
+    const downloadMutation = useDownloadSampleIssueFile();
+
+    const mapIssueData = (issue: any): Issue => {
+        return {
+            id: issue.id?.toString() || "",
+            title: issue.title || "",
+            description: issue.description || "",
+            issue_type: issue.issue_type || "",
+            priority: issue.priority || "",
+            status: issue.status || "Open",
+            assigned_to: issue.responsible_person_id,
+            created_at: issue.created_at || "",
+            updated_at: issue.updated_at || "",
+            start_date: issue.start_date
+                ? new Date(issue.start_date).toLocaleDateString()
+                : "",
+            due_date: issue.end_date
+                ? new Date(issue.end_date).toLocaleDateString()
+                : "",
+            effort_duration: issue.effort_duration || "-",
+            comment: issue.comments?.[issue.comments.length - 1]?.body || "",
+            is_started: issue.is_started || false,
+            active_time_till_now: issue.active_time_till_now || null,
+        };
+    };
+
+    const displayIssues = useMemo(() => {
+        return Array.isArray(rawIssues) ? rawIssues : [];
+    }, [rawIssues]);
+
+    const issues: Issue[] = displayIssues.map(mapIssueData);
+
+    const [users, setUsers] = useState([]);
+    const [issueTypeOptions, setIssueTypeOptions] = useState([]);
+    const [projects, setProjects] = useState([]);
+    const [openIssueModal, setOpenIssueModal] = useState(false);
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+    const getUsers = useCallback(async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            setUsers(response.data.users);
+        } catch (error) {
+            console.log(error);
+        }
+    }, [baseUrl, token]);
+
+    const getProjects = useCallback(async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/project_managements/projects_for_dropdown.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            setProjects(response.data || []);
+        } catch (error) {
+            console.log("Error fetching projects:", error);
+        }
+    }, [baseUrl, token]);
+
+    const fetchIssueTypes = useCallback(async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/issue_types.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const issueTypes = response.data || [];
+            const mappedTypes = issueTypes.map((i: any) => ({
+                value: i.id,
+                label: i.name,
+            }));
+            setIssueTypeOptions(mappedTypes);
+        } catch (error) {
+            console.error("Error fetching issue types:", error);
+            toast.error("Failed to load issue types.");
+        }
+    }, [baseUrl, token]);
+
+    useEffect(() => {
+        if (token && baseUrl) {
+            getUsers();
+            getProjects();
+            fetchIssueTypes();
+        }
+    }, [token, baseUrl, getUsers, getProjects, fetchIssueTypes]);
+
+    const handleOpenDialog = () => setOpenIssueModal(true);
+
+    const handleIssueTypeChange = async (issueId: string, newType: string) => {
+        try {
+            await updateMutation.mutateAsync({
+                id: issueId,
+                data: { issue_type: newType },
+                baseUrl,
+                token,
+            });
+            toast.success("Issue type updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update issue type");
+        }
+    };
+
+    const handleIssueUpdate = async (issueId: string, assignedToId: string) => {
+        const currentIssue = displayIssues?.find(
+            (issue: any) => String(issue.id) === String(issueId)
+        );
+        const currentAssignedTo = currentIssue?.responsible_person_id;
+
+        if (currentAssignedTo && currentAssignedTo !== assignedToId) {
+            setResponsibleTaskId(issueId);
+            setPendingResponsiblePersonId(assignedToId);
+            setIsResponsibleModalOpen(true);
+        } else {
+            try {
+                await updateMutation.mutateAsync({
+                    id: issueId,
+                    data: { responsible_person_id: assignedToId },
+                    baseUrl,
+                    token,
+                });
+                toast.success("Issue updated successfully");
+            } catch (error) {
+                console.log(error);
+                toast.error("Failed to update issue");
+            }
+        }
+    };
+
+    const handleResponsiblePersonChange = async (
+        reason: string,
+        issueId: string,
+        newPersonId: string
+    ) => {
+        setIsResponsibleLoading(true);
+        try {
+            await updateMutation.mutateAsync({
+                id: issueId,
+                data: { responsible_person_id: newPersonId },
+                baseUrl,
+                token,
+            });
+            toast.success("Issue responsible person updated successfully");
+            setIsResponsibleModalOpen(false);
+            setResponsibleTaskId(null);
+            setPendingResponsiblePersonId(null);
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update issue");
+        } finally {
+            setIsResponsibleLoading(false);
+        }
+    };
+
+    const handleIssueStatusChange = async (
+        issueId: string,
+        newStatus: string
+    ) => {
+        try {
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${issueId}/update_status.json`,
+                { status: newStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success("Issue status updated successfully");
+            refetchIssues();
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update issue status");
+        }
+    };
+
+    const handleSampleDownload = async () => {
+        try {
+            const blob = await downloadMutation.mutateAsync({
+                baseUrl,
+                token,
+            });
+
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "sample_issues.xlsx");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Sample format downloaded successfully");
+        } catch (error) {
+            console.error("Error downloading sample file:", error);
+            toast.error("Failed to download sample file. Please try again.");
+        }
+    };
+
+    const handleImportIssues = async () => {
+        if (!selectedFile) {
+            toast.error("Please select a file");
+            return;
+        }
+
+        try {
+            const response = await importMutation.mutateAsync({
+                file: selectedFile,
+                baseUrl,
+                token,
+            });
+
+            const importResult = response.import_result;
+            const created = importResult?.created || 0;
+            const failed = importResult?.failed || [];
+
+            setImportResults({ created, failed: failed.length });
+
+            if (failed && failed.length > 0) {
+                setImportErrors(failed);
+                setIsErrorModalOpen(true);
+            } else {
+                toast.success(`Successfully imported ${created} issues`);
+                setIsImportModalOpen(false);
+                setSelectedFile(null);
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to import issues");
+        }
+    };
+
+    const handlePlayIssue = async (id: number) => {
+        try {
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${id}/update_status.json`,
+                { status: "started" },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success("Issue started successfully");
+            refetchIssues();
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to start issue");
+        }
+    };
+
+    const handlePauseIssueSubmit = async (reason: string, iid: number) => {
+        if (!iid) return;
+        setIsPauseLoading(true);
+        try {
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${iid}/update_status.json`,
+                { status: "stopped" },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success("Issue paused successfully");
+            setIsPauseModalOpen(false);
+            setPauseIssueId(null);
+            refetchIssues();
+        } catch (error) {
+            toast.error("Failed to pause issue");
+        } finally {
+            setIsPauseLoading(false);
+        }
+    };
+
+    const handleEndIssueSubmit = async (reason: string, iid: number) => {
+        if (!iid) return;
+        setIsPauseLoading(true);
+        try {
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${iid}/update_status.json`,
+                { status: "completed" },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success("Issue ended successfully");
+            setIsPauseModalOpen(false);
+            setPauseIssueId(null);
+            refetchIssues();
+        } catch (error) {
+            toast.error("Failed to end issue");
+        } finally {
+            setIsPauseLoading(false);
+        }
+    };
+
+    const renderCell = (item: any, columnKey: string) => {
+        if (columnKey === "actions") {
+            return (
+                <div className="flex items-center justify-center gap-2">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        className="p-1"
+                        onClick={() => navigate(`/business-compass/issues/${item.id}`)}
+                        title="View Issue Details"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                </div>
+            );
+        }
+        if (columnKey === "title") {
+            const isCompleted =
+                item.status === "completed" || item.status === "closed";
+            const isStarted = item.is_started;
+            return (
+                <div className="flex items-center gap-2 w-[20rem]">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="w-full truncate">{item.title}</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="rounded-[5px]">
+                                <p>{item.title}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    {!isCompleted &&
+                        (isStarted ? (
+                            <button
+                                onClick={() => {
+                                    setPauseIssueId(Number(item.id));
+                                    setIsPauseModalOpen(true);
+                                }}
+                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                title="Pause issue"
+                            >
+                                <Pause size={13} className="text-orange-500" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => handlePlayIssue(Number(item.id))}
+                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                title="Start issue"
+                            >
+                                <Play size={13} className="text-green-500" />
+                            </button>
+                        ))}
+                </div>
+            );
+        }
+        if (columnKey === "started_time") {
+            return (
+                <ActiveTimer
+                    activeTimeTillNow={item?.active_time_till_now}
+                    isStarted={item?.is_started}
+                />
+            );
+        }
+        if (columnKey === "priority") {
+            return item[columnKey];
+        }
+        if (columnKey === "status") {
+            const statusColorMap = {
+                open: { dot: "bg-blue-500" },
+                in_progress: { dot: "bg-amber-500" },
+                on_hold: { dot: "bg-gray-500" },
+                completed: { dot: "bg-teal-500" },
+                reopen: { dot: "bg-orange-500" },
+                closed: { dot: "bg-green-800" },
+                overdue: { dot: "bg-red-500" },
+            };
+
+            const colors =
+                statusColorMap[item.status as keyof typeof statusColorMap] ||
+                statusColorMap.open;
+
+            return (
+                <FormControl variant="standard" sx={{ width: 148 }}>
+                    <Select
+                        value={item.status}
+                        onChange={(e) =>
+                            handleIssueStatusChange(item.id, e.target.value as string)
+                        }
+                        disableUnderline
+                        renderValue={(value) => (
+                            <div
+                                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                            >
+                                <span
+                                    className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}
+                                ></span>
+                                <span>
+                                    {ISSUSE_STATUS.find((opt) => opt.value === value)?.label ||
+                                        value}
+                                </span>
+                            </div>
+                        )}
+                        sx={{
+                            fontSize: "0.875rem",
+                            cursor: "pointer",
+                            "& .MuiSelect-select": {
+                                padding: "4px 0",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                            },
+                        }}
+                    >
+                        {ISSUSE_STATUS.map((opt) => {
+                            const optColors =
+                                statusColorMap[opt.value as keyof typeof statusColorMap];
+                            return (
+                                <MenuItem
+                                    key={opt.value}
+                                    value={opt.value}
+                                    sx={{ display: "flex", alignItems: "center", gap: "8px" }}
+                                >
+                                    <span
+                                        className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}
+                                    ></span>
+                                    <span>{opt.label}</span>
+                                </MenuItem>
+                            );
+                        })}
+                    </Select>
+                </FormControl>
+            );
+        }
+        if (columnKey === "issue_type") {
+            return (
+                <FormControl variant="standard" sx={{ width: 128 }}>
+                    <Select
+                        value={item.issue_type}
+                        onChange={(e) =>
+                            handleIssueTypeChange(item.id, e.target.value as string)
+                        }
+                        disableUnderline
+                        sx={{
+                            fontSize: "0.875rem",
+                            cursor: "pointer",
+                            "& .MuiSelect-select": {
+                                padding: "4px 0",
+                            },
+                        }}
+                    >
+                        {issueTypeOptions.map((opt: any) => (
+                            <MenuItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            );
+        }
+        if (columnKey === "assigned_to") {
+            return (
+                <FormControl variant="standard" sx={{ width: 188 }}>
+                    <Select
+                        value={item.assigned_to}
+                        onChange={(e) =>
+                            handleIssueUpdate(item.id, e.target.value as string)
+                        }
+                        disableUnderline
+                        sx={{
+                            fontSize: "0.875rem",
+                            cursor: "pointer",
+                            "& .MuiSelect-select": {
+                                padding: "4px 0",
+                            },
+                        }}
+                    >
+                        {users.map((user: any) => (
+                            <MenuItem key={user.id} value={user.id}>
+                                {user.full_name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            );
+        }
+        if (columnKey === "comment") {
+            return (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="max-w-[10rem] overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer">
+                                {item.comment || "No comment"}
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[20rem] rounded-[5px] text-wrap">
+                            <p className="mx-2">{item.comment || "No comment"}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            );
+        }
+        return item[columnKey];
+    };
+
+    const leftActions = (
+        <>
+            <Button
+                className="bg-[#C72030] hover:bg-[#A01020] text-white px-2 sm:px-4"
+                onClick={() => setShowActionPanel(true)}
+            >
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Action</span>
+            </Button>
+        </>
+    );
+
+    const rightActions = (
+        <div className="flex flex-wrap items-center gap-1">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                    Total:
+                </span>
+                <span className="text-sm font-bold text-[#C72030]">
+                    {pagination?.total_count || 0}
+                </span>
+            </div>
+
+            <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-1">
+                <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                    My
+                </span>
+                <Switch
+                    checked={!showMyIssuesOnly}
+                    onChange={() => setShowMyIssuesOnly(!showMyIssuesOnly)}
+                    sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": { color: "#C72030" },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                            backgroundColor: "#C72030",
+                        },
+                        transform: "scale(0.8)",
+                        margin: "-4px",
+                    }}
+                />
+                <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                    All
+                </span>
+            </div>
+        </div>
+    );
+
+    const handlePageChange = (page: number) => {
+        if (
+            page < 1 ||
+            page > pagination.total_pages ||
+            page === pagination.current_page ||
+            isLoading
+        ) {
+            return;
+        }
+        setCurrentPage(page);
+    };
+
+    const renderPaginationItems = () => {
+        if (!pagination.total_pages || pagination.total_pages <= 0) {
+            return null;
+        }
+        const items = [];
+        const totalPages = pagination.total_pages;
+        const currentPageNum = pagination.current_page;
+        const pagesToShow = new Set<number>();
+
+        pagesToShow.add(1);
+        pagesToShow.add(totalPages);
+        pagesToShow.add(currentPageNum);
+        if (currentPageNum > 1) pagesToShow.add(currentPageNum - 1);
+        if (currentPageNum < totalPages) pagesToShow.add(currentPageNum + 1);
+
+        if (totalPages > 7) {
+            pagesToShow.add(2);
+            pagesToShow.add(totalPages - 1);
+        }
+
+        const sortedPages = Array.from(pagesToShow).sort((a, b) => a - b);
+
+        sortedPages.forEach((page, index) => {
+            if (index > 0 && sortedPages[index - 1] < page - 1) {
+                items.push(
+                    <PaginationItem key={`ellipsis-${sortedPages[index - 1]}`}>
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            }
+
+            items.push(
+                <PaginationItem key={page} className="cursor-pointer">
+                    <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPageNum === page}
+                        aria-disabled={isFetching}
+                        className={isFetching ? "pointer-events-none opacity-50" : ""}
+                    >
+                        {page}
+                    </PaginationLink>
+                </PaginationItem>
+            );
+        });
+
+        return items;
+    };
+
+    const handleSearchChange = (value: string) => {
+        setTempSearchQuery(value);
+    };
+
+    return (
+        <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
+            <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+                <EnhancedTable
+                    data={issues}
+                    columns={columns}
+                    searchValue={tempSearchQuery}
+                    onSearchChange={(searchTerm) => handleSearchChange(searchTerm)}
+                    renderCell={renderCell}
+                    loading={isFetching}
+                    leftActions={leftActions}
+                    onFilterClick={() => setIsFilterModalOpen(true)}
+                    rightActions={rightActions}
+                    emptyMessage={
+                        issues.length === 0 && !isFetching
+                            ? "No issues found. Create one to get started."
+                            : ""
+                    }
+                    getItemId={(item: any) => String(item.id)}
+                />
+            </div>
+
+            {showActionPanel && (
+                <SelectionPanel
+                    onAdd={handleOpenDialog}
+                    onImport={() => setIsImportModalOpen(true)}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
+            )}
+
+            {/* Issue Filter Modal */}
+            <IssueFilterModal
+                isModalOpen={isFilterModalOpen}
+                setIsModalOpen={setIsFilterModalOpen}
+                onApplyFilters={(filterStr) => {
+                    setAppliedFilters(filterStr);
+                    setCurrentPage(1);
+                    updateQueryParams({
+                        filters: filterStr || undefined,
+                    });
+                }}
+                issueTypes={issueTypeOptions}
+                users={users}
+                projects={projects}
+            />
+
+            {/* Add Issue Modal */}
+            <BCIssueCreateModal
+                isOpen={openIssueModal}
+                onClose={() => setOpenIssueModal(false)}
+                onSuccess={() => refetchIssues()}
+                baseUrl={baseUrl || ""}
+                token={token || ""}
+            />
+
+            <CommonImportModal
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                title="Import Issues"
+                entityType="issues"
+                onSampleDownload={handleSampleDownload}
+                onImport={handleImportIssues}
+                isUploading={importMutation.isPending}
+            />
+
+            {/* Import Error Modal */}
+            <Dialog
+                open={isErrorModalOpen}
+                onClose={() => setIsErrorModalOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle
+                    sx={{
+                        fontWeight: 600,
+                        fontSize: "18px",
+                        borderBottom: "2px solid #E95420",
+                    }}
+                >
+                    Import Summary
+                </DialogTitle>
+                <DialogContent sx={{ py: 3 }}>
+                    <div className="space-y-4">
+                        <div className="flex gap-4 mb-6">
+                            <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded">
+                                <div className="text-xs text-gray-600">
+                                    Successfully Created
+                                </div>
+                                <div className="text-2xl font-bold text-green-600">
+                                    {importResults.created}
+                                </div>
+                            </div>
+                            <div className="flex-1 p-3 bg-red-50 border border-red-200 rounded">
+                                <div className="text-xs text-gray-600">Failed Records</div>
+                                <div className="text-2xl font-bold text-red-600">
+                                    {importResults.failed}
+                                </div>
+                            </div>
+                        </div>
+
+                        {importErrors.length > 0 && (
+                            <div className="bg-gray-50 rounded border border-gray-200 p-4 max-h-96 overflow-y-auto">
+                                <div className="text-sm font-semibold mb-3 text-gray-700">
+                                    Error Details:
+                                </div>
+                                <div className="space-y-3">
+                                    {importErrors.map((error, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="bg-white p-3 rounded border border-gray-200"
+                                        >
+                                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                                                Row {error.row}
+                                            </div>
+                                            <div className="text-sm text-red-600 space-y-1">
+                                                {error.errors?.map((err, errIdx) => (
+                                                    <div key={errIdx} className="flex items-start gap-2">
+                                                        <span className="text-red-500 mt-0.5">•</span>
+                                                        <span>{err}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setIsErrorModalOpen(false);
+                                    setIsImportModalOpen(false);
+                                    setSelectedFile(null);
+                                }}
+                            >
+                                Close & Refresh
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <div className="flex justify-center mt-4 sm:mt-6 overflow-x-auto pb-2">
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                onClick={() =>
+                                    handlePageChange(Math.max(1, pagination.current_page - 1))
+                                }
+                                className={
+                                    pagination.current_page === 1 || isFetching
+                                        ? "pointer-events-none opacity-50"
+                                        : "cursor-pointer"
+                                }
+                            />
+                        </PaginationItem>
+                        {renderPaginationItems()}
+                        <PaginationItem>
+                            <PaginationNext
+                                onClick={() =>
+                                    handlePageChange(
+                                        Math.min(pagination.total_pages, pagination.current_page + 1)
+                                    )
+                                }
+                                className={
+                                    pagination.current_page === pagination.total_pages ||
+                                        isFetching
+                                        ? "pointer-events-none opacity-50"
+                                        : "cursor-pointer"
+                                }
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
+
+            {/* Pause / End Issue Modal */}
+            {isPauseModalOpen && (
+                <IssuePauseModal
+                    isOpen={isPauseModalOpen}
+                    onClose={() => {
+                        setIsPauseModalOpen(false);
+                        setPauseIssueId(null);
+                    }}
+                    onSubmit={handlePauseIssueSubmit}
+                    onEndIssue={handleEndIssueSubmit}
+                    isLoading={isPauseLoading}
+                    issueId={pauseIssueId}
+                />
+            )}
+
+            {/* Responsible Person Change Modal */}
+            <ResponsiblePersonReasonModal
+                isOpen={isResponsibleModalOpen}
+                onClose={() => {
+                    setIsResponsibleModalOpen(false);
+                    setResponsibleTaskId(null);
+                    setPendingResponsiblePersonId(null);
+                }}
+                onSubmit={(reason: string) => {
+                    if (responsibleTaskId && pendingResponsiblePersonId) {
+                        handleResponsiblePersonChange(
+                            reason,
+                            responsibleTaskId,
+                            pendingResponsiblePersonId
+                        );
+                    }
+                }}
+                isLoading={isResponsibleLoading}
+                taskId={responsibleTaskId}
+                pendingResponsiblePersonId={pendingResponsiblePersonId}
+                users={users}
+            />
+        </div>
+    );
+};
+
+export default BusinessCompassIssuesPage;
