@@ -679,7 +679,7 @@ export const AddFacilityBookingPage = () => {
           user_society_type: 'User',
           resource_type: 'Pms::Site',
           resource_id: selectedSiteId,
-          book_by_id: selectedSlots,
+          book_by_id: selectedSlots[0],
           book_by: 'slot',
           facility_id: facilityId,
           startdate: selectedDate.replace(/-/g, '/'),
