@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Camera, ShieldAlert, Lock, RefreshCw } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SecurityState } from "./useProductSecurity";
+import { FACE_DETECTION_ENABLED, SecurityState } from "./useProductSecurity";
 
 interface SecurityOverlaysProps {
   security: SecurityState;
@@ -146,7 +146,8 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
   const canRetryFaceCheck =
     showBadge &&
     (faceAuthStatus === "api_unavailable" || faceAuthStatus === "error");
-  const showLiveBadge = showBadge && !showBlankScreen;
+  const showLiveBadge =
+    FACE_DETECTION_ENABLED && showBadge && !showBlankScreen;
 
   const goToFaceEnrollment = () => {
     const params = new URLSearchParams({ tab: "face_enroll" });
