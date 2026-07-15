@@ -225,7 +225,7 @@ const EditPermitPage = lazy(() => import("./pages/EditPermitPage").then(m => ({ 
 
 const LeadDashboard = lazy(() => import("./pages/LeadDashboard").then(m => ({ default: m.LeadDashboard })));
 const EnergyDashboard = lazy(() => import("./pages/EnergyDashboard").then(m => ({ default: m.EnergyDashboard })));
-
+const BusinessCardSetupPage = lazy(() => import("./pages/admin/BusinessCardSetupPage"));
 // // Import Inventory pages
 // import { InventoryDashboard } from "./pages/InventoryDashboard";
 // import { InventoryDetailsPage } from "./pages/InventoryDetailsPage";
@@ -1782,6 +1782,10 @@ function App() {
                             <Route
                               path="admin/disc-report"
                               element={<DiscReport />}
+                            />
+                             <Route
+                              path="admin/business-card-setup"
+                              element={<BusinessCardSetupPage />}
                             />
 
                             <Route
